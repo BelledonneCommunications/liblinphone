@@ -114,8 +114,8 @@ void ToneManager::startNamedTone(const std::shared_ptr<CallSession> &session, Li
 	LinphoneCore *lc = getCore()->getCCore();
 	if (linphone_core_tone_indications_enabled(lc)) {
 		printDebugInfo(session);
-		setState(session, State::Tone);
 		doStopToneToPlaySomethingElse(session);
+		setState(session, State::Tone);
 		doStartNamedTone(session, toneId);
 		mStats->number_of_startNamedTone++;
 	}
@@ -245,6 +245,9 @@ void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
 				}else{
 					return false;
 				}
+			}else if(!source) {// Stop the timer if there is no more ring stream. It can happen when forcing ring to stop while playing a tone. Deleting timer here avoid concurrency issue.
+				deleteTimer();
+				return false;
 			}
 			return true;
 		};
@@ -286,8 +289,7 @@ LinphoneToneDescription *ToneManager::getToneFromId(LinphoneToneID id) {
 
 void ToneManager::setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile) {
 	LinphoneCore *lc = getCore()->getCCore();
-	LinphoneToneDescription *tone = getToneFromId(id);
-	if (!tone) tone = getToneFromReason(reason);
+	LinphoneToneDescription *tone = getToneFromReason(reason);
 
 	if (tone) {
 		lc->tones = bctbx_list_remove(lc->tones, tone);
@@ -602,7 +604,7 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 	MSDtmfGenCustomTone def;
 	memset(&def, 0, sizeof(def));
 	def.amplitude = 1;
-	/*these are french tones, excepted the failed one, which is USA congestion tone (does not exist in France)*/
+	/*these are french tones, excepted the failed one, which comes USA congestion on mono-frequency*/
 	switch(toneId) {
 		case LinphoneToneCallOnHold:
 			def.repeat_count=3;
@@ -623,10 +625,17 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 		break;
 		case LinphoneToneCallLost:
 			def.duration=250;
-			def.frequencies[0]=480;
+			//def.frequencies[0]=480;  // Second frequency that is hide
 			def.frequencies[0]=620;
 			def.interval=250;
 			def.repeat_count=3;
+		break;
+		case LinphoneToneCallEnd:
+			def.duration=200;
+			def.frequencies[0]=480;
+			def.interval=200;
+			def.repeat_count=2;
+			def.amplitude = 0.5f;// This tone can be in parallel of other calls. This will be played on a lighter amplitude
 		break;
 		default:
 			lWarning() << "[ToneManager] Unhandled tone id.";

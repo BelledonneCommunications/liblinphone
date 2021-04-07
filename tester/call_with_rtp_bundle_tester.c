@@ -27,6 +27,7 @@
 #include "mediastreamer2/msutils.h"
 #include "belle-sip/sipstack.h"
 #include <bctoolbox/defs.h>
+#include "shared_tester_functions.h"
 
 static void check_rtp_bundle(LinphoneCall *call, bool_t should_be_active){
 	const LinphoneCallParams *remote_params = linphone_call_get_remote_params(call);

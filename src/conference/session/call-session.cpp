@@ -707,13 +707,13 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 		else
 			newSubject = "Media change";
 	}
-	if (destProxy && destProxy->op) {
+	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
 		/* Give a chance to update the contact address if connectivity has changed */
-		char * contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
+		char * contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
 
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
-		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
+		linphone_proxy_config_get_op(destProxy)->setContactAddress(contactAddress.getInternalAddress());
 
 		q->updateContactAddress(contactAddress);
 
@@ -859,7 +859,7 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		return result;
 	} else if (destProxy){
 		const LinphoneAddress *addr = linphone_proxy_config_get_contact(destProxy);
-		if (addr && (destProxy->op || destProxy->dependency != nullptr)) {
+		if (addr && (linphone_proxy_config_get_op(destProxy) || linphone_proxy_config_get_dependency(destProxy) != nullptr)) {
 			/* If using a proxy, use the contact address as guessed with the REGISTERs */
 			lInfo() << "Contact has been fixed using proxy";
 			result = linphone_address_clone(addr);

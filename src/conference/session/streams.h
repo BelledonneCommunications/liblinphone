@@ -185,6 +185,11 @@ inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){
 	return ostr;
 }
 
+inline std::ostream &operator<<(std::ostream & ostr, SalMediaProto proto){
+	ostr << sal_media_proto_to_string(proto);
+	return ostr;
+}
+
 inline std::ostream & operator<<(std::ostream & ostr, const Stream& stream){
 	ostr << "stream#" << stream.getIndex() << " [" << stream.getType() << "] in state [" << Stream::stateToString(stream.getState()) << "]";
 	return ostr;
@@ -356,7 +361,7 @@ public:
 	void unjoinMixerSession();
 	Stream * getStream(size_t index);
 	Stream * getStream(int index){
-		return getStream((size_t) index);
+		return getStream(static_cast<size_t>(index));
 	}
 	/**
 	 * Lookup the main stream for a given stream type.
@@ -457,7 +462,7 @@ public:
 protected:
 	
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
-	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
+	int getVideoBandwidth (const std::shared_ptr<SalMediaDescription> & md, const SalStreamDescription & desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
 	void authTokenReady(const std::string &token, bool verified);

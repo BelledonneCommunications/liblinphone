@@ -18,6 +18,7 @@
 */
 
 #include <UIKit/UIKit.h>
+#import <PushKit/PushKit.h>
 #include "private.h"
 #import <UserNotifications/UserNotifications.h>
 
@@ -39,12 +40,15 @@
  iteration
  Its lifecicle is the same as the one from linphonecore init to destroy.
  */
-@interface IosAppDelegate : IosObject {
+@interface IosAppDelegate : IosObject <PKPushRegistryDelegate> {
 	BOOL mStopAsyncEnd;
+	PKPushRegistry* voipRegistry;
 }
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
 - (void)onStopAsyncEnd: (BOOL)stop;
+- (void)didRegisterForRemotePush:(NSData *)token;
+- (void)registerForPush;
 
 @end

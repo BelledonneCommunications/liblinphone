@@ -761,7 +761,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		dChatMessage->forceState(messageState);
 
 		dChatMessage->forceFromAddress(IdentityAddress(row.get<string>(3)));
-		dChatMessage->forceToAddress(IdentityAddress(row.get<string>(4)));
+		dChatMessage->forceToAddress(ConferenceAddress(row.get<string>(4)));
 
 		dChatMessage->setTime(dbSession.getTime(row, 5));
 		dChatMessage->setImdnMessageId(row.get<string>(6));
@@ -3400,8 +3400,10 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 						for (const auto &row : rows) {
 							ConferenceId previousId = ConferenceId(ConferenceAddress(row.get<string>(0)), conferenceId.getLocalAddress());
-							lInfo() << "Keeping around previous chat room ID [" << previousId << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
-							clientGroupChatRoom->getPrivate()->addConferenceIdToPreviousList(previousId);
+							if (previousId != conferenceId) {
+								lInfo() << "Keeping around previous chat room ID [" << previousId << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
+								clientGroupChatRoom->getPrivate()->addConferenceIdToPreviousList(previousId);
+							}
 						}
 					}
 

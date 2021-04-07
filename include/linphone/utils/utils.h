@@ -29,6 +29,8 @@
 #include <map>
 
 #include "linphone/utils/enum-generator.h"
+#include "address/address.h"
+#include "conference/session/streams.h"
 
 // =============================================================================
 
@@ -128,7 +130,15 @@ namespace Utils {
 	}
 	LINPHONE_PUBLIC std::string trim (const std::string &str);
 
-	template<typename T>
+	template<typename T, typename std::enable_if<std::is_base_of<Address, T>::value>::type* = nullptr>
+	inline const T &getEmptyConstRefObject () {
+		static const T object{};
+		object.removeFromLeakDetector();
+		return object;
+	}
+
+	template<typename T, typename std::enable_if<!std::is_base_of<Address, T>::value>::type* = nullptr>
+
 	inline const T &getEmptyConstRefObject () {
 		static const T object{};
 		return object;
@@ -147,6 +157,15 @@ namespace Utils {
 		std::list<typename Container::value_type> v;
 		std::copy(std::begin(l), std::end(l), std::back_inserter(v));
 		return v;
+	}
+
+	template<class T>
+	bctbx_list_t* listToBctbxList (const std::list<T> & l) {
+		bctbx_list_t* bcList = NULL;
+		for (const auto & e : l) {
+			bcList = bctbx_list_append(bcList, e);
+		}
+		return bcList;
 	}
 
 	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t t);

@@ -1108,7 +1108,16 @@ bool FileTransferChatMessageModifier::downloadFile (
 	cbs.process_response = _chat_message_process_response_from_get_file;
 	cbs.process_io_error = _chat_message_process_io_error_download;
 	cbs.process_auth_requested = _chat_message_process_auth_requested_download;
-	int err = startHttpTransfer(fileTransferContent->getFileUrl(), "GET", nullptr, &cbs); // File URL has been set by createFileTransferInformationsFromVndGsmaRcsFtHttpXml
+
+	std::string url = fileTransferContent->getFileUrl(); // File URL has been set by createFileTransferInformationsFromVndGsmaRcsFtHttpXml
+	// Shall we use a proxy to get this file?
+	std::string proxy(linphone_config_get_string(message->getCore()->getCCore()->config, "misc", "file_transfer_server_get_proxy", ""));
+	if (!proxy.empty()) {
+		lInfo() << "Using proxy "<<proxy<<" to get file at "<<url;
+		proxy.append("?target=");
+		url.insert(0,proxy);
+	}
+	int err = startHttpTransfer(url, "GET", nullptr, &cbs);
 	if (err == -1)
 		return false;
 	// start the download, status is In Progress

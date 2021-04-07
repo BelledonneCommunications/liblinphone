@@ -28,6 +28,13 @@ public:
 	Video();
 
 	void exec(Daemon *app, const std::string& args) override;
+
+	class Preview : public DaemonCommand
+	{
+	public:
+		Preview();
+		void exec(Daemon *app, const std::string& args) override;
+	};
 };
 
 
@@ -78,5 +85,22 @@ public:
 
 	void exec(Daemon *app, const std::string& args) override;
 };
+
+class VideoDisplayGet : public DaemonCommand
+{
+public:
+	VideoDisplayGet();
+
+	void exec(Daemon *app, const std::string& args) override;
+};
+
+class VideoDisplaySet : public DaemonCommand
+{
+public:
+	VideoDisplaySet();
+
+	void exec(Daemon *app, const std::string& args) override;
+};
+
 
 #endif // LINPHONE_DAEMON_COMMAND_VIDEO_H

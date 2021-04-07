@@ -466,6 +466,8 @@ static void audio_bypass(void) {
 	unlink(recordpath);
 
 	// Enable L16 audio codec
+	linphone_core_set_mtu(marie_lc, 4000);
+	linphone_core_set_mtu(pauline_lc, 4000);
 	only_enable_payload(marie_lc, "L16", 44100, 1);
 	only_enable_payload(pauline_lc, "L16", 44100, 1);
 

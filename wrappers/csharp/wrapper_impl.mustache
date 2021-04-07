@@ -552,6 +552,118 @@ namespace Linphone
 					Marshal.FreeHGlobal(string_ptr_to_remove);
 			}
 		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		public struct MSOglContextInfo
+		{
+			public System.IntPtr window;
+			public System.UInt32 width;
+			public System.UInt32 height;
+			public System.IntPtr getProcAddress;
+		};
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_core_get_native_video_window_id(IntPtr thiz);
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern void linphone_core_set_native_video_window_id(IntPtr thiz, IntPtr windowId);
+
+		/// <summary>
+		/// Get the native window handle of the video window. On Windows UWP/WindowsStore, this is a SwapChainPanel. eg: LinphoneManager.Instance.Core.NativeVideoWindowId = panel; The rendering is automatically done by Linphone.
+		/// </summary>
+#if WINDOWS_UWP
+		public Windows.UI.Xaml.Controls.SwapChainPanel NativeVideoWindowId
+		{
+			get
+			{
+				return (Windows.UI.Xaml.Controls.SwapChainPanel)Marshal.GetObjectForIUnknown(((MSOglContextInfo)Marshal.PtrToStructure<MSOglContextInfo>(linphone_core_get_native_video_window_id(nativePtr)) ).window);
+			}
+			set
+			{
+				MSOglContextInfo c;
+				if (value != null)
+					c.window = Marshal.GetIUnknownForObject(value);
+				else
+					c.window = IntPtr.Zero;
+				c.getProcAddress = IntPtr.Zero;
+				c.width = 0;
+				c.height = 0;
+				IntPtr pnt = Marshal.AllocHGlobal(Marshal.SizeOf(c));
+				Marshal.StructureToPtr(c, pnt, false);
+				IntPtr oldData = linphone_core_get_native_video_window_id(nativePtr);
+				linphone_core_set_native_video_window_id(nativePtr, pnt);
+				if (oldData != IntPtr.Zero){
+					IntPtr window = ((MSOglContextInfo)Marshal.PtrToStructure<MSOglContextInfo>(oldData) ).window;
+					if(window != IntPtr.Zero)
+						Marshal.Release( window );
+					Marshal.FreeHGlobal(oldData);
+				}
+			}
+		}
+#else
+		public IntPtr NativeVideoWindowId
+		{
+			get
+			{
+				return linphone_core_get_native_video_window_id(nativePtr);
+			}
+			set
+			{
+				linphone_core_set_native_video_window_id(nativePtr, value);
+			}
+		}
+#endif
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_core_get_native_preview_window_id(IntPtr thiz);
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern void linphone_core_set_native_preview_window_id(IntPtr thiz, IntPtr windowId);
+
+		/// <summary>
+		/// Get the native window handle of the video preview window. On Windows UWP/WindowsStore, this is a SwapChainPanel. eg: LinphoneManager.Instance.Core.NativePreviewWindowId = panel; The rendering is automatically done by Linphone.
+		/// </summary>
+		///
+#if WINDOWS_UWP
+		public Windows.UI.Xaml.Controls.SwapChainPanel NativePreviewWindowId
+		{
+			get
+			{
+				return(Windows.UI.Xaml.Controls.SwapChainPanel) Marshal.GetObjectForIUnknown(((MSOglContextInfo)Marshal.PtrToStructure<MSOglContextInfo>(linphone_core_get_native_preview_window_id(nativePtr)) ).window);
+			}
+			set
+			{
+				MSOglContextInfo c;
+				if (value != null)
+					c.window = Marshal.GetIUnknownForObject(value);
+				else
+					c.window = IntPtr.Zero;
+				c.getProcAddress = IntPtr.Zero;
+				c.width = 0;
+				c.height = 0;
+				IntPtr pnt = Marshal.AllocHGlobal(Marshal.SizeOf(c));
+				Marshal.StructureToPtr(c, pnt, false);
+				IntPtr oldData = linphone_core_get_native_preview_window_id(nativePtr);
+				linphone_core_set_native_preview_window_id(nativePtr, pnt);
+				if (oldData != IntPtr.Zero){
+					IntPtr window = ((MSOglContextInfo)Marshal.PtrToStructure<MSOglContextInfo>(oldData) ).window;
+					if(window != IntPtr.Zero)
+						Marshal.Release( window );
+					Marshal.FreeHGlobal(oldData);
+				}
+			}
+		}
+#else
+		public IntPtr NativePreviewWindowId
+		{
+			get
+			{
+				return linphone_core_get_native_preview_window_id(nativePtr);
+			}
+			set
+			{
+				linphone_core_set_native_preview_window_id(nativePtr, value);
+			}
+		}
+#endif
+
 		{{/isLinphoneCore}}
 
 		{{#listener}}

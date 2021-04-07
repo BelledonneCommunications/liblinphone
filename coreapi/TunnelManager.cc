@@ -25,6 +25,7 @@
 #include "linphone/core_utils.h"
 #include "private.h"
 #include "private_functions.h"
+#include "account/account.h"
 #ifdef __ANDROID__
 #include <android/log.h>
 #endif
@@ -32,6 +33,7 @@
 belledonnecomm::TunnelManager *bcTunnel(const LinphoneTunnel *tunnel);
 
 using namespace belledonnecomm;
+using namespace LinphonePrivate;
 using namespace ::std;
 
 void TunnelManager::addServer(const char *ip, int port,unsigned int udpMirrorPort,unsigned int delay) {
@@ -427,19 +429,17 @@ TunnelManager::~TunnelManager(){
 }
 
 void TunnelManager::doRegistration(){
-	LinphoneProxyConfig* lProxy;
-	lProxy = linphone_core_get_default_proxy_config(mCore);
-	if (lProxy) {
+	LinphoneAccount *account = linphone_core_get_default_account(mCore);
+	if (account) {
 		ms_message("TunnelManager: New registration");
-		lProxy->commit = TRUE;
+		Account::toCpp(account)->setNeedToRegister(true);
 	}
 }
 
 void TunnelManager::doUnregistration() {
-	LinphoneProxyConfig *lProxy;
-	lProxy = linphone_core_get_default_proxy_config(mCore);
-	if(lProxy) {
-		_linphone_proxy_config_unregister(lProxy);
+	LinphoneAccount *account = linphone_core_get_default_account(mCore);
+	if (account) {
+		Account::toCpp(account)->unregister();
 	}
 }
 

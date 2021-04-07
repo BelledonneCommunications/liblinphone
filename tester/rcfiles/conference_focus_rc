@@ -35,3 +35,5 @@ automatically_initiate=0
 automatically_accept=0
 device=StaticImage: Static picture
 
+[tester]
+test_env=1
