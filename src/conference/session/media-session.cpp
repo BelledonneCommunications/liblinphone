@@ -2496,8 +2496,11 @@ LinphoneStatus MediaSession::resume () {
 			d->pendingActions.push([this] {this->resume();});
 			return -1;
 		}*/
-		lInfo() << "Resuming MediaSession " << this;
+
 	}
+
+	lInfo() << "Resuming MediaSession " << this;
+
 	d->automaticallyPaused = false;
 	d->broken = false;
 	/* Stop playing music immediately. If remote side is a conference it
@@ -2536,6 +2539,7 @@ LinphoneStatus MediaSession::resume () {
 		 * process the remote offer when it will arrive. */
 		d->op->setLocalMediaDescription(d->localDesc);
 	}
+
 	return 0;
 }
 
