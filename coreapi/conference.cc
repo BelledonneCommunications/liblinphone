@@ -152,7 +152,6 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		success =  false;
 	}
 
-	call->setConference(toC());
 	addParticipantDevice(call);
 
 	return success;
@@ -277,6 +276,13 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	if (pSession->getState() == LinphonePrivate::CallSession::State::PausedByRemote) {
 		checkTermination = false;
 	}
+
+	// Detach call from conference
+	shared_ptr<Call> pSessionCall = getCore()->getCallByRemoteAddress (*pSession->getRemoteAddress());
+	if (pSessionCall) {
+		pSessionCall->setConference(nullptr);
+	}
+
 	if (checkTermination) {
 		checkIfTerminated();
 	}
@@ -628,7 +634,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			break;
 		}
 
-		call->setConference(toC());
 		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
@@ -715,11 +720,6 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 			if ((sessionState != LinphonePrivate::CallSession::State::Released) && contactAddress.hasUriParam("conf-id")) {
 				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->terminate();
 			}
-
-			if (call) {
-				call->setConference(nullptr);
-			}
-
 		}
 		// Detach call from conference
 		if (call) {
@@ -1401,7 +1401,7 @@ void RemoteConference::reset () {
 	m_transferingCalls.clear();
 }
 
-void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
+void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 	list<std::shared_ptr<LinphonePrivate::Call>>::iterator it;
 	switch (state) {
 		case LinphoneCallConnected:
@@ -1431,6 +1431,13 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 			break;
 		case LinphoneCallError:
 			setState(ConferenceInterface::State::CreationFailed);
+			m_focusCall->setConference(nullptr);
+			it = m_pendingCalls.begin();
+			while (it != m_pendingCalls.end()) {
+				std::shared_ptr<LinphonePrivate::Call> pendingCall = *it;
+				pendingCall->setConference(nullptr);
+				it++;
+			}
 			break;
 		case LinphoneCallEnd:
 			setState(ConferenceInterface::State::TerminationPending);
@@ -1484,7 +1491,7 @@ void RemoteConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call,
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	RemoteConference *conf = (RemoteConference *)linphone_core_v_table_get_user_data(vtable);
 	if (Call::toCpp(call)->getSharedFromThis() == conf->m_focusCall)
-		conf->onFocusCallSateChanged(cstate);
+		conf->onFocusCallStateChanged(cstate);
 	else {
 		list<std::shared_ptr<LinphonePrivate::Call>>::iterator it = find(conf->m_pendingCalls.begin(), conf->m_pendingCalls.end(), Call::toCpp(call)->getSharedFromThis());
 		if (it != conf->m_pendingCalls.end())
