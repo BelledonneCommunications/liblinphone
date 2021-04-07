@@ -1807,8 +1807,10 @@ LinphoneStatus MediaSessionPrivate::pause () {
 
 		if (listener) {
 			auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
-			auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
-			conference->removeParticipant(q->getSharedFromThis(), true);
+			if (callConference) {
+				auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
+				conference->removeParticipant(q->getSharedFromThis(), true);
+			}
 		}
 	}
 

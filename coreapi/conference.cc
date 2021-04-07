@@ -674,12 +674,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 
 	CallSession::State sessionState = session->getState();
 
-	// It is allowed to remove a participant if
-	// - there are at least 2 remote participants in the conference
-	// - the remaining participant doesn't need to preserve its session after the conference ends hence the conference was not destroyed
-	// - session in paused by remote state which means that a remote participant temporarely left the conference
-	bool removeParticipantAllowed = ((getParticipantCount() >= 2) || ((getParticipantCount() == 1) && !preserveSession) || (sessionState == LinphonePrivate::CallSession::State::PausedByRemote));
-	if (removeParticipantAllowed && (getState() != ConferenceInterface::State::TerminationPending)) {
+	if (getState() != ConferenceInterface::State::TerminationPending) {
 
 		const auto & op = session->getPrivate()->getOp();
 		const auto account = linphone_core_lookup_known_account(getCore()->getCCore(), L_GET_C_BACK_PTR(&(me->getAddress().asAddress())));
@@ -695,7 +690,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 
-		if (preserveSession) {
+		if (participant->getPreserveSession()) {
 			// If the session is already paused,then send an update to kick the participant out of the conference, pause the call otherwise
 			if (sessionState == CallSession::State::Paused) {
 				const MediaSessionParams * params = static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams();
@@ -733,7 +728,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	}
 	
 	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
-	if (participant && (removeParticipantAllowed || (getState() == ConferenceInterface::State::TerminationPending))) {
+	if (participant) {
 		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
 		Conference::removeParticipant(participant);
 		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
@@ -741,7 +736,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 
 	// If conference is in termination pending state, terminate method is already taking care of state kicking participants out of the conference
 	// No need to kick out last remainign participant as it will be done soon
-	if (getState() != ConferenceInterface::State::TerminationPending) {
+	if ((getState() != ConferenceInterface::State::TerminationPending) && (!preserveSession)) {
 		/*
 		 * Handle the case where only the local participant and a unique remote participant are remaining.
 		 * In this case, if the session linked to the participant has to be preserved after the conference, then destroy the conference and let these two participants to connect directly thanks to a simple call.
@@ -855,10 +850,9 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 
 bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
-	const bool preserveSession = participant->getPreserveSession();
 	if (!callSession)
 		return false;
-	return (bool)removeParticipant(callSession, preserveSession);
+	return (bool)removeParticipant(callSession, false);
 }
 
 /* ConferenceInterface */
