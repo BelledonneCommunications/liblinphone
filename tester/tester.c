@@ -1155,6 +1155,7 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 
 		ms_free(participants_initial_stats);
 		ms_free(participants_initial_state);
+		bctbx_list_free(participants);
 	}
 
 	return 0;
