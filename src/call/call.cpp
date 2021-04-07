@@ -335,30 +335,15 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 }
 
 void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
-	LinphoneAddress * cAddress = L_GET_C_BACK_PTR(&(session->getLocalAddress()));
-	// Search local conference to add the call to again
-	char * contactAddressStr = nullptr;
-	const auto op = session->getPrivate()->getOp();
-	if (op && op->getRemoteContactAddress()) {
-		contactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
+	if (getConference()) {
+		auto conference = MediaConference::Conference::toCpp(getConference());
+		if (conference->getState() == ConferenceInterface::State::Created) {
+			conference->addParticipant(getSharedFromThis());
+		} else {
+			lInfo() << "Unable to add participant because conference is in state " << linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+		}
 	} else {
-		contactAddressStr = ms_strdup(linphone_core_find_best_identity(getCore()->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
-	}
-	Address contactAddress(contactAddressStr);
-	if (contactAddressStr) {
-		ms_free(contactAddressStr);
-	}
-
-	const auto & confId = session->getPrivate()->getConferenceId();
-	if (!confId.empty()) {
-		contactAddress.setUriParam("conf-id",confId);
-	}
-
-	ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
-	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
-
-	if (conference) {
-		conference->addParticipant(getSharedFromThis());
+		lInfo() << "Unable to add participant because call is not attached to conference";
 	}
 }
 
@@ -463,6 +448,17 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				setConference(nullptr);
 			}
 		break;
+		case CallSession::State::Resuming:
+		{
+			if (attachedToLocalConference(session)) {
+				// The participant left the conference and put its call in pause
+				auto conference = MediaConference::Conference::toCpp(getConference());
+				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call
+				lInfo() << "Call in conference has been resumed, hence add participant " << getRemoteAddress()->asString() << " to conference " << conference->getConferenceAddress();
+				reenterLocalConference(session);
+			}
+		}
+		break;
 		case CallSession::State::PausedByRemote:
 		{
 			const auto op = session->getPrivate()->getOp();
@@ -537,9 +533,19 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			const auto op = session->getPrivate()->getOp();
 			const auto & confId = session->getPrivate()->getConferenceId();
 			// Try to add device to local conference
-			if (attachedToLocalConference(session) && isInConference()) {
-				MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
-			} else if (!attachedToRemoteConference(session) && op && op->getRemoteContactAddress()) {
+			if (attachedToLocalConference(session)) {
+				if (isInConference()) {
+					MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
+				} else {
+					// Try to reenter conference if the call may have been part of one
+					reenterLocalConference(session);
+				}
+			} else if (attachedToRemoteConference(session)) {
+				// The participant rejoins the conference
+				auto conference = MediaConference::Conference::toCpp(getConference());
+				time_t creationTime = time(nullptr);
+				conference->notifyParticipantAdded(creationTime, false, conference->getMe());
+			} else if (op && op->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
@@ -563,10 +569,21 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
+				} else if (!confId.empty()) {
+
+					char * contactAddressStr = sal_address_as_string(op->getContactAddress());
+					Address localAddress(contactAddressStr);
+					ms_free(contactAddressStr);
+					if (!localAddress.hasUriParam("conf-id")) {
+						localAddress.setUriParam("conf-id",confId);
+					}
+					ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
+					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
+					if (conference) {
+						setConference(conference->toC());
+						reenterLocalConference(session);
+					}
 				}
-			} else if (!confId.empty() && getConference() && !isInConference()) {
-				// Try to reenter conference if the call may have been part of one
-				reenterLocalConference(session);
 			}
 		}
 		break;
