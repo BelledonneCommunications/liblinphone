@@ -1283,6 +1283,9 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 		if (initial_other_participants_stats) {
 			ms_free(initial_other_participants_stats);
 		}
+		if (initial_other_participants_state) {
+			ms_free(initial_other_participants_state);
+		}
 
 		participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
 		participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
