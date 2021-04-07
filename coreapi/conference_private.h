@@ -294,7 +294,7 @@ private:
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();
 
-	void onFocusCallSateChanged(LinphoneCallState state);
+	void onFocusCallStateChanged(LinphoneCallState state);
 	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState);
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered, LinphoneCallState newCallState);
 
