@@ -3759,7 +3759,6 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		if (c != laure->lc) {
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
-printf("%s - call between marie and laure has been terminated - core %s - conference %p (address %s)\n", __func__, linphone_core_get_identity(c), conference, linphone_address_as_string( marie_conference_address) );
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
 				BC_ASSERT_EQUAL(linphone_conference_get_size(conference),linphone_conference_get_participant_count(conference)+linphone_conference_is_in(conference), int, "%d");
 				BC_ASSERT_TRUE(linphone_conference_is_in(conference));
