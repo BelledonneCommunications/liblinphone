@@ -1334,6 +1334,7 @@ void linphone_core_manager_init_with_db(LinphoneCoreManager *mgr, const char* rc
 
 void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
 	linphone_core_manager_init_with_db(mgr, rc_file, phone_alias, NULL, NULL, NULL, NULL);
+	linphone_core_set_auto_iterate_enabled(mgr->lc, FALSE);
 }
 
 void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy) {
