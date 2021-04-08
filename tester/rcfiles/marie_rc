@@ -84,3 +84,4 @@ attributes=telephoneNumber,givenName,sn,mobile,homePhone,mail
 sip_scheme=sip
 sip_domain=ldap.example.org
 use_sal=1
+verify_server_certificates=0

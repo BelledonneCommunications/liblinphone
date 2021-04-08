@@ -69,11 +69,21 @@ static int ldap_sasl_interactive_bind_s(LDAP *ld, const char *dn, const char *sa
 	return ldap_sasl_bind_sA(ld, (const PSTR)dn, (const PSTR)saslMechanism, NULL, NULL, NULL, &serverResponse);
 }
 static int ldap_initialize(LDAP **ldp,const char *url ){
-	*ldp = ldap_init((PSTR)url, LDAP_PORT);// Port parameter is ignored if the port is in url. For STARTTLS, the connection is on normal port
-	if( *ldp!=NULL){
-		return ldap_connect(*ldp, NULL);
-	}else
-		return LdapGetLastError();
+// Remove scheme from URL. Windows doesn't support scheme.
+	belle_generic_uri_t *uri = belle_generic_uri_parse(url);
+	if(uri){
+		belle_generic_uri_set_scheme(uri, "");
+		char * uriString = belle_generic_uri_to_string(uri);
+		*ldp = ldap_init((PSTR)uriString, LDAP_PORT);// Port parameter is ignored if the port is in url. For STARTTLS, the connection is on normal port
+		if( *ldp!=NULL){
+			return ldap_connect(*ldp, NULL);
+		}else
+			return LdapGetLastError();
+		belle_sip_free(uriString);
+	}else{
+		ms_error( "LDAP : Cannot parse url : %s", url);
+		return -1;
+	}
 }
 static int ldap_search_ext(LDAP *ld, const char *base, int scope, const char *filter, char **attrs, int attrsonly, LDAPControl **serverctrls, LDAPControl **clientctrls, l_timeval *timeout, int sizelimit, int *msgidp){
 	//return (int)ldap_search_ext_s(ld, (const PSTR)base, (ULONG)scope, (const PSTR)filter, (PZPSTR)attrs, (ULONG)attrsonly, (PLDAPControlA *)serverctrls, (PLDAPControlA *) clientctrls, (l_timeval) timeout, (ULONG)sizelimit ,(PLDAPMessage*)msgidp );
@@ -157,6 +167,7 @@ std::vector<std::shared_ptr<LDAPContactProvider> > LDAPContactProvider::create(c
 	}
 	return providers;
 }
+#ifdef _WIN32
 VERIFYSERVERCERT Verifyservercert;
 
 BOOLEAN Verifyservercert(
@@ -168,9 +179,38 @@ BOOLEAN Verifyservercert(
 	//CertFreeCertificateContext(*((PCCERT_CONTEXT*)pServerCert)); // if cast issue
 	return true;
 }
+#endif
+
 void LDAPContactProvider::initializeLdap(){
 	int proto_version = LDAP_VERSION3;
-	int ret = ldap_initialize(&mLd, mServerUrl.c_str());
+	
+	int ret = ldap_set_option(NULL, LDAP_OPT_PROTOCOL_VERSION, &proto_version);
+// Setting global options for the next initialization. These options cannot be done with the LDAP instance directly.
+	if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
+#ifndef _WIN32
+		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
+		bool enableVerification = true;
+		if( mConfig.count("verify_server_certificates")>0){
+			if( mConfig["verify_server_certificates"] == "-1")
+				enableVerification = linphone_core_get_verify_server_certificates(mCore->getCCore());
+			else if( mConfig["verify_server_certificates"] == "0")
+				enableVerification = false;
+		}
+		int reqcert = (enableVerification?LDAP_OPT_X_TLS_DEMAND:LDAP_OPT_X_TLS_ALLOW);
+		int reqsan = LDAP_OPT_X_TLS_ALLOW;
+		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &reqcert);
+		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_CACERTFILE,caFile.c_str());
+		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_SAN,&reqsan);
+#else
+#endif
+	}
+	ret = ldap_initialize(&mLd, mServerUrl.c_str());
+	if(mConfig.count("debug")>0 && mConfig["debug"] == "1"){
+#ifndef _WIN32
+		int debLevel = 7;
+		ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debLevel);
+#endif
+	}
 	if( ret != LDAP_SUCCESS ){
 		ms_error( "LDAP : Problem initializing ldap on url '%s': %s", mConfig["server"].c_str(), ldap_err2string(ret));
 		mState = STATE_ERROR;
@@ -178,13 +218,11 @@ void LDAPContactProvider::initializeLdap(){
 		ms_error( "LDAP : Problem setting protocol version %d: %s", proto_version, ldap_err2string(ret));
 		mState = STATE_ERROR;
 	} else {
-		//ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, 7);
+		
 		if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
 #ifndef _WIN32
-			int reqcert = LDAP_OPT_X_TLS_ALLOW;
-			ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &reqcert);
 #else
-			ldap_set_option(mLd, LDAP_OPT_SERVER_CERTIFICATE, &Verifyservercert);
+			ldap_set_option(mLd, LDAP_OPT_X_TLS_CONNECT_CB, &Verifyservercert);// Callback to accept Certificates
 #endif
 			ret = ldap_start_tls_s(mLd, NULL, NULL);
 
@@ -236,7 +274,9 @@ static const std::map<std::string, ConfigKeys> gConfigKeys={
 	{"sip_domain", ConfigKeys("sip.linphone.org")},
 	{"enable", ConfigKeys("1")},
 	{"use_sal", ConfigKeys("0")},
-	{"use_tls", ConfigKeys("1")}
+	{"use_tls", ConfigKeys("1")},
+	{"debug", ConfigKeys("0")},
+	{"verify_server_certificates", ConfigKeys("-1")}// -1:auto from core, 0:deactivate, 1:activate
 };
 
 bool_t LDAPContactProvider::validConfig(const std::map<std::string, std::string>& config)const {
@@ -503,7 +543,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			}
 		}
 	}else if(provider->mCurrentAction == ACTION_WAIT_REQUEST){
-		ms_message("[LDAP] ACTION_WAIT_REQUEST");ortp_mutex_lock(&provider->mLock);
+		ms_message("[LDAP] ACTION_WAIT_REQUEST");
 		size_t requestSize = 0;
 		if( provider->mLd && provider->mConnected ){
 			// check for pending searches
