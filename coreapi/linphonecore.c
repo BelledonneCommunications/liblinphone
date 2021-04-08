@@ -5351,12 +5351,20 @@ void linphone_core_verify_server_certificates(LinphoneCore *lc, bool_t yesno){
 	linphone_config_set_int(lc->config,"sip","verify_server_certs",yesno);
 }
 
+bool_t linphone_core_get_verify_server_certificates(LinphoneCore *lc){
+	return !!linphone_config_get_int(lc->config, "sip", "verify_server_certs", TRUE);
+}
+
 void linphone_core_verify_server_cn(LinphoneCore *lc, bool_t yesno){
 	lc->sal->verifyServerCn(!!yesno);
 	if (lc->http_crypto_config){
 		belle_tls_crypto_config_set_verify_exceptions(lc->http_crypto_config, yesno ? 0 : BELLE_TLS_VERIFY_CN_MISMATCH);
 	}
 	linphone_config_set_int(lc->config,"sip","verify_server_cn",yesno);
+}
+
+bool_t linphone_core_get_verify_server_cn(LinphoneCore *lc){
+	return !!linphone_config_get_int(lc->config, "sip", "verify_server_cn", TRUE);
 }
 
 void linphone_core_set_ssl_config(LinphoneCore *lc, void *ssl_config) {
