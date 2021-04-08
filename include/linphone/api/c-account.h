@@ -77,7 +77,9 @@ LINPHONE_PUBLIC void linphone_account_unref(LinphoneAccount *account);
 LINPHONE_PUBLIC int linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams* params);
 
 /**
- * Get the #LinphoneAccountParams.
+ * Get the #LinphoneAccountParams as read-only object.
+ * To make changes, clone the returned object using linphone_account_params_clone() method, 
+ * make your changes on it and apply them using with linphone_account_set_params().
  * @param account The #LinphoneAccount object. @notnil
  * @return The #LinphoneAccountParams attached to this account. @notnil
  */
