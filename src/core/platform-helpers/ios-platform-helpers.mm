@@ -101,6 +101,7 @@ public:
 	void onNetworkChanged(bool reachable, bool force);
 
 	void didRegisterForRemotePush(void *token) override;
+	void enableAutoIterate (bool autoIterateEnabled) override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -132,7 +133,7 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
-	mUseAppDelgate = core->getCCore()->is_main_core && !linphone_config_get_int(core->getCCore()->config, "tester", "test_env", false);
+	mUseAppDelgate = core->getCCore()->is_main_core;
 	if (mUseAppDelgate) {
 		mAppDelegate = [[IosAppDelegate alloc] initWithCore:core];
 	}
@@ -180,6 +181,27 @@ void IosPlatformHelpers::stop () {
 
 void IosPlatformHelpers::didRegisterForRemotePush(void *token) {
 	[mAppDelegate didRegisterForRemotePush:(NSData *)token];
+}
+
+void IosPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
+	if (mUseAppDelgate && mStart) {
+		if (autoIterateEnabled) {
+			if (mIterateTimer && mIterateTimer.valid) {
+				ms_message("[IosPlatformHelpers] core.iterate() is already scheduled");
+				return;
+			}
+			mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:mAppDelegate selector:@selector(iterate) userInfo:nil repeats:YES];
+			// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
+			[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
+			ms_message("[IosPlatformHelpers] Call to core.iterate() scheduled every 20ms");
+		} else {
+			if (mIterateTimer) {
+				[mIterateTimer invalidate];
+				mIterateTimer = NULL;
+				ms_message("[IosPlatformHelpers] Auto core.iterate() stopped");
+			}
+		}
+	}
 }
 
 //Safely get an UTF-8 string from the given CFStringRef
@@ -302,14 +324,7 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	}
 
 	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
-		if (mIterateTimer && mIterateTimer.valid) {
-			ms_message("[IosPlatformHelpers] core.iterate() is already scheduled");
-			return;
-		}
-		mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:mAppDelegate selector:@selector(iterate) userInfo:nil repeats:YES];
-		// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
-		[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
-		ms_message("[IosPlatformHelpers] Call to core.iterate() scheduled every 20ms");
+		enableAutoIterate(TRUE);
 	} else {
 		ms_warning("[IosPlatformHelpers] Auto core.iterate() isn't enabled, ensure you do it in your application!");
 	}
@@ -323,11 +338,7 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 	}
 
 	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
-		if (mIterateTimer) {
-			[mIterateTimer invalidate];
-			mIterateTimer = NULL;
-		}
-		ms_message("[IosPlatformHelpers] Auto core.iterate() stopped");
+		enableAutoIterate(FALSE);
 	}
 
 	// To avoid trigger callbacks of mHandler after linphone core stop
