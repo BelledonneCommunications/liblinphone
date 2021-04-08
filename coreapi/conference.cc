@@ -881,6 +881,23 @@ int LocalConference::terminate () {
 			}
 		}
 	}
+
+	std::string confId = std::string();
+	const auto & confAddr = getConferenceAddress().asAddress();
+	if (confAddr.hasUriParam("conf-id")) {
+		confId = confAddr.getUriParamValue("conf-id");
+	}
+
+	auto callIt = getCore()->getCalls().begin();
+	while (callIt != getCore()->getCalls().end()) {
+		std::shared_ptr<LinphonePrivate::Call> call = *callIt;
+		callIt++;
+		lInfo() << "call is in conference " << call->isInConference() << " call conference " << call->getConference() << " call conference ID " << call->getConferenceId() <<  " current conference " << toC() << " conference address " << getConferenceAddress();
+		if (call->getConferenceId() == confId) {
+			lInfo() << "found call to terminate " << call;
+			call->terminate();
+		}
+	}
 	return 0;
 }
 
