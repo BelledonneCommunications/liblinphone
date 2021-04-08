@@ -434,6 +434,7 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	linphone_config_set_string(config, "storage", "call_logs_db_uri", mgr->call_logs_database_path);
 	linphone_config_set_string(config, "storage", "zrtp_secrets_db_uri", mgr->zrtp_secrets_database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
+	linphone_config_set_bool(config, "misc", "auto_iterate", FALSE);
 	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 
 	linphone_config_unref(config);
