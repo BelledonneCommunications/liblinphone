@@ -3623,7 +3623,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
