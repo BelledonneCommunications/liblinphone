@@ -113,6 +113,9 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
 
+			// Media capabilities
+			addMediaCapabilities(device, endpoint);
+
 			endpoint.setState(StateType::full);
 			user.getEndpoint().push_back(endpoint);
 		}
@@ -121,6 +124,30 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	}
 
 	return createNotify(confInfo, true);
+}
+
+void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, EndpointType & endpoint) {
+	const auto &audioDirection = device->getAudioDirection();
+	MediaType audio = MediaType("1");
+	audio.setDisplayText("audio");
+	audio.setType("audio");
+	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
+	endpoint.getMedia().push_back(audio);
+
+	const auto &videoDirection = device->getVideoDirection();
+	MediaType video = MediaType("2");
+	video.setDisplayText("video");
+	video.setType("video");
+	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	endpoint.getMedia().push_back(video);
+
+	const auto &textDirection = device->getTextDirection();
+	MediaType text = MediaType("3");
+	text.setDisplayText("text");
+	text.setType("text");
+	text.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
+	endpoint.getMedia().push_back(text);
+
 }
 
 string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
@@ -249,6 +276,9 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address 
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
 
+			// Media capabilities
+			addMediaCapabilities(device, endpoint);
+
 			endpoint.setState(StateType::full);
 			user.getEndpoint().push_back(endpoint);
 		}
@@ -334,12 +364,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Ad
 				endpoint.setDisplayText(displayName);
 
 			// Media capabilities
-			const auto &audioDirection = participantDevice->getAudioDirection();
-			MediaType audio = MediaType("1");
-			audio.setDisplayText("audio");
-			audio.setType("audio");
-			audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
-			endpoint.getMedia().push_back(audio);
+			addMediaCapabilities(participantDevice, endpoint);
 		}
 	}
 	endpoint.setState(StateType::full);
@@ -392,6 +417,10 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceMediaChanged (c
 			const string &displayName = participantDevice->getName();
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
+
+			// Media capabilities
+			addMediaCapabilities(participantDevice, endpoint);
+
 		}
 	}
 	endpoint.setState(StateType::full);
