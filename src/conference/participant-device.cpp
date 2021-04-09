@@ -162,11 +162,13 @@ bool ParticipantDevice::updateMedia() {
 	const auto & currentParams = static_cast<MediaSessionParams*>(mSession->getCurrentParams());
 	bool mediaChanged = false;
 
+	const auto & audioEnabled = currentParams->audioEnabled();
 	const auto & audioDir = currentParams->getAudioDirection();
-	mediaChanged |= setAudioDirection((audioDir == LinphoneMediaDirectionSendOnly) ? LinphoneMediaDirectionInactive : audioDir);
+	mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
 
+	const auto & videoEnabled = currentParams->videoEnabled();
 	const auto & videoDir = currentParams->getVideoDirection();
-	mediaChanged |= setVideoDirection((videoDir == LinphoneMediaDirectionSendOnly) ? LinphoneMediaDirectionInactive : videoDir);
+	mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
 
 	const auto & textEnabled = currentParams->realtimeTextEnabled();
 	mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
