@@ -443,18 +443,13 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			exitFromConference(session);
 
 			break;
-		case CallSession::State::Paused:
-			if (attachedToLocalConference(session) && !isInConference()) {
-				setConference(nullptr);
-			}
-		break;
 		case CallSession::State::Resuming:
 		{
 			if (attachedToLocalConference(session)) {
 				// The participant left the conference and put its call in pause
 				auto conference = MediaConference::Conference::toCpp(getConference());
 				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call
-				lInfo() << "Call in conference has been resumed, hence add participant " << getRemoteAddress()->asString() << " to conference " << conference->getConferenceAddress();
+				lInfo() << "Call in conference has been resumed, hence add participant " << session->getRemoteAddress()->asString() << " to conference " << conference->getConferenceAddress();
 				reenterLocalConference(session);
 			}
 		}
@@ -472,10 +467,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					terminateConference();
 				}
 			} else if (attachedToLocalConference(session)) {
-				// The participant left the conference and put its call in pause
+				// The participant temporarely left the conference and put its call in pause
 				auto conference = MediaConference::Conference::toCpp(getConference());
-				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call
-				lInfo() << "Call in conference has been put on hold by remote device, hence remove participant " << getRemoteAddress()->asString() << " from conference " << conference->getConferenceAddress();
+				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call, hence notify that no audio and video is available
+				lInfo() << "Call in conference has been put on hold by remote device, hence participant " << session->getRemoteAddress()->asString() << " temporarely left conference " << conference->getConferenceAddress();
+//				conference->participantDeviceMediaChanged(session);
 				conference->removeParticipant (session, true);
 			}
 		}
