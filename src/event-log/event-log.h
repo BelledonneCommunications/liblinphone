@@ -51,6 +51,7 @@ public:
 		ConferenceParticipantUnsetAdmin = LinphoneEventLogTypeConferenceParticipantUnsetAdmin,
 		ConferenceParticipantDeviceAdded = LinphoneEventLogTypeConferenceParticipantDeviceAdded,
 		ConferenceParticipantDeviceRemoved = LinphoneEventLogTypeConferenceParticipantDeviceRemoved,
+		ConferenceParticipantDeviceMediaChanged = LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged,
 		ConferenceSubjectChanged = LinphoneEventLogTypeConferenceSubjectChanged,
 		ConferenceSecurityEvent = LinphoneEventLogTypeConferenceSecurityEvent,
 		ConferenceEphemeralMessageLifetimeChanged = LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged,

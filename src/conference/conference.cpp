@@ -394,6 +394,24 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	return event;
 }
 
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceMediaChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceAdded,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceMediaChanged(event, participantDevice);
+	}
+	return event;
+}
+
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	if (this->state != state) {
 		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {

@@ -203,7 +203,8 @@ namespace {
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
 			EventLog::Type::ConferenceParticipantDeviceAdded,
-			EventLog::Type::ConferenceParticipantDeviceRemoved
+			EventLog::Type::ConferenceParticipantDeviceRemoved,
+			EventLog::Type::ConferenceParticipantDeviceMediaChanged
 		>::get();
 
 		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
@@ -692,6 +693,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
+		case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
 			break;
 
@@ -2263,6 +2265,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
 
@@ -2326,6 +2329,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceSubjectChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
