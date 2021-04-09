@@ -571,6 +571,40 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 	return 0;
 }
 
+int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(session);
+	int success = -1;
+	if (p) {
+		const Address * remoteContact = session->getRemoteContactAddress();
+		if (remoteContact) {
+			std::shared_ptr<ParticipantDevice> device = p->findDevice(*remoteContact);
+			success = participantDeviceMediaChanged(p, device);
+		} else {
+			lWarning() << "Unable to find device with address " << remoteContact->asString() << " among devices of participant " << p->getAddress().asString();
+		}
+	}
+	return success;
+}
+
+int LocalConference::participantDeviceMediaChanged(const IdentityAddress &addr) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
+	int success = -1;
+	for (const auto & d : p->getDevices()) {
+		success = participantDeviceMediaChanged(p, d);
+	}
+	return success;
+}
+
+int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
+	int success = -1;
+	if (device->updateMedia()) {
+		time_t creationTime = time(nullptr);
+		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
+		return 0;
+	}
+	return success;
+}
+
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
 		ms_error("Already in conference");
@@ -882,22 +916,6 @@ int LocalConference::terminate () {
 		}
 	}
 
-	std::string confId = std::string();
-	const auto & confAddr = getConferenceAddress().asAddress();
-	if (confAddr.hasUriParam("conf-id")) {
-		confId = confAddr.getUriParamValue("conf-id");
-	}
-
-	auto callIt = getCore()->getCalls().begin();
-	while (callIt != getCore()->getCalls().end()) {
-		std::shared_ptr<LinphonePrivate::Call> call = *callIt;
-		callIt++;
-		lInfo() << "call is in conference " << call->isInConference() << " call conference " << call->getConference() << " call conference ID " << call->getConferenceId() <<  " current conference " << toC() << " conference address " << getConferenceAddress();
-		if (call->getConferenceId() == confId) {
-			lInfo() << "found call to terminate " << call;
-			call->terminate();
-		}
-	}
 	return 0;
 }
 
@@ -1081,6 +1099,12 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	return nullptr;
 }
 
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceMediaChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceMediaChanged (creationTime,  isFullState, participant, participantDevice);
+}
+
 RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &focus,
@@ -1181,6 +1205,21 @@ void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface:
 
 int RemoteConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	ms_error("RemoteConference::inviteAddresses() not implemented");
+	return -1;
+}
+
+int RemoteConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
+	ms_error("RemoteConference::participantDeviceMediaChanged() not implemented");
+	return -1;
+}
+
+int RemoteConference::participantDeviceMediaChanged(const IdentityAddress &addr) {
+	ms_error("RemoteConference::participantDeviceMediaChanged() not implemented");
+	return -1;
+}
+
+int RemoteConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
+	ms_error("RemoteConference::participantDeviceMediaChanged() not implemented");
 	return -1;
 }
 
@@ -1354,21 +1393,14 @@ void RemoteConference::leave () {
 		ms_error("Could not leave the conference: bad conference state (%s)", Utils::toString(state).c_str());
 	}
 
-	time_t creationTime = time(nullptr);
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallPaused:
 			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << " while focus call is paused.";
-			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(m_focusCall->getParams()))->setInConference(false);
-			notifyParticipantRemoved(creationTime, false, getMe());
 			break;
 		case LinphoneCallStreamsRunning:
 			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << ". Focus call is going to be paused.";
-			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(m_focusCall->getParams()))->setInConference(false);
 			m_focusCall->pause();
-			notifyParticipantRemoved(creationTime, false, getMe());
 			break;
 		default:
 			lError() << getMe()->getAddress() << " cannot leave conference " << getConferenceAddress() << " because focus call is in state " << linphone_call_state_to_string(callState);
