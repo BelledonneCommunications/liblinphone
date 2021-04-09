@@ -1866,15 +1866,14 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, 
  */
 
 /**
- * Create an account params with default values from Linphone core.
+ * Create an account params using default values from Linphone core.
  * @param core #LinphoneCore object @notnil
  * @return #LinphoneAccountParams with default values set @notnil
  */
 LINPHONE_PUBLIC LinphoneAccountParams * linphone_core_create_account_params(LinphoneCore *core);
 
 /**
- * Create an account with default values from Linphone core.
- *
+ * Create an account using given parameters, see linphone_core_create_account_params().
  * @param core #LinphoneCore object @notnil
  * @param params #LinphoneAccountParams object @notnil
  * @return #LinphoneAccount with default values set @notnil
@@ -5486,7 +5485,6 @@ LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *co
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
  * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
  * If disabled, it is the application that must do this job.
- * This method must be called before the Core global state becomes On otherwise it won't have any effect until the next start.
  * @param core The #LinphoneCore @notnil
  * @param enable TRUE to enable auto iterate, FALSE to disable
  * @ingroup misc

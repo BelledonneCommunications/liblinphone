@@ -70,6 +70,8 @@ public:
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
 
+	void enableAutoIterate (bool autoIterateEnabled) override;
+
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
 	string getDownloadPath() override;
@@ -102,6 +104,8 @@ private:
 	jmethodID mCoreManagerOnLinphoneCoreStopId = nullptr;
 	jmethodID mStartAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mStopAudioForEchoTestOrCalibrationId = nullptr;
+	jmethodID mStartAutoIterateId = nullptr;
+	jmethodID mStopAutoIterateId = nullptr;
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jmethodID mIsActiveNetworkWifiOnlyCompliantId = nullptr;
 	jobject mPreviewVideoWindow = nullptr;
@@ -153,6 +157,8 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	
 	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
 	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
+	mStartAutoIterateId = getMethodId(env, klass, "startAutoIterate", "()V");
+	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
 
 	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
 }
@@ -447,6 +453,19 @@ void AndroidPlatformHelpers::stopAudioForEchoTestOrCalibration () {
 	if (env) {
 		if (mJavaCoreManager) {
 			env->CallVoidMethod(mJavaCoreManager, mStopAudioForEchoTestOrCalibrationId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			if (autoIterateEnabled) {
+				env->CallVoidMethod(mJavaCoreManager, mStartAutoIterateId);
+			} else {
+				env->CallVoidMethod(mJavaCoreManager, mStopAutoIterateId);
+			}
 		}
 	}
 }
