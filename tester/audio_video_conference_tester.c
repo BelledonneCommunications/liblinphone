@@ -4181,7 +4181,7 @@ end:
 	}
 }
 
-static void participant_takes_call_after_conference_started_and_rejoins_conference_after_conference_ended(void) {
+static void participants_takes_call_after_conference_started_and_rejoins_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
@@ -6629,6 +6629,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Participant takes call after conference started and conference ends", participant_takes_call_after_conference_started_and_conference_ends),
 	TEST_NO_TAG("Participant takes call after conference started and rejoins conference", participant_takes_call_after_conference_started_and_rejoins_conference),
 	TEST_NO_TAG("Participant takes call after conference started and rejoins conference after conference ended", participant_takes_call_after_conference_started_and_rejoins_conference_after_conference_ended),
+	TEST_NO_TAG("Participants takes call after conference started and rejoins conference", participants_takes_call_after_conference_started_and_rejoins_conference),
 	TEST_NO_TAG("Simple local participant leaves conference", simple_local_participant_leaves_conference),
 	TEST_NO_TAG("Local participant leaves conference and add participant", local_participant_leaves_conference_and_add_participant),
 	TEST_NO_TAG("Local participant leaves conference and call to focus", local_participant_leaves_conference_and_call_to_focus),

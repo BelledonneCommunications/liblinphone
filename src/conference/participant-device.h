@@ -51,6 +51,13 @@ public:
 		ScheduledForLeaving, //Transitional state for a participant that will receive a BYE shortly.
 	};
 
+	enum class MediaCapabilities {
+		Audio, // Audio text capabilities
+		Video, // Video capabilities
+		Text, // Text capabilities
+		Count // Count of media capabilities
+	};
+
 	ParticipantDevice ();
 	explicit ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const std::string &name = "");
 	virtual ~ParticipantDevice ();
@@ -66,7 +73,7 @@ public:
 	inline void setName (const std::string &name) { mName = name; }
 	Participant *getParticipant () const { return mParticipant; }
 	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
-	inline void setSession (std::shared_ptr<CallSession> session) { mSession = session; }
+	void setSession (std::shared_ptr<CallSession> session);
 	inline State getState () const { return mState; }
 	inline void setState (State newState) { mState = newState; }
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
@@ -87,6 +94,15 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
+	// Media getters and setters
+	LinphoneMediaDirection getAudioDirection() const;
+	LinphoneMediaDirection getVideoDirection() const;
+	LinphoneMediaDirection getTextDirection() const;
+	bool setAudioDirection(const LinphoneMediaDirection direction);
+	bool setVideoDirection(const LinphoneMediaDirection direction);
+	bool setTextDirection(const LinphoneMediaDirection direction);
+	bool updateMedia();
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
@@ -97,7 +113,12 @@ private:
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
 
+	int mediaCapabilities[static_cast<int>(MediaCapabilities::Count)];
+
 	void *mUserData = nullptr;
+
+	bool setMediaDirection(const LinphoneMediaDirection & direction, const MediaCapabilities capIdx);
+	LinphoneMediaDirection getMediaDirection(const MediaCapabilities capIdx) const;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };

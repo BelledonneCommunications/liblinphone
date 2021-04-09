@@ -2000,8 +2000,8 @@ void MediaSessionPrivate::updateCurrentParams () const {
 				getCurrentParams()->enableVideo(false);
 			}
 		}
-		if ((mainTextStreamIndex != -1) && (mainTextStreamIndex < (int)md->streams.size())){
-		if ((mainTextStreamIndex != -1) && (mainTextStreamIndex < (int)md->streams.size())){
+		if (mainTextStreamIndex != -1){
+			if (mainTextStreamIndex < (int)md->streams.size()){
 				const SalStreamDescription &sd = md->streams[static_cast<size_t>(mainTextStreamIndex)];
 				// Direction and multicast are not supported for real-time text.
 				getCurrentParams()->enableRealtimeText(sd.enabled());
