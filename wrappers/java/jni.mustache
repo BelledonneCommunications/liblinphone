@@ -53,6 +53,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *ajvm, void *reserved) {
 }
 
 #define belle_sip_java_user_data_key "java_object"
+#define belle_sip_const_java_user_data_key "const_java_object"
 
 static const char* GetStringUTFChars(JNIEnv* env, jstring string) {
 	const char *cstring = string ? env->GetStringUTFChars(string, nullptr) : nullptr;
@@ -245,7 +246,7 @@ public:
 
 		{{#objects}}
 		{{cPrefix}}_class = (jclass)env->NewGlobalRef(env->FindClass("{{jniPath}}{{classImplName}}"));
-		{{cPrefix}}_class_constructor = env->GetMethodID({{cPrefix}}_class, "<init>", "(J)V");
+		{{cPrefix}}_class_constructor = env->GetMethodID({{cPrefix}}_class, "<init>", "(JZ)V");
 		{{/objects}}
 
 		{{#enums}}
@@ -288,11 +289,13 @@ public:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 {{#objects}}
-JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bool_t takeref) {
+JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bool_t takeref, bool_t is_const) {
 	jobject jobj = nullptr;
+	const char *key = belle_sip_java_user_data_key;
+	if (is_const) key = belle_sip_const_java_user_data_key;
 
 	if (cptr != nullptr) {
-		void *up = belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
+		void *up = belle_sip_object_data_get((belle_sip_object_t *)cptr, key);
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 		if (!ljb) {
 			ljb = new LinphoneJavaBindings(env);
@@ -303,37 +306,50 @@ JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bo
 		jmethodID {{cPrefix}}_constructor = ljb->{{cPrefix}}_class_constructor;
 
 		if (up == nullptr) {
-			jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr);
-			belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, (void*)env->NewWeakGlobalRef(jobj), nullptr);
-			if (takeref)
+			jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr, (jboolean)is_const == TRUE);
+			belle_sip_object_data_set((belle_sip_object_t *)cptr, key, (void*)env->NewWeakGlobalRef(jobj), nullptr);
+			if (takeref) {
 				{{#refCountable}}{{cPrefix}}_ref(cptr);{{/refCountable}}
+			}
 		} else {
 			jobj = env->NewLocalRef((jobject)up);
 			if (jobj == nullptr) {
 				// Delete weak ref ?
 				env->DeleteWeakGlobalRef((jobject)up);
 				// takes implicit local ref
-				jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr);
-				belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, (void*)env->NewWeakGlobalRef(jobj), nullptr);
-				if (takeref)
+				jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr, (jboolean)is_const == TRUE);
+				belle_sip_object_data_set((belle_sip_object_t *)cptr, key, (void*)env->NewWeakGlobalRef(jobj), nullptr);
+				if (takeref) {
 					{{#refCountable}}{{cPrefix}}_ref(cptr);{{/refCountable}}
+				}
 			}
 		}
 	}
 	return jobj;
 }
 
-JNIEXPORT jboolean JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env, jobject thiz, jlong ptr) {
+JNIEXPORT jboolean JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env, jobject thiz, jlong ptr, jboolean is_const) {
 	{{classCName}} *cptr = ({{classCName}}*)ptr;
 	if (cptr == 0) {
 		bctbx_error("Java_{{jniPrefix}}{{classImplName}}_unref's {{classCName}} C ptr is null!");
 		return TRUE;
 	}
-	jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
-	belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, nullptr, nullptr);
-	if (wref) {
-		env->DeleteWeakGlobalRef(wref);
+
+
+	if (is_const) {
+	jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_const_java_user_data_key);
+		belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_const_java_user_data_key, nullptr, nullptr);
+		if (wref) {
+			env->DeleteWeakGlobalRef(wref);
+		}
+	} else {
+		jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
+		belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, nullptr, nullptr);
+		if (wref) {
+			env->DeleteWeakGlobalRef(wref);
+		}
 	}
+
 	{{#refCountable}}return belle_sip_object_unref_2(cptr) == 1;{{/refCountable}}
 	{{#notRefCountable}}return FALSE;{{/notRefCountable}}
 }
@@ -389,7 +405,7 @@ static {{return}} {{callbackName}}({{params}}) {
 	env->DeleteLocalRef(up);
 
 	{{#jobjects}}
-	jobject j_{{objectName}} = get{{className}}(env, (Linphone{{className}} *){{objectName}}, TRUE);
+	jobject j_{{objectName}} = get{{className}}(env, (Linphone{{className}} *){{objectName}}, TRUE, {{isObjectConst}});
 	{{/jobjects}}
 	{{#jenums}}
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
@@ -409,7 +425,7 @@ static {{return}} {{callbackName}}({{params}}) {
 	while (list_it != nullptr) {
 		{{#isRealObjectArray}}
 		{{objectClassCName}}* c_object = ({{objectClassCName}}*)list_it->data;
-		jobject object = get{{objectClassName}}(env, c_object, TRUE);
+		jobject object = get{{objectClassName}}(env, c_object, TRUE, {{isObjectConst}});
 		{{/isRealObjectArray}}
 		{{#isStringObjectArray}}const char *cstring = (const char *)list_it->data;
 		jstring object = cstring ? get_jstring_from_char(env, cstring) : 0;{{/isStringObjectArray}}
@@ -593,7 +609,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	while (list_it != nullptr) {
 		{{#isRealObjectArray}}
 		{{objectClassCName}}* c_object = ({{objectClassCName}}*)list_it->data;
-		jobject object = get{{objectClassName}}(env, c_object, {{takeRefOnReturnedObject}});
+		jobject object = get{{objectClassName}}(env, c_object, {{takeRefOnReturnedObject}}, {{isRealObjectConst}});
 		{{/isRealObjectArray}}
 		{{#isStringObjectArray}}const char *cstring = (const char *)list_it->data;
 		jstring object = cstring ? get_jstring_from_char(env, cstring) : 0;{{/isStringObjectArray}}
@@ -617,7 +633,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	jstring jni_result = (c_string != nullptr) ? get_jstring_from_char(env, c_string) : nullptr;
 	{{#isNotConst}}bctbx_free(c_string);{{/isNotConst}}
 	{{/hasStringReturn}}{{#hasNormalReturn}}
-	{{#hasReturn}}{{return}} jni_result = ({{return}}){{#returnObject}}get{{returnClassName}}(env, (Linphone{{returnClassName}} *){{/returnObject}}{{/hasReturn}}{{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}, {{takeRefOnReturnedObject}}){{/returnObject}};
+	{{#hasReturn}}{{return}} jni_result = ({{return}}){{#returnObject}}get{{returnClassName}}(env, (Linphone{{returnClassName}} *){{/returnObject}}{{/hasReturn}}{{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}, {{takeRefOnReturnedObject}}, {{returnedObjectIsConst}}){{/returnObject}};
 	{{/hasNormalReturn}}{{#strings}}
 	ReleaseStringUTFChars(env, {{string}}, c_{{string}});
 	{{/strings}}{{#bytes}}
@@ -660,7 +676,7 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JN
 }
 
 JNIEXPORT jobject JNICALL Java_org_linphone_core_FactoryImpl_getCore(JNIEnv *env, jobject thiz, jlong ptr, jlong lcPtr) {
-	return getCore(env, (LinphoneCore*)lcPtr, TRUE);
+	return getCore(env, (LinphoneCore*)lcPtr, TRUE, FALSE);
 }
 
 JNIEXPORT jlong JNICALL Java_org_linphone_core_FactoryImpl_init(JNIEnv *env, jobject thiz, jlong ptr) {
