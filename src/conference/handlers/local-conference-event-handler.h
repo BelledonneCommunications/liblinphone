@@ -151,6 +151,8 @@ private:
 
 	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
 
+	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
+
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };
 
