@@ -471,8 +471,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				auto conference = MediaConference::Conference::toCpp(getConference());
 				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call, hence notify that no audio and video is available
 				lInfo() << "Call in conference has been put on hold by remote device, hence participant " << session->getRemoteAddress()->asString() << " temporarely left conference " << conference->getConferenceAddress();
-//				conference->participantDeviceMediaChanged(session);
-				conference->removeParticipant (session, true);
+				conference->participantDeviceMediaChanged(session);
 			}
 		}
 		break;
@@ -530,8 +529,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			const auto & confId = session->getPrivate()->getConferenceId();
 			// Try to add device to local conference
 			if (attachedToLocalConference(session)) {
+				auto conference = MediaConference::Conference::toCpp(getConference());
 				if (isInConference()) {
-					MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
+					if(!conference->addParticipantDevice(getSharedFromThis())) {
+						conference->participantDeviceMediaChanged(session);
+					}
 				} else {
 					// Try to reenter conference if the call may have been part of one
 					reenterLocalConference(session);
