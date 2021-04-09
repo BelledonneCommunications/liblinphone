@@ -768,6 +768,14 @@ const bctbx_list_t *linphone_core_get_proxy_config_list(const LinphoneCore *lc){
 	return lc->sip_conf.proxies;
 }
 
+LinphoneAccountParams * linphone_core_create_account_params(LinphoneCore *core) {
+	return linphone_account_params_new(core);
+}
+
+LinphoneAccount * linphone_core_create_account(LinphoneCore *core, LinphoneAccountParams *params) {
+	return linphone_account_new(core, params);
+}
+
 LinphoneStatus linphone_core_add_account(LinphoneCore *lc, LinphoneAccount *account) {
 	if (!Account::toCpp(account)->check()) {
 		return -1;

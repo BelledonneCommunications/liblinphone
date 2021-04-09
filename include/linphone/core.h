@@ -1866,6 +1866,21 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, 
  */
 
 /**
+ * Create an account params using default values from Linphone core.
+ * @param core #LinphoneCore object @notnil
+ * @return #LinphoneAccountParams with default values set @notnil
+ */
+LINPHONE_PUBLIC LinphoneAccountParams * linphone_core_create_account_params(LinphoneCore *core);
+
+/**
+ * Create an account using given parameters, see linphone_core_create_account_params().
+ * @param core #LinphoneCore object @notnil
+ * @param params #LinphoneAccountParams object @notnil
+ * @return #LinphoneAccount with default values set @notnil
+ */
+LINPHONE_PUBLIC LinphoneAccount * linphone_core_create_account(LinphoneCore *core, LinphoneAccountParams *params);
+
+/**
  * Add an account.
  * This will start registration on the proxy, if registration is enabled.
  * @param core #LinphoneCore object @notnil
