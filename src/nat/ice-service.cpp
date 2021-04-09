@@ -274,13 +274,17 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const std::shared_pt
 		}
 	}
 	if (!ice_session_remote_ufrag(mIceSession) && !ice_session_remote_pwd(mIceSession)) {
-		ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
+		if (!md->ice_ufrag.empty() && !md->ice_pwd.empty()) {
+			ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
+		}
 	} else if (ice_session_remote_credentials_changed(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd))) {
 		if (!iceRestarted) {
 			restartSession( isOffer ? IR_Controlled : IR_Controlling);
 			iceRestarted = true;
 		}
-		ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
+		if (!md->ice_ufrag.empty() && !md->ice_pwd.empty()) {
+			ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
+		}
 	}
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		const auto & stream = md->streams[i];
