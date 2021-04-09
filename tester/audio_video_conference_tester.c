@@ -794,30 +794,33 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
 	wait_for_list(lcs,NULL,0,1000);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 2),5000));
+	// Laure received the notification about Pauline's media changed
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
 	LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
 	LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
+	linphone_address_unref(laure_uri);
 	BC_ASSERT_PTR_NOT_NULL(laure_conference);
 	if (laure_conference) {
-		// Check that Laure was notified that Pauline left the conference
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), ((unsigned int)bctbx_list_size(participants)-1), unsigned int, "%u");
+		// Check that number pf participants on Laure's side is unchanged
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
 		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 2),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 	LinphoneAddress *michelle_uri = linphone_address_new(linphone_core_get_identity(michelle->lc));
 	LinphoneConference * michelle_conference = linphone_core_search_conference(michelle->lc, NULL, michelle_uri, marie_conference_address, NULL);
+	linphone_address_unref(michelle_uri);
 	BC_ASSERT_PTR_NOT_NULL(michelle_conference);
 	if (michelle_conference) {
-		// Check that Michelle was notified that Pauline left the conference
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), ((unsigned int)bctbx_list_size(participants)-1), unsigned int, "%u");
+		// Check that number pf participants on Pauline's side is unchanged
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
 		BC_ASSERT_EQUAL(linphone_conference_is_in(michelle_conference), 1, int, "%d");
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,(marie_stats.number_of_NotifyReceived + 2),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,(marie_stats.number_of_NotifyReceived + 1),5000));
 	if (marie_conference) {
-		// Check that Laure was notified that Pauline left the conference
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), ((unsigned int)bctbx_list_size(participants)-1), unsigned int, "%u");
+		// Check that number pf participants on Marie's side is unchanged
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
 		BC_ASSERT_EQUAL(linphone_conference_is_in(marie_conference), 1, int, "%d");
 	}
 
@@ -853,13 +856,14 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPaused,(pauline_stats.number_of_LinphoneCallPaused + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneCallPausedByRemote,(chloe_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionOutgoingProgress,(pauline_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionOutgoingProgress,(pauline_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,(pauline_stats.number_of_LinphoneSubscriptionActive + 1),5000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,(pauline_stats.number_of_LinphoneSubscriptionActive + 1),1000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 2),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 2),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,(marie_stats.number_of_NotifyReceived + 2),5000));
+	// Notify about pauline's media capability changes
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,(marie_stats.number_of_NotifyReceived + 1),1000));
 
 	if (marie_conference) {
 		// Check that Marie was notified that Pauline rejoined the conference
