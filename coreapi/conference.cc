@@ -578,9 +578,11 @@ int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<Linphon
 		const Address * remoteContact = session->getRemoteContactAddress();
 		if (remoteContact) {
 			std::shared_ptr<ParticipantDevice> device = p->findDevice(*remoteContact);
-			success = participantDeviceMediaChanged(p, device);
-		} else {
-			lWarning() << "Unable to find device with address " << remoteContact->asString() << " among devices of participant " << p->getAddress().asString();
+			if (device) {
+				success = participantDeviceMediaChanged(p, device);
+			} else {
+				lWarning() << "Unable to find device with address " << remoteContact->asString() << " among devices of participant " << p->getAddress().asString();
+			}
 		}
 	}
 	return success;
