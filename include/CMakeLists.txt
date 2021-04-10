@@ -45,7 +45,6 @@ set(ROOT_HEADER_FILES
 	im_encryption_engine.h
 	im_notif_policy.h
 	info_message.h
-	ldapprovider.h
 	logging.h
 	lpconfig.h
 	misc.h
@@ -96,6 +95,7 @@ set(C_API_HEADER_FILES
 	c-event-log.h
 	c-factory.h
 	c-magic-search.h
+	c-magic-search-cbs.h
 	c-participant.h
 	c-participant-device.h
 	c-participant-device-identity.h
