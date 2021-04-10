@@ -90,9 +90,7 @@ if(ENABLE_TUNNEL)
 	list(APPEND LINK_LIBS ${TUNNEL_LIBRARIES})
   	add_definitions(-DTUNNEL_ENABLED)
 endif()
-if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LINK_LIBS ${LIBGCC} ${LIBMINGWEX})
-endif()
+
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LINK_LIBS shlwapi)
 endif()
@@ -104,15 +102,14 @@ if(BELCARD_FOUND)
 	list(APPEND INTERFACE_LIBS belcard)
 	list(APPEND LINK_LIBS belcard)
 endif()
-if(WIN32 AND ENABLE_LDAP)
-	list(APPEND LINK_LIBS "Wldap32")
-endif()
-if(OPENLDAP_FOUND AND SASL_FOUND)
+if(OPENLDAP_FOUND)
 	list(APPEND LINK_LIBS ${OPENLDAP_LIBRARIES})
-	list(APPEND LINK_LIBS ${SASL_LIBRARIES})
 endif()
 #define log domain for this part of code
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
+if(ENABLE_LDAP)
+	add_definitions(-DBUILD_LDAP)
+endif()
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
@@ -229,7 +226,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/event-log.h
 	event-log/events.h
 	factory/factory.h
-	hacks/hacks.h
+	hacks/hacks.h	
 	logger/logger.h
 	nat/ice-service.h
 	nat/stun-client.h
@@ -252,6 +249,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	sal/sal_stream_description.h
 	sal/sal_media_description.h
 	sal/offeranswer.h
+	search/search-async-data.h
 	search/magic-search-p.h
 	search/magic-search.h
 	search/search-result.h
@@ -286,6 +284,14 @@ if(ENABLE_ADVANCED_IM)
 		xml/rlmi.h
 		xml/xml.h
 	)
+endif()
+
+if(ENABLE_LDAP)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
+		ldap/ldap-friend.h
+		ldap/ldap-contact-provider.h
+		ldap/ldap-contact-search.h
+		)
 endif()
 
 if(ENABLE_DB_STORAGE)
@@ -326,6 +332,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-factory.cpp
 	c-wrapper/api/c-magic-search.cpp
+	c-wrapper/api/c-magic-search-cbs.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
 	c-wrapper/api/c-participant-device-identity.cpp
@@ -438,6 +445,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	sal/sal_media_description.cpp
 	sal/offeranswer.cpp
 	search/magic-search.cpp
+	search/search-async-data.cpp
 	search/search-result.cpp
 	utils/background-task.cpp
 	utils/fs.cpp
@@ -448,7 +456,13 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/version.cpp
 	variant/variant.cpp
 )
-
+if(ENABLE_LDAP)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		ldap/ldap-friend.cpp
+		ldap/ldap-contact-provider.cpp
+		ldap/ldap-contact-search.cpp
+		)
+endif()
 if(ENABLE_VIDEO)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
 		conference/session/video-mixer.cpp

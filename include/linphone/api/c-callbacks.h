@@ -400,6 +400,9 @@ typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom
  */
 typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message, const LinphoneParticipantImdnState *state);
 
+	
+	
+	
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -477,6 +480,22 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConfere
  * @}
 **/
 
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+/**
+ * Call back used to notify message delivery status
+ * @param magic_search #LinphoneChatMessage object @notnil
+ */
+typedef void (*LinphoneMagicSearchCbsSearchResultsReceivedCb)(LinphoneMagicSearch* magic_search);
+
+/**
+* @}
+**/	
+	
+	
 #ifdef __cplusplus
 	}
 #endif // ifdef __cplusplus
