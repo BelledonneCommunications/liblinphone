@@ -23,6 +23,10 @@
 #include "contact_providers_priv.h"
 
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <iomanip> 
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -33,6 +37,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // Custom redefinitions
 #ifdef _WIN32
+
 static void ldap_unbind_ext_s(LDAP * ld, void *, void*){
 	ldap_unbind_s(ld);
 }
@@ -72,14 +77,15 @@ static int ldap_initialize(LDAP **ldp,const char *url ){
 // Remove scheme from URL. Windows doesn't support scheme.
 	belle_generic_uri_t *uri = belle_generic_uri_parse(url);
 	if(uri){
-		belle_generic_uri_set_scheme(uri, "");
-		char * uriString = belle_generic_uri_to_string(uri);
-		*ldp = ldap_init((PSTR)uriString, LDAP_PORT);// Port parameter is ignored if the port is in url. For STARTTLS, the connection is on normal port
+		std::string host = belle_generic_uri_get_host(uri);
+		int port = belle_generic_uri_get_port(uri);
+		if( port>0 )
+			host += ":"+std::to_string(port);
+		*ldp = ldap_init((PSTR)host.c_str(), LDAP_PORT);// Port parameter is ignored if the port is in url. For STARTTLS, the connection is on normal port
 		if( *ldp!=NULL){
 			return ldap_connect(*ldp, NULL);
 		}else
 			return LdapGetLastError();
-		belle_sip_free(uriString);
 	}else{
 		ms_error( "LDAP : Cannot parse url : %s", url);
 		return -1;
@@ -168,6 +174,7 @@ std::vector<std::shared_ptr<LDAPContactProvider> > LDAPContactProvider::create(c
 	return providers;
 }
 #ifdef _WIN32
+
 VERIFYSERVERCERT Verifyservercert;
 
 BOOLEAN Verifyservercert(
@@ -175,10 +182,66 @@ BOOLEAN Verifyservercert(
   PCCERT_CONTEXT *pServerCert
 )
 {
+	BOOL isValid = false;
+	/*
+	BOOL isValid = CryptMsgGetAndVerifySigner(
+	HCRYPTMSG      hCryptMsg,
+	DWORD          cSignerStore,
+	HCERTSTORE     *rghSignerStore,
+	DWORD          dwFlags,
+	PCCERT_CONTEXT *ppSigner,
+	DWORD          *pdwSignerIndex
+	);*/
+	HCERTSTORE hCertStore; 
+	if ( hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,0,NULL,CERT_SYSTEM_STORE_CURRENT_USER,L"MY")){
+	}else{
+		ms_error("LDAP : The MY store did not open.");
+		return false;
+	}
+	/*
+	isValid = CertVerifyCertificateChainPolicy(
+	LPCSTR                    pszPolicyOID,
+	PCCERT_CHAIN_CONTEXT      pChainContext,
+	PCERT_CHAIN_POLICY_PARA   pPolicyPara,
+	PCERT_CHAIN_POLICY_STATUS pPolicyStatus
+	);*/
+	/*
+	PCCERT_CHAIN_CONTEXT pChainContext;
+	isValid = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, pChainContext,
+	PCERT_CHAIN_POLICY_PARA   pPolicyPara,
+	PCERT_CHAIN_POLICY_STATUS pPolicyStatus
+	);*/
+	/*
+	BOOL CertGetCertificateChain(
+	HCERTCHAINENGINE     hChainEngine,
+	PCCERT_CONTEXT       pCertContext,
+	LPFILETIME           pTime,
+	HCERTSTORE           hAdditionalStore,
+	PCERT_CHAIN_PARA     pChainPara,
+	DWORD                dwFlags,
+	LPVOID               pvReserved,
+	PCCERT_CHAIN_CONTEXT *ppChainContext
+	);*/
+	//PCERT_CHAIN_PARA     pChainPara
+	PCCERT_CHAIN_CONTEXT pChainContext;
+	isValid = CertGetCertificateChain(NULL,	*pServerCert,NULL,NULL,NULL,CERT_CHAIN_OPT_IN_WEAK_SIGNATURE,NULL, &pChainContext);
+	if(isValid){
+		CertFreeCertificateChain (pChainContext);
+	}
+//	BOOL isValid = CertVerifySubjectCertificateContext(PCCERT_CONTEXT pSubject,
+//	PCCERT_CONTEXT pIssuer,
+//	DWORD          *pdwFlags
+//	);
+	
+	// Find the client's certificate.
+   //client_cert = 
+   //CertFindCertificateInStore( hCertStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_STR, L"ClientName",  // Use the principal name
+   //NULL );
 	CertFreeCertificateContext(*pServerCert);
 	//CertFreeCertificateContext(*((PCCERT_CONTEXT*)pServerCert)); // if cast issue
 	return true;
 }
+
 #endif
 
 void LDAPContactProvider::initializeLdap(){
@@ -202,6 +265,58 @@ void LDAPContactProvider::initializeLdap(){
 		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_CACERTFILE,caFile.c_str());
 		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_SAN,&reqsan);
 #else
+		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
+		std::ifstream file;
+		file.open(caFile);
+		if(!file.is_open())
+			return;
+		file.seekg(0, std::ios_base::end);
+		size_t fileSize = (size_t) file.tellg();
+		file.seekg(0, std::ios_base::beg);
+		std::vector<byte> data(fileSize, 0);
+		file.read((char*)&data[0], fileSize);
+		//const void * CertCreateContext(DWORDdwContextType,DWORD dwEncodingType, const BYTE *pbEncoded,DWORD cbEncoded,DWORD dwFlags,PCERT_CREATE_CONTEXT_PARA pCreatePara);
+		CERT_CREATE_CONTEXT_PARA createPara;
+		const void * context = CertCreateContext(CERT_STORE_CTL_CONTEXT,X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,&data[0],data.size(),CERT_CREATE_CONTEXT_SORTED_FLAG,&createPara);
+		if(context != NULL){
+			HCERTSTORE hCertStore; 
+			if ( hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,0,NULL,CERT_SYSTEM_STORE_CURRENT_USER,L"MY")){
+			}else{
+				ms_error("LDAP : The MY store did not open.");
+				return;
+			}
+		}
+		
+		/*
+		PCCTL_CONTEXT context = CertCreateCTLContext(0,&data[0],data.size());//X509_ASN_ENCODING | PKCS_7_ASN_ENCODING
+		if(context == NULL)
+			context = CertCreateCTLContext(X509_ASN_ENCODING,&data[0],data.size());
+		if(context == NULL)
+			context = CertCreateCTLContext(PKCS_7_ASN_ENCODING,&data[0],data.size());
+		if(context == NULL)
+			context = CertCreateCTLContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,&data[0],data.size());
+		if(context != NULL){
+			HCERTSTORE hCertStore; 
+			if ( hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,0,NULL,CERT_SYSTEM_STORE_CURRENT_USER,L"MY")){
+			}else{
+				ms_error("LDAP : The MY store did not open.");
+				return;
+			}
+			//BOOL ok = CertAddCTLContextToStore(HCERTSTORE    hCertStore,PCCTL_CONTEXT pCtlContext,DWORD         dwAddDisposition,PCCTL_CONTEXT *ppStoreContext);
+			BOOL ok = CertAddCTLContextToStore(hCertStore,context,CERT_STORE_ADD_USE_EXISTING,NULL);
+			if(!ok)
+				ms_error("LDAP : cannot stopre CTL");
+		}*/
+		ULONG shannelFlags = 0;
+		ldap_get_option(NULL, LDAP_OPT_SCH_FLAGS, &shannelFlags);
+		shannelFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_SERVERNAME_CHECK | SCH_CRED_USE_DEFAULT_CREDS;
+		ldap_set_option(NULL, LDAP_OPT_SCH_FLAGS, &shannelFlags);
+		
+		belle_generic_uri_t *serverUri = belle_generic_uri_parse("ldap://127.0.0.1");//mConfig["server"].c_str());
+		std::string hostname = belle_generic_uri_get_host(serverUri);
+		std::vector<char> cHostname(hostname.c_str(), hostname.c_str() + hostname.size() + 1);
+		ldap_set_option(NULL, LDAP_OPT_HOST_NAME, &cHostname[0]);
+		belle_sip_object_unref(serverUri);
 #endif
 	}
 	ret = ldap_initialize(&mLd, mServerUrl.c_str());
@@ -228,7 +343,23 @@ void LDAPContactProvider::initializeLdap(){
 				ldap_set_option(mLd, LDAP_OPT_X_TLS_PEER_CN, &cHostname[0]);
 			}
 #else
-			ldap_set_option(mLd, LDAP_OPT_X_TLS_CONNECT_CB, &Verifyservercert);// Callback to accept Certificates
+			ldap_set_option(mLd, LDAP_OPT_SERVER_CERTIFICATE, &Verifyservercert);// Callback to accept Certificates
+			//LDAP_OPT_HOST_NAME
+			ULONG shannelFlags = 0;
+			ldap_get_option(mLd, LDAP_OPT_SCH_FLAGS, &shannelFlags);
+			//shannelFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_SERVERNAME_CHECK | SCH_CRED_USE_DEFAULT_CREDS;
+			//ldap_set_option(mLd, LDAP_OPT_SCH_FLAGS, &shannelFlags);
+			
+			if(mConfig.count("use_sal")>0 && mConfig["use_sal"] == "1"){// Using Sal give an IP for a domain. So check the domain rather than the IP.
+				//belle_generic_uri_t *serverUri = belle_generic_uri_parse("ldap://ldap.example.org");//mConfig["server"].c_str());
+				belle_generic_uri_t *serverUri = belle_generic_uri_parse("ldap://127.0.0.1");//mConfig["server"].c_str());
+				std::string hostname = belle_generic_uri_get_host(serverUri);
+				std::vector<char> cHostname(hostname.c_str(), hostname.c_str() + hostname.size() + 1);
+				ldap_set_option(mLd, LDAP_OPT_HOST_NAME, &cHostname[0]);
+				belle_sip_object_unref(serverUri);
+			}
+			
+
 #endif
 			ret = ldap_start_tls_s(mLd, NULL, NULL);
 		}
@@ -461,7 +592,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
 			//struct berval *serverResponse = NULL;
 	#ifdef _WIN32
-			ret = ldap_bind(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
+			ret = ldap_bind(provider->mLd, (const PSTR)provider->mConfig.at("bind_dn").c_str(), (const PSTR)provider->mConfig.at("password").c_str(), LDAP_AUTH_SIMPLE);
 			if(ret>=0){
 				provider->mAwaitingMessageId = ret;
 				ret = LDAP_SUCCESS;
