@@ -98,7 +98,7 @@ public:
 		this->fromAddress = fromAddress;
 	}
 
-	void forceToAddress (const IdentityAddress &toAddress) {
+	void forceToAddress (const ConferenceAddress &toAddress) {
 		this->toAddress = toAddress;
 	}
 

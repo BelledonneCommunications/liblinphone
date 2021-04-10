@@ -160,6 +160,7 @@ set(RC_FILES
 	rcfiles/marie_zrtp_ecdh255_rc
 	rcfiles/marie_zrtp_ecdh448_rc
 	rcfiles/marie_zrtp_srtpsuite_aes256_rc
+	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
 	rcfiles/pauline_alt_rc
@@ -224,32 +225,30 @@ set(IOS_RESOURCES_FILES
 
 set(SOURCE_FILES_C
 	account_creator_tester.c
+	account_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
 	audio_video_conference_tester.c
-	call_ice_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_push_incoming_tester.c
 	call_recovery_tester.c
 	call_secure_tester.c
 	call_single_tester.c
-	call_video_tester.c
 	call_with_rtp_bundle_tester.c
 	complex_sip_case_tester.c
 	dtmf_tester.c
 	eventapi_tester.c
 	external_domain_tester.c
 	flexisip_tester.c
-        group_chat_tester.c
+	group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	group_chat_secure_tester.c
 	group_chat_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
-	offeranswer_tester.c
 	player_tester.c
 	presence_server_tester.c
 	presence_tester.c
@@ -261,7 +260,6 @@ set(SOURCE_FILES_C
 	setup_tester.c
 	shared_core_tester.c
 	stun_tester.c
-	tester.c
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
@@ -273,13 +271,21 @@ if(ENABLE_LIME_X3DH)
     list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
 endif()
 
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	list(APPEND SOURCE_FILES_C tester.c)# it will be added on RUNTIME_COMPONENT_SOURCES
+endif()
+
 set(SOURCE_FILES_CXX
 	tester.cpp
 	audio_quality_tester.cpp
 	clonable-object-tester.cpp
+	call_video_tester.cpp
+	call_ice_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
+	offeranswer_tester.cpp
+	shared_tester_functions.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
@@ -296,6 +302,7 @@ endif()
 
 set(HEADER_FILES
 	audio_quality_tester.h
+	shared_tester_functions.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
@@ -320,6 +327,17 @@ set(GROUP_CHAT_BENCHMARK_HEADERS
 	tools/tester.h
 )
 
+set(LINPHONETESTER_RESOURCES
+	"${CMAKE_CURRENT_SOURCE_DIR}/certificates"
+	"${CMAKE_CURRENT_SOURCE_DIR}/db"
+	"${CMAKE_CURRENT_SOURCE_DIR}/images"
+	"${CMAKE_CURRENT_SOURCE_DIR}/rcfiles"
+	"${CMAKE_CURRENT_SOURCE_DIR}/sipp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/sounds"
+	"${CMAKE_CURRENT_SOURCE_DIR}/vcards"
+	"${CMAKE_CURRENT_SOURCE_DIR}/tester_hosts"
+	"${CMAKE_CURRENT_SOURCE_DIR}/local_tester_hosts"
+)
 
 # TODO: Remove me later!
 list(REMOVE_ITEM STRICT_OPTIONS_CPP "-Wconversion" "-Werror=conversion" "-Wcast-align" "-Werror=cast-align")
@@ -355,7 +373,7 @@ endif()
 
 # on mobile platforms, we compile the tester as a library so that we can link with it directly from native applications
 if(ANDROID OR IOS)
-	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
+	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${LINPHONETESTER_RESOURCES})
 	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
@@ -365,10 +383,12 @@ if(ANDROID OR IOS)
 		else()
 			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 		endif()
+
 		set_target_properties(linphonetester PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER com.belledonne-communications.linphonetester
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+			RESOURCE "${LINPHONETESTER_RESOURCES}"
 			PUBLIC_HEADER "${HEADER_FILES}"
 		)
 	endif()
@@ -391,6 +411,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	set(RUNTIME_COMPONENT_SOURCES
 		liblinphone_tester_windows.cpp
 		liblinphone_tester_windows.h
+		tester.c
 	)
 	add_library(linphone_tester_runtime MODULE ${RUNTIME_COMPONENT_SOURCES})
 	target_compile_options(linphone_tester_runtime PRIVATE "/wd4996")
@@ -414,8 +435,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	endif()
 endif()
 
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	if(NOT IOS)
+if(NOT ANDROID)
+	if(NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		add_executable(liblinphone_tester ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${SOURCE_FILES_OBJC})
 		set_target_properties(liblinphone_tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)

@@ -21,7 +21,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
-project(linphone VERSION 4.5.0 LANGUAGES C CXX)
+project(linphone VERSION 5.0.0 LANGUAGES C CXX)
 
 
 set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
@@ -68,6 +68,7 @@ option(ENABLE_VCARD "Turn on compilation of vcard4 support." YES)
 option(ENABLE_VIDEO "Build with video support." YES)
 option(ENABLE_ASSETS "Package sound assets." YES)
 option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making (CMake >= 3.11)" OFF)
+
 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
@@ -365,7 +366,6 @@ else()
 endif()
 
 add_subdirectory(include)
-add_subdirectory(java)
 if(ENABLE_JAVA_WRAPPER)
 	add_subdirectory(wrappers/java)
 endif()

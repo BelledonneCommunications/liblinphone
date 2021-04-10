@@ -54,7 +54,6 @@ Conference::Conference (
 	const std::shared_ptr<ConferenceParams> params
 ) : CoreAccessor(core) {
 	this->me = Participant::create(this,myAddress);
-	this->me->setFocus(true);
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
@@ -111,7 +110,7 @@ bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return soFarSoGood;
 }
 
-const ConferenceAddress Conference::getConferenceAddress () const {
+const ConferenceAddress & Conference::getConferenceAddress () const {
 	return confParams->getConferenceAddress();
 }
 
@@ -183,7 +182,7 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 		}
 	}
 
-	lInfo() << "Unable to find participant in conference " << this << " with address " << addr.asString();
+	lInfo() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with address " << addr.asString();
 	return nullptr;
 }
 
@@ -193,7 +192,7 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 		if (participant->getSession() == session)
 			return participant;
 	}
-	lInfo() << "Unable to find participant in conference " << this << " with call session " << session;
+	lInfo() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with call session " << session;
 
 	return nullptr;
 }
@@ -391,6 +390,24 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceRemoved(event, participantDevice);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceMediaChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceAdded,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceMediaChanged(event, participantDevice);
 	}
 	return event;
 }

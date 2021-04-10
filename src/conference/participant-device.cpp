@@ -19,6 +19,7 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
+#include "conference/params/media-session-params.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
@@ -114,6 +115,65 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 
 void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities){
 	mCapabilityDescriptor = capabilities;
+}
+
+void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
+	mSession = session;
+	updateMedia();
+}
+
+LinphoneMediaDirection ParticipantDevice::getMediaDirection(const MediaCapabilities capIdx) const {
+	return static_cast<LinphoneMediaDirection>(mediaCapabilities[static_cast<int>(capIdx)]);
+}
+
+LinphoneMediaDirection ParticipantDevice::getAudioDirection() const {
+	return getMediaDirection(MediaCapabilities::Audio);
+}
+
+LinphoneMediaDirection ParticipantDevice::getVideoDirection() const {
+	return getMediaDirection(MediaCapabilities::Video);
+}
+
+LinphoneMediaDirection ParticipantDevice::getTextDirection() const {
+	return getMediaDirection(MediaCapabilities::Text);
+}
+
+bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & direction, const MediaCapabilities capIdx) {
+	if (mediaCapabilities[static_cast<int>(capIdx)] != static_cast<int>(direction)) {
+		mediaCapabilities[static_cast<int>(capIdx)] = static_cast<int>(direction);
+		return true;
+	}
+	return false;
+}
+
+bool ParticipantDevice::setAudioDirection(const LinphoneMediaDirection direction) {
+	return setMediaDirection(direction, MediaCapabilities::Audio);
+}
+
+bool ParticipantDevice::setVideoDirection(const LinphoneMediaDirection direction) {
+	return setMediaDirection(direction, MediaCapabilities::Video);
+}
+
+bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction) {
+	return setMediaDirection(direction, MediaCapabilities::Text);
+}
+
+bool ParticipantDevice::updateMedia() {
+	const auto & currentParams = static_cast<MediaSessionParams*>(mSession->getCurrentParams());
+	bool mediaChanged = false;
+
+	const auto & audioEnabled = currentParams->audioEnabled();
+	const auto & audioDir = currentParams->getAudioDirection();
+	mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
+
+	const auto & videoEnabled = currentParams->videoEnabled();
+	const auto & videoDir = currentParams->getVideoDirection();
+	mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
+
+	const auto & textEnabled = currentParams->realtimeTextEnabled();
+	mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+
+	return mediaChanged;
 }
 
 LINPHONE_END_NAMESPACE

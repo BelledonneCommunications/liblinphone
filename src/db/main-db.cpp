@@ -203,7 +203,8 @@ namespace {
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
 			EventLog::Type::ConferenceParticipantDeviceAdded,
-			EventLog::Type::ConferenceParticipantDeviceRemoved
+			EventLog::Type::ConferenceParticipantDeviceRemoved,
+			EventLog::Type::ConferenceParticipantDeviceMediaChanged
 		>::get();
 
 		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
@@ -692,6 +693,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
+		case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
 			break;
 
@@ -761,7 +763,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		dChatMessage->forceState(messageState);
 
 		dChatMessage->forceFromAddress(IdentityAddress(row.get<string>(3)));
-		dChatMessage->forceToAddress(IdentityAddress(row.get<string>(4)));
+		dChatMessage->forceToAddress(ConferenceAddress(row.get<string>(4)));
 
 		dChatMessage->setTime(dbSession.getTime(row, 5));
 		dChatMessage->setImdnMessageId(row.get<string>(6));
@@ -2263,6 +2265,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
 
@@ -2326,6 +2329,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceSubjectChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
@@ -3400,8 +3404,10 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 						for (const auto &row : rows) {
 							ConferenceId previousId = ConferenceId(ConferenceAddress(row.get<string>(0)), conferenceId.getLocalAddress());
-							lInfo() << "Keeping around previous chat room ID [" << previousId << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
-							clientGroupChatRoom->getPrivate()->addConferenceIdToPreviousList(previousId);
+							if (previousId != conferenceId) {
+								lInfo() << "Keeping around previous chat room ID [" << previousId << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
+								clientGroupChatRoom->getPrivate()->addConferenceIdToPreviousList(previousId);
+							}
 						}
 					}
 

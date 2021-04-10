@@ -97,7 +97,7 @@ public:
 	 Get the conference ID of this conference.
 	 @return The Address of the conference.
 	 **/
-	virtual const ConferenceAddress getConferenceAddress () const = 0;
+	virtual const ConferenceAddress &getConferenceAddress () const = 0;
 
 	/*
 	* Get the subject of this conference
@@ -112,7 +112,7 @@ public:
 	virtual void setSubject (const std::string &subject) = 0;
 
 	/*
-	 * Change the admin status of a participant of this conference (If not focus,  This operation is only available if the local participant  #getMe() is admin). All participants are notified of subject change.
+	 * Change the admin status of a participant of this conference (If not focus,  This operation is only available if the local participant  #getMe() is admin). All participants are notified of change of the admin.
 	 * @param[in] participant The Participant for which to change the admin status
 	 * @param[in] isAdmin A boolean value telling whether the participant should now be an admin or not
 	 */
@@ -253,6 +253,13 @@ public:
 	 * @param[in] participant participant removed from conference or chat room. @notnil
 	 */
 	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {}
+
+	/*
+	* This fonction is called each time a participant device changes its available media
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed its media capabilities
+	*/
+	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
 
 	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.

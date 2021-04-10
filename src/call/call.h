@@ -263,8 +263,11 @@ public:
 
 
 	LinphoneConference *getConference () const;
-	void setConference (LinphoneConference *ref);
+	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
 	void exitFromConference(const std::shared_ptr<CallSession> &session);
+	bool attachedToLocalConference(const std::shared_ptr<CallSession> &session) const;
+	bool attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const;
+	void setConference (LinphoneConference *ref);
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
 	bctbx_list_t *getCallbacksList () const;
@@ -293,7 +296,8 @@ private:
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
-	void removeFromConference(const Address & remoteContactAddress);
+	void changeSubjectInLocalConference(SalCallOp *op);
+	void terminateConference();
 	
 	void *mUserData = nullptr;
 };

@@ -20,15 +20,9 @@
 #ifndef CONFERENCE_PRIVATE_H
 #define CONFERENCE_PRIVATE_H
 
-#include <map>
-
 #include "linphone/core.h"
-#include "call/call.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
-#ifdef HAVE_ADVANCED_IM
-#include "conference/handlers/local-audio-video-conference-event-handler.h"
-#endif // HAVE_ADVANCED_IM
 
 #include "belle-sip/object++.hh"
 
@@ -69,6 +63,7 @@ void linphone_conference_set_state_changed_callback(LinphoneConference *obj, Lin
 LINPHONE_BEGIN_NAMESPACE
 
 class Call;
+class CallSessionListener;
 class Participant;
 class AudioControlInterface;
 class VideoControlInterface;
@@ -77,8 +72,12 @@ class MixerSession;
 class ConferenceFactoryInterface;
 class ConferenceParamsInterface;
 class ConferenceParams;
+class Conference;
 
 class RemoteConferenceEventHandler;
+#ifdef HAVE_ADVANCED_IM
+class LocalAudioVideoConferenceEventHandler;
+#endif // HAVE_ADVANCED_IM
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
@@ -91,7 +90,9 @@ class RemoteConference;
  */
 
 class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
+#ifdef HAVE_ADVANCED_IM
 	friend class LocalAudioVideoConferenceEventHandler;
+#endif // HAVE_ADVANCED_IM
 public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference();
@@ -109,6 +110,10 @@ public:
 	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
+
+	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
+	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) = 0;
+	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
 
 	virtual int terminate() = 0;
 	virtual void finalizeCreation() = 0;
@@ -134,8 +139,6 @@ public:
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
-	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
-
 	virtual void join () override;
 	virtual void join (const IdentityAddress &participantAddress) override;
 
@@ -150,7 +153,6 @@ public:
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
-	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 	void checkIfTerminated();
 
 	void setID(const std::string &conferenceID) {
@@ -159,6 +161,9 @@ public:
 	const std::string& getID() const {
 		return mConferenceID;
 	}
+
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 protected:
 	void setConferenceId (const ConferenceId &conferenceId);
@@ -213,22 +218,30 @@ public:
 	void subscribeReceived (LinphoneEvent *event);
 	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
+	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
+	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
+	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
 	virtual void notifyFullState () override;
 
-	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
+
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 private:
+
+	void chooseAnotherAdminIfNoneInConference();
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
-	bool mIsIn = false;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
@@ -272,7 +285,19 @@ public:
 
 	void notifyReceived (const std::string &body);
 
-	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
+	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
+	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+
+	virtual void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+
+	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
+	virtual void setSubject (const std::string &subject) override;
+	virtual bool update(const ConferenceParamsInterface &params) override;
+
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
@@ -282,7 +307,7 @@ private:
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();
 
-	void onFocusCallSateChanged(LinphoneCallState state);
+	void onFocusCallStateChanged(LinphoneCallState state);
 	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState);
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered, LinphoneCallState newCallState);
 

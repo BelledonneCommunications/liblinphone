@@ -56,7 +56,10 @@
 
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
+#include "conference/participant.h"
 #include "conference_private.h"
+
+#include "sal/sal_media_description.h"
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
@@ -1145,7 +1148,7 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress().asAddress())) {
 				count += chatRoom->getUnreadChatMessageCount();
 			}
 		}
@@ -1211,12 +1214,11 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 }
 
 const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & conferenceId) const {
-	Address peerAddress = conferenceId.getPeerAddress();
+	Address peerAddress = conferenceId.getPeerAddress().asAddress();
 	peerAddress.removeUriParam("gr");
-	Address localAddress = conferenceId.getLocalAddress();
+	Address localAddress = conferenceId.getLocalAddress().asAddress();
 	localAddress.removeUriParam("gr");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
-
 	return prunedConferenceId;
 }
 
@@ -1263,6 +1265,58 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 		audioVideoConferenceById.erase(it);
 	}
 
+}
+
+shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
+
+	const auto it = std::find_if (audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&] (const auto & p) {
+		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
+		const auto &audioVideoConference = p.second;
+		const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+		const IdentityAddress &curLocalAddress = conferenceId.getLocalAddress();
+		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu())
+			return false;
+		const IdentityAddress &curRemoteAddress = conferenceId.getPeerAddress();
+		if (remoteAddress.isValid() && remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
+			return false;
+
+		// Check parameters only if pointer provided as argument is not null
+		if (params) {
+			const ConferenceParams confParams = audioVideoConference->getCurrentParams();
+			if (!params->getSubject().empty() && (params->getSubject().compare(confParams.getSubject()) != 0))
+				return false;
+			if (params->chatEnabled() != confParams.chatEnabled())
+				return false;
+			if (params->audioEnabled() != confParams.audioEnabled())
+				return false;
+			if (params->videoEnabled() != confParams.videoEnabled())
+				return false;
+			if (params->localParticipantEnabled() != confParams.localParticipantEnabled())
+				return false;
+		}
+
+		// Check participants only if list provided as argument is not empty
+		bool participantListMatch = true;
+		if (participants.empty() == false) {
+			const std::list<std::shared_ptr<Participant>> & confParticipants = audioVideoConference->getParticipants ();
+			participantListMatch = equal(participants.cbegin(), participants.cend(), confParticipants.cbegin(), confParticipants.cend(), [] (const auto & p1, const auto & p2) {
+				return (p2->getAddress().getAddressWithoutGruu() == p1.getAddressWithoutGruu());
+			});
+		}
+		return participantListMatch;
+	});
+
+	shared_ptr<MediaConference::Conference> conference = nullptr;
+	if (it != audioVideoConferenceById.cend()) {
+		conference = it->second;
+	}
+
+	return conference;
+}
+
+bool Core::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	return linphone_core_is_media_encryption_mandatory(lc) && linphone_core_get_media_encryption(lc)==LinphoneMediaEncryptionSRTP && !md->hasSrtp();
 }
 
 LINPHONE_END_NAMESPACE

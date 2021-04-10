@@ -84,7 +84,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 		if (cr->hasBeenLeft())
 			continue;
 
-		Address addr = conferenceId.getPeerAddress();
+		Address addr = conferenceId.getPeerAddress().asAddress();
 		addr.setUriParam("Last-Notify", Utils::toString(handler->getLastNotify()));
 		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 		l.getEntry().push_back(entry);

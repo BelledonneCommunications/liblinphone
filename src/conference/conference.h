@@ -58,7 +58,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		ConferenceParams(const ConferenceParams& params) = default;
 		ConferenceParams(const LinphoneCore *core = NULL);
 
-		Object *clone()const override{
+		ConferenceParams *clone()const override{
 			return new ConferenceParams(*this);
 		}
 
@@ -78,7 +78,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool localParticipantEnabled() const { return mLocalParticipantEnabled; }
 
 		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		const ConferenceAddress getConferenceAddress() const { return m_conferenceAddress; };
+		const ConferenceAddress & getConferenceAddress() const { return m_conferenceAddress; };
 
 		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
 		const std::string &getSubject() const { return m_subject; };
@@ -138,7 +138,7 @@ public:
 	bool update(const ConferenceParamsInterface &newParameters) override;
 	const ConferenceParams &getCurrentParams() const {return *confParams;}
 
-	virtual const ConferenceAddress getConferenceAddress () const override;
+	virtual const ConferenceAddress & getConferenceAddress () const override;
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
@@ -162,6 +162,7 @@ public:
 	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaChanged (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);

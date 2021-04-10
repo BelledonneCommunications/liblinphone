@@ -89,6 +89,8 @@ public:
 	virtual void start (std::shared_ptr<LinphonePrivate::Core> core) = 0;
 	virtual void stop (void) = 0;
 
+	virtual void didRegisterForRemotePush(void *token) = 0;
+
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
 
@@ -145,6 +147,8 @@ public:
 	
 	void start (std::shared_ptr<LinphonePrivate::Core> core) override {};
 	void stop (void) override {};
+
+	void didRegisterForRemotePush(void *token) override {};
 
 protected:
 	bool checkIpAddressChanged();
