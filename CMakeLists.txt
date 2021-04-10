@@ -206,8 +206,8 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	find_library(LIBGCC NAMES gcc)
-	find_library(LIBMINGWEX NAMES mingwex)
+	#find_library(LIBGCC NAMES gcc)
+	#find_library(LIBMINGWEX NAMES mingwex)
 endif()
 
 if(NOT WIN32)
