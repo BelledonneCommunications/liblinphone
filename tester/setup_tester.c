@@ -627,7 +627,7 @@ static void search_friend_in_alphabetical_order(void) {
 	const char *name2SipUri = {"sip:stephanie@sip.example.org"};
 	const char *name3SipUri = {"sip:alber@sip.example.org"};
 	const char *name4SipUri = {"sip:gauthier@sip.example.org"};
-	const char *name5SipUri = {"sip:gal@sip.example.org"};
+	const char *name5SipUri = {"sip:gal@sip.test.org"};
 
 	LinphoneFriend *friend1 = linphone_core_create_friend(manager->lc);
 	LinphoneFriend *friend2 = linphone_core_create_friend(manager->lc);
@@ -674,7 +674,7 @@ static void search_friend_in_alphabetical_order(void) {
 	linphone_core_add_friend(manager->lc, friend4);
 
 	linphone_vcard_set_full_name(vcard5, name5); // gal tcho
-	linphone_vcard_set_url(vcard5, name5SipUri); //sip:gal@sip.example.org
+	linphone_vcard_set_url(vcard5, name5SipUri); //sip:gal@sip.test.org
 	linphone_vcard_add_sip_address(vcard5, name5SipUri);
 	linphone_friend_set_vcard(friend5, vcard5);
 	linphone_core_add_friend(manager->lc, friend5);
@@ -690,7 +690,7 @@ static void search_friend_in_alphabetical_order(void) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, name3SipUri, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, name2SipUri, NULL);//"sip:alber@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 2, name5SipUri, NULL);//"sip:gal@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 2, name5SipUri, NULL);//"sip:gal@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 3, name4SipUri, NULL);//"sip:gauthier@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 4, name1SipUri, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -752,7 +752,7 @@ static void search_friend_with_domain_without_filter(void) {
 	LinphoneCoreManager* manager = linphone_core_manager_new2("marie_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *chloeName = "chloe zaya";
-	const char *chloeSipUri = "sip:ch@sip.test.org";
+	const char *chloeSipUri = "sip:ch@sip.test.org";// Test multi domains
 	const char *chloePhoneNumber = "0633556644";
 	LinphoneFriend *chloeFriend = linphone_core_create_friend(manager->lc);
 	LinphonePresenceModel *chloePresence = linphone_core_create_presence_model(manager->lc);
@@ -1186,9 +1186,10 @@ static void search_friend_with_presence(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "chloe", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
-		_check_friend_result_list(manager->lc, resultList, 0, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 1, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 3, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);// From LDAP
+		_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 2, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -1245,6 +1246,20 @@ static void search_friend_in_call_log(void) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL);//"sip:charles@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
+	}
+
+	linphone_magic_search_reset_search_cache(magicSearch);
+
+	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "sip.test.org");
+
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL);//"sip:charles@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 3, sFriends[8], NULL);//"sip:laure@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 4, sFriends[9], NULL);//"sip:loic@sip.test.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -1769,9 +1784,13 @@ static void search_friend_chat_room_remote(void) {
 	magicSearch = linphone_magic_search_new(marie->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
-		_check_friend_result_list(marie->lc, resultList, 0, addr, NULL);
-		_check_friend_result_list(marie->lc, resultList, 1, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 6, int, "%d");
+		_check_friend_result_list(marie->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);
+		_check_friend_result_list(marie->lc, resultList, 1, "sip:0601234567@ldap.example.org", NULL);
+		_check_friend_result_list(marie->lc, resultList, 2, "sip:Chloe@ldap.example.org", NULL);
+		_check_friend_result_list(marie->lc, resultList, 3, "sip:Pauline@ldap.example.org", NULL);
+		_check_friend_result_list(marie->lc, resultList, 4, addr, NULL);
+		_check_friend_result_list(marie->lc, resultList, 5, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 	ms_free(addr);

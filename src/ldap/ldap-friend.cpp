@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,32 +17,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_MAGIC_SEARCH_P_H_
-#define _L_MAGIC_SEARCH_P_H_
-
-#include "magic-search.h"
-#include "object/object-p.h"
-#include <vector>
+#include "ldap-friend.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class MagicSearchPrivate : public ObjectPrivate{
-private:
-	unsigned int mMaxWeight;
-	unsigned int mMinWeight;
-	unsigned int mSearchLimit; // Number of ResultSearch maximum when the search is limited
-	bool mLimitedSearch; // Limit the search
-	std::string mDelimiter; // Delimiter use for the search
-	bool mUseDelimiter;
-	std::string mFilter;
-
-	mutable std::list<SearchResult> *mCacheResult;
-	
-
-
-	L_DECLARE_PUBLIC(MagicSearch);
-};
+LDAPFriend::LDAPFriend(){
+	mSipIndex=-1;
+	mNameIndex=-1;
+}
 
 LINPHONE_END_NAMESPACE
-
-#endif //_L_MAGIC_SEARCH_P_H_

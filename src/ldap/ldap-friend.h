@@ -17,32 +17,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_MAGIC_SEARCH_P_H_
-#define _L_MAGIC_SEARCH_P_H_
+#ifndef LINPHONE_LDAP_FRIEND_H_
+#define LINPHONE_LDAP_FRIEND_H_
 
-#include "magic-search.h"
-#include "object/object-p.h"
-#include <vector>
+#include "linphone/types.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class MagicSearchPrivate : public ObjectPrivate{
-private:
-	unsigned int mMaxWeight;
-	unsigned int mMinWeight;
-	unsigned int mSearchLimit; // Number of ResultSearch maximum when the search is limited
-	bool mLimitedSearch; // Limit the search
-	std::string mDelimiter; // Delimiter use for the search
-	bool mUseDelimiter;
-	std::string mFilter;
-
-	mutable std::list<SearchResult> *mCacheResult;
-	
-
-
-	L_DECLARE_PUBLIC(MagicSearch);
+class LDAPFriend {
+public:
+	LDAPFriend();
+// From a request, the index is the index that matches to the attribute vector. It is used for giving priority on attributes (eg: mobile and then telephoneNumber if first is not good enough to take account)
+	std::string mName;
+	int mNameIndex;
+	std::string mSip;
+	int mSipIndex;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif //_L_MAGIC_SEARCH_P_H_
+#endif /* LINPHONE_LDAP_FRIEND_H_ */
