@@ -21,8 +21,8 @@
 ############################################################################
 
 if(MSVC)
-	find_library(LIBGCC NAMES gcc)
-	find_library(LIBMINGWEX NAMES mingwex)
+	#find_library(LIBGCC NAMES gcc)
+	#find_library(LIBMINGWEX NAMES mingwex)
 endif()
 
 set(USE_BUNDLE )
