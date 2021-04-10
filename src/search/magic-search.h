@@ -23,6 +23,7 @@
 #include <string>
 #include <list>
 #include <memory>
+#include <queue>
 
 #include "core/core.h"
 #include "core/core-accessor.h"
@@ -118,13 +119,33 @@ public:
 	 * Use resetSearchCache() to begin a new search
 	 * @param[in] filter word we search
 	 * @param[in] withDomain
-	 * - "" for searching in all contact
-	 * - "*" for searching in contact with sip SipUri
-	 * - "yourdomain" for searching in contact from "yourdomain" domain
+	 ** "" for searching in all contact
+	 ** "*" for searching in contact with sip SipUri
+	 ** "yourdomain" for searching in contact from "yourdomain" domain
 	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
 	 **/
-	std::list<SearchResult> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "") const;
+	std::list<SearchResult> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "");
 
+	/**
+	 * Create a sorted list of SearchResult from SipUri, Contact name,
+	 * Contact displayname, Contact phone number, which match with a filter word
+	 * The last item list will be an address formed with "filter" if a proxy config exist
+	 * During the first search, a cache is created and used for the next search
+	 * Use linphone_magic_search_reset_search_cache() to begin a new search
+	 * @param[in] filter word we search
+	 * @param[in] withDomain
+	 ** NULL or "" for searching in all contact
+	 ** "*" for searching in contact with sip SipUri
+	 ** "yourdomain" for searching in contact from "yourdomain" domain
+	 **/
+	void getContactListFromFilterAsync (const std::string &filter, const std::string &withDomain);
+	
+	/**
+	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
+	 * 
+	 **/
+	std::list<SearchResult> getLastSearch() const;
+			
 private:
 
 	/**
@@ -246,7 +267,12 @@ private:
 	void addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const;
 
 	std::list<SearchResult> *uniqueItemsList (std::list<SearchResult> &list) const;
-
+	
+	static void* async(void* arg);
+	bool_t mIsAsync;
+	ms_mutex_t mLock;
+	std::queue<void*> mRequests;
+	
 	L_DECLARE_PRIVATE(MagicSearch);
 };
 
