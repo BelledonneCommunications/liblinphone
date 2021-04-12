@@ -3705,7 +3705,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
@@ -4263,7 +4263,7 @@ end:
 	}
 }
 
-static void participants_takes_call_after_conference_started_and_rejoins_conference(void) {
+static void participants_take_call_after_conference_started_and_rejoins_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
@@ -4272,12 +4272,22 @@ static void participants_takes_call_after_conference_started_and_rejoins_confere
 
 	LinphoneCall* marie_call_michelle;
 	LinphoneCall* michelle_called_by_marie;
+	LinphoneCall* marie_call_chloe;
+	LinphoneCall* chloe_called_by_marie;
 	LinphoneCall* chloe_call_laure;
 	LinphoneCall* laure_called_by_chloe;
 	LinphoneAddress * marie_conference_address = NULL;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,michelle->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
+	lcs=bctbx_list_append(lcs,chloe->lc);
+
+	if (!BC_ASSERT_TRUE(call(marie,chloe)))
+		goto end;
+
+	chloe_called_by_marie=linphone_core_get_current_call(chloe->lc);
+	marie_call_chloe = linphone_core_get_call_by_remote_address2(marie->lc, chloe->identity);
+	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_chloe,chloe,chloe_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,michelle)))
 		goto end;
@@ -4322,14 +4332,8 @@ static void participants_takes_call_after_conference_started_and_rejoins_confere
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneCallPaused,(chloe_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 
-	// Laure leaves the conference to take Chloe's call
-	// Chloe also leave the conference to make the call
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneSubscriptionTerminated,chloe_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
-
-	// Michelle is notified that Laure and Chloe left
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 4),5000));
+	// Michelle is notified that Laure and Chloe media capabilities changed
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 2),5000));
 
 	// As Marie is in a conference, the named tone should not be played even though the call is paused
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
@@ -4345,7 +4349,7 @@ static void participants_takes_call_after_conference_started_and_rejoins_confere
 
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),2, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
 
 	// Taking michelle out of the conference causes the conference to be destroyed
 	new_participants = terminate_participant_call(new_participants, marie, michelle);
@@ -4359,54 +4363,95 @@ static void participants_takes_call_after_conference_started_and_rejoins_confere
 	LinphoneCall * chloe_calls_marie = linphone_core_get_call_by_remote_address2(chloe->lc, marie->identity);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_calls_marie)) goto end;
 
-	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_conference(marie->lc));
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
 
 	// Remote  conference
-	BC_ASSERT_PTR_NULL(linphone_call_get_conference(laure_calls_marie));
+	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
-	BC_ASSERT_PTR_NULL(linphone_call_get_conference(chloe_calls_marie));
+	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(chloe_calls_marie));
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(chloe_calls_marie));
 
 	LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
 	LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
-	BC_ASSERT_PTR_NULL(laure_conference);
-	linphone_address_unref(laure_uri);
+	BC_ASSERT_PTR_NOT_NULL(laure_conference);
+
+	LinphoneAddress *chloe_uri = linphone_address_new(linphone_core_get_identity(chloe->lc));
+	LinphoneConference * chloe_conference = linphone_core_search_conference(chloe->lc, NULL, chloe_uri, marie_conference_address, NULL);
+	BC_ASSERT_PTR_NOT_NULL(chloe_conference);
 
 	// Call between Chloe and Laure ends and Laure resumes call with Marie. Conferece has terminated because Michelle left in the meantime
 	if (laure_called_by_chloe) {
-		stats initial_marie_stat = marie->stat;
-		stats initial_laure_stat = laure->stat;
-		stats initial_chloe_stat = chloe->stat;
+		marie_initial_stats = marie->stat;
+		laure_initial_stats = laure->stat;
+		chloe_initial_stats = chloe->stat;
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 		linphone_core_terminate_call(laure->lc, laure_called_by_chloe);
-		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&laure->stat.number_of_LinphoneCallEnd,initial_laure_stat.number_of_LinphoneCallEnd + 1));
-		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&chloe->stat.number_of_LinphoneCallEnd,initial_chloe_stat.number_of_LinphoneCallEnd + 1));
-		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&laure->stat.number_of_LinphoneCallReleased,initial_laure_stat.number_of_LinphoneCallReleased + 1));
-		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&chloe->stat.number_of_LinphoneCallReleased,initial_chloe_stat.number_of_LinphoneCallReleased + 1));
+		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&laure->stat.number_of_LinphoneCallEnd,laure_initial_stats.number_of_LinphoneCallEnd + 1));
+		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&chloe->stat.number_of_LinphoneCallEnd,chloe_initial_stats.number_of_LinphoneCallEnd + 1));
+		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&laure->stat.number_of_LinphoneCallReleased,laure_initial_stats.number_of_LinphoneCallReleased + 1));
+		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&chloe->stat.number_of_LinphoneCallReleased,chloe_initial_stats.number_of_LinphoneCallReleased + 1));
 
 		// Remote  conference
-		BC_ASSERT_PTR_NULL(linphone_call_get_conference(laure_calls_marie));
+		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 1, unsigned int, "%u");
 
 		linphone_call_resume(laure_calls_marie);
 
+		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallResuming,laure_initial_stats.number_of_LinphoneCallResuming + 1));
+		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,laure_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,marie_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_initial_stats.number_of_NotifyReceived + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_initial_stats.number_of_NotifyReceived + 1),5000));
+
 		// Remote  conference
-		BC_ASSERT_PTR_NULL(linphone_call_get_conference(laure_calls_marie));
+		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
+		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
 
-		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallResuming,initial_laure_stat.number_of_LinphoneCallResuming + 1));
-		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,initial_laure_stat.number_of_LinphoneCallStreamsRunning + 1));
-		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
 	}
 
-	stats initial_marie_stat = marie->stat;
-	stats initial_laure_stat = laure->stat;
+	laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
+	BC_ASSERT_PTR_NOT_NULL(laure_conference);
+	linphone_address_unref(laure_uri);
+
+	chloe_conference = linphone_core_search_conference(chloe->lc, NULL, chloe_uri, marie_conference_address, NULL);
+	BC_ASSERT_PTR_NOT_NULL(chloe_conference);
+	linphone_address_unref(chloe_uri);
+
+	marie_initial_stats = marie->stat;
+	laure_initial_stats = laure->stat;
+	chloe_initial_stats = chloe->stat;
 	linphone_core_terminate_call(laure->lc, laure_calls_marie);
-	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&laure->stat.number_of_LinphoneCallEnd,initial_laure_stat.number_of_LinphoneCallEnd + 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&marie->stat.number_of_LinphoneCallEnd,initial_marie_stat.number_of_LinphoneCallEnd + 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&laure->stat.number_of_LinphoneCallReleased,initial_laure_stat.number_of_LinphoneCallReleased + 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&marie->stat.number_of_LinphoneCallReleased,initial_marie_stat.number_of_LinphoneCallReleased + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&laure->stat.number_of_LinphoneCallEnd,laure_initial_stats.number_of_LinphoneCallEnd + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&marie->stat.number_of_LinphoneCallEnd,marie_initial_stats.number_of_LinphoneCallEnd + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&laure->stat.number_of_LinphoneCallReleased,laure_initial_stats.number_of_LinphoneCallReleased + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&marie->stat.number_of_LinphoneCallReleased,marie_initial_stats.number_of_LinphoneCallReleased + 1));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneSubscriptionTerminated,chloe_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,10000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(laure_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,(laure_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateDeleted,(laure_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneConferenceStateTerminationPending,(chloe_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneConferenceStateTerminated,(chloe_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneConferenceStateDeleted,(chloe_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,(marie_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,(marie_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,(marie_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
+
+	marie_initial_stats = marie->stat;
+	chloe_initial_stats = chloe->stat;
+	linphone_core_terminate_call(chloe->lc, chloe_calls_marie);
+	BC_ASSERT_TRUE(wait_for(marie->lc,chloe->lc,&chloe->stat.number_of_LinphoneCallEnd,chloe_initial_stats.number_of_LinphoneCallEnd + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,chloe->lc,&marie->stat.number_of_LinphoneCallEnd,marie_initial_stats.number_of_LinphoneCallEnd + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,chloe->lc,&chloe->stat.number_of_LinphoneCallReleased,chloe_initial_stats.number_of_LinphoneCallReleased + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,chloe->lc,&marie->stat.number_of_LinphoneCallReleased,marie_initial_stats.number_of_LinphoneCallReleased + 1));
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -4415,6 +4460,7 @@ static void participants_takes_call_after_conference_started_and_rejoins_confere
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 0, unsigned int, "%u");
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(chloe->lc));
 
 end:
 
@@ -6710,8 +6756,8 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Participant quits conference and is called by focus", participant_quits_conference_and_is_called_by_focus),
 	TEST_NO_TAG("Participant takes call after conference started and conference ends", participant_takes_call_after_conference_started_and_conference_ends),
 	TEST_NO_TAG("Participant takes call after conference started and rejoins conference", participant_takes_call_after_conference_started_and_rejoins_conference),
+	TEST_NO_TAG("Participants take call after conference started and rejoins conference", participants_take_call_after_conference_started_and_rejoins_conference),
 	TEST_NO_TAG("Participant takes call after conference started and rejoins conference after conference ended", participant_takes_call_after_conference_started_and_rejoins_conference_after_conference_ended),
-	TEST_NO_TAG("Participants takes call after conference started and rejoins conference", participants_takes_call_after_conference_started_and_rejoins_conference),
 	TEST_NO_TAG("Simple local participant leaves conference", simple_local_participant_leaves_conference),
 	TEST_NO_TAG("Local participant leaves conference and add participant", local_participant_leaves_conference_and_add_participant),
 	TEST_NO_TAG("Local participant leaves conference and call to focus", local_participant_leaves_conference_and_call_to_focus),

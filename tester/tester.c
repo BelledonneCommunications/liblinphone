@@ -1256,7 +1256,11 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 
 				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, conf_mgr->identity);
 				BC_ASSERT_PTR_NOT_NULL(participant_call);
-				initial_other_participants_state[counter - 1] = linphone_call_get_state(participant_call);
+				if (participant_call) {
+					initial_other_participants_state[counter - 1] = linphone_call_get_state(participant_call);
+				} else {
+					initial_other_participants_state[counter - 1] = LinphoneCallStateIdle;
+				}
 
 				// Increment counter
 				counter++;
