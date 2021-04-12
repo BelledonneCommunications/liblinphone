@@ -3241,6 +3241,7 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
 	bctbx_list_t* participants=NULL;
+	LinphoneAddress * marie_conference_address = NULL;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,michelle->lc);
@@ -3269,7 +3270,6 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
-	LinphoneAddress * marie_conference_address = NULL;
 	if (marie_conference) {
 		marie_conference_address = linphone_address_clone(linphone_conference_get_conference_address(marie_conference));
 	}
