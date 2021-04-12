@@ -2637,6 +2637,8 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
 
+	wait_for_list(lcs ,NULL, 0, 2000);
+
 	if (!wait_for_updates) {
 		if (remote_participant_leaves) {
 			if (pauline_conference) {
@@ -2677,7 +2679,7 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	int expectedNotify = ((remote_participant_leaves) ? 2 : 1);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + expectedNotify),5000));
 	if (michelle_conference) {
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),((remote_participant_leaves) ? 2 : 1), int, "%d");
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_conference_get_size(michelle_conference),linphone_conference_get_participant_count(michelle_conference)+linphone_conference_is_in(michelle_conference), int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
