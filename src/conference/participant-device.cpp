@@ -38,11 +38,17 @@ class Core;
 
 ParticipantDevice::ParticipantDevice () {
 	mTimeOfJoining = time(nullptr);
+	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Audio);
+	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Video);
+	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Text);
 }
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
 	mTimeOfJoining = time(nullptr);
+	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Audio);
+	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Video);
+	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Text);
 }
 
 ParticipantDevice::~ParticipantDevice () {
@@ -159,19 +165,29 @@ bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction)
 }
 
 bool ParticipantDevice::updateMedia() {
-	const auto & currentParams = static_cast<MediaSessionParams*>(mSession->getCurrentParams());
 	bool mediaChanged = false;
+	if (mSession) {
+		const auto currentParams = dynamic_cast<MediaSessionParams*>(mSession->getCurrentParams());
 
-	const auto & audioEnabled = currentParams->audioEnabled();
-	const auto & audioDir = currentParams->getAudioDirection();
-	mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
+		if (currentParams) {
+			const auto & audioEnabled = currentParams->audioEnabled();
+			const auto & audioDir = currentParams->getAudioDirection();
+			mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
 
-	const auto & videoEnabled = currentParams->videoEnabled();
-	const auto & videoDir = currentParams->getVideoDirection();
-	mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
+			const auto & videoEnabled = currentParams->videoEnabled();
+			const auto & videoDir = currentParams->getVideoDirection();
+			mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
 
-	const auto & textEnabled = currentParams->realtimeTextEnabled();
-	mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			const auto & textEnabled = currentParams->realtimeTextEnabled();
+			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		} else {
+			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
+		}
+	} else {
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Audio);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Video);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Text);
+	}
 
 	return mediaChanged;
 }
