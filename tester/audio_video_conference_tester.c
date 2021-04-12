@@ -3346,25 +3346,24 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 			pauline_conference = linphone_core_search_conference(pauline->lc, NULL, NULL, marie_conference_address, NULL);
 			BC_ASSERT_PTR_NULL(pauline_conference);
 		}
+
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 1, unsigned int, "%u");
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(pauline->lc)), 1, unsigned int, "%u");
+
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_call_by_remote_address2(marie->lc, pauline->identity));
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_call_by_remote_address2(pauline->lc, marie->identity));
+
+		end_call(marie, pauline);
 	}
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),0, int, "%d");
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 1, unsigned int, "%u");
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(pauline->lc)), 1, unsigned int, "%u");
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(pauline->lc)), 0, unsigned int, "%u");
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	// As the conference ended, the current call of Marie and Pauline is NULL but there is still a session between them
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_call_by_remote_address2(marie->lc, pauline->identity));
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_call_by_remote_address2(pauline->lc, marie->identity));
-
-	pauline_stats = pauline->stat;
-	marie_stats = marie->stat;
-
-	end_call(marie, pauline);
 
 end:
 
@@ -4697,6 +4696,8 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		idx++;
 	}
 
+	wait_for_list(lcs ,NULL, 0, 2000);
+
 	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
 
 	stats initial_conf_stat = conf->stat;
@@ -4743,7 +4744,7 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		}
 
 		// Focus removed and added
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats[idx].number_of_NotifyReceived + 2 + (no_participants - 1)),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats[idx].number_of_NotifyReceived + 2),5000));
 
 		// Wait for first frame if video is enabled
 		if (enable_video) {
@@ -4771,7 +4772,6 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(pconf_participants), no_participants, unsigned int, "%u");
 			bctbx_list_free_with_data(pconf_participants, (void(*)(void *))linphone_participant_unref);
 		}
-
 
 		idx++;
 
