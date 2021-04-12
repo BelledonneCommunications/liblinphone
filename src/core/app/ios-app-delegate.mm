@@ -255,6 +255,9 @@
 			LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
 			linphone_push_notification_config_set_bundle_identifier(push_cfg, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
 		}
+	} else {
+		voipRegistry.delegate = NULL;
+		[[UIApplication sharedApplication] unregisterForRemoteNotifications];
 	}
 }
 

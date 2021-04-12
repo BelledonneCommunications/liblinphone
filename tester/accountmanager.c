@@ -152,7 +152,7 @@ static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *
 
 void account_create_on_server(Account *account, const LinphoneProxyConfig *refcfg, const char* phone_alias){
 	LinphoneCore *lc;
-	linphone_core_set_push_notification_enabled(lc, FALSE);
+	
 	LinphoneAddress *tmp_identity=linphone_address_clone(account->modified_identity);
 	LinphoneProxyConfig *cfg;
 	LinphoneAuthInfo *ai;
@@ -162,7 +162,9 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
 	linphone_core_cbs_set_registration_state_changed(cbs, account_created_on_server_cb);
+
 	lc = configure_lc_from(cbs, bc_tester_get_resource_dir_prefix(), NULL, account);
+	linphone_core_set_push_notification_enabled(lc, FALSE);
 	linphone_core_cbs_unref(cbs);
 	tr.udp_port=LC_SIP_TRANSPORT_RANDOM;
 	tr.tcp_port=LC_SIP_TRANSPORT_RANDOM;

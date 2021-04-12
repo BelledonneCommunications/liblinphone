@@ -91,6 +91,7 @@ public:
 
 	virtual void didRegisterForRemotePush(void *token) = 0;
 	virtual void enableAutoIterate (bool autoIterateEnabled) = 0;
+	virtual void registerForPush(void) = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -151,6 +152,7 @@ public:
 
 	void didRegisterForRemotePush(void *token) override {};
 	void enableAutoIterate (bool autoIterateEnabled) override {};
+	void registerForPush(void) override {};
 
 protected:
 	bool checkIpAddressChanged();

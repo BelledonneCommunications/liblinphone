@@ -2707,6 +2707,8 @@ void linphone_core_update_push_notification_information(LinphoneCore *core, cons
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "net", "push_notification", enable);
 	core->push_notification_enabled = enable;
+	
+	getPlatformHelpers(core)->registerForPush();
 
 	linphone_core_update_account_push_params(core);
 }

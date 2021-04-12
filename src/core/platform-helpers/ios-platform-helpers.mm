@@ -102,6 +102,7 @@ public:
 
 	void didRegisterForRemotePush(void *token) override;
 	void enableAutoIterate (bool autoIterateEnabled) override;
+	void registerForPush(void) override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -201,6 +202,12 @@ void IosPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
 				ms_message("[IosPlatformHelpers] Auto core.iterate() stopped");
 			}
 		}
+	}
+}
+
+void IosPlatformHelpers::registerForPush() {
+	if (mUseAppDelgate) {
+		[mAppDelegate registerForPush];
 	}
 }
 
