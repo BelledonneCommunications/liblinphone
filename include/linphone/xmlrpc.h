@@ -263,6 +263,7 @@ LINPHONE_PUBLIC LinphoneXmlRpcRequest * linphone_xml_rpc_session_create_request(
  * @param request #LinphoneXmlRpcRequest object @notnil
  * @return The #LinphoneXmlRpcRequestCbs object associated with the LinphoneXmlRpcRequest. @maybenil
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+ * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request);
 

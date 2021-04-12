@@ -321,6 +321,7 @@ LINPHONE_PUBLIC void linphone_event_cbs_set_notify_response(LinphoneEventCbs *cb
  * @param linphone_event #LinphoneEvent object @notnil
  * @return The LinphoneEventCbs object associated with the LinphoneEvent. @notnil
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+ * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEvent *linphone_event);
 

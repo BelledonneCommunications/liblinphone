@@ -417,8 +417,6 @@ class JavaTranslator:
             if _class.multilistener:
                 classDict['methods'].append(self.generate_add_listener(_class))
                 classDict['methods'].append(self.generate_remove_listener(_class))
-            if _class.singlelistener:
-                classDict['methods'].append(self.generate_set_listener(_class))
 
         return classDict
 
@@ -447,7 +445,6 @@ class JavaTranslator:
                 methodDict['isJniUpcallBasicType'] = True
         methodDict['returnIfFail'] = '' if  methodDict['return'] == 'void' else ' NULL'
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
-        methodDict['isSingleListener'] = _class.singlelistener
         methodDict['isMultiListener'] = _class.multilistener
 
         methodDict['firstParam'] = ''
@@ -578,7 +575,6 @@ class JavaEnum:
 
 class JniInterface:
     def __init__(self, javaClass, apiClass):
-        self.isSingleListener = (apiClass.singlelistener)
         self.isMultiListener = (apiClass.multilistener)
         self.className = javaClass.className
         self.classCName = javaClass.cName
@@ -688,7 +684,6 @@ class Jni:
         jniInterface = javaClass.jniInterface
         if jniInterface is not None:
             interface = {
-                'isSingleListener': jniInterface.isSingleListener,
                 'isMultiListener': jniInterface.isMultiListener,
                 'classCName': jniInterface.classCName,
                 'className': jniInterface.className,

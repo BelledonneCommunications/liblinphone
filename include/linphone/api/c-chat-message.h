@@ -505,6 +505,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_set_file_transfer
  * @param message #LinphoneChatMessage object. @notnil
  * @return The #LinphoneChatMessageCbs object associated with the LinphoneChatMessage. @notnil
  * @deprecated 19/02/2019
+ * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessageCbs *linphone_chat_message_get_callbacks (const LinphoneChatMessage *message);
 

@@ -571,15 +571,16 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(Lin
 **/
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
 
-/************ */
+/**************/
 /* DEPRECATED */
-/* ********** */
+/**************/
 
 /**
  * Get the #LinphoneAccountCreatorCbs object associated with a LinphoneAccountCreator.
  * @param creator #LinphoneAccountCreator object @notnil
  * @return The #LinphoneAccountCreatorCbs object associated with the LinphoneAccountCreator. @maybenil
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+ * @donotwrap
 **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator);
 
