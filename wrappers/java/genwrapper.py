@@ -680,7 +680,7 @@ class Jni:
             'notRefCountable': not javaClass.refCountable
         }
         self.objects.append(obj)
-
+		
         jniInterface = javaClass.jniInterface
         if jniInterface is not None:
             interface = {

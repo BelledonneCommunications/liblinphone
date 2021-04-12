@@ -54,6 +54,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *ajvm, void *reserved) {
 
 #define belle_sip_java_user_data_key "java_object"
 #define belle_sip_const_java_user_data_key "const_java_object"
+#define belle_sip_java_listener_user_data_key "java_listener_object"
 
 static const char* GetStringUTFChars(JNIEnv* env, jstring string) {
 	const char *cstring = string ? env->GetStringUTFChars(string, nullptr) : nullptr;
@@ -337,13 +338,13 @@ JNIEXPORT jboolean JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env
 
 	if (is_const) {
 		jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_const_java_user_data_key);
-		belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_const_java_user_data_key, nullptr, nullptr);
+		belle_sip_object_data_remove((belle_sip_object_t *)cptr, belle_sip_const_java_user_data_key);
 		if (wref) {
 			env->DeleteWeakGlobalRef(wref);
 		}
 	} else {
 		jobject wref = (jobject)belle_sip_object_data_get((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
-		belle_sip_object_data_set((belle_sip_object_t *)cptr, belle_sip_java_user_data_key, nullptr, nullptr);
+		belle_sip_object_data_remove((belle_sip_object_t *)cptr, belle_sip_java_user_data_key);
 		if (wref) {
 			env->DeleteWeakGlobalRef(wref);
 		}
@@ -377,7 +378,7 @@ static {{return}} {{callbackName}}({{params}}) {
 	{{#isMultiListener}}
 	{{classCName}} *multi_cbs = {{cPrefix}}_get_current_callbacks({{firstParam}});
 	if (multi_cbs != nullptr) {
-		jlistener = (jobject) {{cPrefix}}_cbs_get_user_data(multi_cbs);
+		jlistener = (jobject) belle_sip_object_data_get((belle_sip_object_t *)multi_cbs, belle_sip_java_listener_user_data_key);
 	}
 	{{/isMultiListener}}
 
@@ -467,6 +468,12 @@ static {{return}} {{callbackName}}({{params}}) {
 {{/callbacks}}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void belle_sip_java_listener_data_removed_callback(void *data) {
+	JNIEnv *env = ms_get_jni_env();
+	jobject listener = (jobject) data;
+	env->DeleteGlobalRef(listener);
+}
+
 {{#interfaces}}
 {{#isMultiListener}}
 JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* env, jobject thiz, jlong ptr, jobject jlistener) {
@@ -476,9 +483,8 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* 
 		bctbx_error("Java_{{jniPackage}}{{className}}Impl_addListener's {{classCName}} C ptr is null!");
 		return;
 	}
-	jobject listener = env->NewWeakGlobalRef(jlistener);
 	{{classCName}}Cbs *cbs = linphone_factory_create_{{factoryName}}_cbs(linphone_factory_get());
-	{{cPrefix}}_cbs_set_user_data(cbs, listener);
+	belle_sip_object_data_set((belle_sip_object_t *)cbs, belle_sip_java_listener_user_data_key, (void*)env->NewGlobalRef(jlistener), belle_sip_java_listener_data_removed_callback);
 	{{#callbacksList}}
 	{{cPrefix}}_cbs_set_{{callback}}(cbs, {{callbackName}});
 	{{/callbacksList}}
@@ -496,11 +502,10 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 	bctbx_list_t *it;
 	for (it = (bctbx_list_t *)cbs_list; it != nullptr; it = it->next) {
 		{{classCName}}Cbs *cbs = ({{classCName}}Cbs *)it->data;
-		jobject listener = (jobject) {{cPrefix}}_cbs_get_user_data(cbs);
+		jobject listener = (jobject) belle_sip_object_data_get((belle_sip_object_t *)cbs, belle_sip_java_listener_user_data_key);
 		if (env->IsSameObject(listener, jlistener)) {
-			{{cPrefix}}_cbs_set_user_data(cbs, nullptr);
+			belle_sip_object_data_remove((belle_sip_object_t *)cbs, belle_sip_java_listener_user_data_key); // Global ref will be deleted by belle_sip_java_listener_data_removed_callback
 			{{cPrefix}}_remove_callbacks(cptr, cbs);
-			env->DeleteWeakGlobalRef(listener);
 			break;
 		}
 	}
