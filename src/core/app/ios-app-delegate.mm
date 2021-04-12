@@ -64,6 +64,10 @@
 
 - (void)dealloc {
 	[NSNotificationCenter.defaultCenter removeObserver:self];
+	[[UIApplication sharedApplication] unregisterForRemoteNotifications];
+	voipRegistry.delegate = NULL;
+	if ([self getCore])
+		linphone_core_set_auto_iterate_enabled([self getCore]->getCCore(), FALSE);
 	[super dealloc];
 }
 
@@ -244,6 +248,7 @@
 		ms_message("[APNs] register for push notif");
 		[[UIApplication sharedApplication] registerForRemoteNotifications];
 
+		linphone_push_notification_config_set_bundle_identifier(core->getCCore()->push_config, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
 		bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 		for (; accounts != NULL; accounts = accounts->next) {
 			LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -256,6 +261,12 @@
 - (void)didRegisterForRemotePush:(NSData *)token {
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
+	
+	if (token) {
+		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, [self stringFromToken:token forType:@"remote"].UTF8String);
+	} else {
+		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, nullptr);
+	}
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -278,6 +289,7 @@
 	if (!core) return;
 	NSData *pushToken = credentials.token;
 
+	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, [self stringFromToken:pushToken forType:@"voip"].UTF8String);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -292,6 +304,7 @@
     ms_message("[PushKit] Token invalidated");
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
+	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, nullptr);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
