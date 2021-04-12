@@ -64,6 +64,10 @@
 
 - (void)dealloc {
 	[NSNotificationCenter.defaultCenter removeObserver:self];
+	[[UIApplication sharedApplication] unregisterForRemoteNotifications];
+	voipRegistry.delegate = NULL;
+	if ([self getCore])
+		linphone_core_set_auto_iterate_enabled([self getCore]->getCCore(), FALSE);
 	[super dealloc];
 }
 
