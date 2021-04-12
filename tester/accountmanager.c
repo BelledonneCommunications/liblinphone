@@ -152,6 +152,7 @@ static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *
 
 void account_create_on_server(Account *account, const LinphoneProxyConfig *refcfg, const char* phone_alias){
 	LinphoneCore *lc;
+	linphone_core_set_push_notification_enabled(lc, FALSE);
 	LinphoneAddress *tmp_identity=linphone_address_clone(account->modified_identity);
 	LinphoneProxyConfig *cfg;
 	LinphoneAuthInfo *ai;
