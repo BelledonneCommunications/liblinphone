@@ -417,6 +417,7 @@ LINPHONE_PUBLIC bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriend
  * @param friend_list #LinphoneFriendList object @notnil
  * @return The #LinphoneFriendListCbs object associated with the LinphoneFriendList.
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+ * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *friend_list);
 

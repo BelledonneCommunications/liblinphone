@@ -222,6 +222,7 @@ class JavaTranslator:
         methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
         methodDict['return_keyword'] = '' if methodDict['return'] == 'void' else 'return '
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
+        methodDict['cantBeCalledIfObjectIsConst'] = not _method.isconst
 
         methodDict['convertInputClassArrayToLongArray'] = False
 
@@ -293,6 +294,7 @@ class JavaTranslator:
             methodDict['c_name'] = _method.name.to_c()
 
         methodDict['takeRefOnReturnedObject'] = "FALSE" if _method.returnAllocatedObject else "TRUE"
+        methodDict['returnedObjectIsConst'] = "TRUE" if _method.returnType.isconst else "FALSE"
 
         methodDict['returnObject'] = methodDict['hasReturn'] and type(_method.returnType) is AbsApi.ClassType
         methodDict['returnClassName'] = _method.returnType.translate(self.langTranslator, namespace=namespace)
@@ -313,6 +315,7 @@ class JavaTranslator:
                 methodDict['isStringObjectArray'] = True
             elif isinstance(_method.returnType.containedTypeDesc, AbsApi.ClassType):
                 methodDict['isRealObjectArray'] = True
+                methodDict['isRealObjectConst'] = "TRUE" if _method.returnType.containedTypeDesc.isconst else "FALSE"
                 methodDict['objectCPrefix'] = 'linphone_' + _method.returnType.containedTypeDesc.desc.name.to_snake_case()
                 methodDict['objectClassCName'] = 'Linphone' + _method.returnType.containedTypeDesc.desc.name.to_camel_case()
                 methodDict['objectClassName'] = _method.returnType.containedTypeDesc.desc.name.to_camel_case()
@@ -414,8 +417,6 @@ class JavaTranslator:
             if _class.multilistener:
                 classDict['methods'].append(self.generate_add_listener(_class))
                 classDict['methods'].append(self.generate_remove_listener(_class))
-            if _class.singlelistener:
-                classDict['methods'].append(self.generate_set_listener(_class))
 
         return classDict
 
@@ -444,7 +445,6 @@ class JavaTranslator:
                 methodDict['isJniUpcallBasicType'] = True
         methodDict['returnIfFail'] = '' if  methodDict['return'] == 'void' else ' NULL'
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
-        methodDict['isSingleListener'] = _class.singlelistener
         methodDict['isMultiListener'] = _class.multilistener
 
         methodDict['firstParam'] = ''
@@ -468,7 +468,8 @@ class JavaTranslator:
             if isinstance(arg.type, AbsApi.ClassType):
                 methodDict['jparams'] += 'L' + self.jni_path + arg.type.desc.name.to_camel_case() + ';'
                 methodDict['params_impl'] += 'j_' + argname
-                methodDict['jobjects'].append({'objectName': argname, 'className': arg.type.desc.name.to_camel_case(), })
+                isConst = 'TRUE' if arg.type.isconst else 'FALSE'
+                methodDict['jobjects'].append({'objectName': argname, 'className': arg.type.desc.name.to_camel_case(), 'isObjectConst':isConst})
             elif isinstance(arg.type, AbsApi.BaseType):
                 methodDict['jparams'] += arg.type.translate(self.jnilangTranslator)
                 if arg.type.name == 'string':
@@ -490,7 +491,8 @@ class JavaTranslator:
                     cprefix = 'linphone_' +  arg.type.containedTypeDesc.desc.name.to_snake_case()
                     classcname = 'Linphone' +  arg.type.containedTypeDesc.desc.name.to_camel_case()
                     classname =  arg.type.containedTypeDesc.desc.name.to_camel_case()
-                    methodDict['jlists'].append({'list_name': argname, 'objectCPrefix':cprefix, 'objectClassCName':classcname, 'objectClassName':classname, 'isRealObjectArray':True, 'isStringObjectArray':False})
+                    isConst = 'TRUE' if arg.type.containedTypeDesc.isconst else 'FALSE'
+                    methodDict['jlists'].append({'list_name': argname, 'objectCPrefix':cprefix, 'objectClassCName':classcname, 'objectClassName':classname, 'isRealObjectArray':True, 'isStringObjectArray':False, 'isObjectConst':isConst})
 
         methodDict['jparams'] += ')'
         if (methodDict['return'] == 'void'):
@@ -573,7 +575,6 @@ class JavaEnum:
 
 class JniInterface:
     def __init__(self, javaClass, apiClass):
-        self.isSingleListener = (apiClass.singlelistener)
         self.isMultiListener = (apiClass.multilistener)
         self.className = javaClass.className
         self.classCName = javaClass.cName
@@ -679,11 +680,10 @@ class Jni:
             'notRefCountable': not javaClass.refCountable
         }
         self.objects.append(obj)
-
+		
         jniInterface = javaClass.jniInterface
         if jniInterface is not None:
             interface = {
-                'isSingleListener': jniInterface.isSingleListener,
                 'isMultiListener': jniInterface.isMultiListener,
                 'classCName': jniInterface.classCName,
                 'className': jniInterface.className,

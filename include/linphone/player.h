@@ -210,6 +210,7 @@ LINPHONE_PUBLIC void linphone_player_cbs_set_eof_reached(LinphonePlayerCbs *cbs,
  * @param player #LinphonePlayer object @notnil
  * @return The #LinphonePlayerCbs object associated with the LinphonePlayer.
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead @notnil
+ * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player);
 

@@ -6677,6 +6677,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char ** linphone_core_get_supported_fi
  * @return The linphone specs telling what functionalities the linphone client supports @maybenil
  * @ingroup initializing
  * @deprecated 07/02/2019 Use linphone_core_get_linphone_specs_list instead.
+ * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_linphone_specs (const LinphoneCore *core);
 
@@ -6686,6 +6687,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_linphone_specs
  * @param specs The linphone specs to set @maybenil
  * @ingroup initializing
  * @deprecated 07/02/2019 Use linphone_core_set_linphone_specs_list or linphone_core_add_linphone_spec instead.
+ * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_linphone_specs (LinphoneCore *core, const char *specs);
 
@@ -6862,6 +6864,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_find_chat_ro
  * @param participant_addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
  * @deprecated 12/12/2018, use linphone_core_find_one_to_one_chat_room_2 instead
+ * @donotwrap
  * @ingroup chatroom
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (

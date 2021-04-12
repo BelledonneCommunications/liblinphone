@@ -1178,6 +1178,7 @@ typedef struct LinphoneVideoSizeDef {
 /**
  * Old name of #LinphoneVideoSizeDef
  * @deprecated 03/02/2017
+ * @donotwrap
  */
 typedef LinphoneVideoSizeDef MSVideoSizeDef;
 

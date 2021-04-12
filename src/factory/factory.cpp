@@ -575,7 +575,7 @@ void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *s
 
 	// Associate the VfsEncryption class callback
 	bctoolbox::VfsEncryption::openCallbackSet([module, this](bctoolbox::VfsEncryption &settings) {
-		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %s file. Current file's encryption module is %s", settings.filenameGet().data(), encryptionSuiteString(module).data(), encryptionSuiteString(settings.encryptionSuiteGet()).data());
+		bctbx_debug("Encrypted VFS: Open file %s, encryption is set to %s file. Current file's encryption module is %s", settings.filenameGet().data(), encryptionSuiteString(module).data(), encryptionSuiteString(settings.encryptionSuiteGet()).data());
 
 		settings.encryptionSuiteSet(module); // This call will migrate plain files to encrypted ones if needed
 		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
