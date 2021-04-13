@@ -54,11 +54,18 @@ typedef void (*LinphoneAccountCreatorCbsStatusCb)(LinphoneAccountCreator *creato
 /**
  * Create a #LinphoneAccountCreator and set Linphone Request callbacks.
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
- * @param xmlrpc_url The URL to the XML-RPC server. @maybenil
  * @return The new #LinphoneAccountCreator object. @notnil
 **/
-LINPHONE_PUBLIC LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url);
+LINPHONE_PUBLIC LinphoneAccountCreator* linphone_account_creator_create(LinphoneCore *core);
 
+/**
+ * Create a #LinphoneAccountCreator and set Linphone Request callbacks.
+ * @param core The #LinphoneCore used for the XML-RPC communication @notnil
+ * @param xmlrpc_url The URL to the XML-RPC server. @maybenil
+ * @return The new #LinphoneAccountCreator object. @notnil
+ * @deprecated 13/04/2020 Use linphone_account_creator_create() instead
+**/
+LINPHONE_PUBLIC LinphoneAccountCreator* linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url);
 
 /**
  * Reset the account creator entries like username, password, phone number...
