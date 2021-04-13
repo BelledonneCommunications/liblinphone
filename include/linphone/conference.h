@@ -89,6 +89,20 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(Linphon
 LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_clone(const LinphoneConferenceParams *params);
 
 /**
+ * Enable audio when starting a conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param enable If true, audio will be enabled during conference
+ */
+LINPHONE_PUBLIC void linphone_conference_params_enable_audio(LinphoneConferenceParams *params, bool_t enable);
+
+/**
+ * Check whether audio will be enable at conference starting
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return TRUE if the audio will be enable at conference starting, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_params_audio_enabled(const LinphoneConferenceParams *params);
+
+/**
  * Enable video when starting a conference
  * @param params A #LinphoneConferenceParams @notnil
  * @param enable If true, video will be enabled during conference
@@ -101,6 +115,20 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_video(LinphoneConferenceP
  * @return TRUE if the video will be enable at conference starting, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_video_enabled(const LinphoneConferenceParams *params);
+
+/**
+ * Enable chat when starting a conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param enable If true, chat will be enabled during conference
+ */
+LINPHONE_PUBLIC void linphone_conference_params_enable_chat(LinphoneConferenceParams *params, bool_t enable);
+
+/**
+ * Check whether chat will be enable at conference starting
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return TRUE if the chat will be enable at conference starting, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_params_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Enable local participant to enter the conference.

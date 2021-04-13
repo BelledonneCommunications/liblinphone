@@ -676,7 +676,18 @@ static void check_participants_medias(LinphoneConference * local_conference, Lin
 		LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(itp);
 		const LinphoneAddress * p_address = linphone_participant_get_address (p);
 		if (linphone_address_equal(p_address, remote_me_address)) {
-
+			const bool_t remote_is_in = linphone_conference_is_in(remote_conference);
+			const LinphoneConferenceParams * remote_params = linphone_conference_get_current_params(remote_conference);
+			LinphoneMediaDirection audio_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_audio_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
+			LinphoneMediaDirection video_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_video_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
+			LinphoneMediaDirection text_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_chat_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
+			bctbx_list_t *local_devices = linphone_participant_get_devices (p);
+			for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
+				LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+				BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), audio_direction, int, "%0d");
+				BC_ASSERT_EQUAL(linphone_participant_device_get_video_direction(d), video_direction, int, "%0d");
+				BC_ASSERT_EQUAL(linphone_participant_device_get_text_direction(d), text_direction, int, "%0d");
+			}
 		} else {
 			LinphoneParticipant * remote_participant = linphone_conference_find_participant(remote_conference, p_address);
 			BC_ASSERT_PTR_NOT_NULL(remote_participant);
