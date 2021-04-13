@@ -310,7 +310,12 @@ bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator 
 /************************** Start Account Creator data **************************/
 static void _linphone_account_creator_destroy(LinphoneAccountCreator *creator) {
 	/*this will drop all pending requests if any*/
-	if (creator->xmlrpc_session) linphone_xml_rpc_session_release(creator->xmlrpc_session);
+	LinphoneXmlRpcSession* xmlrpc = (LinphoneXmlRpcSession*)belle_sip_object_data_get(
+		BELLE_SIP_OBJECT(creator),
+		"xmlrpc_session"
+	);
+	if (xmlrpc) linphone_xml_rpc_session_release(xmlrpc);
+
 	if (creator->service != NULL ) {
 			if (linphone_account_creator_service_get_destructor_cb(creator->service) != NULL)
 				linphone_account_creator_service_get_destructor_cb(creator->service)(creator);
@@ -333,7 +338,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneAccountCreator, belle_sip_object_t,
 	FALSE
 );
 
-LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
+LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
 	LinphoneAccountCreator *creator;
 
 	creator = belle_sip_object_new(LinphoneAccountCreator);
@@ -342,7 +347,15 @@ LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const
 	creator->cbs = linphone_account_creator_cbs_new();
 	creator->core = core;
 	creator->transport = LinphoneTransportTcp;
-	creator->xmlrpc_session = (xmlrpc_url) ? linphone_xml_rpc_session_new(core, xmlrpc_url) : NULL;
+
+	if (xmlrpc_url) {
+		belle_sip_object_data_set(
+			BELLE_SIP_OBJECT(creator),
+			"xmlrpc_session",
+			linphone_xml_rpc_session_new(core, xmlrpc_url),
+			NULL
+		);
+	}
 
 	creator->set_as_default = TRUE;
 	creator->proxy_cfg = linphone_core_create_proxy_config(core);
@@ -353,8 +366,8 @@ LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const
 	return creator;
 }
 
-LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
-	return _linphone_account_creator_new(core, xmlrpc_url);
+LinphoneAccountCreator * linphone_account_creator_create(LinphoneCore *core) {
+	return linphone_account_creator_new(core, "");
 }
 
 void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
@@ -378,7 +391,7 @@ void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
 }
 
 LinphoneAccountCreator * linphone_core_create_account_creator(LinphoneCore *core, const char *xmlrpc_url) {
-	return _linphone_account_creator_new(core, xmlrpc_url);
+	return linphone_account_creator_new(core, xmlrpc_url);
 }
 
 LinphoneAccountCreator * linphone_account_creator_ref(LinphoneAccountCreator *creator) {
