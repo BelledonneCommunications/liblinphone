@@ -667,6 +667,36 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 
 }
 
+static void check_participants_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference) {
+	bctbx_list_t *local_conference_participants = linphone_conference_get_participant_list(local_conference);
+
+	LinphoneParticipant * remote_conference_me = linphone_conference_get_me(remote_conference);
+	const LinphoneAddress * remote_me_address = linphone_participant_get_address(remote_conference_me);
+	for (bctbx_list_t *itp = local_conference_participants; itp; itp = bctbx_list_next(itp)) {
+		LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(itp);
+		const LinphoneAddress * p_address = linphone_participant_get_address (p);
+		if (linphone_address_equal(p_address, remote_me_address)) {
+
+		} else {
+			LinphoneParticipant * remote_participant = linphone_conference_find_participant(remote_conference, p_address);
+			BC_ASSERT_PTR_NOT_NULL(remote_participant);
+			if (remote_participant) {
+				bctbx_list_t *local_devices = linphone_participant_get_devices (p);
+				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
+					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+					LinphoneParticipantDevice * remote_device = linphone_participant_find_device (remote_participant, linphone_participant_device_get_address(d));
+					BC_ASSERT_PTR_NOT_NULL(remote_device);
+					if (remote_device) {
+						BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), linphone_participant_device_get_audio_direction(remote_device), int, "%0d");
+						BC_ASSERT_EQUAL(linphone_participant_device_get_video_direction(d), linphone_participant_device_get_video_direction(remote_device), int, "%0d");
+						BC_ASSERT_EQUAL(linphone_participant_device_get_text_direction(d), linphone_participant_device_get_text_direction(remote_device), int, "%0d");
+					}
+				}
+			}
+		}
+	}
+}
+
 static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, stats conf_initial_stats, bctbx_list_t *new_participants, stats* new_participant_initial_stats, bool_t * is_call_paused, bctbx_list_t *participants, stats* participant_initial_stats, LinphoneConference * conference) {
 
 	const int no_new_participants = (int)bctbx_list_size(new_participants);
@@ -780,6 +810,29 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 
 	ms_free(notifyExpected);
+
+	// Add a short wait to ensure that all NOTIFYs are replied
+	wait_for_list(lcs,NULL,0,1000);
+
+	LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(local_conference);
+	if (local_conference) {
+		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+			if (p_event_log_enabled && conf_event_log_enabled) {
+				LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+				LinphoneConference * remote_conference = linphone_core_search_conference(m->lc, NULL, m_uri, local_conference_address, NULL);
+				linphone_address_unref(m_uri);
+				BC_ASSERT_PTR_NOT_NULL(remote_conference);
+				if (remote_conference) {
+					check_participants_medias(local_conference, remote_conference);
+				}
+			}
+		}
+	}
+
 
 }
 
