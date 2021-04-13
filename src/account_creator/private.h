@@ -105,7 +105,6 @@ struct _LinphoneAccountCreator {
 	bctbx_list_t *callbacks;
 	LinphoneAccountCreatorCbs *currentCbs; /** Used during the callbacks list iteration */
 
-	LinphoneXmlRpcSession *xmlrpc_session; /**< XML-RPC session */
 	LinphoneProxyConfig *proxy_cfg; /**< Default proxy config */
 
 	/* User */

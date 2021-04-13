@@ -24,9 +24,7 @@
 static const char XMLRPC_URL[] = "http://subscribe.example.org:8082/flexisip-account-manager/xmlrpc.php";
 static const int TIMEOUT_REQUEST = 10000;
 
-/////////// INIT //////////////
-
-static void init_linphone_account_creator_service(LinphoneCore *lc) {
+static LinphoneAccountCreator* init_linphone_account_creator_service(LinphoneCore *lc, const char * url) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 	linphone_account_creator_service_set_constructor_cb(service, NULL);
 	linphone_account_creator_service_set_destructor_cb(service, NULL);
@@ -42,15 +40,9 @@ static void init_linphone_account_creator_service(LinphoneCore *lc) {
 	linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_linphone_xmlrpc);
 	linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone_xmlrpc);
 	linphone_core_set_account_creator_service(lc, service);
-}
 
-static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, const char * url) {
-	init_linphone_account_creator_service(lc);
-	LinphoneAccountCreator *creator = linphone_account_creator_new(lc, url);
-	return creator;
+	return linphone_account_creator_new(lc, url);
 }
-
-/////////// SERVER TESTS ///////////
 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
@@ -82,7 +74,7 @@ static void get_activation_code(LinphoneAccountCreator *creator, int *cb_done) {
 
 static void server_delete_account_test(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -108,7 +100,7 @@ static void server_delete_account_test(void) {
 	linphone_account_creator_cbs_unref(cbs);
 
 	// First attempt with the first password
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -133,7 +125,7 @@ static void server_delete_account_test(void) {
 	linphone_account_creator_cbs_unref(cbs);
 
 	// Second attempt with the second password
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -157,7 +149,7 @@ static void server_delete_account_test(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -182,7 +174,7 @@ static void server_delete_account_test(void) {
 	linphone_account_creator_cbs_unref(cbs);
 
 	// Fourth attempt with the password and sha256
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -208,7 +200,7 @@ static void server_delete_account_test(void) {
 	linphone_account_creator_cbs_unref(cbs);
 
 	// Another attempt with previous password if previous suite crashed before the update
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -234,7 +226,7 @@ static void server_delete_account_test(void) {
 	linphone_account_creator_cbs_unref(cbs);
 
 	// fifth attempt with the second password
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -266,7 +258,7 @@ static void server_delete_account_test(void) {
 /****************** Start Is Account Exist ************************/
 static void server_account_doesnt_exist(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -295,7 +287,7 @@ static void server_account_doesnt_exist(void) {
 
 static void server_account_exist(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -327,7 +319,7 @@ static void server_account_exist(void) {
 /****************** Start Create Account ************************/
 static void server_account_created_with_email(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -353,7 +345,7 @@ static void server_account_created_with_email(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_cbs_set_create_account(cbs, account_creator_cb);
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
@@ -384,7 +376,7 @@ static void server_account_created_with_email(void) {
 
 static void server_create_account_already_create_with_email(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -415,7 +407,7 @@ static void server_create_account_already_create_with_email(void) {
 
 static void server_account_created_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -441,7 +433,7 @@ static void server_account_created_with_phone_number(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
@@ -470,7 +462,7 @@ static void server_account_created_with_phone_number(void) {
 
 static void server_create_account_already_create_as_account_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -501,7 +493,7 @@ static void server_create_account_already_create_as_account_with_phone_number(vo
 
 static void server_create_account_already_create_as_alias_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -535,7 +527,7 @@ static void server_create_account_already_create_as_alias_with_phone_number(void
 /****************** Start Is Account Activated ************************/
 static void server_account_not_activated(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -564,7 +556,7 @@ static void server_account_not_activated(void) {
 
 static void server_account_already_activated(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -595,7 +587,7 @@ static void server_account_already_activated(void) {
 /****************** Start Activate Account ************************/
 static void server_activate_account_not_activated(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -627,7 +619,7 @@ static void server_activate_account_not_activated(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -665,7 +657,7 @@ static void server_activate_account_not_activated(void) {
 
 static void server_activate_account_already_activated(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -702,7 +694,7 @@ static void server_activate_account_already_activated(void) {
 
 static void server_activate_non_existent_account(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -739,7 +731,7 @@ static void server_activate_non_existent_account(void) {
 /****************** Start Link Account ************************/
 static void server_link_account_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -770,7 +762,7 @@ static void server_link_account_with_phone_number(void) {
 
 static void server_link_non_existent_account_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -803,7 +795,7 @@ static void server_link_non_existent_account_with_phone_number(void) {
 /****************** Start Activate Alias ************************/
 static void server_activate_phone_number_for_non_existent_account(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -836,7 +828,7 @@ static void server_activate_phone_number_for_non_existent_account(void) {
 
 static void server_activate_phone_number_for_account(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -866,7 +858,7 @@ static void server_activate_phone_number_for_account(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -903,7 +895,7 @@ static void server_activate_phone_number_for_account(void) {
 /****************** Start Is Alias Used ************************/
 static void server_phone_number_is_used_as_alias(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -933,7 +925,7 @@ static void server_phone_number_is_used_as_alias(void) {
 
 static void server_phone_number_is_used_as_account(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -963,7 +955,7 @@ static void server_phone_number_is_used_as_account(void) {
 
 static void server_phone_number_not_used(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -995,7 +987,7 @@ static void server_phone_number_not_used(void) {
 /****************** Start Is Account Linked ************************/
 static void server_account_link_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1025,7 +1017,7 @@ static void server_account_link_with_phone_number(void) {
 
 static void server_account_not_link_with_phone_number(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1057,7 +1049,7 @@ static void server_account_not_link_with_phone_number(void) {
 /****************** Start Recover Account ************************/
 static void server_recover_account_with_phone_number_used(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1087,7 +1079,7 @@ static void server_recover_account_with_phone_number_used(void) {
 
 static void server_recover_account_with_phone_number_not_used(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1119,7 +1111,7 @@ static void server_recover_account_with_phone_number_not_used(void) {
 /****************** Start Update Account ************************/
 static void server_update_account_password_with_wrong_password(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1151,7 +1143,7 @@ static void server_update_account_password_with_wrong_password(void) {
 
 static void server_update_account_password_with_correct_password(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1178,7 +1170,7 @@ static void server_update_account_password_with_correct_password(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 
@@ -1210,7 +1202,7 @@ static void server_update_account_password_with_correct_password(void) {
 
 static void server_update_account_password_for_non_existent_account(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1264,7 +1256,7 @@ static void login_linphone_account_creator_cb(LinphoneAccountCreator *creator, L
 
 static void server_recover_phone_account_doesnt_exists(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1296,7 +1288,7 @@ static void server_recover_phone_account_doesnt_exists(void) {
 
 static void server_recover_phone_account_exists(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreator *creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1327,7 +1319,7 @@ static void server_recover_phone_account_exists(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 	stats = new_linphone_account_creator_stats();
@@ -1357,7 +1349,7 @@ static void server_recover_phone_account_exists(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 	stats = new_linphone_account_creator_stats();
@@ -1387,7 +1379,7 @@ static void server_recover_phone_account_exists(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 	stats = new_linphone_account_creator_stats();
@@ -1417,7 +1409,7 @@ static void server_recover_phone_account_exists(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 	stats = new_linphone_account_creator_stats();
@@ -1447,7 +1439,7 @@ static void server_recover_phone_account_exists(void) {
 	linphone_account_creator_unref(creator);
 	linphone_account_creator_cbs_unref(cbs);
 
-	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	creator = init_linphone_account_creator_service(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
 	linphone_account_creator_add_callbacks(creator, cbs);
 	stats = new_linphone_account_creator_stats();
