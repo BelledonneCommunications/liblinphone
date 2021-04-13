@@ -2653,13 +2653,17 @@ static void linphone_core_internal_publish_state_changed(LinphoneCore *lc, Linph
 	}
 }
 
+void linphone_core_set_account_creator_url(LinphoneCore *lc, LinphoneAccountCreatorBackend backend, const char *url) {
+	linphone_config_set_int(lc->config, "account_creator", "backend", (int)backend);
+	linphone_config_set_string(lc->config, "account_creator", "url", url);
+}
+
 static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 
 	#ifdef HAVE_FLEXIAPI
-	const char* uri = linphone_config_get_string(lc->config, "sip", "flexiapi_url", NULL);
-
-	if (uri == NULL) {
+	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendFlexiAPI)
+		== LinphoneAccountCreatorBackendXMLRPC) {
 	#endif
 		linphone_account_creator_service_set_constructor_cb(service, linphone_account_creator_constructor_linphone_xmlrpc);
 		linphone_account_creator_service_set_destructor_cb(service, NULL);
