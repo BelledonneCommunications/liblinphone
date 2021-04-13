@@ -30,7 +30,6 @@
 #include "core/core-p.h"
 #include "logger/logger.h"
 #include "remote-conference-event-handler.h"
-#include "xml/conference-info.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -222,10 +221,11 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				Address gruu(endpoint.getEntity().get());
 				StateType state = endpoint.getState();
 
+				shared_ptr<ParticipantDevice> device = nullptr;
 				if (state == StateType::deleted) {
 
 					// Take a pointer towards the device before deleting it in order to send the notification
-					shared_ptr<ParticipantDevice> device = participant->findDevice(gruu);
+					device = participant->findDevice(gruu);
 					participant->removeDevice(gruu);
 
 					if (!isFullState && device && participant) {
@@ -239,7 +239,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 				} else if (state == StateType::full) {
 
-					shared_ptr<ParticipantDevice> device = participant->addDevice(gruu);
+					device = participant->addDevice(gruu);
 
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
@@ -254,6 +254,24 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 							device
 						);
 					}
+				} else {
+					device = participant->findDevice(gruu);
+				}
+
+				if (state != StateType::deleted) {
+					for (const auto media : endpoint.getMedia()) {
+						const std::string mediaType = media.getType().get();
+						const LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
+						if (mediaType.compare("audio") == 0) {
+							device->setAudioDirection(mediaDirection);
+						} else if (mediaType.compare("video") == 0) {
+							device->setVideoDirection(mediaDirection);
+						} else if (mediaType.compare("text") == 0) {
+							device->setTextDirection(mediaDirection);
+						} else {
+							lError() << "Unrecognized media type " << mediaType;
+						}
+					}
 				}
 			}
 		}
@@ -267,6 +285,20 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			conf->setState(ConferenceInterface::State::Created);
 		}
 	}
+}
+
+LinphoneMediaDirection RemoteConferenceEventHandler::mediaStatusToMediaDirection (MediaStatusType status) {
+	switch (status) {
+		case MediaStatusType::inactive:
+			return LinphoneMediaDirectionInactive;
+		case MediaStatusType::sendonly:
+			return LinphoneMediaDirectionSendOnly;
+		case MediaStatusType::recvonly:
+			return LinphoneMediaDirectionRecvOnly;
+		case MediaStatusType::sendrecv:
+			return LinphoneMediaDirectionSendRecv;
+	}
+	return LinphoneMediaDirectionSendRecv;
 }
 
 // -----------------------------------------------------------------------------
