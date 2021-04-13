@@ -37,8 +37,6 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 )
 
 set(LINPHONE_SOURCE_FILES_C
-	account_creator.c
-	account_creator_service.c
 	authentication.c
 	bellesip_sal/sal_address_impl.c
 	bellesip_sal/sal_impl.c
@@ -158,8 +156,8 @@ if (ENABLE_SHARED)
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
-        add_dependencies(linphone-coreapi linphonej)
-    endif()
+		add_dependencies(linphone-coreapi linphonej)
+	endif()
 endif ()
 
 
