@@ -1,5 +1,8 @@
+[account_creator]
+backend=flexiapi
+url=http://subscribe.example.org/flexiapi/api/
+
 [sip]
-flexiapi_url=http://fs-test.linphone.org/flexiapi/api/
 default_proxy=0
 
 [assistant]
