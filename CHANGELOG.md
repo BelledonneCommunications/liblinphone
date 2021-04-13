@@ -10,6 +10,11 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## [5.0.0] Unreleased
 
+### Changed
+- Java wrapper now creates a separated managed object for const native pointers and print an error log when trying to use a non-const method on it.
+- Java & C# wrapper now takes a strong reference on listeners, allowing to use inner classes & lambda expressions even without keeping parent object around.
+- Deprecated methods for more than two years have been removed from wrappers (e.g. every setListener() on some objects).
+
 ### Removed
 - Legacy Java wrapper for Android
 
@@ -20,7 +25,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Automatic handling of some mobile OS behaviours
   * enterForeground() and enterBackground() automatically called (iOS and Android).
   * auto acquire and release of audio focus for Android.
-  * Core.iterate() is being called automatically internally for Android, it is no longer needed to create a timer in the application to call it.
+  * Core.iterate() is being called automatically internally for Android & iOS, it is no longer needed to create a timer in the application to call it.
 - New audio routes API to choose which device use to capture & play audio (Android & iOS). The application can manage
   audio route changes (bluetooth, speaker, earpiece) throug liblinphone's API.
 - Added API to play user's ringtone instead of default ringtone for Android.
@@ -28,7 +33,6 @@ This changelog file was started on October 2019. Previous changes were more or l
 - iOS: added linphone_core_configure_audio_session() to be called when used with Callkit
   see specific documentation here: https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Getting%20started/iOS/#HCallKitintegration
 - client-based video conference in active speaker switching mode (beta feature).
-
 
 ### Changed
 - Warning: some function parameters have been renamed for consistency, which modified the Swift API (where parameter names are part of the ABI).

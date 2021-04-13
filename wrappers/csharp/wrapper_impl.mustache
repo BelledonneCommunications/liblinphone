@@ -105,35 +105,35 @@ namespace Linphone
 		internal List<IntPtr> string_ptr_list;
 
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-		private delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
+		internal delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 #if WINDOWS_UWP
-		static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, IntPtr cb);
+		internal static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, IntPtr cb);
 #else
-		static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, OnLinphoneObjectDataDestroyed cb);
+		internal static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, OnLinphoneObjectDataDestroyed cb);
 #endif
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr belle_sip_object_data_get(IntPtr ptr, string name);
+		internal static extern IntPtr belle_sip_object_data_get(IntPtr ptr, string name);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr belle_sip_object_ref(IntPtr ptr);
+		internal static extern IntPtr belle_sip_object_ref(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern void belle_sip_object_unref(IntPtr ptr);
+		internal static extern void belle_sip_object_unref(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern void belle_sip_object_data_remove(IntPtr ptr, string name);
+		internal static extern void belle_sip_object_data_remove(IntPtr ptr, string name);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr bctbx_list_next(IntPtr ptr);
+		internal static extern IntPtr bctbx_list_next(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr bctbx_list_get_data(IntPtr ptr);
+		internal static extern IntPtr bctbx_list_get_data(IntPtr ptr);
 
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-		static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
+		internal static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
 
 		~LinphoneObject()
 		{
@@ -345,10 +345,6 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{interfaceName}} : LinphoneObject
 	{
-        ~{{interfaceName}}()
-        {
-            unregister();
-        }
 
         [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
         static extern void {{set_user_data_name}}(IntPtr thiz, IntPtr listener);
@@ -421,35 +417,44 @@ namespace Linphone
 		{{/delegate}}
 		{{/methods}}
 
+		internal OnLinphoneObjectDataDestroyed onLinphoneListenerObjectDestroyed;
+
+		internal void on_linphone_cbs_data_destroyed(IntPtr data) {
+			if (data != IntPtr.Zero)
+			{
+				GCHandle.FromIntPtr(data).Free();
+			}
+		}
+
 		internal void register() {
-			IntPtr listener = {{get_user_data_name}}(nativePtr);
+			IntPtr listener = belle_sip_object_data_get(nativePtr, "cs_listener_obj");
 			if (listener == IntPtr.Zero)
 			{
 				GCHandle _handle = GCHandle.Alloc(this, GCHandleType.Normal);
 				listener = GCHandle.ToIntPtr(_handle);
-			} else
+			} 
+			else
 			{
 				GCHandle _handle = GCHandle.FromIntPtr(listener);
 				if (_handle.Target == this)
 				{
 					return;
-				} else
+				} 
+				else
 				{
 					_handle.Free();
 					_handle = GCHandle.Alloc(this, GCHandleType.Normal);
 					listener = GCHandle.ToIntPtr(_handle);
 				}
 			}
-			{{set_user_data_name}}(nativePtr, listener);
-		}
 
-		internal void unregister() {
-			IntPtr listener = {{get_user_data_name}}(nativePtr);
-			{{set_user_data_name}}(nativePtr, IntPtr.Zero);
-			if (listener != IntPtr.Zero)
-			{
-				GCHandle.FromIntPtr(listener).Free();
-			}
+#if WINDOWS_UWP
+		onLinphoneListenerObjectDestroyed = on_linphone_cbs_data_destroyed;
+		IntPtr cb = Marshal.GetFunctionPointerForDelegate(onLinphoneListenerObjectDestroyed);
+		belle_sip_object_data_set(nativePtr, "cs_listener_obj", listener, cb);
+#else
+		belle_sip_object_data_set(nativePtr, "cs_listener_obj", listener, on_linphone_cbs_data_destroyed);
+#endif
 		}
 	}
 
