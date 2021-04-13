@@ -38,17 +38,17 @@ class Core;
 
 ParticipantDevice::ParticipantDevice () {
 	mTimeOfJoining = time(nullptr);
-	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Audio);
-	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Video);
-	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Text);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Audio);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Video);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Text);
 }
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
 	mTimeOfJoining = time(nullptr);
-	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Audio);
-	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Video);
-	setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Text);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Audio);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Video);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Text);
 }
 
 ParticipantDevice::~ParticipantDevice () {
@@ -128,23 +128,23 @@ void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
 	updateMedia();
 }
 
-LinphoneMediaDirection ParticipantDevice::getMediaDirection(const MediaCapabilities capIdx) const {
+LinphoneMediaDirection ParticipantDevice::getMediaDirection(const ConferenceInterface::MediaCapabilities capIdx) const {
 	return static_cast<LinphoneMediaDirection>(mediaCapabilities[static_cast<int>(capIdx)]);
 }
 
 LinphoneMediaDirection ParticipantDevice::getAudioDirection() const {
-	return getMediaDirection(MediaCapabilities::Audio);
+	return getMediaDirection(ConferenceInterface::MediaCapabilities::Audio);
 }
 
 LinphoneMediaDirection ParticipantDevice::getVideoDirection() const {
-	return getMediaDirection(MediaCapabilities::Video);
+	return getMediaDirection(ConferenceInterface::MediaCapabilities::Video);
 }
 
 LinphoneMediaDirection ParticipantDevice::getTextDirection() const {
-	return getMediaDirection(MediaCapabilities::Text);
+	return getMediaDirection(ConferenceInterface::MediaCapabilities::Text);
 }
 
-bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & direction, const MediaCapabilities capIdx) {
+bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceInterface::MediaCapabilities capIdx) {
 	if (mediaCapabilities[static_cast<int>(capIdx)] != static_cast<int>(direction)) {
 		mediaCapabilities[static_cast<int>(capIdx)] = static_cast<int>(direction);
 		return true;
@@ -153,15 +153,15 @@ bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & directi
 }
 
 bool ParticipantDevice::setAudioDirection(const LinphoneMediaDirection direction) {
-	return setMediaDirection(direction, MediaCapabilities::Audio);
+	return setMediaDirection(direction, ConferenceInterface::MediaCapabilities::Audio);
 }
 
 bool ParticipantDevice::setVideoDirection(const LinphoneMediaDirection direction) {
-	return setMediaDirection(direction, MediaCapabilities::Video);
+	return setMediaDirection(direction, ConferenceInterface::MediaCapabilities::Video);
 }
 
 bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction) {
-	return setMediaDirection(direction, MediaCapabilities::Text);
+	return setMediaDirection(direction, ConferenceInterface::MediaCapabilities::Text);
 }
 
 bool ParticipantDevice::updateMedia() {
@@ -184,9 +184,9 @@ bool ParticipantDevice::updateMedia() {
 			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
 		}
 	} else {
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Audio);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Video);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, MediaCapabilities::Text);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Audio);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Video);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceInterface::MediaCapabilities::Text);
 	}
 
 	return mediaChanged;

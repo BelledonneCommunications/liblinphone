@@ -51,13 +51,6 @@ public:
 		ScheduledForLeaving, //Transitional state for a participant that will receive a BYE shortly.
 	};
 
-	enum class MediaCapabilities {
-		Audio, // Audio text capabilities
-		Video, // Video capabilities
-		Text, // Text capabilities
-		Count // Count of media capabilities
-	};
-
 	ParticipantDevice ();
 	explicit ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const std::string &name = "");
 	virtual ~ParticipantDevice ();
@@ -113,12 +106,12 @@ private:
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
 
-	int mediaCapabilities[static_cast<int>(MediaCapabilities::Count)];
+	int mediaCapabilities[static_cast<int>(ConferenceInterface::MediaCapabilities::Count)];
 
 	void *mUserData = nullptr;
 
-	bool setMediaDirection(const LinphoneMediaDirection & direction, const MediaCapabilities capIdx);
-	LinphoneMediaDirection getMediaDirection(const MediaCapabilities capIdx) const;
+	bool setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceInterface::MediaCapabilities capIdx);
+	LinphoneMediaDirection getMediaDirection(const ConferenceInterface::MediaCapabilities capIdx) const;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
