@@ -53,6 +53,7 @@ public:
 		ConferenceParticipantDeviceRemoved = LinphoneEventLogTypeConferenceParticipantDeviceRemoved,
 		ConferenceParticipantDeviceMediaChanged = LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged,
 		ConferenceSubjectChanged = LinphoneEventLogTypeConferenceSubjectChanged,
+		ConferenceAvailableMediaChanged = LinphoneEventLogTypeConferenceAvailableMediaChanged,
 		ConferenceSecurityEvent = LinphoneEventLogTypeConferenceSecurityEvent,
 		ConferenceEphemeralMessageLifetimeChanged = LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged,
 		ConferenceEphemeralMessageEnabled = LinphoneEventLogTypeConferenceEphemeralMessageEnabled,

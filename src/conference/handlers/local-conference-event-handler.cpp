@@ -77,6 +77,14 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	UsersType users;
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	confDescr.setSubject(subject);
+	const auto & confParams = conf->getCurrentParams();
+	const auto & audioEnabled = confParams.audioEnabled();
+	const LinphoneMediaDirection audioDirection = audioEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	const auto & videoEnabled = confParams.videoEnabled();
+	const LinphoneMediaDirection videoDirection = videoEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	const auto & textEnabled = confParams.chatEnabled();
+	const LinphoneMediaDirection textDirection = textEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	addAvailableMediaCapabilities(audioDirection, videoDirection, textDirection, confDescr);
 	if (oneToOne) {
 		KeywordsType keywords(sizeof(char), "one-to-one");
 		confDescr.setKeywords(keywords);
@@ -87,7 +95,6 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	std::list<std::shared_ptr<Participant>> participants(conf->getParticipants());
 
 	// Add local participant only if it is enabled
-	const ConferenceParams & confParams = conf->getCurrentParams();
 	if (confParams.localParticipantEnabled()) {
 		std::shared_ptr<Participant> me = conf->getMe();
 		if (me) {
@@ -125,6 +132,27 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 
 	return createNotify(confInfo, true);
 }
+
+void LocalConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, ConferenceDescriptionType & confDescr) {
+	ConferenceMediaType mediaType;
+	ConferenceMediumType audio("audio", "1");
+	audio.setDisplayText("audio");
+	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
+	mediaType.getEntry().push_back(audio);
+
+	ConferenceMediumType video("video", "2");
+	video.setDisplayText("video");
+	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	mediaType.getEntry().push_back(video);
+
+	ConferenceMediumType text("text", "3");
+	text.setDisplayText("text");
+	text.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
+	mediaType.getEntry().push_back(text);
+	confDescr.setAvailableMedia(mediaType);
+
+}
+
 
 void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, EndpointType & endpoint) {
 	const auto &audioDirection = device->getAudioDirection();
@@ -234,6 +262,13 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 				shared_ptr<ConferenceSubjectEvent> subjectEvent = static_pointer_cast<ConferenceSubjectEvent>(eventLog);
 				body = createNotifySubjectChanged(
 					subjectEvent->getSubject()
+				);
+			} break;
+
+			case EventLog::Type::ConferenceAvailableMediaChanged: {
+				shared_ptr<ConferenceAvailableMediaEvent> availableMediaEvent = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog);
+				body = createNotifyAvailableMediaChanged(
+					availableMediaEvent->getAvailableMediaType()
 				);
 			} break;
 
@@ -501,6 +536,38 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 	return createNotify(confInfo);
 }
 
+string LocalConferenceEventHandler::createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
+	string entity = conf->getConferenceAddress().asString();
+	ConferenceType confInfo = ConferenceType(entity);
+	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
+	LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
+	try {
+		const auto & audioEnabled = mediaCapabilities.at(ConferenceMediaCapabilities::Audio);
+		audioDirection = audioEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	} catch (std::out_of_range&) {
+
+	}
+	LinphoneMediaDirection videoDirection = LinphoneMediaDirectionInactive;
+	try {
+		const auto & videoEnabled = mediaCapabilities.at(ConferenceMediaCapabilities::Video);
+		videoDirection = videoEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	} catch (std::out_of_range&) {
+
+	}
+	LinphoneMediaDirection textDirection = LinphoneMediaDirectionInactive;
+	try {
+		const auto & textEnabled = mediaCapabilities.at(ConferenceMediaCapabilities::Text);
+		textDirection = textEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	} catch (std::out_of_range&) {
+
+	}
+	addAvailableMediaCapabilities(audioDirection, videoDirection, textDirection, confDescr);
+	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+	return createNotify(confInfo);
+}
+
+
 void LocalConferenceEventHandler::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
 	for (const auto &device : participant->getDevices()){
 		/* Only notify to device that are present in the conference. */
@@ -664,6 +731,12 @@ void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<Confer
 }
 
 void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyAvailableMediaChanged(event->getAvailableMediaType()));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {

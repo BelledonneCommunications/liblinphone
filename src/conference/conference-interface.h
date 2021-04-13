@@ -29,7 +29,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceAvailableMediaEvent;
 class ConferenceListenerInterface;
 class IdentityAddress;
 class CallSessionParams;
@@ -69,17 +68,6 @@ public:
 		Terminated = LinphoneConferenceStateTerminated, /**< Conference exists on server but not in local //fixme jehan creuser ce point */
 		TerminationFailed = LinphoneConferenceStateTerminationFailed, /**< Conference termination failed */
 		Deleted = LinphoneConferenceStateDeleted, /**< Conference is deleted on the server //fixme jehan creuser ce point  */
-	};
-
-	/**
-	 * Conference media capabilities.
-	 * MediaCapabilities is used to index participant and media capabilities.
-	 */
-	enum class MediaCapabilities {
-		Audio, // Audio text capabilities
-		Video, // Video capabilities
-		Text, // Text capabilities
-		Count // Count of media capabilities
 	};
 
 	//casting to int to get rid of the enum compare warning.
@@ -368,17 +356,6 @@ class LINPHONE_PUBLIC ConferenceFactoryInterface {
 	*/
 	std::shared_ptr<ConferenceInterface>& createConference(const std::shared_ptr<ConferenceParamsInterface> &params,
 	const std::list<IdentityAddress> &participants);
-};
-
-/*
- * Event used to repport media availability changes from a conference.
- **/
-class ConferenceAvailableMediaEvent :  public EventLog {
-	/*
-	 * Can be audio, video, text
-	 *@return list of available media type for this conference;
-	 */
-	const std::list<std::string> &getAvailableMediaType () const;
 };
 
 std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e);
