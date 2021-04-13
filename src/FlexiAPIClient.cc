@@ -274,7 +274,7 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
 	belle_http_request_listener_t *listener;
 	belle_http_request_t *req;
 
-	string uri = linphone_config_get_string(mCore->config, "sip", "flexiapi_url", NULL);
+	string uri = linphone_config_get_string(mCore->config, "account_creator", "url", NULL);
 
 	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
 									belle_sip_header_content_type_create("application", "json"),
