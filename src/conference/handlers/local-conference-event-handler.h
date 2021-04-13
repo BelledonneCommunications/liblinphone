@@ -70,6 +70,7 @@ public:
 	std::string createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceMediaChanged (const Address & pAddress, const Address & dAddress);
+	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
 	std::string createNotifySubjectChanged ();
 
 	static void notifyResponseCb (const LinphoneEvent *ev);
@@ -152,6 +153,7 @@ private:
 	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
 
 	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
+	void addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, Xsd::ConferenceInfo::ConferenceDescriptionType & confDescr);
 
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };

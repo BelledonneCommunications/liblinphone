@@ -954,6 +954,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = confParams->videoEnabled();
 	bool previousAudioEnablement = confParams->audioEnabled();
+	bool previousChatEnablement = confParams->chatEnabled();
 	bool ret = MediaConference::Conference::update(newParameters);
 	// Update media conference parameter here in order to properly
 	if (newConfParams.videoEnabled() != previousVideoEnablement){
@@ -979,6 +980,14 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 		/* Don't forget the local participant. For simplicity, a removeLocalEndpoint()/addLocalEndpoint() does the job. */
 		removeLocalEndpoint();
 		addLocalEndpoint();
+	}
+	if ((newConfParams.chatEnabled() != previousChatEnablement) || (newConfParams.videoEnabled() != previousVideoEnablement) || (newConfParams.audioEnabled() != previousAudioEnablement)){
+		std::map<ConferenceMediaCapabilities, bool> mediaCapabilities;
+		mediaCapabilities[ConferenceMediaCapabilities::Audio] = newConfParams.audioEnabled();
+		mediaCapabilities[ConferenceMediaCapabilities::Video] = newConfParams.videoEnabled();
+		mediaCapabilities[ConferenceMediaCapabilities::Text] = newConfParams.chatEnabled();
+		time_t creationTime = time(nullptr);
+		notifyAvailableMediaChanged(creationTime, false, mediaCapabilities);
 	}
 	return ret;
 }
@@ -1070,6 +1079,12 @@ shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
 	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+}
+
+shared_ptr<ConferenceAvailableMediaEvent> LocalConference::notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyAvailableMediaChanged (creationTime, isFullState, mediaCapabilities);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {

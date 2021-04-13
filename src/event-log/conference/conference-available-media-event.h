@@ -17,33 +17,39 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_CONFERENCE_SUBJECT_EVENT_H_
-#define _L_CONFERENCE_SUBJECT_EVENT_H_
+#ifndef _L_CONFERENCE_AVAILABLE_MEDIA_EVENT_H_
+#define _L_CONFERENCE_AVAILABLE_MEDIA_EVENT_H_
 
+#include <map>
+
+#include "conference/conference-enums.h"
 #include "conference-notified-event.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceSubjectEventPrivate;
+class ConferenceAvailableMediaEventPrivate;
 
-class LINPHONE_PUBLIC ConferenceSubjectEvent : public ConferenceNotifiedEvent {
+class LINPHONE_PUBLIC ConferenceAvailableMediaEvent : public ConferenceNotifiedEvent {
 	friend class Conference;
 public:
-	ConferenceSubjectEvent (
+	ConferenceAvailableMediaEvent (
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const std::string &subject
+		const std::map<ConferenceMediaCapabilities, bool> mediaCapabilties
 	);
 
-	const std::string &getSubject () const;
+	const std::map<ConferenceMediaCapabilities, bool> &getAvailableMediaType() const;
+	bool audioEnabled() const;
+	bool videoEnabled() const;
+	bool chatEnabled() const;
 
 private:
-	L_DECLARE_PRIVATE(ConferenceSubjectEvent);
-	L_DISABLE_COPY(ConferenceSubjectEvent);
+	L_DECLARE_PRIVATE(ConferenceAvailableMediaEvent);
+	L_DISABLE_COPY(ConferenceAvailableMediaEvent);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_CONFERENCE_SUBJECT_EVENT_H_
+#endif // ifndef _L_CONFERENCE_AVAILABLE_MEDIA_EVENT_H_

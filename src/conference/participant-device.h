@@ -25,6 +25,8 @@
 
 #include <belle-sip/object++.hh>
 
+#include "conference/conference-enums.h"
+
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/encryption/encryption-engine.h"
@@ -106,12 +108,12 @@ private:
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
 
-	int mediaCapabilities[static_cast<int>(ConferenceInterface::MediaCapabilities::Count)];
+	int mediaCapabilities[static_cast<int>(ConferenceMediaCapabilities::Count)];
 
 	void *mUserData = nullptr;
 
-	bool setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceInterface::MediaCapabilities capIdx);
-	LinphoneMediaDirection getMediaDirection(const ConferenceInterface::MediaCapabilities capIdx) const;
+	bool setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceMediaCapabilities capIdx);
+	LinphoneMediaDirection getMediaDirection(const ConferenceMediaCapabilities capIdx) const;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
