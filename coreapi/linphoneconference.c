@@ -306,12 +306,28 @@ LinphoneConferenceParams *linphone_conference_params_clone (const LinphoneConfer
 	return static_cast<ConferenceParams*>(ConferenceParams::toCpp(params)->clone())->toC();
 }
 
+void linphone_conference_params_enable_audio (LinphoneConferenceParams *params, bool_t enable) {
+	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+}
+
+bool_t linphone_conference_params_audio_enabled (const LinphoneConferenceParams *params) {
+	return ConferenceParams::toCpp(params)->audioEnabled() ? TRUE : FALSE;
+}
+
 void linphone_conference_params_enable_video (LinphoneConferenceParams *params, bool_t enable) {
 	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
 }
 
 bool_t linphone_conference_params_video_enabled (const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->videoEnabled() ? TRUE : FALSE;
+}
+
+void linphone_conference_params_enable_chat (LinphoneConferenceParams *params, bool_t enable) {
+	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+}
+
+bool_t linphone_conference_params_chat_enabled (const LinphoneConferenceParams *params) {
+	return ConferenceParams::toCpp(params)->chatEnabled() ? TRUE : FALSE;
 }
 
 void linphone_conference_params_enable_local_participant(LinphoneConferenceParams *params, bool_t enable){
