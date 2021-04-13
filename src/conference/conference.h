@@ -111,6 +111,7 @@ class LINPHONE_PUBLIC Conference :
 	friend class ServerGroupChatRoomPrivate;
 	friend class ServerGroupChatRoom;
 public:
+
 	~Conference();
 
 	std::shared_ptr<Participant> getActiveParticipant () const;

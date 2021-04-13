@@ -71,6 +71,17 @@ public:
 		Deleted = LinphoneConferenceStateDeleted, /**< Conference is deleted on the server //fixme jehan creuser ce point  */
 	};
 
+	/**
+	 * Conference media capabilities.
+	 * MediaCapabilities is used to index participant and media capabilities.
+	 */
+	enum class MediaCapabilities {
+		Audio, // Audio text capabilities
+		Video, // Video capabilities
+		Text, // Text capabilities
+		Count // Count of media capabilities
+	};
+
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
 	static_assert((int)ConferenceInterface::State::Deleted == (int)LinphoneConferenceStateDeleted, "LinphoneConferenceState and ConferenceInterface::State are not synchronized, fix this !");
