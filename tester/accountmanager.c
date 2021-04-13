@@ -233,20 +233,23 @@ void account_create_in_server_db(Account *account, LinphoneProxyConfig *cfg){
 	tr.tls_port = LC_SIP_TRANSPORT_RANDOM;
 	linphone_core_set_sip_transports(lc, &tr);
 
-	LinphoneAccountCreator *creator = linphone_account_creator_new(lc, "");
+	linphone_core_set_account_creator_backend(lc, LinphoneAccountCreatorBackendFlexiAPI);
+	linphone_core_set_account_creator_url(
+		lc,
+		linphone_config_get_string(
+			linphone_core_get_config(lc),
+				"account_creator",
+				"url",
+				"http://subscribe.example.org/flexiapi/api/"
+		)
+	);
+
+	LinphoneAccountCreator *creator = linphone_account_creator_create(lc);
 	LinphoneAccountCreatorCbs *creator_cbs = linphone_account_creator_get_callbacks(creator);
 
 	LinphoneProxyConfig *default_cfg = linphone_core_get_default_proxy_config(lc);
-	linphone_config_set_string(linphone_core_get_config(lc), "sip", "flexiapi_url",
-		linphone_config_get_string(
-			linphone_core_get_config(lc),
-				"sip",
-				"flexiapi_url",
-				"http://fs-test.linphone.org/flexiapi/api/"
-		)
-	);
-	linphone_account_creator_set_proxy_config(creator, cfg);
 
+	linphone_account_creator_set_proxy_config(creator, cfg);
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator), (void*)LinphoneAccountCreatorStatusAccountCreated);
 
 	const char *username = linphone_address_get_username(account->modified_identity);

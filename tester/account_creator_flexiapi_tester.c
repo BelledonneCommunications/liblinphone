@@ -23,28 +23,20 @@
 
 static const int TIMEOUT_REQUEST = 3000;
 
-static void init_linphone_account_creator_service(LinphoneCore *lc) {
+static LinphoneAccountCreator* init(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 	linphone_account_creator_service_set_constructor_cb(service, NULL);
 	linphone_account_creator_service_set_destructor_cb(service, NULL);
-	//linphone_account_creator_service_set_create_account_cb(service, linphone_account_creator_create_account_linphone_xmlrpc);
 	linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_flexiapi);
 	linphone_account_creator_service_set_activate_account_cb(service, linphone_account_creator_activate_phone_account_flexiapi);
 	linphone_account_creator_service_set_is_account_activated_cb(service, linphone_account_creator_is_account_activated_flexiapi);
 	linphone_account_creator_service_set_link_account_cb(service, linphone_account_creator_link_phone_number_with_account_flexiapi);
 	linphone_account_creator_service_set_activate_alias_cb(service, linphone_account_creator_activate_phone_number_link_flexiapi);
-	//linphone_account_creator_service_set_is_alias_used_cb(service, linphone_account_creator_is_phone_number_used_linphone_xmlrpc);
 	linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_flexiapi);
-	//linphone_account_creator_service_set_recover_account_cb(service, linphone_account_creator_recover_phone_account_linphone_xmlrpc);
 	linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_flexiapi);
-	//linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone_xmlrpc);
 	linphone_core_set_account_creator_service(lc, service);
-}
 
-static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, const char * url) {
-	init_linphone_account_creator_service(lc);
-	LinphoneAccountCreator *creator = linphone_account_creator_new(lc, url);
-	return creator;
+	return linphone_account_creator_create(lc);
 }
 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
@@ -63,7 +55,7 @@ static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountC
 
 static void server_account_exist(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -94,7 +86,7 @@ static void server_account_exist(void) {
 
 static void server_account_linked(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -123,7 +115,7 @@ static void server_account_linked(void) {
 
 static void server_account_activated(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -152,7 +144,7 @@ static void server_account_activated(void) {
 
 static void server_account_delete(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -186,7 +178,7 @@ static void server_account_delete(void) {
 
 static void server_account_activate_email(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -218,7 +210,7 @@ static void server_account_activate_email(void) {
 
 static void server_account_send_token(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -250,7 +242,7 @@ static void server_account_send_token(void) {
 
 static void server_account_create_account_with_token(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreator *creator = init(marie->lc);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
