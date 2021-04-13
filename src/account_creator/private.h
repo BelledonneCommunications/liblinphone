@@ -100,12 +100,11 @@ struct _LinphoneAccountCreator {
 	/* AccountCreator */
 	LinphoneAccountCreatorService *service; /**< Account creator service */
 
-	LinphoneAccountCreatorCbs *cbs; /**< Account creator cbs, deprecated, use a list of Cbs instead */
+	LinphoneAccountCreatorCbs *cbs; /**< Account creator cbs, deprecated, use the list of callbacks */
 
 	bctbx_list_t *callbacks;
 	LinphoneAccountCreatorCbs *currentCbs; /** Used during the callbacks list iteration */
 
-	LinphoneXmlRpcSession *xmlrpc_session; /**< XML-RPC session */
 	LinphoneProxyConfig *proxy_cfg; /**< Default proxy config */
 
 	/* User */
