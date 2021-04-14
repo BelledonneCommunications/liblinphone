@@ -5500,6 +5500,22 @@ LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, 
 LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
 
 /**
+ * Enable vibration will incoming call is ringing (Android only).
+ * @param core The #LinphoneCore @notnil
+ * @return TRUE if the device should vibrate while an incoming call is ringing, FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether the device will vibrate while an incoming call is ringing (Android only).
+ * @param core The #LinphoneCore @notnil
+ * @return TRUE if the device will vibrate (if possible), FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC bool_t linphone_core_vibration_on_incoming_call_enabled(LinphoneCore *core);
+
+/**
  * Returns a list of audio devices, with only the first device for each type
  * To have the list of all audio devices, use #linphone_core_get_extended_audio_devices()
  * @param core The #LinphoneCore @notnil
