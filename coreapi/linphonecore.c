@@ -2729,6 +2729,15 @@ bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core) {
 	return core->auto_iterate_enabled;
 }
 
+void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_int(core->config, "misc", "vibrate_on_incoming_call", enable);
+	core->vibrate_on_incoming_call = enable;
+}
+
+bool_t linphone_core_is_vibration_on_incoming_call_enabled(LinphoneCore *core) {
+	return core->vibrate_on_incoming_call;
+}
+
 static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig *config, void * userdata, void *system_context, bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
@@ -2756,12 +2765,17 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	bool_t push_notification_default = FALSE;
 	bool_t auto_iterate_default = FALSE;
+	bool_t vibration_incoming_call_default = FALSE;
 #if __ANDROID__ || TARGET_OS_IPHONE
 	push_notification_default = TRUE;
 	auto_iterate_default = TRUE;
 #endif
+#if __ANDROID__
+	vibration_incoming_call_default = TRUE;
+#endif
 	lc->push_notification_enabled = !!linphone_config_get_int(lc->config, "net", "push_notification", push_notification_default);
 	lc->auto_iterate_enabled = !!linphone_config_get_int(lc->config, "misc", "auto_iterate", auto_iterate_default);
+	lc->vibrate_on_incoming_call = !!linphone_config_get_int(lc->config, "misc", "vibrate_on_incoming_call", vibration_incoming_call_default);
 
 	lc->push_config = linphone_push_notification_config_new();
 
