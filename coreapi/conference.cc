@@ -1327,27 +1327,31 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 	if (getMe()->isAdmin()) {
 		Address refer_to_addr;
 		int res;
-
-		switch (state) {
-			case ConferenceInterface::State::Created:
-			case ConferenceInterface::State::TerminationPending:
-				if(!findParticipant(addr)) {
-					ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
+		std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
+		if (p) {
+			switch (state) {
+				case ConferenceInterface::State::Created:
+				case ConferenceInterface::State::TerminationPending:
+					if(!findParticipant(addr)) {
+						ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
+						return -1;
+					}
+					refer_to_addr = addr.asAddress();
+					linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
+					res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
+					if (res == 0)
+						return Conference::removeParticipant(p);
+					else {
+						ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
+						return -1;
+					}
+				default:
+					ms_error("Cannot remove %s from conference: Bad conference state (%s)",
+						addr.asString().c_str(), Utils::toString(state).c_str());
 					return -1;
-				}
-				refer_to_addr = addr.asAddress();
-				linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
-				res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
-				if (res == 0)
-					return Conference::removeParticipant(addr);
-				else {
-					ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
-					return -1;
-				}
-			default:
-				ms_error("Cannot remove %s from conference: Bad conference state (%s)",
-					addr.asString().c_str(), Utils::toString(state).c_str());
-				return -1;
+			}
+		} else {
+			lWarning() << "Unable to remove participant " << addr.asString() << " because it is not part of the conference " << getConferenceAddress();
 		}
 	} else {
 		lWarning() << "Unable to remove participant " << addr.asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
