@@ -675,13 +675,14 @@ static void check_participants_medias(LinphoneConference * local_conference, Lin
 	for (bctbx_list_t *itp = local_conference_participants; itp; itp = bctbx_list_next(itp)) {
 		LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(itp);
 		const LinphoneAddress * p_address = linphone_participant_get_address (p);
+		bctbx_list_t *local_devices = NULL;
 		if (linphone_address_equal(p_address, remote_me_address)) {
 			const bool_t remote_is_in = linphone_conference_is_in(remote_conference);
 			const LinphoneConferenceParams * remote_params = linphone_conference_get_current_params(remote_conference);
 			LinphoneMediaDirection audio_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_audio_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
 			LinphoneMediaDirection video_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_video_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
 			LinphoneMediaDirection text_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_chat_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
-			bctbx_list_t *local_devices = linphone_participant_get_devices (p);
+			local_devices = linphone_participant_get_devices (p);
 			for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
 				LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
 				BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), audio_direction, int, "%0d");
@@ -692,7 +693,7 @@ static void check_participants_medias(LinphoneConference * local_conference, Lin
 			LinphoneParticipant * remote_participant = linphone_conference_find_participant(remote_conference, p_address);
 			BC_ASSERT_PTR_NOT_NULL(remote_participant);
 			if (remote_participant) {
-				bctbx_list_t *local_devices = linphone_participant_get_devices (p);
+				local_devices = linphone_participant_get_devices (p);
 				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
 					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
 					LinphoneParticipantDevice * remote_device = linphone_participant_find_device (remote_participant, linphone_participant_device_get_address(d));
@@ -705,7 +706,11 @@ static void check_participants_medias(LinphoneConference * local_conference, Lin
 				}
 			}
 		}
+		if (local_devices) {
+			bctbx_list_free_with_data(local_devices, (void (*)(void *))linphone_participant_device_unref);
+		}
 	}
+	bctbx_list_free_with_data(local_conference_participants, (void (*)(void *))linphone_participant_unref);
 }
 
 static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, stats conf_initial_stats, bctbx_list_t *new_participants, stats* new_participant_initial_stats, bool_t * is_call_paused, bctbx_list_t *participants, stats* participant_initial_stats, LinphoneConference * conference) {
