@@ -82,7 +82,7 @@ static bool_t realm_match(const char *realm1, const char *realm2){
 /* Check if the LinphoneAuthInfo candidate is compatible with the requested algorithm. */
 static bool_t check_algorithm_compatibility(const LinphoneAuthInfo *ai, const char *algorithm){
 	const char *ai_algorithm = linphone_auth_info_get_algorithm(ai);
-	
+
 	if (algorithm == NULL) return TRUE;
 	if (linphone_auth_info_get_password(ai) != NULL){
 		/* We have the clear text password, so if the user didn't requested a specific algorithm, we can satisfy all algorithms.*/
@@ -104,9 +104,9 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc, const char *user
 	for (elem=lc->auth_info;elem!=NULL;elem=elem->next) {
 		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo*)elem->data;
 
-		if (username && linphone_auth_info_get_username(pinfo) && strcmp(username, linphone_auth_info_get_username(pinfo))==0) 
+		if (username && linphone_auth_info_get_username(pinfo) && strcmp(username, linphone_auth_info_get_username(pinfo))==0)
 		{
-			
+
 			if (!check_algorithm_compatibility(pinfo, algorithm)) {
 				continue;
 			}
@@ -176,7 +176,7 @@ const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const ch
 	if (ai==NULL){
 		ai=find_auth_info(lc,username,NULL,NULL, algorithm, ignore_realm);
 	}
-	
+
 	if (ai) ms_message("linphone_core_find_auth_info(): returning auth info username=%s, realm=%s", linphone_auth_info_get_username(ai) ? linphone_auth_info_get_username(ai) : "", linphone_auth_info_get_realm(ai) ? linphone_auth_info_get_realm(ai) : "");
 	return ai;
 }
@@ -213,7 +213,7 @@ static void write_auth_infos(LinphoneCore *lc){
 }
 
 LinphoneAuthInfo *linphone_core_create_auth_info(LinphoneCore *lc, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
-	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);	
+	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
 }
 
 void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info){
@@ -246,7 +246,7 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 			sai.username = (char *) linphone_auth_info_get_username(ai);
 			sai.userid = (char *)linphone_auth_info_get_userid(ai);
 			sai.realm = (char *) linphone_auth_info_get_realm(ai);
-			sai.password = (char *) linphone_auth_info_get_passwd(ai);
+			sai.password = (char *) linphone_auth_info_get_password(ai);
 			sai.ha1 = (char *)linphone_auth_info_get_ha1(ai);
 			sai.algorithm = (char *)linphone_auth_info_get_algorithm(ai);
 			if (linphone_auth_info_get_tls_cert(ai) && linphone_auth_info_get_tls_key(ai)) {
