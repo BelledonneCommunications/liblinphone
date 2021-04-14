@@ -10,6 +10,9 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## [5.0.0] Unreleased
 
+### Added
+- CoreService class for Android can make the device vibrate while incoming call is ringing.
+
 ### Changed
 - Java wrapper now creates a separated managed object for const native pointers and print an error log when trying to use a non-const method on it.
 - Java & C# wrapper now takes a strong reference on listeners, allowing to use inner classes & lambda expressions even without keeping parent object around.

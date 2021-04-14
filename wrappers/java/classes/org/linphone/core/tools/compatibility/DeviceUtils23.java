@@ -21,6 +21,7 @@ package org.linphone.core.tools.compatibility;
 
 import android.content.Context;
 import android.os.PowerManager;
+import android.os.Vibrator;
 
 import org.linphone.core.tools.Log;
 
@@ -31,4 +32,9 @@ public class DeviceUtils23 {
         Log.i("[Platform Helper] Is app in device battery optimization whitelist: " + ignoringBatteryOptimizations);
         return !ignoringBatteryOptimizations;
     }
+
+	public static void vibrate(Vibrator vibrator) {
+		long[] pattern = {0, 1000, 1000};
+		vibrator.vibrate(pattern, 1);
+	}
 }
