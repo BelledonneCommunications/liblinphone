@@ -257,6 +257,7 @@ static void call_with_unreliable_device(void) {
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -369,6 +370,7 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	// After call, unref the sound card
 	linphone_audio_device_unref(current_dev);
 end:
+	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -543,6 +545,7 @@ static void simple_call_with_audio_device_change_same_audio_device_base(bool_t b
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
 end:
+	bctbx_list_free(lcs);
 	// After call, unref the sound card
 	linphone_audio_device_unref(dev0);
 	linphone_audio_device_unref(dev1);
