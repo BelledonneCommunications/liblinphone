@@ -20,9 +20,23 @@
 package org.linphone.core.tools.compatibility;
 
 import android.graphics.SurfaceTexture;
+import android.media.AudioAttributes;
+import android.os.Vibrator;
+import android.os.VibrationEffect;
 
 public class DeviceUtils26 {
     public static boolean isSurfaceTextureReleased(SurfaceTexture surfaceTexture) {
         return surfaceTexture.isReleased();
     }
+
+	public static void vibrate(Vibrator vibrator) {
+		long[] timings = {0, 1000, 1000};
+        int[] amplitudes = {0, VibrationEffect.DEFAULT_AMPLITUDE, 0};
+        VibrationEffect effect = VibrationEffect.createWaveform(timings, amplitudes, 1);
+        AudioAttributes audioAttrs =
+                new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                        .build();
+        vibrator.vibrate(effect, audioAttrs);
+	}
 }
