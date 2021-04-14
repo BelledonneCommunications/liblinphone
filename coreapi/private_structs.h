@@ -812,7 +812,8 @@ namespace LinphonePrivate {
 	bool_t is_unreffing; \
 	bool_t push_notification_enabled; \
 	bool_t auto_iterate_enabled; \
-	bool_t native_ringing_enabled;\
+	bool_t native_ringing_enabled; \
+	bool_t vibrate_on_incoming_call; \
 
 
 
