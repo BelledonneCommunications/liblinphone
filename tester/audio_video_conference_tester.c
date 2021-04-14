@@ -5435,7 +5435,6 @@ static void try_to_update_call_params_during_conference(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
-	
 
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	const LinphoneConferenceParams * marie_conf_params = linphone_conference_get_current_params(marie_conference);
@@ -5467,6 +5466,9 @@ static void try_to_update_call_params_during_conference(void) {
 
 		const LinphoneConferenceParams * marie_conf_params = linphone_conference_get_current_params(marie_conference);
 		BC_ASSERT_TRUE(linphone_conference_params_video_enabled(marie_conf_params) == orig_marie_video_enabled);
+
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_called_by_marie)));
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call_pauline)));
 
 	}
 
