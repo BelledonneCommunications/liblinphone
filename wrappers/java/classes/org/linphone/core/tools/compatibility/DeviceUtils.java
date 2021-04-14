@@ -21,6 +21,7 @@ package org.linphone.core.tools.compatibility;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.os.Vibrator;
 
 import org.linphone.mediastream.Version;
 
@@ -65,4 +66,12 @@ public class DeviceUtils {
             DeviceUtils30.logPreviousCrashesIfAny(context);
         }
     }
+
+	public static void vibrate(Vibrator vibrator) {
+		if (Version.sdkAboveOrEqual(Version.API26_O_80)) {
+			DeviceUtils26.vibrate(vibrator);
+		} else {
+			DeviceUtils23.vibrate(vibrator);
+		}
+	}
 }

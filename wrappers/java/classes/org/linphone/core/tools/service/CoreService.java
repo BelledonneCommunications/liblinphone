@@ -23,18 +23,22 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Vibrator;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.Factory;
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.mediastream.Version;
 
 /**
@@ -54,6 +58,8 @@ public class CoreService extends Service {
     protected Notification mServiceNotification = null;
 
     private CoreListenerStub mListener;
+    private Vibrator mVibrator;
+    private boolean mIsVibrating;
 
     @Override
     public void onCreate() {
@@ -67,6 +73,8 @@ public class CoreService extends Service {
             createServiceNotificationChannel();
         }
 
+        mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
         mListener = new CoreListenerStub() {
             @Override
             public void onFirstCallStarted(Core core) {
@@ -74,6 +82,28 @@ public class CoreService extends Service {
                 // There is only one call, service shouldn't be in foreground mode yet
                 if (!mIsInForegroundMode) {
                     startForeground();
+                }
+
+                // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
+                if (core.getCurrentCall().getDir() == Call.Dir.Incoming && core.isVibrationOnIncomingCallEnabled()) {
+                    if (mVibrator.hasVibrator()) {
+                        Log.i("[Core Service] Starting vibrator");
+                        DeviceUtils.vibrate(mVibrator);
+                        mIsVibrating = true;
+                    } else {
+                        Log.e("[Core Service] Device doesn't have a vibrator");
+                    }
+                }
+            }
+
+            @Override
+            public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (state == Call.State.End || state == Call.State.Error || state == Call.State.Connected) {
+                    if (mIsVibrating) {
+                        Log.i("[Core Service] Stopping vibrator");
+                        mVibrator.cancel();
+                        mIsVibrating = false;
+                    }
                 }
             }
 
@@ -95,6 +125,18 @@ public class CoreService extends Service {
                 if (core.getCallsNb() > 0) {
                     Log.w("[Core Service] Service started while at least one call active !");
                     startForeground();
+
+                    Call call = core.getCurrentCall();
+                    // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
+                    if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
+                        if (mVibrator.hasVibrator()) {
+                            Log.i("[Core Service] Starting vibrator");
+                            DeviceUtils.vibrate(mVibrator);
+                            mIsVibrating = true;
+                        } else {
+                            Log.e("[Core Service] Device doesn't have a vibrator");
+                        }
+                    }
                 }
             }
         }
