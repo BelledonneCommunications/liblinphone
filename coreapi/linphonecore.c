@@ -2729,6 +2729,15 @@ bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core) {
 	return core->auto_iterate_enabled;
 }
 
+void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_int(core->config, "misc", "vibrate_on_incoming_call", enable);
+	core->vibrate_on_incoming_call = enable;
+}
+
+bool_t linphone_core_is_vibration_on_incoming_call_enabled(LinphoneCore *core) {
+	return core->vibrate_on_incoming_call;
+}
+
 static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig *config, void * userdata, void *system_context, bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
