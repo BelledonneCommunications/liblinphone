@@ -187,11 +187,25 @@ public class CoreManager {
                         Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
                         mAudioHelper.requestRingingAudioFocus();
                     }
+                } else if (state == Call.State.IncomingEarlyMedia && core.getCallsNb() == 1) {
+                    if (core.getRingDuringIncomingEarlyMedia()) {
+                        Log.i("[Core Manager] Incoming call is early media and ringing is allowed");
+                    } else {
+                        if (core.isNativeRingingEnabled()) {
+                            Log.w("[Core Manager] Incoming call is early media and ringing is disabled, stop ringing");
+                            mAudioHelper.stopRinging();
+                        } else {
+                            Log.w("[Core Manager] Incoming call is early media and ringing is disabled, release ringing audio focus but acquire call audio focus");
+                            mAudioHelper.releaseRingingAudioFocus();
+                            mAudioHelper.requestCallAudioFocus();
+                        }
+                    }
                 } else if (state == Call.State.Connected) {
                     if (call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
                         Log.i("[Core Manager] Stop incoming call ringing");
                         mAudioHelper.stopRinging();
                     } else {
+                        Log.i("[Core Manager] Stop incoming call ringing audio focus");
                         mAudioHelper.releaseRingingAudioFocus();
                     }
                 } else if (state == Call.State.OutgoingInit && core.getCallsNb() == 1) {
