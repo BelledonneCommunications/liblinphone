@@ -167,11 +167,25 @@ public class CoreManager {
                         Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
                         mAudioHelper.requestRingingAudioFocus();
                     }
+                } else if (state == Call.State.IncomingEarlyMedia && core.getCallsNb() == 1) {
+                    if (core.getRingDuringIncomingEarlyMedia()) {
+                        Log.i("[Core Manager] Incoming call is early media and ringing is allowed");
+                    } else {
+                        if (core.isNativeRingingEnabled()) {
+                            Log.w("[Core Manager] Incoming call is early media and ringing is disabled, stop ringing");
+                            mAudioHelper.stopRinging();
+                        } else {
+                            Log.w("[Core Manager] Incoming call is early media and ringing is disabled, release ringing audio focus but acquire call audio focus");
+                            mAudioHelper.releaseRingingAudioFocus();
+                            mAudioHelper.requestCallAudioFocus();
+                        }
+                    }
                 } else if (state == Call.State.Connected) {
                     if (call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
                         Log.i("[Core Manager] Stop incoming call ringing");
                         mAudioHelper.stopRinging();
                     } else {
+                        Log.i("[Core Manager] Stop incoming call ringing audio focus");
                         mAudioHelper.releaseRingingAudioFocus();
                     }
                 } else if (state == Call.State.OutgoingInit && core.getCallsNb() == 1) {
@@ -224,37 +238,37 @@ public class CoreManager {
         sInstance = null;
     }
 
-	public void startAutoIterate() {
-		mIterateRunnable =
-			new Runnable() {
-				@Override
-				public void run() {
-					if (mCore != null) {
-						mCore.iterate();
-					}
-				}
-			};
-		TimerTask lTask =
-			new TimerTask() {
-				@Override
-				public void run() {
-					AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
-				}
-			};
+    public void startAutoIterate() {
+        mIterateRunnable =
+            new Runnable() {
+                @Override
+                public void run() {
+                    if (mCore != null) {
+                        mCore.iterate();
+                    }
+                }
+            };
+        TimerTask lTask =
+            new TimerTask() {
+                @Override
+                public void run() {
+                    AndroidDispatcher.dispatchOnUIThread(mIterateRunnable);
+                }
+            };
 
-		/*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
-		mTimer = new Timer("Linphone Core iterate scheduler");
-		mTimer.schedule(lTask, 0, 20);
-		Log.i("[Core Manager] Call to core.iterate() scheduled every 20ms");
-	}
+        /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
+        mTimer = new Timer("Linphone Core iterate scheduler");
+        mTimer.schedule(lTask, 0, 20);
+        Log.i("[Core Manager] Call to core.iterate() scheduled every 20ms");
+    }
 
-	public void stopAutoIterate() {
-		if (mTimer != null) {
-			Log.w("[Core Manager] Stopping scheduling of core.iterate() every 20ms");
-			mTimer.cancel();
-			mTimer = null;
-		}
-	}
+    public void stopAutoIterate() {
+        if (mTimer != null) {
+            Log.w("[Core Manager] Stopping scheduling of core.iterate() every 20ms");
+            mTimer.cancel();
+            mTimer = null;
+        }
+    }
 
     public void startAudioForEchoTestOrCalibration() {
         if (mAudioHelper == null) return;
