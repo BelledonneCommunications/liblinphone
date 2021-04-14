@@ -667,7 +667,7 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 
 }
 
-static void check_conference_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference) {
+void check_conference_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference) {
 	BC_ASSERT_PTR_NOT_NULL(local_conference);
 	BC_ASSERT_PTR_NOT_NULL(remote_conference);
 	if (local_conference && remote_conference) {
