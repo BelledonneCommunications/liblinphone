@@ -4758,7 +4758,8 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		}
 
 		// Focus removed and added
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats[idx].number_of_NotifyReceived + 2),5000));
+		// Conference media changed
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats[idx].number_of_NotifyReceived + 3),5000));
 
 		// Wait for first frame if video is enabled
 		if (enable_video) {
@@ -4790,6 +4791,25 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		idx++;
 
 	}
+
+	wait_for_list(lcs ,NULL, 0, 1000);
+
+	const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
+	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf->lc), "misc", "conference_event_log_enabled", TRUE );
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+		if (p_event_log_enabled && conf_event_log_enabled) {
+			LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+			LinphoneConference * pconference = linphone_core_search_conference(m->lc, NULL, m_uri, local_conference_address, NULL);
+			linphone_address_unref(m_uri);
+			BC_ASSERT_PTR_NOT_NULL(pconference);
+			if (pconference) {
+				check_conference_medias(conference, pconference);
+			}
+		}
+	}
+
 	ms_free(initial_stats);
 	ms_free(initial_video_call);
 
