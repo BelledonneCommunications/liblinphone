@@ -10,7 +10,10 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## [Unreleased]
 
+## [4.5.2] 2021-04-14
 
+### Added
+- CoreService class for Android can make the device vibrate while incoming call is ringing.
 
 ## [4.5.0] 2021-03-29
 
