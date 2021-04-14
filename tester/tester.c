@@ -841,10 +841,12 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	// Add a short wait to ensure that all NOTIFYs are replied
 	wait_for_list(lcs,NULL,0,1000);
 
-	LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
-	BC_ASSERT_PTR_NOT_NULL(local_conference);
-	if (local_conference) {
-		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+	if (!conference) {
+		conference = linphone_core_get_conference(conf_mgr->lc);
+	}
+	BC_ASSERT_PTR_NOT_NULL(conference);
+	if (conference) {
+		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
 		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 			bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
@@ -854,7 +856,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 				linphone_address_unref(m_uri);
 				BC_ASSERT_PTR_NOT_NULL(remote_conference);
 				if (remote_conference) {
-					check_conference_medias(local_conference, remote_conference);
+					check_conference_medias(conference, remote_conference);
 				}
 			}
 		}
