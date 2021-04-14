@@ -128,6 +128,26 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				vector<string>(xmlKeywords.begin(), xmlKeywords.end())
 			);
 		}
+
+
+		const auto &availableMedia = confDescription.get().getAvailableMedia();
+		if (availableMedia.present()) {
+			for (auto &mediaEntry : availableMedia.get().getEntry()) {
+				const std::string mediaType = mediaEntry.getType();
+				const LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(mediaEntry.getStatus().get());
+				const bool enabled = (mediaDirection == LinphoneMediaDirectionSendRecv);
+				if (mediaType.compare("audio") == 0) {
+					conf->confParams->enableAudio(enabled);
+				} else if (mediaType.compare("video") == 0) {
+					conf->confParams->enableVideo(enabled);
+				} else if (mediaType.compare("text") == 0) {
+					conf->confParams->enableChat(enabled);
+				} else {
+					lError() << "Unrecognized media type " << mediaType;
+				}
+			}
+		}
+
 	}
 
 	if (isFullState)
