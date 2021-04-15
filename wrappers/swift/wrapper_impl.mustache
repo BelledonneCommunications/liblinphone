@@ -223,7 +223,7 @@ public final class {{interfaceName}}Stub : {{interfaceName}}
 class {{interfaceName}}Manager
 {
 	var cPtr: OpaquePointer
-	public weak var delegate: {{interfaceName}}?
+	public var delegate: {{interfaceName}}?
 
 	public init() {
 		cPtr = {{create_user_data_name}}(linphone_factory_get())
@@ -395,7 +395,8 @@ public class {{className}} : LinphoneObject
 	{{#isDeprecated}}
 	@available(*, deprecated)
 	{{/isDeprecated}}
-	{{#has_property}}
+	{{#has_property}}{{#is_class}}{{^Instance}}
+	var _{{property_name}}: {{{return}}}{{{return_default}}}{{/Instance}}{{/is_class}}
 	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
 	{{#has_getter}}
@@ -425,13 +426,14 @@ public class {{className}} : LinphoneObject
 			{{/is_string}}
 			{{#is_bool}}
 			return {{getter_c_name}}({{cPtr}}) != 0
-			{{/is_bool}}
-			{{#is_class}}
-			{{^Instance}}let cPointer = {{getter_c_name}}({{cPtr}})
-			if (cPointer == nil) {
-				return nil
+			{{/is_bool}}{{#is_class}}{{^Instance}}
+			if(_{{property_name}} == nil) {
+				let cPointer = {{getter_c_name}}({{cPtr}})
+				if (cPointer != nil) {
+					_{{property_name}} = {{{return}}}.getSwiftObject(cObject:cPointer!{{#isAllocated}}, true{{/isAllocated}})
+				}
 			}
-			return {{{return}}}.getSwiftObject(cObject:cPointer!{{#isAllocated}}, true{{/isAllocated}}){{/Instance}}{{#Instance}}return {{{return}}}.getSwiftObject(cObject:{{getter_c_name}}({{cPtr}}){{#isAllocated}}, true{{/isAllocated}}){{/Instance}}
+			return _{{property_name}}{{/Instance}}{{#Instance}} return {{{return}}}.getSwiftObject(cObject:{{getter_c_name}}({{cPtr}}){{#isAllocated}}, true{{/isAllocated}}){{/Instance}}
 			{{/is_class}}
 			{{#is_enum}}
 			return {{{return}}}(rawValue: Int({{getter_c_name}}({{cPtr}}).rawValue)){{^isFlag}}!{{/isFlag}}
@@ -484,6 +486,7 @@ public class {{className}} : LinphoneObject
 			{{setter_c_name}}(cPtr, newValue==true ? 1:0)
 			{{/is_bool}}
 			{{#is_class}}
+			_{{property_name}} = newValue
 			{{setter_c_name}}(cPtr, newValue?.cPtr)
 			{{/is_class}}
 			{{#is_enum}}
