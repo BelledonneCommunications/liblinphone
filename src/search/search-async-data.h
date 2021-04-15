@@ -32,67 +32,163 @@ class MagicSearch;
 
 class SearchAsyncData{
 public:
-// This is the final result to use
+	/**
+	 * @brief mSearchResults This is the final result to use.
+	 */
 	std::shared_ptr<std::list<SearchResult>> mSearchResults;
-	
-// All results stored for each providers
+
+	/**
+	 * @brief mProviderResults All results stored for each providers.
+	 */
 	std::list<std::list<SearchResult> > mProviderResults;
 
-// Callback interface that can be inherit to allow adding more providers
+	/**
+	 * @brief The CbData class. Callback interface that can be inherit to allow adding more providers.
+	 */
 	class CbData{
 	public:
 		CbData(){
 			mEnd = FALSE;
-			mTimeout = 5;
+			mTimeout = 5;// 5s is the default
 		}
 		virtual ~CbData();
-		virtual void cancel(){}// Cancel transaction.
-		static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );// Callback that is call when a results has to be used
-		bool_t mEnd;					// Search is end
-		int64_t mTimeout;				// Timeout in seconds
-		std::list<SearchResult> *mResult;// Pointer to a result data that is inside parent
 
-// Request
+		/**
+		 * @brief cancel Cancel transaction.
+		 */
+		virtual void cancel(){}
+
+		/**
+		 * @brief resultsCb Callback that is call when a result has to be used.
+		 * By default, it will set mEnd to true on the first call of this callback.
+		 * @param id The current search request.
+		 * @param friends List of address as results. Data depends of the provider.
+		 * @param data User data coming from Callback binding.
+		 */
+		static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );
+
+		/**
+		 * @brief mEnd Search is over.
+		 */
+		bool_t mEnd;
+
+		/**
+		 * @brief mTimeout Timeout in seconds.
+		 */
+		int64_t mTimeout;
+
+		/**
+		 * @brief mResult Pointer to a result data that is inside parent.
+		 */
+		std::list<SearchResult> *mResult;
+
+		/**
+		 * @brief mFilter Filter Request
+		 */		
 		std::string mFilter;
+		/**
+		 * @brief mWithDomain Domain Request
+		 */
 		std::string mWithDomain;
-		const MagicSearch * mParent;// Used to get searchInAddress of parent but may be usefull for anything else if needed
+		/**
+		 * @brief mParent Used to get searchInAddress of parent but may be usefull for anything else if needed.
+		 */
+		const MagicSearch * mParent;
 	};
 
 	SearchAsyncData();
 	~SearchAsyncData();
-// Create a room for results in the main list and return the location
+
+	/**
+	 * @brief createResult Create a room for results in the main list and return the location.
+	 * @param data Initialize list as results.
+	 * @return 
+	 */
 	std::list<SearchResult> *createResult(std::list<SearchResult> data = std::list<SearchResult>());
-// Get the current request if there is one in the queue. Return if it is not empty
+
+	/**
+	 * @brief getCurrentRequest Get the current request if there is one in the queue.
+	 * @param[out] result Current request.
+	 * @return true if the queue is not empty.
+	 */
 	bool getCurrentRequest(std::pair<std::string, std::string> * result);
-// Remove all request in queue and keep only the last entered
+
+	/**
+	 * @brief keepOneRequest Remove all request in queue and keep only the last entered.
+	 * @return true the queue is empty.
+	 */
 	bool keepOneRequest();
-// Add a request in the queue (FIFO): Thread-safe. 
+
+	/**
+	 * @brief pushRequest Add a request in the queue (FIFO): Thread-safe. 
+	 * @param request Pair of <Filter, withDomain>.
+	 * @return The queue size.
+	 */
 	int pushRequest(const std::pair<std::string, std::string>& request);
-// Add a provider in the vector
+
+	/**
+	 * @brief pushData Add a provider in the vector.
+	 * @param data A pointer of #CbData to allow any types of provider.
+	 */
 	void pushData(std::shared_ptr<CbData> data);
-// To be call when starting a search for timeout computation
+
+	/**
+	 * @brief initStartTime To be call when starting a search for timeout computation.
+	 */
 	void initStartTime();
-// Get the start time initialized by initStartTime()
+
+	/**
+	 * @brief getStartTime Get the start time initialized by initStartTime().
+	 * @return The start time.
+	 */
 	bctoolboxTimeSpec getStartTime() const;
-// Set the final search result
+
+	/**
+	 * @brief setSearchResults Set the final search result
+	 * @param resultList The search result list.
+	 * @return true if results are not null.
+	 */
 	bool setSearchResults(std::shared_ptr<std::list<SearchResult> > resultList);
 
-// Getter for the vector of provider
+
+	/**
+	 * @brief getData Const getter for the vector of provider
+	 * @return Const array of provider.
+	 */
+
 	const std::vector<std::shared_ptr<CbData> >& getData() const;
+	/**
+	 * @brief getData  Getter for the vector of provider
+	 * @return Array of provider.
+	 */
 	std::vector<std::shared_ptr<CbData> >& getData();
-// Clear results and providers
+
+	/**
+	 * @brief clear Clear results and providers
+	 */
 	void clear();
 private:
-// Queue of requests. Not very useful yet but can be used for historic search
-	std::queue<std::pair<std::string, std::string> > mRequests;	// Filter/WithDomain
-// Protect the queue for read/write : we can add requests on any threads. All requests are removed from the main iteration.
-	ms_mutex_t mLockQueue;// Protect queue
-// Start time of the request for timeout computation
+
+	/**
+	 * @brief mRequests Queue of requests. Not very useful yet but can be used for historic search
+	 * pair <Filter/WithDomain>
+	 */
+	std::queue<std::pair<std::string, std::string> > mRequests;	
+
+	/**
+	 * @brief mLockQueue Protect the queue for read/write : we can add requests on any threads. All requests are removed from the main iteration.
+	 */
+	ms_mutex_t mLockQueue;
+
+	/**
+	 * @brief mStartTime Start time of the request for timeout computation
+	 */
 	bctoolboxTimeSpec mStartTime;
-// Store a vector of providers. By this way, we can use any providers we want on an asynchronous strategy.
+
+	/**
+	 * @brief mProvidersCbData Store a vector of providers. By this way, we can use any providers we want on an asynchronous strategy.
+	 */
 	std::vector<std::shared_ptr<CbData> > mProvidersCbData;
-	
-	
 };
 LINPHONE_END_NAMESPACE
 

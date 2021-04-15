@@ -26,13 +26,13 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-LDAPContactSearch::LDAPContactSearch(const int& msgId){
+LdapContactSearch::LdapContactSearch(const int& msgId){
 	mMsgId = msgId;
 	mFoundCount = 0;
 	mFoundEntries = NULL;
 	complete = 0;
 }
-LDAPContactSearch::LDAPContactSearch(LDAPContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData){
+LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData){
 	mPredicate = predicate;
 	mCb = cb;
 	mCbData = cbData;
@@ -41,7 +41,7 @@ LDAPContactSearch::LDAPContactSearch(LDAPContactProvider * parent, const std::st
 	mFoundEntries = NULL;
 	complete = 0;
 	char temp[FILTER_MAX_SIZE];
-	snprintf(temp, FILTER_MAX_SIZE-1, parent->mConfig["filter"].c_str(), predicate.c_str());
+	snprintf(temp, FILTER_MAX_SIZE-1, parent->getFilter().c_str(), predicate.c_str());
 	temp[FILTER_MAX_SIZE-1] = '\0';
 	if(predicate == "*"){// Full search : replace all "***" by "*"
 		mFilter = temp;
@@ -59,12 +59,12 @@ LDAPContactSearch::LDAPContactSearch(LDAPContactProvider * parent, const std::st
 static void destroy_address( void* entry ){
 	linphone_address_unref((LinphoneAddress*)entry);
 }
-LDAPContactSearch::~LDAPContactSearch(){
+LdapContactSearch::~LdapContactSearch(){
 	if(mFoundEntries)
 		bctbx_list_free_with_data(mFoundEntries, destroy_address);
 }
 
-void LDAPContactSearch::callCallback(){
+void LdapContactSearch::callCallback(){
 	mCb(NULL, mFoundEntries, mCbData);
 }
 LINPHONE_END_NAMESPACE
