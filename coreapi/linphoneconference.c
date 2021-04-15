@@ -148,6 +148,10 @@ int linphone_conference_leave (LinphoneConference *conference) {
 	return 0;
 }
 
+bool_t linphone_conference_is_me (const LinphoneConference *conference, const LinphoneAddress * uri) {
+	return MediaConference::Conference::toCpp(conference)->isMe(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+}
+
 bool_t linphone_conference_is_in (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->isIn();
 }

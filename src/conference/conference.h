@@ -128,6 +128,7 @@ public:
 	/* ConferenceInterface */
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 	std::shared_ptr<Participant> getMe () const override;
+	bool isMe (const IdentityAddress &addr) const;
 	bool addParticipant (std::shared_ptr<Call> call) override;
 	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
@@ -183,8 +184,6 @@ protected:
 		CallSessionListener *listener,
 		const std::shared_ptr<ConferenceParams> params
 	);
-
-	bool isMe (const IdentityAddress &addr) const;
 
 	std::list<std::shared_ptr<Participant>> participants;
 

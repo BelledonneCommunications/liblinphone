@@ -344,6 +344,15 @@ LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 LINPHONE_PUBLIC int linphone_conference_leave(LinphoneConference *conference);
 
 /**
+ * For a local audio video conference, this function compares the address provided as argument with that of participant hosting the conference
+ * For a remote audio video conference, this function compares the address provided as argument with that of the focus of the conference
+ * @param conference A #LinphoneConference object @notnil
+ * @param uri A #LinphoneAddress object @notnil
+ * @return TRUE if the participant is me, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_is_me(const LinphoneConference *conference, const LinphoneAddress * uri);
+
+/**
  * For a local conference, it returns whether the local participant is enabled
  * For a remote conference, it return whether the remote participant has left the conference without bein removed from it
  * @param conference A #LinphoneConference object @notnil
