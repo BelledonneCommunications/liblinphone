@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,23 +17,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINPHONE_LDAP_FRIEND_H_
-#define LINPHONE_LDAP_FRIEND_H_
+#ifndef LINPHONE_LDAP_CONTACT_FIELDS_H_
+#define LINPHONE_LDAP_CONTACT_FIELDS_H_
 
 #include "linphone/types.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LDAPFriend {
+class LdapContactFields {
 public:
-	LDAPFriend();
-// From a request, the index is the index that matches to the attribute vector. It is used for giving priority on attributes (eg: mobile and then telephoneNumber if first is not good enough to take account)
-	std::string mName;
-	int mNameIndex;
-	std::string mSip;
-	int mSipIndex;
+
+	LdapContactFields();
+
+	/**
+	 * Regroup findings and keep the best choice.
+	 * 
+	 * A pair is the string to use with its priority. If -1, then there is not defined result.
+	 * It is used for giving priority on attributes (eg: mobile and then telephoneNumber if mobile is not good enough to take account)
+	 * 
+	 */
+	std::pair< std::string, int> mName;
+	std::pair< std::string, int> mSip;
+
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif /* LINPHONE_LDAP_FRIEND_H_ */
+#endif /* LINPHONE_LDAP_CONTACT_FIELDS_H_ */

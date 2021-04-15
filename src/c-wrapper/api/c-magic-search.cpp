@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/wrapper_utils.h"
 #include "c-wrapper/c-wrapper.h"
 #include "search/magic-search.h"
 
