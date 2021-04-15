@@ -69,6 +69,13 @@ LINPHONE_PUBLIC void linphone_magic_search_add_callbacks(LinphoneMagicSearch *ma
 LINPHONE_PUBLIC void linphone_magic_search_remove_callbacks(LinphoneMagicSearch *magic_search, LinphoneMagicSearchCbs *cbs);
 
 /**
+ * Gets the list of listeners from a #LinphoneMagicSearch.maybenil
+ * @param magic_search #LinphoneMagicSearch object. @notnil
+ * @return The list of #LinphoneMagicSearchCbs object. @maybenil
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_magic_search_get_callbacks_list(const LinphoneMagicSearch *magic_search);
+
+/**
  * Gets the current LinphoneMagicSearchCbs.
  * This is meant only to be called from a callback to be able to get the user_data associated with the #LinphoneMagicSearchCbs that is calling the callback.
  * @param magic_search #LinphoneMagicSearch object @notnil
