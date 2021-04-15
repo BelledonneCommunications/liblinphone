@@ -34,8 +34,9 @@
 
 //#include "linphone/belle-sip/object.h"
 
+#ifdef LDAP_ENABLED
 #include "ldap/ldap-contact-provider.h"
-
+#endif
 
 using namespace std;
 
@@ -144,7 +145,7 @@ static string getDisplayNameFromSearchResult (const SearchResult &sr) {
 	}
 	return name;
 }
-
+#ifdef LDAP_ENABLED
 class LdapCbData : public SearchAsyncData::CbData{
 public:
 	LdapCbData(){}
@@ -154,7 +155,7 @@ public:
 	}
 	std::shared_ptr<LDAPContactProvider> mProvider;
 };
-
+#endif
 // STATES:
 // STATE_START => (STATE_WAIT) => STATE_SEND [<=] => STATE_END
 
@@ -388,7 +389,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 	return resultList;
 }
 
-
+#ifdef LDAP_ENABLED
 void MagicSearch::getAddressFromLDAPServerStartAsync (
 	const string &filter,
 	const string &withDomain,
@@ -412,6 +413,7 @@ void MagicSearch::getAddressFromLDAPServerStartAsync (
 		asyncData->pushData(data);
 	}
 }
+#endif
 
 bool MagicSearch::getAddressIsEndAsync(SearchAsyncData* asyncData)const{
 // Wait for all answers
@@ -431,6 +433,7 @@ bool MagicSearch::getAddressIsEndAsync(SearchAsyncData* asyncData)const{
 	return endCount == (int)asyncData->getData().size() ;
 }
 
+#ifdef LDAP_ENABLED
 std::list<list<SearchResult>> MagicSearch::getAddressFromLDAPServer (
 	const string &filter,
 	const string &withDomain
@@ -445,6 +448,7 @@ std::list<list<SearchResult>> MagicSearch::getAddressFromLDAPServer (
 	}
 	return asyncData.mProviderResults;
 }
+#endif
 
 void MagicSearch::beginNewSearchAsync (const string &filter, const string &withDomain, SearchAsyncData * asyncData) const{
 	const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
@@ -459,7 +463,9 @@ void MagicSearch::beginNewSearchAsync (const string &filter, const string &withD
 		}
 	}
 	asyncData->createResult(friendsList);
+#ifdef LDAP_ENABLED
 	getAddressFromLDAPServerStartAsync(filter, withDomain, asyncData);
+#endif
 	asyncData->createResult(getAddressFromCallLog(filter, withDomain, list<SearchResult>()));
 	asyncData->createResult(getAddressFromGroupChatRoomParticipants(filter, withDomain, list<SearchResult>()));
 }
@@ -526,9 +532,11 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 			addResultsToResultsList(fResults, *resultList);
 		}
 	}
+#ifdef LDAP_ENABLED
 	multiClResults = getAddressFromLDAPServer(filter, withDomain);
 	for(auto it = multiClResults.begin() ; it != multiClResults.end() ; ++it)
 		addResultsToResultsList(*it, *resultList, filter, withDomain);
+#endif
 	clResults = getAddressFromCallLog(filter, withDomain, *resultList);
 	addResultsToResultsList(clResults, *resultList);
 	crResults = getAddressFromGroupChatRoomParticipants(filter, withDomain, *resultList);
