@@ -131,7 +131,7 @@ LINPHONE_PUBLIC void linphone_chat_room_allow_multipart(LinphoneChatRoom *room);
 LINPHONE_PUBLIC void linphone_chat_room_allow_cpim(LinphoneChatRoom *room);
 
 /**
- * Gets the list of listeners from a #LinphoneMagicSearch.maybenil
+ * Gets the list of listeners from a #LinphoneMagicSearch.
  * @param magic_search #LinphoneMagicSearch object. @notnil
  * @return The list of listeners that have been added. \bctbx_list{LinphoneMagicSearchCbs} @maybenil
  * @donotwrap
