@@ -223,11 +223,16 @@ public final class {{interfaceName}}Stub : {{interfaceName}}
 class {{interfaceName}}Manager
 {
 	var cPtr: OpaquePointer
-	public weak var delegate: {{interfaceName}}?
+	public var delegate: {{interfaceName}}?
 
 	public init() {
 		cPtr = {{create_user_data_name}}(linphone_factory_get())
-		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passRetained(self).toOpaque()), {
+			data in
+			if (data != nil) {
+				Unmanaged<{{interfaceName}}Manager>.fromOpaque(data!).release()
+			}
+		})
 		{{#methods}}
 		{{#delegate}}
 
@@ -253,10 +258,7 @@ class {{interfaceName}}Manager
 		{{/methods}}
 	}
 
-	deinit {
-		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  nil, nil)
-		belle_sip_object_unref(UnsafeMutableRawPointer(cPtr))
-	}
+
 }
 {{/interface}}
 {{/interfaces}}
@@ -567,6 +569,7 @@ public class {{className}} : LinphoneObject
 		manager.delegate = delegate
 		delegateManagers.append(manager)
 		{{c_name}}(cPtr, manager.cPtr)
+		belle_sip_object_unref(UnsafeMutableRawPointer(manager.cPtr))
 		{{/addListener}}
 		{{#removeListener}}
 		if let index = delegateManagers.firstIndex(where: { $0.delegate === delegate as AnyObject}) {
