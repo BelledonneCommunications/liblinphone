@@ -378,7 +378,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 		std::string auth_mechanism = provider->mConfig.at("auth_method");
 		int ret;
 		if( (auth_mechanism == "ANONYMOUS") || (auth_mechanism == "SIMPLE") ) {
-			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
+			struct berval passwd = { (ber_len_t)provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
 			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
 			ms_free(passwd.bv_val);
 			if( ret == LDAP_SUCCESS ) {
@@ -536,7 +536,7 @@ void LDAPContactProvider::stun_server_resolved(void *data, belle_sip_resolver_re
 		int err;
 		char ipstring [INET6_ADDRSTRLEN];
 		ai = belle_sip_resolver_results_get_addrinfos(results);
-		err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
+		err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, (socklen_t)ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
 		if (err != 0)
 			ms_error("LDAP resolver: getnameinfo error %s", gai_strerror(err));
 		if(provider->mServerUri){
