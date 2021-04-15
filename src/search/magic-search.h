@@ -193,6 +193,7 @@ private:
 		const std::string &withDomain,
 		const std::list<SearchResult> &currentList
 	) const;
+
 #ifdef LDAP_ENABLED
 	/**
 	 * Get all addresses from LDAP Server
@@ -206,6 +207,7 @@ private:
 		const std::string &withDomain
 	);
 #endif
+
 	/**
 	 * Get all friends as SearchResult
 	 * @param[in] withDomain domain which we want to search only
@@ -276,27 +278,72 @@ private:
 		STATE_SEND,
 		STATE_END
 	};
-// Start async requests by building providers and prepare SearchAsyncData. Return if results are already available (coming from cache)
+
+	/**
+	 * @brief getContactListFromFilterStartAsync Start async requests by building providers and prepare SearchAsyncData.
+	 * @param filter word we search.
+	 * @param withDomain domain which we want to search only.
+	 * @param asyncData Instance to use for all data storage.
+	 * @return true if results are already available (coming from cache).
+	 */
 	bool getContactListFromFilterStartAsync (const std::string &filter, const std::string &withDomain, SearchAsyncData * asyncData);
 #ifdef LDAP_ENABLED
-// Initialize SearchAsyncData to add LDAP providers for a request on addresses
-	void getAddressFromLDAPServerStartAsync (const std::string &filter,const std::string &withDomain, SearchAsyncData * allData)const;
+	/**
+	 * @brief getAddressFromLDAPServerStartAsync Initialize SearchAsyncData to add LDAP providers for a request on addresses.
+	 * It is called from Iterate to auto start the process when ready.
+	 * @param filter word we search.
+	 * @param withDomain domain which we want to search only.
+	 * @param asyncData Instance to use for all data storage.
+	 */
+	void getAddressFromLDAPServerStartAsync (const std::string &filter,const std::string &withDomain, SearchAsyncData * asyncData)const;
 #endif
-// Test if getting addresses is over. It will cancel all providers that reach their timeout (this mecanisms is an addition to the provider cancellation to make sure to stop all processes)
+
+	/**
+	 * @brief getAddressIsEndAsync Check if all Async processes are done.
+	 * Test if getting addresses is over. It will cancel all providers that reach their timeout (this mecanism is an addition to the provider cancellation to make sure to stop all processes).
+	 * @param asyncData Instance to use for all data storage.
+	 * @return true if all is over.
+	 */
 	bool getAddressIsEndAsync(SearchAsyncData* asyncData) const;
-// Merge all the providers results and build the final search vector, accressible with mSearchResults
+
+	/**
+	 * @brief mergeResults Merge all the providers results and build the final search vector, accessible with mSearchResults.
+	 * @param filter word we search.
+	 * @param withDomain domain which we want to search only.
+	 * @param asyncData Instance to use for all data storage.
+	 */
 	void mergeResults (const std::string& filter, const std::string withDomain, SearchAsyncData * asyncData);
-// Clean for unique items and set the cache
+
+	/**
+	 * @brief processResults Clean for unique items and set the cache.
+	 * @return the cleaned list.
+	 */
 	std::list<SearchResult> processResults(std::shared_ptr<std::list<SearchResult> >);
 	
-// Same as beginNewSearch but on an asynchronous version : it will build the SearchAsyncData from async providers like LDAP
+	/**
+	 * @brief beginNewSearchAsync Same as beginNewSearch but on an asynchronous version : it will build the SearchAsyncData from async providers like LDAP.
+	 * @param filter word we search.
+	 * @param withDomain domain which we want to search only.
+	 * @param asyncData Instance to use for all data storage.
+	 */
 	void beginNewSearchAsync (const std::string &filter, const std::string &withDomain, SearchAsyncData * asyncData) const;
-// Same as addResultsToResultsList but apply an unicity filtering before splicing. It is usefull prioritize results from the order of providers
+
+	/**
+	 * @brief addResultsToResultsList Same as addResultsToResultsList but apply an unicity filtering before splicing. It is usefull to prioritize results based to the order of providers.
+	 * @param results List of #SearchResult to add.
+	 * @param srL List of #SearchResult to modify.
+	 * @param filter word we search.
+	 * @param withDomain domain which we want to search only.
+	 */
 	void addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL, const std::string filter, const std::string& withDomain) const;
 
-// State of the iteration : 
-// STATE_START => (STATE_WAIT) => STATE_SEND [<=] => STATE_END
 	int mState;
+	/**
+	 * @brief iterate Iteration that is executed in the main loop.
+	 * State follows this flow:
+	 * STATE_START => (STATE_WAIT) => STATE_SEND [<=] => STATE_END
+	 * @return 
+	 */
 	bool iterate(void);
 	
 	L_DECLARE_PRIVATE(MagicSearch);

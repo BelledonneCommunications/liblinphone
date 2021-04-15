@@ -35,14 +35,13 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LDAPContactProvider;
+class LdapContactProvider;
 
-class LINPHONE_PUBLIC LDAPContactSearch {
+class LINPHONE_PUBLIC LdapContactSearch {
 public:
-	LDAPContactSearch(const int& msgId);
-	LDAPContactSearch(LDAPContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData);
-	virtual ~LDAPContactSearch();
-	//static LDAPContactSearch* create(LDAPContactProvider * provider, const std::string& mPredicate, ContactSearchCallback mCb, void* mCbData);
+	LdapContactSearch(const int& msgId);
+	LdapContactSearch(LdapContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData);
+	virtual ~LdapContactSearch();
 	
 	void callCallback();
 	
