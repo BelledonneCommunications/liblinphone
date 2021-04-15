@@ -195,19 +195,12 @@ if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_
 	endif()
 endif()
 if(ENABLE_LDAP)
-	if(NOT WIN32)
 		find_package(OpenLDAP REQUIRED)
-	endif()
 endif()
 
 if(UNIX AND NOT APPLE)
 	include(CheckIncludeFiles)
 	check_include_files(libudev.h HAVE_LIBUDEV_H)
-endif()
-
-if(MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsPhone" AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	#find_library(LIBGCC NAMES gcc)
-	#find_library(LIBMINGWEX NAMES mingwex)
 endif()
 
 if(NOT WIN32)
@@ -365,6 +358,10 @@ add_definitions(-DHAVE_CONFIG_H)
 
 if(ENABLE_VIDEO)
 	add_definitions(-DVIDEO_ENABLED)
+endif()
+
+if(ENABLE_LDAP)
+	add_definitions(-DLDAP_ENABLED -DLDAP_LIBS_DYNAMIC)
 endif()
 
 if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
