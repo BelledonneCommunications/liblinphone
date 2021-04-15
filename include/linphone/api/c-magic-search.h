@@ -71,7 +71,7 @@ LINPHONE_PUBLIC void linphone_magic_search_remove_callbacks(LinphoneMagicSearch 
 /**
  * Gets the list of listeners from a #LinphoneMagicSearch.maybenil
  * @param magic_search #LinphoneMagicSearch object. @notnil
- * @return The list of #LinphoneMagicSearchCbs object. @maybenil
+ * @return The list of \bctbx_list{LinphoneMagicSearchCbs} that have been added. @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t *linphone_magic_search_get_callbacks_list(const LinphoneMagicSearch *magic_search);
 
