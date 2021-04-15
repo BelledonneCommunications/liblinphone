@@ -193,7 +193,7 @@ private:
 		const std::string &withDomain,
 		const std::list<SearchResult> &currentList
 	) const;
-
+#ifdef LDAP_ENABLED
 	/**
 	 * Get all addresses from LDAP Server
 	 * @param[in] filter word we search
@@ -205,7 +205,7 @@ private:
 		const std::string &filter,
 		const std::string &withDomain
 	);
-
+#endif
 	/**
 	 * Get all friends as SearchResult
 	 * @param[in] withDomain domain which we want to search only
@@ -278,8 +278,10 @@ private:
 	};
 // Start async requests by building providers and prepare SearchAsyncData. Return if results are already available (coming from cache)
 	bool getContactListFromFilterStartAsync (const std::string &filter, const std::string &withDomain, SearchAsyncData * asyncData);
+#ifdef LDAP_ENABLED
 // Initialize SearchAsyncData to add LDAP providers for a request on addresses
 	void getAddressFromLDAPServerStartAsync (const std::string &filter,const std::string &withDomain, SearchAsyncData * allData)const;
+#endif
 // Test if getting addresses is over. It will cancel all providers that reach their timeout (this mecanisms is an addition to the provider cancellation to make sure to stop all processes)
 	bool getAddressIsEndAsync(SearchAsyncData* asyncData) const;
 // Merge all the providers results and build the final search vector, accressible with mSearchResults
