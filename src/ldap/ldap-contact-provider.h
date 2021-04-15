@@ -31,12 +31,7 @@
 #include <string>
 #include <list>
 
-#ifdef _WIN32
-#	include <winldap.h>
-#	include <winber.h>
-#else
-#	include <ldap.h>
-#endif
+#include <ldap.h>
 
 LINPHONE_BEGIN_NAMESPACE
 

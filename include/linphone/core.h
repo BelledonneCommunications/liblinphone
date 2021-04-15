@@ -2770,7 +2770,7 @@ LINPHONE_PUBLIC void linphone_core_verify_server_certificates(LinphoneCore *core
  * @return True if the tls server certificate must be verified
  * @ingroup initializing
 **/
-LINPHONE_PUBLIC bool_t linphone_core_get_verify_server_certificates(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_is_verify_server_certificates(LinphoneCore *core);
 
 /**
  * Specify whether the tls server certificate common name must be verified when connecting to a SIP/TLS server.

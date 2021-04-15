@@ -36,73 +36,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 // Custom redefinitions
-#ifdef _WIN32
 
-static void ldap_unbind_ext_s(LDAP * ld, void *, void*){
-	ldap_unbind_s(ld);
-}
-static void ldap_abandon_ext(LDAP * ld,int mId, void *, void*){
-	ldap_abandon(ld,(ULONG)mId);
-}
-static int ldap_start_tls_s(LDAP * ld, void*, void*){
-	return (int)ldap_start_tls_sA(ld, NULL, NULL, NULL, NULL);
-}
-static int ldap_msgtype(LDAPMessage* message){
-	return (int)message->lm_msgtype;
-}
-static LDAPMessage* ldap_first_message(LDAP* ld, LDAPMessage* results){
-	return ldap_first_entry(ld, results);
-}
-static int ldap_msgid(LDAPMessage* message){
-	return message->lm_msgid;
-}
-static LDAPMessage* ldap_next_message(LDAP* ld, LDAPMessage* message){
-	return ldap_next_entry(ld, message);
-}
-#define LDAP_SASL_SIMPLE	((char*)0)
-#define LDAP_SASL_QUIET			2U
-#define LDAP_OPT_RESULT_CODE			0x0031
-
-static int ldap_sasl_bind_s(LDAP *ld, const char *dn, const char *mechanism, struct berval *cred, LDAPControl **serverctrls, LDAPControl **clientctrls, struct berval **servercredp){
-	return ldap_sasl_bind_sA(ld, (const PSTR)dn, (const PSTR)mechanism, (const BERVAL *)cred, (PLDAPControlA *)serverctrls, (PLDAPControlA *)clientctrls, (PBERVAL *)servercredp);
-}
-static int ldap_sasl_bind(LDAP *ld, const char *dn, const char *mechanism, struct berval *cred, LDAPControl **serverctrls, LDAPControl **clientctrls, int           *MessageNumber){
-	return ldap_sasl_bindA(ld, (const PSTR)dn, (const PSTR)mechanism, (const BERVAL *)cred, (PLDAPControlA *)serverctrls, (PLDAPControlA *)clientctrls, MessageNumber);
-}
-static int ldap_sasl_interactive_bind_s(LDAP *ld, const char *dn, const char *saslMechanism, LDAPControl **serverControls, LDAPControl **clientControls, unsigned flags, void *proc, void *defaults){
-	struct berval* serverResponse = NULL;
-	return ldap_sasl_bind_sA(ld, (const PSTR)dn, (const PSTR)saslMechanism, NULL, NULL, NULL, &serverResponse);
-}
-static int ldap_initialize(LDAP **ldp,const char *url ){
-// Remove scheme from URL. Windows doesn't support scheme.
-	belle_generic_uri_t *uri = belle_generic_uri_parse(url);
-	if(uri){
-		std::string host = belle_generic_uri_get_host(uri);
-		int port = belle_generic_uri_get_port(uri);
-		if( port>0 )
-			host += ":"+std::to_string(port);
-		*ldp = ldap_init((PSTR)host.c_str(), LDAP_PORT);// Port parameter is ignored if the port is in url. For STARTTLS, the connection is on normal port
-		if( *ldp!=NULL){
-			return ldap_connect(*ldp, NULL);
-		}else
-			return LdapGetLastError();
-	}else{
-		ms_error( "LDAP : Cannot parse url : %s", url);
-		return -1;
-	}
-}
-static int ldap_search_ext(LDAP *ld, const char *base, int scope, const char *filter, char **attrs, int attrsonly, LDAPControl **serverctrls, LDAPControl **clientctrls, l_timeval *timeout, int sizelimit, int *msgidp){
-	//return (int)ldap_search_ext_s(ld, (const PSTR)base, (ULONG)scope, (const PSTR)filter, (PZPSTR)attrs, (ULONG)attrsonly, (PLDAPControlA *)serverctrls, (PLDAPControlA *) clientctrls, (l_timeval) timeout, (ULONG)sizelimit ,(PLDAPMessage*)msgidp );
-	return (int)ldap_search_ext(ld, (const PSTR)base, (ULONG)scope, (const PSTR)filter, (PZPSTR)attrs, (ULONG)attrsonly, (PLDAPControlA *)serverctrls, (PLDAPControlA *) clientctrls, timeout->tv_sec, (ULONG)sizelimit ,(ULONG*)msgidp );
-}
-static int ldap_parse_sasl_bind_result(LDAP *ld,LDAPMessage *res, struct berval	**servercredp, int freeit){
-	ULONG returnCode;
-	ldap_parse_result(ld, res, &returnCode, NULL, NULL, NULL, NULL, freeit>0);
-	return (int)returnCode ;
-}
-#else
-
-#endif
 //*******************************************	CREATION
 
 LDAPContactProvider::LDAPContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config ){
@@ -173,194 +107,57 @@ std::vector<std::shared_ptr<LDAPContactProvider> > LDAPContactProvider::create(c
 	}
 	return providers;
 }
-#ifdef _WIN32
-
-VERIFYSERVERCERT Verifyservercert;
-
-BOOLEAN Verifyservercert(
-  PLDAP Connection,
-  PCCERT_CONTEXT *pServerCert
-)
-{
-	BOOL isValid = false;
-	/*
-	BOOL isValid = CryptMsgGetAndVerifySigner(
-	HCRYPTMSG      hCryptMsg,
-	DWORD          cSignerStore,
-	HCERTSTORE     *rghSignerStore,
-	DWORD          dwFlags,
-	PCCERT_CONTEXT *ppSigner,
-	DWORD          *pdwSignerIndex
-	);*/
-	HCERTSTORE hCertStore; 
-	if ( hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,0,NULL,CERT_SYSTEM_STORE_CURRENT_USER,L"MY")){
-	}else{
-		ms_error("LDAP : The MY store did not open.");
-		return false;
-	}
-	/*
-	isValid = CertVerifyCertificateChainPolicy(
-	LPCSTR                    pszPolicyOID,
-	PCCERT_CHAIN_CONTEXT      pChainContext,
-	PCERT_CHAIN_POLICY_PARA   pPolicyPara,
-	PCERT_CHAIN_POLICY_STATUS pPolicyStatus
-	);*/
-	/*
-	PCCERT_CHAIN_CONTEXT pChainContext;
-	isValid = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, pChainContext,
-	PCERT_CHAIN_POLICY_PARA   pPolicyPara,
-	PCERT_CHAIN_POLICY_STATUS pPolicyStatus
-	);*/
-	/*
-	BOOL CertGetCertificateChain(
-	HCERTCHAINENGINE     hChainEngine,
-	PCCERT_CONTEXT       pCertContext,
-	LPFILETIME           pTime,
-	HCERTSTORE           hAdditionalStore,
-	PCERT_CHAIN_PARA     pChainPara,
-	DWORD                dwFlags,
-	LPVOID               pvReserved,
-	PCCERT_CHAIN_CONTEXT *ppChainContext
-	);*/
-	//PCERT_CHAIN_PARA     pChainPara
-	PCCERT_CHAIN_CONTEXT pChainContext;
-	isValid = CertGetCertificateChain(NULL,	*pServerCert,NULL,NULL,NULL,CERT_CHAIN_OPT_IN_WEAK_SIGNATURE,NULL, &pChainContext);
-	if(isValid){
-		CertFreeCertificateChain (pChainContext);
-	}
-//	BOOL isValid = CertVerifySubjectCertificateContext(PCCERT_CONTEXT pSubject,
-//	PCCERT_CONTEXT pIssuer,
-//	DWORD          *pdwFlags
-//	);
-	
-	// Find the client's certificate.
-   //client_cert = 
-   //CertFindCertificateInStore( hCertStore, X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, 0, CERT_FIND_SUBJECT_STR, L"ClientName",  // Use the principal name
-   //NULL );
-	CertFreeCertificateContext(*pServerCert);
-	//CertFreeCertificateContext(*((PCCERT_CONTEXT*)pServerCert)); // if cast issue
-	return true;
-}
-
-#endif
 
 void LDAPContactProvider::initializeLdap(){
 	int proto_version = LDAP_VERSION3;
-	
+	size_t t = (size_t)&ldap_set_option;
+	ms_error("TOTO2: %d", (int)t);
 	int ret = ldap_set_option(NULL, LDAP_OPT_PROTOCOL_VERSION, &proto_version);
+	if( ret != LDAP_SUCCESS )
+		ms_error( "[LDAP] Problem initializing default Protocol version to 3 : %x (%s)", ret, ldap_err2string(ret));
 // Setting global options for the next initialization. These options cannot be done with the LDAP instance directly.
 	if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
-#ifndef _WIN32
 		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
 		bool enableVerification = true;
 		if( mConfig.count("verify_server_certificates")>0){
 			if( mConfig["verify_server_certificates"] == "-1")
-				enableVerification = linphone_core_get_verify_server_certificates(mCore->getCCore());
+				enableVerification = linphone_core_is_verify_server_certificates(mCore->getCCore());
 			else if( mConfig["verify_server_certificates"] == "0")
 				enableVerification = false;
 		}
 		int reqcert = (enableVerification?LDAP_OPT_X_TLS_DEMAND:LDAP_OPT_X_TLS_ALLOW);
 		int reqsan = LDAP_OPT_X_TLS_ALLOW;
 		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &reqcert);
+		if( ret != LDAP_SUCCESS )
+			ms_error( "[LDAP] Problem initializing TLS on setting require certification '%s': %x (%s)", mConfig["server"].c_str(),ret, ldap_err2string(ret));
 		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_CACERTFILE,caFile.c_str());
+		if( ret != LDAP_SUCCESS )
+			ms_error( "[LDAP] Problem initializing TLS on setting CA Certification file '%s': %x (%s)", mConfig["server"].c_str(),ret, ldap_err2string(ret));
 		ret = ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_SAN,&reqsan);
-#else
-		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
-		std::ifstream file;
-		file.open(caFile);
-		if(!file.is_open())
-			return;
-		file.seekg(0, std::ios_base::end);
-		size_t fileSize = (size_t) file.tellg();
-		file.seekg(0, std::ios_base::beg);
-		std::vector<byte> data(fileSize, 0);
-		file.read((char*)&data[0], fileSize);
-		//const void * CertCreateContext(DWORDdwContextType,DWORD dwEncodingType, const BYTE *pbEncoded,DWORD cbEncoded,DWORD dwFlags,PCERT_CREATE_CONTEXT_PARA pCreatePara);
-		CERT_CREATE_CONTEXT_PARA createPara;
-		const void * context = CertCreateContext(CERT_STORE_CTL_CONTEXT,X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,&data[0],data.size(),CERT_CREATE_CONTEXT_SORTED_FLAG,&createPara);
-		if(context != NULL){
-			HCERTSTORE hCertStore; 
-			if ( hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,0,NULL,CERT_SYSTEM_STORE_CURRENT_USER,L"MY")){
-			}else{
-				ms_error("LDAP : The MY store did not open.");
-				return;
-			}
-		}
-		
-		/*
-		PCCTL_CONTEXT context = CertCreateCTLContext(0,&data[0],data.size());//X509_ASN_ENCODING | PKCS_7_ASN_ENCODING
-		if(context == NULL)
-			context = CertCreateCTLContext(X509_ASN_ENCODING,&data[0],data.size());
-		if(context == NULL)
-			context = CertCreateCTLContext(PKCS_7_ASN_ENCODING,&data[0],data.size());
-		if(context == NULL)
-			context = CertCreateCTLContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,&data[0],data.size());
-		if(context != NULL){
-			HCERTSTORE hCertStore; 
-			if ( hCertStore = CertOpenStore(CERT_STORE_PROV_SYSTEM,0,NULL,CERT_SYSTEM_STORE_CURRENT_USER,L"MY")){
-			}else{
-				ms_error("LDAP : The MY store did not open.");
-				return;
-			}
-			//BOOL ok = CertAddCTLContextToStore(HCERTSTORE    hCertStore,PCCTL_CONTEXT pCtlContext,DWORD         dwAddDisposition,PCCTL_CONTEXT *ppStoreContext);
-			BOOL ok = CertAddCTLContextToStore(hCertStore,context,CERT_STORE_ADD_USE_EXISTING,NULL);
-			if(!ok)
-				ms_error("LDAP : cannot stopre CTL");
-		}*/
-		ULONG shannelFlags = 0;
-		ldap_get_option(NULL, LDAP_OPT_SCH_FLAGS, &shannelFlags);
-		shannelFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_SERVERNAME_CHECK | SCH_CRED_USE_DEFAULT_CREDS;
-		ldap_set_option(NULL, LDAP_OPT_SCH_FLAGS, &shannelFlags);
-		
-		belle_generic_uri_t *serverUri = belle_generic_uri_parse("ldap://127.0.0.1");//mConfig["server"].c_str());
-		std::string hostname = belle_generic_uri_get_host(serverUri);
-		std::vector<char> cHostname(hostname.c_str(), hostname.c_str() + hostname.size() + 1);
-		ldap_set_option(NULL, LDAP_OPT_HOST_NAME, &cHostname[0]);
-		belle_sip_object_unref(serverUri);
-#endif
+		if( ret != LDAP_SUCCESS )
+			ms_error( "[LDAP] Problem initializing TLS on setting require SAN '%s': %x (%s)", mConfig["server"].c_str(),ret, ldap_err2string(ret));
+
 	}
 	ret = ldap_initialize(&mLd, mServerUrl.c_str());
 	if(mConfig.count("debug")>0 && mConfig["debug"] == "1"){
-#ifndef _WIN32
 		int debLevel = 7;
 		ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debLevel);
-#endif
 	}
 	if( ret != LDAP_SUCCESS ){
-		ms_error( "LDAP : Problem initializing ldap on url '%s': %s", mConfig["server"].c_str(), ldap_err2string(ret));
+		ms_error( "LDAP : Problem initializing ldap on url '%s': %x (%s)", mConfig["server"].c_str(),ret, ldap_err2string(ret));
 		mState = STATE_ERROR;
 	} else if( (ret = ldap_set_option(mLd, LDAP_OPT_PROTOCOL_VERSION, &proto_version)) != LDAP_SUCCESS ){
-		ms_error( "LDAP : Problem setting protocol version %d: %s", proto_version, ldap_err2string(ret));
+		ms_error( "LDAP : Problem setting protocol version %d: %x (%s)", proto_version,ret, ldap_err2string(ret));
 		mState = STATE_ERROR;
 	} else {
 		
 		if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
-#ifndef _WIN32
 			if(mConfig.count("use_sal")>0 && mConfig["use_sal"] == "1"){// Using Sal give an IP for a domain. So check the domain rather than the IP.
 				belle_generic_uri_t *serverUri = belle_generic_uri_parse(mConfig["server"].c_str());
 				std::string hostname = belle_generic_uri_get_host(serverUri);
 				std::vector<char> cHostname(hostname.c_str(), hostname.c_str() + hostname.size() + 1);
 				ldap_set_option(mLd, LDAP_OPT_X_TLS_PEER_CN, &cHostname[0]);
 			}
-#else
-			ldap_set_option(mLd, LDAP_OPT_SERVER_CERTIFICATE, &Verifyservercert);// Callback to accept Certificates
-			//LDAP_OPT_HOST_NAME
-			ULONG shannelFlags = 0;
-			ldap_get_option(mLd, LDAP_OPT_SCH_FLAGS, &shannelFlags);
-			//shannelFlags = SCH_CRED_AUTO_CRED_VALIDATION | SCH_CRED_NO_SERVERNAME_CHECK | SCH_CRED_USE_DEFAULT_CREDS;
-			//ldap_set_option(mLd, LDAP_OPT_SCH_FLAGS, &shannelFlags);
-			
-			if(mConfig.count("use_sal")>0 && mConfig["use_sal"] == "1"){// Using Sal give an IP for a domain. So check the domain rather than the IP.
-				//belle_generic_uri_t *serverUri = belle_generic_uri_parse("ldap://ldap.example.org");//mConfig["server"].c_str());
-				belle_generic_uri_t *serverUri = belle_generic_uri_parse("ldap://127.0.0.1");//mConfig["server"].c_str());
-				std::string hostname = belle_generic_uri_get_host(serverUri);
-				std::vector<char> cHostname(hostname.c_str(), hostname.c_str() + hostname.size() + 1);
-				ldap_set_option(mLd, LDAP_OPT_HOST_NAME, &cHostname[0]);
-				belle_sip_object_unref(serverUri);
-			}
-			
-
-#endif
 			ret = ldap_start_tls_s(mLd, NULL, NULL);
 		}
 		if( ret == LDAP_SUCCESS ) {
@@ -469,11 +266,7 @@ void LDAPContactProvider::search(const std::string& predicate, ContactSearchCall
 
 int LDAPContactProvider::search(std::shared_ptr<LDAPContactSearch> request){
 	int ret = -1;
-#ifdef _WIN32
-	struct l_timeval timeout = { atoi(mConfig["timeout"].c_str()), 0 };
-#else
 	struct timeval timeout = { atoi(mConfig["timeout"].c_str()), 0 };
-#endif
 
 	if( request->mMsgId == 0 ){
 		ret = ldap_search_ext(mLd,
@@ -563,11 +356,7 @@ int LDAPContactProvider::completeContact( LDAPFriend* lf, const char* attr_name,
 //*******************************************	ASYNC PROCESSING
 // ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST
 bool_t LDAPContactProvider::iterate(void *data) {
-#ifdef _WIN32
-		LDAP_TIMEVAL pollTimeout = {0,0};
-#else
-		struct timeval pollTimeout = {0,0};
-#endif
+	struct timeval pollTimeout = {0,0};
 	LDAPMessage* results = NULL;
 	LDAPContactProvider* provider = (LDAPContactProvider*)data;
 	if(provider->mState == STATE_ERROR){
@@ -590,18 +379,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 		int ret;
 		if( (auth_mechanism == "ANONYMOUS") || (auth_mechanism == "SIMPLE") ) {
 			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
-			//struct berval *serverResponse = NULL;
-	#ifdef _WIN32
-			ret = ldap_bind(provider->mLd, (const PSTR)provider->mConfig.at("bind_dn").c_str(), (const PSTR)provider->mConfig.at("password").c_str(), LDAP_AUTH_SIMPLE);
-			if(ret>=0){
-				provider->mAwaitingMessageId = ret;
-				ret = LDAP_SUCCESS;
-			}
-	#else
-			//ret = ldap_sasl_bind_s(provider->ld, provider->bind_dn, NULL, &passwd, NULL, NULL, &serverResponse);
-			//ret = ldap_sasl_bind_s(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &serverResponse);
 			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
-	#endif
 			ms_free(passwd.bv_val);
 			if( ret == LDAP_SUCCESS ) {
 				ms_message("[LDAP] Waiting for bind");
@@ -707,11 +485,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			switch( ret ){
 			case -1:
 			{
-	#ifdef _WIN32
-				int lastError = LdapGetLastError();
-	#else
 				int lastError = errno;
-	#endif
 				ms_warning("LDAP : Error in ldap_result : returned -1 (req_count %zu): %s", requestSize, ldap_err2string(lastError));
 				break;
 			}
@@ -725,10 +499,8 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			}
 			case LDAP_RES_EXTENDED:
 			case LDAP_RES_SEARCH_ENTRY:
-	#ifndef _WIN32
 			case LDAP_RES_SEARCH_REFERENCE:
 			case LDAP_RES_INTERMEDIATE:
-	#endif
 			case LDAP_RES_SEARCH_RESULT:
 			{
 				provider->handleSearchResult(results );
@@ -737,11 +509,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			case LDAP_RES_MODIFY:
 			case LDAP_RES_ADD:
 			case LDAP_RES_DELETE:
-	#ifdef WIN32
-			case LDAP_RES_MODRDN:
-	#else
 			case LDAP_RES_MODDN:
-	#endif
 			case LDAP_RES_COMPARE:
 			default:
 				ms_message("LDAP : Unhandled LDAP result %x", ret);

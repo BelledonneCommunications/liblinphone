@@ -28,12 +28,25 @@ find_path(OPENLDAP_INCLUDE_DIRS
 	NAMES ldap.h
 	PATH_SUFFIXES include/openldap
 )
-
-find_library(OPENLDAP_LIBRARIES
-	NAMES ldap
-	HINTS "${CMAKE_INSTALL_PREFIX}"
-	PATH_SUFFIXES lib
-)
+if(WIN32)
+	find_library(LDAP_LIB
+		NAMES ldap
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES lib
+	)
+	find_library(LBER_LIB
+		NAMES lber
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES lib
+	)
+	set(OPENLDAP_LIBRARIES ${LDAP_LIB} ${LBER_LIB})
+else()
+	find_library(OPENLDAP_LIBRARIES
+		NAMES ldap
+		HINTS "${CMAKE_INSTALL_PREFIX}"
+		PATH_SUFFIXES bin lib
+	)
+endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(OpenLDAP
