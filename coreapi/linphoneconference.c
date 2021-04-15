@@ -124,7 +124,11 @@ LinphoneStatus linphone_conference_remove_participant_3 (LinphoneConference *con
 }
 
 LinphoneParticipant * linphone_conference_find_participant (LinphoneConference *conference, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(conference)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))->toC();
+	shared_ptr<LinphonePrivate::Participant> p = MediaConference::Conference::toCpp(conference)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+	if (p) {
+		return p->toC();
+	}
+	return NULL;
 }
 
 int linphone_conference_update_params(LinphoneConference *conference, const LinphoneConferenceParams *params){
@@ -142,6 +146,10 @@ int linphone_conference_enter (LinphoneConference *conference) {
 int linphone_conference_leave (LinphoneConference *conference) {
 	MediaConference::Conference::toCpp(conference)->leave();
 	return 0;
+}
+
+bool_t linphone_conference_is_me (const LinphoneConference *conference, const LinphoneAddress * uri) {
+	return MediaConference::Conference::toCpp(conference)->isMe(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 }
 
 bool_t linphone_conference_is_in (const LinphoneConference *conference) {
@@ -302,20 +310,44 @@ LinphoneConferenceParams *linphone_conference_params_clone (const LinphoneConfer
 	return static_cast<ConferenceParams*>(ConferenceParams::toCpp(params)->clone())->toC();
 }
 
-void linphone_conference_params_enable_video (LinphoneConferenceParams *params, bool_t enable) {
+void linphone_conference_params_set_audio_enabled (LinphoneConferenceParams *params, bool_t enable) {
 	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
 }
 
-bool_t linphone_conference_params_video_enabled (const LinphoneConferenceParams *params) {
+bool_t linphone_conference_params_is_audio_enabled (const LinphoneConferenceParams *params) {
+	return ConferenceParams::toCpp(params)->audioEnabled() ? TRUE : FALSE;
+}
+
+void linphone_conference_params_set_video_enabled (LinphoneConferenceParams *params, bool_t enable) {
+	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+}
+
+bool_t linphone_conference_params_is_video_enabled (const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->videoEnabled() ? TRUE : FALSE;
 }
 
-void linphone_conference_params_enable_local_participant(LinphoneConferenceParams *params, bool_t enable){
+void linphone_conference_params_set_chat_enabled (LinphoneConferenceParams *params, bool_t enable) {
+	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+}
+
+bool_t linphone_conference_params_is_chat_enabled (const LinphoneConferenceParams *params) {
+	return ConferenceParams::toCpp(params)->chatEnabled() ? TRUE : FALSE;
+}
+
+void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable){
 	ConferenceParams::toCpp(params)->enableLocalParticipant(!!enable);
 }
 
-bool_t linphone_conference_params_local_participant_enabled(const LinphoneConferenceParams *params){
+bool_t linphone_conference_params_is_local_participant_enabled(const LinphoneConferenceParams *params){
 	return ConferenceParams::toCpp(params)->localParticipantEnabled();
+}
+
+void linphone_conference_params_set_one_participant_conference_enabled(LinphoneConferenceParams *params, bool_t enable){
+	ConferenceParams::toCpp(params)->enableOneParticipantConference(!!enable);
+}
+
+bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
 
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {

@@ -127,14 +127,23 @@ typedef struct _LinphoneAddress LinphoneAddress;
 // -----------------------------------------------------------------------------
 
 /**
- * @brief TODO
- * @ingroup conferencing
+ * @brief A conference is the object that allow to make calls when there are 2 or more participants
+ * 
+ * To create (or find) a #LinphoneConference, you first need a #LinphoneConferenceParams object.
+ * linphone_core_create_conference_with_params() allows you to create a conference.
+ * A conference is uniquely identified by a conference address, meaning you can
+ * only have more than one conference between two accounts. As of now, a #LinphoneCore can host only 1 conference but it can be part of many conferences as a remote participant.
+ * To find a conference among those a core is part of, you can call linphone_core_search_conference().
+ * @ingroup conference
  */
 typedef struct _LinphoneConference LinphoneConference;
 
 /**
- * @brief TODO
- * @ingroup conferencing
+ * @brief Object defining parameters for a #LinphoneConference.
+ * 
+ * Can be created by calling function linphone_core_create_conference_params().
+ * 
+ * @ingroup conference
  */
 typedef struct _LinphoneConferenceParams LinphoneConferenceParams;
 
@@ -143,7 +152,7 @@ typedef struct _LinphoneConferenceParams LinphoneConferenceParams;
  *
  * Use linphone_factory_create_conference_cbs() to create an instance. 
  * Then pass the object to a #LinphoneConference instance through linphone_conference_add_callbacks().
- * @ingroup conferencing
+ * @ingroup conference
  */
 typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
 
