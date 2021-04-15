@@ -2765,12 +2765,28 @@ LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCor
 LINPHONE_PUBLIC void linphone_core_verify_server_certificates(LinphoneCore *core, bool_t yesno);
 
 /**
+ * Get whether the tls server certificate must be verified when connecting to a SIP/TLS server.
+ * @param core #LinphoneCore object @notnil
+ * @return True if the tls server certificate must be verified
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_verify_server_certificates(LinphoneCore *core);
+
+/**
  * Specify whether the tls server certificate common name must be verified when connecting to a SIP/TLS server.
  * @param core #LinphoneCore object @notnil
  * @param yesno A boolean value telling whether the tls server certificate common name must be verified
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_verify_server_cn(LinphoneCore *core, bool_t yesno);
+
+/**
+ * Get whether the tls server certificate common name must be verified when connecting to a SIP/TLS server.
+ * @param core #LinphoneCore object @notnil
+ * @return True if the tls server certificate common name must be verified
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC bool_t linphone_core_get_verify_server_cn(LinphoneCore *core);
 
 /**
  * Gets the path to a file or folder containing the trusted root CAs (PEM format)
