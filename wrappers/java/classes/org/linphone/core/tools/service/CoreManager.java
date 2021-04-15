@@ -104,7 +104,7 @@ public class CoreManager {
         if (isAndroidXMediaAvailable()) {
             mAudioHelper = new AudioHelper(mContext);
         } else {
-            Log.w("[Core Manager] Do you have a dependency on androidx.media:media package?");
+            Log.w("[Core Manager] Do you have a dependency on androidx.media:media:1.2.0 or newer?");
         }
         mBluetoothHelper = new BluetoothHelper(mContext);
 
@@ -169,6 +169,7 @@ public class CoreManager {
             @Override
             public void onLastCallEnded(Core core) {
                 Log.i("[Core Manager] Last call ended");
+                if (mAudioHelper == null) return;
                 if (core.isNativeRingingEnabled()) {
                     mAudioHelper.stopRinging();
                 } else {
@@ -179,6 +180,7 @@ public class CoreManager {
 
             @Override
             public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
+                if (mAudioHelper == null) return;
                 if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
                     if (core.isNativeRingingEnabled()) {
                         Log.i("[Core Manager] Incoming call received, no other call, start ringing");
@@ -216,19 +218,9 @@ public class CoreManager {
                     mAudioHelper.requestCallAudioFocus();
                 }
             }
-        };        
-        if (mAudioHelper != null) mCore.addListener(mListener);
-
-        try {
-            mServiceClass = getServiceClass();
-            if (mServiceClass == null) mServiceClass = CoreService.class;
-            //startService();
-        } catch (IllegalStateException ise) {
-            Log.w("[Core Manager] Failed to start service: ", ise);
-            // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
-            // If not whitelisted temporary by the system like after a push, so assume background
-            mCore.enterBackground();
-        }
+        };
+        
+        mCore.addListener(mListener);
     }
 
     public void stop() {
@@ -338,8 +330,8 @@ public class CoreManager {
     }
 
     private void startService() {
-        mContext.startService(new Intent().setClass(mContext, mServiceClass));
         Log.i("[Core Manager] Starting service ", mServiceClass.getName());
+        mContext.startService(new Intent().setClass(mContext, mServiceClass));
     }
 
     private boolean isServiceRunning() {
@@ -355,10 +347,12 @@ public class CoreManager {
     private boolean isAndroidXMediaAvailable() {
         boolean available = false;
         try {
-            Class androixMedia = Class.forName("androidx.media.AudioAttributesCompat");
+            Class audioAttributesCompat = Class.forName("androidx.media.AudioAttributesCompat");
+            Class audioFocusRequestCompat = Class.forName("androidx.media.AudioFocusRequestCompat");
+            Class audioManagerCompat = Class.forName("androidx.media.AudioManagerCompat");
             available = true;
         } catch (ClassNotFoundException e) {
-            Log.w("[Core Manager] Couldn't find class androidx.media.AudioAttributesCompat");
+            Log.w("[Core Manager] Couldn't find class : ", e);
         } catch (Exception e) {
             Log.w("[Core Manager] Exception: " + e);
         }
