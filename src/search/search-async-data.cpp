@@ -22,22 +22,6 @@
 #include "magic-search-p.h"
 
 #include <bctoolbox/list.h>
-//#include <algorithm>
-
-/*
-#include "c-wrapper/c-wrapper.h"
-#include "c-wrapper/internal/c-tools.h"
-#include "linphone/utils/utils.h"
-#include "linphone/core.h"
-#include "linphone/types.h"
-#include "linphone/dictionary.h"
-#include "logger/logger.h"
-#include "private.h"
-*/
-//#include "linphone/belle-sip/object.h"
-
-#include "ldap/ldap-contact-provider.h"
-
 
 using namespace std;
 
