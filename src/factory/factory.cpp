@@ -265,6 +265,11 @@ LinphoneChatMessageCbs* Factory::createChatMessageCbs() const {
 	return linphone_chat_message_cbs_new();
 }
 
+LinphoneMagicSearchCbs* Factory::createMagicSearchCbs() const {
+	return linphone_magic_search_cbs_new();
+}
+
+
 LinphoneVcard* Factory::createVcard() const {
 	return _linphone_vcard_new();
 }
