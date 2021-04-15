@@ -24,29 +24,47 @@
 #  OPENLDAP_INCLUDE_DIRS - the OpenLDAP include directory
 #  OPENLDAP_LIBRARIES - The libraries needed to use OpenLDAP
 
+
+#Note : There are double find* because of priority given to the HINTS first. The second call will keep the result if there is one.
+#INCLUDES
 find_path(OPENLDAP_INCLUDE_DIRS
 	NAMES ldap.h
 	PATH_SUFFIXES include/openldap
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+	NO_DEFAULT_PATH
 )
-if(WIN32)
-	find_library(LDAP_LIB
-		NAMES ldap
-		HINTS "${CMAKE_INSTALL_PREFIX}"
-		PATH_SUFFIXES lib
-	)
-	find_library(LBER_LIB
-		NAMES lber
-		HINTS "${CMAKE_INSTALL_PREFIX}"
-		PATH_SUFFIXES lib
-	)
-	set(OPENLDAP_LIBRARIES ${LDAP_LIB} ${LBER_LIB})
-else()
-	find_library(OPENLDAP_LIBRARIES
-		NAMES ldap
-		HINTS "${CMAKE_INSTALL_PREFIX}"
-		PATH_SUFFIXES bin lib
-	)
-endif()
+find_path(OPENLDAP_INCLUDE_DIRS
+	NAMES ldap.h
+	PATH_SUFFIXES include/openldap
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+)
+
+#LDAP
+find_library(LDAP_LIB
+	NAMES ldap
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+	PATH_SUFFIXES lib
+	NO_DEFAULT_PATH
+)
+find_library(LDAP_LIB
+	NAMES ldap
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+	PATH_SUFFIXES lib
+)
+
+#LBER
+find_library(LBER_LIB
+	NAMES lber
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+	PATH_SUFFIXES lib
+	NO_DEFAULT_PATH
+)
+find_library(LBER_LIB
+	NAMES lber
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+	PATH_SUFFIXES lib
+)
+set(OPENLDAP_LIBRARIES ${LDAP_LIB} ${LBER_LIB})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(OpenLDAP
