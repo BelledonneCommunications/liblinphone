@@ -115,6 +115,9 @@ public class CoreManager {
         Log.i("[Core Manager] Registering shutdown receiver");
         mContext.registerReceiver(mShutdownReceiver, shutdownIntentFilter);
 
+        mServiceClass = getServiceClass();
+        if (mServiceClass == null) mServiceClass = CoreService.class;
+
         Log.i("[Core Manager] Ready");
     }
 
@@ -221,6 +224,8 @@ public class CoreManager {
         };
         
         mCore.addListener(mListener);
+
+        Log.i("[Core Manager] Started");
     }
 
     public void stop() {
@@ -237,8 +242,10 @@ public class CoreManager {
             mShutdownReceiver = null;
         }
 
-        mContext.stopService(new Intent().setClass(mContext, mServiceClass));
-        Log.i("[Core Manager] Stopping service ", mServiceClass.getName());
+        if (isServiceRunning()) {
+            Log.i("[Core Manager] Stopping service ", mServiceClass.getName());
+            mContext.stopService(new Intent().setClass(mContext, mServiceClass));
+        }
 
         if (mTimer != null) {
             mTimer.cancel();
