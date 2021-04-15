@@ -145,9 +145,7 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
-	if (mUseAppDelgate) {
-		[mAppDelegate registerForPush];
-	}
+	
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -322,7 +320,9 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	if (monitoringEnabled) {
 		startNetworkMonitoring();
 	}
-
+	if (mUseAppDelgate) {
+		[mAppDelegate registerForPush];
+	}
 	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
 		enableAutoIterate(TRUE);
 	} else {
