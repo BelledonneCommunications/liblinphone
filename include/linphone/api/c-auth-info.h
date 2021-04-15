@@ -262,7 +262,7 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert_path(const LinphoneA
  * @return The TLS key path. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *auth_info);
-	
+
 /*
  * Gets the TLS key password.
  * @param auth_info The #LinphoneAuthInfo object. @notnil

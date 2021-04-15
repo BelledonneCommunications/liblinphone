@@ -1194,7 +1194,7 @@ LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *core, const char
 
 /**
  * Constructs a #LinphoneAddress from the given string if possible.
- * 
+ *
  * In case of just a username, characters will be unescaped.
  * If a phone number is detected, it will be flattened.
  * sip: or sips: prefix will be added if not present.
@@ -1317,10 +1317,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_pause_all_calls(LinphoneCore *core)
 
 
 /**
- * Create a #LinphoneCallParams suitable for linphone_core_invite_with_params(), linphone_core_accept_call_with_params(), 
+ * Create a #LinphoneCallParams suitable for linphone_core_invite_with_params(), linphone_core_accept_call_with_params(),
  * linphone_core_accept_early_media_with_params() or linphone_core_accept_call_update().
- * The parameters are initialized according to the current #LinphoneCore configuration and the last used local #LinphoneCallParams, 
- * the ones passed through linphone_call_update(), linphone_call_accept_with_params() or linphone_call_accept_update_with_params(). 
+ * The parameters are initialized according to the current #LinphoneCore configuration and the last used local #LinphoneCallParams,
+ * the ones passed through linphone_call_update(), linphone_call_accept_with_params() or linphone_call_accept_update_with_params().
  * @param core #LinphoneCore object
  * @param call #LinphoneCall for which the parameters are to be build, or NULL in the case where the parameters are to be used for a new outgoing call. @maybenil
  * @return A new #LinphoneCallParams object. @maybenil
@@ -1994,6 +1994,14 @@ LINPHONE_PUBLIC void linphone_core_abort_authentication(LinphoneCore *core, Linp
  * @param core the #LinphoneCore @notnil
  **/
 LINPHONE_PUBLIC void linphone_core_clear_all_auth_info(LinphoneCore *core);
+
+/**
+ * Set the #LinphoneAccountCreator configuration on the #LinphoneCore
+ * @param core The #LinphoneCore used for the XML-RPC communication @notnil
+ * @param backend The #LinphoneAccountCreatorBackend
+ * @param url The URL to reach
+**/
+LINPHONE_PUBLIC void linphone_core_set_account_creator_url(LinphoneCore *lc, LinphoneAccountCreatorBackend backend, const char *url);
 
 /**
  * Sets an default account creator service in the core
@@ -3190,7 +3198,7 @@ LINPHONE_PUBLIC void linphone_video_activation_policy_set_automatically_initiate
  * This policy defines whether:
  * - video shall be initiated by default for outgoing calls
  * - video shall be accepted by default for incoming calls
- * 
+ *
  * @param core the #LinphoneCore object @notnil
  * @param policy The #LinphoneVideoActivationPolicy to use @notnil
  * @ingroup media_parameters
@@ -4436,7 +4444,7 @@ LINPHONE_PUBLIC void linphone_core_set_call_error_tone(LinphoneCore *core, Linph
 LINPHONE_PUBLIC void linphone_core_set_tone(LinphoneCore *core, LinphoneToneID tone_id, const char *audiofile);
 
 /**
- * Globaly set an http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml. 
+ * Globaly set an http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml.
  * Url may be like: "https://file.linphone.org/upload.php".
  * This value can also be set for a dedicated account using #linphone_proxy_config_set_file_transfer_server().
  * @param core #LinphoneCore to be modified @notnil
@@ -5589,7 +5597,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore 
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
 
 /**
- * Gets the default output audio device 
+ * Gets the default output audio device
  * @param core The #LinphoneCore @notnil
  * @returns The default output audio device @notnil
  * @ingroup audio

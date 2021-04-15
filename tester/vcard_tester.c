@@ -33,7 +33,7 @@
 #define CARDDAV_SYNC_TIMEOUT 15000
 
 static void linphone_vcard_import_export_friends_test(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const bctbx_list_t *friends = linphone_friend_list_get_friends(lfl);
 	char *import_filepath = bc_tester_res("vcards/vcards.vcf");
@@ -62,7 +62,7 @@ static void linphone_vcard_import_export_friends_test(void) {
 }
 
 static void linphone_vcard_import_a_lot_of_friends_test(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	char *import_filepath = bc_tester_res("vcards/thousand_vcards.vcf");
 	clock_t start, end;
@@ -147,7 +147,7 @@ static void linphone_vcard_update_existing_friends_test(void) {
 #endif
 
 static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneVcard *lvc = linphone_vcard_context_get_vcard_from_buffer(linphone_core_get_vcard_context(manager->lc), "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain Berfini\r\nIMPP:sip:sberfini@sip.linphone.org\r\nIMPP;TYPE=home:sip:sylvain@sip.linphone.org\r\nTEL;TYPE=work:0952636505\r\nEND:VCARD\r\n");
 	LinphoneFriend *lf = linphone_friend_new_from_vcard(lvc);
 	linphone_vcard_unref(lvc);
@@ -205,7 +205,7 @@ static void linphone_vcard_phone_numbers_and_sip_addresses(void) {
 }
 
 static void friends_if_no_db_set(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriend *lf = linphone_core_create_friend(manager->lc);
 	LinphoneAddress *addr = linphone_address_new("sip:sylvain@sip.linphone.org");
 	const bctbx_list_t *friends = NULL;
@@ -266,7 +266,7 @@ static void friends_sqlite_storage(void) {
 	cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_friend_list_created(cbs, friend_list_created_cb);
 	linphone_core_cbs_set_friend_list_removed(cbs, friend_list_removed_cb);
-	lcm = linphone_core_manager_new2("stun_rc",FALSE);
+	lcm = linphone_core_manager_new_with_proxies_check("stun_rc",FALSE);
 	lc = lcm->lc;
 	linphone_core_add_callbacks(lc, cbs);
 	linphone_core_cbs_unref(cbs);
@@ -547,7 +547,7 @@ static void carddav_updated_contact(LinphoneCardDavContext *c, LinphoneFriend *n
 }
 
 static void carddav_sync(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneCardDavContext *c = NULL;
@@ -576,7 +576,7 @@ static void carddav_sync(void) {
 }
 
 static void carddav_sync_2(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
 	LinphoneFriend *lf = linphone_core_create_friend_with_address(manager->lc, "\"Sylvain\" <sip:sylvain@sip.linphone.org>");
 	char *friends_db = bc_tester_file("friends.db");
@@ -617,7 +617,7 @@ static void carddav_sync_2(void) {
 }
 
 static void carddav_sync_3(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
 	LinphoneVcard *lvc = linphone_vcard_context_get_vcard_from_buffer(linphone_core_get_vcard_context(manager->lc), "BEGIN:VCARD\r\nVERSION:4.0\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nFN:Sylvain Berfini\r\nIMPP;TYPE=work:sip:sylvain@sip.linphone.org\r\nEND:VCARD\r\n");
 	LinphoneFriend *lf = linphone_friend_new_from_vcard(lvc);
@@ -658,7 +658,7 @@ static void carddav_sync_3(void) {
 }
 
 static void carddav_sync_4(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
 	LinphoneVcard *lvc = linphone_vcard_context_get_vcard_from_buffer(linphone_core_get_vcard_context(manager->lc), "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Margaux Clerc\r\nIMPP;TYPE=work:sip:margaux@sip.linphone.org\r\nEND:VCARD\r\n");
 	LinphoneFriend *lf = linphone_friend_new_from_vcard(lvc);
@@ -720,7 +720,7 @@ static void carddav_sync_status_changed(LinphoneFriendList *list, LinphoneFriend
 }
 
 static void carddav_integration(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneVcard *lvc = linphone_vcard_context_get_vcard_from_buffer(linphone_core_get_vcard_context(manager->lc), "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Margaux Clerc\r\nIMPP;TYPE=work:sip:margaux@sip.linphone.org\r\nEND:VCARD\r\n");
 	LinphoneFriend *lf = linphone_friend_new_from_vcard(lvc);
@@ -810,7 +810,7 @@ static void carddav_integration(void) {
 }
 
 static void carddav_clean(void) {  // This is to ensure the content of the test addressbook is in the correct state for the following tests
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneFriendListCbs *cbs = linphone_friend_list_get_callbacks(lfl);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
@@ -860,7 +860,7 @@ static void carddav_clean(void) {  // This is to ensure the content of the test 
 }
 
 static void carddav_multiple_sync(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneFriendListCbs *cbs = linphone_friend_list_get_callbacks(lfl);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
@@ -890,7 +890,7 @@ static void carddav_multiple_sync(void) {
 }
 
 static void carddav_server_to_client_and_client_to_sever_sync(void) {
-	LinphoneCoreManager *manager = linphone_core_manager_new2("carddav_rc", FALSE);
+	LinphoneCoreManager *manager = linphone_core_manager_new_with_proxies_check("carddav_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(manager->lc);
 	LinphoneFriendListCbs *cbs = linphone_friend_list_get_callbacks(lfl);
 	LinphoneCardDAVStats *stats = (LinphoneCardDAVStats *)ms_new0(LinphoneCardDAVStats, 1);
@@ -939,7 +939,7 @@ static void carddav_server_to_client_and_client_to_sever_sync(void) {
 }
 
 static void find_friend_by_ref_key_test(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriend *lf = linphone_core_create_friend_with_address(manager->lc, "sip:toto@sip.linphone.org");
 	LinphoneFriend *lf2 = NULL;
@@ -1006,7 +1006,7 @@ static void find_friend_by_ref_key_in_lot_of_friends_test(void) {
 }
 
 static void find_friend_by_ref_key_empty_list_test(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriend *lf2;
 	lf2 = linphone_friend_list_find_friend_by_ref_key(lfl, "totorefkey");

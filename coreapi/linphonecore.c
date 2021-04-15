@@ -1383,7 +1383,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	// Wait to have restored previous sound cards to notify list has been updated
 	// Otherwise app won't be able to change audio device in callback
 	linphone_core_notify_audio_devices_list_updated(lc);
-	
+
 /*
 	tmp=linphone_config_get_int(lc->config,"sound","play_lev",80);
 	linphone_core_set_play_level(lc,tmp);
@@ -2653,23 +2653,53 @@ static void linphone_core_internal_publish_state_changed(LinphoneCore *lc, Linph
 	}
 }
 
+void linphone_core_set_account_creator_url(LinphoneCore *lc, LinphoneAccountCreatorBackend backend, const char *url) {
+	linphone_config_set_int(lc->config, "account_creator", "backend", (int)backend);
+	linphone_config_set_string(lc->config, "account_creator", "url", url);
+}
+
 static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
-	service->account_creator_service_constructor_cb = linphone_account_creator_constructor_linphone;
-	service->account_creator_service_destructor_cb = NULL;
-	service->create_account_request_cb = linphone_account_creator_create_account_linphone;
-	service->delete_account_request_cb = linphone_account_creator_delete_account_linphone;
-	service->is_account_exist_request_cb = linphone_account_creator_is_account_exist_linphone;
-	service->confirmation_key_request_cb = linphone_account_creator_get_confirmation_key_linphone;
-	service->activate_account_request_cb = linphone_account_creator_activate_account_linphone;
-	service->is_account_activated_request_cb = linphone_account_creator_is_account_activated_linphone;
-	service->link_account_request_cb = linphone_account_creator_link_phone_number_with_account_linphone;
-	service->activate_alias_request_cb = linphone_account_creator_activate_phone_number_link_linphone;
-	service->is_alias_used_request_cb = linphone_account_creator_is_phone_number_used_linphone;
-	service->is_account_linked_request_cb = linphone_account_creator_is_account_linked_linphone;
-	service->recover_account_request_cb = linphone_account_creator_recover_phone_account_linphone;
-	service->update_account_request_cb = linphone_account_creator_update_password_linphone;
-	service->login_linphone_account_request_cb = linphone_account_creator_login_linphone_account_linphone;
+
+	#ifdef HAVE_FLEXIAPI
+	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendFlexiAPI)
+		== LinphoneAccountCreatorBackendXMLRPC) {
+	#endif
+		linphone_account_creator_service_set_constructor_cb(service, linphone_account_creator_constructor_linphone_xmlrpc);
+		linphone_account_creator_service_set_destructor_cb(service, NULL);
+		linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_linphone_xmlrpc);
+		linphone_account_creator_service_set_activate_account_cb(service, linphone_account_creator_activate_phone_account_linphone_xmlrpc);
+		linphone_account_creator_service_set_is_account_activated_cb(service, linphone_account_creator_is_account_activated_linphone_xmlrpc);
+		linphone_account_creator_service_set_link_account_cb(service, linphone_account_creator_link_phone_number_with_account_linphone_xmlrpc);
+		linphone_account_creator_service_set_activate_alias_cb(service, linphone_account_creator_activate_phone_number_link_linphone_xmlrpc);
+		linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_linphone_xmlrpc);
+		linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_linphone_xmlrpc);
+		linphone_account_creator_service_set_confirmation_key_cb(service, linphone_account_creator_get_confirmation_key_linphone_xmlrpc);
+
+		// XMLRPC specific endpoints
+		linphone_account_creator_service_set_create_account_cb(service, linphone_account_creator_create_account_linphone_xmlrpc);
+		linphone_account_creator_service_set_recover_account_cb(service, linphone_account_creator_recover_phone_account_linphone_xmlrpc);
+		linphone_account_creator_service_set_is_alias_used_cb(service, linphone_account_creator_is_phone_number_used_linphone_xmlrpc);
+		linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone_xmlrpc);
+
+	#ifdef HAVE_FLEXIAPI
+	} else {
+		linphone_account_creator_service_set_constructor_cb(service, NULL);
+		linphone_account_creator_service_set_destructor_cb(service, NULL);
+		linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_flexiapi);
+		linphone_account_creator_service_set_activate_account_cb(service, linphone_account_creator_activate_phone_account_flexiapi);
+		linphone_account_creator_service_set_is_account_activated_cb(service, linphone_account_creator_is_account_activated_flexiapi);
+		linphone_account_creator_service_set_link_account_cb(service, linphone_account_creator_link_phone_number_with_account_flexiapi);
+		linphone_account_creator_service_set_activate_alias_cb(service, linphone_account_creator_activate_phone_number_link_flexiapi);
+		linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_flexiapi);
+		linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_flexiapi);
+
+		// FlexiAPI specific endpoints
+		linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_send_token_flexiapi);
+		linphone_account_creator_service_set_create_account_with_token_cb(service, linphone_account_creator_create_account_with_token_flexiapi);
+	}
+	#endif
+
 	linphone_core_set_account_creator_service(lc, service);
 }
 
@@ -4656,14 +4686,14 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 		linphone_core_leave_conference(lc);
 		return 0;
 	}
-	
+
 	current_call=linphone_core_get_current_call(lc);
 
 	// If current call is not answered, do not try to pause it as user may take another one in the list of ringing calls
 	if((current_call != NULL) && (!linphone_core_is_incoming_invite_pending(lc))){
 		if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls().size() == 1){
-			/* 
-			 * The current call is the unique one and is the call that requires the sound ressources. 
+			/*
+			 * The current call is the unique one and is the call that requires the sound ressources.
 			 * This is the case of receiving an incoming call when there is no other one. It is then set as current_call.
 			 */
 			return 0;
@@ -5117,7 +5147,7 @@ LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * de
 
 LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * devid) {
 	MSSndCard *card = get_card_from_string_id(devid, MS_SND_CARD_CAP_PLAYBACK, lc->factory);
-	if (lc->sound_conf.play_sndcard) { 
+	if (lc->sound_conf.play_sndcard) {
 		ms_snd_card_unref(lc->sound_conf.play_sndcard);
 		lc->sound_conf.play_sndcard = NULL;
 	}
@@ -8252,13 +8282,13 @@ bool_t _linphone_core_is_conference_creation (const LinphoneCore *lc, const Linp
 	const bctbx_list_t * elem;
 	LinphoneAddress *testedAddr = linphone_address_clone(addr);
 	bool_t result = FALSE;
-	
+
 	if (!testedAddr) return FALSE;
 	linphone_address_set_port(testedAddr, 0);
-	
+
 	for (elem = linphone_core_get_proxy_config_list(lc); elem != NULL; elem = elem->next){
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig*) elem->data;
-		
+
 		const char *uri = linphone_proxy_config_get_conference_factory_uri(proxy);
 		if (!uri) continue;
 
@@ -8268,7 +8298,7 @@ bool_t _linphone_core_is_conference_creation (const LinphoneCore *lc, const Linp
 		linphone_address_set_port(factoryAddr, 0);
 		result = linphone_address_weak_equal(factoryAddr, testedAddr);
 		linphone_address_unref(factoryAddr);
-		
+
 		if (result) break; /* if they match*/
 	}
 	linphone_address_unref(testedAddr);
