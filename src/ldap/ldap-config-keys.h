@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 21021 Belledonne Communications SARL.
+ * Copyright (c) 2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -54,9 +54,9 @@ public:
 	 *   - "password" : "".
 	 * Password to pass to server when binding.
 	 *   - "filter" : "(sn=*%s*)".
-	 * The search is base on this filter to search friends.
+	 * The search is based on this filter to search friends.
 	 *   - "name_attribute" : "sn".
-	 * Check these attributes To build Name Friend, separated by a comma and the first is the highest priority.
+	 * Check these attributes to build Name Friend, separated by a comma and the first is the highest priority.
 	 *   - "sip_attribute" : "mobile,telephoneNumber,homePhone,sn".
 	 * Check these attributes to build the SIP username in address of Friend. Attributes are separated by a comma and the first is the highest priority.
 	 *   - "sip_scheme" : "sip".

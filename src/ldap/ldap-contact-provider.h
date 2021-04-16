@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -30,6 +30,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <mutex>
 
 #include <ldap.h>
 
@@ -147,13 +148,13 @@ public:
 	 * @param data A pointer to #LdapContactProvider
 	 * @return 
 	 */
-	static bool_t iterate(void *data);
+	static bool iterate(void *data);
 	/**
 	 * @brief stun_server_resolved Callback for DNS resolution with Sal. It retrieve the Sal's result and replace the server domain to the IP.
 	 * @param data #LdapContactProvider
 	 * @param results The address from Sal
 	 */
-	static void stun_server_resolved(void *data, belle_sip_resolver_results_t *results);
+	static void ldapServerResolved(void *data, belle_sip_resolver_results_t *results);
 private:
 	/**
 	 * @brief handleSearchResult Parse the LDAPMessage to get contacts and fill Search entries.
@@ -167,12 +168,13 @@ private:
 	std::vector<std::string> mNameAttributes;// Optimization to avoid split each times
 	std::vector<std::string> mSipAttributes;// Optimization to avoid split each times
 	LDAP *mLd;
-	ortp_mutex_t mLock;
+	std::mutex mLock;
 	std::list<std::shared_ptr<LdapContactSearch> > mRequests;
 
 	int mAwaitingMessageId; // Waiting Message for ldap_abandon_ext on bind
 	bool_t mConnected;	// If we are connected to server (bind)
 	int mCurrentAction; // Iteration action
+	belle_sip_source_t * mIteration;	// Iteration loop
 	belle_sip_resolver_context_t * mSalContext;	// Sal Context for DNS
 	belle_generic_uri_t *mServerUri;//Used to optimized query on SAL
 	std::string mServerUrl;	// URL to use for connection. It can be different from configuration

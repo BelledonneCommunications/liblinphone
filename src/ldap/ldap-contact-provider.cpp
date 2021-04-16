@@ -47,10 +47,9 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, cons
 	mLd = nullptr;
 	mSalContext = NULL;
 	mServerUri = NULL;
-	ortp_mutex_init(&mLock, NULL);
 
 	// register our hook into iterate so that LDAP can do its magic asynchronously.
-	linphone_core_add_iterate_hook(core->getCCore(), iterate, this);
+	mIteration = mCore->createTimer(std::bind(&LdapContactProvider::iterate, this), 50, "LdapContactProvider");
 	if( !LdapConfigKeys::validConfig(config) ) {
 		ms_error( "[LDAP] Invalid configuration for LDAP, aborting creation");
 		mCurrentAction = ACTION_ERROR;
@@ -61,9 +60,17 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, cons
 }
 
 LdapContactProvider::~LdapContactProvider(){
-	linphone_core_remove_iterate_hook(mCore->getCCore(), iterate, this);
+	if(mIteration){
+		mCore->destroyTimer(mIteration);
+		mIteration = nullptr;
+	}
 // Wait for bind thread to end
-	ortp_mutex_lock(&mLock);
+	mLock.lock();
+	if (mSalContext) {
+		belle_sip_resolver_context_cancel(mSalContext);
+		belle_sip_object_unref(mSalContext);
+		mSalContext = NULL;
+	}
 	if(mConnected==1)// We have been bind. Clean the exit
 		ldap_unbind_ext_s(mLd, NULL, NULL);
 	if(mAwaitingMessageId > 0){//There is currently a request that has not been processed. Abandon it.
@@ -74,8 +81,7 @@ LdapContactProvider::~LdapContactProvider(){
 		belle_sip_object_unref(mServerUri);
 		mServerUri = NULL;
 	}
-	ortp_mutex_unlock(&mLock);
-	ortp_mutex_destroy(&mLock);
+	mLock.unlock();
 }
 
 std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(const std::shared_ptr<Core> &core){
@@ -188,11 +194,11 @@ int LdapContactProvider::getCurrentAction()const{
 // Create a search object and store the request to be used when the provider is ready
 void LdapContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData){
 	std::shared_ptr<LdapContactSearch> request = std::make_shared<LdapContactSearch>(this, predicate, cb, cbData );
-	ortp_mutex_lock(&mLock);
+	mLock.lock();
 	if( request != NULL ) {
 		mRequests.push_back(request);
 	}
-	ortp_mutex_unlock(&mLock);
+	mLock.unlock();
 }
 
 // Start the search
@@ -288,7 +294,7 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 
 //*******************************************	ASYNC PROCESSING
 // ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST
-bool_t LdapContactProvider::iterate(void *data) {
+bool LdapContactProvider::iterate(void *data) {
 	struct timeval pollTimeout = {0,0};
 	LDAPMessage* results = NULL;
 	LdapContactProvider* provider = (LdapContactProvider*)data;
@@ -299,7 +305,7 @@ bool_t LdapContactProvider::iterate(void *data) {
 		// not using switch is wanted : we can do severals steps in one iteration if wanted.
 		if(provider->mCurrentAction == ACTION_NONE){
 			ms_debug("[LDAP] ACTION_NONE");
-			ortp_mutex_lock(&provider->mLock);
+			provider->mLock.lock();
 			if( provider->mRequests.size() > 0){
 				if( provider->mCurrentAction != ACTION_ERROR){
 					if( provider->mConnected != 1)
@@ -308,7 +314,7 @@ bool_t LdapContactProvider::iterate(void *data) {
 						provider->mCurrentAction = ACTION_BIND;
 				}
 			}
-			ortp_mutex_unlock(&provider->mLock);
+			provider->mLock.unlock();
 		}
 
 		if(provider->mCurrentAction == ACTION_INIT){
@@ -329,7 +335,7 @@ bool_t LdapContactProvider::iterate(void *data) {
 							port = 636;
 						belle_generic_uri_set_port(provider->mServerUri, port);
 					}
-					provider->mSalContext = provider->mCore->getCCore()->sal->resolveA(domain.c_str(), port, AF_INET, stun_server_resolved, provider);
+					provider->mSalContext = provider->mCore->getCCore()->sal->resolveA(domain.c_str(), port, AF_INET, ldapServerResolved, provider);
 					if (provider->mSalContext){
 						belle_sip_object_ref(provider->mSalContext);
 						provider->mCurrentAction = ACTION_WAIT_DNS;
@@ -406,7 +412,7 @@ bool_t LdapContactProvider::iterate(void *data) {
 			size_t requestSize = 0;
 			if( provider->mLd && provider->mConnected ){
 				// check for pending searches
-				ortp_mutex_lock(&provider->mLock);
+				provider->mLock.lock();
 				for(auto it = provider->mRequests.begin() ; it != provider->mRequests.end() ; ){
 					if(!(*it))
 						it = provider->mRequests.erase(it);
@@ -422,7 +428,7 @@ bool_t LdapContactProvider::iterate(void *data) {
 						++it;
 				}
 				requestSize = provider->mRequests.size();
-				ortp_mutex_unlock(&provider->mLock);
+				provider->mLock.unlock();
 			}
 			if( requestSize > 0 ){// No need to check connectivity as it is checked before
 				// never block
@@ -464,11 +470,11 @@ bool_t LdapContactProvider::iterate(void *data) {
 			}
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 
-void LdapContactProvider::stun_server_resolved(void *data, belle_sip_resolver_results_t *results) {
+void LdapContactProvider::ldapServerResolved(void *data, belle_sip_resolver_results_t *results) {
 	LdapContactProvider * provider = (LdapContactProvider*)(data);
 	const struct addrinfo * addr = belle_sip_resolver_results_get_addrinfos(results);
 	if (addr) {
@@ -488,19 +494,19 @@ void LdapContactProvider::stun_server_resolved(void *data, belle_sip_resolver_re
 		}else{
 			provider->mServerUrl = provider->mConfig["server"];
 		}
-		ortp_mutex_lock(&provider->mLock);
+		provider->mLock.lock();
 		provider->mCurrentAction = ACTION_INITIALIZE;
-		ortp_mutex_unlock(&provider->mLock);
+		provider->mLock.unlock();
 	} else {
 		ms_error("[LDAP] Server resolution failed, no address can be found.");
-		ortp_mutex_lock(&provider->mLock);
+		provider->mLock.lock();
 		provider->mCurrentAction = ACTION_ERROR;
-		ortp_mutex_unlock(&provider->mLock);
+		provider->mLock.unlock();
 	}
 }
 
 void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
-	ortp_mutex_lock(&mLock);
+	mLock.lock();
 	if(message){
 		int msgtype = ldap_msgtype(message);
 		LdapContactSearch* req = requestSearch(ldap_msgid(message));
@@ -555,7 +561,7 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 		}
 		mRequests.clear();
 	}
-	ortp_mutex_unlock(&mLock);
+	mLock.unlock();
 }
 
 
