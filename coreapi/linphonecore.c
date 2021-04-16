@@ -8112,7 +8112,7 @@ static void linphone_core_set_conference(LinphoneCore *lc, LinphoneConference *c
 LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc, const LinphoneConferenceParams *params) {
 	const char *conf_method_name;
 	LinphoneConference *conf = nullptr;
-	bool serverMode = params && !linphone_conference_params_local_participant_enabled(params);
+	bool serverMode = params && !linphone_conference_params_is_local_participant_enabled(params);
 
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {
@@ -8147,9 +8147,12 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 
 LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
-	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
-		return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
-	});
+	list<LinphonePrivate::IdentityAddress> participantsList;
+	if (participants) {
+		participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
+			return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
+		});
+	}
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
 	LinphonePrivate::IdentityAddress remoteAddress = remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::IdentityAddress();
 	shared_ptr<LinphonePrivate::MediaConference::Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceParams, identityAddress, remoteAddress, participantsList);
@@ -8221,7 +8224,7 @@ bool_t linphone_core_is_in_conference(const LinphoneCore *lc) {
 }
 
 int linphone_core_get_conference_size(LinphoneCore *lc) {
-	if(lc->conf_ctx) return linphone_conference_get_size(lc->conf_ctx);
+	if(lc->conf_ctx) return linphone_conference_get_participant_count(lc->conf_ctx) + (linphone_conference_is_in(lc->conf_ctx) ? 1 : 0);
 	return 0;
 }
 
