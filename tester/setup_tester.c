@@ -400,7 +400,7 @@ void linphone_proxy_config_address_equal_test(void) {
 	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(a,d), LinphoneProxyConfigAddressDifferent, int, "%d");
 	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(a,e), LinphoneProxyConfigAddressWeakEqual, int, "%d");
 	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(NULL,NULL), LinphoneProxyConfigAddressEqual, int, "%d");
-	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(a,f), LinphoneProxyConfigAddressWeakEqual, int, "%d");
+	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(a,f), LinphoneProxyConfigAddressEqual, int, "%d");
 	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(c,f), LinphoneProxyConfigAddressDifferent, int, "%d");
 	BC_ASSERT_EQUAL(linphone_proxy_config_address_equal(e,f), LinphoneProxyConfigAddressWeakEqual, int, "%d");
 
@@ -457,7 +457,7 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org;param=blue");
 	linphone_proxy_config_done(proxy_config);
-	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressWeakEqual, int, "%d");
+	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressEqual, int, "%d");
 
 
 	linphone_proxy_config_edit(proxy_config);
@@ -1734,6 +1734,10 @@ static void search_friend_get_capabilities(void) {
 		BC_ASSERT_TRUE(ephemeralFound);
 		bctbx_list_free_with_data(copy, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
+
+	bctbx_list_free(group_chat_descriptions);
+	bctbx_list_free(lime_descriptions);
+	bctbx_list_free(ephemeral_descriptions);
 
 	linphone_presence_service_unref(group_chat_service);
 	linphone_presence_service_unref(lime_service);

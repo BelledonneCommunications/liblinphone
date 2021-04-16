@@ -41,7 +41,6 @@ class ConferenceId;
 class ConferenceParticipantDeviceEvent;
 class ConferenceParticipantEvent;
 class ConferenceSubjectEvent;
-class ConferenceAvailableMediaEvent;
 class Participant;
 class ParticipantDevice;
 
@@ -51,6 +50,7 @@ friend class LocalConferenceListEventHandler;
 	friend class Tester;
 #endif
 public:
+	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus (LinphoneMediaDirection direction);
 	LocalConferenceEventHandler (Conference *conference, ConferenceListener* listener = nullptr);
 
 	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
@@ -69,6 +69,8 @@ public:
 	std::string createNotifyParticipantRemoved (const Address & pAddress);
 	std::string createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress);
+	std::string createNotifyParticipantDeviceMediaChanged (const Address & pAddress, const Address & dAddress);
+	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
 	std::string createNotifySubjectChanged ();
 
 	static void notifyResponseCb (const LinphoneEvent *ev);
@@ -123,6 +125,12 @@ public:
 	* @param[in] device participant device removed from the conference or chat room.
 	*/
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	/*
+	* This fonction is called each time a participant device changes its available media
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed its media capabilities
+	*/
+	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	 * This fonction is called each time the conference transitions to a new state
@@ -143,6 +151,9 @@ private:
 	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
 
 	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
+
+	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
+	void addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, Xsd::ConferenceInfo::ConferenceDescriptionType & confDescr);
 
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };

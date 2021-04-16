@@ -248,7 +248,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphon
 	if (conference) {
 		// Default videoEnable to conference capabilities if the core is in a conference
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
-		d->videoEnabled = !!linphone_conference_params_video_enabled(params);
+		d->videoEnabled = !!linphone_conference_params_is_video_enabled(params);
 	} else {
 		if (dir == LinphoneCallOutgoing){
 			d->videoEnabled = cCore->video_policy.automatically_initiate;
