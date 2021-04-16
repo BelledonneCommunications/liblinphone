@@ -235,27 +235,33 @@
 - (void)registerForPush {
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
-	if (linphone_core_is_push_notification_enabled(core->getCCore())) {
-		ms_message("[PushKit] Connecting for push notifications");
-		voipRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
-		voipRegistry.delegate = self;
-		voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
-		
-		ms_message("[APNs] register for push notif");
-		[[UIApplication sharedApplication] registerForRemoteNotifications];
 
-		bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
-		for (; accounts != NULL; accounts = accounts->next) {
-			LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-			LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
-			linphone_push_notification_config_set_bundle_identifier(push_cfg, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
-		}
+	ms_message("[PushKit] Connecting for push notifications");
+	voipRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
+	voipRegistry.delegate = self;
+	voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
+		
+	ms_message("[APNs] register for push notif");
+	[[UIApplication sharedApplication] registerForRemoteNotifications];
+
+	linphone_push_notification_config_set_bundle_identifier(core->getCCore()->push_config, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		linphone_push_notification_config_set_bundle_identifier(push_cfg, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
 	}
 }
 
 - (void)didRegisterForRemotePush:(NSData *)token {
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
+	
+	if (token) {
+		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, [self stringFromToken:token forType:@"remote"].UTF8String);
+	} else {
+		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, nullptr);
+	}
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -278,6 +284,7 @@
 	if (!core) return;
 	NSData *pushToken = credentials.token;
 
+	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, [self stringFromToken:pushToken forType:@"voip"].UTF8String);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -292,6 +299,7 @@
     ms_message("[PushKit] Token invalidated");
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
+	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, nullptr);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -330,16 +338,14 @@
 	NSDictionary *aps = [userInfo objectForKey:@"aps"];
 	NSString *callId = [aps objectForKey:@"call-id"] ?: @"";
 
-	if([self callkitEnabled]) {
-		// Since ios13, a new Incoming call must be displayed when the callkit is enabled and app is in background.
-		// Otherwise it will cause a crash.
-		LinphoneCall *incomingCall = linphone_core_get_call_by_callid(lc, [callId UTF8String]);
-		if (!incomingCall) {
-			ms_message("[pushkit] create new call");
-			incomingCall = linphone_call_new_incoming_with_callid(lc, [callId UTF8String]);
-			linphone_call_start_basic_incoming_notification(incomingCall);
-			linphone_call_start_push_incoming_notification(incomingCall);
-		}
+	// Since ios13, a new Incoming call must be displayed when the callkit is enabled and app is in background.
+	// Otherwise it will cause a crash.
+	LinphoneCall *incomingCall = linphone_core_get_call_by_callid(lc, [callId UTF8String]);
+	if (!incomingCall) {
+		ms_message("[pushkit] create new call");
+		incomingCall = linphone_call_new_incoming_with_callid(lc, [callId UTF8String]);
+		linphone_call_start_basic_incoming_notification(incomingCall);
+		linphone_call_start_push_incoming_notification(incomingCall);
 	}
 
     ms_message("Notification [%p] processed", userInfo);
