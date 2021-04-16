@@ -288,7 +288,8 @@ endif()
 
 if(ENABLE_LDAP)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-		ldap/ldap-friend.h
+		ldap/ldap-config-keys.h
+		ldap/ldap-contact-fields.h
 		ldap/ldap-contact-provider.h
 		ldap/ldap-contact-search.h
 		)
@@ -458,7 +459,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 )
 if(ENABLE_LDAP)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
-		ldap/ldap-friend.cpp
+		ldap/ldap-config-keys.cpp
+		ldap/ldap-contact-fields.cpp
 		ldap/ldap-contact-provider.cpp
 		ldap/ldap-contact-search.cpp
 		)
