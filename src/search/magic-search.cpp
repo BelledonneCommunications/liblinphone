@@ -151,14 +151,14 @@ public:
 	LdapCbData(){}
 	virtual ~LdapCbData(){}
 	virtual void cancel() override{
-		mProvider = nullptr;
+		mProvider = nullptr;// Just remove shared pointer. When there is no reference on it, it will be destroyed (aka cancelled)
 	}
-	std::shared_ptr<LDAPContactProvider> mProvider;
+	std::shared_ptr<LdapContactProvider> mProvider;
 };
 #endif
+
 // STATES:
 // STATE_START => (STATE_WAIT) => STATE_SEND [<=] => STATE_END
-
 bool MagicSearch::iterate(void){
 	L_D();
 	std::pair<std::string, std::string> request;
@@ -224,6 +224,7 @@ list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, 
 	return processResults(resultList);
 }
 
+// Private : used from iterate. This is an auto start. 
 bool MagicSearch::getContactListFromFilterStartAsync (const string &filter, const string &withDomain, SearchAsyncData * asyncData) {
 	L_D();
 	std::shared_ptr<list<SearchResult>> returnList = nullptr;
@@ -235,7 +236,6 @@ bool MagicSearch::getContactListFromFilterStartAsync (const string &filter, cons
 		beginNewSearchAsync(filter, withDomain, asyncData);
 	}
 	d->mFilter = filter;
-	;
 	return asyncData->setSearchResults(returnList);
 }
 
@@ -396,13 +396,13 @@ void MagicSearch::getAddressFromLDAPServerStartAsync (
 	SearchAsyncData * asyncData
 )const {
 	std::string predicate = (filter.empty()?"*":filter);
-	std::vector<std::shared_ptr<LDAPContactProvider> > providers = LDAPContactProvider::create(this->getCore());
+	std::vector<std::shared_ptr<LdapContactProvider> > providers = LdapContactProvider::create(this->getCore());
 // Requests
 	for(size_t i = 0 ; i < providers.size() ; ++i){
 		std::shared_ptr<LdapCbData> data = std::make_shared<LdapCbData>();		
 		data->mProvider = providers[i];
 		data->mResult = asyncData->createResult();
-		if(data->mProvider && data->mProvider->mState != LDAPContactProvider::STATE_ERROR){
+		if(data->mProvider && data->mProvider->getCurrentAction() != LdapContactProvider::ACTION_ERROR){
 			data->mTimeout = (int64_t) data->mProvider->getTimeout();
 			data->mParent = this;
 			data->mFilter = filter;
@@ -423,7 +423,7 @@ bool MagicSearch::getAddressIsEndAsync(SearchAsyncData* asyncData)const{
 	for(size_t i = 0 ; i < asyncData->getData().size() ; ++i){
 		timeout = startTime;
 		auto data = asyncData->getData()[i];
-		bctbx_timespec_add(&timeout, data->mTimeout);// Timeout becomes the max of all timeout
+		bctbx_timespec_add(&timeout, data->mTimeout);
 		if( data->mEnd || bctbx_timespec_compare( &currentTime, &timeout) > 0){
 			if(!data->mEnd)
 				data->cancel();
@@ -434,15 +434,17 @@ bool MagicSearch::getAddressIsEndAsync(SearchAsyncData* asyncData)const{
 }
 
 #ifdef LDAP_ENABLED
+// Synchronous search by iterate directly on main loop if there are async processes
+// Provided for convenience
 std::list<list<SearchResult>> MagicSearch::getAddressFromLDAPServer (
 	const string &filter,
 	const string &withDomain
 ) {
 	SearchAsyncData asyncData;
-
+// Start async search
 	getAddressFromLDAPServerStartAsync(filter, withDomain, &asyncData);
 	asyncData.initStartTime();
-
+// Loop in core iterate till having all (good/bad) results
 	while( !getAddressIsEndAsync(&asyncData)){
 		linphone_core_iterate(this->getCore()->getCCore());
 	}
@@ -450,6 +452,7 @@ std::list<list<SearchResult>> MagicSearch::getAddressFromLDAPServer (
 }
 #endif
 
+// List all searchs to be done. Provider order will prioritize results : next contacts will be removed if already exist in results
 void MagicSearch::beginNewSearchAsync (const string &filter, const string &withDomain, SearchAsyncData * asyncData) const{
 	const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
 	asyncData->clear();

@@ -37,7 +37,7 @@ void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t
 		if (addr) {
 			if (cbData->mFilter.empty() && cbData->mWithDomain.empty()) {
 				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr));
-			} else {
+			} else {// We have constraints : add result with weight
 				unsigned int weight = cbData->mParent->searchInAddress(addr, cbData->mFilter, cbData->mWithDomain);
 				cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr));
 			}
@@ -69,6 +69,7 @@ bool SearchAsyncData::getCurrentRequest(std::pair<std::string, std::string> * re
 	ms_mutex_unlock(&mLockQueue);
 	return haveRequest;
 }
+
 bool SearchAsyncData::keepOneRequest(){
 	bool haveRequest;
 	ms_mutex_lock(&mLockQueue);
@@ -79,6 +80,7 @@ bool SearchAsyncData::keepOneRequest(){
 	ms_mutex_unlock(&mLockQueue);
 	return haveRequest;
 }
+
 int SearchAsyncData::pushRequest(const std::pair<std::string, std::string>& request){
 	int currentSize = (int)mRequests.size()+1;
 	ms_mutex_lock(&mLockQueue);
@@ -86,6 +88,7 @@ int SearchAsyncData::pushRequest(const std::pair<std::string, std::string>& requ
 	ms_mutex_unlock(&mLockQueue);
 	return currentSize;
 }
+
 void SearchAsyncData::pushData(std::shared_ptr<CbData> data){
 	mProvidersCbData.push_back(data);
 }
@@ -113,4 +116,5 @@ bool SearchAsyncData::setSearchResults(std::shared_ptr<list<SearchResult> > resu
 	mSearchResults = resultList;
 	return mSearchResults != nullptr;
 }
+
 LINPHONE_END_NAMESPACE

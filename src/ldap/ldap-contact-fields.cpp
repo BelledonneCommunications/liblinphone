@@ -17,13 +17,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ldap-friend.h"
+#include "ldap-contact-fields.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-LDAPFriend::LDAPFriend(){
-	mSipIndex=-1;
-	mNameIndex=-1;
+LdapContactFields::LdapContactFields(){
+	mSip.second = -1;
+	mName.second = -1;
 }
 
 LINPHONE_END_NAMESPACE
