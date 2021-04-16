@@ -77,6 +77,14 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	UsersType users;
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	confDescr.setSubject(subject);
+	const auto & confParams = conf->getCurrentParams();
+	const auto & audioEnabled = confParams.audioEnabled();
+	const LinphoneMediaDirection audioDirection = audioEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	const auto & videoEnabled = confParams.videoEnabled();
+	const LinphoneMediaDirection videoDirection = videoEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	const auto & textEnabled = confParams.chatEnabled();
+	const LinphoneMediaDirection textDirection = textEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	addAvailableMediaCapabilities(audioDirection, videoDirection, textDirection, confDescr);
 	if (oneToOne) {
 		KeywordsType keywords(sizeof(char), "one-to-one");
 		confDescr.setKeywords(keywords);
@@ -87,7 +95,6 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	std::list<std::shared_ptr<Participant>> participants(conf->getParticipants());
 
 	// Add local participant only if it is enabled
-	const ConferenceParams & confParams = conf->getCurrentParams();
 	if (confParams.localParticipantEnabled()) {
 		std::shared_ptr<Participant> me = conf->getMe();
 		if (me) {
@@ -113,6 +120,9 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
 
+			// Media capabilities
+			addMediaCapabilities(device, endpoint);
+
 			endpoint.setState(StateType::full);
 			user.getEndpoint().push_back(endpoint);
 		}
@@ -121,6 +131,51 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	}
 
 	return createNotify(confInfo, true);
+}
+
+void LocalConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, ConferenceDescriptionType & confDescr) {
+	ConferenceMediaType mediaType;
+	ConferenceMediumType audio("audio", "1");
+	audio.setDisplayText("audio");
+	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
+	mediaType.getEntry().push_back(audio);
+
+	ConferenceMediumType video("video", "2");
+	video.setDisplayText("video");
+	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	mediaType.getEntry().push_back(video);
+
+	ConferenceMediumType text("text", "3");
+	text.setDisplayText("text");
+	text.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
+	mediaType.getEntry().push_back(text);
+	confDescr.setAvailableMedia(mediaType);
+
+}
+
+
+void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, EndpointType & endpoint) {
+	const auto &audioDirection = device->getAudioDirection();
+	MediaType audio = MediaType("1");
+	audio.setDisplayText("audio");
+	audio.setType("audio");
+	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
+	endpoint.getMedia().push_back(audio);
+
+	const auto &videoDirection = device->getVideoDirection();
+	MediaType video = MediaType("2");
+	video.setDisplayText("video");
+	video.setType("video");
+	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
+	endpoint.getMedia().push_back(video);
+
+	const auto &textDirection = device->getTextDirection();
+	MediaType text = MediaType("3");
+	text.setDisplayText("text");
+	text.setType("text");
+	text.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
+	endpoint.getMedia().push_back(text);
+
 }
 
 string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
@@ -193,10 +248,27 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 				);
 			} break;
 
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged: {
+				shared_ptr<ConferenceParticipantDeviceEvent> deviceMediaChangedEvent = static_pointer_cast<ConferenceParticipantDeviceEvent>(eventLog);
+				const Address & participantAddress = deviceMediaChangedEvent->getParticipantAddress().asAddress();
+				const Address & deviceAddress = deviceMediaChangedEvent->getDeviceAddress().asAddress();
+				body = createNotifyParticipantDeviceMediaChanged(
+					participantAddress,
+					deviceAddress
+				);
+			} break;
+
 			case EventLog::Type::ConferenceSubjectChanged: {
 				shared_ptr<ConferenceSubjectEvent> subjectEvent = static_pointer_cast<ConferenceSubjectEvent>(eventLog);
 				body = createNotifySubjectChanged(
 					subjectEvent->getSubject()
+				);
+			} break;
+
+			case EventLog::Type::ConferenceAvailableMediaChanged: {
+				shared_ptr<ConferenceAvailableMediaEvent> availableMediaEvent = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog);
+				body = createNotifyAvailableMediaChanged(
+					availableMediaEvent->getAvailableMediaType()
 				);
 			} break;
 
@@ -238,6 +310,9 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address 
 			const string &displayName = device->getName();
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
+
+			// Media capabilities
+			addMediaCapabilities(device, endpoint);
 
 			endpoint.setState(StateType::full);
 			user.getEndpoint().push_back(endpoint);
@@ -285,6 +360,23 @@ string LocalConferenceEventHandler::createNotifyParticipantRemoved (const Addres
 	return createNotify(confInfo);
 }
 
+MediaStatusType LocalConferenceEventHandler::mediaDirectionToMediaStatus (LinphoneMediaDirection direction) {
+	switch (direction) {
+		case LinphoneMediaDirectionInactive:
+			return MediaStatusType::inactive;
+		case LinphoneMediaDirectionSendOnly:
+			return MediaStatusType::sendonly;
+		case LinphoneMediaDirectionRecvOnly:
+			return MediaStatusType::recvonly;
+		case LinphoneMediaDirectionSendRecv:
+			return MediaStatusType::sendrecv;
+		case LinphoneMediaDirectionInvalid:
+			lError() << "LinphoneMediaDirectionInvalid shall not be used";
+			return MediaStatusType::inactive;
+	}
+	return MediaStatusType::sendrecv;
+}
+
 string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
@@ -305,6 +397,9 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Ad
 			const string &displayName = participantDevice->getName();
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
+
+			// Media capabilities
+			addMediaCapabilities(participantDevice, endpoint);
 		}
 	}
 	endpoint.setState(StateType::full);
@@ -336,6 +431,41 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const 
 
 	return createNotify(confInfo);
 }
+
+string LocalConferenceEventHandler::createNotifyParticipantDeviceMediaChanged (const Address & pAddress, const Address & dAddress) {
+	string entity = conf->getConferenceAddress().asString();
+	ConferenceType confInfo = ConferenceType(entity);
+	UsersType users;
+	confInfo.setUsers(users);
+
+	UserType user = UserType();
+	UserType::EndpointSequence endpoints;
+	user.setEntity(pAddress.asStringUriOnly());
+	user.setState(StateType::partial);
+
+	EndpointType endpoint = EndpointType();
+	endpoint.setEntity(dAddress.asStringUriOnly());
+	shared_ptr<Participant> participant = conf->findParticipant(pAddress);
+	if (participant) {
+		shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(dAddress);
+		if (participantDevice) {
+			const string &displayName = participantDevice->getName();
+			if (!displayName.empty())
+				endpoint.setDisplayText(displayName);
+
+			// Media capabilities
+			addMediaCapabilities(participantDevice, endpoint);
+
+		}
+	}
+	endpoint.setState(StateType::full);
+	user.getEndpoint().push_back(endpoint);
+
+	confInfo.getUsers()->getUser().push_back(user);
+
+	return createNotify(confInfo);
+}
+
 
 string LocalConferenceEventHandler::createNotifySubjectChanged () {
 	return createNotifySubjectChanged(conf->getSubject());
@@ -405,6 +535,38 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 
 	return createNotify(confInfo);
 }
+
+string LocalConferenceEventHandler::createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
+	string entity = conf->getConferenceAddress().asString();
+	ConferenceType confInfo = ConferenceType(entity);
+	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
+	LinphoneMediaDirection audioDirection = LinphoneMediaDirectionInactive;
+	try {
+		const auto & audioEnabled = mediaCapabilities.at(ConferenceMediaCapabilities::Audio);
+		audioDirection = audioEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	} catch (std::out_of_range&) {
+
+	}
+	LinphoneMediaDirection videoDirection = LinphoneMediaDirectionInactive;
+	try {
+		const auto & videoEnabled = mediaCapabilities.at(ConferenceMediaCapabilities::Video);
+		videoDirection = videoEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	} catch (std::out_of_range&) {
+
+	}
+	LinphoneMediaDirection textDirection = LinphoneMediaDirectionInactive;
+	try {
+		const auto & textEnabled = mediaCapabilities.at(ConferenceMediaCapabilities::Text);
+		textDirection = textEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
+	} catch (std::out_of_range&) {
+
+	}
+	addAvailableMediaCapabilities(audioDirection, videoDirection, textDirection, confDescr);
+	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+	return createNotify(confInfo);
+}
+
 
 void LocalConferenceEventHandler::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
 	for (const auto &device : participant->getDevices()){
@@ -569,6 +731,12 @@ void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<Confer
 }
 
 void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyAvailableMediaChanged(event->getAvailableMediaType()));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
@@ -588,6 +756,16 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 		notifyAll(createNotifyParticipantDeviceRemoved(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being removed because pointer to conference is null";
+	}
+}
+
+void LocalConferenceEventHandler::onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		Participant *participant = device->getParticipant();
+		notifyAll(createNotifyParticipantDeviceMediaChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
 }
 
