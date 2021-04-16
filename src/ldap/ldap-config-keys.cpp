@@ -26,17 +26,16 @@
 LINPHONE_BEGIN_NAMESPACE
 
 static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys={
-	{"timeout", LdapConfigKeys("10")},
+	{"timeout", LdapConfigKeys("5")},
 	{"max_results", LdapConfigKeys("5")},
 	{"auth_method", LdapConfigKeys("SIMPLE")},
-	//{"username", LdapConfigKeys("")},
 	{"password", LdapConfigKeys("")},
 	{"bind_dn", LdapConfigKeys("", TRUE)},
 	{"base_object", LdapConfigKeys("dc=example,dc=com", TRUE)},
 	{"server", LdapConfigKeys("ldap:///", TRUE)},
 	{"filter", LdapConfigKeys("(sn=*%s*)")},
 	{"name_attribute", LdapConfigKeys("sn")},
-	{"sip_attribute", LdapConfigKeys("mobile,telephoneNumber,homePhone")},
+	{"sip_attribute", LdapConfigKeys("mobile,telephoneNumber,homePhone,sn")},
 	{"sip_scheme", LdapConfigKeys("sip")},
 	{"sip_domain", LdapConfigKeys("sip.linphone.org")},
 	{"enable", LdapConfigKeys("1")},
