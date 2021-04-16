@@ -594,6 +594,7 @@ int liblinphone_tester_set_log_file(const char *filename);
 LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies);
 void setup_mgr_for_conference(LinphoneCoreManager *mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
+void check_conference_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants);
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
