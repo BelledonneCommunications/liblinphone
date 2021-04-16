@@ -446,6 +446,8 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 	IceCandidate *rtcpCandidate = nullptr;
 	bool result = false;
 	IceSessionState sessionState = ice_session_state(mIceSession);
+	bool usePerStreamUfragPassword = linphone_config_get_bool(linphone_core_get_config(getCCore()),"sip", "ice_password_ufrag_in_media_description", false);
+	
 	if (sessionState == IS_Completed) {
 		IceCheckList *firstCl = nullptr;
 		for (size_t i = 0; i < desc->streams.size(); i++) {
@@ -465,8 +467,10 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		}
 	}
 
-	desc->ice_pwd = L_C_TO_STRING(ice_session_local_pwd(mIceSession));
-	desc->ice_ufrag = L_C_TO_STRING(ice_session_local_ufrag(mIceSession));
+	if (!usePerStreamUfragPassword){
+		desc->ice_pwd = L_C_TO_STRING(ice_session_local_pwd(mIceSession));
+		desc->ice_ufrag = L_C_TO_STRING(ice_session_local_ufrag(mIceSession));
+	}
 	
 	for (size_t i = 0; i < desc->streams.size(); i++) {
 		auto & stream = desc->streams[i];
@@ -489,15 +493,17 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 			stream.rtcp_addr.clear();
 		}
 
-		if ((strlen(ice_check_list_local_pwd(cl)) != desc->ice_pwd.length()) || (desc->ice_pwd.compare(ice_check_list_local_pwd(cl))))
+		if (desc->ice_pwd.compare(ice_check_list_local_pwd(cl)) != 0 || usePerStreamUfragPassword){
 			stream.ice_pwd = L_C_TO_STRING(ice_check_list_local_pwd(cl));
-		else
+		}else{
 			stream.ice_pwd.clear();
+		}
 
-		if ((strlen(ice_check_list_local_ufrag(cl)) != desc->ice_ufrag.length()) || (desc->ice_ufrag.compare(ice_check_list_local_ufrag(cl))))
+		if (desc->ice_ufrag.compare(ice_check_list_local_ufrag(cl)) != 0 || usePerStreamUfragPassword){
 			stream.ice_ufrag = L_C_TO_STRING(ice_check_list_local_ufrag(cl));
-		else
+		}else{
 			stream.ice_ufrag.clear();
+		}
 
 		stream.ice_mismatch = ice_check_list_is_mismatch(cl);
 		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
