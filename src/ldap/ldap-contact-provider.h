@@ -35,70 +35,148 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LDAPContactSearch;
-class LDAPFriend;
+class LdapContactSearch;
+class LdapContactFields;
 
-class LINPHONE_PUBLIC LDAPContactProvider {
+class LINPHONE_PUBLIC LdapContactProvider {
 public:
+	
+	/**
+	 * Current action of the provider following this flow:
+	 * ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST =>]
+	 */	
 	enum{
-		STATE_ERROR = -1,
-		STATE_OK = 0,
-		STATE_CONNECTED
-	};
-	enum{
-		ACTION_NONE = 0,
-		ACTION_INIT,
-		ACTION_WAIT_DNS,
-		ACTION_INITIALIZE,
-		ACTION_BIND,
-		ACTION_WAIT_BIND,
-		ACTION_WAIT_REQUEST
+		ACTION_ERROR = -1,	// Error State
+		ACTION_NONE = 0,	// Do nothing
+		ACTION_INIT,		// First step of initialization. Check domain and use Sal if requested.
+		ACTION_WAIT_DNS,	// Sal is processing : wait till a result
+		ACTION_INITIALIZE,	// Initialize the connection to the server
+		ACTION_BIND,		// Bind to the server
+		ACTION_WAIT_BIND,	// Wait for binding
+		ACTION_WAIT_REQUEST	// Wait for processing search requests
 	};
 //	CREATION
-	LDAPContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config );
-	virtual ~LDAPContactProvider();
-	static std::vector<std::shared_ptr<LDAPContactProvider> > create(const std::shared_ptr<Core> &core);// Read configuration and create all providers from them
-	void initializeLdap();	// call ldap_initialize and set options. Return mState
+	/**
+	 * @brief LdapContactProvider Instance to make searches on a LDAP server. Use create() to get all usable #LdapContactProvider.
+	 * Only LDAP/STARTTLS is supported.
+	 * @param core The Linphone core for Configurations, thread processing and callbacks
+	 * @param config The configuration to used. It can contains only required fields, all others will be filled by default values. Check #LdapConfigKeys to know what fields are requiered
+	 */
+	
+	LdapContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config );
+	virtual ~LdapContactProvider();
+	
+	/**
+	 * @brief create Create a list of #LdapContactProvider from the core's configuration : The section name is 'ldap' and have an additionnal index to separate servers (eg. 'ldap_4'). 
+	 * A section must be enabled with 'enable' to 1 to be taken account.
+	 * @param core The Linphone core
+	 * @return A list of #LdapContactProvider
+	 */
+	static std::vector<std::shared_ptr<LdapContactProvider> > create(const std::shared_ptr<Core> &core);
+	
+	/**
+	 * @brief initializeLdap  Call ldap_initialize, set options and start TLS if needed.
+	 */
+	void initializeLdap();
 	
 //	CONFIGURATION
-	bool_t validConfig(const std::map<std::string, std::string>& dict)const;
-	void loadConfig(const std::map<std::string, std::string>& config);
+	/**
+	 * @brief getTimeout it's a convertor from configuration 'timeout' to integer
+	 * @return The timeout
+	 */
 	int getTimeout() const;
 
+	/**
+	 * @brief getFilter Get filter key from Configuration
+	 * @return The filter as astring
+	 */
+	std::string getFilter()const;
+	
+	/**
+	 * @brief getCurrentAction Get the current action of Iteration.
+	 * @return Return ACTION_ERROR in case of error.
+	 */
+	int getCurrentAction()const;
+
 //	SEARCH
+	/**
+	 * @brief search Make a search to the provider. Results are retrieved from the callback #ContactSearchCallback.
+	 * This function is thread-safe.
+	 * @param mPredicate A value to be used to replace a format specifier in the format string : 'filter' configuration key.
+	 * This key is a string that contains a format string that follows the same specifications as format in printf.
+	 * @param mCb The callback where to get results in the form of 'static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );'
+	 * @param mCbData The data to pass to the callback
+	 */
 	void search(const std::string& mPredicate, ContactSearchCallback mCb, void* mCbData);
-	int search(std::shared_ptr<LDAPContactSearch> request);
-	std::list<std::shared_ptr<LDAPContactSearch> >::iterator cancelSearch(LDAPContactSearch* req);
-	LDAPContactSearch* requestSearch( int msgid );
-	int completeContact( LDAPFriend* lf, const char* attr_name, const char* attr_value);
+	
+	/**
+	 * @brief search Start the search to LDAP
+	 * @param request Request instance that contains data to make a search.
+	 * @return the result of ldap_search_ext (LDAP_SUCCESS on success)
+	 */
+	int search(std::shared_ptr<LdapContactSearch> request);
+	
+	/**
+	 * @brief cancelSearch Remove the search from the list and call the callback
+	 * @param request the request
+	 * @return The new list iterator after the deletion of the request
+	 */
+	std::list<std::shared_ptr<LdapContactSearch> >::iterator cancelSearch(LdapContactSearch* request);
+	
+	/**
+	 * @brief requestSearch Get the #LdapContactSearch linked to the ID
+	 * @param msgid The ID of the search request
+	 * @return  The #LdapContactSearch linked to the ID. NULL if no request has been found.
+	 */
+	LdapContactSearch* requestSearch( int msgid );
+	
+	/**
+	 * @brief completeContact Fill LdapContactFields with the attribute. This function has to be call for each attributes.
+	 * The function use 'sip_scheme' and 'sip_domain' to complete the SIP attribute (scheme:attr_value@domain). These options can be empty to avoid this behaviour.
+	 * @param lf the contact to fill
+	 * @param attr_name The attribute name from LDAP.
+	 * @param attr_value The value from LDAP.
+	 * @return 1 if all contact's fields are filled. 0 if some fields are missing.
+	 */
+	int completeContact( LdapContactFields* lf, const char* attr_name, const char* attr_value);
 
 //	ASYNC PROCESSING
-	
+
+	/**
+	 * @brief iterate This function is called from main loop to do actions that need to be serialized.
+	 * @param data A pointer to #LdapContactProvider
+	 * @return 
+	 */
 	static bool_t iterate(void *data);
-	//static void* bind( void*arg);
-	//int bindAsync();// Start a thread to bind
-	void handleSearchResult( LDAPMessage* message );
+	/**
+	 * @brief stun_server_resolved Callback for DNS resolution with Sal. It retrieve the Sal's result and replace the server domain to the IP.
+	 * @param data #LdapContactProvider
+	 * @param results The address from Sal
+	 */
 	static void stun_server_resolved(void *data, belle_sip_resolver_results_t *results);
+private:
+	/**
+	 * @brief handleSearchResult Parse the LDAPMessage to get contacts and fill Search entries.
+	 * @param message LDAPMessage to parse
+	 */
+	void handleSearchResult( LDAPMessage* message );
 
 	std::shared_ptr<Core> mCore;
 	std::map<std::string,std::string>  mConfig;
-	std::vector<std::string> mAttributes;
+	std::vector<std::string> mAttributes;	// Request optimization to limit attributes
 	std::vector<std::string> mNameAttributes;// Optimization to avoid split each times
 	std::vector<std::string> mSipAttributes;// Optimization to avoid split each times
-	LDAP*   mLd;
+	LDAP *mLd;
 	ortp_mutex_t mLock;
-	std::list<std::shared_ptr<LDAPContactSearch> > mRequests;
+	std::list<std::shared_ptr<LdapContactSearch> > mRequests;
 
-	// bind transaction
-	bool_t mConnected;
-	std::string mName;
+	int mAwaitingMessageId; // Waiting Message for ldap_abandon_ext on bind
+	bool_t mConnected;	// If we are connected to server (bind)
+	int mCurrentAction; // Iteration action
+	belle_sip_resolver_context_t * mSalContext;	// Sal Context for DNS
 	belle_generic_uri_t *mServerUri;//Used to optimized query on SAL
-	belle_sip_resolver_context_t * mSalContext;
-	std::string mServerUrl;
-	int mState;
-	int mCurrentAction;
-	int mAwaitingMessageId;
-	
+	std::string mServerUrl;	// URL to use for connection. It can be different from configuration
+	int mState;	// Indicate the overall state
 };
 
 LINPHONE_END_NAMESPACE
