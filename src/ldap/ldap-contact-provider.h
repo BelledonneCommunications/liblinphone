@@ -176,7 +176,6 @@ private:
 	belle_sip_resolver_context_t * mSalContext;	// Sal Context for DNS
 	belle_generic_uri_t *mServerUri;//Used to optimized query on SAL
 	std::string mServerUrl;	// URL to use for connection. It can be different from configuration
-	int mState;	// Indicate the overall state
 };
 
 LINPHONE_END_NAMESPACE
