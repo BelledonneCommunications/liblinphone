@@ -133,6 +133,7 @@ public:
   LinphoneChatRoomCbs * createChatRoomCbs() const;
 
   LinphoneChatMessageCbs * createChatMessageCbs() const;
+  LinphoneMagicSearchCbs * createMagicSearchCbs() const;
 
   LinphoneVcard *createVcard() const;
 
