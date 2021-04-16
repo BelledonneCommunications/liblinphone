@@ -360,6 +360,55 @@ static void call_with_ice_ipv6(void) {
 	}
 }
 
+static void call_with_ice_ufrag_and_password_set_in_sdp_m_line(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new2(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	if (liblinphone_tester_ipv6_available()) {
+		linphone_core_enable_ipv6(marie->lc, TRUE);
+		linphone_core_enable_ipv6(pauline->lc, TRUE);
+	}
+	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(pauline, TRUE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "ice_password_ufrag_in_media_description", 1);
+	
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_2(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new2(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	if (liblinphone_tester_ipv6_available()) {
+		linphone_core_enable_ipv6(marie->lc, TRUE);
+		linphone_core_enable_ipv6(pauline->lc, TRUE);
+	}
+	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(pauline, TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "ice_password_ufrag_in_media_description", 1);
+	
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_3(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new2(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	if (liblinphone_tester_ipv6_available()) {
+		linphone_core_enable_ipv6(marie->lc, TRUE);
+		linphone_core_enable_ipv6(pauline->lc, TRUE);
+	}
+	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(pauline, TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "ice_password_ufrag_in_media_description", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "ice_password_ufrag_in_media_description", 1);
+	
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 /*ICE is not expected to work in this case, however this should not crash.
  Updated 08/01/2020: now ICE works also in the case of an INVITE without SDP.
  */
@@ -493,6 +542,9 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE without stun server", call_with_ice_without_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE without stun server one side", call_with_ice_without_stun2, "ICE"),
 	TEST_ONE_TAG("Call with ICE and stun server not responding", call_with_ice_stun_not_responding, "ICE"),
+	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line", call_with_ice_ufrag_and_password_set_in_sdp_m_line, "ICE"),
+	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 2", call_with_ice_ufrag_and_password_set_in_sdp_m_line_2, "ICE"),
+	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 3", call_with_ice_ufrag_and_password_set_in_sdp_m_line_3, "ICE")
 };
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

@@ -444,6 +444,8 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 	IceCandidate *rtcpCandidate = nullptr;
 	bool result = false;
 	IceSessionState sessionState = ice_session_state(mIceSession);
+	bool usePerStreamUfragPassword = linphone_config_get_bool(linphone_core_get_config(getCCore()),"sip", "ice_password_ufrag_in_media_description", false);
+	
 	if (sessionState == IS_Completed) {
 		IceCheckList *firstCl = nullptr;
 		for (int i = 0; i < desc->nb_streams; i++) {
@@ -463,9 +465,11 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 		}
 	}
 
-	strncpy(desc->ice_pwd, ice_session_local_pwd(mIceSession), sizeof(desc->ice_pwd)-1);
-	strncpy(desc->ice_ufrag, ice_session_local_ufrag(mIceSession), sizeof(desc->ice_ufrag)-1);
-	
+	if (!usePerStreamUfragPassword){
+		strncpy(desc->ice_pwd, ice_session_local_pwd(mIceSession), sizeof(desc->ice_pwd)-1);
+		strncpy(desc->ice_ufrag, ice_session_local_ufrag(mIceSession), sizeof(desc->ice_ufrag)-1);
+	}
+
 	for (int i = 0; i < desc->nb_streams; i++) {
 		SalStreamDescription *stream = &desc->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
@@ -486,15 +490,16 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			memset(stream->rtp_addr, 0, sizeof(stream->rtp_addr));
 			memset(stream->rtcp_addr, 0, sizeof(stream->rtcp_addr));
 		}
-		if ((strlen(ice_check_list_local_pwd(cl)) != strlen(desc->ice_pwd)) || (strcmp(ice_check_list_local_pwd(cl), desc->ice_pwd)))
+		if (strcmp(ice_check_list_local_pwd(cl), desc->ice_pwd) != 0 || usePerStreamUfragPassword)
 			strncpy(stream->ice_pwd, ice_check_list_local_pwd(cl), sizeof(stream->ice_pwd) - 1);
 		else
 			memset(stream->ice_pwd, 0, sizeof(stream->ice_pwd));
-		if ((strlen(ice_check_list_local_ufrag(cl)) != strlen(desc->ice_ufrag)) || (strcmp(ice_check_list_local_ufrag(cl), desc->ice_ufrag)))
+		if (strcmp(ice_check_list_local_ufrag(cl), desc->ice_ufrag) != 0 || usePerStreamUfragPassword)
 			strncpy(stream->ice_ufrag, ice_check_list_local_ufrag(cl), sizeof(stream->ice_ufrag) -1 );
 		else
 			memset(stream->ice_pwd, 0, sizeof(stream->ice_pwd));
 		stream->ice_mismatch = ice_check_list_is_mismatch(cl);
+
 		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
 			memset(stream->ice_candidates, 0, sizeof(stream->ice_candidates));
 			int nbCandidates = 0;
