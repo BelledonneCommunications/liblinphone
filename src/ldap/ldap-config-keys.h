@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 21021 Belledonne Communications SARL.
+ * Copyright (c) 2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
