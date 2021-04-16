@@ -486,7 +486,7 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConfere
  */
 
 /**
- * Call back used to notify message delivery status
+ * Callback used to notify message delivery status
  * @param magic_search #LinphoneChatMessage object @notnil
  */
 typedef void (*LinphoneMagicSearchCbsSearchResultsReceivedCb)(LinphoneMagicSearch* magic_search);

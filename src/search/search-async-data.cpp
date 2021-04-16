@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -39,7 +39,8 @@ void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t
 				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr));
 			} else {// We have constraints : add result with weight
 				unsigned int weight = cbData->mParent->searchInAddress(addr, cbData->mFilter, cbData->mWithDomain);
-				cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr));
+				if( weight > cbData->mParent->getMinWeight())
+					cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr));
 			}
 		}
 	}
