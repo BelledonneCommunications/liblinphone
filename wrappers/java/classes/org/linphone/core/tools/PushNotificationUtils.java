@@ -37,7 +37,7 @@ public class PushNotificationUtils {
         mHelper = null;
 
         if (!isFirebaseAvailable()) {
-            Log.w("[Push Utils] Firebase isn't available");
+            Log.w("[Push Utils] Firebase isn't available. Ensure you have at least com.google.firebase:firebase-messaging:19.0.1 dependency in your app's build.gradle file.");
             return;
         }
         FirebaseApp.initializeApp(context);
@@ -53,7 +53,7 @@ public class PushNotificationUtils {
         } catch (NoSuchMethodException e) {
             Log.w("[Push Utils] Couldn't get push helper constructor");
         } catch (ClassNotFoundException e) {
-            Log.w("[Push Utils] Couldn't find class " + className);
+            Log.w("[Push Utils] Couldn't find class: " + e);
         } catch (Exception e) {
             Log.w("[Push Utils] Couldn't get push helper instance: " + e);
         }
@@ -68,9 +68,11 @@ public class PushNotificationUtils {
         boolean available = false;
         try {
             Class firebaseApp = Class.forName("com.google.firebase.FirebaseApp");
+            Class firebaseInstanceId = Class.forName("com.google.firebase.iid.FirebaseInstanceId");
+            Class firebaseInstanceIdResult = Class.forName("com.google.firebase.iid.InstanceIdResult");
             available = true;
         } catch (ClassNotFoundException e) {
-            Log.w("[Push Utils] Couldn't find class com.google.firebase.FirebaseApp");
+            Log.w("[Push Utils] Couldn't find class: ", e);
         } catch (Exception e) {
             Log.w("[Push Utils] Exception: " + e);
         }
