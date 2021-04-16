@@ -227,6 +227,8 @@ public class CoreManager {
             mContext.stopService(new Intent().setClass(mContext, mServiceClass));
         }
 
+        mCore.removeListener(mListener);
+
         if (mTimer != null) {
             mTimer.cancel();
             mTimer.purge();
@@ -371,7 +373,7 @@ public class CoreManager {
             Class audioManagerCompat = Class.forName("androidx.media.AudioManagerCompat");
             available = true;
         } catch (ClassNotFoundException e) {
-            Log.w("[Core Manager] Couldn't find class : ", e);
+            Log.w("[Core Manager] Couldn't find class: ", e);
         } catch (Exception e) {
             Log.w("[Core Manager] Exception: " + e);
         }
