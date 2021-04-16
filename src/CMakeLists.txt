@@ -154,6 +154,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/imdn.h
 	chat/notification/is-composing-listener.h
 	chat/notification/is-composing.h
+	conference/conference-enums.h
 	conference/conference-id.h
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
@@ -217,6 +218,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/conference/conference-participant-event.h
 	event-log/conference/conference-security-event.h
 	event-log/conference/conference-subject-event.h
+	event-log/conference/conference-available-media-event.h
 	event-log/event-log-p.h
 	event-log/event-log.h
 	event-log/events.h
@@ -349,6 +351,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/modifier/multipart-chat-message-modifier.cpp
 	chat/notification/imdn.cpp
 	chat/notification/is-composing.cpp
+	conference/conference-enums.cpp
 	conference/conference-id.cpp
 	conference/conference.cpp
 	conference/conference-interface.cpp
@@ -401,6 +404,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-participant-event.cpp
 	event-log/conference/conference-security-event.cpp
 	event-log/conference/conference-subject-event.cpp
+	event-log/conference/conference-available-media-event.cpp
 	event-log/conference/conference-ephemeral-message-event.cpp
 	event-log/event-log.cpp
 	factory/factory.cpp

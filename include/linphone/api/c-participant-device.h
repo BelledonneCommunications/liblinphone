@@ -98,6 +98,27 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get the audio direction of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the audio direction of the device
+ */
+LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_audio_direction(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the video direction of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the video direction of the device
+ */
+LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_video_direction(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the text direction of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the text direction of the device
+ */
+LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_text_direction(const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 
