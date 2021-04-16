@@ -304,6 +304,9 @@ const bctbx_list_t* linphone_vcard_get_sip_addresses(LinphoneVcard *vCard) {
 		for (auto &impp : vCard->belCard->getImpp()) {
 			LinphoneAddress* addr = linphone_address_new(impp->getValue().c_str());
 			if (addr) {
+				auto displayName = vCard->belCard->getFullName();
+				if( linphone_address_get_display_name(addr) == NULL && displayName)
+					linphone_address_set_display_name(addr, displayName->getValue().c_str());
 				vCard->sip_addresses_cache = bctbx_list_append(vCard->sip_addresses_cache, addr);
 			}
 		}
