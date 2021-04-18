@@ -40,6 +40,10 @@ public class PushNotificationUtils {
             Log.w("[Push Utils] Firebase isn't available. Ensure you have at least com.google.firebase:firebase-messaging:19.0.1 dependency in your app's build.gradle file.");
             return;
         }
+        if (!isGoogleApiAvailable()) {
+            Log.w("[Push Utils] Google services aren't available. Ensure you have correctly applied the com.google.gms.google-services plugin in your app's build.gradle file (cf https://firebase.google.com/docs/android/setup#add-config-file).");
+			return;
+        }
         FirebaseApp.initializeApp(context);
 
         String className = "org.linphone.core.tools.firebase.FirebasePushHelper";
@@ -70,6 +74,22 @@ public class PushNotificationUtils {
             Class firebaseApp = Class.forName("com.google.firebase.FirebaseApp");
             Class firebaseInstanceId = Class.forName("com.google.firebase.iid.FirebaseInstanceId");
             Class firebaseInstanceIdResult = Class.forName("com.google.firebase.iid.InstanceIdResult");
+            available = true;
+        } catch (ClassNotFoundException e) {
+            Log.w("[Push Utils] Couldn't find class: ", e);
+        } catch (Exception e) {
+            Log.w("[Push Utils] Exception: " + e);
+        }
+        return available;
+    }
+
+    private static boolean isGoogleApiAvailable() {
+        boolean available = false;
+        try {
+            Class googleAPiAvailability = Class.forName("com.google.android.gms.common.GoogleApiAvailability");
+            Class googleTask = Class.forName("com.google.android.gms.tasks.Task");
+            Class googleConnectionResult = Class.forName("com.google.android.gms.common.ConnectionResult");
+            Class googleCompleteListener = Class.forName("com.google.android.gms.tasks.OnCompleteListener");
             available = true;
         } catch (ClassNotFoundException e) {
             Log.w("[Push Utils] Couldn't find class: ", e);
