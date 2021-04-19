@@ -21,7 +21,7 @@
 #include "tester_utils.h"
 #include <ctype.h>
 
-static const char XMLRPC_URL[] = "http://subscribe.example.org:8082/flexisip-account-manager/xmlrpc.php";
+static const char XMLRPC_URL[] = "https://subscribe.example.org:8082/flexisip-account-manager/xmlrpc.php";
 static const int TIMEOUT_REQUEST = 10000;
 
 static LinphoneAccountCreator* init(LinphoneCore *lc, const char * url) {

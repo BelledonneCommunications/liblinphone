@@ -1,6 +1,6 @@
 [account_creator]
 backend=flexiapi
-url=http://subscribe.example.org/flexiapi/api/
+url=https://subscribe.example.org/flexiapi/api/
 
 [sip]
 default_proxy=0

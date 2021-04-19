@@ -240,7 +240,7 @@ void account_create_in_server_db(Account *account, LinphoneProxyConfig *cfg){
 			linphone_core_get_config(lc),
 				"account_creator",
 				"url",
-				"http://subscribe.example.org/flexiapi/api/"
+				"https://subscribe.example.org/flexiapi/api/"
 		)
 	);
 
