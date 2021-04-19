@@ -22,6 +22,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant-device.h"
+#include "private.h"
 
 // =============================================================================
 
@@ -52,6 +53,10 @@ const LinphoneAddress *linphone_participant_device_get_address(const LinphonePar
 
 LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
 	return (LinphoneChatRoomSecurityLevel)(ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
+}
+
+LinphoneConferenceLayout linphone_participant_device_get_layout (const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneConferenceLayout)(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getLayout());
 }
 
 const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device) {
@@ -104,5 +109,41 @@ const bctbx_list_t *linphone_participant_device_get_callbacks_list(const Linphon
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
+}
+
+void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void* window_id){
+#ifdef __ANDROID__
+	shared_ptr<LinphonePrivate::Core> core = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCore();
+	if (core) {
+		LinphoneCore *lc = core->getCCore();
+		getPlatformHelpers(lc)->setParticipantDeviceVideoWindow(participant_device, window_id);
+	}
+#else
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setWindowId(window_id);
+#endif
+}
+
+void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device){
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
+}
+
+void _linphone_participant_device_notify_conference_left(LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_left);
+}
+
+void _linphone_participant_device_notify_conference_joined(LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_joined);
+}
+
+void _linphone_participant_device_notify_audio_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_audio_direction_changed, direction);
+}
+
+void _linphone_participant_device_notify_video_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_video_direction_changed, direction);
+}
+
+void _linphone_participant_device_notify_text_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_text_direction_changed, direction);
 }
 

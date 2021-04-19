@@ -28,6 +28,7 @@
 #include "call-session.h"
 #include "media-description-renderer.h"
 #include "call/audio-device/audio-device.h"
+#include "mediastreamer2/msmire.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -128,6 +129,7 @@ public:
 	virtual void refreshSockets() = 0;
 	virtual void updateBandwidthReports() = 0;
 	virtual float getCpuUsage()const = 0;
+	virtual std::string getLabel()const = 0;
 	size_t getIndex()const { return mIndex; }
 	SalStreamType getType()const{ return mStreamType;}
 	LinphoneCore *getCCore()const;
@@ -170,6 +172,7 @@ protected:
 private:
 	void setMain();
 	void initMulticast(const OfferAnswerContext &params);
+	void resetMain();
 	void setPortConfig(std::pair<int, int> portRange);
 	int selectFixedPort(std::pair<int, int> portRange);
 	int selectRandomPort(std::pair<int, int> portRange);
@@ -325,7 +328,7 @@ public:
 	 * There can be only one main stream per type (audio, video, text...).
 	 * This attribute is useful to know whether certains tasks must be done on these streams.
 	 */
-	void setStreamMain(size_t index);
+	void setStreamMain(size_t index, const bool force = false);
 
 	/**
 	 * Once the streams are created, update the local media description to fill mainly
@@ -372,6 +375,13 @@ public:
 	 * Lookup the main stream for a given stream type.
 	 */
 	Stream * lookupMainStream(SalStreamType type);
+	Stream * lookupStream(const SalStreamType type, const std::string & label) const;
+	VideoStream *lookupItcStream(VideoStream *refStream) const;
+	Stream * lookupVideoStream (MediaStreamDir dir);
+	Stream * lookupVideoStream ( MSFilterId id);
+	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir) const;
+	bool checkRtpSession() const;
+
 	/*
 	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.
 	 */
@@ -387,11 +397,26 @@ public:
 		}
 		return nullptr;
 	}
+	template <typename _interface>
+	_interface * lookupVideoStreamInterface(MediaStreamDir dir){
+		Stream *s = lookupVideoStream(dir);
+		if (s){
+			_interface *iface = dynamic_cast<_interface*>(s);
+			if (iface == nullptr){
+				lError() << "lookupVideoStreamInterface(): stream " << s << " cannot be casted to " << typeid(_interface).name();
+			}
+			return iface;
+		}
+		return nullptr;
+	}
 	const std::vector<std::unique_ptr<Stream>> & getStreams(){
 		return mStreams;
 	}
 	MediaSession &getMediaSession()const{
 		return mMediaSession;
+	}
+	MixerSession *getMixerSession()const{
+		return mMixerSession;
 	}
 	bool isPortUsed(int port)const;
 	IceService &getIceService()const;
@@ -463,6 +488,7 @@ public:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	Core & getCore()const;
+
 protected:
 
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);

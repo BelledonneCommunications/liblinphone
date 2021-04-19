@@ -30,6 +30,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class StreamMixer;
+class MS2VideoStream;
 
 /**
  * Generic listener for audio mixers.
@@ -76,6 +77,7 @@ public:
 	void setFocus(StreamsGroup *sg);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
+
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 private:
@@ -108,8 +110,16 @@ public:
 	 * Enable a local participant in this Mixer.
 	 */
 	virtual void enableLocalParticipant(bool enabled) = 0;
+	virtual void setLocalLabel(const std::string &label) {
+		mLocalLabel = label;
+	};
+	virtual std::string getLocalLabel() const {
+		return mLocalLabel;
+	};
 protected:
+	
 	MixerSession & mSession;
+	std::string mLocalLabel;
 };
 
 inline std::ostream & operator<<(std::ostream &str, const StreamMixer & mixer){
@@ -183,12 +193,15 @@ private:
  * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the mixer class.
  */
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
+	friend MS2VideoStream;
 public:
 	MS2VideoMixer(MixerSession & session);
-	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted);
+	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
+	void setLocalParticipantLabel(const std::string & label);
+	std::string getLocalParticipantLabel() const;
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
@@ -196,12 +209,17 @@ protected:
 	virtual MSWebCam *getVideoDevice()const override;
 private:
 	void addLocalParticipant();
+	void createLocalMember(bool isThumbnail);
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
-	MSVideoConference *mConference = nullptr;
+	MSVideoConference *mConferenceMix = nullptr; // Add only normal streams to get switched stream (active speaker) and all routed normal streams (mosaic)
+	MSVideoConference *mConferenceThumbnail = nullptr; // Add only mini streams and get all routed mini streams (active speaker)
 	VideoStream *mLocalParticipantStream = nullptr;
+	VideoStream *mLocalParticipantItcStream = nullptr; // TODO WORKAROUND - Stores the pointer to a stream created for active speaker layout so that it can be stopped when removing the local participant
+	MSVideoEndpoint *mMainLocalEndpoint = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
+	std::string mLocalParticipantLabel;
 	RtpProfile *mLocalDummyProfile = nullptr;
 	static constexpr int sVP8PayloadTypeNumber = 95;
 };

@@ -41,7 +41,9 @@ SalStreamDescription::SalStreamDescription(){
 	// By default, the current index points to the actual configuration
 	cfgIndex = SalStreamDescription::actualConfigurationIndex;
 	cfgs.clear();
+	unparsed_cfgs.clear();
 	already_assigned_payloads.clear();
+	custom_sdp_attributes = NULL;
 
 	ice_candidates.clear();
 	ice_remote_candidates.clear();
@@ -49,6 +51,7 @@ SalStreamDescription::SalStreamDescription(){
 
 SalStreamDescription::~SalStreamDescription(){
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
@@ -62,10 +65,12 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	acaps = other.acaps;
 	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
-		cfgs.insert(cfg);
+		const auto result = cfgs.insert(cfg);
+		if (!result.second) cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto & cfg : other.unparsed_cfgs) {
-		unparsed_cfgs.insert(cfg);
+		const auto result = unparsed_cfgs.insert(cfg);
+		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto & pt : other.already_assigned_payloads) {
 		already_assigned_payloads.push_back(payload_type_clone(pt));
@@ -79,6 +84,15 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	ice_pwd = other.ice_pwd;
 	ice_mismatch = other.ice_mismatch;
 
+	label = other.label;
+	content = other.content;
+
+	supportedEncryption = other.supportedEncryption;
+
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+
+	cfgIndex = other.cfgIndex;
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
@@ -104,7 +118,6 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	rtp_port=belle_sdp_media_get_media_port ( media );
-
 	mtype = belle_sdp_media_get_media_type ( media );
 	// Make mtype lowercase to emulate case insensitive comparison
 	std::transform(mtype.begin(), mtype.end(), mtype.begin(), ::tolower);
@@ -139,6 +152,16 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 
 	if ( belle_sdp_media_description_get_bandwidth ( media_desc,"AS" ) >0 ) {
 		bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
+	}
+
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"label");
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		label=value;
+	}
+
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"content");
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		content=value;
 	}
 
 	createActualCfg(salMediaDesc, sdp, media_desc);
@@ -516,7 +539,6 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 	media=belle_sdp_media_description_get_media ( media_desc );
 
 	SalStreamConfiguration actualCfg;
-	actualCfg.custom_sdp_attributes = NULL;
 
 	/*copy dtls attributes from session descriptiun, might be overwritten stream by stream*/
 	/*DTLS attributes can be defined at session level.*/
@@ -652,7 +674,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
 		const char *attr_name = belle_sdp_attribute_get_name(attr);
 		const char *attr_value = belle_sdp_attribute_get_value(attr);
-		actualCfg.custom_sdp_attributes = sal_custom_sdp_attribute_append(actualCfg.custom_sdp_attributes, attr_name, attr_value);
+		custom_sdp_attributes = sal_custom_sdp_attribute_append(custom_sdp_attributes, attr_name, attr_value);
 
 		if (strcasecmp(attr_name, "extmap") == 0){
 			char *extmap_urn = (char*)bctbx_malloc0(strlen(attr_value) + 1);
@@ -687,10 +709,12 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	acaps = other.acaps;
 	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
-		cfgs.insert(cfg);
+		const auto result = cfgs.insert(cfg);
+		if (!result.second) cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto & cfg : other.unparsed_cfgs) {
-		unparsed_cfgs.insert(cfg);
+		const auto result = unparsed_cfgs.insert(cfg);
+		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto & pt : other.already_assigned_payloads) {
@@ -704,6 +728,16 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	ice_ufrag = other.ice_ufrag;
 	ice_pwd = other.ice_pwd;
 	ice_mismatch = other.ice_mismatch;
+
+	supportedEncryption = other.supportedEncryption;
+
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+
+	cfgIndex = other.cfgIndex;
+
+	label = other.label;
+	content = other.content;
 
 	return *this;
 }
@@ -763,7 +797,7 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 	if (type != other.type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
 	// RTP
-	if (rtp_addr.compare(other.rtp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if ((rtp_addr.compare(other.rtp_addr) != 0) && ((rtp_port != 0) || (other.rtp_port != 0))) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	if ((rtp_addr.empty()==false) && (other.rtp_addr.empty()==false) && ms_is_multicast(L_STRING_TO_C(rtp_addr)) != ms_is_multicast(L_STRING_TO_C(other.rtp_addr)))
 			result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (rtp_port != other.rtp_port) {
@@ -772,8 +806,14 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 	}
 
 	// RTCP
-	if (rtcp_addr.compare(other.rtcp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if (rtcp_port != other.rtcp_port) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if ((rtcp_addr.compare(other.rtcp_addr) != 0) && (rtcp_port != 0) && (other.rtcp_port != 0)) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if ((rtcp_addr.empty()==false) && (other.rtcp_addr.empty()==false) && ms_is_multicast(L_STRING_TO_C(rtcp_addr)) != ms_is_multicast(L_STRING_TO_C(other.rtcp_addr)))
+			result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
+	if (rtcp_port != other.rtcp_port) {
+		if ((rtcp_port == 0) || (other.rtcp_port == 0)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+		else result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	}
+
 
 	if (multicast_role != other.multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 
@@ -782,7 +822,7 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 
 bool SalStreamDescription::enabled() const {
 	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
-	return rtp_port > 0 || isBundleOnly();
+	return rtp_port > 0 || (isBundleOnly() && (getDirection() != SalStreamInactive));
 }
 
 bool SalStreamDescription::isAcceptable() const {
@@ -908,7 +948,7 @@ const int & SalStreamDescription::getMaxRate() const {
 }
 
 SalCustomSdpAttribute * SalStreamDescription::getCustomSdpAttributes() const {
-	return getChosenConfiguration().getCustomSdpAttributes();
+	return custom_sdp_attributes;
 }
 
 void SalStreamDescription::setPtime(const int & ptime, const int & maxptime) {
@@ -937,6 +977,23 @@ const SalSrtpCryptoAlgo & SalStreamDescription::getCryptoAtIndex(const size_t & 
 void SalStreamDescription::setCrypto(const size_t & idx, const SalSrtpCryptoAlgo & newCrypto) {
 	cfgs[getChosenConfigurationIndex()].crypto[idx] = newCrypto;
 }
+
+void SalStreamDescription::setLabel(const std::string newLabel) {
+	label = newLabel;
+}
+
+const std::string & SalStreamDescription::getLabel() const {
+	return label;
+}
+
+void SalStreamDescription::setContent(const std::string newContent) {
+	content = newContent;
+}
+
+const std::string & SalStreamDescription::getContent() const {
+	return content;
+}
+
 
 void SalStreamDescription::setSupportedEncryptions(const std::list<LinphoneMediaEncryption> & encryptionList) {
 	supportedEncryption = encryptionList;
@@ -1119,8 +1176,18 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		}
 	}
 
-	if (actualCfg.custom_sdp_attributes) {
-		belle_sdp_session_description_t *custom_desc = (belle_sdp_session_description_t *)actualCfg.custom_sdp_attributes;
+	if (!label.empty()) {
+		belle_sdp_attribute_t *label_attribute = belle_sdp_attribute_create("label", label.c_str());
+		belle_sdp_media_description_add_attribute(media_desc, label_attribute);
+	}
+
+	if (!content.empty()) {
+		belle_sdp_attribute_t *content_attribute = belle_sdp_attribute_create("content", content.c_str());
+		belle_sdp_media_description_add_attribute(media_desc, content_attribute);
+	}
+
+	if (custom_sdp_attributes) {
+		belle_sdp_session_description_t *custom_desc = (belle_sdp_session_description_t *)custom_sdp_attributes;
 		belle_sip_list_t *l = belle_sdp_session_description_get_attributes(custom_desc);
 		belle_sip_list_t *elem;
 		for (elem = l; elem != NULL; elem = elem->next) {

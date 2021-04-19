@@ -5963,6 +5963,22 @@ LINPHONE_PUBLIC void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *
 LINPHONE_PUBLIC long linphone_core_get_default_ephemeral_lifetime(const LinphoneCore *lc);
 
 /**
+ * Set the default conference layout
+ * @param core the linphone core
+ * @param value layout
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_conference_layout(LinphoneCore *lc, LinphoneConferenceLayout value);
+
+/**
+ * Gets the default conference layout
+ * @core core the linphone core
+ * @return conference layout
+ * @ingroup conference
+ **/
+LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc);
+
+/**
  * Send the conference invitations to all participants as an ICS file.
  * @param core The #LinphoneCore @notnil
  * @param conference_information The #LinphoneConferenceInfo @notnil

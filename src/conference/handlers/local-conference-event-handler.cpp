@@ -61,6 +61,20 @@ void LocalConferenceEventHandler::notifyFullState (const string &notify, const s
 	notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
 }
 
+void LocalConferenceEventHandler::notifyAllExceptDevice (const string &notify, const shared_ptr<ParticipantDevice> &exceptDevice) {
+	for (const auto &participant : conf->getParticipants()) {
+		for (const auto &device : participant->getDevices()){
+			if (device != exceptDevice) {
+				const auto & deviceState = device->getState();
+				/* Only notify to device that are present in the conference. */
+				if (deviceState == ParticipantDevice::State::Present) {
+					notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
+				}
+			}
+		}
+	}
+}
+
 void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
 	for (const auto &participant : conf->getParticipants()) {
 		if (participant != exceptParticipant)
@@ -93,7 +107,9 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 	string subject = conf->getSubject();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
-	confDescr.setSubject(subject);
+	if (!subject.empty()) {
+		confDescr.setSubject(subject);
+	}
 	const auto & confParams = conf->getCurrentParams();
 	const auto & audioEnabled = confParams.audioEnabled();
 	const LinphoneMediaDirection audioDirection = audioEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
@@ -220,6 +236,9 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	MediaType video = MediaType("2");
 	video.setDisplayText("video");
 	video.setType("video");
+	if (!device->getLabel().empty()) {
+		video.setLabel(device->getLabel());
+	}
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
 	endpoint.getMedia().push_back(video);
 
@@ -229,7 +248,6 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	text.setType("text");
 	text.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(textDirection));
 	endpoint.getMedia().push_back(text);
-
 }
 
 string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
@@ -353,7 +371,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address 
 	UserRolesType roles;
 	UserType::EndpointSequence endpoints;
 
-	shared_ptr<Participant> participant = conf->findParticipant(pAddress);
+	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
 		for (const auto &device : participant->getDevices()) {
 			const string &gruu = device->getAddress().asString();
@@ -442,7 +460,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Ad
 
 	EndpointType endpoint = EndpointType();
 	endpoint.setEntity(dAddress.asStringUriOnly());
-	shared_ptr<Participant> participant = conf->findParticipant(pAddress);
+	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
 		shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(dAddress);
 		if (participantDevice) {
@@ -521,7 +539,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceMediaChanged (c
 
 		}
 	}
-	endpoint.setState(StateType::full);
+	endpoint.setState(StateType::partial);
 	user.getEndpoint().push_back(endpoint);
 
 	confInfo.getUsers()->getUser().push_back(user);
@@ -725,6 +743,7 @@ void LocalConferenceEventHandler::notifyParticipant (const string &notify, const
 }
 
 void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify, const shared_ptr<ParticipantDevice> &device, bool multipart) {
+
 	if (!device->isSubscribedToConferenceEventPackage() || notify.empty())
 		return;
 
@@ -884,8 +903,8 @@ void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr
 void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		Participant *participant = device->getParticipant();
-		notifyAll(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+		auto participant = device->getParticipant();
+		notifyAllExceptDevice(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
@@ -894,8 +913,8 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		Participant *participant = device->getParticipant();
-		notifyAll(createNotifyParticipantDeviceRemoved(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+		auto participant = device->getParticipant();
+		notifyAllExceptDevice(createNotifyParticipantDeviceRemoved(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being removed because pointer to conference is null";
 	}
@@ -904,7 +923,8 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 void LocalConferenceEventHandler::onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		Participant *participant = device->getParticipant();
+		auto participant = device->getParticipant();
+//		notifyAllExceptDevice(createNotifyParticipantDeviceMediaChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
 		notifyAll(createNotifyParticipantDeviceMediaChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";

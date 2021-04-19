@@ -132,6 +132,20 @@ LINPHONE_PUBLIC LinphoneConferenceCbsParticipantAdminStatusChangedCb linphone_co
 LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_admin_status_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantAdminStatusChangedCb cb);
 
 /**
+ * Get the participant device media changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device media changed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceMediaChangedCb linphone_conference_cbs_get_participant_device_media_changed (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device media changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device media changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaChangedCb cb);
+
+/**
  * Get the state changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current state changed callback.

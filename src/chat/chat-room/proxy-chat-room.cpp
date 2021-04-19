@@ -361,6 +361,11 @@ const list<shared_ptr<Participant>> &ProxyChatRoom::getParticipants () const {
 	return d->chatRoom->getParticipants();
 }
 
+const list<shared_ptr<ParticipantDevice>> ProxyChatRoom::getParticipantDevices () const {
+	L_D();
+	return d->chatRoom->getParticipantDevices();
+}
+
 void ProxyChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
 	L_D();
 	d->chatRoom->setParticipantAdminStatus(participant, isAdmin);

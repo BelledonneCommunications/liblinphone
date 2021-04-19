@@ -122,6 +122,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasDtls() const;
 		bool hasZrtp() const;
 		bool hasLimeIk() const;
+
 		const std::string & getRtcpAddress() const;
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
@@ -145,6 +146,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool getIceMismatch() const;
 		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
 		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
+
+		void setLabel(const std::string newLabel);
+		const std::string & getLabel() const;
+
+		void setContent(const std::string newContent);
+		const std::string & getContent() const;
 
 		const cfg_map getAllCfgs() const;
 
@@ -174,6 +181,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::list<PayloadType*> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 		int bandwidth = 0;
 		SalMulticastRole multicast_role = SalMulticastInactive;
+		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 
 	private:
 
@@ -184,6 +192,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::string ice_ufrag;
 		std::string ice_pwd;
 		bool ice_mismatch = false;
+
+		std::string label;
+		std::string content;
 
 		cfg_map cfgs;
 		acap_map_t acaps;

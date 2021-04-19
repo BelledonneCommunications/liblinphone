@@ -23,6 +23,7 @@
 #include "logger/logger.h"
 #include "c-wrapper/c-wrapper.h"
 #include "core/paths/paths.h"
+#include "conference/participant-device.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -55,6 +56,7 @@ public:
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
+	void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) override;
 	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
@@ -78,6 +80,7 @@ public:
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
+	void _setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, jobject windowId);
 	string getDownloadPath() override;
 
 private:
@@ -92,6 +95,7 @@ private:
 	jobject mJavaCoreManager = nullptr;
 	jobject mPreviewVideoWindow = nullptr;
 	jobject mVideoWindow = nullptr;
+	unordered_map<long, jobject> mParticipantDeviceVideoWindows;
 
 	// PlatformHelper methods
 	jmethodID mWifiLockAcquireId = nullptr;
@@ -105,6 +109,7 @@ private:
 	jmethodID mGetNativeLibraryDirId = nullptr;
 	jmethodID mSetNativeVideoWindowId = nullptr;
 	jmethodID mSetNativePreviewVideoWindowId = nullptr;
+	jmethodID mSetParticipantDeviceNativeVideoWindowId = nullptr;
 	jmethodID mResizeVideoPreviewId = nullptr;
 	jmethodID mOnLinphoneCoreStartId = nullptr;
 	jmethodID mOnLinphoneCoreStopId = nullptr;
@@ -218,6 +223,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
+	mSetParticipantDeviceNativeVideoWindowId = getMethodId(env, klass, "setParticipantDeviceVideoRenderingView", "(JLjava/lang/Object;)V");
 	mResizeVideoPreviewId = getMethodId(env, klass, "resizeVideoPreview", "(II)V");
 	mOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "(Z)V");
 	mOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
@@ -342,6 +348,20 @@ void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
 			env->CallVoidMethod(mJavaHelper, mSetNativeVideoWindowId, (jobject)windowId);
 		} else {
 			_setVideoWindow((jobject)windowId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
+		if ((displayFilter.empty() || displayFilter == "MSAndroidTextureDisplay")) {
+			lInfo() << "[Android Platform Helper] Sending window ID [" << windowId << "] through Java platform helper for participant device [" << participantDevice << "]";
+			env->CallVoidMethod(mJavaHelper, mSetParticipantDeviceNativeVideoWindowId, (jlong)participantDevice, (jobject)windowId);
+		} else {
+			lInfo() << "[Android Platform Helper] Directly using window ID [" << windowId << "] without going through Java platform helper for participant device [" << participantDevice << "]";
+			_setParticipantDeviceVideoWindow(participantDevice, (jobject)windowId);
 		}
 	}
 }
@@ -534,6 +554,31 @@ void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
 	_linphone_core_set_native_video_window_id(lc, (void *)mVideoWindow);
 }
 
+void AndroidPlatformHelpers::_setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, jobject window) {
+	JNIEnv *env = ms_get_jni_env();
+
+	long key = (long) participantDevice;
+	auto it = mParticipantDeviceVideoWindows.find(key);
+	jobject currentWindow = it == mParticipantDeviceVideoWindows.cend() ? nullptr : it->second;
+
+	if (window != nullptr && window != currentWindow) {
+		lInfo() << "[Android Platform Helper] New not null window ID [" << window << "] for participant device, previously was [" << currentWindow << "]";
+		if (currentWindow != nullptr) {
+			env->DeleteGlobalRef(currentWindow);
+		}
+		currentWindow = env->NewGlobalRef(window);
+		mParticipantDeviceVideoWindows[key] = currentWindow;
+	} else if (window == nullptr && currentWindow != nullptr) {
+		lInfo() << "[Android Platform Helper] New null window ID for participant device, previously was [" << currentWindow << "]";
+		env->DeleteGlobalRef(currentWindow);
+		currentWindow = nullptr;
+		mParticipantDeviceVideoWindows[key] = nullptr;
+	}
+	
+	lInfo() << "[Android Platform Helper] New window ID is [" << currentWindow << "]";
+	LinphonePrivate::ParticipantDevice::toCpp(participantDevice)->setWindowId((void *)currentWindow);
+}
+
 // -----------------------------------------------------------------------------
 
 int AndroidPlatformHelpers::callVoidMethod (jmethodID id) {
@@ -573,6 +618,12 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	androidPlatformHelper->_setVideoWindow(id);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setParticipantDeviceNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jlong participantDevicePtr, jobject id) {
+	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
+	LinphoneParticipantDevice *participantDevice = static_cast<LinphoneParticipantDevice *>((void *)participantDevicePtr);
+	androidPlatformHelper->_setParticipantDeviceVideoWindow(participantDevice, id);
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_setNetworkReachable(JNIEnv* env, jobject thiz, jlong ptr, jboolean reachable) {

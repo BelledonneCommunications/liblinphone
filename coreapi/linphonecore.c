@@ -2604,9 +2604,10 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscribeReceived(lev);
 	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
-#else
+#else // !HAVE_ADVANCED_IM
+	linphone_event_deny_subscription(lev, LinphoneReasonNotAcceptable);
 	ms_warning("Advanced IM such as group chat is disabled!");
-#endif
+#endif // HAVE_ADVANCED_IM
 }
 
 static void linphone_core_internal_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body) {
@@ -4586,7 +4587,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
 	bool defer = Call::toCpp(call)->initiateOutgoing();
 	if (!defer) {
-		if (Call::toCpp(call)->startInvite(nullptr) != 0) {
+		if (Call::toCpp(call)->startInvite(NULL) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
@@ -6033,6 +6034,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 				vsize.width = (int)linphone_video_definition_get_width(vdef);
 				vsize.height = (int)linphone_video_definition_get_height(vdef);
 			}
+
 			lc->previewstream = video_preview_new(lc->factory);
 			video_preview_set_size(lc->previewstream, vsize);
 			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
@@ -6418,7 +6420,7 @@ void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 }
 
 void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
-#ifdef ANDROID
+#ifdef __ANDROID__
 	getPlatformHelpers(lc)->setVideoWindow(id);
 #else
 	_linphone_core_set_native_video_window_id(lc, id);
@@ -6458,7 +6460,7 @@ void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 }
 
 void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
-#ifdef ANDROID
+#ifdef __ANDROID__
 	getPlatformHelpers(lc)->setVideoPreviewWindow(id);
 #else
 	_linphone_core_set_native_preview_window_id(lc, id);
@@ -8174,6 +8176,14 @@ void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) 
 	linphone_config_set_int64(lc->config, "misc", "ephemeral_lifetime", (int64_t)value);
 }
 
+LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc) {
+	return (LinphoneConferenceLayout)linphone_config_get_int(lc->config, "misc", "conference_layout", LinphoneConferenceLayoutNone);
+}
+
+void linphone_core_set_default_conference_layout(LinphoneCore *lc, LinphoneConferenceLayout value) {
+	linphone_config_set_int(lc->config, "misc", "conference_layout", (int)value);
+}
+
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 	return lc->sip_conf.sdp_200_ack!=0;
 }
@@ -8521,6 +8531,16 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 	LinphoneConference *conference = linphone_core_get_conference(lc);
 	if(conference == NULL) {
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
+		if (call) {
+			const LinphoneCallParams * remote_call_params = linphone_call_get_remote_params(call);
+			LinphoneProxyConfig * proxy_cfg = linphone_call_get_dest_proxy(call);
+			LinphonePrivate::ConferenceParams::toCpp(params)->setProxyCfg(proxy_cfg);
+			if (remote_call_params) {
+				linphone_conference_params_set_audio_enabled(params, linphone_call_params_audio_enabled(remote_call_params));
+				linphone_conference_params_set_video_enabled(params, linphone_call_params_video_enabled(remote_call_params));
+				linphone_conference_params_set_chat_enabled(params, linphone_call_params_realtime_text_enabled(remote_call_params));
+			}
+		}
 		conference = linphone_core_create_conference_with_params(lc, params);
 		linphone_conference_params_unref(params);
 		linphone_conference_unref(conference); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */

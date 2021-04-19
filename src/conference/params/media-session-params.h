@@ -45,6 +45,7 @@ class LINPHONE_INTERNAL_PUBLIC MediaSessionParams : public CallSessionParams {
 	friend class MS2AudioStream;
 	friend class MS2VideoStream;
 	friend class MS2RTTStream;
+	friend class ParticipantDevice;
 
 	friend class MediaConference::LocalConference;
 public:
@@ -69,6 +70,7 @@ public:
 	const OrtpPayloadType * getUsedAudioCodec () const;
 	LinphonePayloadType * getUsedAudioPayloadType () const;
 	void setAudioBandwidthLimit (int value);
+	void setAudioDirection (SalStreamDir direction);
 	void setAudioDirection (LinphoneMediaDirection direction);
 
 	void enableVideo (bool value);
@@ -80,6 +82,7 @@ public:
 	const OrtpPayloadType * getUsedVideoCodec () const;
 	LinphonePayloadType * getUsedVideoPayloadType () const;
 	LinphoneMediaDirection getVideoDirection () const;
+	void setVideoDirection (SalStreamDir direction);
 	void setVideoDirection (LinphoneMediaDirection direction);
 	bool videoEnabled () const;
 	bool videoMulticastEnabled () const;

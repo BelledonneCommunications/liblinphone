@@ -369,6 +369,7 @@ static void unattended_call_transfer(void) {
 	reset_counters(&laure->stat);
 
 	linphone_call_transfer(pauline_called_by_marie,laure_identity);
+	bctbx_free(laure_identity);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallRefered,1,3000));
 
 	//marie ends the call

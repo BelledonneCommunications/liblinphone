@@ -62,6 +62,7 @@ public:
 //protected:
 	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
 	void notifyAllExcept (const std::string &notify, const std::shared_ptr<Participant> &exceptParticipant);
+	void notifyAllExceptDevice(const std::string &notify, const std::shared_ptr<ParticipantDevice> &exceptDevice);
 	void notifyAll (const std::string &notify);
 	std::string createNotifyFullState (LinphoneEvent * lev);
 	std::string createNotifyMultipart (int notifyId);

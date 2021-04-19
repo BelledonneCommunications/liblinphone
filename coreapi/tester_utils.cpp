@@ -159,18 +159,15 @@ void _linphone_call_add_local_desc_changed_flag (LinphoneCall *call, int flag) {
 }
 
 int _linphone_call_get_main_audio_stream_index (const LinphoneCall *call) {
-	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		Call::toCpp(call)->getActiveSession()))->getMainAudioStreamIndex();
+	return Call::toCpp(call)->getMediaStreamIndex(LinphoneStreamTypeAudio);
 }
 
 int _linphone_call_get_main_text_stream_index (const LinphoneCall *call) {
-	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		Call::toCpp(call)->getActiveSession()))->getMainTextStreamIndex();
+	return Call::toCpp(call)->getMediaStreamIndex(LinphoneStreamTypeText);
 }
 
 int _linphone_call_get_main_video_stream_index (const LinphoneCall *call) {
-	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		Call::toCpp(call)->getActiveSession()))->getMainVideoStreamIndex();
+	return Call::toCpp(call)->getMediaStreamIndex(LinphoneStreamTypeVideo);
 }
 
 void _linphone_chat_room_enable_migration(LinphoneChatRoom *cr, bool_t enable) {

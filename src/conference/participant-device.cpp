@@ -19,10 +19,13 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "conference/params/media-session-params.h"
+#include "conference/params/media-session-params-p.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
+#include "private_functions.h"
 
 #include "linphone/event.h"
 
@@ -43,7 +46,7 @@ ParticipantDevice::ParticipantDevice () {
 	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
 }
 
-ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
+ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
 	mTimeOfJoining = time(nullptr);
 	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
@@ -60,8 +63,24 @@ bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
 	return (mGruu == device.getAddress());
 }
 
+Conference* ParticipantDevice::getConference () const {
+	return getParticipant() ? getParticipant()->getConference() : nullptr;
+}
+
 shared_ptr<Core> ParticipantDevice::getCore () const {
-	return mParticipant ? mParticipant->getCore() : nullptr;
+	return getParticipant() ? getParticipant()->getCore() : nullptr;
+}
+
+std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
+	if (mParticipant.expired()) {
+		lWarning() << "The participant owning device " << getAddress().asString() << " has already been deleted";
+	}
+	shared_ptr<Participant> participant = mParticipant.lock();
+	if (!participant) {
+		lWarning() << "Unable to get the participant owning the device";
+		return nullptr;
+	}
+	return participant;
 }
 
 void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
@@ -86,11 +105,22 @@ time_t ParticipantDevice::getTimeOfJoining () const {
 }
 
 bool ParticipantDevice::isInConference() const {
-	if (mSession) {
-		return mSession->getPrivate()->isInConference();
-	} else {
-		return false;
+	const auto & conference = getConference();
+	if (conference) {
+		const auto & isMe = conference->isMe(getAddress());
+		if (isMe) {
+			return conference->isIn();
+		} else if (mSession) {
+			const auto & callState = mSession->getState();
+			if (mSession->getPrivate()->isInConference()) {
+				// If it is in local conference
+				return (callState != CallSession::State::PausedByRemote);
+			} else {
+				return (callState != CallSession::State::Paused);
+			}
+		}
 	}
+	return false;
 }
 
 void ParticipantDevice::setSsrc (uint32_t ssrc) {
@@ -133,6 +163,7 @@ void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities)
 
 void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
 	mSession = session;
+	// Estimate media capabilities based on call session
 	updateMedia();
 }
 
@@ -166,40 +197,89 @@ bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & directi
 }
 
 bool ParticipantDevice::setAudioDirection(const LinphoneMediaDirection direction) {
-	return setMediaDirection(direction, ConferenceMediaCapabilities::Audio);
+	auto ret = setMediaDirection(direction, ConferenceMediaCapabilities::Audio);
+	if (ret) {
+		_linphone_participant_device_notify_audio_direction_changed(toC(), direction);
+	}
+	return ret;
 }
 
 bool ParticipantDevice::setVideoDirection(const LinphoneMediaDirection direction) {
-	return setMediaDirection(direction, ConferenceMediaCapabilities::Video);
+	auto ret = setMediaDirection(direction, ConferenceMediaCapabilities::Video);
+	if (ret) {
+		_linphone_participant_device_notify_video_direction_changed(toC(), direction);
+	}
+	return ret;
 }
 
 bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction) {
-	return setMediaDirection(direction, ConferenceMediaCapabilities::Text);
+	auto ret = setMediaDirection(direction, ConferenceMediaCapabilities::Text);
+	if (ret) {
+		_linphone_participant_device_notify_text_direction_changed(toC(), direction);
+	}
+	return ret;
+}
+
+LinphoneMediaDirection ParticipantDevice::computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const {
+	if (conferenceEnable && callEnable) {
+		return dir;
+	}
+
+	return LinphoneMediaDirectionInactive;
 }
 
 bool ParticipantDevice::updateMedia() {
 	bool mediaChanged = false;
-	if (mSession) {
-		const auto currentParams = dynamic_cast<MediaSessionParams*>(mSession->getCurrentParams());
+	const auto & conference = getConference();
 
-		if (currentParams) {
-			const auto & audioEnabled = currentParams->audioEnabled();
-			const auto & audioDir = currentParams->getAudioDirection();
-			mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
+	if (conference) {
+		const auto & isMe = conference->isMe(getAddress());
+		const auto & conferenceParams = conference->getCurrentParams();
+		const auto & conferenceAudioEnabled = conferenceParams.audioEnabled();
+		const auto & conferenceVideoEnabled = conferenceParams.videoEnabled();
+		const auto & conferenceTextEnabled = conferenceParams.chatEnabled();
+		auto audioEnabled = false;
+		auto videoEnabled = false;
+		auto textEnabled = false;
+		auto audioDir = LinphoneMediaDirectionInactive;
+		auto videoDir = LinphoneMediaDirectionInactive;
+		auto textDir = LinphoneMediaDirectionInactive;
+		if (mSession) {
+			const MediaSessionParams* participantParams = static_pointer_cast<MediaSession>(mSession)->getRemoteParams();
+			if (participantParams) {
+				audioEnabled = participantParams->audioEnabled();
+				videoEnabled = participantParams->videoEnabled();
+				textEnabled = participantParams->realtimeTextEnabled();
+				audioDir = participantParams->getAudioDirection();
+				videoDir = participantParams->getVideoDirection();
+			}
+		} else if (isMe) {
+			audioEnabled = true;
+			videoEnabled = linphone_core_video_enabled(getCore()->getCCore());
+			textEnabled = true;
+			const auto & cCore = getCore()->getCCore();
+			audioDir = LinphoneMediaDirectionSendRecv;
 
-			const auto & videoEnabled = currentParams->videoEnabled();
-			const auto & videoDir = currentParams->getVideoDirection();
-			mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
-
-			const auto & textEnabled = currentParams->realtimeTextEnabled();
-			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-		} else {
-			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
+			const auto captureEnabled = linphone_core_video_capture_enabled(cCore);
+			const auto displayEnabled = linphone_core_video_display_enabled(cCore);
+			if (captureEnabled && displayEnabled) {
+				videoDir = LinphoneMediaDirectionSendRecv;
+			} else if (captureEnabled && !displayEnabled) {
+				videoDir = LinphoneMediaDirectionSendOnly;
+			} else if (!captureEnabled && displayEnabled) {
+				videoDir = LinphoneMediaDirectionRecvOnly;
+			} else {
+				videoDir = LinphoneMediaDirectionInactive;
+			}
 		}
+		textDir = LinphoneMediaDirectionSendRecv;
+		mediaChanged |= setAudioDirection(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir));
+		mediaChanged |= setVideoDirection(computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled, videoDir));
+		mediaChanged |= setTextDirection(computeDeviceMediaDirection(conferenceTextEnabled, textEnabled, textDir));
 	} else {
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Video);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
+		mediaChanged |= setAudioDirection(LinphoneMediaDirectionInactive);
+		mediaChanged |= setVideoDirection(LinphoneMediaDirectionInactive);
+		mediaChanged |= setTextDirection(LinphoneMediaDirectionInactive);
 	}
 
 	return mediaChanged;
@@ -221,6 +301,59 @@ LinphoneParticipantDeviceCbsIsSpeakingChangedCb ParticipantDeviceCbs::getIsSpeak
 
 void ParticipantDeviceCbs::setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb){
 	mIsSpeakingChangedCb = cb;
+}
+
+LinphoneParticipantDeviceCbsConferenceJoinedCb ParticipantDeviceCbs::getConferenceJoined()const {
+	return mConferenceJoinedCb;
+}
+
+void ParticipantDeviceCbs::setConferenceJoined(LinphoneParticipantDeviceCbsConferenceJoinedCb cb) {
+	mConferenceJoinedCb = cb;
+}
+
+LinphoneParticipantDeviceCbsConferenceLeftCb ParticipantDeviceCbs::getConferenceLeft()const {
+	return mConferenceLeftCb;
+}
+
+void ParticipantDeviceCbs::setConferenceLeft(LinphoneParticipantDeviceCbsConferenceLeftCb cb){
+	mConferenceLeftCb = cb;
+}
+
+LinphoneParticipantDeviceCbsAudioDirectionChangedCb ParticipantDeviceCbs::getAudioDirectionChanged()const {
+	return mAudioDirectionChangedCb;
+}
+
+void ParticipantDeviceCbs::setAudioDirectionChanged(LinphoneParticipantDeviceCbsAudioDirectionChangedCb cb) {
+	mAudioDirectionChangedCb = cb;
+}
+
+LinphoneParticipantDeviceCbsVideoDirectionChangedCb ParticipantDeviceCbs::getVideoDirectionChanged()const {
+	return mVideoDirectionChangedCb;
+}
+
+void ParticipantDeviceCbs::setVideoDirectionChanged(LinphoneParticipantDeviceCbsVideoDirectionChangedCb cb) {
+	mVideoDirectionChangedCb = cb;
+}
+
+LinphoneParticipantDeviceCbsTextDirectionChangedCb ParticipantDeviceCbs::getTextDirectionChanged()const {
+	return mTextDirectionChangedCb;
+}
+
+void ParticipantDeviceCbs::setTextDirectionChanged(LinphoneParticipantDeviceCbsTextDirectionChangedCb cb) {
+	mTextDirectionChangedCb = cb;
+}
+
+void ParticipantDevice::setWindowId(void * newWindowId) {
+#ifdef VIDEO_ENABLED
+	mWindowId = newWindowId;
+	if (!mLabel.empty() && mSession) {
+		static_pointer_cast<MediaSession>(mSession)->setNativeVideoWindowId(mWindowId, mLabel);
+	}
+#endif
+}
+
+void * ParticipantDevice::getWindowId() const {
+	return mWindowId;
 }
 
 LINPHONE_END_NAMESPACE

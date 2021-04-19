@@ -33,6 +33,7 @@
 //#include "call/audio-device/audio-device.h"
 #include "conference/session/call-session-listener.h"
 #include "utils/background-task.h"
+#include "mediastreamer2/msmire.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -237,6 +238,11 @@ public:
 	unsigned int getTextStartCount () const;
 	// don't make new code relying on this method.
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
+	int getMediaStreamIndex (LinphoneStreamType type) const;
+	int getMediaStreamsNb (LinphoneStreamType type) const;
+	MediaStream *getVideoStream (MediaStreamDir dir) const;
+	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir) const;
+	bool checkRtpSession() const;
 	SalCallOp *getOp () const;
 	bool getSpeakerMuted () const;
 	void setSpeakerMuted (bool muted);
@@ -279,7 +285,7 @@ public:
 	void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) override;
 	bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) override;
-	LinphoneConference *getCallSessionConference (const std::shared_ptr<CallSession> &session) override;
+	LinphoneConference *getCallSessionConference (const std::shared_ptr<CallSession> &session) const override;
 	void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *character) override;
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
@@ -311,7 +317,9 @@ private:
 	void changeSubjectInLocalConference(SalCallOp *op);
 	void terminateConference();
 	void cleanupSessionAndUnrefCObjectCall();
+
 	void updateRecordState(SalMediaRecord state);
+	void createRemoteConference(const std::shared_ptr<CallSession> &session);
 };
 
 LINPHONE_END_NAMESPACE

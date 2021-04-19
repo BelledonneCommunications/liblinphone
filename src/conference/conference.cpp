@@ -20,6 +20,7 @@
 #include "conference.h"
 #include "conference/participant-device.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
@@ -40,14 +41,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-
-ConferenceParams::ConferenceParams(const LinphoneCore *core) {
-	if(core) {
-		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
-		if(policy->automatically_initiate) m_enableVideo = true;
-	}
-}
-
 Conference::Conference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -58,6 +51,7 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
+	this->startTime = ms_time(nullptr);
 }
 
 Conference::~Conference () {
@@ -65,6 +59,40 @@ Conference::~Conference () {
 }
 
 // -----------------------------------------------------------------------------
+
+bool Conference::tryAddMeDevice() {
+	if (confParams->localParticipantEnabled() &&  me->getDevices().empty() && confParams->getProxyCfg()) {
+		char * devAddrStr = linphone_proxy_config_get_contact(confParams->getProxyCfg()) ? linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg())) : nullptr;
+		if (devAddrStr) {
+			Address devAddr(devAddrStr);
+			auto meDev = me->addDevice(devAddr);
+			const auto & meSession = me->getSession();
+			ms_free(devAddrStr);
+
+			// Initialize media directions
+			meDev->setAudioDirection(confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+
+			char label[Conference::labelLength];
+			belle_sip_random_token(label,sizeof(label));
+			meDev->setLabel(label);
+			meDev->setSession(meSession);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+time_t Conference::getStartTime() const {
+	return startTime;
+}
+
+int Conference::getDuration() const {
+	return (int)(ms_time(nullptr) - startTime);
+}
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
 	return activeParticipant;
@@ -99,6 +127,10 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 
 }
 
+const std::shared_ptr<CallSession> Conference::getMainSession() const {
+	return me->getSession();
+}
+
 bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	list<IdentityAddress> sortedAddresses(addresses);
 	sortedAddresses.sort();
@@ -122,12 +154,20 @@ bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls)
 	return soFarSoGood;
 }
 
+ConferenceLayout Conference::getLayout() const {
+	return confParams ? confParams->getLayout() : (ConferenceLayout)linphone_core_get_default_conference_layout(getCore()->getCCore());
+}
+
+void Conference::setLayout(const ConferenceLayout layout) {
+	confParams->setLayout(layout);
+}
+
 const ConferenceAddress & Conference::getConferenceAddress () const {
 	return confParams->getConferenceAddress();
 }
 
 void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
-	return confParams->setConferenceAddress(conferenceAddress);
+	confParams->setConferenceAddress(conferenceAddress);
 }
 
 shared_ptr<Participant> Conference::getMe () const {
@@ -142,8 +182,30 @@ const list<shared_ptr<Participant>> &Conference::getParticipants () const {
 	return participants;
 }
 
+const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices () const {
+	list<shared_ptr<ParticipantDevice>> devices;
+	for (const auto & p : participants) {
+		const auto & d = p->getDevices();
+		if (!d.empty()) {
+			devices.insert(devices.begin(), d.begin(), d.end());
+		}
+	}
+	if (isIn()) {
+		const auto & d = getMe()->getDevices();
+		if (!d.empty()) {
+			devices.insert(devices.begin(), d.begin(), d.end());
+		}
+	}
+
+	return devices;
+}
+
 const string &Conference::getSubject () const {
 	return confParams->getSubject();
+}
+
+const string &Conference::getUsername () const {
+	return mUsername;
 }
 
 void Conference::join (const IdentityAddress &participantAddress) {}
@@ -153,7 +215,19 @@ void Conference::join () {}
 void Conference::leave () {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
+	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
+	bool layoutChanged = (confParams) && (getLayout() != newLayout);
 	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
+	if (layoutChanged) {
+		const auto & meSession = static_pointer_cast<MediaSession>(getMainSession());
+		const MediaSessionParams * meParams = meSession->getMediaParams();
+		MediaSessionParams *clonedParams = meParams->clone();
+
+		std::string subject(std::string("Conference layout changed to ") + newLayout);
+
+// TODO Use UPDATE instead of DEFAULT
+		return meSession->update(clonedParams, CallSession::UpdateMethod::Default, false, subject);
+	}
 	return true;
 };
 
@@ -182,6 +256,18 @@ void Conference::setSubject (const string &subject) {
 	confParams->setSubject(subject);
 }
 
+void Conference::notifyParticipantDeviceJoinedConference (const std::shared_ptr<ParticipantDevice> & device) const {
+	if (device) {
+		_linphone_participant_device_notify_conference_joined(device->toC());
+	}
+}
+
+void Conference::notifyParticipantDeviceLeftConference (const std::shared_ptr<ParticipantDevice> & device) const {
+	if (device) {
+		_linphone_participant_device_notify_conference_left(device->toC());
+	}
+}
+
 void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
@@ -198,6 +284,10 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 		}
 	}
 	lDebug() << "IsSpeaking: unable to notify speaking device because there is no device found.";
+}
+
+void Conference::setUsername (const string &username) {
+	mUsername = username;
 }
 
 // -----------------------------------------------------------------------------
@@ -227,6 +317,34 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const std::string &label) const {
+
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getLabel() == label)
+				return device;
+		}
+	}
+
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with label " << label;
+
+	return nullptr;
+}
+
+shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityAddress &addr) const {
+
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getAddress() == addr)
+				return device;
+		}
+	}
+
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with address " << addr.asString();
+
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_ptr<const CallSession> &session) const {
 
 	for (const auto &participant : participants) {
@@ -236,7 +354,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 		}
 	}
 
-	lWarning() << "Unable to find participant device in conference " << this << " with call session " << session;
+	lWarning() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session " << session;
 
 	return nullptr;
 }

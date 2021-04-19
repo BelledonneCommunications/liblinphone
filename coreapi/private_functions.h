@@ -70,6 +70,7 @@ LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call);
 
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
+LINPHONE_PUBLIC MediaStream *linphone_call_get_video_stream (LinphoneCall *call, MediaStreamDir dir);
 LINPHONE_PUBLIC VideoStream * linphone_core_get_preview_stream(LinphoneCore *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
@@ -327,10 +328,16 @@ void _linphone_conference_notify_participant_removed(LinphoneConference *confere
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant);
+void _linphone_conference_notify_participant_device_media_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking);
+void _linphone_participant_device_notify_conference_joined(LinphoneParticipantDevice *participant_device);
+void _linphone_participant_device_notify_conference_left(LinphoneParticipantDevice *participant_device);
+void _linphone_participant_device_notify_audio_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+void _linphone_participant_device_notify_video_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+void _linphone_participant_device_notify_text_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
 
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);

@@ -684,6 +684,10 @@ int ClientGroupChatRoom::getParticipantCount () const {
 	return getConference()->getParticipantCount();
 }
 
+const list<shared_ptr<ParticipantDevice>> ClientGroupChatRoom::getParticipantDevices () const {
+	return getConference()->getParticipantDevices();
+}
+
 const list<shared_ptr<Participant>> &ClientGroupChatRoom::getParticipants () const {
 	return getConference()->getParticipants();
 }

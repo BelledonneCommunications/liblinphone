@@ -90,6 +90,8 @@ public class AndroidPlatformHelper {
 
     private native void setNativeVideoWindowId(long nativePtr, Object view);
 
+    private native void setParticipantDeviceNativeVideoWindowId(long nativePtr, long participantDevicePtr, Object view);
+
     private native void setNetworkReachable(long nativePtr, boolean reachable);
 
     private native void setHttpProxy(long nativePtr, String host, int port);
@@ -549,6 +551,43 @@ public class AndroidPlatformHelper {
         if (mVideoTextureView.isAvailable()) {
             Log.i("[Platform Helper] Rendering window surface is directly available for texture view [" + mVideoTextureView + "]");
             setNativeVideoWindowId(mNativePtr, mVideoTextureView);
+        }
+    }
+
+    public synchronized void setParticipantDeviceVideoRenderingView(long participantDevice, Object view) {
+        if (view == null) {
+            Log.i("[Platform Helper] Participant device video window surface set to null");
+            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, null);
+            return;
+        }
+
+        if (view instanceof Surface) {
+            Log.i("[Platform Helper] Participant device video window surface is a Surface");
+            Surface surface = (Surface) view;
+            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, surface);
+            return;
+        }
+
+        if (view instanceof SurfaceTexture) {
+            Log.i("[Platform Helper] Participant device video window surface is a SurfaceTexture");
+            SurfaceTexture surface = (SurfaceTexture) view;
+            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, surface);
+            return;
+        }
+
+        if (!(view instanceof TextureView)) {
+            throw new RuntimeException("[Platform Helper] Rendering window id is not an instance of TextureView, Surface or SurfaceTexture. " +
+                    "Please update your UI layer so that the video rendering view is an object of any above types (or an instance of it) " +
+                    "or enable compatibility mode by setting displaytype=MSAndroidOpenGLDisplay in the [video] section your linphonerc factory configuration file " +
+                    "so you can keep using your existing application code for managing video views.");
+        }
+
+        TextureView textureView = (TextureView) view;
+        if (textureView.isAvailable()) {
+            Log.i("[Platform Helper] Rendering participant device window surface is directly available for texture view [" + textureView + "]");
+            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, textureView);
+        } else {
+            Log.i("[Platform Helper] Rendering participant device window surface is not available !");
         }
     }
 

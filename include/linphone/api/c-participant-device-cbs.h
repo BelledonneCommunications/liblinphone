@@ -69,7 +69,7 @@ LINPHONE_PUBLIC void linphone_participant_device_cbs_set_user_data (LinphonePart
 /**
  * Get the is this participant device speaking changed callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @return The current is this particiapnt device speaking changed callback.
+ * @return The current is this participant device speaking changed callback.
  */
 LINPHONE_PUBLIC LinphoneParticipantDeviceCbsIsSpeakingChangedCb linphone_participant_device_cbs_get_is_speaking_changed (const LinphoneParticipantDeviceCbs *cbs);
 
@@ -79,8 +79,77 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbsIsSpeakingChangedCb linphone_partici
  * @param[in] cb The is this participant device speaking changed callback to be used.
  */
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_is_speaking_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
-	
-	
+
+/**
+ * Get the participant device conference joined callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current participant device conference joined callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsConferenceJoinedCb linphone_participant_device_cbs_get_conference_joined (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the participant device conference joined callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The participant device conference joined callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_conference_joined (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceJoinedCb cb);
+
+/**
+ * Get the participant device conference left callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current participant device conference left callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsConferenceLeftCb linphone_participant_device_cbs_get_conference_left (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the participant device conference left callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The participant device conference left callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_conference_left (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceLeftCb cb);
+
+/**
+ * Get the participant device audio direction changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current participant device audio direction changed callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsAudioDirectionChangedCb linphone_participant_device_cbs_get_audio_direction_changed (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the participant device audio direction changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The participant device audio direction changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_audio_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsAudioDirectionChangedCb cb);
+
+/**
+ * Get the participant device video direction changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current participant device video direction changed callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsVideoDirectionChangedCb linphone_participant_device_cbs_get_video_direction_changed (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the participant device video direction changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The participant device video direction changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_video_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsVideoDirectionChangedCb cb);
+
+/**
+ * Get the participant device text direction changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current participant device text direction changed callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsTextDirectionChangedCb linphone_participant_device_cbs_get_text_direction_changed (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the participant device text direction changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The participant device text direction changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_text_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsTextDirectionChangedCb cb);
+
 /**
  * @}
  */

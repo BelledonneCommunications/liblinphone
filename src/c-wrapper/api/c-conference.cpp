@@ -57,6 +57,10 @@ void _linphone_conference_notify_participant_removed(LinphoneConference *confere
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_removed, participant);
 }
 
+void _linphone_conference_notify_participant_device_media_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_media_changed, participant_device);
+}
+
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_added, participant_device);
 }

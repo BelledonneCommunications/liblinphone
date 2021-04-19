@@ -36,6 +36,7 @@ class StreamsGroup;
 
 namespace MediaConference {
 	class Conference;
+	class RemoteConference;
 }
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
@@ -47,6 +48,8 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 
 	friend class MediaConference::LocalConference;
 public:
+	static ConferenceLayout computeConferenceLayout(const std::shared_ptr<SalMediaDescription> & md);
+
 	MediaSession (const std::shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener);
 	~MediaSession ();
 
@@ -63,6 +66,7 @@ public:
 	LinphoneStatus pauseFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus resume ();
+	LinphoneStatus delayResume();
 	LinphoneStatus sendDtmf (char dtmf);
 	LinphoneStatus sendDtmfs (const std::string &dtmfs);
 	void sendVfuRequest ();
@@ -114,6 +118,7 @@ public:
 	void setAuthenticationTokenVerified (bool value);
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
+	void setNativeVideoWindowId (void *id, const std::string label);
 	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
@@ -122,7 +127,9 @@ public:
 	bool setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
-	
+
+	void * getParticipantWindowId(const std::string label);
+
 	StreamsGroup & getStreamsGroup()const;
 	bool pausedByApp()const;
 	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking);
@@ -130,6 +137,8 @@ public:
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);
+
+	int getRandomRtpPort (const SalStreamDescription & stream) const;
 };
 
 LINPHONE_END_NAMESPACE

@@ -31,6 +31,8 @@
 #include "nat/ice-service.h"
 #include "linphone/core.h"
 #include "mixers.h"
+#include "mediastreamer2/msanalysedisplay.h"
+#include "mediastreamer2/mediastream.h"
 
 #include <iomanip>
 
@@ -58,27 +60,31 @@ IceService & StreamsGroup::getIceService()const{
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
+	const auto & payloads = params.getLocalStreamDescription().getPayloads();
 	SalStreamType type = params.getLocalStreamDescription().type;
-	switch(type){
-		case SalAudio:
-			ret = new MS2AudioStream(*this, params);
-		break;
-		case SalVideo:
-#ifdef VIDEO_ENABLED
-			ret = new MS2VideoStream(*this, params);
-#endif
-		break;
-		case SalText:
-			ret = new MS2RTTStream(*this, params);
-		break;
-		case SalOther:
-		break;
+	// Do not create video stream if no payload is in local media description
+	if (!payloads.empty()) {
+		switch(type){
+			case SalAudio:
+				ret = new MS2AudioStream(*this, params);
+			break;
+			case SalVideo:
+		#ifdef VIDEO_ENABLED
+				ret = new MS2VideoStream(*this, params);
+		#endif
+			break;
+			case SalText:
+				ret = new MS2RTTStream(*this, params);
+			break;
+			case SalOther:
+			break;
+		}
 	}
 	if (!ret){
 		lError() << "Could not create Stream of type " << sal_stream_type_to_string(type);
 		return nullptr;
 	}
-	lInfo() << "Created " << *ret;
+	lInfo() << "Created stream of type " << sal_stream_type_to_string(type) << " at index " << params.streamIndex << ": " << *ret;
 	
 	if ((decltype(mStreams)::size_type)params.streamIndex >= mStreams.size()) mStreams.resize(params.streamIndex + 1);
 	if (mStreams[params.streamIndex] != nullptr){
@@ -92,6 +98,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 
 void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		params.scopeStreamToIndex(stream->getIndex());
 		stream->fillLocalMediaDescription(params);
 	}
@@ -135,6 +142,7 @@ bool StreamsGroup::prepare(){
 		return false;
 	}
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Stopped){
 			stream->prepare();
 		}
@@ -144,6 +152,7 @@ bool StreamsGroup::prepare(){
 
 void StreamsGroup::finishPrepare(){
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Preparing){
 			stream->finishPrepare();
 		}
@@ -166,6 +175,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	}
 	
 	for(auto &stream : mStreams){
+		if (!stream) continue;
 		Stream *streamPtr = stream.get();
 		lInfo() << "StreamsGroup " << this << " rendering " << *stream;
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
@@ -204,6 +214,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 
 void StreamsGroup::sessionConfirmed(const OfferAnswerContext &params){
 	for (auto &stream  : mStreams){
+		if (!stream) continue;
 		mCurrentOfferAnswerState.scopeStreamToIndex(stream->getIndex());
 		stream->sessionConfirmed(mCurrentOfferAnswerState);
 	}
@@ -283,6 +294,7 @@ void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
 bool StreamsGroup::allStreamsEncrypted () const {
 	int activeStreamsCount = 0;
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Running){
 			++activeStreamsCount;
 			if (!stream->isEncrypted()){
@@ -323,18 +335,132 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 	mAuthTokenVerified = value;
 }
 
+Stream * StreamsGroup::lookupStream(const SalStreamType type, const std::string & label) const {
+	for (auto &s : mStreams){
+		if (!s) continue;
+		const auto streamLabel = s->getLabel();
+		if ((s->getType() == type) && (label.compare(streamLabel) == 0)) {
+			return s.get();
+		}
+	}
+	return nullptr;
+}
+
+VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
+#ifdef VIDEO_ENABLED
+	for (auto &stream : mStreams){
+		if (!stream) continue;
+		const auto streamLabel = stream->getLabel();
+		if ((stream->getType() == SalVideo) && (refStream->label && strcmp(refStream->label, streamLabel.c_str()) == 0)) {
+			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+			MediaStream *ms = s->getMediaStream();
+			if (ms) {
+				VideoStream *vs = (VideoStream *)ms;
+				if (vs != refStream)
+					return vs;
+			}
+		}
+	}
+#endif // VIDEO_ENABLED
+	return nullptr;
+}
+
+
+bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) const {
+	for (auto &stream : mStreams){
+		if (!stream) continue;
+		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+		if(stream->getType() == SalVideo) {
+			MediaStream *ms = s->getMediaStream();
+			if (ms && media_stream_get_direction(ms) == dir) {
+				VideoStream *vs = (VideoStream *)ms;
+				if (vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
+					return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool StreamsGroup::checkRtpSession() const {
+	for (auto &stream : mStreams){
+		if (!stream) continue;
+		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+		if(stream->getType() == SalVideo) {
+			MediaStream *ms = s->getMediaStream();
+			RtpSession *rtp_session = ms->sessions.rtp_session;
+			if (!rtp_session) {
+				lInfo() << "session empty";
+				return false;
+			}
+			const rtp_stats_t *rtps = rtp_session_get_stats(rtp_session);
+			switch (media_stream_get_direction(ms)) {
+				case MediaStreamRecvOnly:
+					// Can be 0 if it's not attached with filter
+					lInfo() << "session recv true";
+					break;
+				case MediaStreamSendOnly:
+					if (rtps->packet_sent < 5) {
+						lInfo() << "session send false";
+						return false;
+					}
+					lInfo() << "session send true";
+					break;
+				case MediaStreamSendRecv:
+					if (rtps->packet_recv < 5 || rtps->packet_sent < 5) {
+						lInfo() << "session send recv false";
+						return false;
+					}
+					lInfo() << "session send recv true";
+					break;
+				default:
+					break;
+			}
+		}
+	}
+	return true;
+}
+
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
-		if (stream->isMain() && stream->getType() == type){
+		if (stream && stream->isMain() && stream->getType() == type){
 			return stream.get();
 		}
 	}
 	return nullptr;
 }
 
+Stream * StreamsGroup::lookupVideoStream ( MediaStreamDir dir) {
+	for (auto &stream : mStreams){
+		if (stream && (stream->getType() == SalVideo)){
+			Stream *s = stream.get();
+			MS2Stream *iface = dynamic_cast<MS2Stream*>(s);
+			if (media_stream_get_direction(iface->getMediaStream()) == dir) {
+				return stream.get();
+			}
+		}
+	}
+	return nullptr;
+}
+
+Stream * StreamsGroup::lookupVideoStream ( MSFilterId id) {
+	for (auto &stream : mStreams){
+		if (stream && (stream->getType() == SalVideo)){
+			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+			MediaStream *ms = s->getMediaStream();
+			VideoStream *vs = (VideoStream *)ms;
+			if (vs && vs->source && ms_filter_get_id(vs->source)== id){
+				return stream.get();
+			}
+		}
+	}
+	return nullptr;
+}
 
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
+		if (!s) continue;
 		params.scopeStreamToIndex(s->getIndex());
 		const auto & refStream = params.getResultStreamDescription();
 		if (!refStream.enabled() || refStream.getDirection() == SalStreamInactive)
@@ -361,7 +487,7 @@ void StreamsGroup::finishEarlyMediaForking(){
 
 bool StreamsGroup::isStarted()const{
 	for( auto & stream : mStreams){
-		if (stream->getState() == Stream::Running) return true;
+		if (stream && (stream->getState() == Stream::Running)) return true;
 	}
 	return false;
 }
@@ -376,14 +502,14 @@ void StreamsGroup::clearStreams(){
 size_t StreamsGroup::getActiveStreamsCount() const{
 	size_t ret = 0;
 	for( auto & stream : mStreams){
-		if (stream->getState() == Stream::Running) ++ret;
+		if (stream && (stream->getState() == Stream::Running)) ++ret;
 	}
 	return ret;
 }
 
 bool StreamsGroup::isMuted() const{
 	for (auto & stream : mStreams){
-		if (stream->getState() == Stream::Running){
+		if (stream && (stream->getState() == Stream::Running)){
 			if (stream->isMuted() == false) return false;
 		}
 	}
@@ -395,14 +521,16 @@ float StreamsGroup::computeOverallQuality(_functor func){
 	float globalRating = -1.0f;
 	int countedStreams = 0;
 	for (auto &stream : mStreams){
-		float streamRating = func(stream.get());
-		if (streamRating != -1.0f){
-			if (globalRating == -1.0f){
-				globalRating = streamRating;
-			}else{
-				globalRating += streamRating;
+		if (stream){
+			float streamRating = func(stream.get());
+			if (streamRating != -1.0f){
+				if (globalRating == -1.0f){
+					globalRating = streamRating;
+				}else{
+					globalRating += streamRating;
+				}
+				countedStreams++;
 			}
-			countedStreams++;
 		}
 	}
 	return globalRating / (float)countedStreams;
@@ -418,14 +546,17 @@ float StreamsGroup::getCurrentQuality(){
 
 void StreamsGroup::startDtls(const OfferAnswerContext &params){
 	for( auto & stream : mStreams){
-		params.scopeStreamToIndex(stream->getIndex());
-		stream->startDtls(params);
+		if (stream){
+			params.scopeStreamToIndex(stream->getIndex());
+			stream->startDtls(params);
+		}
 	}
 }
 
 int StreamsGroup::getAvpfRrInterval()const{
 	int interval = 0;
 	for( auto & stream : mStreams){
+		if (!stream) continue;
 		RtpInterface *i = dynamic_cast<MS2Stream*>(stream.get());
 		if (i && i->getAvpfRrInterval() > interval) 
 			interval = i->getAvpfRrInterval();
@@ -436,6 +567,7 @@ int StreamsGroup::getAvpfRrInterval()const{
 bool StreamsGroup::avpfEnabled() const{
 	bool ret = false;
 	for( auto & stream : mStreams){
+		if (!stream) continue;
 		RtpInterface *i = dynamic_cast<MS2Stream*>(stream.get());
 		if (i && stream->getState() == Stream::Running){
 			if (!i->avpfEnabled()){
@@ -470,6 +602,8 @@ void StreamsGroup::computeAndReportBandwidth(){
 		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | cpu: " << stream->getCpuUsage() << "% |" << " RTP : [d="
 			<< linphone_call_stats_get_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
 			<< "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
+		ostr << "\n test   rtp " << stream->getPortConfig().rtpPort << " rtcp " << stream->getPortConfig().rtcpPort;
+		
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
 		if (est_bw > 0.0) ostr << "Est max d=" << est_bw;
 		ostr << " (kbits/sec)" << endl;
@@ -481,15 +615,19 @@ void StreamsGroup::addPostRenderHook(const std::function<void()> &l){
 	mPostRenderHooks.push_back(l);
 }
 
-void StreamsGroup::setStreamMain(size_t index){
+void StreamsGroup::setStreamMain(size_t index, const bool force){
 	Stream *s = getStream(index);
 	if (s){
 		SalStreamType type = s->getType();
 		// Make sure there is not already a "main" stream; which would be a programmer fault.
 		Stream *other = lookupMainStream(type);
 		if (other != nullptr && other != s){
-			lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
-			return;
+			if (force) {
+				other->resetMain();
+			} else {
+				lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
+				return;
+			}
 		}
 		s->setMain();
 	}
@@ -509,6 +647,7 @@ void StreamsGroup::finish(){
 void StreamsGroup::attachMixers(){
 	if (!mMixerSession) return;
 	for (auto & stream : mStreams){
+		if (!stream) continue;
 		if (stream->getMixer() == nullptr){
 			StreamMixer *mixer = mMixerSession->getMixerByType(stream->getType());
 			if (mixer) stream->connectToMixer(mixer);
@@ -518,6 +657,7 @@ void StreamsGroup::attachMixers(){
 
 void StreamsGroup::detachMixers(){
 	for (auto & stream : mStreams){
+		if (!stream) continue;
 		if (stream->getMixer() != nullptr){
 			stream->disconnectFromMixer();
 		}
@@ -538,4 +678,3 @@ void StreamsGroup::unjoinMixerSession(){
 
 
 LINPHONE_END_NAMESPACE
-

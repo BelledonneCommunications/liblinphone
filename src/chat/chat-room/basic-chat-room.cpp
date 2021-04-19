@@ -133,6 +133,17 @@ int BasicChatRoom::getParticipantCount () const {
 	return 1;
 }
 
+const list<shared_ptr<ParticipantDevice>> BasicChatRoom::getParticipantDevices () const {
+	list<shared_ptr<ParticipantDevice>> devices;
+	for (const auto & p : getParticipants()) {
+		const auto & d = p->getDevices();
+		if (!d.empty()) {
+			devices.insert(devices.begin(), d.begin(), d.end());
+		}
+	}
+	return devices;
+}
+
 const list<shared_ptr<Participant>> &BasicChatRoom::getParticipants () const {
 	L_D();
 	return d->participants;

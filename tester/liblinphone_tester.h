@@ -392,6 +392,7 @@ typedef struct _stats {
 	int number_of_core_chat_room_subject_changed;
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
+	int number_of_participant_device_media_changed;
 	int number_of_participant_state_changed;
 
 	int number_of_SecurityLevelDowngraded;
@@ -645,13 +646,14 @@ void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 void check_conference_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants, bool_t one_by_one);
-LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
+LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants, LinphoneConference * conference);
 LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr, LinphoneConference * conf);
 LinphoneStatus terminate_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, LinphoneCoreManager * focus_mgr);
 bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
 LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bool_t do_registration);
 void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee);
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv);
+void check_nb_streams(LinphoneCoreManager * m1, LinphoneCoreManager * m2, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams);
 
 LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source);
 FILE *sip_start(const char *senario, const char* dest_username, const char *passwd, LinphoneAddress* dest_addres);

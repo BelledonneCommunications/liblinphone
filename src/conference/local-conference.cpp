@@ -108,7 +108,9 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 	}
 
 	eventHandler->subscribeReceived(event);
-#endif
+#else // !HAVE_ADVANCED_IM
+	linphone_event_deny_subscription(event, LinphoneReasonNotAcceptable);
+#endif // HAVE_ADVANCED_IM
 }
 
 void LocalConference::notifyFullState () {

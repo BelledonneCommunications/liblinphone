@@ -140,6 +140,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
+		if (!stream) continue;
 		size_t index = stream->getIndex();
 		params.scopeStreamToIndex(index);
 		bool streamActive = params.getLocalStreamDescription().enabled();
@@ -557,7 +558,10 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		}else if (ice_check_list_state(cl) == ICL_Completed){
 			// Only include the nominated candidates.
 			if (rtpCandidate) candidatesToInclude.push_back(rtpCandidate);
-			if (rtcpCandidate) candidatesToInclude.push_back(rtcpCandidate);
+			/* In rtcp-mux or bundle mode, the rtcpCandidate returned as the same componentID as the rtpCandidate. It doesn't need to be
+			 * included in the offer.*/
+			if (rtcpCandidate && (!rtpCandidate || rtcpCandidate->componentID != rtpCandidate->componentID)) 
+				candidatesToInclude.push_back(rtcpCandidate);
 		}
 		if (!candidatesToInclude.empty()){
 			stream.ice_candidates.clear();
@@ -694,8 +698,11 @@ void IceService::deleteSession () {
 	if (!mIceSession)
 		return;
 	/* clear all check lists */
-	for (auto & stream : mStreamsGroup.getStreams())
-		stream->setIceCheckList(nullptr);
+	for (auto & stream : mStreamsGroup.getStreams()) {
+		if (stream) {
+			stream->setIceCheckList(nullptr);
+		}
+	}
 	ice_session_destroy(mIceSession);
 	mIceSession = nullptr;
 }

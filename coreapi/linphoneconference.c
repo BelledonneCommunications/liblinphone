@@ -72,7 +72,7 @@ void linphone_conference_set_user_data (LinphoneConference *conference, void *ud
 	MediaConference::Conference::toCpp(conference)->setUserData(ud);
 }
 
-const char *linphone_conference_state_to_string (LinphoneConferenceState state) {
+char *linphone_conference_state_to_string (LinphoneConferenceState state) {
 	return ms_strdup(Utils::toString((LinphonePrivate::ConferenceInterface::State)state).c_str());
 }
 
@@ -235,6 +235,18 @@ bctbx_list_t *linphone_conference_get_participant_list (const LinphoneConference
 	return participants_list;
 }
 
+bctbx_list_t *linphone_conference_get_participant_device_list (const LinphoneConference *conference) {
+	const list<std::shared_ptr<LinphonePrivate::ParticipantDevice>> devices = MediaConference::Conference::toCpp(conference)->getParticipantDevices();
+	bctbx_list_t *devices_list = nullptr;
+	for (auto it = devices.begin(); it != devices.end(); it++) {
+		const std::shared_ptr<LinphonePrivate::ParticipantDevice> device((*it));
+		device->ref();
+		LinphoneParticipantDevice *c_device(device->toC());
+		devices_list = bctbx_list_append(devices_list, c_device);
+	}
+	return devices_list;
+}
+
 int linphone_conference_start_recording (LinphoneConference *conference, const char *path) {
 	return MediaConference::Conference::toCpp(conference)->startRecording(path);
 }
@@ -284,6 +296,30 @@ void linphone_conference_set_subject(LinphoneConference *conference, const char 
 	MediaConference::Conference::toCpp(conference)->setSubject(L_C_TO_STRING(subject));
 }
 
+const char *linphone_conference_get_username (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getUsername().c_str();
+}
+
+void linphone_conference_set_username(LinphoneConference *conference, const char *subject) {
+	MediaConference::Conference::toCpp(conference)->setUsername(L_C_TO_STRING(subject));
+}
+
+LinphoneConferenceLayout linphone_conference_get_layout (const LinphoneConference *conference) {
+	return (LinphoneConferenceLayout)MediaConference::Conference::toCpp(conference)->getLayout();
+}
+
+void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConferenceLayout layout) {
+	MediaConference::Conference::toCpp(conference)->setLayout((ConferenceLayout)layout);
+}
+
+int linphone_conference_get_duration (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getDuration();
+}
+
+time_t linphone_conference_get_start_time (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getStartTime();
+}
+
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference){
 	return MediaConference::Conference::toCpp(conference)->getAudioStream();
 }
@@ -307,6 +343,10 @@ void linphone_conference_preview_ogl_render(LinphoneConference *conference) {
 			if(stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
 				ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
 			}
+			if (stream && stream->output2) {
+				MSVideoDisplayMode mode = MSVideoDisplayHybrid;
+				ms_filter_call_method(stream->output2, MS_VIDEO_DISPLAY_SET_MODE, &mode);
+			}
 		}
 	}
 #endif
@@ -321,6 +361,10 @@ void linphone_conference_ogl_render(LinphoneConference *conference) {
 			VideoStream *stream = control->getVideoStream();
 			if(stream && stream->output && ms_filter_get_id(stream->output) == MS_OGL_ID) {
 				ms_filter_call_method(stream->output, MS_OGL_RENDER, NULL);
+			}
+			if (stream && stream->output) {
+				MSVideoDisplayMode mode = MSVideoDisplayHybrid;
+				ms_filter_call_method(stream->output, MS_VIDEO_DISPLAY_SET_MODE, &mode);
 			}
 		}
 	}
@@ -350,7 +394,7 @@ LinphoneConferenceParams *linphone_conference_params_clone (const LinphoneConfer
 }
 
 void linphone_conference_params_set_audio_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+	ConferenceParams::toCpp(params)->enableAudio(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_audio_enabled (const LinphoneConferenceParams *params) {
@@ -366,11 +410,15 @@ bool_t linphone_conference_params_is_video_enabled (const LinphoneConferencePara
 }
 
 void linphone_conference_params_set_chat_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+	ConferenceParams::toCpp(params)->enableChat(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_chat_enabled (const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->chatEnabled() ? TRUE : FALSE;
+}
+
+LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getProxyCfg();
 }
 
 void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable){
@@ -387,6 +435,14 @@ void linphone_conference_params_set_one_participant_conference_enabled(LinphoneC
 
 bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params){
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
+}
+
+void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout){
+	ConferenceParams::toCpp(params)->setLayout((ConferenceLayout)layout);
+}
+
+LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params){
+	return (LinphoneConferenceLayout)ConferenceParams::toCpp(params)->getLayout();
 }
 
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {

@@ -269,7 +269,6 @@ set(SOURCE_FILES_C
 	group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	group_chat_secure_tester.c
-	group_chat_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
@@ -354,6 +353,10 @@ if(APPLE)
 		list(APPEND SOURCE_FILES_OBJC ../src/utils/main-loop-integration-macos.m)#Override main(), instantiate Main Loop and call apple_main()
 	endif()
 endif()
+
+set(GROUP_CHAT_BENCHMARK_SOURCE_CXX
+	shared_tester_functions.cpp
+)
 
 set(GROUP_CHAT_BENCHMARK_SOURCE_C
 	accountmanager.c

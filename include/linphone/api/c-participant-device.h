@@ -79,6 +79,13 @@ LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_get_address (
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get layout used by a participant's device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return The #LinphoneConferenceLayout of the device
+*/
+LinphoneConferenceLayout linphone_participant_device_get_layout (const LinphoneParticipantDevice *participant_device);
+
+/**
  * Return the name of the device or NULL.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the name of the device or NULL. @maybenil
@@ -94,28 +101,28 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 
 /**
  * Get the timestamp the device joined a conference.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return time of joining a conference as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the audio direction of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the audio direction of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_audio_direction(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the video direction of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the video direction of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_video_direction(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the text direction of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the text direction of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_text_direction(const LinphoneParticipantDevice *participant_device);
@@ -148,6 +155,20 @@ LINPHONE_PUBLIC void linphone_participant_device_remove_callbacks(LinphonePartic
  * @return The LinphoneParticipantDeviceCbs that has called the last callback. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipantDeviceCbs *linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Set window ID for a device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @param window_id the window ID of the device @maybenil
+ */
+LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void * window_id);
+
+/**
+ * Get window ID.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return the window ID of the device @maybenil
+ */
+LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}

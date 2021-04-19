@@ -450,6 +450,13 @@ typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *con
 typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
+ * Callback used to notify a conference that the media of a participant device has been changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] device #LinphoneParticipantDevice whose media changed has changed @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceMediaChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+
+/**
  * Callback used to notify a conference that the admin status of a participant has been changed.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] participant #LinphoneParticipant whose admin status has changed @notnil
@@ -498,6 +505,39 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConfere
  * @param[in] is_speaking  is this participant device speaking
  */
 typedef void (*LinphoneParticipantDeviceCbsIsSpeakingChangedCb) (LinphoneParticipantDevice *participant_device, bool_t is_speaking);
+
+/**
+ * Callback used to notify that participant device has left the conference.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ */
+typedef void (*LinphoneParticipantDeviceCbsConferenceLeftCb) (LinphoneParticipantDevice *participant_device);
+
+/**
+ * Callback used to notify that participant device has joined the conference.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ */
+typedef void (*LinphoneParticipantDeviceCbsConferenceJoinedCb) (LinphoneParticipantDevice *participant_device);
+
+/**
+ * Callback used to notify that participant device audio direction has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] direction  participant device's audio direction
+ */
+typedef void (*LinphoneParticipantDeviceCbsAudioDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+
+/**
+ * Callback used to notify that participant device video direction has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] direction  participant device's video direction
+ */
+typedef void (*LinphoneParticipantDeviceCbsVideoDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+
+/**
+ * Callback used to notify that participant device text direction has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] direction  participant device's text direction
+ */
+typedef void (*LinphoneParticipantDeviceCbsTextDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
 
 /**
  * @}

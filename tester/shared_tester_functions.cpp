@@ -21,11 +21,17 @@
 
 #include "tester_utils.h"
 #include "call/call.h"
+#include "conference/participant-device.h"
+#include "conference/session/media-session.h"
+#include "conference/params/media-session-params.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
+#include "liblinphone_tester.h"
 #include "shared_tester_functions.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "mediastreamer2/msmire.h"
 
+using namespace std;
 using namespace LinphonePrivate;
 
 static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStreamType stream_type) {
@@ -313,6 +319,113 @@ void check_local_desc_stream (LinphoneCall *call) {
 			BC_ASSERT_EQUAL(streamDir, linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? SalStreamSendRecv : SalStreamInactive, int, "%d");
 			BC_ASSERT_EQUAL(textStream.rtp_port, 0, int, "%d");
 			BC_ASSERT_EQUAL(textStream.rtcp_port, 0, int, "%d");
+		}
+	}
+}
+
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
+	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
+	BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
+	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
+	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
+	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
+}
+
+int _linphone_call_get_nb_audio_steams(const LinphoneCall * call) {
+	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
+	return (int)call_local_desc->nbStreamsOfType(SalAudio);
+}
+
+int _linphone_call_get_nb_video_steams(const LinphoneCall * call) {
+	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
+	return (int)call_local_desc->nbStreamsOfType(SalVideo);
+}
+
+int _linphone_call_get_nb_text_steams(const LinphoneCall * call) {
+	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
+	return (int)call_local_desc->nbStreamsOfType(SalText);
+}
+
+bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device) {
+
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	
+	if (session) {
+		return (session->getCurrentParams()->audioEnabled()) ? TRUE : FALSE;
+	}
+	return FALSE;
+}
+
+bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device) {
+
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	
+	if (session) {
+		return (session->getCurrentParams()->videoEnabled()) ? TRUE : FALSE;
+	}
+	return FALSE;
+}
+
+bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device) {
+
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	
+	if (session) {
+		return (session->getCurrentParams()->realtimeTextEnabled()) ? TRUE : FALSE;
+	}
+	return FALSE;
+}
+
+void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout) {
+	LinphoneCall *call1=linphone_core_get_current_call(lc1->lc);
+	LinphoneCall *call2=linphone_core_get_current_call(lc2->lc);
+	BC_ASSERT_PTR_NOT_NULL(call1);
+	BC_ASSERT_PTR_NOT_NULL(call2);
+	if (call1 && call2) {
+		VideoStream *vstream1s = (VideoStream *)linphone_call_get_stream(call1, LinphoneStreamTypeVideo);
+		//VideoStream *vstream1s = (VideoStream *)linphone_call_get_video_stream(call1, MediaStreamSendOnly);
+		BC_ASSERT_PTR_NOT_NULL(vstream1s);
+		VideoStream *vstream2s = (VideoStream *)linphone_call_get_stream(call2, LinphoneStreamTypeVideo);
+		//VideoStream *vstream2s = (VideoStream *)linphone_call_get_video_stream(call2, MediaStreamSendOnly);
+		BC_ASSERT_PTR_NOT_NULL(vstream2s);
+		BC_ASSERT_TRUE(vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID);
+		BC_ASSERT_TRUE(vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID);
+		MSMireControl c1 = {{0,5,10,15,20,25}};
+		MSMireControl c2 = {{100,120,140,160,180,200}};
+
+		if (vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID) {
+			ms_filter_call_method(vstream1s->source, MS_MIRE_SET_COLOR, &c1);
+		}
+		if (vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID) {
+			ms_filter_call_method(vstream2s->source, MS_MIRE_SET_COLOR, &c2);
+		}
+
+		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
+		
+		int nb = layout == LinphoneConferenceLayoutNone ? 1 : 3;
+		BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		BC_ASSERT_TRUE(Call::toCpp(call1)->checkRtpSession());
+		BC_ASSERT_TRUE(Call::toCpp(call2)->checkRtpSession());
+		if (layout != LinphoneConferenceLayoutNone) {
+			BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
+			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));
+		}
+		if (layout != LinphoneConferenceLayoutGrid) {
+			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv));
+		}
+	}
+}
+
+void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneConferenceLayout layout) {
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCall *call=linphone_core_get_current_call(m->lc);
+		BC_ASSERT_PTR_NOT_NULL(call);
+		if (call) {
+			int nb = layout == LinphoneConferenceLayoutNone ? 1 : (bctbx_list_size(participants)+2) ;
+			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+			BC_ASSERT_TRUE(Call::toCpp(call)->checkRtpSession());
 		}
 	}
 }

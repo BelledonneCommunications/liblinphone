@@ -36,4 +36,35 @@ std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e) {
 	return lhs;
 }
 
+std::ostream & operator << (std::ostream & str, ConferenceLayout layout){
+	switch (layout) {
+		case ConferenceLayout::None:
+			str << "Legacy";
+			break;
+		case ConferenceLayout::Grid:
+			str << "Grid";
+			break;
+		case ConferenceLayout::ActiveSpeaker:
+			str << "ActiveSpeaker";
+			break;
+	}
+	return str;
+}
+
+std::string operator + (const std::string & str, ConferenceLayout layout){
+	std::string s(str);
+	switch (layout) {
+		case ConferenceLayout::None:
+			s.append("Legacy");
+			break;
+		case ConferenceLayout::Grid:
+			s.append("Grid");
+			break;
+		case ConferenceLayout::ActiveSpeaker:
+			s.append("ActiveSpeaker");
+			break;
+	}
+	return s;
+}
+
 LINPHONE_END_NAMESPACE

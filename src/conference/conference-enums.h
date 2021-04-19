@@ -21,6 +21,7 @@
 #define CONFERENCE_ENUMS_H
 
 #include "linphone/utils/general.h"
+#include "linphone/enums/conference-enums.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -35,6 +36,18 @@ enum class ConferenceMediaCapabilities {
 };
 
 std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e);
+
+/**
+ * Conference layout
+ */
+enum class ConferenceLayout{
+	None = LinphoneConferenceLayoutNone,                   /**< None - participant who speaks is prominently displayed in the center of the screen */
+	ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
+	Grid = LinphoneConferenceLayoutGrid,                   /**< Grid - each participant is given an equal sized image size */
+};
+
+std::ostream & operator<<(std::ostream & str, ConferenceLayout layout);
+std::string operator+(const std::string & str, ConferenceLayout layout);
 
 LINPHONE_END_NAMESPACE
 

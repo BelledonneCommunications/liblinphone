@@ -79,6 +79,14 @@ public:
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
+	* This fonction is called each time a new participant device changed its media direction after full state notification.
+	* @param[in] event informations related to the device's participant whose media changed. @notnil
+	* @param[in] device participant device whose media direction. @notnil
+	*/
+	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+
+	/*
 	 * Notify Conference state changes.
 	 ** @param[in] newState the new state of this conference.
 	 */

@@ -40,9 +40,9 @@ extern "C" {
 typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state, void *user_data);
 
 /**
- * A function to converte a #LinphoneConferenceState into a string
+ * A function to convert a #LinphoneConferenceState into a string
  */
-const char *linphone_conference_state_to_string(LinphoneConferenceState state);
+char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
 /**
  * Get the state of a conference
@@ -88,6 +88,7 @@ public:
 	LinphoneConferenceCbsParticipantDeviceAddedCb participantDeviceAddedCb;
 	LinphoneConferenceCbsParticipantDeviceRemovedCb participantDeviceRemovedCb;
 	LinphoneConferenceCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
+	LinphoneConferenceCbsParticipantDeviceMediaChangedCb participantDeviceMediaChangedCb;
 	LinphoneConferenceCbsStateChangedCb stateChangedCb;
 	LinphoneConferenceCbsSubjectChangedCb subjectChangedCb;
 	LinphoneConferenceCbsAudioDeviceChangedCb audioDeviceChangedCb;
@@ -134,6 +135,7 @@ public:
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) = 0;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) = 0;
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) = 0;
 
@@ -239,6 +241,7 @@ public:
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
 
@@ -259,6 +262,7 @@ public:
 
 private:
 
+	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> & session);
 	void chooseAnotherAdminIfNoneInConference();
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
@@ -284,6 +288,7 @@ public:
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;
@@ -304,6 +309,7 @@ public:
 	virtual bool isRecording() const override {
 		return false;
 	}
+	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
@@ -314,6 +320,7 @@ public:
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
 
@@ -331,6 +338,8 @@ public:
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 private:
+	std::shared_ptr<CallSession> focusSession;
+
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();
@@ -342,8 +351,6 @@ private:
 	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
 
-	char *m_focusContact;
-	std::shared_ptr<LinphonePrivate::Call> m_focusCall;
 	LinphoneCoreCbs *m_coreCbs;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;

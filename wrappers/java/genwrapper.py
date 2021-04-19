@@ -254,7 +254,8 @@ class JavaTranslator:
     def translate_jni_method(self, class_, _method, static=False):
         jni_blacklist = ['linphone_call_set_native_video_window_id',
                         'linphone_core_set_native_preview_window_id',
-                        'linphone_core_set_native_video_window_id']
+                        'linphone_core_set_native_video_window_id',
+                        'linphone_participant_device_set_native_video_window_id']
 
         namespace = class_.find_first_ancestor_by_type(AbsApi.Namespace)
         className = class_.name.translate(self.nameTranslator)
@@ -677,7 +678,7 @@ class Jni:
             'notRefCountable': not javaClass.refCountable
         }
         self.objects.append(obj)
-		
+        
         jniInterface = javaClass.jniInterface
         if jniInterface is not None:
             interface = {

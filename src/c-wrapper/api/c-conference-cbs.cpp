@@ -87,6 +87,14 @@ void linphone_conference_cbs_set_participant_admin_status_changed (LinphoneConfe
 	ConferenceCbs::toCpp(cbs)->participantAdminStatusChangedCb = cb;
 }
 
+LinphoneConferenceCbsParticipantDeviceMediaChangedCb linphone_conference_cbs_get_participant_device_media_changed (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceMediaChangedCb;
+}
+
+void linphone_conference_cbs_set_participant_device_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceMediaChangedCb = cb;
+}
+
 LinphoneConferenceCbsStateChangedCb linphone_conference_cbs_get_state_changed (const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->stateChangedCb;
 }
