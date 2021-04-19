@@ -536,6 +536,5 @@ void StreamsGroup::unjoinMixerSession(){
 	mMixerSession = nullptr;
 }
 
-
 LINPHONE_END_NAMESPACE
 
