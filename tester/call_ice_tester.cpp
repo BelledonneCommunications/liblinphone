@@ -362,8 +362,8 @@ static void call_with_ice_ipv6(void) {
 }
 
 static void call_with_ice_ufrag_and_password_set_in_sdp_m_line(void){
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
 	if (liblinphone_tester_ipv6_available()) {
 		linphone_core_enable_ipv6(marie->lc, TRUE);
 		linphone_core_enable_ipv6(pauline->lc, TRUE);
@@ -371,15 +371,15 @@ static void call_with_ice_ufrag_and_password_set_in_sdp_m_line(void){
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "ice_password_ufrag_in_media_description", 1);
-	
+
 	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_2(void){
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
 	if (liblinphone_tester_ipv6_available()) {
 		linphone_core_enable_ipv6(marie->lc, TRUE);
 		linphone_core_enable_ipv6(pauline->lc, TRUE);
@@ -387,15 +387,15 @@ static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_2(void){
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "ice_password_ufrag_in_media_description", 1);
-	
+
 	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_3(void){
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
 	if (liblinphone_tester_ipv6_available()) {
 		linphone_core_enable_ipv6(marie->lc, TRUE);
 		linphone_core_enable_ipv6(pauline->lc, TRUE);
@@ -404,7 +404,7 @@ static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_3(void){
 	linphone_core_manager_start(pauline, TRUE);
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "ice_password_ufrag_in_media_description", 1);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "ice_password_ufrag_in_media_description", 1);
-	
+
 	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
