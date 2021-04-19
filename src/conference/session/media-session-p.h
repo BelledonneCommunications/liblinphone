@@ -167,7 +167,6 @@ private:
 
 	void assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md);
 	void assignStreamsIndexes(bool localIsOfferer);
-	int getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> & md, SalStreamType type);
 	void fixCallParams (std::shared_ptr<SalMediaDescription> & rmd, bool fromOffer);
 	void initializeParamsAccordingToIncomingCallParams () override;
 	void setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> & md);
