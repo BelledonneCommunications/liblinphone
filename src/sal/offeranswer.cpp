@@ -167,7 +167,11 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 	// When a stream is inactive, refpt->mime_type might be null
 	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
-		ret = ms_offer_answer_context_match_payload(ctx, Utils::listToBctbxList(local_payloads), refpt, Utils::listToBctbxList(remote_payloads), reading_response);
+		bctbx_list_t* remote_payload_list = Utils::listToBctbxList(remote_payloads);
+		bctbx_list_t* local_payload_list = Utils::listToBctbxList(local_payloads);
+		ret = ms_offer_answer_context_match_payload(ctx, local_payload_list, refpt, remote_payload_list, reading_response);
+		bctbx_list_free(local_payload_list);
+		bctbx_list_free(remote_payload_list);
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
