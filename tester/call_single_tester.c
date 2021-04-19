@@ -1553,6 +1553,19 @@ static void call_with_no_sdp(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_no_sdp_lime(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_lime_x3dh_rc" : "pauline_tcp_rc");
+
+	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
+
+	BC_ASSERT_TRUE(call(marie,pauline));
+
+	end_call(pauline, marie);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void call_with_no_sdp_ack_without_sdp(void){
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -5279,6 +5292,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Early-media call with updated codec", early_media_call_with_codec_update),
 	TEST_NO_TAG("Call terminated by caller", call_terminated_by_caller),
 	TEST_NO_TAG("Call without SDP", call_with_no_sdp),
+	TEST_NO_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime),
 	TEST_NO_TAG("Call without SDP and ACK without SDP", call_with_no_sdp_ack_without_sdp),
 	TEST_NO_TAG("Call paused resumed", call_paused_resumed),
 	TEST_NO_TAG("Call paused resumed with sip packets looses", call_paused_resumed_with_sip_packets_losses),
