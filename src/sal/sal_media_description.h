@@ -56,6 +56,9 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription & getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
 		const SalStreamDescription findSecureStreamOfType(SalStreamType type) const;
 		const SalStreamDescription findBestStream(SalStreamType type) const;
+		const SalStreamDescription findFirstStreamOfType(SalStreamType type) const;
+		const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
+		int findIdxFirstStreamOfType(SalStreamType type) const;
 
 		bool isEmpty() const;
 
