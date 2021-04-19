@@ -675,6 +675,12 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 	SalMediaDescription *remoteMediaDescription,
 	LinphoneCallDir direction
 ) {
+	// Check we have remote and local media description (remote could be null when a call without SDP is received)
+	if ( !localMediaDescription || !remoteMediaDescription) {
+		lInfo() << "[LIME] Missing media description to get identity keys for mutual authentication, do not set auxiliary secret from identity keys";
+		return;
+	}
+
 	// Get local and remote identity keys from sdp attributes
 	std::string LocalIkB64;
 	const char *charLocalLimeIk = sal_custom_sdp_attribute_find(localMediaDescription->custom_sdp_attributes, "lime-Ik");
