@@ -618,6 +618,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
+				call->setConference(toC());
 			break;
 			case LinphoneCallPaused:
 			{
@@ -632,6 +633,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				const_cast<LinphonePrivate::MediaSessionParams *>(
 					call->getParams())->enableVideo(getCurrentParams().videoEnabled());
 				// Conference resumes call that previously paused in order to add the participant
+				call->setConference(toC());
 				call->resume();
 			}
 			break;
@@ -642,6 +644,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_params_set_in_conference(params, TRUE);
 				linphone_call_params_enable_video(params, getCurrentParams().videoEnabled());
 				linphone_call_params_set_conference_id(params, confId.c_str());
+
+				call->setConference(toC());
 
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
