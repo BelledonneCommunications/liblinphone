@@ -79,7 +79,7 @@ int manager_count = 0;
 int leaked_objects_count = 0;
 const MSAudioDiffParams audio_cmp_params = {10,2000};
 
-const char* flexisip_tester_dns_server = "fs-test.linphone.org";
+const char* flexisip_tester_dns_server = "fs-test-2.linphone.org";
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
@@ -421,7 +421,7 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
 	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, filepath);
-	
+
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "storage", "call_logs_db_uri", mgr->call_logs_database_path);
@@ -1958,7 +1958,7 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 			message_external_body_url=NULL;
 		}
 	}
-	
+
 	if (linphone_config_get_bool(linphone_core_get_config(lc), "net", "bad_net", 0)) {
 		sal_set_send_error(linphone_core_get_sal(lc), 1500);
 	}
@@ -2804,7 +2804,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
 			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
-			&& ( linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS 
+			&& ( linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS
 				|| (linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE)
 				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE)) )
 			) {
