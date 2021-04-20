@@ -53,6 +53,7 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	name = other.name;
 	proto = other.proto;
 	type = other.type;
+	main = other.main;
 	typeother = other.typeother;
 	proto_other = other.proto_other;
 	rtp_addr = other.rtp_addr;
@@ -171,8 +172,19 @@ SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaD
 	attribute = belle_sdp_media_description_get_attribute(media_desc, "mid");
 	if (attribute){
 		value = belle_sdp_attribute_get_value(attribute);
-		if (value)
+		if (value) {
 			mid = L_C_TO_STRING(value);
+		}
+	}
+
+	main = false;
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "main");
+	if (attribute){
+		value = belle_sdp_attribute_get_value(attribute);
+		if (value) {
+			// If value is 0, then main is false, true otherwise
+			main = (strcmp(value, "0") != 0);
+		}
 	}
 
 	payloads.clear();
@@ -276,6 +288,7 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	name = other.name;
 	proto = other.proto;
 	type = other.type;
+	main = other.main;
 	typeother = other.typeother;
 	proto_other = other.proto_other;
 	rtp_addr = other.rtp_addr;
@@ -496,6 +509,14 @@ bool SalStreamDescription::hasZrtp() const {
 	return false;
 }
 
+	if (haveLimeIk==1) return true;
+	return false;
+}
+
+bool SalStreamDescription::isMain() const {
+	return main;
+}
+
 const std::string & SalStreamDescription::getRtcpAddress() const {
 	return rtcp_addr;
 }
@@ -627,6 +648,8 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
 		ms_free(ssrc_attribute);
 	}
+
+	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("main",(main ? "1" : "0")));
 
 	/* insert zrtp-hash attribute if needed */
 	if (haveZrtpHash == 1) {
