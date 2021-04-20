@@ -1,3 +1,7 @@
+[account_creator]
+backend=flexiapi
+url=http://subscribe.example.org/flexiapi/api/
+
 [sip]
 sip_port=-1
 sip_tcp_port=-1
