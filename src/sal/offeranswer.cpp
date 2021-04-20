@@ -440,6 +440,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 
 		const auto & resultCfg = resultCfgPair.first;
 		result.addActualConfiguration(resultCfg);
+		result.main=local_offer.main;
 
 		const auto success = resultCfgPair.second;
 		if (success) {
@@ -636,6 +637,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 
 	const auto & resultCfg = resultCfgPair.first;
 	result.addActualConfiguration(resultCfg);
+	result.main=local_cap.main;
 
 	const auto success = resultCfgPair.second;
 	if (success) {
