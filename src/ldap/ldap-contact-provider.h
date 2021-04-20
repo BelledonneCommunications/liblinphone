@@ -30,6 +30,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <mutex>
 
 #include <ldap.h>
 
@@ -167,7 +168,7 @@ private:
 	std::vector<std::string> mNameAttributes;// Optimization to avoid split each times
 	std::vector<std::string> mSipAttributes;// Optimization to avoid split each times
 	LDAP *mLd;
-	ortp_mutex_t mLock;
+	std::mutex mLock;
 	std::list<std::shared_ptr<LdapContactSearch> > mRequests;
 
 	int mAwaitingMessageId; // Waiting Message for ldap_abandon_ext on bind
