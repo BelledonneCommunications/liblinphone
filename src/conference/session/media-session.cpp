@@ -829,19 +829,6 @@ void MediaSessionPrivate::setState (CallSession::State newState, const string &m
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md) {
-	if (mainAudioStreamIndex == -1){
-		mainAudioStreamIndex = md->findIdxMainStreamOfType(SalAudio);
-	}
-	if (mainVideoStreamIndex == -1){
-		mainVideoStreamIndex = md->findIdxMainStreamOfType(SalVideo);
-	}
-	if (mainTextStreamIndex == -1){
-		mainTextStreamIndex = md->findIdxMainStreamOfType(SalText);
-	}
-	if (freeStreamIndex < static_cast<int>(md->streams.size())) freeStreamIndex = static_cast<int>(md->streams.size());
-}
-
 /*
  * This method needs to be called at each incoming reINVITE, in order to adjust various local parameters to what is being offered by remote:
  * - the stream indexes.
@@ -913,7 +900,6 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
 	CallSessionPrivate::initializeParamsAccordingToIncomingCallParams();
 	std::shared_ptr<SalMediaDescription> md = op->getRemoteMediaDescription();
 	if (md) {
-		assignStreamsIndexesIncoming(md);
 		/* It is implicit to receive an INVITE without SDP, in this case WE choose the media parameters according to policy */
 		setCompatibleIncomingCallParams(md);
 	}
@@ -1460,7 +1446,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			actualCfg.ptime = downPtime;
 		else
 			actualCfg.ptime = linphone_core_get_download_ptime(core);
-
 		md->streams.push_back(audioStream);
 		PayloadTypeHandler::clearPayloadList(audioCodecs);
 	}
@@ -1475,7 +1460,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		videoStream.setSupportedEncryptions(encList);
 		videoStream.main = true;
-
 		videoStream.bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 		md->streams.push_back(videoStream);
 		PayloadTypeHandler::clearPayloadList(videoCodecs);
@@ -1491,7 +1475,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		textStream.setSupportedEncryptions(encList);
 		textStream.main = true;
-
 		md->streams.push_back(textStream);
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
