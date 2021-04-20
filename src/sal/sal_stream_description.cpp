@@ -54,6 +54,7 @@ SalStreamDescription::~SalStreamDescription(){
 SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	name = other.name;
 	type = other.type;
+	main = other.main;
 	typeother = other.typeother;
 	rtp_addr = other.rtp_addr;
 	rtcp_addr = other.rtcp_addr;
@@ -117,6 +118,16 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	} else {
 		type=SalOther;
 		typeother = mtype;
+	}
+
+	main = false;
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "main");
+	if (attribute){
+		value = belle_sdp_attribute_get_value(attribute);
+		if (value) {
+			// If value is 0, then main is false, true otherwise
+			main = (strcmp(value, "0") != 0);
+		}
 	}
 
 	/* Get media specific RTCP attribute */
@@ -679,6 +690,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription & other){
 	name = other.name;
 	type = other.type;
+	main = other.main;
 	typeother = other.typeother;
 	rtp_addr = other.rtp_addr;
 	rtcp_addr = other.rtcp_addr;
@@ -854,6 +866,10 @@ bool SalStreamDescription::hasLimeIk() const {
 	return getChosenConfiguration().hasLimeIk();
 }
 
+bool SalStreamDescription::isMain() const {
+	return main;
+}
+
 const std::string & SalStreamDescription::getRtcpAddress() const {
 	return rtcp_addr;
 }
@@ -1022,6 +1038,8 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 
 	/* insert DTLS session attribute if needed */
 	addDtlsAttributesToMediaDesc(actualCfg, media_desc);
+
+	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("main",(main ? "1" : "0")));
 
 	/* insert zrtp-hash attribute if needed */
 	if (actualCfg.haveZrtpHash == 1) {
