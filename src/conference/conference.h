@@ -57,6 +57,14 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
 	public:
+		/**
+		 * Conference layout
+		 */
+		enum class Layout{
+			ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
+			Grid = LinphoneConferenceLayoutGrid, /**< Grid - each participant is given an equal sized image size */
+		};
+
 		ConferenceParams(const ConferenceParams& params) = default;
 		ConferenceParams(const LinphoneCore *core = NULL);
 
@@ -91,6 +99,9 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
 		const IdentityAddress &getMe() const { return m_me; };
 
+		void setLayout(const Layout l) { m_layout = l; };
+		Layout getLayout() const { return m_layout; };
+
 	private:
 		bool m_enableVideo = false;
 		bool m_enableAudio = false;
@@ -98,7 +109,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool m_localParticipantEnabled = true;
 		bool m_allowOneParticipantConference = false;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		//Address m_conferenceAddress = Address();
+		Layout m_layout = Layout::ActiveSpeaker;
 		Address m_factoryAddress = Address();
 		std::string m_subject = "";
 		IdentityAddress m_me = IdentityAddress();
