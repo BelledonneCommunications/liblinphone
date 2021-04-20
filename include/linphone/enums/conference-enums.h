@@ -27,15 +27,25 @@
  */
 
 typedef enum _LinphoneConferenceState{
-	LinphoneConferenceStateNone, /**< Initial state */
-	LinphoneConferenceStateInstantiated, /**< Conference is now instantiated on local */
-	LinphoneConferenceStateCreationPending, /**< One creation request was sent to the server */
-	LinphoneConferenceStateCreated, /**< Conference was created on the server */
-	LinphoneConferenceStateCreationFailed, /**< Conference creation failed */
+	LinphoneConferenceStateNone,               /**< Initial state */
+	LinphoneConferenceStateInstantiated,       /**< Conference is now instantiated on local */
+	LinphoneConferenceStateCreationPending,    /**< One creation request was sent to the server */
+	LinphoneConferenceStateCreated,            /**< Conference was created on the server */
+	LinphoneConferenceStateCreationFailed,     /**< Conference creation failed */
 	LinphoneConferenceStateTerminationPending, /**< Wait for conference termination */
-	LinphoneConferenceStateTerminated, /**< Conference exists on server but not in local */
-	LinphoneConferenceStateTerminationFailed, /**< Conference termination failed */
-	LinphoneConferenceStateDeleted, /**< Conference was deleted on the server */
+	LinphoneConferenceStateTerminated,         /**< Conference exists on server but not in local */
+	LinphoneConferenceStateTerminationFailed,  /**< Conference termination failed */
+	LinphoneConferenceStateDeleted,            /**< Conference was deleted on the server */
 } LinphoneConferenceState;
+
+/**
+ * #LinphoneConferenceLayout is used to indicate the layout used by the conference.
+ * @ingroup conference
+ */
+
+typedef enum _LinphoneConferenceLayout{
+	LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
+	LinphoneConferenceLayoutGrid,          /**< Grid - each participant is given an equal sized image size */
+} LinphoneConferenceLayout;
 
 #endif // ifndef _L_CONFERENCE_ENUMS_H_
