@@ -495,8 +495,9 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 
 void MediaSessionPrivate::oglRender () {
 #ifdef VIDEO_ENABLED
-	if (mainVideoStreamIndex != -1){
-		MS2VideoStream * vs = dynamic_cast<MS2VideoStream*>(getStreamsGroup().getStream(mainVideoStreamIndex));
+	const auto videoStreamIndex = localDesc->findIdxMainStreamOfType(SalVideo);
+	if (videoStreamIndex != -1){
+		MS2VideoStream * vs = dynamic_cast<MS2VideoStream*>(getStreamsGroup().getStream(videoStreamIndex));
 		if (vs) vs->oglRender();
 	}
 #endif
@@ -774,8 +775,9 @@ bool MediaSessionPrivate::hasAvpf(const std::shared_ptr<SalMediaDescription> & m
 	 * In practice, this means for a remote media description that AVPF is supported by the far end.
 	 */
 	bool hasAvpf = !!md->hasAvpf();
-	if (mainVideoStreamIndex != -1 && (mainVideoStreamIndex < (int)md->streams.size()) && md->streams[static_cast<size_t>(mainVideoStreamIndex)].hasAvpf()){
-		hasAvpf = true;
+	const auto videoStream = md->findMainStreamOfType(SalVideo);
+	if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
+		hasAvpf = videoStream.hasAvpf();
 	}
 	return hasAvpf;
 }
@@ -1723,7 +1725,8 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		if (listener)
 			listener->onEncryptionChanged(q->getSharedFromThis(), true, authToken);
 
-		Stream *videoStream = mainVideoStreamIndex != -1 ? getStreamsGroup().getStream(mainVideoStreamIndex) : nullptr;
+		const auto videoStreamIndex = localDesc->findIdxMainStreamOfType(SalVideo);
+		Stream *videoStream = videoStreamIndex != -1 ? getStreamsGroup().getStream(videoStreamIndex) : nullptr;
 		if (isEncryptionMandatory() && videoStream && videoStream->getState() == Stream::Running) {
 			/* Nothing could have been sent yet so generating key frame */
 			VideoControlInterface *vc = dynamic_cast<VideoControlInterface*> (videoStream);
@@ -2996,7 +2999,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			}else params->enableVideo(false);
 
 			const SalStreamDescription &textStream = md->findMainStreamOfType(SalText);
-			if (d->mainTextStreamIndex != -1 && (textStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+			if (textStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 				params->enableRealtimeText(textStream.enabled());
 				params->setMediaEncryption(textStream.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeText, textStream.custom_sdp_attributes);
