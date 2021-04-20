@@ -39,6 +39,35 @@ SalMediaDescription::~SalMediaDescription(){
 }
 
 SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
+
+	name = other.name;
+	username = other.username;
+	addr = other.addr;
+
+	bandwidth = other.bandwidth;
+	session_ver = other.session_ver;
+	session_id = other.session_id;
+
+	dir = other.dir;
+	streams = other.streams;
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+	rtcp_xr = other.rtcp_xr;
+
+	ice_ufrag = other.ice_ufrag;
+	ice_pwd = other.ice_pwd;
+	ice_lite = other.ice_lite;
+
+	accept_bundles = other.accept_bundles;
+	bundles = other.bundles;
+
+	pad = other.pad;
+	set_nortpproxy = other.set_nortpproxy;
+
+}
+
+SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & other) {
+
 	name = other.name;
 	username = other.username;
 	addr = other.addr;
@@ -63,6 +92,8 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	set_nortpproxy = other.set_nortpproxy;
 
 	haveLimeIk = other.haveLimeIk;
+
+	return *this;
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription() {
