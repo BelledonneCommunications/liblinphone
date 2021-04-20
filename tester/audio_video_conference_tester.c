@@ -1157,7 +1157,7 @@ static void simple_conference_with_one_participant(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
 
-	int marie_call_no = bctbx_list_size(linphone_core_get_calls(marie->lc));
+	int marie_call_no = (int)bctbx_list_size(linphone_core_get_calls(marie->lc));
 	linphone_core_terminate_all_calls(marie->lc);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallEnd, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallReleased, 1, 10000));
@@ -2514,7 +2514,7 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 	LinphoneConference * michelle_conference = linphone_core_search_conference(michelle->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(michelle_conference);
 
-	int no_parts = bctbx_list_size(participants);
+	int no_parts = (int)bctbx_list_size(participants);
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
@@ -2697,7 +2697,7 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	LinphoneConference * michelle_conference = linphone_core_search_conference(michelle->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(michelle_conference);
 
-	int no_parts = bctbx_list_size(participants);
+	int no_parts = (int)bctbx_list_size(participants);
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
@@ -3047,7 +3047,7 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
 
-	int no_parts = bctbx_list_size(participants);
+	int no_parts = (int)bctbx_list_size(participants);
 
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
@@ -3397,7 +3397,7 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 	LinphoneConference * michelle_conference = linphone_core_search_conference(michelle->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(michelle_conference);
 
-	int no_parts = bctbx_list_size(participants);
+	int no_parts = (int)bctbx_list_size(participants);
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
@@ -3577,7 +3577,7 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	LinphoneConference * chloe_conference = linphone_core_search_conference(chloe->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(chloe_conference);
 
-	int no_parts = bctbx_list_size(participants);
+	int no_parts = (int)bctbx_list_size(participants);
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
@@ -4179,7 +4179,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		BC_ASSERT_PTR_NULL(linphone_call_get_conference(pauline_marie_call));
 	}
 
-	size_t marie_calls_no = bctbx_list_size(linphone_core_get_calls(marie->lc));
+	int marie_calls_no = (int)bctbx_list_size(linphone_core_get_calls(marie->lc));
 
 	laure_stats = laure->stat;
 	pauline_stats = pauline->stat;
