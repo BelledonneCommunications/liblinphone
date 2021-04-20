@@ -669,7 +669,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 
 void MediaSessionPrivate::oglRender () {
 #ifdef VIDEO_ENABLED
-	const auto videoStreamIndex = localDesc->findIdxMainStreamOfType(SalVideo);
+	const std::shared_ptr<SalMediaDescription> & md = localIsOfferer ? localDesc : op->getRemoteMediaDescription();
+	const auto videoStreamIndex = md->findIdxMainStreamOfType(SalVideo);
 	if (videoStreamIndex != -1){
 		MS2VideoStream * vs = dynamic_cast<MS2VideoStream*>(getStreamsGroup().getStream(videoStreamIndex));
 		if (vs) vs->oglRender();
@@ -828,30 +829,6 @@ void MediaSessionPrivate::setState (CallSession::State newState, const string &m
 
 // -----------------------------------------------------------------------------
 
-
-void MediaSessionPrivate::assignStreamsIndexes(bool localIsOfferer){
-	if (biggestDesc && freeStreamIndex < static_cast<int>(biggestDesc->streams.size())) freeStreamIndex = static_cast<int>(biggestDesc->streams.size());
-
-	/*Initialize stream indexes from potential incoming offer.*/
-	std::shared_ptr<SalMediaDescription> rmd = op ? op->getRemoteMediaDescription() : nullptr;
-	if (rmd) assignStreamsIndexesIncoming(rmd);
-
-	if (!localIsOfferer) return;
-
-	/*Assign indexes for our streams, if no incoming offer was received, or if new streams are requested.*/
-	if (getParams()->audioEnabled() && mainAudioStreamIndex == -1){
-		mainAudioStreamIndex = freeStreamIndex++;
-	}
-	if (getParams()->videoEnabled() && mainVideoStreamIndex == -1){
-		mainVideoStreamIndex = freeStreamIndex++;
-	}
-	if (getParams()->realtimeTextEnabled() && mainTextStreamIndex == -1){
-		mainTextStreamIndex = freeStreamIndex++;
-	}
-	lInfo() << "Stream indexes selected (-1 = unassigned): mainAudioStreamIndex=" << mainAudioStreamIndex <<
-		", mainVideoStreamIndex=" << mainVideoStreamIndex << ", mainTextStreamIndex=" << mainTextStreamIndex;
-}
-
 void MediaSessionPrivate::assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md) {
 	if (mainAudioStreamIndex == -1){
 		mainAudioStreamIndex = md->findIdxMainStreamOfType(SalAudio);
@@ -937,7 +914,7 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
 	std::shared_ptr<SalMediaDescription> md = op->getRemoteMediaDescription();
 	if (md) {
 		assignStreamsIndexesIncoming(md);
-		/* It is licit to receive an INVITE without SDP, in this case WE choose the media parameters according to policy */
+		/* It is implicit to receive an INVITE without SDP, in this case WE choose the media parameters according to policy */
 		setCompatibleIncomingCallParams(md);
 	}
 }
@@ -1140,11 +1117,12 @@ void MediaSessionPrivate::runStunTestsIfNeeded () {
 	L_Q();
 	if (linphone_nat_policy_stun_enabled(natPolicy) && !(linphone_nat_policy_ice_enabled(natPolicy) || linphone_nat_policy_turn_enabled(natPolicy))) {
 		stunClient = makeUnique<StunClient>(q->getCore());
-		const auto audioStreamIndex = localDesc->findIdxMainStreamOfType(SalAudio);
+		const std::shared_ptr<SalMediaDescription> & md = localIsOfferer ? localDesc : op->getRemoteMediaDescription();
+		const auto audioStreamIndex = md->findIdxMainStreamOfType(SalAudio);
 		int audioPort = portFromStreamIndex(audioStreamIndex);
-		const auto videoStreamIndex = localDesc->findIdxMainStreamOfType(SalVideo);
+		const auto videoStreamIndex = md->findIdxMainStreamOfType(SalVideo);
 		int videoPort = portFromStreamIndex(videoStreamIndex);
-		const auto textStreamIndex = localDesc->findIdxMainStreamOfType(SalText);
+		const auto textStreamIndex = md->findIdxMainStreamOfType(SalText);
 		int textPort = portFromStreamIndex(textStreamIndex);
 		int ret = stunClient->run(audioPort, videoPort, textPort);
 		if (ret >= 0)
@@ -1386,7 +1364,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;
-	assignStreamsIndexes(localIsOfferer);
 
 	getParams()->getPrivate()->adaptToNetwork(core, pingTime);
 
@@ -1786,7 +1763,8 @@ void MediaSessionPrivate::performMutualAuthentication(){
 	// Perform mutual authentication if instant messaging encryption is enabled
 	auto encryptionEngine = q->getCore()->getEncryptionEngine();
 	// Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
-	const auto audioStreamIndex = localDesc->findIdxMainStreamOfType(SalAudio);
+	const std::shared_ptr<SalMediaDescription> & md = localIsOfferer ? localDesc : op->getRemoteMediaDescription();
+	const auto audioStreamIndex = md->findIdxMainStreamOfType(SalAudio);
 	Stream *stream = audioStreamIndex != -1 ? getStreamsGroup().getStream(audioStreamIndex) : nullptr;
 	MS2AudioStream *ms2a = dynamic_cast<MS2AudioStream*>(stream);
 	if (encryptionEngine && ms2a && ms2a->getZrtpContext()) {
@@ -2007,6 +1985,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		if (listener)
 			listener->onEncryptionChanged(q->getSharedFromThis(), false, authToken);
 	} else {
+		const std::shared_ptr<SalMediaDescription> & md = localIsOfferer ? localDesc : op->getRemoteMediaDescription();
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
@@ -2015,15 +1994,14 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
 				if (remoteAddress){
 					char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-					const auto audioStreamIndex = localDesc->findIdxMainStreamOfType(SalAudio);
+					const auto audioStreamIndex = md->findIdxMainStreamOfType(SalAudio);
 					Stream *stream = audioStreamIndex != -1 ? getStreamsGroup().getStream(audioStreamIndex) : nullptr;
 					if (stream){
 						MS2Stream *ms2s = dynamic_cast<MS2Stream*>(stream);
 						if (ms2s){
 							encryptionEngine->authenticationVerified(ms2s->getZrtpContext(), op->getRemoteMediaDescription(), peerDeviceId);
-						} else {
+						}else{
 							lError() << "Could not dynamic_cast to MS2Stream in propagateEncryptionChanged().";
-						}
 					}
 					ms_free(peerDeviceId);
 				}else {
@@ -2043,7 +2021,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		if (listener)
 			listener->onEncryptionChanged(q->getSharedFromThis(), true, authToken);
 
-		const auto videoStreamIndex = localDesc->findIdxMainStreamOfType(SalVideo);
+		const auto videoStreamIndex = md->findIdxMainStreamOfType(SalVideo);
 		Stream *videoStream = videoStreamIndex != -1 ? getStreamsGroup().getStream(videoStreamIndex) : nullptr;
 		if (isEncryptionMandatory() && videoStream && videoStream->getState() == Stream::Running) {
 			/* Nothing could have been sent yet so generating key frame */
