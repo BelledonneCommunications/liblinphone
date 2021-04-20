@@ -443,6 +443,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 	}
 	result.rtp_ssrc=local_offer.rtp_ssrc;
 	result.rtcp_cname=local_offer.rtcp_cname;
+	result.main=local_offer.main;
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
 	if ((local_offer.dtls_role!=SalDtlsRoleInvalid) && (remote_answer.dtls_role!=SalDtlsRoleInvalid)
@@ -548,6 +549,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	result.name = local_cap.name;
 	result.rtp_ssrc=local_cap.rtp_ssrc;
 	result.rtcp_cname=local_cap.rtcp_cname;
+	result.main=local_cap.main;
 
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
