@@ -86,6 +86,8 @@ typedef struct _LinphoneAuthInfo LinphoneAuthInfo;
 
 /**
  * Object that represents a Linphone Account.
+ * This object replaces the deprecated #LinphoneProxyConfig.
+ * Use a #LinphoneAccountParams object to configure it.
  * @ingroup account
  */
 typedef struct _LinphoneAccount LinphoneAccount;
@@ -404,8 +406,11 @@ typedef struct _LinphoneDialPlan LinphoneDialPlan;
 typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
 
 /**
- * @brief Object holding push notification config for contact uri parameter.
- * @ingroup misc
+ * @brief Object holding push notification config that will be set in the contact URI parameters of the Contact header in the REGISTER,
+ * if the #LinphoneAccountParams is configured to allow push notifications, see linphone_account_params_set_push_notification_allowed().
+ * 
+ * This object can be accessed through the #LinphoneAccountParams object, which can be obtained from your #LinphoneAccount object.
+ * @ingroup account
 **/
 typedef struct _LinphonePushNotificationConfig LinphonePushNotificationConfig;
 

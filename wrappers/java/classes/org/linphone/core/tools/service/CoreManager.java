@@ -164,6 +164,12 @@ public class CoreManager {
             @Override
             public void onCallStateChanged(Core core, Call call, Call.State state, String message) {
                 if (mAudioHelper == null) return;
+                if (call.getState() != state) {
+                    // This can happen if a listener set earlier than this one in the app automatically accepts an incoming call for example.
+                    Log.w("[Core Manager] Call state changed callback state variable doesn't match current call state, skipping");
+                    return;
+                }
+
                 if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
                     if (core.isNativeRingingEnabled()) {
                         Log.i("[Core Manager] Incoming call received, no other call, start ringing");
