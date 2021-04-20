@@ -2096,8 +2096,10 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 		linphone_call_cbs_unref(caller_cbs);
 
 		caller_stream = (VideoStream*) linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
+		BC_ASSERT_TRUE(wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_tmmbr_received, 1, 10000));
+		// If we don't wait for tmmbr, the unplumbing/replumbing and configuring the new graph can reinitialize fps. Note: If thr test still fail, use a timer instead of reading tmmbr.
+		// Set here the FPS can simulate a camera that do not working
 		ms_filter_call_method(caller_stream->source, MS_FILTER_SET_FPS, &fps);
-
 		BC_ASSERT_TRUE(wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallCameraNotWorking, 1, 10000));
 		BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(video_stream_get_camera(caller_stream)), "Static picture");
 	}
