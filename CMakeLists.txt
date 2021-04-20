@@ -20,7 +20,11 @@
 #
 ############################################################################
 
-cmake_minimum_required(VERSION 3.1)
+
+# CMake 3.13 required for new Flexisip build process.
+# See [CMP077](https://cmake.org/cmake/help/v3.13/policy/CMP0077.html).
+cmake_minimum_required(VERSION 3.13)
+
 project(linphone VERSION 4.5.0 LANGUAGES C CXX)
 
 
@@ -72,6 +76,9 @@ option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
 
+# Hidden non-cache options:
+# * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -122,11 +129,13 @@ if (ENABLE_VCARD)
 	endif()
 endif()
 
-find_package(BelleSIP CONFIG REQUIRED)
-find_package(Mediastreamer2 CONFIG REQUIRED)
-find_package(ortp CONFIG REQUIRED)
-find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
-find_package(belr CONFIG REQUIRED)
+if(NOT DISABLE_BC_PACKAGE_SEARCH)
+	find_package(BelleSIP CONFIG REQUIRED)
+	find_package(Mediastreamer2 CONFIG REQUIRED)
+	find_package(ortp CONFIG REQUIRED)
+	find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
+	find_package(belr CONFIG REQUIRED)
+endif()
 
 if(ENABLE_ADVANCED_IM)
 	find_package(XercesC REQUIRED)
@@ -139,11 +148,16 @@ find_package(Sqlite3 REQUIRED)
 find_package(XML2 REQUIRED)
 
 if (ENABLE_DB_STORAGE)
-	#APPLE platform does not use dlopen for soci backend
-	if (APPLE OR ANDROID)
-		find_package(Soci REQUIRED COMPONENTS sqlite3)
+	if(NOT DISABLE_SOCI_PACKAGE_SEARCH)
+		#APPLE platform does not use dlopen for soci backend
+		if (APPLE OR ANDROID)
+			find_package(Soci REQUIRED COMPONENTS sqlite3)
+		else()
+			find_package(Soci REQUIRED)
+		endif()
 	else()
-		find_package(Soci REQUIRED)
+		set(SOCI_FOUND YES)
+		set(SOCI_LIBRARIES "soci_core")
 	endif()
 	set(HAVE_DB_STORAGE 1)
 endif()
@@ -402,9 +416,11 @@ write_basic_package_version_file(
 	VERSION ${LINPHONE_VERSION}
 	COMPATIBILITY AnyNewerVersion
 )
-export(EXPORT ${EXPORT_TARGETS_NAME}Targets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneTargets.cmake"
-)
+if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
+	export(EXPORT ${EXPORT_TARGETS_NAME}Targets
+		FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneTargets.cmake"
+	)
+endif()
 configure_package_config_file(cmake/LinphoneConfig.cmake.in
 	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneConfig.cmake"
 	INSTALL_DESTINATION ${CONFIG_PACKAGE_LOCATION}
