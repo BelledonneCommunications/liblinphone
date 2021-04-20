@@ -163,16 +163,11 @@ private:
 #endif // ifdef TEST_EXT_RENDERER
 	static int sendDtmf (void *data, unsigned int revents);
 
-	
-
-	void assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md);
-	void assignStreamsIndexes(bool localIsOfferer);
 	void fixCallParams (std::shared_ptr<SalMediaDescription> & rmd, bool fromOffer);
 	void initializeParamsAccordingToIncomingCallParams () override;
 	void setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> & md);
 	void updateBiggestDesc (std::shared_ptr<SalMediaDescription> & md);
 	void updateRemoteSessionIdAndVer ();
-
 
 	void discoverMtu (const Address &remoteAddr);
 	void getLocalIp (const Address &remoteAddr);
