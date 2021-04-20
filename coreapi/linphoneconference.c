@@ -346,6 +346,15 @@ bool_t linphone_conference_params_is_one_participant_conference_enabled(const Li
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
 
+void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout){
+	ConferenceParams::toCpp(params)->setLayout((ConferenceParams::Layout)layout);
+}
+
+LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params){
+	return (LinphoneConferenceLayout)ConferenceParams::toCpp(params)->getLayout();
+}
+
+
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getID().c_str();
 }
