@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2017  Belledonne Communications, Grenoble France
+# Copyright (C) 2010-2021 Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -24,8 +24,10 @@ set(LINK_LIBS
 	bctoolbox
 	${BELLESIP_TARGETNAME}
 	belr
-	mediastreamer
+)
+set(PUBLIC_LINK_LIBS
 	ortp
+	mediastreamer
 )
 
 if (ENABLE_FLEXIAPI)
@@ -625,7 +627,10 @@ if(ENABLE_STATIC)
 		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
 		PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
 	)
-	target_link_libraries(linphone-static PRIVATE ${LINK_LIBS})
+	target_link_libraries(linphone-static
+		PUBLIC ${PUBLIC_LINK_LIBS}
+		PRIVATE ${LINK_LIBS}
+	)
 
 	if(APPLE)
 		target_link_libraries(linphone-static PUBLIC ${APPLE_LIBS})
@@ -706,7 +711,10 @@ if(ENABLE_SHARED)
 		$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/>
 		PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LINPHONE_CXX_OBJECTS_INCLUDE_DIRS}
 	)
-	target_link_libraries(linphone PRIVATE ${LINK_LIBS})
+	target_link_libraries(linphone
+		PUBLIC ${PUBLIC_LINK_LIBS}
+		PRIVATE ${LINK_LIBS}
+	)
 
 	if(APPLE)
 		target_link_libraries(linphone PUBLIC ${APPLE_LIBS})
