@@ -44,6 +44,13 @@ public class PushNotificationUtils {
             Log.w("[Push Utils] Google services aren't available. Ensure you have correctly applied the com.google.gms.google-services plugin in your app's build.gradle file (cf https://firebase.google.com/docs/android/setup#add-config-file).");
             return;
         }
+
+        int resId = context.getResources().getIdentifier("gcm_defaultSenderId", "string", context.getPackageName());
+        if (resId == 0) {
+            Log.e("[Push Utils] Couldn't find gcm_defaultSenderId string resource.");
+            return;
+        }
+        
         FirebaseApp.initializeApp(context);
 
         String className = "org.linphone.core.tools.firebase.FirebasePushHelper";
