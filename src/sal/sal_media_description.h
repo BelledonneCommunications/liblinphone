@@ -79,6 +79,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool supportCapabilityNegotiation() const;
 		bool tcapLinesMerged() const;
 
+		SalMediaDescription &operator=(const SalMediaDescription & other);
 		bool operator==(const SalMediaDescription & other) const;
 		bool operator!=(const SalMediaDescription & other) const;
 		int equal(const SalMediaDescription & otherMd) const;
