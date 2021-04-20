@@ -278,14 +278,26 @@ const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType typ
 	return desc;
 }
 
-int SalMediaDescription::findIdxFirstStreamOfType(SalStreamType type) const {
-	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type] (const auto & stream) {
-		return (stream.getType()==type);
-	});
+int SalMediaDescription::findIdxMainStreamOfType(SalStreamType type) const {
+	const auto & streamIt =  findMainStreamItOfType(type);
 	if (streamIt != streams.end()) {
 		return static_cast<int>(std::distance(streams.begin(), streamIt));
 	}
 	return -1;
+}
+
+const SalStreamDescription SalMediaDescription::findMainStreamOfType(SalStreamType type) const {
+	const auto & streamIt =  findMainStreamItOfType(type);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findMainStreamItOfType(SalStreamType type) const {
+	return std::find_if(streams.cbegin(), streams.cend(), [&type] (const auto & stream) {
+		return ((stream.getType()==type) && stream.isMain());
+	});
 }
 
 const SalStreamDescription SalMediaDescription::findFirstStreamOfType(SalStreamType type) const {

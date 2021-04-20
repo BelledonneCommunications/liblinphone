@@ -84,6 +84,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasDtls() const;
 		bool hasZrtp() const;
 		bool hasLimeIk() const;
+
+		bool isMain() const;
+
 		const std::string & getRtcpAddress() const;
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
@@ -96,6 +99,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const std::string getProtoAsString() const;
 		SalStreamDir getDirection() const;
 
+		bool main = false;
 		std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 		SalMediaProto proto = SalProtoRtpAvp;
 		SalStreamType type = SalAudio;
