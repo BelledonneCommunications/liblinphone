@@ -38,6 +38,7 @@ public:
 	virtual void initializeParamsAccordingToIncomingCallParams ();
 	void notifyReferState ();
 	virtual void setState (CallSession::State newState, const std::string &message);
+	void restorePreviousState();
 	void setTransferState (CallSession::State newState);
 	void startIncomingNotification ();
 	bool startPing ();
@@ -70,6 +71,7 @@ public:
 	void updated (bool isUpdate);
 	void updatedByRemote ();
 	virtual void updating (bool isUpdate);
+	virtual void refreshed(); /* Called when an incoming UPDATE is received (for session timers)*/
 
 	void setCallSessionListener (CallSessionListener *listener) { this->listener = listener; }
 	CallSessionListener *getCallSessionListener()const{
@@ -117,7 +119,9 @@ protected:
 	std::string subject;
 	LinphoneCallDir direction = LinphoneCallOutgoing;
 	CallSession::State state = CallSession::State::Idle;
+	std::string messageState;
 	CallSession::State prevState = CallSession::State::Idle;
+	std::string prevMessageState;
 	CallSession::State transferState = CallSession::State::Idle;
 	LinphoneProxyConfig *destProxy = nullptr;
 	LinphoneErrorInfo *ei = nullptr;
