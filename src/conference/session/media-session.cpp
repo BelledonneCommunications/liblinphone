@@ -1430,7 +1430,33 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	encList.push_back(getParams()->getMediaEncryption());
 
-	const SalStreamDescription &oldAudioStream = oldMd ? oldMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	LinphoneConference * localConference = NULL;
+	if (isInLocalConference) {
+		localConference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+
+	if (localIsOfferer && oldMd) {
+		md->streams = oldMd->streams;
+	} else if (!localIsOfferer && op->getRemoteMediaDescription()) {
+		md->streams = op->getRemoteMediaDescription()->streams;
+	}
+
+	for (auto & s : md->streams) {
+		if (!s.isMain()) {
+			if (localConference) {
+
+			} else {
+				// If it is not in local conference, then disable non main streams
+				s.disable();
+				s.dir = SalStreamInactive;
+			}
+		}
+	}
+	encList.push_back(getParams()->getMediaEncryption());
+
+	const SalStreamDescription &oldAudioStream = md->findMainStreamOfType(SalAudio);
+
 	if (getParams()->audioEnabled() || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList));
 
@@ -1446,11 +1472,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			actualCfg.ptime = downPtime;
 		else
 			actualCfg.ptime = linphone_core_get_download_ptime(core);
-		md->streams.push_back(audioStream);
+
+		const auto audioStreamIdx = md->findIdxMainStreamOfType(SalAudio);
+		if (audioStreamIdx == -1) {
+			md->streams.push_back(audioStream);
+		} else {
+			md->streams[audioStreamIdx] = audioStream;
+		}
 		PayloadTypeHandler::clearPayloadList(audioCodecs);
 	}
 
-	const SalStreamDescription &oldVideoStream = oldMd ? oldMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	const SalStreamDescription &oldVideoStream = md->findMainStreamOfType(SalVideo);
 	if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 
@@ -1461,11 +1493,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		videoStream.setSupportedEncryptions(encList);
 		videoStream.main = true;
 		videoStream.bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
-		md->streams.push_back(videoStream);
+		const auto videoStreamIdx = md->findIdxMainStreamOfType(SalVideo);
+		if (videoStreamIdx == -1) {
+			md->streams.push_back(videoStream);
+		} else {
+			md->streams[videoStreamIdx] = videoStream;
+		}
 		PayloadTypeHandler::clearPayloadList(videoCodecs);
 	}
 
-	const SalStreamDescription &oldTextStream = oldMd ? oldMd->findMainStreamOfType(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	const SalStreamDescription &oldTextStream = md->findMainStreamOfType(SalText);
 	if (getParams()->realtimeTextEnabled() || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto textCodecs = pth.makeCodecsList(SalText, 0, -1, ((oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldTextStream.already_assigned_payloads : emptyList));
 
@@ -1475,7 +1512,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		textStream.setSupportedEncryptions(encList);
 		textStream.main = true;
-		md->streams.push_back(textStream);
+
+		const auto textStreamIdx = md->findIdxMainStreamOfType(SalText);
+		if (textStreamIdx == -1) {
+			md->streams.push_back(textStream);
+		} else {
+			md->streams[textStreamIdx] = textStream;
+		}
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
@@ -1503,7 +1546,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	/* Get the transport addresses filled in to the media description. */
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
-		transferAlreadyAssignedPayloadTypes(oldMd, md);
+//		transferAlreadyAssignedPayloadTypes(oldMd, md);
 		localDescChanged = md->equal(*oldMd);
 		if (getParams()->getPrivate()->getInternalCallUpdate()) {
 			/*
