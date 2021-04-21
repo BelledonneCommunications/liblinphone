@@ -1129,6 +1129,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>();
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
+	const std::shared_ptr<SalMediaDescription> & refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
 
 	this->localIsOfferer = localIsOfferer;
 
@@ -1182,30 +1183,30 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	emptyList.clear();
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	LinphoneConference * localConference = NULL;
-	if (isInLocalConference) {
-		localConference = listener->getCallSessionConference(q->getSharedFromThis());
-	}
+	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
 
-	if (localIsOfferer && oldMd) {
-		md->streams = oldMd->streams;
-	} else if (!localIsOfferer && op->getRemoteMediaDescription()) {
-		md->streams = op->getRemoteMediaDescription()->streams;
-	}
-
-	for (auto & s : md->streams) {
-		if (!s.isMain()) {
-			if (localConference) {
-
-			} else {
-				// If it is not in local conference, then disable non main streams
-				s.disable();
-				s.dir = SalStreamInactive;
+	if (refMd) {
+		for (const auto & s : refMd->streams) {
+			SalStreamDescription newStream;
+			newStream.main = s.main;
+			newStream.proto = s.proto;
+			newStream.type = s.type;
+			if (!s.isMain()) {
+				if (conference) {
+					if (isInLocalConference) {
+					} else {
+					}
+				} else {
+					// If it is not in local conference, then disable non main streams
+					newStream.dir = SalStreamInactive;
+					newStream.disable();
+				}
 			}
+			md->streams.push_back(newStream);
 		}
 	}
 
-	const SalStreamDescription &oldAudioStream = md->findMainStreamOfType(SalAudio);
+	const SalStreamDescription &oldAudioStream = refMd ? refMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
 	if (getParams()->audioEnabled() || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription audioStream;
@@ -1244,7 +1245,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			audioStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 		}
 
-		const auto audioStreamIdx = md->findIdxMainStreamOfType(SalAudio);
+		const auto audioStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalAudio) : -1;
 		if (audioStreamIdx == -1) {
 			md->streams.push_back(audioStream);
 		} else {
@@ -1252,7 +1253,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		}
 	}
 
-	const SalStreamDescription &oldVideoStream = md->findMainStreamOfType(SalVideo);
+	const SalStreamDescription &oldVideoStream = refMd ? refMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription videoStream;
 		videoStream.main = true;
@@ -1284,7 +1285,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 		}
 
-		const auto videoStreamIdx = md->findIdxMainStreamOfType(SalVideo);
+		const auto videoStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalVideo) : -1;
 		if (videoStreamIdx == -1) {
 			md->streams.push_back(videoStream);
 		} else {
@@ -1292,7 +1293,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		}
 	}
 
-	const SalStreamDescription &oldTextStream = md->findMainStreamOfType(SalText);
+	const SalStreamDescription &oldTextStream = refMd ? refMd->findMainStreamOfType(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	if (getParams()->realtimeTextEnabled() || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription textStream;
 		textStream.proto = getParams()->getMediaProto();
@@ -1318,7 +1319,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			textStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 		}
 
-		const auto textStreamIdx = md->findIdxMainStreamOfType(SalText);
+		const auto textStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalText) : -1;
 		if (textStreamIdx == -1) {
 			md->streams.push_back(textStream);
 		} else {
