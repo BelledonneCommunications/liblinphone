@@ -121,6 +121,31 @@ public class CoreManager {
         Log.i("[Core Manager] Ready");
     }
 
+    public void destroy() {
+        Log.i("[Core Manager] Destroying");
+
+        if (mActivityCallbacks != null) {
+            ((Application) mContext).unregisterActivityLifecycleCallbacks(mActivityCallbacks);
+            mActivityCallbacks = null;
+        }
+
+        if (mBluetoothHelper != null) {
+            mBluetoothHelper.destroy(mContext);
+            mBluetoothHelper = null;
+        }
+
+        if (mShutdownReceiver != null) {
+            Log.i("[Core Manager] Unregistering shutdown receiver");
+            mContext.unregisterReceiver(mShutdownReceiver);
+            mShutdownReceiver = null;
+        }
+
+        mServiceClass = null;
+        mAudioHelper = null;
+        mContext = null;
+        sInstance = null;
+    }
+
     public Core getCore() {
         return mCore;
     }
@@ -220,13 +245,7 @@ public class CoreManager {
     }
 
     public void onLinphoneCoreStop() {
-        Log.i("[Core Manager] Destroying");
-
-        if (mShutdownReceiver != null) {
-            Log.i("[Core Manager] Unregistering shutdown receiver");
-            mContext.unregisterReceiver(mShutdownReceiver);
-            mShutdownReceiver = null;
-        }
+        Log.i("[Core Manager] Core stopped");
 
         if (isServiceRunning()) {
             Log.i("[Core Manager] Stopping service ", mServiceClass.getName());
