@@ -193,6 +193,10 @@ LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const Linphone
   return Factory::toCpp(factory)->createChatMessageCbs();
 }
 
+LinphoneMagicSearchCbs * linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory){
+     return Factory::toCpp(factory)->createMagicSearchCbs();
+}
+
 LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {
   return Factory::toCpp(factory)->createVcard();
 }
