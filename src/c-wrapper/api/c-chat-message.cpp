@@ -250,6 +250,33 @@ const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *m
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo());
 }
 
+bool_t linphone_chat_message_is_reply (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isReply();
+}
+
+const char *linphone_chat_message_get_reply_message_id(LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToMessageId());
+}
+
+LinphoneAddress *linphone_chat_message_get_reply_message_sender_address(LinphoneChatMessage *msg) {
+	if (L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isReply()) {
+		const LinphonePrivate::IdentityAddress &address = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToSenderAddress();
+		if (address.isValid()) {
+			return L_GET_C_BACK_PTR(&(address.asAddress()));
+		}
+	}
+	return NULL;
+}
+
+LinphoneChatMessage* linphone_chat_message_get_reply_message(LinphoneChatMessage *message) {
+	if (linphone_chat_message_is_reply(message)) {
+		shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getReplyToMessage();
+		if (!cppPtr) return NULL;
+		return linphone_chat_message_ref(L_GET_C_BACK_PTR(cppPtr));
+	}
+	return NULL;
+}
+
 bool_t linphone_chat_message_is_ephemeral (const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isEphemeral();
 }
