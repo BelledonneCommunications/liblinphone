@@ -57,4 +57,15 @@ public class BluetoothHelper {
         
         Log.i("[Bluetooth] Bluetooth helper created");
     }
+
+    public void destroy(Context context) {
+        if (mBluetoothReceiver != null) {
+            context.unregisterReceiver(mBluetoothReceiver);
+            mBluetoothReceiver = null;
+        }
+
+        mBluetoothAdapter = null;
+        mAudioManager = null;
+        Log.i("[Bluetooth] Bluetooth helper destroyed");
+    }
 }
