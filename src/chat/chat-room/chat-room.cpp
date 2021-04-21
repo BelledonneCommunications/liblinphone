@@ -29,6 +29,7 @@
 #include "chat/chat-message/is-composing-message.h"
 #include "chat/chat-message/notification-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "content/content-manager.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
 
@@ -639,6 +640,13 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMes
 
 	return chatMessage;
 }
+
+shared_ptr<ChatMessage> ChatRoom::createReplyMessage (const shared_ptr<ChatMessage> &msg) {
+	shared_ptr<ChatMessage> chatMessage = createChatMessage();
+	chatMessage->getPrivate()->setReplyToMessageIdAndSenderAddress(msg->getImdnMessageId(), msg->getFromAddress().getAddressWithoutGruu());
+	return chatMessage;
+}
+
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId) const {
