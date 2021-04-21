@@ -1180,7 +1180,33 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
-	const SalStreamDescription &oldAudioStream = oldMd ? oldMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	LinphoneConference * localConference = NULL;
+	if (isInLocalConference) {
+		localConference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+
+	if (localIsOfferer && oldMd) {
+		md->streams = oldMd->streams;
+	} else if (!localIsOfferer && op->getRemoteMediaDescription()) {
+		md->streams = op->getRemoteMediaDescription()->streams;
+	}
+
+	for (auto & s : md->streams) {
+		if (!s.isMain()) {
+			if (localConference) {
+
+			} else {
+				// If it is not in local conference, then disable non main streams
+				s.disable();
+				s.dir = SalStreamInactive;
+			}
+		}
+	}
+
+	const SalStreamDescription &oldAudioStream = md->findMainStreamOfType(SalAudio);
+
 	if (getParams()->audioEnabled() || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription audioStream;
 		audioStream.main = true;
@@ -1210,7 +1236,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 		} else {
 			lInfo() << "Don't put audio stream on local offer for CallSession [" << q << "]";
-			audioStream.disable();
 			audioStream.dir = SalStreamInactive;
 			PayloadTypeHandler::clearPayloadList(l);
 		}
@@ -1218,9 +1243,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (customSdpAttributes) {
 			audioStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 		}
-		md->streams.push_back(audioStream);
+
+		const auto audioStreamIdx = md->findIdxMainStreamOfType(SalAudio);
+		if (audioStreamIdx == -1) {
+			md->streams.push_back(audioStream);
+		} else {
+			md->streams[audioStreamIdx] = audioStream;
+		}
 	}
-	const SalStreamDescription &oldVideoStream = oldMd ? oldMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+
+	const SalStreamDescription &oldVideoStream = md->findMainStreamOfType(SalVideo);
 	if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription videoStream;
 		videoStream.main = true;
@@ -1244,7 +1276,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			videoStream.bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
-			videoStream.disable();
 			videoStream.dir = SalStreamInactive;
 			PayloadTypeHandler::clearPayloadList(l);
 		}
@@ -1252,10 +1283,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (customSdpAttributes) {
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 		}
-		md->streams.push_back(videoStream);
+
+		const auto videoStreamIdx = md->findIdxMainStreamOfType(SalVideo);
+		if (videoStreamIdx == -1) {
+			md->streams.push_back(videoStream);
+		} else {
+			md->streams[videoStreamIdx] = videoStream;
+		}
 	}
 
-	const SalStreamDescription &oldTextStream = oldMd ? oldMd->findMainStreamOfType(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	const SalStreamDescription &oldTextStream = md->findMainStreamOfType(SalText);
 	if (getParams()->realtimeTextEnabled() || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription textStream;
 		textStream.proto = getParams()->getMediaProto();
@@ -1273,7 +1310,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, textStream, "ts");
 		} else {
 			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
-			textStream.disable();
 			textStream.dir = SalStreamInactive;
 			PayloadTypeHandler::clearPayloadList(l);
 		}
@@ -1281,7 +1317,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (customSdpAttributes) {
 			textStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 		}
-		md->streams.push_back(textStream);
+
+		const auto textStreamIdx = md->findIdxMainStreamOfType(SalText);
+		if (textStreamIdx == -1) {
+			md->streams.push_back(textStream);
+		} else {
+			md->streams[textStreamIdx] = textStream;
+		}
 	}
 
 	setupEncryptionKeys(md);
@@ -1310,7 +1352,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
-		transferAlreadyAssignedPayloadTypes(oldMd, md);
+//		transferAlreadyAssignedPayloadTypes(oldMd, md);
 		localDescChanged = md->equal(*oldMd);
 		if (getParams()->getPrivate()->getInternalCallUpdate()) {
 			/*
