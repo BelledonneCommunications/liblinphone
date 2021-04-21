@@ -323,9 +323,7 @@ static void call_refreshed(SalOp *op) {
 		return;
 	}
 	auto sessionRef = session->getSharedFromThis();
-
-	L_GET_PRIVATE(sessionRef)->setState(CallSession::State::UpdatedByRemote, "Session refresh");
-	L_GET_PRIVATE(sessionRef)->setState(CallSession::State::StreamsRunning, "Session refresh");
+	L_GET_PRIVATE(sessionRef)->refreshed();
 }
 
 /* Used to set the CallSession state to Updating */
