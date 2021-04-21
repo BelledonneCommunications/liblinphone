@@ -83,7 +83,6 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasSrtp() const;
 		bool hasDtls() const;
 		bool hasZrtp() const;
-		bool hasLimeIk() const;
 		const std::string & getRtcpAddress() const;
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
@@ -132,7 +131,6 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 		bool rtcp_mux = false;
 		uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
-		uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
 		uint8_t zrtphash[128];
 		std::string dtls_fingerprint;
 		SalDtlsRole dtls_role = SalDtlsRoleInvalid;

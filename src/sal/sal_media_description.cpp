@@ -27,8 +27,6 @@
 LINPHONE_BEGIN_NAMESPACE
 
 SalMediaDescription::SalMediaDescription(){
-	pad = false;
-
 	streams.clear();
 	bundles.clear();
 	custom_sdp_attributes = nullptr;
@@ -62,9 +60,9 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	accept_bundles = other.accept_bundles;
 	bundles = other.bundles;
 
-	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
 
+	haveLimeIk = other.haveLimeIk;
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription() {
@@ -133,6 +131,14 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	/* Get session RTCP-XR attributes if any */
 	sdp_parse_session_rtcp_xr_parameters(sdp, &rtcp_xr);
+
+	/* Do we have Lime Ik attribute */
+	value=belle_sdp_session_description_get_attribute_value(sdp,"Ik");
+	if (value) haveLimeIk = true;
+
+	/* get ready to parse also lime-Ik */
+	value=belle_sdp_session_description_get_attribute_value(sdp,"lime-Ik");
+	if (value) haveLimeIk = true;
 
 	/* Get the custom attributes, parse some of them that are relevant */
 	for (custom_attribute_it = belle_sdp_session_description_get_attributes(sdp); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
@@ -341,6 +347,10 @@ bool SalMediaDescription::hasZrtp() const {
 		if (stream.hasZrtp() != true) return false;
 	}
 	return true;
+}
+
+bool SalMediaDescription::hasLimeIk() const {
+	return haveLimeIk;
 }
 
 bool SalMediaDescription::hasIpv6() const {
