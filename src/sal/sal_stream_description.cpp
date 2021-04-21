@@ -91,7 +91,6 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
 	haveZrtpHash = other.haveZrtpHash;
-	haveLimeIk = other.haveLimeIk;
 	memcpy(zrtphash, other.zrtphash, sizeof(zrtphash));
 	dtls_fingerprint = other.dtls_fingerprint;
 	dtls_role = other.dtls_role;
@@ -236,19 +235,6 @@ SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaD
 		}
 	}
 
-	/* Do we have Lime Ik attribute */
-	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"Ik"))!=NULL) {
-		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
-			haveLimeIk = 1;
-		}
-	}
-	/* get ready to parse also lime-Ik */
-	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"lime-Ik"))!=NULL) {
-		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
-			haveLimeIk = 1;
-		}
-	}
-
 	/* Get ICE candidate attributes if any */
 	sdpParseMediaIceParameters(media_desc);
 
@@ -331,7 +317,6 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
 	haveZrtpHash = other.haveZrtpHash;
-	haveLimeIk = other.haveLimeIk;
 	memcpy(zrtphash, other.zrtphash, sizeof(zrtphash));
 	dtls_fingerprint = other.dtls_fingerprint;
 	dtls_role = other.dtls_role;
@@ -508,11 +493,6 @@ bool SalStreamDescription::hasDtls() const {
 
 bool SalStreamDescription::hasZrtp() const {
 	if (haveZrtpHash==1) return true;
-	return false;
-}
-
-bool SalStreamDescription::hasLimeIk() const {
-	if (haveLimeIk==1) return true;
 	return false;
 }
 

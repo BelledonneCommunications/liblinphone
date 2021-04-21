@@ -417,7 +417,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().haveZrtpHash == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
 			// until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik in it) before starting its ZRTP engine
-			if (!params.localIsOfferer && params.getRemoteStreamDescription().hasLimeIk()) {
+			if (!params.localIsOfferer && params.remoteMediaDescription->hasLimeIk()) {
 				mStartZrtpLater = true;
 			} else {
 				startZrtpPrimaryChannel(params);

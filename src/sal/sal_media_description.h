@@ -69,6 +69,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasSrtp() const;
 		bool hasDtls() const;
 		bool hasZrtp() const;
+		bool hasLimeIk() const;
 		bool hasIpv6() const;
 
 		bool operator==(const SalMediaDescription & other) const;
@@ -98,7 +99,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool ice_lite = false;
 		bool set_nortpproxy = false;
 		bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-		bool pad;
+		bool haveLimeIk = false; /**< flag for lime Ik presence */
 
 	private:
 		/*check for the presence of at least one stream with requested direction */
