@@ -1,0 +1,43 @@
+[account_creator]
+backend=flexiapi
+url=http://subscribe.example.org/flexiapi/api/
+
+[sip]
+default_proxy=0
+
+[assistant]
+domain=sip.accounttest.org
+password_max_length=12
+password_min_length=3
+username_max_length=22
+username_min_length=3
+username_regex=^[A-Za-z0-9_.\-\ ]*$
+xmlrpc_url=https://sip2.linphone.org:446/wizard.php
+
+[proxy_0]
+realm=sip.example.org
+reg_proxy=<sip:sip.example.org;transport=tls>
+reg_route=<sip:sip.example.org;transport=tls>
+reg_identity=sip:pauline@sip.example.org
+reg_expires=3600
+reg_sendregister=1
+publish=0
+dial_escape_plus=0
+
+[auth_info_0]
+username=pauline
+userid=pauline
+passwd=secret
+realm=sip.example.org
+
+[proxy_default_values]
+reg_proxy=<sip:sip2.linphone.org:5072>
+realm=sip.accounttest.org
+reg_identity=sip:user@sip.accounttest.org
+
+#set random port in order to avoid port conflicts with other tests running in parallel
+#and receive unsollicited SIP messages.
+[sip]
+sip_port=-1
+sip_tcp_port=-1
+sip_tls_port=-1
