@@ -83,6 +83,12 @@ SalOp::~SalOp () {
 		sal_custom_header_free(mRecvCustomHeaders);
 	if (mSentCustomHeaders)
 		sal_custom_header_free(mSentCustomHeaders);
+
+	if (&mErrorInfo)
+		sal_error_info_reset(&mErrorInfo);
+
+	if (&mReasonErrorInfo)
+		sal_error_info_reset(&mReasonErrorInfo);
 }
 
 SalOp *SalOp::ref () {
