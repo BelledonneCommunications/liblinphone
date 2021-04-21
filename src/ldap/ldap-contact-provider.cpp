@@ -49,7 +49,7 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, cons
 	mServerUri = NULL;
 
 	// register our hook into iterate so that LDAP can do its magic asynchronously.
-	linphone_core_add_iterate_hook(core->getCCore(), iterate, this);
+	mIteration = mCore->createTimer(std::bind(&LdapContactProvider::iterate, this), 50, "LdapContactProvider");
 	if( !LdapConfigKeys::validConfig(config) ) {
 		ms_error( "[LDAP] Invalid configuration for LDAP, aborting creation");
 		mCurrentAction = ACTION_ERROR;
@@ -60,7 +60,10 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, cons
 }
 
 LdapContactProvider::~LdapContactProvider(){
-	linphone_core_remove_iterate_hook(mCore->getCCore(), iterate, this);
+	if(mIteration){
+		mCore->destroyTimer(mIteration);
+		mIteration = nullptr;
+	}
 // Wait for bind thread to end
 	mLock.lock();
 	if(mConnected==1)// We have been bind. Clean the exit
@@ -286,7 +289,7 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 
 //*******************************************	ASYNC PROCESSING
 // ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST
-bool_t LdapContactProvider::iterate(void *data) {
+bool LdapContactProvider::iterate(void *data) {
 	struct timeval pollTimeout = {0,0};
 	LDAPMessage* results = NULL;
 	LdapContactProvider* provider = (LdapContactProvider*)data;
@@ -327,7 +330,7 @@ bool_t LdapContactProvider::iterate(void *data) {
 							port = 636;
 						belle_generic_uri_set_port(provider->mServerUri, port);
 					}
-					provider->mSalContext = provider->mCore->getCCore()->sal->resolveA(domain.c_str(), port, AF_INET, stun_server_resolved, provider);
+					provider->mSalContext = provider->mCore->getCCore()->sal->resolveA(domain.c_str(), port, AF_INET, ldapServerResolved, provider);
 					if (provider->mSalContext){
 						belle_sip_object_ref(provider->mSalContext);
 						provider->mCurrentAction = ACTION_WAIT_DNS;
@@ -462,11 +465,11 @@ bool_t LdapContactProvider::iterate(void *data) {
 			}
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 
-void LdapContactProvider::stun_server_resolved(void *data, belle_sip_resolver_results_t *results) {
+void LdapContactProvider::ldapServerResolved(void *data, belle_sip_resolver_results_t *results) {
 	LdapContactProvider * provider = (LdapContactProvider*)(data);
 	const struct addrinfo * addr = belle_sip_resolver_results_get_addrinfos(results);
 	if (addr) {
