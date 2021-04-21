@@ -1251,7 +1251,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (audioStreamIdx == -1) {
 			md->streams.push_back(audioStream);
 		} else {
-			md->streams[audioStreamIdx] = audioStream;
+			md->streams[static_cast<decltype(md->streams)::size_type>(audioStreamIdx)] = audioStream;
 		}
 	}
 
@@ -1291,7 +1291,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (videoStreamIdx == -1) {
 			md->streams.push_back(videoStream);
 		} else {
-			md->streams[videoStreamIdx] = videoStream;
+			md->streams[static_cast<decltype(md->streams)::size_type>(videoStreamIdx)] = videoStream;
 		}
 	}
 
@@ -1325,7 +1325,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (textStreamIdx == -1) {
 			md->streams.push_back(textStream);
 		} else {
-			md->streams[textStreamIdx] = textStream;
+			md->streams[static_cast<decltype(md->streams)::size_type>(textStreamIdx)] = textStream;
 		}
 	}
 
