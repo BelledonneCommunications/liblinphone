@@ -1472,7 +1472,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		if (audioStreamIdx == -1) {
 			md->streams.push_back(audioStream);
 		} else {
-			md->streams[audioStreamIdx] = audioStream;
+			md->streams[static_cast<decltype(md->streams)::size_type>(audioStreamIdx)] = audioStream;
 		}
 		PayloadTypeHandler::clearPayloadList(audioCodecs);
 	}
@@ -1493,7 +1493,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		if (videoStreamIdx == -1) {
 			md->streams.push_back(videoStream);
 		} else {
-			md->streams[videoStreamIdx] = videoStream;
+			md->streams[static_cast<decltype(md->streams)::size_type>(videoStreamIdx)] = videoStream;
 		}
 		PayloadTypeHandler::clearPayloadList(videoCodecs);
 	}
@@ -1513,7 +1513,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		if (textStreamIdx == -1) {
 			md->streams.push_back(textStream);
 		} else {
-			md->streams[textStreamIdx] = textStream;
+			md->streams[static_cast<decltype(md->streams)::size_type>(textStreamIdx)] = textStream;
 		}
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
