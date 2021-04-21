@@ -450,7 +450,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexi
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->setTest(TRUE)
-		->adminAccountCreate(creator->username, creator->password, "MD5", creator->domain, true)
+		->adminAccountCreate(creator->username, creator->password, "MD5", creator->domain, true, creator->email)
 		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
 											response.body.c_str());
