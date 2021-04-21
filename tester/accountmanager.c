@@ -262,9 +262,13 @@ void account_create_in_server_db(Account *account, LinphoneProxyConfig *cfg){
 
 	AccountCreatorState state = {0};
 
+// This ifdef is only to prevent errors in compilation when FlexiAPI is disabled
+// FlexiAPI is mandatory in the AccountManager
+#ifdef HAVE_FLEXIAPI
 	// Attache the event to FlexiAPI and add the callbacks
 	linphone_account_creator_service_set_create_account_cb(linphone_account_creator_get_service(creator), linphone_account_creator_admin_create_account_flexiapi);
 	linphone_account_creator_add_callbacks(creator, creator_cbs);
+#endif
 
 	// Create account
 	linphone_account_creator_cbs_set_create_account(creator_cbs, account_created_in_db_cb);
