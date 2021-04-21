@@ -60,6 +60,10 @@ void CallSessionPrivate::notifyReferState () {
 		refererOp->notifyReferState(op);
 }
 
+void CallSessionPrivate::restorePreviousState(){
+	setState(prevState, prevMessageState);
+}
+
 void CallSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
 
@@ -67,6 +71,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 	shared_ptr<CallSession> ref = q->getSharedFromThis();
 	if (state != newState){
 		prevState = state;
+		prevMessageState = messageState;
 
 		// Make sanity checks with call state changes. Any bad transition can result in unpredictable results
 		// or irrecoverable errors in the application.
@@ -86,6 +91,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 			// CallSession::State::Referred is rather an event, not a state.
 			// Indeed it does not change the state of the call (still paused or running).
 			state = newState;
+			messageState = message;
 		}
 
 		switch (newState) {
@@ -498,6 +504,13 @@ void CallSessionPrivate::updated (bool isUpdate) {
 			lWarning() << "Receiving reINVITE or UPDATE while in state [" << Utils::toString(state) << "], should not happen";
 		break;
 	}
+}
+
+void CallSessionPrivate::refreshed() {
+	/* Briefly notifies the application that we received an UPDATE thanks to UpdatedByRemote state .*/
+	setState(CallSession::State::UpdatedByRemote, "Session refresh");
+	/* And immediately get back to previous state, since the actual call state doesn't change.*/
+	restorePreviousState();
 }
 
 void CallSessionPrivate::updatedByRemote () {
