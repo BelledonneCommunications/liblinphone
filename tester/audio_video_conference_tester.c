@@ -988,7 +988,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 		counter++;
 	}
 
-	const char * original_subject = "SEGABRT (signal 6)";
+	const char * original_subject = "SIGABRT (signal 6)";
 	linphone_conference_set_subject(marie_conference, original_subject);
 	// Participants should have received the subject change notification
 	int idx = 0;
@@ -1238,7 +1238,7 @@ static void simple_conference_with_subject_change_from_admin(void) {
 	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);
 
-	const char * original_subject = "SEGABRT (signal 6)";
+	const char * original_subject = "SIGABRT (signal 6)";
 	linphone_conference_set_subject(conf, original_subject);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
@@ -5734,6 +5734,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		LinphoneCore * c = m->lc;
+printf("%s - call between core conf %s particioant %s (el %p)\n", __func__, linphone_core_get_identity(local_conf->lc), linphone_core_get_identity(m->lc), it);
 		if (!BC_ASSERT_TRUE(call(local_conf,m)))
 			return;
 		lcs=bctbx_list_append(lcs,c);
@@ -5820,6 +5821,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(local_conf->lc));
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(local_conf->lc)), 0, unsigned int, "%u");
+	bctbx_list_free(lcs);
 }
 
 static void simple_4_participants_conference_ended_by_terminating_conference(void) {
