@@ -76,7 +76,6 @@
 #include "vcard_private.h"
 #include "carddav.h"
 #include "linphone/player.h"
-#include "account_creator_private.h"
 #include "tester_utils.h"
 
 #include "bctoolbox/port.h"

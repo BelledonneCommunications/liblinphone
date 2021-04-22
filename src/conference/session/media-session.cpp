@@ -665,7 +665,7 @@ void MediaSessionPrivate::assignStreamsIndexes(bool localIsOfferer){
 	/*Initialize stream indexes from potential incoming offer.*/
 	std::shared_ptr<SalMediaDescription> rmd = op ? op->getRemoteMediaDescription() : nullptr;
 	if (rmd) assignStreamsIndexesIncoming(rmd);
-	
+
 	if (!localIsOfferer) return;
 
 	/*Assign indexes for our streams, if no incoming offer was received, or if new streams are requested.*/
@@ -792,8 +792,8 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
 	/* Handle AVPF, SRTP and DTLS */
-	
-	
+
+
 	getParams()->enableAvpf(hasAvpf(md));
 	if (destProxy)
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
@@ -1040,7 +1040,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		SalStreamDescription &sd = md->streams[i];
 		CallSession::State stateToConsider = state;
-		
+
 		switch (stateToConsider){
 			case CallSession::State::UpdatedByRemote:
 				stateToConsider = prevState;
@@ -1048,7 +1048,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 			default:
 			break;
 		}
-		
+
 		switch (stateToConsider) {
 			case CallSession::State::Pausing:
 			case CallSession::State::Paused:
@@ -1143,7 +1143,7 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 	L_Q();
 	/*This property is mainly used for testing hybrid case where the SDP offer is made with AVPF only for video stream.*/
 	SalMediaProto ret = getParams()->getMediaProto();
-	
+
 	if (linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "no_avpf_for_audio", false)){
 		lInfo() << "Removing AVPF for audio mline.";
 		switch (ret){
@@ -1959,7 +1959,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			break;
 	}
 	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
-	
+
 	if (md) {
 		getCurrentParams()->enableAvpf(hasAvpf(md));
 		if (getCurrentParams()->avpfEnabled())
@@ -2128,7 +2128,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
 		startAcceptUpdate(nextState, stateInfo);
 	};
-	
+
 	if (getStreamsGroup().prepare()){
 		lInfo() << "Acceptance of incoming reINVITE is deferred to ICE gathering completion.";
 		queueIceCompletionTask(acceptCompletionTask);
@@ -2235,7 +2235,7 @@ void MediaSessionPrivate::stunAuthRequestedCb (const char *realm, const char *no
 	if (hash)
 			*ha1 = hash;
 	else
-		*password = linphone_auth_info_get_passwd(authInfo);
+		*password = linphone_auth_info_get_password(authInfo);
 	*username = user;
 }
 
@@ -2721,7 +2721,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			}
 			return res;
 		};
-		
+
 		if (d->getStreamsGroup().prepare()) {
 			lInfo() << "Defer CallSession update to gather ICE candidates";
 			d->queueIceCompletionTask(updateCompletionTask);
