@@ -28,6 +28,14 @@ set(LINK_LIBS
 	ortp
 )
 
+if (ENABLE_FLEXIAPI)
+	if (XCODE)
+		list(APPEND LINK_LIBS jsoncpp_static)
+	else()
+		list(APPEND LINK_LIBS jsoncpp_object)
+	endif()
+endif()
+
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
 	list(APPEND APPLE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
@@ -330,6 +338,12 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
+
+	account_creator/utils.cpp
+	account_creator/service.cpp
+	account_creator/main.cpp
+	account_creator/connector_xmlrpc.cpp
+
 	call/call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
@@ -443,6 +457,13 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	variant/variant.cpp
 )
 
+if (ENABLE_FLEXIAPI)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		account_creator/connector_flexiapi.cpp
+		FlexiAPIClient.cc
+	)
+endif()
+
 if(ENABLE_VIDEO)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
 		conference/session/video-mixer.cpp
@@ -535,6 +556,15 @@ if(ENABLE_STATIC)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
+
+	if (ENABLE_FLEXIAPI)
+		if (XCODE)
+			target_link_libraries(linphone PRIVATE jsoncpp_static)
+		else()
+			target_link_libraries(linphone PRIVATE jsoncpp_object)
+		endif()
+	endif()
+
 	if (APPLE)
 		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
 	else()
@@ -577,6 +607,15 @@ if(ENABLE_SHARED)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
+
+	if (ENABLE_FLEXIAPI)
+		if (XCODE)
+			target_link_libraries(linphone PRIVATE jsoncpp_static)
+		else()
+			target_link_libraries(linphone PRIVATE jsoncpp_object)
+		endif()
+	endif()
+
 	if(APPLE)
 		set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
 	else()
