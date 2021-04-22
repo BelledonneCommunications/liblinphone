@@ -56,10 +56,12 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription & getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
 		const SalStreamDescription findSecureStreamOfType(SalStreamType type) const;
 		const SalStreamDescription findBestStream(SalStreamType type) const;
-		const SalStreamDescription findMainStreamOfType(SalStreamType type) const;
+		const SalStreamDescription & findMainStreamOfType(SalStreamType type) const;
+		const SalStreamDescription & findStreamWithSdpAttribute(const std::string name, const std::string value) const;
 		const SalStreamDescription findFirstStreamOfType(SalStreamType type) const;
 		const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
 		int findIdxMainStreamOfType(SalStreamType type) const;
+		int findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const;
 
 		bool isEmpty() const;
 
@@ -108,6 +110,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 	private:
 		std::vector<SalStreamDescription>::const_iterator findMainStreamItOfType(SalStreamType type) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const std::string name, const std::string value) const;
 
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
