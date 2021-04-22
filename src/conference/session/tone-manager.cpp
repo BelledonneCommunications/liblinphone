@@ -531,7 +531,9 @@ void ToneManager::doStopTone() {
 	}
 
 	if (isThereACall()) {
-		MSFilter *f = getAudioResource(ToneGenerator, NULL, FALSE);
+		MSFilter *f = getAudioResource(LocalPlayer, lc->sound_conf.play_sndcard, false);
+		if(f != NULL) ms_filter_call_method_noarg(f, MS_PLAYER_CLOSE);// MS_PLAYER is used while being in call
+		f = getAudioResource(ToneGenerator, NULL, FALSE);
 		if (f != NULL) ms_filter_call_method_noarg(f, MS_DTMF_GEN_STOP);
 		if (audioDevice) {
 			getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
