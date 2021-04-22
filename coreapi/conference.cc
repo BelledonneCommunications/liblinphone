@@ -738,7 +738,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
-				call->setConference(toC());
+				Conference::addParticipant(call);
 			break;
 			case LinphoneCallPaused:
 			{
@@ -753,7 +753,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				const_cast<LinphonePrivate::MediaSessionParams *>(
 					call->getParams())->enableVideo(getCurrentParams().videoEnabled());
 				// Conference resumes call that previously paused in order to add the participant
-				call->setConference(toC());
+				Conference::addParticipant(call);
+
 				call->resume();
 			}
 			break;
@@ -765,7 +766,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_params_enable_video(params, getCurrentParams().videoEnabled());
 				linphone_call_params_set_conference_id(params, confId.c_str());
 
-				call->setConference(toC());
+				Conference::addParticipant(call);
 
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -779,10 +780,27 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			break;
 		}
 
+		const auto & newParticipantSession = static_pointer_cast<MediaSession>(call->getActiveSession());
+		const Address * newParticipantAddress = newParticipantSession->getRemoteContactAddress();
+		for (const auto & p : participants) {
+			for (const auto & dev : p->getDevices()) {
+				const auto & devSession = static_pointer_cast<MediaSession>(dev->getSession());
+				if ((devSession != newParticipantSession) && getCurrentParams().videoEnabled()) {
+					const MediaSessionParams * params = devSession->getMediaParams();
+
+					MediaSessionParams *currentParams = params->clone();
+					lInfo() << "Re-INVITing participant " << p->getAddress().asString() << " because participant device " << newParticipantAddress->asString() << " has joined conference " << getConferenceAddress();
+					lInfo() << "DEBUG sesson is in state " << devSession->getState();
+					std::string subject("Participant " + newParticipantAddress->asString() + " joined");
+					devSession->update(currentParams, subject);
+					delete currentParams;
+				}
+			}
+		}
+
 		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
-		Conference::addParticipant(call);
 		if (localEndpointCanBeAdded){
 			/*
 			 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
@@ -805,7 +823,10 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		return true;
 	}
 
-	lError() << "Unable to add participant to conference " << getConferenceAddress() << " because it is in state " << linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(getState()));
+	char * confState = linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(getState()));
+	lError() << "Unable to add participant to conference " << getConferenceAddress() << " because it is in state " << confState;
+	ms_free(confState);
+
 	return false;
 }
 
@@ -861,6 +882,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				if (contactAddress.hasUriParam("conf-id")) {
 					err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->updateFromConference(currentParams);
 				}
+				delete currentParams;
 			} else {
 				/* Kick the session out of the conference by moving to the Paused state. */
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
@@ -1085,12 +1107,13 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 			if (session){
 
 				const MediaSessionParams * params = session->getMediaParams();
-				MediaSessionParams *currentParams = params->clone();
 
-				if ((!!currentParams->videoEnabled()) != newConfParams.videoEnabled()){
+				if ((!!params->videoEnabled()) != newConfParams.videoEnabled()){
+					MediaSessionParams *currentParams = params->clone();
 					lInfo() << "Re-INVITing participant " << participant->getAddress().asString() << " to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
 					currentParams->enableVideo(newConfParams.videoEnabled());
 					session->update(currentParams);
+					delete currentParams;
 				}
 			}
 		}
