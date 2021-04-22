@@ -72,7 +72,7 @@ void linphone_conference_set_user_data (LinphoneConference *conference, void *ud
 	MediaConference::Conference::toCpp(conference)->setUserData(ud);
 }
 
-const char *linphone_conference_state_to_string (LinphoneConferenceState state) {
+char *linphone_conference_state_to_string (LinphoneConferenceState state) {
 	return ms_strdup(Utils::toString((LinphonePrivate::ConferenceInterface::State)state).c_str());
 }
 
