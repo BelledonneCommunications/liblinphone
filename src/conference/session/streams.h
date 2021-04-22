@@ -388,6 +388,9 @@ public:
 	MediaSession &getMediaSession()const{
 		return mMediaSession;
 	}
+	MixerSession *getMixerSession()const{
+		return mMixerSession;
+	}
 	bool isPortUsed(int port)const;
 	IceService &getIceService()const;
 	bool allStreamsEncrypted () const;

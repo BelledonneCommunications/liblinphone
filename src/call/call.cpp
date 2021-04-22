@@ -339,7 +339,9 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 		if (conference->getState() == ConferenceInterface::State::Created) {
 			conference->enter();
 		} else {
-			lInfo() << "Unable to add participant because conference is in state " << linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+			char * conf_state = linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+			lInfo() << "Unable to add participant because conference is in state " << conf_state;
+			ms_free(conf_state);
 		}
 	} else {
 		lInfo() << "Unable to add participant because call is not attached to conference";
@@ -413,7 +415,10 @@ bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session
 		const auto conference = MediaConference::Conference::toCpp(cConference);
 		const ConferenceId localConferenceId = ConferenceId(session->getLocalAddress(), session->getLocalAddress());
 		const auto & participant = conference->findParticipant(session);
-		return (participant && (localConferenceId == conference->getConferenceId()));
+		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
+		StreamsGroup & sg = ms->getStreamsGroup();
+		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
+		return (participant && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
 
 	return false;
