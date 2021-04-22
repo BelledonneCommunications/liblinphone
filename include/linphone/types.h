@@ -35,24 +35,24 @@
 
 /**
  * @brief Represents an account configuration to be used by #LinphoneCore.
- * 
- * In addition to the #LinphoneAuthInfo that stores the credentials, 
+ *
+ * In addition to the #LinphoneAuthInfo that stores the credentials,
  * you need to configure a #LinphoneProxyConfig as well to be able to connect to a proxy server.
- * 
- * A minimal proxy config consists of an identity address (sip:username@domain.tld) 
+ *
+ * A minimal proxy config consists of an identity address (sip:username@domain.tld)
  * and the proxy server address, @see linphone_proxy_config_set_server_addr().
- * 
+ *
  * If any, it will be stored inside the default configuration file, so it will survive the destruction
  * of the #LinphoneCore and be available at the next start.
  *
- * The account set with linphone_core_set_default_proxy_config() will be used as default 
+ * The account set with linphone_core_set_default_proxy_config() will be used as default
  * for outgoing calls & chat messages unless specified otherwise.
  * @ingroup proxies
 **/
 typedef struct _LinphoneProxyConfig LinphoneProxyConfig;
 
 /**
- * @brief The object used to configure an account on a server via XML-RPC, 
+ * @brief The object used to configure an account on a server via XML-RPC,
  * see @link https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Override%20account%20creator%20request/
  * @ingroup account_creator
 **/
@@ -88,6 +88,15 @@ typedef enum _LinphoneAccountCreatorPhoneNumberStatus {
  * @ingroup account_creator
  */
 typedef unsigned int LinphoneAccountCreatorPhoneNumberStatusMask;
+
+/**
+ * @brief Enum describing backend used in the #LinphoneAccountCreator.
+ * @ingroup account_creator
+**/
+typedef enum _LinphoneAccountCreatorBackend {
+	LinphoneAccountCreatorBackendXMLRPC, /**< XMLRPC Backend */
+	LinphoneAccountCreatorBackendFlexiAPI, /**< FlexiAPI Backend */
+} LinphoneAccountCreatorBackend;
 
 /**
  * @brief Enum describing username checking, used by the #LinphoneAccountCreator.
@@ -225,7 +234,7 @@ typedef enum _LinphoneCallDir {
 /**
  * @brief This object carry various statistic informations regarding the quality of an audio or video stream for a given #LinphoneCall.
  *
- * To receive these informations periodically and as soon as they are computed, 
+ * To receive these informations periodically and as soon as they are computed,
  * implement the call_stats_updated() callback inside a #LinphoneCoreCbs.
  *
  * At any time, the application can access latest computed statistics using linphone_call_get_audio_stats() and linphone_call_get_video_stats().
@@ -253,13 +262,13 @@ typedef enum _LinphoneCallStatus {
 
 /**
  * @brief This object is used to store a SIP address.
- * 
+ *
  * #LinphoneFriend is mainly used to implement an adressbook feature, and are used as data for the #LinphoneMagicSearch object.
  * If your proxy supports it, you can also use it to subscribe to presence information.
- * 
+ *
  * The objects are stored in a #LinphoneFriendList which are in turn stored inside the #LinphoneCore.
  * They can be stored inside a database if the path to it is configured, otherwise they will be lost after the #LinphoneCore is destroyed.
- * 
+ *
  * Thanks to the vCard plugin, you can also store more information like phone numbers, organization, etc...
  * @ingroup buddy_list
  */
@@ -278,7 +287,7 @@ typedef enum _LinphoneFriendCapability {
 
 /**
  * @brief This object representing a list of #LinphoneFriend.
- * 
+ *
  * You can use it to store contacts locally or synchronize them through CardDAV protocol.
  * @ingroup buddy_list
 **/
@@ -321,12 +330,12 @@ typedef enum _LinphoneFriendListSyncStatus {
  * - sections are defined in []
  * - each section contains a sequence of key=value pairs
  * - each line starting by a # is a comment
- * 
+ *
  * Various types can be used: strings and lists of strings, integers, floats, booleans (written as 0 or 1) and range of integers.
- * 
+ *
  * Usually a #LinphoneCore is initialized using two #LinphoneConfig, one default (where configuration changes through API calls will be saved)
  * and one named 'factory' which is read-only and overwrites any setting that may exists in the default one.
- * 
+ *
  * It is also possible to use only one (either default or factory) or even none.
  * @ingroup initializing
 **/
@@ -339,7 +348,7 @@ typedef struct _LpConfig LinphoneConfig;
 
 /**
  * @brief Describes the state of the remote configuring process of the #LinphoneCore object, 'Skipped' when the feature is disabled.
- * 
+ *
  * It is notified via the configuring_status() callback in #LinphoneCoreCbs.
  * @ingroup initializing
 **/
@@ -351,7 +360,7 @@ typedef enum _LinphoneConfiguringState {
 
 /**
  * @brief Describes the global state of the #LinphoneCore object.
- * 
+ *
  * It is notified via the global_state_changed() callback in #LinphoneCoreCbs.
  * @ingroup initializing
 **/
@@ -372,7 +381,7 @@ typedef enum _LinphoneGlobalState {
 
 /**
  * @brief Describes proxy registration states.
- * 
+ *
  * It is notified via the registration_state_changed() callback in #LinphoneCoreCbs.
  * @ingroup proxies
 **/
@@ -386,21 +395,21 @@ typedef enum _LinphoneRegistrationState {
 
 /**
  * @brief Main object to instanciate and on which to keep a reference.
- * 
+ *
  * This object is the first object to instanciante, and will allow you to perform all kind of tasks.
  * To create it, use either linphone_factory_create_core_3() or linphone_factory_create_core_with_config_3(),
  * see #LinphoneConfig for more information about factory and default config.
  * On some platforms like Android or iOS you will need to give it the Context of your application.
- * 
- * Once the #LinphoneCore is in state #LinphoneGlobalReady, use linphone_core_start(). 
+ *
+ * Once the #LinphoneCore is in state #LinphoneGlobalReady, use linphone_core_start().
  * It will then go to state #LinphoneGlobalOn and from that you can start using it for calls and chat messages.
  * It is recommended to add a #LinphoneCoreCbs listener using linphone_core_add_listener() to it to monitor different events.
- * 
+ *
  * To be able to receive events from the network, you must schedule a call linphone_core_iterate() often, like every 20ms.
  * On Android & iOS linphone_core_is_auto_iterate_enabled() is enabled by default so you don't have to worry about that unless you disable it
  * using linphone_core_set_auto_iterate_enabled() or by setting in the [misc] section of your configuration auto_iterate=0.
  * @warning Our API isn't thread-safe but also isn't blocking, so it is strongly recommend to always call our methods from the main thread.
- * 
+ *
  * Once you don't need it anymore, call linphone_core_stop() and release the reference on it so it can gracefully shutdown.
  * @ingroup initializing
  */
@@ -409,7 +418,7 @@ typedef struct _LinphoneCore LinphoneCore;
 /**
  * @brief The factory is a singleton object devoted to the creation of all the objects
  * of Liblinphone that cannot be created by #LinphoneCore itself.
- * 
+ *
  * It is also used to configure a few behaviors before creating the #LinphoneCore, like the logs verbosity or collection.
  * @ingroup initializing
  */
@@ -419,9 +428,9 @@ typedef struct _LinphoneFactory LinphoneFactory;
  * @brief That class holds all the callbacks which are called by #LinphoneCore.
  *
  * Once created, add your #LinphoneCoreCbs using linphone_core_add_listener().
- * Keep a reference on it as long as you need it. 
+ * Keep a reference on it as long as you need it.
  * You can use linphone_core_remove_listener() to remove it but that isn't mandatory.
- * 
+ *
  * The same applies to all listeners in our API.
  * @ingroup initializing
  */
@@ -433,10 +442,10 @@ typedef struct _LinphoneCoreCbs LinphoneCoreCbs;
 
 /**
  * @brief SIP transports & ports configuration object.
- * 
+ *
  * Indicates which transport among UDP, TCP, TLS and DTLS should be enabled and if so on which port to listen.
  * You can use special values like #LC_SIP_TRANSPORT_DISABLED (0), #LC_SIP_TRANSPORT_RANDOM (-1) and #LC_SIP_TRANSPORT_DONTBIND (-2).
- * 
+ *
  * Once configuration is complete, use linphone_core_set_transports() to apply it.
  * This will be saved in configuration file so you don't have to do it each time the #LinphoneCore starts.
  * @ingroup initializing
@@ -445,10 +454,10 @@ typedef struct _LinphoneTransports LinphoneTransports;
 
 /**
  * @brief Object describing policy regarding video streams establishments.
- * 
+ *
  * Use linphone_video_activation_policy_set_automatically_accept() and linphone_video_activation_policy_set_automatically_initiate()
  * to tell the Core to automatically accept or initiate video during calls.
- * 
+ *
  * Even if disabled, you'll still be able to add it later while the call is running.
  * @ingroup media_parameters
 **/
@@ -456,7 +465,7 @@ typedef struct _LinphoneVideoActivationPolicy LinphoneVideoActivationPolicy;
 
 /**
  * @brief This object represents a video definition, eg. it's width, it's height and possibly it's name.
- * 
+ *
  * It is mostly used to configure the default video size sent by your camera during a video call with
  * linphone_core_set_preferred_video_definition() method.
  * @ingroup media_parameters
@@ -544,7 +553,7 @@ typedef enum _LinphoneEcCalibratorStatus {
 
 /**
  * @brief Object representing full details about a signaling error or status.
- * 
+ *
  * All #LinphoneErrorInfo object returned by the liblinphone API are readonly and transcients. For safety they must be used immediately
  * after obtaining them. Any other function call to the liblinphone may change their content or invalidate the pointer.
  * @ingroup misc
@@ -553,7 +562,7 @@ typedef struct _LinphoneErrorInfo LinphoneErrorInfo;
 
 /**
  * @brief Object representing an event state, which is subcribed or published.
- * 
+ *
  * @see linphone_core_publish()
  * @see linphone_core_subscribe()
  * @ingroup event_api
@@ -595,7 +604,7 @@ typedef enum _LinphoneIceState {
 
 /**
  * @brief IM encryption engine.
- * 
+ *
  * @see https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Instant%20Messaging%20Encryption%20Engine/
  * @ingroup misc
  * @donotwrap
@@ -611,7 +620,7 @@ typedef struct _LinphoneImEncryptionEngineCbs LinphoneImEncryptionEngineCbs;
 
 /**
  * @brief Policy to use to send/receive instant messaging composing/delivery/display notifications.
- * 
+ *
  * The sending of this information is done as in the RFCs 3994 (is_composing) and 5438 (imdn delivered/displayed).
  * @ingroup chatroom
  */
