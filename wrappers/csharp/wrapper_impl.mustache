@@ -75,14 +75,14 @@ namespace Linphone
 	/// All methods that returns a LinphoneStatus with a value != 0 as an error code in C are translated in C# by throwing a LinphoneException
 	/// </summary>
 #if WINDOWS_UWP
-    public class LinphoneException : System.Exception
-    {
-        public LinphoneException() : base() { }
-        public LinphoneException(string message) : base(message) { }
-        public LinphoneException(string message, System.Exception inner) : base(message, inner) { }
-    }
+	public class LinphoneException : System.Exception
+	{
+		public LinphoneException() : base() { }
+		public LinphoneException(string message) : base(message) { }
+		public LinphoneException(string message, System.Exception inner) : base(message, inner) { }
+	}
 #else
-    [Serializable()]
+	[Serializable()]
 	public class LinphoneException : System.Exception
 	{
 		public LinphoneException() : base() { }
@@ -101,6 +101,8 @@ namespace Linphone
 		internal IntPtr nativePtr;
 
 		internal GCHandle handle;
+
+		internal bool isListener;
 
 		internal List<IntPtr> string_ptr_list;
 
@@ -135,18 +137,28 @@ namespace Linphone
 		[DllImport(LinphoneWrapper.BCTOOLBOX_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr bctbx_list_append(IntPtr elem, IntPtr data);
 
+		internal OnLinphoneObjectDataDestroyed onLinphoneListenerObjectDestroyed;
+
+		internal void on_linphone_cbs_data_destroyed(IntPtr data) {
+			if (data != IntPtr.Zero)
+			{
+				GCHandle handle = GCHandle.FromIntPtr(data);
+				if (handle.IsAllocated) {
+					handle.Free();
+				}
+			}
+		}
+
 		~LinphoneObject()
 		{
-			//Console.WriteLine("Destroying " + this.ToString());
-			if (nativePtr != IntPtr.Zero) {
-				//Console.WriteLine("Unreffing " + this.ToString());
+			if (nativePtr != IntPtr.Zero && !isListener) {
 				belle_sip_object_data_remove(nativePtr, "cs_obj");
 				belle_sip_object_unref(nativePtr);
 				handle.Free();
 			}
 		}
 
-		internal static T fromNativePtr<T>(IntPtr ptr, bool takeRef=true) where T : LinphoneObject, new()
+		internal static T fromNativePtr<T>(IntPtr ptr, bool takeRef=true, bool isListener=false) where T : LinphoneObject, new()
 		{
 			if (ptr == IntPtr.Zero) return null;
 			IntPtr objPtr = belle_sip_object_data_get(ptr, "cs_obj");
@@ -160,33 +172,45 @@ namespace Linphone
 				}
 				if (obj == null)
 				{
-					//Console.WriteLine("Handle target is null " + handle.Target);
 					objPtr = IntPtr.Zero;
 				}
 				else
 				{
-					//Console.WriteLine("Using existing " + obj.ToString());
 					return obj;
 				}
 			}
 			if (objPtr == IntPtr.Zero)
 			{
 				T obj = new T();
-				//Console.WriteLine("Creating " + obj.ToString());
 				if (takeRef)
 				{
 					ptr = belle_sip_object_ref(ptr);
-					//Console.WriteLine("Reffing " + obj.ToString());
 				}
 				obj.nativePtr = ptr;
-				obj.handle = GCHandle.Alloc(obj, GCHandleType.WeakTrackResurrection);
-				objPtr = GCHandle.ToIntPtr(obj.handle);
-#if WINDOWS_UWP
-				belle_sip_object_data_set(ptr, "cs_obj", objPtr, IntPtr.Zero);
-#else
-				belle_sip_object_data_set(ptr, "cs_obj", objPtr, null);
-#endif
+				obj.isListener = isListener;
 
+				if (isListener) {
+					obj.handle = GCHandle.Alloc(obj, GCHandleType.Normal);
+				} else {
+					obj.handle = GCHandle.Alloc(obj, GCHandleType.WeakTrackResurrection);
+				}
+				objPtr = GCHandle.ToIntPtr(obj.handle);
+
+				if (isListener) {
+#if WINDOWS_UWP
+					obj.onLinphoneListenerObjectDestroyed = obj.on_linphone_cbs_data_destroyed;
+					IntPtr cb = Marshal.GetFunctionPointerForDelegate(obj.onLinphoneListenerObjectDestroyed);
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, cb);
+#else
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, on_linphone_cbs_data_destroyed);
+#endif
+				} else {
+#if WINDOWS_UWP
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, IntPtr.Zero);
+#else
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, null);
+#endif
+				}
 				return obj;
 			}
 			return null;
@@ -282,7 +306,7 @@ namespace Linphone
 
 		public void addDevicesInfo(string manufacturer, string model, string platform, uint flags, int delay, int recommended_rate)
 		{
-				ms_devices_info_add(ms_factory_get_devices_info(nativePtr), manufacturer, model, platform, flags, delay, recommended_rate);
+			ms_devices_info_add(ms_factory_get_devices_info(nativePtr), manufacturer, model, platform, flags, delay, recommended_rate);
 		}
 	}
 #endregion
@@ -345,12 +369,8 @@ namespace Linphone
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{interfaceName}} : LinphoneObject
 	{
-
-        [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-        static extern void {{set_user_data_name}}(IntPtr thiz, IntPtr listener);
-
-        [DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-        static extern IntPtr {{get_user_data_name}}(IntPtr thiz);
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_{{interfaceCName}}_get_current_callbacks(IntPtr thiz);
 
 		{{#methods}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -361,7 +381,7 @@ namespace Linphone
 		static extern void {{name}}(IntPtr thiz, {{name_private}} cb);
 #endif
 		{{/cb_setter}}
-
+		
 		{{#delegate}}
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void {{name_private}}({{params_private}});
@@ -379,7 +399,7 @@ namespace Linphone
 		{{/lines}}
 		{{/detailedDoc}}
 		{{#deprecated}}[Obsolete]
-    	{{/deprecated}}public delegate void {{name_public}}({{{params_public}}});
+		{{/deprecated}}public delegate void {{name_public}}({{{params_public}}});
 		private {{name_private}} {{var_private}};
 		private {{name_public}} {{var_public}};
 
@@ -389,7 +409,10 @@ namespace Linphone
 		private static void {{cb_name}}({{params_private}})
 		{
 			{{interfaceClassName}} thiz = fromNativePtr<{{interfaceClassName}}>({{first_param}});
-			{{interfaceName}} current_listener = thiz.CurrentCallbacks;
+
+			IntPtr ptr = linphone_{{interfaceCName}}_get_current_callbacks(thiz.nativePtr);
+			{{interfaceName}} current_listener = fromNativePtr<{{interfaceName}}>(ptr, false, true);
+
 			if (current_listener != null)
 			{
 				current_listener.{{var_public}}?.Invoke({{{params}}});
@@ -416,46 +439,6 @@ namespace Linphone
 		}
 		{{/delegate}}
 		{{/methods}}
-
-		internal OnLinphoneObjectDataDestroyed onLinphoneListenerObjectDestroyed;
-
-		internal void on_linphone_cbs_data_destroyed(IntPtr data) {
-			if (data != IntPtr.Zero)
-			{
-				GCHandle.FromIntPtr(data).Free();
-			}
-		}
-
-		internal void register() {
-			IntPtr listener = belle_sip_object_data_get(nativePtr, "cs_listener_obj");
-			if (listener == IntPtr.Zero)
-			{
-				GCHandle _handle = GCHandle.Alloc(this, GCHandleType.Normal);
-				listener = GCHandle.ToIntPtr(_handle);
-			} 
-			else
-			{
-				GCHandle _handle = GCHandle.FromIntPtr(listener);
-				if (_handle.Target == this)
-				{
-					return;
-				} 
-				else
-				{
-					_handle.Free();
-					_handle = GCHandle.Alloc(this, GCHandleType.Normal);
-					listener = GCHandle.ToIntPtr(_handle);
-				}
-			}
-
-#if WINDOWS_UWP
-		onLinphoneListenerObjectDestroyed = on_linphone_cbs_data_destroyed;
-		IntPtr cb = Marshal.GetFunctionPointerForDelegate(onLinphoneListenerObjectDestroyed);
-		belle_sip_object_data_set(nativePtr, "cs_listener_obj", listener, cb);
-#else
-		belle_sip_object_data_set(nativePtr, "cs_listener_obj", listener, on_linphone_cbs_data_destroyed);
-#endif
-		}
 	}
 
 	{{/interface}}
@@ -482,14 +465,14 @@ namespace Linphone
 	{
 		{{#isLinphoneFactory}}
 #if  __ANDROID__
-        static Factory()
-        {
-            Java.Lang.JavaSystem.LoadLibrary("c++_shared");
-            Java.Lang.JavaSystem.LoadLibrary("bctoolbox");
-            Java.Lang.JavaSystem.LoadLibrary("ortp");
-            Java.Lang.JavaSystem.LoadLibrary("mediastreamer");
-            Java.Lang.JavaSystem.LoadLibrary("linphone");
-        }
+		static Factory()
+		{
+			Java.Lang.JavaSystem.LoadLibrary("c++_shared");
+			Java.Lang.JavaSystem.LoadLibrary("bctoolbox");
+			Java.Lang.JavaSystem.LoadLibrary("ortp");
+			Java.Lang.JavaSystem.LoadLibrary("mediastreamer");
+			Java.Lang.JavaSystem.LoadLibrary("linphone");
+		}
 #endif
 		{{/isLinphoneFactory}}
 		{{#isLinphoneCall}}
@@ -684,14 +667,6 @@ namespace Linphone
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr linphone_{{listener_constructor}}_remove_callbacks(IntPtr thiz, IntPtr cbs);
 
-		~{{className}}() 
-		{
-			if (listener != null)
-			{
-				linphone_{{listener_constructor}}_remove_callbacks(nativePtr, listener.nativePtr);
-			}
-		}
-
 		private {{interfaceName}} listener;
 
 		public {{interfaceName}} Listener
@@ -700,9 +675,9 @@ namespace Linphone
 				if (listener == null)
 				{
 					IntPtr nativeListener = linphone_factory_create_{{listener_constructor}}_cbs(linphone_factory_get());
-					listener = fromNativePtr<{{interfaceName}}>(nativeListener, false);
+					listener = fromNativePtr<{{interfaceName}}>(nativeListener, false, true);
 					linphone_{{listener_constructor}}_add_callbacks(nativePtr, nativeListener);
-					listener.register();
+					belle_sip_object_unref(nativeListener);
 				}
 				return listener;
 			}
