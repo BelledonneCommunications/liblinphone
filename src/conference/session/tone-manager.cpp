@@ -475,13 +475,15 @@ void ToneManager::doStopRingbackTone() {
 void ToneManager::doStopTone() {
 	lInfo() << "[ToneManager] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
+	MSFilter *f = getAudioResource(LocalPlayer, lc->sound_conf.play_sndcard, false);
+	if(f != NULL) ms_filter_call_method_noarg(f, MS_PLAYER_CLOSE);
 	if (lc->ringstream) {
 		ring_stop(lc->ringstream);
 		lc->ringstream = NULL;
 	}
 
 	if (isThereACall()) {
-		MSFilter *f = getAudioResource(ToneGenerator, NULL, FALSE);
+		f = getAudioResource(ToneGenerator, NULL, FALSE);
 		if (f != NULL) ms_filter_call_method_noarg(f, MS_DTMF_GEN_STOP);
 	}
 }
