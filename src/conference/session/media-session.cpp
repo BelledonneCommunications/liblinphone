@@ -1441,20 +1441,60 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			newStream.proto = s.proto;
 			newStream.type = s.type;
 			if (!s.isMain()) {
-				if (conference) {
-					if (isInLocalConference) {
+				const char * attrName = "participant";
+				const char * attrValue =  sal_custom_sdp_attribute_find(s.custom_sdp_attributes, attrName);
+				if (attrValue) {
+					newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, attrName, attrValue);
+					if (conference) {
+						auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+						const auto participant = cppConference->findParticipant(IdentityAddress(attrValue));
+						if (participant) {
+							newStream.dir = s.dir;
+						} else {
+							// If it is not in local conference, then disable non main streams
+							newStream.dir = SalStreamInactive;
+							newStream.disable();
+						}
 					} else {
+						// If it is not in local conference, then disable non main streams
+						newStream.dir = SalStreamInactive;
+						newStream.disable();
 					}
 				} else {
-					// If it is not in local conference, then disable non main streams
-					newStream.dir = SalStreamInactive;
-					newStream.disable();
+					newStream.dir = s.dir;
 				}
 			}
 			md->streams.push_back(newStream);
 		}
 	}
 	encList.push_back(getParams()->getMediaEncryption());
+
+	if (conference && isInLocalConference) {
+		const char * attrName = "participant";
+		auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		const auto & currentConfParams = cppConference->getCurrentParams();
+		const auto confVideoCapabilities = currentConfParams.videoEnabled();
+		for (const auto & p : cppConference->getParticipants()) {
+			for (const auto & dev : p->getDevices()) {
+				const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(attrName, dev->getAddress().asString());
+				SalStreamDescription newStream;
+				if (foundStreamIdx == -1) {
+					if (dev->getVideoDirection() != LinphoneMediaDirectionInactive) {
+						newStream.main = false;
+						newStream.proto = getParams()->getMediaProto();
+						newStream.type = SalVideo;
+						newStream.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(confVideoCapabilities ? dev->getVideoDirection() : LinphoneMediaDirectionInactive);
+						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, attrName, dev->getAddress().asString().c_str());
+						md->streams.push_back(newStream);
+					}
+				} else {
+					newStream = md->streams[foundStreamIdx];
+					newStream.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(confVideoCapabilities ? dev->getVideoDirection() : LinphoneMediaDirectionInactive);
+					md->streams[foundStreamIdx] = newStream;
+				}
+			}
+		}
+	}
 
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
