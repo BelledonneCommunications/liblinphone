@@ -308,6 +308,33 @@ const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType typ
 	return desc;
 }
 
+int SalMediaDescription::findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const {
+	const auto & streamIt =  findStreamItWithSdpAttribute(name, value);
+	if (streamIt != streams.end()) {
+		return static_cast<int>(std::distance(streams.begin(), streamIt));
+	}
+	return -1;
+}
+
+const SalStreamDescription & SalMediaDescription::findStreamWithSdpAttribute(const std::string name, const std::string value) const {
+	const auto & streamIt =  findStreamItWithSdpAttribute(name, value);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(const std::string name, const std::string value) const {
+	return std::find_if(streams.cbegin(), streams.cend(), [&name, &value] (const auto & stream) {
+		const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
+		if (foundAttrVal) {
+			return (strcmp(foundAttrVal, value.c_str()) == 0);
+		} else {
+			return false;
+		}
+	});
+}
+
 int SalMediaDescription::findIdxMainStreamOfType(SalStreamType type) const {
 	const auto & streamIt =  findMainStreamItOfType(type);
 	if (streamIt != streams.end()) {
@@ -316,7 +343,7 @@ int SalMediaDescription::findIdxMainStreamOfType(SalStreamType type) const {
 	return -1;
 }
 
-const SalStreamDescription SalMediaDescription::findMainStreamOfType(SalStreamType type) const {
+const SalStreamDescription & SalMediaDescription::findMainStreamOfType(SalStreamType type) const {
 	const auto & streamIt =  findMainStreamItOfType(type);
 	if (streamIt != streams.end()) {
 		return *streamIt;

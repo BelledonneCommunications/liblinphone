@@ -172,11 +172,11 @@ bool ParticipantDevice::updateMedia() {
 		if (currentParams) {
 			const auto & audioEnabled = currentParams->audioEnabled();
 			const auto & audioDir = currentParams->getAudioDirection();
-			mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
+			mediaChanged |= setAudioDirection((!audioEnabled) ? LinphoneMediaDirectionInactive : audioDir);
 
 			const auto & videoEnabled = currentParams->videoEnabled();
 			const auto & videoDir = currentParams->getVideoDirection();
-			mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
+			mediaChanged |= setVideoDirection((!videoEnabled) ? LinphoneMediaDirectionInactive : videoDir);
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
