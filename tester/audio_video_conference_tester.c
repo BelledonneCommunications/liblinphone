@@ -1183,11 +1183,33 @@ static void simple_conference_with_one_participant(void) {
 	bctbx_list_free(all_manangers_in_conf);
 }
 
-static void simple_conference_with_subject_change_from_admin(void) {
+static void simple_conference_with_subject_change_from_admin_base(bool_t enable_video) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
+
+	LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_core_set_video_activation_policy(pauline->lc, pol);
+	linphone_core_set_video_activation_policy(marie->lc, pol);
+	linphone_core_set_video_activation_policy(laure->lc, pol);
+	linphone_core_set_video_activation_policy(michelle->lc, pol);
+	linphone_video_activation_policy_unref(pol);
+
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(laure->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(michelle->lc, liblinphone_tester_mire_id);
+
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(laure->lc, TRUE);
+	linphone_core_enable_video_display(laure->lc, TRUE);
+	linphone_core_enable_video_capture(michelle->lc, TRUE);
+	linphone_core_enable_video_display(michelle->lc, TRUE);
 
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	linphone_core_enable_conference_server(((LinphoneCoreManager*)focus)->lc,TRUE);
@@ -1237,6 +1259,7 @@ static void simple_conference_with_subject_change_from_admin(void) {
 
 	//marie creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_video_enabled(conf_params, enable_video);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);
@@ -1253,6 +1276,10 @@ static void simple_conference_with_subject_change_from_admin(void) {
 
 	// Subject should not have changed
 	BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conf)) == 0);
+
+	const LinphoneConferenceParams * current_conf_params = linphone_conference_get_current_params(conf);
+	BC_ASSERT_PTR_NOT_NULL(current_conf_params);
+	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(current_conf_params) == enable_video);
 
 	bctbx_list_t* all_manangers_in_conf=bctbx_list_copy(participants);
 	all_manangers_in_conf = bctbx_list_append(all_manangers_in_conf, marie);
@@ -1317,6 +1344,14 @@ static void simple_conference_with_subject_change_from_admin(void) {
 	linphone_conference_server_destroy(focus);
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
+}
+
+static void simple_conference_with_subject_change_from_admin(void) {
+	simple_conference_with_subject_change_from_admin_base(FALSE);
+}
+
+static void simple_video_conference_with_subject_change_from_admin(void) {
+	simple_conference_with_subject_change_from_admin_base(TRUE);
 }
 
 static void simple_conference(void) {
@@ -1568,6 +1603,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_set_video_enabled(conf_params, with_video);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	BC_ASSERT_PTR_NOT_NULL(conf);
 	linphone_conference_params_unref(conf_params);
 
 	if (with_video){
@@ -1595,6 +1631,10 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	participants = bctbx_list_append(participants, pauline);
 
 	add_participant_to_local_conference_through_invite(lcs, marie, participants, NULL);
+
+	const LinphoneConferenceParams * current_conf_params = linphone_conference_get_current_params(conf);
+	BC_ASSERT_PTR_NOT_NULL(current_conf_params);
+	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(current_conf_params) == with_video);
 
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	laure_call = linphone_core_get_current_call(laure->lc);
@@ -1697,7 +1737,6 @@ static void video_conference_by_merging_calls(void){
 		linphone_core_enable_video_capture(laure->lc, TRUE);
 		linphone_core_enable_video_display(laure->lc, TRUE);
 	}
-	
 
 	// Marie first estabishes a call with Pauline, with video.*/
 	params = linphone_core_create_call_params(marie->lc, NULL);
@@ -6950,6 +6989,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference with participant addition from not admin", simple_conference_with_participant_addition_from_not_admin),
 	TEST_NO_TAG("Simple conference with subject change from not admin", simple_conference_with_subject_change_from_not_admin),
 	TEST_NO_TAG("Simple conference with subject change from admin", simple_conference_with_subject_change_from_admin),
+	TEST_NO_TAG("Simple video conference with subject change from admin", simple_video_conference_with_subject_change_from_admin),
 	TEST_NO_TAG("Simple conference with one participant", simple_conference_with_one_participant),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
