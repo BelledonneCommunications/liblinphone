@@ -805,7 +805,9 @@ AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) cons
 
 const list<AudioDevice *> Core::getAudioDevices() const {
 	std::list<AudioDevice *> audioDevices;
-	bool micFound = false, speakerFound = false, earpieceFound = false, bluetoothMicFound = false, bluetoothSpeakerFound = false;
+	bool micFound = false, speakerFound = false, earpieceFound = false;
+	bool bluetoothMicFound = false, bluetoothSpeakerFound = false;
+	bool headsetMicFound = false, headsetSpeakerFound = false;
 
 	for (const auto &audioDevice : getExtendedAudioDevices()) {
 		switch (audioDevice->getType()) {
@@ -839,10 +841,22 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 				if (!bluetoothMicFound) bluetoothMicFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record));
 				if (!bluetoothSpeakerFound) bluetoothSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
 				break;
+			case AudioDevice::Type::Headphones:
+			case AudioDevice::Type::Headset:
+				if (!headsetMicFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record))) {
+					audioDevices.push_back(audioDevice);
+				} else if (!headsetSpeakerFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play))) {
+					audioDevices.push_back(audioDevice);
+				}
+
+				// Do not allow to be set to false
+				// Not setting flags inside if statement in order to handle the case of a headset/headphones device that can record and play sound
+				if (!headsetMicFound) headsetMicFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record));
+				if (!headsetSpeakerFound) headsetSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
 			default:
 				break;
 		}
-		if (micFound && speakerFound && earpieceFound && bluetoothMicFound && bluetoothSpeakerFound) break;
+		if (micFound && speakerFound && earpieceFound && bluetoothMicFound && bluetoothSpeakerFound && headsetMicFound && headsetSpeakerFound) break;
 	}
 	return audioDevices;
 }
