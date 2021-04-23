@@ -184,10 +184,13 @@ void CallSessionPrivate::setTransferState (CallSession::State newState) {
 
 void CallSessionPrivate::startIncomingNotification () {
 	L_Q();
+	bool_t tryStartRingtone = TRUE;// Try to start a tone if this notification is not a PushIncomingReceived and have listener
 	if (listener && state != CallSession::State::PushIncomingReceived)
-		listener->onIncomingCallSessionStarted(q->getSharedFromThis());
+		listener->onIncomingCallSessionStarted(q->getSharedFromThis());// Can set current call to this sessions
+	else
+		tryStartRingtone = FALSE;
 
-	setState(CallSession::State::IncomingReceived, "Incoming call received");
+	setState(CallSession::State::IncomingReceived, "Incoming call received"); // Change state and notify listeners
 
 	// From now on, the application is aware of the call and supposed to take background task or already submitted
 	// notification to the user. We can then drop our background task.
@@ -195,6 +198,8 @@ void CallSessionPrivate::startIncomingNotification () {
 		listener->onBackgroundTaskToBeStopped(q->getSharedFromThis());
 
 	if (state == CallSession::State::IncomingReceived) {
+		if(tryStartRingtone)// The state is still in IncomingReceived state. Start ringing if it was needed
+			listener->onStartRingtone(q->getSharedFromThis());
 		handleIncomingReceivedStateInIncomingNotification();
 	}
 
@@ -1271,8 +1276,10 @@ void CallSession::startBasicIncomingNotification (bool notifyRinging) {
 
 void CallSession::startPushIncomingNotification () {
 	L_D();
-	if (d->listener)
+	if (d->listener){
 		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
+		d->listener->onStartRingtone(getSharedFromThis());
+	}
 
 	d->setState(CallSession::State::PushIncomingReceived, "Push notification received");
 }
