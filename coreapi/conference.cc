@@ -648,9 +648,49 @@ int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<Linphon
 	if (device->updateMedia()) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
+		const auto & updatedParticipantSession = device->getSession();
+		lInfo() << "Re-INVITing participants because participant device " << device->getAddress().asString() << " changed media directions.";
+		updateAllParticipantSessionsExcept(updatedParticipantSession);
 		return 0;
 	}
 	return success;
+}
+
+int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) {
+	MS2AudioMixer * mixer = dynamic_cast<MS2AudioMixer*> (mMixerSession->getMixerByType(SalAudio));
+
+	if (mixer) {
+		MSAudioConference *conf = mixer->getAudioConference();
+		return ms_audio_conference_get_participant_volume(conf, device->getSsrc());
+	}
+
+	return AUDIOSTREAMVOLUMES_NOT_FOUND;
+}
+
+bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> & session) {
+	bool result = true;
+	const Address * participantAddress = session->getRemoteContactAddress();
+	for (const auto & p : participants) {
+		for (const auto & dev : p->getDevices()) {
+			const auto & devSession = static_pointer_cast<MediaSession>(dev->getSession());
+			if (devSession != session) {
+				const MediaSessionParams * params = devSession->getMediaParams();
+
+				MediaSessionParams *currentParams = params->clone();
+				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its session.";
+				std::string subject("Participant " + participantAddress->asString() + " updated session");
+				const auto updateResult = devSession->update(currentParams, subject);
+				result &= (updateResult == 0);
+				delete currentParams;
+			}
+		}
+	}
+
+	if (!result) {
+		lInfo() << "Update of participant session following changes in call session of device " << participantAddress->asString() << " failed";
+	}
+
+	return result;
 }
 
 bool LocalConference::addParticipants (const std::list<std::shared_ptr<Call>> &calls) {
@@ -676,17 +716,6 @@ bool LocalConference::addParticipants (const std::list<std::shared_ptr<Call>> &c
 
 bool LocalConference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return Conference::addParticipants(addresses);
-}
-
-int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) {
-	MS2AudioMixer * mixer = dynamic_cast<MS2AudioMixer*> (mMixerSession->getMixerByType(SalAudio));
-
-	if (mixer) {
-		MSAudioConference *conf = mixer->getAudioConference();
-		return ms_audio_conference_get_participant_volume(conf, device->getSsrc());
-	}
-
-	return AUDIOSTREAMVOLUMES_NOT_FOUND;
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -762,24 +791,11 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			break;
 		}
 
-		const auto & newParticipantSession = static_pointer_cast<MediaSession>(call->getActiveSession());
-		const Address * newParticipantAddress = newParticipantSession->getRemoteContactAddress();
-		for (const auto & p : participants) {
-			for (const auto & dev : p->getDevices()) {
-				const auto & devSession = static_pointer_cast<MediaSession>(dev->getSession());
-				if ((devSession != newParticipantSession) && getCurrentParams().videoEnabled()) {
-					const MediaSessionParams * params = devSession->getMediaParams();
-
-					MediaSessionParams *currentParams = params->clone();
-					lInfo() << "Re-INVITing participant " << p->getAddress().asString() << " because participant device " << newParticipantAddress->asString() << " has joined conference " << getConferenceAddress();
-					lInfo() << "DEBUG sesson is in state " << devSession->getState();
-					std::string subject("Participant " + newParticipantAddress->asString() + " joined");
-					devSession->update(currentParams, subject);
-					delete currentParams;
-				}
-			}
+		const auto & newParticipantSession = call->getActiveSession();
+		if (getCurrentParams().videoEnabled()) {
+			lInfo() << "Re-INVITing participants because participant device " << newParticipantSession->getRemoteContactAddress()->asString() << " joined conference " << getConferenceAddress();
+			updateAllParticipantSessionsExcept(newParticipantSession);
 		}
-
 		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
