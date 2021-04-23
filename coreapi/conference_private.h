@@ -239,6 +239,7 @@ public:
 
 private:
 
+	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> & session);
 	void chooseAnotherAdminIfNoneInConference();
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
