@@ -726,7 +726,7 @@ int MS2Stream::getIdealAudioBandwidth (const std::shared_ptr<SalMediaDescription
 	} else
 		uploadBandwidth = linphone_core_get_upload_bandwidth(getCCore());
 	uploadBandwidth = PayloadTypeHandler::getMinBandwidth(uploadBandwidth, remoteBandwidth);
-	if ((md->nbActiveStreamsOfType(SalVideo) != 0) || forced)
+	if ((md->nbActiveStreamsOfType(SalVideo) == 0) || forced)
 		return uploadBandwidth;
 	
 	/*
