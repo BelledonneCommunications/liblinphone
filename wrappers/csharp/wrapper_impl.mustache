@@ -685,7 +685,7 @@ namespace Linphone
 				if (listener != null && value == null) {
 					linphone_{{listener_constructor}}_remove_callbacks(nativePtr, listener.nativePtr);
 				}
-				listener = value
+				listener = value;
 			}
 		}
 		{{/listener}}
