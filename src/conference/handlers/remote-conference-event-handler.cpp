@@ -350,7 +350,7 @@ void RemoteConferenceEventHandler::subscribe () {
 	linphone_address_unref(peerAddr);
 	linphone_event_set_internal(lev, TRUE);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "event-handler-private", this, NULL);
-	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress << "with last notify: " << lastNotifyStr;
+	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress << " with last notify: " << lastNotifyStr;
 	linphone_event_send_subscribe(lev, nullptr);
 }
 

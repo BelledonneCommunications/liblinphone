@@ -27,6 +27,7 @@
 
 #include "address/address.h"
 
+#include "conference/conference-params.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "core/core-accessor.h"
@@ -51,69 +52,6 @@ class LocalConference;
 class RemoteConference;
 
 }
-
-class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public ConferenceParamsInterface {
-	friend class MediaConference::Conference;
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
-	public:
-		/**
-		 * Conference layout
-		 */
-		enum class Layout{
-			ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
-			Grid = LinphoneConferenceLayoutGrid, /**< Grid - each participant is given an equal sized image size */
-		};
-
-		ConferenceParams(const ConferenceParams& params) = default;
-		ConferenceParams(const LinphoneCore *core = NULL);
-
-		ConferenceParams *clone()const override{
-			return new ConferenceParams(*this);
-		}
-
-		virtual void setConferenceFactoryAddress (const Address &address) override { m_factoryAddress = address; };
-		const Address getFactoryAddress() const { return m_factoryAddress; };
-
-		virtual void enableVideo(bool enable) override {m_enableVideo = enable;}
-		bool videoEnabled() const {return m_enableVideo;}
-
-		virtual void  enableAudio(bool enable) override {m_enableAudio = enable;};
-		bool audioEnabled() const {return m_enableAudio;}
-
-		virtual void  enableChat(bool enable) override {m_enableChat = enable;};
-		bool chatEnabled() const {return m_enableChat;}
-
-		void enableLocalParticipant (bool enable) { m_localParticipantEnabled = enable; }
-		bool localParticipantEnabled() const { return m_localParticipantEnabled; }
-
-		void enableOneParticipantConference (bool enable) { m_allowOneParticipantConference = enable; }
-		bool oneParticipantConferenceEnabled() const { return m_allowOneParticipantConference; }
-
-		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		const ConferenceAddress & getConferenceAddress() const { return m_conferenceAddress; };
-
-		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
-		const std::string &getSubject() const { return m_subject; };
-
-		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
-		const IdentityAddress &getMe() const { return m_me; };
-
-		void setLayout(const Layout l) { m_layout = l; };
-		Layout getLayout() const { return m_layout; };
-
-	private:
-		bool m_enableVideo = false;
-		bool m_enableAudio = false;
-		bool m_enableChat = false;
-		bool m_localParticipantEnabled = true;
-		bool m_allowOneParticipantConference = false;
-		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		Layout m_layout = Layout::ActiveSpeaker;
-		Address m_factoryAddress = Address();
-		std::string m_subject = "";
-		IdentityAddress m_me = IdentityAddress();
-};
 
 class LINPHONE_PUBLIC Conference :
 	public ConferenceInterface,
