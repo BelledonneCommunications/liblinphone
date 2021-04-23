@@ -197,13 +197,23 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 
 FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
 												   bool activated, string email) {
+	return adminAccountCreate(username, password, algorithm, domain, activated, email, "");
+}
+
+FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
+												   bool activated, string email, string phone) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("password", password);
-	params.push("email", email);
 	params.push("algorithm", algorithm);
 	params.push("activated", to_string(activated));
 
+	if (!email.empty()) {
+		params.push("email", email);
+	}
+	if (!phone.empty()) {
+		params.push("phone", phone);
+	}
 	if (!domain.empty()) {
 		params.push("domain", domain);
 	}
