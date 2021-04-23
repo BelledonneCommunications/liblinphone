@@ -1240,9 +1240,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 						md->streams.push_back(newStream);
 					}
 				} else {
-					newStream = md->streams[foundStreamIdx];
+					newStream = md->streams[static_cast<decltype(md->streams)::size_type>(foundStreamIdx)];
 					newStream.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(confVideoCapabilities ? dev->getVideoDirection() : LinphoneMediaDirectionInactive);
-					md->streams[foundStreamIdx] = newStream;
+					md->streams[static_cast<decltype(md->streams)::size_type>(foundStreamIdx)] = newStream;
 				}
 			}
 		}
