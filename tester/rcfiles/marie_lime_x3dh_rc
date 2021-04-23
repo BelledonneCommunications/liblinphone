@@ -55,7 +55,6 @@ device=StaticImage: Static picture
 echocancellation=0 #to not overload cpu in case of VG
 
 [net]
-
 stun_server=stun.example.org
 
 #leave this section, which is used by "Codec setup" test of "Setup" suite.
@@ -66,3 +65,6 @@ enabled=1
 
 [tester]
 test_env=1
+
+[app]
+sender_name_hidden_in_forward_message=1
