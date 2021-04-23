@@ -157,6 +157,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/imdn.h
 	chat/notification/is-composing-listener.h
 	chat/notification/is-composing.h
+	conference/conference-params.h
 	conference/conference-enums.h
 	conference/conference-id.h
 	conference/conference-listener.h
@@ -365,6 +366,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/modifier/multipart-chat-message-modifier.cpp
 	chat/notification/imdn.cpp
 	chat/notification/is-composing.cpp
+	conference/conference-params.cpp
 	conference/conference-enums.cpp
 	conference/conference-id.cpp
 	conference/conference.cpp
