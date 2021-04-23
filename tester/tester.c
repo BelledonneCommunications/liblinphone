@@ -1027,7 +1027,6 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		new_participants_initial_stats[counter - 1] = m->stat;
 		// Increment counter
 		counter++;
-printf("%s - copying stats conf %s particioant %s (el %p)\n", __func__, linphone_core_get_identity(conf_mgr->lc), linphone_core_get_identity(m->lc), it);
 	}
 
 	bool_t * call_paused = NULL;
@@ -1055,10 +1054,8 @@ printf("%s - copying stats conf %s particioant %s (el %p)\n", __func__, linphone
 			}
 
 			if (is_call_paused) {
-printf("%s - call paused core conf %s particioant %s (el %p)\n", __func__, linphone_core_get_identity(conf_mgr->lc), linphone_core_get_identity(m->lc), it);
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
 			} else {
-printf("%s - call not paused core conf %s particioant %s (el %p)\n", __func__, linphone_core_get_identity(conf_mgr->lc), linphone_core_get_identity(m->lc), it);
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
 			}
