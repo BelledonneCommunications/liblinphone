@@ -196,7 +196,7 @@ void CallSessionPrivate::startIncomingNotification () {
 
 	if (state == CallSession::State::IncomingReceived) {
 		if(tryStartRingtone)// The state is still in IncomingReceived state. Start ringing if it was needed
-			q->getCore()->getPrivate()->getToneManager()->startRingtone(q->getSharedFromThis());
+			listener->onStartRingtone(q->getSharedFromThis());
 		handleIncomingReceivedStateInIncomingNotification();
 	}
 
@@ -1275,7 +1275,7 @@ void CallSession::startPushIncomingNotification () {
 	L_D();
 	if (d->listener){
 		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
-		getCore()->getPrivate()->getToneManager()->startRingtone(getSharedFromThis());
+		d->listener->onStartRingtone(getSharedFromThis());
 	}
 
 	d->setState(CallSession::State::PushIncomingReceived, "Push notification received");

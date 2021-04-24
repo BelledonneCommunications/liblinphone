@@ -660,6 +660,10 @@ void Call::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *f
 	linphone_call_notify_snapshot_taken(this->toC(), file_path);
 }
 
+void Call::onStartRingtone(const shared_ptr<CallSession> &session){
+	getCore()->getPrivate()->getToneManager()->startRingtone(session);
+}
+
 // =============================================================================
 
 Call::Call (
