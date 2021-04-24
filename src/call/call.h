@@ -260,7 +260,7 @@ public:
 	void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *character) override;
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
-
+	void onStartRingtone(const std::shared_ptr<CallSession> &session) override;
 
 	LinphoneConference *getConference () const;
 	void setConference (LinphoneConference *ref);
