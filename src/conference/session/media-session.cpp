@@ -1226,13 +1226,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 						const auto confVideoCapabilities = currentConfParams.videoEnabled();
 
 						const auto & dev = cppConference->findParticipantDevice(IdentityAddress(attrValue));
-						if (dev) {
+						const bool isMe = cppConference->isMe(IdentityAddress(attrValue));
+						if (dev || isMe) {
 							const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-							l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 							if (!l.empty()){
-								if (!confVideoCapabilities) {
+								newStream.payloads = l;
+
+								if (!confVideoCapabilities || (!getParams()->videoEnabled() && isMe)) {
 									newStream.dir = SalStreamInactive;
-								} else {
+								} else if (dev) {
 									switch (dev->getVideoDirection()) {
 										case LinphoneMediaDirectionSendOnly:
 										case LinphoneMediaDirectionRecvOnly:
@@ -1246,9 +1249,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 											newStream.dir = SalStreamInactive;
 											break;
 									}
+								} else if (isMe) {
+									newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
 								}
 
-								newStream.payloads = l;
 								if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + attrValue);
 							} else {
 								lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
@@ -1261,7 +1265,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 							newStream.dir = SalStreamInactive;
 							newStream.disable();
 						}
-lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " copying stream for device " << attrValue << " (ptr " << dev << ") stream direction " << sal_stream_dir_to_string(newStream.dir);
+lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " copying stream for device " << attrValue << " (ptr " << dev << " me " << cppConference->getMe() << ") stream direction " << sal_stream_dir_to_string(newStream.dir);
 					} else {
 						// If it is not in local conference, then disable non main streams
 						newStream.dir = SalStreamInactive;
@@ -1294,6 +1298,9 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 					if (!l.empty()){
+
+						newStream.payloads = l;
+						newStream.name = "Video " + dev->getAddress().asString();
 						if (!confVideoCapabilities) {
 							newStream.dir = SalStreamInactive;
 						} else {
@@ -1311,9 +1318,9 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 									break;
 							}
 						}
-						newStream.payloads = l;
-						newStream.name = "Video " + dev->getAddress().asString();
+
 						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getAddress().asString());
+
 					} else {
 						lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
 						newStream.dir = SalStreamInactive;
