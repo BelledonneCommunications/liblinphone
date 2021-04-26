@@ -45,10 +45,10 @@
 #cmakedefine HAVE_CU_GET_SUITE 1
 #cmakedefine HAVE_CU_CURSES 1
 #cmakedefine HAVE_LIBUDEV_H 0
+#cmakedefine HAVE_FLEXIAPI
 #cmakedefine HAVE_LIME
 #cmakedefine HAVE_LIME_X3DH
 #cmakedefine HAVE_ADVANCED_IM
 #cmakedefine HAVE_DB_STORAGE
 #cmakedefine ENABLE_UPDATE_CHECK 1
 #cmakedefine HAVE_GETIFADDRS
-
