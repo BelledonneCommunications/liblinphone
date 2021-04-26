@@ -237,7 +237,7 @@ private:
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
 
-	void fillVideoRptParameters(SalStreamDescription & newStream) const;
+	void fillRtpParameters(SalStreamDescription & stream) const;
 
 private:
 	static const std::string ecStateStore;
