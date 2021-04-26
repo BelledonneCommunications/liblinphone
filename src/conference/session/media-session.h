@@ -127,6 +127,8 @@ public:
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);
+
+	int getRandomRtpPort (const SalStreamDescription & stream) const;
 };
 
 LINPHONE_END_NAMESPACE
