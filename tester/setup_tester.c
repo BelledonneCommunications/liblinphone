@@ -107,9 +107,75 @@ static void core_init_test_2(void) {
 	linphone_core_verify_server_certificates(lc,FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+
+		LinphoneConfig *config = linphone_core_get_config(lc);
+
+		linphone_config_set_string(config, "test", "test", "test");
+		linphone_config_sync(config);
+
+		const char * filename = linphone_config_get_filename(config);
+		const char * factory = linphone_config_get_factory_filename(config);
+		const char * tmp = linphone_config_get_temporary_filename(config);
+		BC_ASSERT_PTR_NULL(filename);
+		BC_ASSERT_STRING_EQUAL(factory, rc_path);
+		BC_ASSERT_PTR_NULL(tmp);
+
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_proxy_config(lc));
 		linphone_core_unref(lc);
 	}
+	
+	ms_free(rc_path);
+}
+
+static void core_init_test_3(void) {
+	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), NULL,NULL, system_context);
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalReady, int, "%i");
+		linphone_core_start(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+
+		LinphoneConfig *config = linphone_core_get_config(lc);
+
+		linphone_config_set_string(config, "test", "test", "test");
+		linphone_config_sync(config);
+
+		const char * filename = linphone_config_get_filename(config);
+		const char * factory = linphone_config_get_factory_filename(config);
+		const char * tmp = linphone_config_get_temporary_filename(config);
+		BC_ASSERT_PTR_NULL(filename);
+		BC_ASSERT_PTR_NULL(factory);
+		BC_ASSERT_PTR_NULL(tmp);
+
+		linphone_core_unref(lc);
+	}
+}
+
+static void core_init_test_4(void) {
+	char* rc_path = bc_tester_res("rcfiles/chloe_rc");
+	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), rc_path, NULL, system_context);
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalReady, int, "%i");
+		linphone_core_start(lc);
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+
+		LinphoneConfig *config = linphone_core_get_config(lc);
+
+		const char * filename = linphone_config_get_filename(config);
+		const char * factory = linphone_config_get_factory_filename(config);
+		const char * tmp = linphone_config_get_temporary_filename(config);
+		BC_ASSERT_PTR_NOT_NULL(filename);
+		BC_ASSERT_PTR_NULL(factory);
+
+		BC_ASSERT_PTR_NOT_NULL(tmp);
+		char test_tmp_name[1024]={0};
+		snprintf(test_tmp_name, sizeof(test_tmp_name), "%s.tmp", filename);
+		BC_ASSERT_STRING_EQUAL(tmp, test_tmp_name);
+
+		linphone_core_unref(lc);
+	}
+
 	ms_free(rc_path);
 }
 
@@ -2155,7 +2221,9 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone proxy config address equal (internal api)", linphone_proxy_config_address_equal_test),
 	TEST_NO_TAG("Linphone proxy config server address change (internal api)", linphone_proxy_config_is_server_config_changed_test),
 	TEST_NO_TAG("Linphone core init/uninit", core_init_test),
-	TEST_NO_TAG("Linphone core init/uninit from existing rc", core_init_test_2),
+	TEST_NO_TAG("Linphone core init/uninit from existing factory rc", core_init_test_2),
+	TEST_NO_TAG("Linphone core init/uninit withtout any rc", core_init_test_3),
+	TEST_NO_TAG("Linphone core init/uninit from existing default rc", core_init_test_4),
 	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
 	TEST_NO_TAG("Linphone core init/unref", core_init_unref_test),
 	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
