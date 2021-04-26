@@ -423,6 +423,7 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 				LinphoneCall *call = linphone_core_get_current_call(marie->lc);
 				VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
 				MSVideoConfiguration vconf;
+				LinphoneCallStats *stats;
 
 				wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 50000);
 
@@ -431,7 +432,9 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 				while (wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000)) {
 					marie->stat.last_tmmbr_value_received = 0;
 				}
-
+				stats = linphone_call_get_video_stats(call);
+				BC_ASSERT_GREATER((int)linphone_call_stats_get_upload_bandwidth(stats), 250, int, "%i");
+				linphone_call_stats_unref(stats);
 				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
 
 				BC_ASSERT_EQUAL(vconf.vsize.width*vconf.vsize.height, width*height, int, "%d");
