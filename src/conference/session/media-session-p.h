@@ -253,6 +253,7 @@ private:
 	void runIceCompletionTasks();
 
 	bool tryEnterConference();
+	void fillVideoRptParameters(SalStreamDescription & newStream) const;
 
 private:
 	static const std::string ecStateStore;
