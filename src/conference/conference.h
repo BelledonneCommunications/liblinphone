@@ -73,6 +73,7 @@ public:
 
 	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<ParticipantDevice> findParticipantDevice (const IdentityAddress &addr) const;
 
 	// TODO: Start Delete
 	virtual void join () override;
