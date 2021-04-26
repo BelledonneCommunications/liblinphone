@@ -33,6 +33,8 @@
 
 #include <functional>
 #include <json/json.h>
+#include <algorithm>
+#include <string>
 
 using namespace LinphonePrivate;
 using namespace std;
@@ -209,7 +211,7 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 	params.push("activated", to_string(activated));
 
 	if (!email.empty()) {
-		params.push("email", email);
+		params.push("email", replaceSpaces(email));
 	}
 	if (!phone.empty()) {
 		params.push("phone", phone);
@@ -366,6 +368,11 @@ void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *eve
 	} catch (const std::exception &e) {
 		lError() << e.what();
 	}
+}
+
+string FlexiAPIClient::replaceSpaces(string value) {
+	std::replace(value.begin(), value.end(), ' ', '_');
+	return value;
 }
 
 string FlexiAPIClient::urlEncode(const string &value) {

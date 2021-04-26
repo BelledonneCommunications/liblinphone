@@ -137,4 +137,5 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
 	static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
 	string urlEncode(const string &value);
+	string replaceSpaces(string value);
 };
