@@ -254,6 +254,7 @@ private:
 	void runIceCompletionTasks();
 
 	bool tryEnterConference();
+	void fillRtpParameters(SalStreamDescription & stream) const;
 	void fillVideoRptParameters(SalStreamDescription & newStream) const;
 
 private:
