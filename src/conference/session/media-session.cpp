@@ -1212,16 +1212,38 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	const char * conferenceDeviceAttrName = "conference-device";
 
 	if (refMd) {
+		decltype(refMd->streams)::size_type streamIdx = 0;
 		for (const auto & s : refMd->streams) {
 			SalStreamDescription newStream;
 			newStream.main = s.main;
 			newStream.proto = s.proto;
 			newStream.type = s.type;
 			newStream.name = s.name;
+			newStream.dir = SalStreamInactive;
+			newStream.disable();
 			if (!s.isMain()) {
 				const std::string attrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, conferenceDeviceAttrName));
 				if (!attrValue.empty()) {
+					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, attrValue.c_str());
+					if (getParams()->rtpBundleEnabled()) {
+						std::string name;
+						switch (s.type) {
+							case SalAudio:
+								name = "as";
+								break;
+							case SalVideo:
+								name = "vs";
+								break;
+							case SalText:
+								name = "ts";
+								break;
+							case SalOther:
+								name = "os";
+								break;
+						}
+						addStreamToBundle(md, newStream, name + " " + attrValue);
+					}
 					if (conference) {
 						const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 						const auto & currentConfParams = cppConference->getCurrentParams();
@@ -1230,7 +1252,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 						const auto & dev = cppConference->findParticipantDevice(IdentityAddress(attrValue));
 						const bool isMe = cppConference->isMe(IdentityAddress(attrValue));
 						if (dev || isMe) {
-							const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+
 							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 							if (!l.empty()){
 								newStream.payloads = l;
@@ -1255,13 +1277,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 									newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
 								}
 
-								if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + attrValue);
 							} else {
 								lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
 								newStream.dir = SalStreamInactive;
 								PayloadTypeHandler::clearPayloadList(l);
 							}
-							fillRtpParameters(newStream);
 						} else {
 							// If it is not in local conference, then disable non main streams
 							newStream.dir = SalStreamInactive;
@@ -1269,15 +1289,72 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 						}
 lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " copying stream for device " << attrValue << " (ptr " << dev << " me " << cppConference->getMe() << ") stream direction " << sal_stream_dir_to_string(newStream.dir);
 					} else {
-						// If it is not in local conference, then disable non main streams
+						l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+						if (!l.empty()){
+							newStream.payloads = l;
+							switch (s.dir) {
+								case SalStreamSendOnly:
+									newStream.dir = SalStreamRecvOnly;
+									break;
+								case SalStreamRecvOnly:
+									newStream.dir = SalStreamSendOnly;
+									break;
+								case SalStreamSendRecv:
+									newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+									break;
+								case SalStreamInactive:
+									newStream.dir = SalStreamInactive;
+									break;
+							}
+						} else {
+							lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
+							newStream.dir = SalStreamInactive;
+							newStream.disable();
+							PayloadTypeHandler::clearPayloadList(l);
+						}
+					}
+
+					fillRtpParameters(newStream);
+
+					if (newStream.dir == SalStreamInactive) {
+						newStream.disable();
+						newStream.rtp_port = 0;
+						newStream.rtcp_port = 0;
+					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (newStream.rtp_port != 0)) {
+						newStream.rtp_port = previousParticipantStream.rtp_port;
+						newStream.rtcp_port = previousParticipantStream.rtcp_port;
+					} else {
+						const auto rtp_port = q->getRandomRtpPort(newStream);
+						newStream.rtp_port = rtp_port;
+						newStream.rtcp_port = newStream.rtp_port + 1;
+					}
+
+				} else {
+					if (streamIdx < oldMd->streams.size()) {
+						newStream = oldMd->streams[streamIdx];
+						switch (oldMd->streams[streamIdx].dir) {
+							case SalStreamSendOnly:
+								newStream.dir = SalStreamRecvOnly;
+								break;
+							case SalStreamRecvOnly:
+								newStream.dir = SalStreamSendOnly;
+								break;
+							case SalStreamSendRecv:
+							case SalStreamInactive:
+								newStream.dir = oldMd->streams[streamIdx].dir;
+								break;
+						}
+
+						fillRtpParameters(newStream);
+					} else {
 						newStream.dir = SalStreamInactive;
 						newStream.disable();
 					}
-				} else {
-					newStream.dir = s.dir;
 				}
 			}
+
 			md->streams.push_back(newStream);
+			streamIdx++;
 		}
 	}
 
@@ -1331,6 +1408,10 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 
 	lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " adding stream for device in conference with address " << dev->getAddress().asString() << " stream direction " << sal_stream_dir_to_string(newStream.dir);
 					fillRtpParameters(newStream);
+					const auto rtp_port = q->getRandomRtpPort(newStream);
+					newStream.rtp_port = rtp_port;
+					newStream.rtcp_port = newStream.rtp_port + 1;
+
 					md->streams.push_back(newStream);
 				}
 			}
@@ -2743,6 +2824,25 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 	CallSession::startIncomingNotification(notifyRinging);
 }
 
+int MediaSession::getRandomRtpPort (const SalStreamDescription & stream) const {
+	pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), stream.type);
+	if (portRange.first <= 0) {
+		portRange.first = 1024;
+		lInfo() << "Setting minimum value of port range to " << portRange.first;
+	}
+	if (portRange.second <= 0) {
+		// 2^16 - 1
+		portRange.second = 65535;
+		lInfo() << "Setting maximum value of port range to " << portRange.second;
+	}
+	if (portRange.second < portRange.first) {
+		lError() << "Invalid port range provided for stream type " << Utils::toString(stream.type) << ": min=" << portRange.first << " max=" << portRange.second;
+		return 0;
+	}
+	const int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
+	return rtp_port;
+}
+
 int MediaSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
@@ -2751,21 +2851,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		for (auto & stream : d->localDesc->streams) {
 			// In case of multicasting, choose a random port to send with the invite
 			if (ms_is_multicast(L_STRING_TO_C(stream.rtp_addr))){
-				pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), stream.type);
-				if (portRange.first <= 0) {
-					portRange.first = 1024;
-					lInfo() << "Setting minimum value of port range to " << portRange.first;
-				}
-				if (portRange.second <= 0) {
-					// 2^16 - 1
-					portRange.second = 65535;
-					lInfo() << "Setting maximum value of port range to " << portRange.second;
-				}
-				if (portRange.second < portRange.first) {
-					lError() << "Invalid port range provided for stream type " << Utils::toString(stream.type) << ": min=" << portRange.first << " max=" << portRange.second;
-					continue;
-				}
-				int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
+				const auto rtp_port = getRandomRtpPort(stream);
 				stream.rtp_port = rtp_port;
 				stream.rtcp_port = stream.rtp_port + 1;
 			}
