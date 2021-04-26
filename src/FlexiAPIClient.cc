@@ -33,6 +33,8 @@
 
 #include <functional>
 #include <json/json.h>
+#include <algorithm>
+#include <string>
 
 using namespace LinphonePrivate;
 using namespace std;
