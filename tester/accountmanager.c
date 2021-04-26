@@ -256,7 +256,7 @@ void account_create_in_server_db(Account *account, LinphoneProxyConfig *cfg){
 	const char *password = account->password;
 	const char *domain = linphone_proxy_config_get_domain(cfg);
 
-	char *email = bctbx_strdup_printf("%s@%s", username, domain);
+	char *email = bctbx_replace(bctbx_strdup_printf("%s@%s", username, domain), ' ', '_');
 
 	const char *algorithm = linphone_config_get_string(linphone_core_get_config(linphone_proxy_config_get_core(cfg)), "assistant", "algorithm", NULL);
 
