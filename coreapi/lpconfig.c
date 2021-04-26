@@ -507,6 +507,18 @@ LpConfig *linphone_config_new_for_shared_core(const char *app_group_id, const ch
 	return linphone_config_new_with_factory(full_path, factory_path);
 }
 
+const char * linphone_config_get_filename(const LinphoneConfig *config) {
+	return config->filename;
+}
+
+const char * linphone_config_get_factory_filename(const LinphoneConfig *config) {
+	return config->factory_filename;
+}
+
+const char * linphone_config_get_temporary_filename(const LinphoneConfig *config) {
+	return config->tmpfilename;
+}
+
 LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filename){
 	char* path = lp_realpath(filename, NULL);
 	bctbx_vfs_file_t* pFile = bctbx_file_open(lpconfig->g_bctbx_vfs, path, "r");
