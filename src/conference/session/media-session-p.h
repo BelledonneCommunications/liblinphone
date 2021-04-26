@@ -236,6 +236,9 @@ private:
 	bool hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const;
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
+
+	void fillVideoRptParameters(SalStreamDescription & newStream) const;
+
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
