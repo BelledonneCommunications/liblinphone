@@ -1489,9 +1489,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 							if (!l.empty()){
 								newStream.payloads = l;
 
-								if (!confVideoCapabilities || (!getParams()->videoEnabled() && isMe)) {
+								//if (!confVideoCapabilities || (!getParams()->videoEnabled() && isMe)) {
+								if (!getParams()->videoEnabled() && isMe) {
 									newStream.dir = SalStreamInactive;
+lInfo() << "DEBUG conf video capabilities " << confVideoCapabilities << " call video capabilities " << getParams()->videoEnabled() << " is me " << isMe;
 								} else if (dev) {
+lInfo() << "DEBUG participant video direction " << dev->getVideoDirection();
 									switch (dev->getVideoDirection()) {
 										case LinphoneMediaDirectionSendOnly:
 										case LinphoneMediaDirectionRecvOnly:
@@ -1506,6 +1509,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 											break;
 									}
 								} else if (isMe) {
+lInfo() << "DEBUG is me is in local conference " << isInLocalConference;
 									newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
 								}
 
