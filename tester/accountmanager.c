@@ -398,16 +398,6 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 		}
 	}
 
-	if (liblinphone_tester_keep_uuid) {
-		// create and/or set uuid
-		if (account->uuid == NULL) {
-			char tmp[64];
-			sal_create_uuid(linphone_core_get_sal(cm->lc), tmp, sizeof(tmp));
-			account->uuid = bctbx_strdup(tmp);
-		}
-		sal_set_uuid(linphone_core_get_sal(cm->lc), account->uuid);
-	}
-
 	// remove previous auth info to avoid mismatching
 	if (original_ai)
 		linphone_core_remove_auth_info(lc,original_ai);
