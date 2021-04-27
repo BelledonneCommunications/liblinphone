@@ -1283,7 +1283,7 @@ lInfo() << "DEBUG is me is in local conference " << isInLocalConference;
 								}
 
 							} else {
-								lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
+								lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "] because no payload is found";
 								newStream.dir = SalStreamInactive;
 								PayloadTypeHandler::clearPayloadList(l);
 							}
@@ -1306,20 +1306,18 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 								newStream.payloads = l;
 								switch (s.dir) {
 									case SalStreamSendOnly:
-										newStream.dir = SalStreamRecvOnly;
-										break;
-									case SalStreamRecvOnly:
-										newStream.dir = SalStreamSendOnly;
-										break;
 									case SalStreamSendRecv:
 										newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+										break;
+									case SalStreamRecvOnly:
+										newStream.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
 										break;
 									case SalStreamInactive:
 										newStream.dir = SalStreamInactive;
 										break;
 								}
 							} else {
-								lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
+								lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "] because no payload is found";
 								newStream.dir = SalStreamInactive;
 								newStream.disable();
 								PayloadTypeHandler::clearPayloadList(l);
@@ -1350,7 +1348,13 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 				} else {
 					if (streamIdx < oldMd->streams.size()) {
 						newStream = oldMd->streams[streamIdx];
-						switch (oldMd->streams[streamIdx].dir) {
+						l = pth.makeCodecsList(s.type, 0, -1, oldMd->streams[streamIdx].already_assigned_payloads);
+					} else {
+						l = pth.makeCodecsList(s.type, 0, -1, emptyList);
+					}
+					if (!l.empty()){
+						newStream.payloads = l;
+						switch (s.dir) {
 							case SalStreamSendOnly:
 								newStream.dir = SalStreamRecvOnly;
 								break;
@@ -1359,14 +1363,30 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 								break;
 							case SalStreamSendRecv:
 							case SalStreamInactive:
-								newStream.dir = oldMd->streams[streamIdx].dir;
+								newStream.dir = s.dir;
 								break;
 						}
-
-						fillRtpParameters(newStream);
 					} else {
+						lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream on local offer for CallSession [" << q << "] because no payload is found";
 						newStream.dir = SalStreamInactive;
 						newStream.disable();
+						PayloadTypeHandler::clearPayloadList(l);
+					}
+
+					fillRtpParameters(newStream);
+
+					if (newStream.dir == SalStreamInactive) {
+						newStream.disable();
+						newStream.rtp_port = 0;
+						newStream.rtcp_port = 0;
+					} else if ((streamIdx < oldMd->streams.size()) && (oldMd->streams[streamIdx].rtp_port != 0)) {
+						// Copy previous rtp and rtcp ports if they were already assigned
+						newStream.rtp_port = oldMd->streams[streamIdx].rtp_port;
+						newStream.rtcp_port = oldMd->streams[streamIdx].rtcp_port;
+					} else {
+						const auto rtp_port = q->getRandomRtpPort(newStream);
+						newStream.rtp_port = rtp_port;
+						newStream.rtcp_port = newStream.rtp_port + 1;
 					}
 				}
 			}
