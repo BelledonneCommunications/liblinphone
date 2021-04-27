@@ -68,7 +68,7 @@ LinphoneContactSearch*linphone_contact_search_ref(void* obj)
 	return LINPHONE_CONTACT_SEARCH(belle_sip_object_ref(obj));
 }
 
-void linphone_ldap_contact_search_unref(void* obj)
+void linphone_contact_search_unref(void* obj)
 {
 	belle_sip_object_unref(obj);
 }

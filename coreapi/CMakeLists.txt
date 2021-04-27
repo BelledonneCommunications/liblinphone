@@ -60,7 +60,6 @@ set(LINPHONE_SOURCE_FILES_C
 	friendlist.c
 	im_notif_policy.c
 	info.c
-	ldapprovider.c
 	lime.c
 	im_encryption_engine.c
 	linphonecall.c
@@ -159,7 +158,7 @@ if (ENABLE_SHARED)
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
         add_dependencies(linphone-coreapi linphonej)
-    endif()
+	endif()
 endif ()
 
 

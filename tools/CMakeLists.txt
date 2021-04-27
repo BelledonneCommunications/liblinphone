@@ -20,11 +20,6 @@
 #
 ############################################################################
 
-if(MSVC)
-	find_library(LIBGCC NAMES gcc)
-	find_library(LIBMINGWEX NAMES mingwex)
-endif()
-
 set(USE_BUNDLE )
 if (IOS)
 	set(USE_BUNDLE MACOSX_BUNDLE)
