@@ -35,7 +35,7 @@ LinphoneContactSearchID linphone_contact_search_get_id(LinphoneContactSearch *ob
 const char* linphone_contact_search_get_predicate(LinphoneContactSearch *obj);
 void linphone_contact_search_invoke_cb(LinphoneContactSearch *req, MSList *friends);
 LINPHONE_PUBLIC LinphoneContactSearch* linphone_contact_search_ref(void *obj);
-void linphone_contact_search_unref(void *obj);
+LINPHONE_PUBLIC void linphone_contact_search_unref(void *obj);
 LinphoneContactSearch* linphone_contact_search_cast(void *obj);
 
 
