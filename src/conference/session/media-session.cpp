@@ -1322,7 +1322,8 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 						newStream.disable();
 						newStream.rtp_port = 0;
 						newStream.rtcp_port = 0;
-					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (newStream.rtp_port != 0)) {
+					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (previousParticipantStream.rtp_port != 0)) {
+						// Copy previous rtp and rtcp ports if they were already assigned
 						newStream.rtp_port = previousParticipantStream.rtp_port;
 						newStream.rtcp_port = previousParticipantStream.rtcp_port;
 					} else {
