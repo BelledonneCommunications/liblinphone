@@ -1481,7 +1481,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 						}
 						addStreamToBundle(md, newStream, name + " " + attrValue);
 					}
-					if (conference) {
+					if (conference && isInLocalConference) {
 						const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 						const auto & currentConfParams = cppConference->getCurrentParams();
 						const auto confVideoCapabilities = currentConfParams.videoEnabled();
