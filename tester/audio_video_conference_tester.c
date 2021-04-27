@@ -2678,10 +2678,14 @@ static void remove_participant_from_video_conference(void) {
 	terminate_conference(participants, marie, NULL, NULL);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 1, unsigned int, "%u");
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
+
+	end_call(laure, marie);
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
+	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 
 end:
 
