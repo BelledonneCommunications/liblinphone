@@ -738,6 +738,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		return -1;
 	}
 
+	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
+	if (participant) {
+		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
+		Conference::removeParticipant(participant);
+		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
+	}
+
 	CallSession::State sessionState = session->getState();
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
@@ -755,6 +762,11 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
+
+		// Detach call from conference
+		if (call) {
+			call->setConference(nullptr);
+		}
 
 		if (participant->getPreserveSession()) {
 			// If the session is already paused,then send an update to kick the participant out of the conference, pause the call otherwise
@@ -783,17 +795,11 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->terminate();
 			}
 		}
-		// Detach call from conference
-		if (call) {
-			call->setConference(nullptr);
+
+		if (getCurrentParams().videoEnabled()) {
+			lInfo() << "Re-INVITing participants because participant device " << session->getRemoteContactAddress()->asString() << " left conference " << getConferenceAddress();
+			updateAllParticipantSessionsExcept(session);
 		}
-	}
-	
-	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
-	if (participant) {
-		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
-		Conference::removeParticipant(participant);
-		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 	}
 
 	// If conference is in termination pending state, terminate method is already taking care of state kicking participants out of the conference
