@@ -2273,7 +2273,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
 			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
 		if (la) {
-			char* fa = linphone_address_as_string(la);
+			char* fa = linphone_address_as_string_uri_only(la);
 			BC_ASSERT_STRING_EQUAL(fa , uri);
 			free(fa);
 			return;

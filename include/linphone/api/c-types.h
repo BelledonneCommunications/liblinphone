@@ -425,6 +425,12 @@ typedef struct _LinphonePushNotificationConfig LinphonePushNotificationConfig;
 typedef struct _LinphoneMagicSearch LinphoneMagicSearch;
 
 /**
+ * @brief A #LinphoneMagicSearchCbs is used to do specifics searchs
+ * @ingroup misc
+ */
+typedef struct _LinphoneMagicSearchCbs LinphoneMagicSearchCbs;
+
+/**
  * @brief The LinphoneSearchResult object represents a result of a search
  * @ingroup misc
  */

@@ -372,6 +372,8 @@ void _linphone_chat_message_notify_ephemeral_message_timer_started(LinphoneChatM
 void _linphone_chat_message_notify_ephemeral_message_deleted(LinphoneChatMessage* msg);
 void _linphone_chat_message_clear_callbacks (LinphoneChatMessage *msg);
 
+void _linphone_magic_search_notify_search_results_received(LinphoneMagicSearch* magic_search);
+
 
 const LinphoneParticipantImdnState *_linphone_participant_imdn_state_from_cpp_obj (const LinphonePrivate::ParticipantImdnState &state);
 
