@@ -66,6 +66,11 @@ LdapContactProvider::~LdapContactProvider(){
 	}
 // Wait for bind thread to end
 	mLock.lock();
+	if (mSalContext) {
+		belle_sip_resolver_context_cancel(mSalContext);
+		belle_sip_object_unref(mSalContext);
+		mSalContext = NULL;
+	}
 	if(mConnected==1)// We have been bind. Clean the exit
 		ldap_unbind_ext_s(mLd, NULL, NULL);
 	if(mAwaitingMessageId > 0){//There is currently a request that has not been processed. Abandon it.

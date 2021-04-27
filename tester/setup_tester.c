@@ -1853,13 +1853,14 @@ static void search_friend_chat_room_remote(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 #ifdef LDAP_ENABLED
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 6, int, "%d");
-		_check_friend_result_list(marie->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);
-		_check_friend_result_list(marie->lc, resultList, 1, "sip:0601234567@ldap.example.org", NULL);
-		_check_friend_result_list(marie->lc, resultList, 2, "sip:Chloe@ldap.example.org", NULL);
-		_check_friend_result_list(marie->lc, resultList, 3, "sip:Pauline@ldap.example.org", NULL);
-		_check_friend_result_list(marie->lc, resultList, 4, addr, NULL);
-		_check_friend_result_list(marie->lc, resultList, 5, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 6, int, "%d");// Sorted by display names
+		_check_friend_result_list(marie->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);	// "Chloe"
+		_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org", NULL);	// "Laure"
+		_check_friend_result_list(marie->lc, resultList, 2, "sip:0601234567@ldap.example.org", NULL);	// "Marie"
+		_check_friend_result_list(marie->lc, resultList, 3, "sip:Pauline@ldap.example.org", NULL);	//"Pauline"
+		_check_friend_result_list(marie->lc, resultList, 4, addr, NULL);	// "pauline_***" *** is dynamic
+		_check_friend_result_list(marie->lc, resultList, 5, "sip:pauline@sip.example.org", NULL);	// "Paupoche"
+		// marie_rc has an hardcoded friend for pauline
 #else
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(marie->lc, resultList, 0, addr, NULL);
