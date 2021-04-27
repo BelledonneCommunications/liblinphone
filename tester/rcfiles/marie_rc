@@ -65,3 +65,24 @@ sender_name_hidden_in_forward_message=1
 
 [tester]
 test_env=1
+
+[ldap_0]
+use_tls=1
+timeout=10
+deref_aliases=0
+max_results=50
+auth_method=SIMPLE
+username=uid=marie,dc=bc,dc=com
+password=secret
+bind_dn=cn=Marie Laroueverte,ou=people,dc=bc,dc=com
+base_object=dc=bc,dc=com
+server=ldap://ldap.example.org/
+filter=(sn=%s)
+name_attribute=sn
+sip_attribute=mobile,telephoneNumber,homePhone,sn
+attributes=telephoneNumber,givenName,sn,mobile,homePhone,mail
+sip_scheme=sip
+sip_domain=ldap.example.org
+use_sal=1
+verify_server_certificates=0
+enable=1

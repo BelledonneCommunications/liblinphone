@@ -79,7 +79,7 @@ int manager_count = 0;
 int leaked_objects_count = 0;
 const MSAudioDiffParams audio_cmp_params = {10,2000};
 
-const char* flexisip_tester_dns_server = "fs-test-2.linphone.org";
+const char* flexisip_tester_dns_server = "fs-test-3.linphone.org";
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
@@ -2273,7 +2273,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
 			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
 		if (la) {
-			char* fa = linphone_address_as_string(la);
+			char* fa = linphone_address_as_string_uri_only(la);
 			BC_ASSERT_STRING_EQUAL(fa , uri);
 			free(fa);
 			return;
