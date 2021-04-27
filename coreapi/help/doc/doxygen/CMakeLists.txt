@@ -31,6 +31,9 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAP
 		if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
 			set(LINPHONE_STATE "releases")
 		endif()
+		# Remove everything after the last point in LINPHONE_VERSION (4.5.0 --> 4.5) to create STRIPPED_LINPHONE_VERSION
+		string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
+		# Replace @LINPHONE_STATE@ and @STRIPPED_LINPHONE_VERSION@ in site main page
 		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.dox.in ${CMAKE_CURRENT_BINARY_DIR}/doxygen.dox)
 
 		set(DOXYGEN_INPUT "")
