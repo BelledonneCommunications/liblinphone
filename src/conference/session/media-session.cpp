@@ -1226,6 +1226,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				if (!attrValue.empty()) {
 					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, attrValue.c_str());
+
 					if (getParams()->rtpBundleEnabled()) {
 						std::string name;
 						switch (s.type) {
@@ -1287,34 +1288,46 @@ lInfo() << "DEBUG is me is in local conference " << isInLocalConference;
 								PayloadTypeHandler::clearPayloadList(l);
 							}
 						} else {
-							// If it is not in local conference, then disable non main streams
+							// disable non main streams if the participant is not in the conference
 							newStream.dir = SalStreamInactive;
 							newStream.disable();
 						}
 lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " copying stream for device " << attrValue << " (ptr " << dev << " me " << cppConference->getMe() << ") stream direction " << sal_stream_dir_to_string(newStream.dir);
 					} else {
-						l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-						if (!l.empty()){
-							newStream.payloads = l;
-							switch (s.dir) {
-								case SalStreamSendOnly:
-									newStream.dir = SalStreamRecvOnly;
-									break;
-								case SalStreamRecvOnly:
-									newStream.dir = SalStreamSendOnly;
-									break;
-								case SalStreamSendRecv:
-									newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
-									break;
-								case SalStreamInactive:
-									newStream.dir = SalStreamInactive;
-									break;
+
+						char * remoteContactAddressStr = getOp() ? sal_address_as_string(getOp()->getRemoteContactAddress()) : NULL;
+						Address remoteContactAddress(remoteContactAddressStr);
+						ms_free(remoteContactAddressStr);
+
+						// If the call is in a remote conference but it has not been created yet
+						if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
+							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+							if (!l.empty()){
+								newStream.payloads = l;
+								switch (s.dir) {
+									case SalStreamSendOnly:
+										newStream.dir = SalStreamRecvOnly;
+										break;
+									case SalStreamRecvOnly:
+										newStream.dir = SalStreamSendOnly;
+										break;
+									case SalStreamSendRecv:
+										newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+										break;
+									case SalStreamInactive:
+										newStream.dir = SalStreamInactive;
+										break;
+								}
+							} else {
+								lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
+								newStream.dir = SalStreamInactive;
+								newStream.disable();
+								PayloadTypeHandler::clearPayloadList(l);
 							}
 						} else {
-							lInfo() << "Don't put video stream for device in conference with address " << attrValue << " on local offer for CallSession [" << q << "]";
+							// If it is not in a remote conference conference, then disable non main streams
 							newStream.dir = SalStreamInactive;
 							newStream.disable();
-							PayloadTypeHandler::clearPayloadList(l);
 						}
 					}
 
