@@ -129,7 +129,11 @@ void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
 }
 
 LinphoneMediaDirection ParticipantDevice::getMediaDirection(const ConferenceMediaCapabilities capIdx) const {
-	return static_cast<LinphoneMediaDirection>(mediaCapabilities[static_cast<int>(capIdx)]);
+	try {
+		return mediaCapabilities.at(capIdx);
+	} catch (std::out_of_range&) {
+		return LinphoneMediaDirectionInactive;
+	}
 }
 
 LinphoneMediaDirection ParticipantDevice::getAudioDirection() const {
@@ -145,8 +149,9 @@ LinphoneMediaDirection ParticipantDevice::getTextDirection() const {
 }
 
 bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceMediaCapabilities capIdx) {
-	if (mediaCapabilities[static_cast<int>(capIdx)] != static_cast<int>(direction)) {
-		mediaCapabilities[static_cast<int>(capIdx)] = static_cast<int>(direction);
+	const bool idxFound = (mediaCapabilities.find(capIdx) != mediaCapabilities.cend());
+	if (!idxFound || (mediaCapabilities[capIdx] != direction)) {
+		mediaCapabilities[capIdx] = direction;
 		return true;
 	}
 	return false;
