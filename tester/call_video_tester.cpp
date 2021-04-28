@@ -28,6 +28,12 @@
 #ifdef VIDEO_ENABLED
 std::string g_display_filter = "";// Global variable to test unit in order to select the display filter to use : "" use the default
 
+static std::string generateRandomFilename(const std::string& name){
+	char token[6];
+	belle_sip_random_token(token, sizeof(token));
+	return name + token;
+}
+
 static void call_paused_resumed_with_video_base_call_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params = linphone_core_create_call_params(lc, call);
@@ -1439,6 +1445,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	stats initial_pauline_stats = pauline->stat;
 
 	if  (call) {
+		call = linphone_call_ref(call);
 		params=linphone_core_create_call_params(marie->lc, NULL);
 		linphone_call_params_set_audio_direction(params,LinphoneMediaDirectionSendOnly);
 		linphone_call_params_set_video_direction(params,LinphoneMediaDirectionSendOnly);
@@ -1464,7 +1471,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 			quality = linphone_call_get_current_quality(call);
 			BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 		}
-
+		linphone_call_unref(call);
 	}
 
 
@@ -1475,6 +1482,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallReleased,initial_pauline_stats.number_of_LinphoneCallReleased, int, "%d");
 
 	if (call) {
+		call = linphone_call_ref(call);
 		check_media_direction(pauline,call,lcs,LinphoneMediaDirectionRecvOnly,LinphoneMediaDirectionRecvOnly);
 
 		float quality = linphone_call_get_current_quality(call);
@@ -1482,6 +1490,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
 		quality = linphone_call_get_current_quality(call);
 		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
+		linphone_call_unref(call);
 	}
 
 	ms_free(remote_uri);
@@ -1721,7 +1730,7 @@ static void classic_video_entry_phone_setup(void) {
 	LinphoneCall *callee_call = NULL;
 	LinphoneVideoPolicy vpol;
 	bctbx_list_t *lcs = NULL;
-	char *video_recording_file = bc_tester_file("video_entry_phone_record.mkv");
+	char *video_recording_file = bc_tester_file((generateRandomFilename("video_entry_phone_record_")+".mkv").c_str());
 	bool_t ok;
 
 	vpol.automatically_initiate = vpol.automatically_accept = TRUE;
@@ -1826,16 +1835,17 @@ end:
 	bctbx_list_free(lcs);
 	bc_free(video_recording_file);
 }
+
 static void video_call_recording_h264_test(void) {
-	record_call("recording", TRUE, "H264");
+	record_call(generateRandomFilename("recording_").c_str(), TRUE, "H264");
 }
 
 static void video_call_recording_vp8_test(void) {
-	record_call("recording", TRUE, "VP8");
+	record_call(generateRandomFilename("recording_").c_str(), TRUE, "VP8");
 }
 
 static void snapshot_taken(LinphoneCall *call, const char *filepath) {
-	char *filename = bc_tester_file("snapshot.jpeg");
+	char *filename = bc_tester_file((generateRandomFilename("snapshot_")+".jpeg").c_str());
 	LinphoneCore *lc = linphone_call_get_core(call);
 	stats *callstats = get_stats(lc);
 	BC_ASSERT_STRING_EQUAL(filepath, filename);
@@ -1849,7 +1859,7 @@ static void video_call_snapshot(void) {
 	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
 	LinphoneCallParams *paulineParams = linphone_core_create_call_params(pauline->lc, NULL);
 	LinphoneCall *callInst = NULL;
-	char *filename = bc_tester_file("snapshot.jpeg");
+	char *filename = bc_tester_file((generateRandomFilename("snapshot_")+".jpeg").c_str());
 	bool_t call_succeeded = FALSE;
 
 	if(g_display_filter != ""){
@@ -1896,7 +1906,7 @@ static void video_call_snapshots(void) {
 	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
 	LinphoneCallParams *paulineParams = linphone_core_create_call_params(pauline->lc, NULL);
 	LinphoneCall *callInst = NULL;
-	char *filename = bc_tester_file("snapshot.jpeg");
+	char *filename = bc_tester_file((generateRandomFilename("snapshot_")+".jpeg").c_str());
 	bool_t call_succeeded = FALSE;
 	int dummy = 0;
 
