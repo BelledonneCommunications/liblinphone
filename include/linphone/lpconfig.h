@@ -134,6 +134,33 @@ LINPHONE_PUBLIC const char* linphone_config_load_from_xml_file(LinphoneConfig *c
 LINPHONE_PUBLIC LinphoneStatus linphone_config_load_from_xml_string(LinphoneConfig *config, const char *buffer);
 
 /**
+ * Returns the filename used to store the user config.
+ * @ingroup misc
+ * @param config the #LinphoneConfig object. @notnill
+ * @return the filename used to store the user config if any. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const char * linphone_config_get_filename(const LinphoneConfig *config);
+
+/**
+ * Returns the filename that was used as the factory config.
+ * @ingroup misc
+ * @param config the #LinphoneConfig object. @notnill
+ * @return the filename used to as the factory config if any. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const char * linphone_config_get_factory_filename(const LinphoneConfig *config);
+
+/**
+ * Returns the temporary filename used to store the user config.
+ * @ingroup misc
+ * @param config the #LinphoneConfig object. @notnill
+ * @return the temporary filename used to store the user config if any. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const char * linphone_config_get_temporary_filename(const LinphoneConfig *config);
+
+/**
  * Retrieves a configuration item as a string, given its section, key, and default value.
  *
  * The default value string is returned if the config item isn't found.
