@@ -23,6 +23,7 @@
 #include "call/call.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
+#include "liblinphone_tester.h"
 #include "shared_tester_functions.h"
 #include "c-wrapper/internal/c-tools.h"
 
@@ -315,4 +316,12 @@ void check_local_desc_stream (LinphoneCall *call) {
 			BC_ASSERT_EQUAL(textStream.rtcp_port, 0, int, "%d");
 		}
 	}
+}
+
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
+	const SalMediaDescription * call_local_desc = _linphone_call_get_local_desc(call);
+	BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
+	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
+	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalVideo), nb_video_streams, int, "%i");
+	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalText), nb_text_streams, int, "%i");
 }
