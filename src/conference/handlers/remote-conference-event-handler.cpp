@@ -279,7 +279,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				}
 
 				if (state != StateType::deleted) {
-					for (const auto media : endpoint.getMedia()) {
+					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						const LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
 						if (mediaType.compare("audio") == 0) {
