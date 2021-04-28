@@ -1010,7 +1010,9 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 
-		BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
+		if (conference) {
+			BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
+		}
 	}
 
 	LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
@@ -1033,6 +1035,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(michelle);
 	linphone_conference_server_destroy(focus);
+	bctbx_list_free(all_manangers_in_conf);
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
