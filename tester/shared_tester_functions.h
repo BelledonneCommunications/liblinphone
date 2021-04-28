@@ -28,6 +28,7 @@ extern "C" {
 
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
 bool_t check_ice_sdp (LinphoneCall *call);
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams);
 
 #ifdef __cplusplus
 }
