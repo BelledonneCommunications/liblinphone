@@ -1830,11 +1830,19 @@ end:
 	bc_free(video_recording_file);
 }
 static void video_call_recording_h264_test(void) {
-	record_call("recording", TRUE, "H264");
+	char token[6];
+	belle_sip_random_token(token, sizeof(token));
+	std::string filename = "recording_";
+	filename += token;
+	record_call(filename.c_str(), TRUE, "H264");
 }
 
 static void video_call_recording_vp8_test(void) {
-	record_call("recording", TRUE, "VP8");
+	char token[6];
+	belle_sip_random_token(token, sizeof(token));
+	std::string filename = "recording_";
+	filename += token;
+	record_call(filename.c_str(), TRUE, "VP8");
 }
 
 static void snapshot_taken(LinphoneCall *call, const char *filepath) {
