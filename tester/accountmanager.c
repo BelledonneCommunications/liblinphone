@@ -86,6 +86,7 @@ static void account_manager_generate_unique_id(AccountManager * am) {
 		am->unique_id[i] = tolower(the_am->unique_id[i]);
 	}
 }
+
 AccountManager *account_manager_get(void){
 	if (the_am==NULL){
 		the_am=ms_new0(AccountManager,1);
@@ -115,20 +116,6 @@ Account *account_manager_get_account(AccountManager *m, const LinphoneAddress *i
 	}
 	return NULL;
 }
-
-LinphoneAddress *account_manager_get_identity_with_modified_identity(const LinphoneAddress *modified_identity){
-	AccountManager *m = account_manager_get();
-	bctbx_list_t *it;
-
-	for(it=m->accounts;it!=NULL;it=it->next){
-		Account *a=(Account*)it->data;
-		if (linphone_address_weak_equal(a->modified_identity,modified_identity)){
-			return a->identity;
-		}
-	}
-	return NULL;
-}
-
 
 static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const char *info){
 	Account *account=(Account*)linphone_core_get_user_data(lc);
@@ -235,34 +222,7 @@ static void account_created_in_db_cb(LinphoneAccountCreator *creator, LinphoneAc
 	}
 }
 
-static void get_confirmation_key_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char *resp){
-	AccountCreatorState *state = linphone_account_creator_get_user_data(creator);
-	switch(status){
-		case LinphoneAccountCreatorStatusRequestOk:
-			state->confirmation_key_received = TRUE;
-			break;
-		default:
-			ms_warning("Confirmation key not received for %s.", linphone_account_creator_get_username(creator));
-			state->confirmation_key_received = FALSE;
-			break;
-	}
-}
-
-static void account_activated_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char *resp){
-	AccountCreatorState *state = linphone_account_creator_get_user_data(creator);
-	switch(status){
-		case LinphoneAccountCreatorStatusAccountActivated:
-		case LinphoneAccountCreatorStatusAccountAlreadyActivated:
-			state->account_activated = TRUE;
-			break;
-		default:
-			ms_message("Account not activated for %s.", linphone_account_creator_get_username(creator));
-			state->account_activated = FALSE;
-			break;
-	}
-}
-
-void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char *xmlrpc_url){
+void account_create_in_server_db(Account *account, LinphoneProxyConfig *cfg){
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_registration_state_changed(cbs, account_created_on_server_cb);
 	LinphoneCore *lc = configure_lc_from(cbs, bc_tester_get_resource_dir_prefix(), NULL, account);
@@ -273,25 +233,44 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	tr.tls_port = LC_SIP_TRANSPORT_RANDOM;
 	linphone_core_set_sip_transports(lc, &tr);
 
-	LinphoneAccountCreator *creator = linphone_account_creator_new(lc, xmlrpc_url);
+	linphone_core_set_account_creator_backend(lc, LinphoneAccountCreatorBackendFlexiAPI);
+	linphone_core_set_account_creator_url(
+		lc,
+		linphone_config_get_string(
+			linphone_core_get_config(lc),
+				"account_creator",
+				"url",
+				"http://subscribe.example.org/flexiapi/api/"
+		)
+	);
+
+	LinphoneAccountCreator *creator = linphone_account_creator_create(lc);
 	LinphoneAccountCreatorCbs *creator_cbs = linphone_account_creator_get_callbacks(creator);
 
 	LinphoneProxyConfig *default_cfg = linphone_core_get_default_proxy_config(lc);
-	linphone_account_creator_set_proxy_config(creator, cfg);
 
+	linphone_account_creator_set_proxy_config(creator, cfg);
 	linphone_account_creator_service_set_user_data(linphone_account_creator_get_service(creator), (void*)LinphoneAccountCreatorStatusAccountCreated);
 
 	const char *username = linphone_address_get_username(account->modified_identity);
 	const char *password = account->password;
 	const char *domain = linphone_proxy_config_get_domain(cfg);
 
-	char *email = bctbx_strdup_printf("%s@%s", username, domain);
+	char *email = bctbx_replace(bctbx_strdup_printf("%s@%s", username, domain), ' ', '_');
 
 	const char *algorithm = linphone_config_get_string(linphone_core_get_config(linphone_proxy_config_get_core(cfg)), "assistant", "algorithm", NULL);
 
 	AccountCreatorState state = {0};
 
-	// create account
+// This ifdef is only to prevent errors in compilation when FlexiAPI is disabled
+// FlexiAPI is mandatory in the AccountManager
+#ifdef HAVE_FLEXIAPI
+	// Attache the event to FlexiAPI and add the callbacks
+	linphone_account_creator_service_set_create_account_cb(linphone_account_creator_get_service(creator), linphone_account_creator_admin_create_account_flexiapi);
+	linphone_account_creator_add_callbacks(creator, creator_cbs);
+#endif
+
+	// Create account
 	linphone_account_creator_cbs_set_create_account(creator_cbs, account_created_in_db_cb);
 	linphone_account_creator_set_username(creator, username);
 	linphone_account_creator_set_password(creator, password);
@@ -314,8 +293,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 		};
 	}
 
-
-	if (linphone_account_creator_create_account(creator) ==	LinphoneAccountCreatorStatusMissingCallbacks) {
+	if (linphone_account_creator_create_account(creator) == LinphoneAccountCreatorStatusMissingCallbacks) {
 		ms_fatal("Could not create account %s on db (missing callbacks)", linphone_proxy_config_get_identity(cfg));
 	}
 
@@ -325,23 +303,6 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	LinphoneAuthInfo *ai = linphone_auth_info_new_for_algorithm(username, NULL, password, NULL, domain, domain, algorithm);
 	linphone_core_add_auth_info(lc, ai);
 	linphone_auth_info_unref(ai);
-
-	// get confirmation key
-	linphone_account_creator_cbs_set_confirmation_key(creator_cbs, get_confirmation_key_cb);
-	linphone_account_creator_get_confirmation_key(creator);
-
-	if (wait_for_until(lc, NULL, &state.confirmation_key_received, TRUE, 15000) == FALSE)
-		ms_fatal("Could not get confirmation key for account %s", linphone_proxy_config_get_identity(cfg));
-
-	// activate account
-	linphone_account_creator_cbs_set_activate_account(creator_cbs, account_activated_cb);
-	if (linphone_account_creator_get_phone_number(creator))
-		linphone_account_creator_activate_account_linphone(creator);
-	else
-		linphone_account_creator_activate_email_account_linphone(creator);
-
-	if (wait_for_until(lc, NULL, &state.account_activated, TRUE, 15000) == FALSE)
-		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
 
 	linphone_account_creator_set_proxy_config(creator, default_cfg);
 
@@ -388,13 +349,7 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 		if (liblinphonetester_no_account_creator) {
 			account_create_on_server(account, cfg, phone_alias);
 		} else {
-			const char *xmlrpc_url = linphone_config_get_string(
-				linphone_core_get_config(lc),
-				"misc",
-				"xmlrpc_server_url",
-				"http://subscribe.example.org:8082/flexisip-account-manager/xmlrpc.php"
-			);
-			account_create_in_db(account, cfg, xmlrpc_url);
+			account_create_in_server_db(account, cfg);
 		}
 	}
 
@@ -438,4 +393,21 @@ void linphone_core_manager_check_accounts(LinphoneCoreManager *m){
 		account_manager_check_account(am, cfg, m);
 	}
 	if (!liblinphonetester_show_account_manager_logs) linphone_core_set_log_level_mask(logmask);
+}
+
+LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) ms_new0(LinphoneAccountCreatorStats, 1);
+	return stats;
+}
+
+void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
+	stats->cb_done++;
+	BC_ASSERT_TRUE(stats->cb_done);
+}
+
+void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
+	stats->cb_done = 0;
+	BC_ASSERT_FALSE(stats->cb_done);
 }
