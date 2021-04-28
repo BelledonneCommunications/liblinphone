@@ -108,7 +108,7 @@ private:
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
 
-	int mediaCapabilities[static_cast<int>(ConferenceMediaCapabilities::Count)];
+	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 
 	void *mUserData = nullptr;
 

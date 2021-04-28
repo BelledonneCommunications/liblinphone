@@ -107,9 +107,7 @@ Address &Address::operator= (const Address &other) {
 }
 
 bool Address::operator== (const Address &other) const {
-	// If either internal addresses is NULL, then the two addresses are not the same
-	if (!internalAddress || !other.internalAddress)  return false;
-	return (sal_address_equals(internalAddress, other.internalAddress) == 0);
+	return asString() == other.asString();
 }
 
 bool Address::operator!= (const Address &other) const {
