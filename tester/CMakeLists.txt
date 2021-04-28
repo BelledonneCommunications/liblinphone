@@ -246,7 +246,6 @@ set(SOURCE_FILES_C
 	group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	group_chat_secure_tester.c
-	group_chat_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
@@ -259,7 +258,6 @@ set(SOURCE_FILES_C
 	remote_provisioning_tester.c
 	session_timers_tester.c
 	setup_tester.c
-	shared_core_tester.c
 	stun_tester.c
 	tunnel_tester.c
 	vcard_tester.c
@@ -316,6 +314,10 @@ if(APPLE)
 	endif()
 endif()
 
+set(GROUP_CHAT_BENCHMARK_SOURCE_CXX
+	shared_tester_functions.cpp
+)
+
 set(GROUP_CHAT_BENCHMARK_SOURCE_C
 	accountmanager.c
 	tester.c
@@ -324,6 +326,7 @@ set(GROUP_CHAT_BENCHMARK_SOURCE_C
 )
 
 set(GROUP_CHAT_BENCHMARK_HEADERS
+	shared_tester_functions.h
 	liblinphone_tester.h
 	tools/tester.h
 )
@@ -351,6 +354,7 @@ bc_apply_compile_flags(SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 
 bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
+bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 
 add_definitions("-DLINPHONE_TESTER")
 
@@ -460,7 +464,7 @@ if(NOT ANDROID)
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
 
-		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
+		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
 		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)

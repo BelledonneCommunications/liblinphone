@@ -23,11 +23,11 @@
 #include "linphone/logging.h"
 #include "logging-private.h"
 #include "liblinphone_tester.h"
+#include "shared_tester_functions.h"
 #include <bctoolbox/tester.h>
 #include <bctoolbox/vfs.h>
 #include "tester_utils.h"
 #include "belle-sip/sipstack.h"
-
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -864,7 +864,14 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 	BC_ASSERT_PTR_NOT_NULL(conference);
 	if (conference) {
+
+		const unsigned int local_conf_participants = linphone_conference_get_participant_count(conference);
+		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
+		const LinphoneConferenceLayout local_conf_layout = linphone_conference_params_get_layout(conf_params);
 		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
+		// if layout is LinphoneConferenceLayoutActiveSpeaker, the stream speaker is added on top of one video stream for each participant
+		const int nb_video_streams = local_conf_participants + (local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0;
+		const int nb_audio_streams = 1;
 		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 			bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
@@ -877,10 +884,13 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 					check_conference_medias(conference, remote_conference);
 				}
 			}
+
+			LinphoneCall * conf_to_part_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
+			_linphone_call_check_nb_streams(conf_to_part_call, nb_audio_streams, nb_video_streams, 0);
+			LinphoneCall * part_to_conf_call = linphone_core_get_call_by_remote_address2(m->lc, conf_mgr->identity);
+			_linphone_call_check_nb_streams(part_to_conf_call, nb_audio_streams, nb_video_streams, 0);
 		}
 	}
-
-
 }
 
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
