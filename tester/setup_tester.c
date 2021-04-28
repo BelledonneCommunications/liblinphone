@@ -149,6 +149,7 @@ static void core_init_test_3(void) {
 	}
 }
 
+/*
 static void core_init_test_4(void) {
 	char* rc_path = bc_tester_res("rcfiles/chloe_rc");
 	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), rc_path, NULL, system_context);
@@ -174,6 +175,7 @@ static void core_init_test_4(void) {
 
 	ms_free(rc_path);
 }
+*/
 
 static void core_init_stop_test(void) {
 	LinphoneCore* lc;
@@ -2219,7 +2221,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone core init/uninit", core_init_test),
 	TEST_NO_TAG("Linphone core init/uninit from existing factory rc", core_init_test_2),
 	TEST_NO_TAG("Linphone core init/uninit withtout any rc", core_init_test_3),
-	TEST_NO_TAG("Linphone core init/uninit from existing default rc", core_init_test_4),
+//	TEST_NO_TAG("Linphone core init/uninit from existing default rc", core_init_test_4),
 	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
 	TEST_NO_TAG("Linphone core init/unref", core_init_unref_test),
 	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
