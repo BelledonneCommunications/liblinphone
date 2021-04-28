@@ -30,6 +30,7 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 bool_t check_ice_sdp (LinphoneCall *call);
 bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype);
 void check_media_stream(LinphoneCall *call, bool_t is_null);
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams);
 
 #ifdef __cplusplus
 }
