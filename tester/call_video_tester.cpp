@@ -1439,6 +1439,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	stats initial_pauline_stats = pauline->stat;
 
 	if  (call) {
+		call = linphone_call_ref(call);
 		params=linphone_core_create_call_params(marie->lc, NULL);
 		linphone_call_params_set_audio_direction(params,LinphoneMediaDirectionSendOnly);
 		linphone_call_params_set_video_direction(params,LinphoneMediaDirectionSendOnly);
@@ -1464,7 +1465,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 			quality = linphone_call_get_current_quality(call);
 			BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 		}
-
+		linphone_call_unref(call);
 	}
 
 
@@ -1475,6 +1476,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallReleased,initial_pauline_stats.number_of_LinphoneCallReleased, int, "%d");
 
 	if (call) {
+		call = linphone_call_ref(call);
 		check_media_direction(pauline,call,lcs,LinphoneMediaDirectionRecvOnly,LinphoneMediaDirectionRecvOnly);
 
 		float quality = linphone_call_get_current_quality(call);
@@ -1482,6 +1484,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
 		quality = linphone_call_get_current_quality(call);
 		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
+		linphone_call_unref(call);
 	}
 
 	ms_free(remote_uri);
@@ -1827,11 +1830,19 @@ end:
 	bc_free(video_recording_file);
 }
 static void video_call_recording_h264_test(void) {
-	record_call("recording", TRUE, "H264");
+	char token[6];
+	belle_sip_random_token(token, sizeof(token));
+	std::string filename = "recording_";
+	filename += token;
+	record_call(filename.c_str(), TRUE, "H264");
 }
 
 static void video_call_recording_vp8_test(void) {
-	record_call("recording", TRUE, "VP8");
+	char token[6];
+	belle_sip_random_token(token, sizeof(token));
+	std::string filename = "recording_";
+	filename += token;
+	record_call(filename.c_str(), TRUE, "VP8");
 }
 
 static void snapshot_taken(LinphoneCall *call, const char *filepath) {
