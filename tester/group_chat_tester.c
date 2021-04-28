@@ -5479,6 +5479,7 @@ static void group_chat_room_participant_devices_name (void) {
 	LinphoneAddress *laureDeviceAddress =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure->lc)));
 	LinphoneAddress *chloeDeviceAddress1 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe->lc)));
 	LinphoneAddress *chloeDeviceAddress2 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe2->lc)));
+	LinphoneAddress *chloeDeviceAddress3  = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, paulineAddress);
 	participantsAddresses = bctbx_list_append(participantsAddresses, laureAddress);
 	stats initialMarieStats = marie->stat;
@@ -5488,6 +5489,8 @@ static void group_chat_room_participant_devices_name (void) {
 	stats initialChloeStats = chloe->stat;
 	stats initialChloeStats2 = chloe2->stat;
 	stats initialChloeStats3 = chloe3->stat;
+	
+	
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
@@ -5573,6 +5576,8 @@ static void group_chat_room_participant_devices_name (void) {
 	// Check that the chat room is correctly created on Chloe's side and that she was added everywhere
 	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 3, 0);
 	LinphoneChatRoom *chloeCr2 = check_creation_chat_room_client_side(coresList, chloe2, &initialChloeStats2, confAddr, initialSubject, 3, 0);
+	LinphoneChatRoom *chloeCr3 = NULL;
+	if(!BC_ASSERT_PTR_NOT_NULL(chloeCr) || !BC_ASSERT_PTR_NOT_NULL(chloeCr2)) goto end;
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_added, initialMarieStats.number_of_participants_added + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 5000));
@@ -5593,12 +5598,18 @@ static void group_chat_room_participant_devices_name (void) {
 	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
 	LinphoneParticipantDevice *chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	LinphoneParticipantDevice *chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
 
 	// Check device's name in Chloe2's chat room
 	chloeParticipant = linphone_chat_room_get_me(chloeCr2);
@@ -5611,41 +5622,55 @@ static void group_chat_room_participant_devices_name (void) {
 	laureDevice = linphone_participant_find_device(laureParticipant, laureDeviceAddress);
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
 
 	// Check Chloe's devices name in other chat rooms
 	// Marie
 	chloeParticipant = linphone_chat_room_find_participant(marieCr, chloeAddress);
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
 
 	// Pauline
 	chloeParticipant = linphone_chat_room_find_participant(paulineCr, chloeAddress);
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
 
 	// Pauline 2
 	chloeParticipant = linphone_chat_room_find_participant(paulineCr2, chloeAddress);
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
 
 	// Laure
 	chloeParticipant = linphone_chat_room_find_participant(laureCr, chloeAddress);
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
 
 	// Reset stats
 	marie->stat = initialMarieStats;
@@ -5663,8 +5688,9 @@ static void group_chat_room_participant_devices_name (void) {
 	coresList = bctbx_list_append(coresList, chloe3->lc);
 	linphone_core_set_user_agent(chloe3->lc, "blabla (Chloe device 3) blibli/blublu (bloblo)", NULL);
 	start_core_for_conference(coresManagerList);
-	LinphoneAddress *chloeDeviceAddress3 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe3->lc)));
-	LinphoneChatRoom *chloeCr3 = check_creation_chat_room_client_side(coresList, chloe3, &initialChloeStats3, confAddr, initialSubject, 3, 0);
+	chloeDeviceAddress3 =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(chloe3->lc)));
+	chloeCr3 = check_creation_chat_room_client_side(coresList, chloe3, &initialChloeStats3, confAddr, initialSubject, 3, 0);
+	if(!BC_ASSERT_PTR_NOT_NULL(chloeCr3)) goto end;
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participant_devices_added, initialPaulineStats.number_of_participant_devices_added + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2->stat.number_of_participant_devices_added, initialPaulineStats2.number_of_participant_devices_added + 1, 5000));
@@ -5684,44 +5710,57 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	LinphoneParticipantDevice *chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Check Chloe3's device name in other chat rooms
 	// Marie
 	chloeParticipant = linphone_chat_room_find_participant(marieCr, chloeAddress);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Pauline
 	chloeParticipant = linphone_chat_room_find_participant(paulineCr, chloeAddress);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Pauline 2
 	chloeParticipant = linphone_chat_room_find_participant(paulineCr2, chloeAddress);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Laure
 	chloeParticipant = linphone_chat_room_find_participant(laureCr, chloeAddress);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Chloe
 	chloeParticipant = linphone_chat_room_get_me(chloeCr);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Chloe2
 	chloeParticipant = linphone_chat_room_get_me(chloeCr2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Still works after restart
 	linphone_core_manager_restart(marie, TRUE);
@@ -5758,13 +5797,20 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Pauline1
 	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineDeviceAddress1);
@@ -5784,13 +5830,20 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Pauline2
 	paulineCr2 = linphone_core_find_chat_room(pauline2->lc, confAddr, paulineDeviceAddress2);
@@ -5810,13 +5863,20 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Laure
 	laureCr = linphone_core_find_chat_room(laure->lc, confAddr, laureDeviceAddress);
@@ -5836,13 +5896,20 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Chloe1
 	chloeCr = linphone_core_find_chat_room(chloe->lc, confAddr, chloeDeviceAddress1);
@@ -5862,13 +5929,20 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Chloe2
 	chloeCr2 = linphone_core_find_chat_room(chloe2->lc, confAddr, chloeDeviceAddress2);
@@ -5888,13 +5962,20 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
 	// Chloe3
 	chloeCr3 = linphone_core_find_chat_room(chloe3->lc, confAddr, chloeDeviceAddress3);
@@ -5914,26 +5995,46 @@ static void group_chat_room_participant_devices_name (void) {
 	chloeDevice = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress1);
 	chloeDevice2 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress2);
 	chloeDevice3 = linphone_participant_find_device(chloeParticipant, chloeDeviceAddress3);
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
-	BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
+	if(BC_ASSERT_PTR_NOT_NULL(marieDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(marieDevice), "Marie device");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice), "Pauline device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(paulineDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(paulineDevice2), "Pauline device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(laureDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(laureDevice), "Laure device ((toto) tata) (titi)");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice), "Chloe device 1");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice2))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice2), "Chloe device 2");
+	if(BC_ASSERT_PTR_NOT_NULL(chloeDevice3))
+		BC_ASSERT_STRING_EQUAL(linphone_participant_device_get_name(chloeDevice3), "Chloe device 3");
 
-	linphone_address_unref(marieAddress);
-	linphone_address_unref(paulineAddress);
-	linphone_address_unref(laureAddress);
-	linphone_address_unref(chloeAddress);
-	linphone_address_unref(confAddr);
-	linphone_address_unref(marieDeviceAddress);
-	linphone_address_unref(paulineDeviceAddress1);
-	linphone_address_unref(paulineDeviceAddress2);
-	linphone_address_unref(laureDeviceAddress);
-	linphone_address_unref(chloeDeviceAddress1);
-	linphone_address_unref(chloeDeviceAddress2);
-	linphone_address_unref(chloeDeviceAddress3);
+end:
+	if(marieAddress)
+		linphone_address_unref(marieAddress);
+	if(paulineAddress)
+		linphone_address_unref(paulineAddress);
+	if(laureAddress)
+		linphone_address_unref(laureAddress);
+	if(chloeAddress)
+		linphone_address_unref(chloeAddress);
+	if(confAddr)
+		linphone_address_unref(confAddr);
+	if(marieDeviceAddress)
+		linphone_address_unref(marieDeviceAddress);
+	if(paulineDeviceAddress1)
+		linphone_address_unref(paulineDeviceAddress1);
+	if(paulineDeviceAddress2)
+		linphone_address_unref(paulineDeviceAddress2);
+	if(laureDeviceAddress)
+		linphone_address_unref(laureDeviceAddress);
+	if(chloeDeviceAddress1)
+		linphone_address_unref(chloeDeviceAddress1);
+	if(chloeDeviceAddress2)
+		linphone_address_unref(chloeDeviceAddress2);
+	if(chloeDeviceAddress3)
+		linphone_address_unref(chloeDeviceAddress3);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);

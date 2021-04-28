@@ -1840,10 +1840,12 @@ void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr) {
 }
 
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList) {
-	stats mgrStats = mgr->stat;
-	if (cr) {
-		linphone_core_delete_chat_room(mgr->lc, cr);
-		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, mgrStats.number_of_LinphoneConferenceStateDeleted + 1, 10000));
+	if(mgr){
+		stats mgrStats = mgr->stat;
+		if (cr) {
+			linphone_core_delete_chat_room(mgr->lc, cr);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, mgrStats.number_of_LinphoneConferenceStateDeleted + 1, 10000));
+		}
 	}
 }
 

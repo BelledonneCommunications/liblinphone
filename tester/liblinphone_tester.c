@@ -397,6 +397,7 @@ void liblinphone_tester_add_suites() {
 #endif
 	bc_tester_add_suite(&local_conference_test_suite);
 #endif
+	bc_tester_add_suite(&flexisip_test_suite);
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
@@ -426,7 +427,6 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&conference_event_test_suite);
 #endif
 	bc_tester_add_suite(&contents_test_suite);
-	bc_tester_add_suite(&flexisip_test_suite);
 	bc_tester_add_suite(&remote_provisioning_test_suite);
 	bc_tester_add_suite(&quality_reporting_test_suite);
 	bc_tester_add_suite(&log_collection_test_suite);
