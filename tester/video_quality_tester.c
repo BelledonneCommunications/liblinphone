@@ -149,7 +149,7 @@ static void video_call_with_thin_congestion(void){
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
 
 	if (BC_ASSERT_TRUE(call(marie, pauline))){
-		LinphoneCall *call = linphone_core_get_current_call(pauline->lc);
+		
 		/* Wait ten seconds. The bandwidth estimator will confirm the 430 kbit/s available. */
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000);
 		/* Now suddenly limit to 300 kbit/s */
@@ -161,7 +161,9 @@ static void video_call_with_thin_congestion(void){
 
 		/*another tmmbr with a greater value is expected once the congestion is resolved*/
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 250000, 50000));
-		BC_ASSERT_GREATER(linphone_call_get_current_quality(call), 4.f, float, "%f");
+		LinphoneCall *call = linphone_core_get_current_call(pauline->lc);
+		if(BC_ASSERT_PTR_NOT_NULL(call))
+			BC_ASSERT_GREATER(linphone_call_get_current_quality(call), 4.f, float, "%f");
 
 		end_call(marie, pauline);
 	}
