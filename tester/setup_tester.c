@@ -101,7 +101,7 @@ static void core_init_test(void) {
 static void core_init_test_2(void) {
 	LinphoneCore* lc;
 	char* rc_path = bc_tester_res("rcfiles/chloe_rc");
-	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL, rc_path, NULL, system_context);
+	lc = linphone_factory_create_core_2(linphone_factory_get(), NULL, NULL, rc_path, NULL, system_context);
 
 	/* until we have good certificates on our test server... */
 	linphone_core_verify_server_certificates(lc,FALSE);
@@ -128,7 +128,7 @@ static void core_init_test_2(void) {
 }
 
 static void core_init_test_3(void) {
-	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), NULL,NULL, system_context);
+	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, NULL, system_context);
 
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		linphone_core_start(lc);
@@ -150,7 +150,8 @@ static void core_init_test_3(void) {
 }
 
 static void core_init_test_4(void) {
-	char* rc_path = bc_tester_res("rcfiles/chloe_rc");
+	// Don't use a RC file used by other tests, it will be edited !!!
+	char* rc_path = bc_tester_res("rcfiles/lise_rc");
 	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), rc_path, NULL, system_context);
 
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
