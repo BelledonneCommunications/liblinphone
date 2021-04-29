@@ -331,6 +331,10 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer,
 						const SalStreamDescription & remote_answer,
 						SalStreamDescription & result){
+
+	result.proto=remote_answer.proto;
+	result.type=local_offer.type;
+
 	if (remote_answer.enabled())
 		result.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
 	else {
@@ -338,8 +342,6 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.rtp_port=0;
 		return;
 	}
-	result.proto=remote_answer.proto;
-	result.type=local_offer.type;
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
 			/*6.2 Multicast Streams

@@ -278,11 +278,18 @@ const SalStreamDescription & SalMediaDescription::findStream(SalMediaProto proto
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
+unsigned int SalMediaDescription::nbStreamsOfType(SalStreamType type) const {
+	unsigned int nb = 0;
+	for(const auto & stream : streams){
+		if (stream.getType() == type) nb++;
+	}
+	return nb;
+}
+
 unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) const {
 	unsigned int nb = 0;
 	for(const auto & stream : streams){
-		if (!stream.enabled()) continue;
-		if (stream.getType() == type) nb++;
+		if (stream.enabled() && (stream.getType() == type)) nb++;
 	}
 	return nb;
 }
