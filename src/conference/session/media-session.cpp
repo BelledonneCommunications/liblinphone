@@ -1407,27 +1407,26 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto confVideoCapabilities = currentConfParams.videoEnabled();
 		const auto & me = cppConference->getMe();
-		for (const auto & p : cppConference->getParticipants()) {
-			for (const auto & dev : p->getDevices()) {
-				const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString());
-				if (foundStreamIdx == -1) {
-					SalStreamDescription newStream;
+		if (confVideoCapabilities) {
+			for (const auto & p : cppConference->getParticipants()) {
+				for (const auto & dev : p->getDevices()) {
+					const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString());
+					if (foundStreamIdx == -1) {
+						SalStreamDescription newStream;
 
-					newStream.main = false;
-					newStream.proto = getParams()->getMediaProto();
-					newStream.type = SalVideo;
-					newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getAddress().asString().c_str());
+						newStream.main = false;
+						newStream.proto = getParams()->getMediaProto();
+						newStream.type = SalVideo;
+						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getAddress().asString().c_str());
 
 
-					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-					l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-					if (!l.empty()){
+						const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+						l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+						if (!l.empty()){
 
-						newStream.payloads = l;
-						newStream.name = "Video " + dev->getAddress().asString();
-						if (!confVideoCapabilities) {
-							newStream.dir = SalStreamInactive;
-						} else {
+							newStream.payloads = l;
+							newStream.name = "Video " + dev->getAddress().asString();
+
 							switch (dev->getVideoDirection()) {
 								case LinphoneMediaDirectionSendOnly:
 								case LinphoneMediaDirectionRecvOnly:
@@ -1441,68 +1440,68 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 									newStream.dir = SalStreamInactive;
 									break;
 							}
+
+							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getAddress().asString());
+
+						} else {
+							lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
+							newStream.dir = SalStreamInactive;
+							PayloadTypeHandler::clearPayloadList(l);
 						}
 
-						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getAddress().asString());
+		lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " adding stream for device in conference with address " << dev->getAddress().asString() << " stream direction " << sal_stream_dir_to_string(newStream.dir);
+						fillRtpParameters(newStream);
+						const auto rtp_port = q->getRandomRtpPort(newStream);
+						newStream.rtp_port = rtp_port;
+						newStream.rtcp_port = newStream.rtp_port + 1;
 
+						md->streams.push_back(newStream);
+					}
+				}
+			}
+
+			const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, me->getAddress().asString());
+			const auto & confLayout = currentConfParams.getLayout();
+
+			if (foundStreamIdx == -1) {
+				SalStreamDescription newStream;
+
+				newStream.main = false;
+				newStream.proto = getParams()->getMediaProto();
+				newStream.type = SalVideo;
+				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, me->getAddress().asString().c_str());
+				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
+
+				const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, me->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+				l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+				if (!l.empty()){
+
+					newStream.payloads = l;
+					newStream.name = "Video " + me->getAddress().asString();
+					if (confLayout == ConferenceParams::Layout::ActiveSpeaker) {
+						newStream.dir = SalStreamSendRecv;
 					} else {
-						lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
 						newStream.dir = SalStreamInactive;
-						PayloadTypeHandler::clearPayloadList(l);
 					}
 
-	lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " adding stream for device in conference with address " << dev->getAddress().asString() << " stream direction " << sal_stream_dir_to_string(newStream.dir);
-					fillRtpParameters(newStream);
-					const auto rtp_port = q->getRandomRtpPort(newStream);
-					newStream.rtp_port = rtp_port;
-					newStream.rtcp_port = newStream.rtp_port + 1;
+					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + me->getAddress().asString());
 
-					md->streams.push_back(newStream);
-				}
-			}
-		}
-
-		const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, me->getAddress().asString());
-		const auto & confLayout = currentConfParams.getLayout();
-
-		if (foundStreamIdx == -1) {
-			SalStreamDescription newStream;
-
-			newStream.main = false;
-			newStream.proto = getParams()->getMediaProto();
-			newStream.type = SalVideo;
-			newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, me->getAddress().asString().c_str());
-			newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
-
-			const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, me->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-			l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-			if (!l.empty()){
-
-				newStream.payloads = l;
-				newStream.name = "Video " + me->getAddress().asString();
-				if ((!confVideoCapabilities) || (confLayout == ConferenceParams::Layout::Grid)) {
-					newStream.dir = SalStreamInactive;
 				} else {
-					newStream.dir = SalStreamSendRecv;
+					lInfo() << "Don't put video stream for device in conference with address " << me->getAddress().asString() << " on local offer for CallSession [" << q << "]";
+					newStream.dir = SalStreamInactive;
+					PayloadTypeHandler::clearPayloadList(l);
 				}
 
-				if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + me->getAddress().asString());
+	lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " adding stream for device (me) in conference with address " << me->getAddress().asString() << " stream direction " << sal_stream_dir_to_string(newStream.dir);
+				fillRtpParameters(newStream);
+				const auto rtp_port = q->getRandomRtpPort(newStream);
+				newStream.rtp_port = rtp_port;
+				newStream.rtcp_port = newStream.rtp_port + 1;
 
-			} else {
-				lInfo() << "Don't put video stream for device in conference with address " << me->getAddress().asString() << " on local offer for CallSession [" << q << "]";
-				newStream.dir = SalStreamInactive;
-				PayloadTypeHandler::clearPayloadList(l);
+				md->streams.push_back(newStream);
 			}
 
-lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " adding stream for device (me) in conference with address " << me->getAddress().asString() << " stream direction " << sal_stream_dir_to_string(newStream.dir);
-			fillRtpParameters(newStream);
-			const auto rtp_port = q->getRandomRtpPort(newStream);
-			newStream.rtp_port = rtp_port;
-			newStream.rtcp_port = newStream.rtp_port + 1;
-
-			md->streams.push_back(newStream);
 		}
-
 	}
 
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
