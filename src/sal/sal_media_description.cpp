@@ -61,9 +61,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	accept_bundles = other.accept_bundles;
 	bundles = other.bundles;
 
-	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
-
 }
 
 SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & other) {
