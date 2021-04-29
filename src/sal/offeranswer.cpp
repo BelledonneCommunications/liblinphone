@@ -487,7 +487,13 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
 	const auto & availableEncs = local_offer.getSupportedEncryptions();
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
+	if (remoteCfg.enabled())
+		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
+	else {
+		lInfo() << "Remote configuration is disabled";
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
 
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		if (localCfg.getProto() != remoteCfg.getProto() && localCfg.hasAvpf()) {
