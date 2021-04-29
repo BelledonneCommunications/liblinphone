@@ -43,7 +43,7 @@ static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountC
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(
-		(long)linphone_account_creator_service_get_user_data(linphone_account_creator_get_service(creator))
+		(intptr_t)linphone_account_creator_service_get_user_data(linphone_account_creator_get_service(creator))
 	);
 	BC_ASSERT_EQUAL(
 		status,
