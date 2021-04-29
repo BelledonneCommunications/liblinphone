@@ -858,10 +858,14 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 		const unsigned int local_conf_participants = linphone_conference_get_participant_count(conference);
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
+		const bool_t video_enabled = !!linphone_conference_params_is_video_enabled(conf_params);
 		const LinphoneConferenceLayout local_conf_layout = linphone_conference_params_get_layout(conf_params);
 		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
 		// if layout is LinphoneConferenceLayoutActiveSpeaker, the stream speaker is added on top of one video stream for each participant
-		const int nb_video_streams = local_conf_participants + (local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0;
+		int nb_video_streams = 0;
+		if (video_enabled) {
+			nb_video_streams = local_conf_participants + ((local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0);
+		}
 		const int nb_audio_streams = 1;
 		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
