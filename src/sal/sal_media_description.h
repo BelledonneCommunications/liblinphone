@@ -52,6 +52,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
 		const SalStreamDescription & findStream(SalMediaProto proto, SalStreamType type) const;
+		unsigned int nbStreamsOfType(SalStreamType type) const;
 		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
 		const SalStreamDescription & getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
 		const SalStreamDescription findSecureStreamOfType(SalStreamType type) const;
