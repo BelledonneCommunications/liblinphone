@@ -5208,6 +5208,7 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 
 	stats* initial_stats = NULL;
 	bool_t* initial_video_call = NULL;
+	int* initial_video_streams = NULL;
 	int idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -5215,12 +5216,14 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		// Allocate memory
 		initial_stats = (stats*)realloc(initial_stats, (idx+1) * sizeof(stats));
 		initial_video_call = (bool_t*)realloc(initial_video_call, (idx+1) * sizeof(bool_t));
+		initial_video_streams = (int*)realloc(initial_video_streams, (idx+1) * sizeof(int));
 		// Append element
 		initial_stats[idx] = m->stat;
 		LinphoneCall * call = linphone_core_get_call_by_remote_address2(conf->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(call);
 		const LinphoneCallParams * params = linphone_call_get_params(call);
 		initial_video_call[idx] = linphone_call_params_video_enabled(params);
+		initial_video_streams[idx] = _linphone_call_get_nb_video_steams(call);
 
 		idx++;
 	}
@@ -5242,7 +5245,9 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 	LinphoneConference * l_conference = linphone_core_get_conference(conf->lc);
 	BC_ASSERT_PTR_NOT_NULL(l_conference);
 	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),no_participants, int, "%d");
+	unsigned int local_conf_participants = linphone_conference_get_participant_count(l_conference);
+	BC_ASSERT_EQUAL(local_conf_participants, no_participants, int, "%d");
+
 
 	idx = 0;
 	int update_cnt = 1;
@@ -5310,7 +5315,18 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 
 	wait_for_list(lcs ,NULL, 0, 1000);
 
+	const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(l_conference);
+	const bool_t video_enabled = !!linphone_conference_params_is_video_enabled(conf_params);
+	BC_ASSERT_TRUE(video_enabled == enable_video);
+	const LinphoneConferenceLayout local_conf_layout = linphone_conference_params_get_layout(conf_params);
 	const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
+	const int nb_audio_streams = 1;
+	const int nb_active_audio_streams = 1;
+	// if layout is LinphoneConferenceLayoutActiveSpeaker, the stream speaker is added on top of one video stream for each participant
+	int nb_video_streams = 0;
+	int nb_active_video_streams = 0;
+
+	idx = 0;
 	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf->lc), "misc", "conference_event_log_enabled", TRUE );
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -5324,10 +5340,23 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 				check_conference_medias(conference, pconference);
 			}
 		}
+
+		if (video_enabled) {
+			nb_video_streams = local_conf_participants + 2;
+			nb_active_video_streams = local_conf_participants + 1 + ((local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0);
+		} else {
+			nb_video_streams = initial_video_streams[idx];
+			nb_active_video_streams = 0;
+		}
+
+		check_nb_streams(conf, m, nb_audio_streams, nb_video_streams, 0, nb_active_audio_streams, nb_active_video_streams, 0);
+		idx++;
+
 	}
 
 	ms_free(initial_stats);
 	ms_free(initial_video_call);
+	ms_free(initial_video_streams);
 
 	const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
 	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == enable_video);
@@ -5505,6 +5534,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	// Enable video
 	bool_t video_enabled = TRUE;
 	set_video_in_conference(lcs, marie, new_participants, video_enabled);
+
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 

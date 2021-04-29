@@ -601,6 +601,7 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bool_t do_registration);
 void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee);
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv);
+void check_nb_streams(LinphoneCoreManager * m1, LinphoneCoreManager * m2, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams);
 
 LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const LinphoneAddress *source);
 FILE *sip_start(const char *senario, const char* dest_username, const char *passwd, LinphoneAddress* dest_addres);
