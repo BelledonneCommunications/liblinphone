@@ -5410,7 +5410,7 @@ void linphone_core_verify_server_cn(LinphoneCore *lc, bool_t yesno){
 	linphone_config_set_int(lc->config,"sip","verify_server_cn",yesno);
 }
 
-bool_t linphone_core_get_verify_server_cn(LinphoneCore *lc){
+bool_t linphone_core_is_verify_server_cn(LinphoneCore *lc){
 	return !!linphone_config_get_int(lc->config, "sip", "verify_server_cn", TRUE);
 }
 

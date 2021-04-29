@@ -1250,7 +1250,7 @@ static void search_friend_with_presence(void) {
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 #ifdef LDAP_ENABLED
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 3, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);// From LDAP
 		_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
@@ -1323,7 +1323,7 @@ static void search_friend_in_call_log(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "sip.test.org");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL);//"sip:charles@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
@@ -1854,7 +1854,7 @@ static void search_friend_chat_room_remote(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 #ifdef LDAP_ENABLED
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 6, int, "%d");// Sorted by display names
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 6, int, "%d");// Sorted by display names
 		_check_friend_result_list(marie->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);	// "Chloe"
 		_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org", NULL);	// "Laure"
 		_check_friend_result_list(marie->lc, resultList, 2, "sip:0601234567@ldap.example.org", NULL);	// "Marie"
