@@ -674,7 +674,7 @@ shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceI
 
 	auto it = d->chatRoomsById.find(conferenceId);
 	if (it != d->chatRoomsById.cend()) {
-		lInfo() << "Found chat room in RAM for conference ID " << conferenceId << ".";
+		lDebug() << "Found chat room in RAM for conference ID " << conferenceId << ".";
 		return it->second;
 	}
 
