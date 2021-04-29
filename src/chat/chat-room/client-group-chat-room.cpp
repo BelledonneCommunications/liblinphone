@@ -475,7 +475,7 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::s
 	
 	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
 	if (getParticipants().size() == 0 && getMe()->getDevices().size() == 0) {
-		lInfo() << "Chatroom SecurityLevel = Encrypted";
+		lDebug() << "Chatroom SecurityLevel = Encrypted";
 		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
 
@@ -489,10 +489,10 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::s
 		// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
 		switch (level) {
 			case AbstractChatRoom::SecurityLevel::Unsafe:
-				lInfo() << "Chatroom SecurityLevel = Unsafe";
+				lDebug() << "Chatroom SecurityLevel = Unsafe";
 				return level; // if one participant is Unsafe the whole chatroom is Unsafe
 			case AbstractChatRoom::SecurityLevel::ClearText:
-				lInfo() << "Chatroom securityLevel = ClearText";
+				lDebug() << "Chatroom securityLevel = ClearText";
 				return level; // if one participant is ClearText the whole chatroom is ClearText
 			case AbstractChatRoom::SecurityLevel::Encrypted:
 				isSafe = false; // if one participant is Encrypted the whole chatroom is Encrypted
@@ -523,10 +523,10 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::s
 	}
 
 	if (isSafe) {
-		lInfo() << "Chatroom SecurityLevel = Safe";
+		lDebug() << "Chatroom SecurityLevel = Safe";
 		return AbstractChatRoom::SecurityLevel::Safe;
 	} else {
-		lInfo() << "Chatroom SecurityLevel = Encrypted";
+		lDebug() << "Chatroom SecurityLevel = Encrypted";
 		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
 }
