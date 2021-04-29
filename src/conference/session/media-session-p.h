@@ -102,7 +102,9 @@ public:
 	int getMainAudioStreamIndex () const { return mainAudioStreamIndex; }
 	int getMainTextStreamIndex () const { return mainTextStreamIndex; }
 	int getMainVideoStreamIndex () const { return mainVideoStreamIndex; }
-	std::shared_ptr<SalMediaDescription> getResultDesc () const { return resultDesc; }
+	std::shared_ptr<SalMediaDescription> getResultDesc () const {
+		return resultDesc;
+	}
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
