@@ -509,10 +509,6 @@ bool SalStreamDescription::hasZrtp() const {
 	return false;
 }
 
-	if (haveLimeIk==1) return true;
-	return false;
-}
-
 bool SalStreamDescription::isMain() const {
 	return main;
 }
