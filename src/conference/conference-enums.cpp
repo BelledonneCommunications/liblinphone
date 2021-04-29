@@ -32,7 +32,6 @@ std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e) {
 		case ConferenceMediaCapabilities::Audio: lhs << "Audio"; break;
 		case ConferenceMediaCapabilities::Video: lhs << "Video"; break;
 		case ConferenceMediaCapabilities::Text: lhs << "Text"; break;
-		case ConferenceMediaCapabilities::Count: lhs << "Count"; break;
 	}
 	return lhs;
 }
