@@ -83,8 +83,6 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasSrtp() const;
 		bool hasDtls() const;
 		bool hasZrtp() const;
-		bool hasLimeIk() const;
-
 		bool isMain() const;
 
 		const std::string & getRtcpAddress() const;
