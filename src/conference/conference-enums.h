@@ -31,8 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 enum class ConferenceMediaCapabilities {
 	Audio, // Audio text capabilities
 	Video, // Video capabilities
-	Text, // Text capabilities
-	Count // Count of media capabilities
+	Text   // Text capabilities
 };
 
 std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e);
