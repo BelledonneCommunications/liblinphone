@@ -1537,7 +1537,7 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 						Address remoteContactAddress(remoteContactAddressStr);
 						ms_free(remoteContactAddressStr);
 
-						// If the call is in a remote conference but it has not been created yet
+						// If the call is in a remote conference
 						if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
 							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 							if (!l.empty()){
@@ -1676,18 +1676,21 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 
 							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getAddress().asString());
 
+							fillRtpParameters(newStream);
+							const auto rtp_port = q->getRandomRtpPort(newStream);
+							newStream.rtp_port = rtp_port;
+							newStream.rtcp_port = newStream.rtp_port + 1;
+
 						} else {
 							lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
 							newStream.dir = SalStreamInactive;
+							newStream.disable();
+							newStream.rtp_port = 0;
+							newStream.rtcp_port = 0;
 							PayloadTypeHandler::clearPayloadList(l);
 						}
 
 		lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAddress()) << " is in local conference " << isInLocalConference << " adding stream for device in conference with address " << dev->getAddress().asString() << " stream direction " << sal_stream_dir_to_string(newStream.dir);
-						fillRtpParameters(newStream);
-						const auto rtp_port = q->getRandomRtpPort(newStream);
-						newStream.rtp_port = rtp_port;
-						newStream.rtcp_port = newStream.rtp_port + 1;
-
 						md->streams.push_back(newStream);
 					}
 				}
@@ -1771,7 +1774,11 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 
 		SalStreamDir videoDir = SalStreamInactive;
 		if (conference && isInLocalConference) {
-			videoDir = SalStreamSendOnly;
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & currentConfParams = cppConference->getCurrentParams();
+			const auto confVideoCapabilities = currentConfParams.videoEnabled();
+			videoDir = (confVideoCapabilities) ? SalStreamSendOnly : SalStreamInactive;
+>>>>>>> Add checks for number of streams
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 		}
@@ -1780,6 +1787,10 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 
 		videoStream.setSupportedEncryptions(encList);
 		videoStream.main = true;
+
+		if (videoStream.dir == SalStreamInactive) {
+			videoStream.disable();
+		}
 
 		const auto videoStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalVideo) : -1;
 		if (videoStreamIdx == -1) {
