@@ -2801,7 +2801,7 @@ LINPHONE_PUBLIC void linphone_core_verify_server_cn(LinphoneCore *core, bool_t y
  * @return True if the tls server certificate common name must be verified
  * @ingroup initializing
 **/
-LINPHONE_PUBLIC bool_t linphone_core_get_verify_server_cn(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_is_verify_server_cn(LinphoneCore *core);
 
 /**
  * Gets the path to a file or folder containing the trusted root CAs (PEM format)

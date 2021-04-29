@@ -1323,7 +1323,7 @@ static void search_friend_in_call_log(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "sip.test.org");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL);//"sip:charles@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
