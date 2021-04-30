@@ -690,7 +690,9 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 
 		const auto & newParticipantSession = call->getActiveSession();
 		if (getCurrentParams().videoEnabled()) {
-			lInfo() << "Re-INVITing participants because participant device " << newParticipantSession->getRemoteContactAddress()->asString() << " joined conference " << getConferenceAddress();
+			if (newParticipantSession->getRemoteContactAddress()) {
+				lInfo() << "Re-INVITing participants because participant device " << newParticipantSession->getRemoteContactAddress()->asString() << " joined conference " << getConferenceAddress();
+			}
 			updateAllParticipantSessionsExcept(newParticipantSession);
 		}
 		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
