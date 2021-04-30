@@ -1170,6 +1170,7 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 
 	LinphoneConference * conference = linphone_core_get_conference(conf_mgr->lc);
 	bool_t one_participant_conference_enabled = FALSE;
+	bool_t video_enabled = FALSE;
 	if (conference) {
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
 		one_participant_conference_enabled = linphone_conference_params_is_one_participant_conference_enabled(conf_params);
@@ -1192,6 +1193,9 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 		if (conference) {
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
 			BC_ASSERT_EQUAL(linphone_conference_is_in(conference), local_participant_is_in, int, "%d");
+
+			const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
+			video_enabled = (!!linphone_conference_params_is_video_enabled(conf_params));
 		}
 	}
 
@@ -1260,7 +1264,9 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 				// Wait for notify of participant device deleted and participant deleted
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(participants_initial_stats[idx].number_of_NotifyReceived + 2),3000));
 
-				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));
+				if (video_enabled == TRUE) {
+					BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));
+				}
 			}
 			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallEnd,participants_initial_stats[idx].number_of_LinphoneCallEnd, int, "%0d");
 			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallReleased,participants_initial_stats[idx].number_of_LinphoneCallReleased, int, "%0d");
