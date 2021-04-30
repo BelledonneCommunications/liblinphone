@@ -313,6 +313,10 @@ endif()
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	account/account.cpp
 	account/account-params.cpp
+	account_creator/utils.cpp
+	account_creator/service.cpp
+	account_creator/main.cpp
+	account_creator/connector_xmlrpc.cpp
 	address/address.cpp
 	address/identity-address.cpp
 	address/identity-address-parser.cpp
@@ -352,12 +356,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
-
-	account_creator/utils.cpp
-	account_creator/service.cpp
-	account_creator/main.cpp
-	account_creator/connector_xmlrpc.cpp
-
 	call/call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
