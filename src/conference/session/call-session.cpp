@@ -170,8 +170,11 @@ void CallSessionPrivate::executePendingActions() {
 
 void CallSessionPrivate::setTransferState (CallSession::State newState) {
 	L_Q();
-	if (newState == transferState)
+	if (newState == transferState) {
+		lError() << "Unable to change transfer state for CallSession [" << q << "] from ["
+			<< Utils::toString(transferState) << "] to [" << Utils::toString(newState) << "]";
 		return;
+	}
 	lInfo() << "Transfer state for CallSession [" << q << "] changed from ["
 		<< Utils::toString(transferState) << "] to [" << Utils::toString(newState) << "]";
 	transferState = newState;
@@ -1361,8 +1364,10 @@ LinphoneStatus CallSession::transfer (const shared_ptr<CallSession> &dest) {
 
 LinphoneStatus CallSession::transfer (const Address &address) {
 	L_D();
-	if (!address.isValid())
+	if (!address.isValid()) {
+		lError() << "Received invalid address " << address.asString() << " to transfer the call to";
 		return -1;
+	}
 	d->op->refer(address.asString().c_str());
 	d->setTransferState(CallSession::State::OutgoingInit);
 	return 0;

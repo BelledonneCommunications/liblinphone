@@ -1493,13 +1493,17 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 	switch (callState) {
 		case LinphoneCallStreamsRunning:
 		case LinphoneCallPaused:
-			if (state == ConferenceInterface::State::Created) {
+		{
+			CallSession::State focusCallState = m_focusCall->getState();
+			// Transfer call to focus is the conference is in creation pending or created state and if the focus call is in connected, streams running or updated by remote state
+			if (((focusCallState == CallSession::State::StreamsRunning) || (focusCallState == CallSession::State::Connected) || (focusCallState == CallSession::State::UpdatedByRemote)) && ((getState() == ConferenceInterface::State::CreationPending) || (state == ConferenceInterface::State::Created))) {
 				// Transfer call only if focus call remote contact address is available (i.e. the call has been correctly established and passed through state StreamsRunning)
 				if (m_focusCall && (m_focusCall->getRemoteContact().empty() == false)) {
 					m_pendingCalls.remove(call);
 					transferToFocus(call);
 				}
 			}
+		}
 			break;
 		case LinphoneCallError:
 		case LinphoneCallEnd:
