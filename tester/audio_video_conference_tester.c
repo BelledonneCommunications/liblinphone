@@ -6426,6 +6426,44 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 }
 #endif
 
+static void back_to_back_conferences_same_core(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
+	linphone_core_set_inc_timeout(michelle->lc, 10000);
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,pauline);
+	participants=bctbx_list_append(participants,laure);
+
+	// Marie hosts the conference
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
+	bctbx_list_free(participants);
+
+	bctbx_list_t* new_participants=NULL;
+	new_participants=bctbx_list_append(new_participants,laure);
+	new_participants=bctbx_list_append(new_participants,michelle);
+	new_participants=bctbx_list_append(new_participants,pauline);
+
+	// Laure hosts the conference
+	conference_with_calls_queued(marie, NULL, new_participants, FALSE, FALSE);
+	bctbx_list_free(new_participants);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(michelle);
+}
+
 static void back_to_back_conferences(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
@@ -6958,6 +6996,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
 	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
 	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
+	TEST_NO_TAG("Back to back conferences with same core", back_to_back_conferences_same_core),
 	TEST_NO_TAG("Try to create second conference with local participant", try_to_create_second_conference_with_local_participant),
 	TEST_NO_TAG("Interleaved conference creation", interleaved_conference_creation),
 	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
