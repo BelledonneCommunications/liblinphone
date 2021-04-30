@@ -411,6 +411,7 @@ bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &sessio
 
 bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session) const {
 	const auto & cConference = getConference();
+lInfo() << "DEBUG DEBUG conference " << cConference;
 	if (cConference) {
 		const auto conference = MediaConference::Conference::toCpp(cConference);
 		const ConferenceId localConferenceId = ConferenceId(session->getLocalAddress(), session->getLocalAddress());
@@ -418,6 +419,7 @@ bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session
 		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
 		StreamsGroup & sg = ms->getStreamsGroup();
 		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
+lInfo() << "DEBUG DEBUG participant " << participant << " attached to mixer " << attachedToMixer << " conference ID: expected " << localConferenceId << " actual " << conference->getConferenceId();
 		return (participant && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
 
@@ -492,6 +494,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		{
 
 			const auto op = session->getPrivate()->getOp();
+			if (op) lInfo() << "DEBUG DEBUG local address " << session->getLocalAddress().asString() << " remote address " << session->getRemoteAddress()->asString() << " subjct " << sal_custom_header_find(op->getRecvCustomHeaders(), "Subject") << " attached to local conference " << attachedToLocalConference(session);
+			else lInfo() << "DEBUG DEBUG Call in updated by remote has a null call op";
 			if (attachedToLocalConference(session)) {
 				// The remote participant requested to change subject
 				changeSubjectInLocalConference(op);
