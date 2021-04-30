@@ -2402,19 +2402,19 @@ void MediaSession::initiateIncoming () {
 
 		d->deferIncomingNotification = d->getStreamsGroup().prepare();
 		/*
-			* If ICE gathering is done, we can update the local media description immediately.
-			* Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
-			*/
+		* If ICE gathering is done, we can update the local media description immediately.
+		* Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
+		*/
 		if (d->deferIncomingNotification) {
 			auto incomingNotificationTask = [d](){
 				/* There is risk that the call can be terminated before this task is executed, for example if offer/answer fails.*/
-				if (d->state != State::Idle) return;
+				if (d->state != State::Idle && d->state != State::PushIncomingReceived) return;
 				d->deferIncomingNotification = false;
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 				d->startIncomingNotification();
 			};
 			d->queueIceCompletionTask(incomingNotificationTask);
-		}else{
+		} else {
 			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 		}
 	}

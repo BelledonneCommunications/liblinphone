@@ -202,7 +202,8 @@ std::shared_ptr<const AccountParams> Account::getAccountParams () const {
 void Account::applyParamsChanges () {
 	if (mOldParams == nullptr
 		|| mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed
-		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed)
+		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed
+		|| linphone_push_notification_config_get_provider(mOldParams->mPushNotificationConfig) != linphone_push_notification_config_get_provider(mParams->mPushNotificationConfig))
 		onPushNotificationAllowedChanged(false);
 
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
