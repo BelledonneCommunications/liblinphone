@@ -634,6 +634,13 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(Lin
 **/
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
 
+
+/**
+ * Create and configure a proxy config and a authentication info for an account creator
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return A #LinphoneAccount object if successful, NULL otherwise. @maybenil
+**/
+LINPHONE_PUBLIC LinphoneAccount * linphone_account_creator_create_quentin_account(const LinphoneAccountCreator *creator);
 /**************/
 /* DEPRECATED */
 /**************/
