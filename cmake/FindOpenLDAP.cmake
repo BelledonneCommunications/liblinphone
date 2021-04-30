@@ -41,26 +41,26 @@ find_path(OPENLDAP_INCLUDE_DIRS
 
 #LDAP
 find_library(LDAP_LIB
-	NAMES ldap
+	NAMES ldap libldap
 	HINTS "${CMAKE_INSTALL_PREFIX}"
 	PATH_SUFFIXES lib
 	NO_DEFAULT_PATH
 )
 find_library(LDAP_LIB
-	NAMES ldap
+	NAMES ldap libldap
 	HINTS "${CMAKE_INSTALL_PREFIX}"
 	PATH_SUFFIXES lib
 )
 
 #LBER
 find_library(LBER_LIB
-	NAMES lber
+	NAMES lber liblber
 	HINTS "${CMAKE_INSTALL_PREFIX}"
 	PATH_SUFFIXES lib
 	NO_DEFAULT_PATH
 )
 find_library(LBER_LIB
-	NAMES lber
+	NAMES lber liblber
 	HINTS "${CMAKE_INSTALL_PREFIX}"
 	PATH_SUFFIXES lib
 )

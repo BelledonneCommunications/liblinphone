@@ -352,12 +352,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
-
-	account_creator/utils.cpp
-	account_creator/service.cpp
-	account_creator/main.cpp
-	account_creator/connector_xmlrpc.cpp
-
 	call/call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
@@ -483,6 +477,10 @@ endif()
 
 if (ENABLE_FLEXIAPI)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		account_creator/utils.cpp
+		account_creator/service.cpp
+		account_creator/main.cpp
+		account_creator/connector_xmlrpc.cpp
 		account_creator/connector_flexiapi.cpp
 		FlexiAPIClient.cc
 	)
