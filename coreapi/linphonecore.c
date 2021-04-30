@@ -4515,7 +4515,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
 	bool defer = Call::toCpp(call)->initiateOutgoing();
 	if (!defer) {
-		if (Call::toCpp(call)->startInvite(nullptr) != 0) {
+		if (Call::toCpp(call)->startInvite(NULL) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
