@@ -38,7 +38,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
 )
 
-if(ENABLE_DOC AND ENABLE_CSHARP_WRAPPER)
+if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 	message(CHECK_START "Generate C# wrapper html site")
 	find_program(
         DOCFX_EXECUTABLE
