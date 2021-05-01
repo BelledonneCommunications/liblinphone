@@ -210,9 +210,6 @@ static void video_call_with_high_bandwidth_available(void) {
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
-	linphone_core_set_video_preset(marie->lc, "custom");
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
-
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
 	simparams.max_bandwidth = 1000000;
@@ -684,8 +681,6 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
-	linphone_core_set_video_preset(marie->lc, "custom");
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 	linphone_core_enable_adaptive_rate_control(marie->lc, FALSE); /* We don't want adaptive rate control here, in order to not interfere with loss recovery algorithms*/
 
 	simparams.mode = OrtpNetworkSimulatorOutbound;
@@ -695,6 +690,8 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	simparams.latency = 60;
 	simparams.loss_rate = 70;
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
+	
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 
 	if (!with_avpf){
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_fb_implicit_rtcp_fb", 0);
