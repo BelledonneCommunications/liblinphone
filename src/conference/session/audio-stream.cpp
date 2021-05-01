@@ -424,7 +424,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			}
 		}
 	}
-	
+
 	getGroup().addPostRenderHook([this, onHoldFile] {
 		/* The on-hold file is to be played once both audio and video are ready */
 		if (!onHoldFile.empty() && !getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
