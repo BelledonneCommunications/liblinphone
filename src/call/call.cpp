@@ -627,7 +627,6 @@ void Call::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session)
 	if (linphone_core_get_calls_nb(getCore()->getCCore()) == 1 && !isInConference()) {
 		L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(getSharedFromThis());
 	}
-	getCore()->getPrivate()->getToneManager()->startRingtone(session);
 }
 
 void Call::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {
@@ -745,6 +744,10 @@ void Call::onTmmbrReceived (const shared_ptr<CallSession> &session, int streamIn
 
 void Call::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *file_path) {
 	linphone_call_notify_snapshot_taken(this->toC(), file_path);
+}
+
+void Call::onStartRingtone(const shared_ptr<CallSession> &session){
+	getCore()->getPrivate()->getToneManager()->startRingtone(session);
 }
 
 // =============================================================================
