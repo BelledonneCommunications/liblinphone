@@ -479,7 +479,9 @@ void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, v
 	bc_tester_set_logfile_func(logfile_arg_func);
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
-	bc_tester_set_max_parallel_suites(10); /* empiricly defined as sustainable for mac book pro with 4 hyperthreaded cores.*/
+	bc_tester_set_max_parallel_suites(10); /* empiricaly defined as sustainable for mac book pro with 4 hyperthreaded cores.*/
+	bc_tester_set_global_timeout(15*60); /* 15 mn max */
+	bc_tester_set_max_failed_tests_threshold(5); /* Please adjust this threshold as long as the full tester becomes more and more reliable.*/
 }
 
 int liblinphone_tester_set_log_file(const char *filename) {
