@@ -1,5 +1,5 @@
 [misc]
-config-uri=http://smtp.linphone.org/marie_transient_xml
+config-uri=http://provisioning.example.org:10080/marie_transient_xml
 
 [tester]
 test_env=1
