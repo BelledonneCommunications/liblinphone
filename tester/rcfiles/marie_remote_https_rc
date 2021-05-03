@@ -1,5 +1,5 @@
 [misc]
-config-uri=https://smtp.linphone.org/marie_xml
+config-uri=https://provisioning.example.org:10443/marie_xml
 
 [tester]
 test_env=1
