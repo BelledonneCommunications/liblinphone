@@ -5109,17 +5109,22 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 
 		// Remote  conference
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
-		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
 
 	}
 
 	laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(laure_conference);
+	if (laure_conference) {
+		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
+	}
 	linphone_address_unref(laure_uri);
 
 	chloe_conference = linphone_core_search_conference(chloe->lc, NULL, chloe_uri, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(chloe_conference);
+	if (chloe_conference) {
+		BC_ASSERT_EQUAL(linphone_conference_is_in(chloe_conference), 1, int, "%d");
+	}
 	linphone_address_unref(chloe_uri);
 
 	marie_initial_stats = marie->stat;
