@@ -177,14 +177,16 @@ extern const char* lime_server_c25519_tlsauth_req_url;
 extern const char* lime_server_c448_tlsauth_req_url;
 extern const char* lime_server_c25519_external_url;
 extern const char* lime_server_c448_external_url;
-extern bool_t liblinphone_tester_keep_uuid;
-extern bool_t liblinphone_tester_tls_support_disabled;
+
+
+
 extern const MSAudioDiffParams audio_cmp_params;
 extern const char *liblinphone_tester_mire_id;
 extern const char *liblinphone_tester_static_image_id;
 extern bool_t liblinphonetester_ipv6;
 extern bool_t liblinphonetester_show_account_manager_logs;
 extern bool_t liblinphonetester_no_account_creator;
+extern bool_t liblinphone_tester_tls_support_disabled;
 
 typedef struct _stats {
 	int number_of_LinphoneRegistrationNone;
