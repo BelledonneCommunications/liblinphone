@@ -1,5 +1,5 @@
 [misc]
-config-uri=http://smtp.linphone.org/marie_404
+config-uri=http://provisioning.example.org:10080/marie_404
 
 [tester]
 test_env=1
