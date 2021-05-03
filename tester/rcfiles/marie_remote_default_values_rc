@@ -1,5 +1,5 @@
 [misc]
-config-uri=http://smtp.linphone.org/marie_default
+config-uri=http://provisioning.example.org:10080/marie_default
 
 [app]
 toto=titi
