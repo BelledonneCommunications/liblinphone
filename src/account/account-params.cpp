@@ -125,7 +125,13 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	mContactParameters = linphone_config_get_string(config, key, "contact_parameters", mContactParameters.c_str());
 	mContactUriParameters = linphone_config_get_string(config, key, "contact_uri_parameters", mContactUriParameters.c_str());
-
+	// Use an Address to avoid rewriting a whole new parser to get the push parameters from scratch
+	Address lAddr(string("sip:dummy;" + mContactUriParameters));
+	
+	linphone_push_notification_config_set_provider(mPushNotificationConfig, lAddr.getUriParamValue("pn-provider").c_str());
+	linphone_push_notification_config_set_prid(mPushNotificationConfig, lAddr.getUriParamValue("pn-prid").c_str());
+	linphone_push_notification_config_set_param(mPushNotificationConfig, lAddr.getUriParamValue("pn-param").c_str());
+	
 	mExpires = linphone_config_get_int(config, key, "reg_expires", mExpires);
 	mRegisterEnabled = !!linphone_config_get_int(config, key, "reg_sendregister", mRegisterEnabled);
 	mPublishEnabled = !!linphone_config_get_int(config, key, "publish", mPublishEnabled);
