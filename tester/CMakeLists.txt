@@ -259,12 +259,7 @@ set(SOURCE_FILES_C
 	complex_sip_case_tester.c
 	dtmf_tester.c
 	eventapi_tester.c
-	external_domain_tester.c
 	flexisip_tester.c
-	group_chat_tester.c
-	group_chat_ephemeral_tester.c
-	group_chat_secure_tester.c
-	group_chat_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
@@ -283,12 +278,22 @@ set(SOURCE_FILES_C
 	vcard_tester.c
 	video_quality_tester.c
 	shared_core_tester.c
-	local_conference_tester.cpp
 	video_tester.c
 )
 
-if(ENABLE_LIME_X3DH)
-	list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
+if(ENABLE_ADVANCED_IM)
+	list(APPEND  SOURCE_FILES_C
+		group_chat_tester.c
+		group_chat_secure_tester.c
+		external_domain_tester.c
+	)
+
+	if(ENABLE_LIME_X3DH)
+		list(APPEND SOURCE_FILES_C
+			group_chat_ephemeral_tester.c
+			group_chat_secure_tester.c
+		)
+	endif()
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
@@ -308,7 +313,6 @@ set(SOURCE_FILES_CXX
 	shared_tester_functions.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
-	lime-user-authentication-tester.cpp
 	vfs-encryption-tester.cpp
 )
 
@@ -318,7 +322,15 @@ if(ENABLE_FLEXIAPI)
 endif()
 
 if(ENABLE_ADVANCED_IM)
-	list(APPEND SOURCE_FILES_CXX conference-event-tester.cpp)
+	list(APPEND  SOURCE_FILES_CXX
+		conference-event-tester.cpp
+		local_conference_tester.cpp
+	)
+	if(ENABLE_LIME_X3DH)
+		list(APPEND  SOURCE_FILES_CXX
+			lime-user-authentication-tester.cpp
+		)
+	endif()
 endif()
 
 if(ENABLE_DB_STORAGE)
@@ -340,17 +352,19 @@ if(APPLE)
 	endif()
 endif()
 
-set(GROUP_CHAT_BENCHMARK_SOURCE_C
-	accountmanager.c
-	tester.c
-	group_chat_tester.c
-	group_chat_benchmark.c
-)
+if(ENABLE_ADVANCED_IM)
+	set(GROUP_CHAT_BENCHMARK_SOURCE_C
+		accountmanager.c
+		tester.c
+		group_chat_tester.c
+		group_chat_benchmark.c
+	)
 
-set(GROUP_CHAT_BENCHMARK_HEADERS
-	liblinphone_tester.h
-	tools/tester.h
-)
+	set(GROUP_CHAT_BENCHMARK_HEADERS
+		liblinphone_tester.h
+		tools/tester.h
+	)
+endif()
 
 set(LINPHONETESTER_RESOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/certificates"
@@ -374,7 +388,9 @@ bc_apply_compile_flags(SOURCE_FILES_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 bc_apply_compile_flags(SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 
-bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
+if(ENABLE_ADVANCED_IM)
+	bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
+endif()
 
 add_definitions("-DLINPHONE_TESTER")
 
@@ -484,19 +500,21 @@ if(NOT ANDROID)
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
 
-		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
-		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
-		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
-		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
-		target_include_directories(groupchat_benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
-		target_link_libraries(groupchat_benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
+		if(ENABLE_ADVANCED_IM)
+			add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
+			set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+			set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
+			set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
+			target_include_directories(groupchat_benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
+			target_link_libraries(groupchat_benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
-		install(TARGETS groupchat_benchmark
-			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-		)
+			install(TARGETS groupchat_benchmark
+				RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+				LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+				ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+				PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+			)
+		endif()
 
 	endif()
 	install(FILES ${CERTIFICATE_ALT_FILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/liblinphone_tester/certificates/altname")

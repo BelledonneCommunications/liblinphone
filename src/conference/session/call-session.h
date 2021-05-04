@@ -42,12 +42,14 @@ namespace MediaConference {
 
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
+#ifdef HAVE_ADVANCED_IM
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
-	friend class Conference;
-	friend class CorePrivate;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
+#endif // HAVE_ADVANCED_IM
+	friend class Conference;
+	friend class CorePrivate;
 	friend class ParticipantDevice;
 
 	friend class MediaConference::LocalConference;
