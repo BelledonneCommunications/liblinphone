@@ -50,22 +50,15 @@ if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 			COPY "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project"
 			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/" 
 		)
-		
-		# Check git describe to see if we are on a release or not
-		set(LINPHONE_STATE "snapshots")
-		execute_process(COMMAND ${GIT_EXECUTABLE} describe OUTPUT_VARIABLE GIT_DESC)
-		if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
-			set(LINPHONE_STATE "releases")
-		endif()
 
 		# Remove everything after the last point in LINPHONE_VERSION (4.5.0 --> 4.5) to create STRIPPED_LINPHONE_VERSION
 		string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
-		# Replace @LINPHONE_STATE@ and @STRIPPED_LINPHONE_VERSION@ in site main page
+		# Replace @LINPHONESDK_STATE@ and @STRIPPED_LINPHONE_VERSION@ in site main page
 		configure_file(
 			"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md" 
 			"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md"
 		)
-		# Replace @LINPHONE_STATE@ and @STRIPPED_LINPHONE_VERSION@ version.txt.in, this
+		# Replace @LINPHONESDK_STATE@ and @STRIPPED_LINPHONE_VERSION@ version.txt.in, this
 		# file will be used for csharp doc upload
 		configure_file(
 			"${CMAKE_CURRENT_SOURCE_DIR}/version.txt.in"
