@@ -210,9 +210,6 @@ static void video_call_with_high_bandwidth_available(void) {
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
-	linphone_core_set_video_preset(marie->lc, "custom");
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
-
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
 	simparams.max_bandwidth = 1000000;
@@ -227,7 +224,7 @@ static void video_call_with_high_bandwidth_available(void) {
 		/*wait a little in order to have traffic*/
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 5, 50000));
 
-		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 870000.f, float, "%f");
+		BC_ASSERT_GREATER((float)marie->stat.last_tmmbr_value_received, 810000.f, float, "%f");
 		BC_ASSERT_LOWER((float)marie->stat.last_tmmbr_value_received, 1150000.f, float, "%f");
 
 		end_call(marie, pauline);
@@ -425,6 +422,7 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 				LinphoneCall *call = linphone_core_get_current_call(marie->lc);
 				VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
 				MSVideoConfiguration vconf;
+				LinphoneCallStats *stats;
 
 				wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 50000);
 
@@ -433,7 +431,9 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 				while (wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 1, 10000)) {
 					marie->stat.last_tmmbr_value_received = 0;
 				}
-
+				stats = linphone_call_get_video_stats(call);
+				BC_ASSERT_GREATER((int)linphone_call_stats_get_upload_bandwidth(stats), 250, int, "%i");
+				linphone_call_stats_unref(stats);
 				ms_filter_call_method(vstream->ms.encoder, MS_VIDEO_ENCODER_GET_CONFIGURATION, &vconf);
 
 				BC_ASSERT_EQUAL(vconf.vsize.width*vconf.vsize.height, width*height, int, "%d");
@@ -652,9 +652,9 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 
 		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,1));
 		BC_ASSERT_TRUE( wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
-		wait_for_until(pauline->lc, marie->lc, NULL, 0, 14000);
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 18000);
 		ms_message("Number of generic NACK received by Marie: %i", marie->stat.number_of_rtcp_generic_nack);
-		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 55, int, "%d");
+		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 60, int, "%d");
 	}
 	end_call(pauline, marie);
 
@@ -681,8 +681,6 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	linphone_core_set_video_policy(marie->lc, &pol);
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
-	linphone_core_set_video_preset(marie->lc, "custom");
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 	linphone_core_enable_adaptive_rate_control(marie->lc, FALSE); /* We don't want adaptive rate control here, in order to not interfere with loss recovery algorithms*/
 
 	simparams.mode = OrtpNetworkSimulatorOutbound;
@@ -692,6 +690,8 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	simparams.latency = 60;
 	simparams.loss_rate = 70;
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
+	
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 
 	if (!with_avpf){
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_fb_implicit_rtcp_fb", 0);

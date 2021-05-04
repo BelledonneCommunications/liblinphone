@@ -112,12 +112,14 @@ void MediaSessionPrivate::accepted () {
 				 * confusing from a signaling standpoint, ICE we will skip the STUN gathering by not giving enough time
 				 * for the gathering step. Only local candidates will be answered in the ACK.
 				 */
-				if (getStreamsGroup().prepare()){
-					lWarning() << "Some gathering is needed for ICE, however since a defered sending of ACK is not supported"
-						" the ICE gathering will only contain local candidates.";
+				if (linphone_nat_policy_ice_enabled(natPolicy)){
+					if (getStreamsGroup().prepare()){
+						lWarning() << "Some gathering is needed for ICE, however since a defered sending of ACK is not supported"
+							" the ICE gathering will only contain local candidates.";
+					}
+					getStreamsGroup().finishPrepare();
+					updateLocalMediaDescriptionFromIce(localIsOfferer);
 				}
-				getStreamsGroup().finishPrepare();
-				updateLocalMediaDescriptionFromIce(localIsOfferer);
 			}
 		break;
 		default:
@@ -2081,7 +2083,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
 		startAccept();
 	};
-	if (getStreamsGroup().prepare()){
+	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()){
 		queueIceCompletionTask(acceptCompletionTask);
 		return; /* Deferred until completion of ICE gathering */
 	}
@@ -2129,7 +2131,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		startAcceptUpdate(nextState, stateInfo);
 	};
 
-	if (getStreamsGroup().prepare()){
+	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()){
 		lInfo() << "Acceptance of incoming reINVITE is deferred to ICE gathering completion.";
 		queueIceCompletionTask(acceptCompletionTask);
 		return 0; /* Deferred until completion of ICE gathering */
@@ -2395,26 +2397,25 @@ LinphoneStatus MediaSession::deferUpdate () {
 void MediaSession::initiateIncoming () {
 	L_D();
 	CallSession::initiateIncoming();
-	if (d->natPolicy) {
-		if (linphone_nat_policy_ice_enabled(d->natPolicy)){
 
-			d->deferIncomingNotification = d->getStreamsGroup().prepare();
-			/*
-			 * If ICE gathering is done, we can update the local media description immediately.
-			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
-			 */
-			if (d->deferIncomingNotification) {
-				auto incomingNotificationTask = [d](){
-					/* There is risk that the call can be terminated before this task is executed, for example if offer/answer fails.*/
-					if (d->state != State::Idle) return;
-					d->deferIncomingNotification = false;
-					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-					d->startIncomingNotification();
-				};
-				d->queueIceCompletionTask(incomingNotificationTask);
-			}else{
+	if (linphone_nat_policy_ice_enabled(d->natPolicy)){
+
+		d->deferIncomingNotification = d->getStreamsGroup().prepare();
+		/*
+			* If ICE gathering is done, we can update the local media description immediately.
+			* Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
+			*/
+		if (d->deferIncomingNotification) {
+			auto incomingNotificationTask = [d](){
+				/* There is risk that the call can be terminated before this task is executed, for example if offer/answer fails.*/
+				if (d->state != State::Idle) return;
+				d->deferIncomingNotification = false;
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-			}
+				d->startIncomingNotification();
+			};
+			d->queueIceCompletionTask(incomingNotificationTask);
+		}else{
+			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 		}
 	}
 }
@@ -2605,15 +2606,8 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 int MediaSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
-	if (!getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
-		/* Give a chance to set card prefered sampling frequency */
-		if (d->localDesc && (d->localDesc->streams.size() > 0) && (d->localDesc->streams[0].max_rate > 0))
-			ms_snd_card_set_preferred_sample_rate(getCore()->getCCore()->sound_conf.play_sndcard, d->localDesc->streams[0].max_rate);
-		d->getStreamsGroup().prepare();
-	}
 
 	if (d->localDesc) {
-		srand((unsigned int)time(NULL));
 		for (auto & stream : d->localDesc->streams) {
 			// In case of multicasting, choose a random port to send with the invite
 			if (ms_is_multicast(L_STRING_TO_C(stream.rtp_addr))){
@@ -2722,7 +2716,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			return res;
 		};
 
-		if (d->getStreamsGroup().prepare()) {
+		if (linphone_nat_policy_ice_enabled(d->natPolicy) && d->getStreamsGroup().prepare()) {
 			lInfo() << "Defer CallSession update to gather ICE candidates";
 			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
