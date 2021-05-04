@@ -1548,7 +1548,7 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 	}
 
 	const SalStreamDescription &oldVideoStream = refMd ? refMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	if ((conference && isInLocalConference) ||  getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription videoStream;
 		videoStream.main = true;
 		videoStream.proto = getParams()->getMediaProto();
@@ -1558,7 +1558,7 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & currentConfParams = cppConference->getCurrentParams();
 			const auto confVideoCapabilities = currentConfParams.videoEnabled();
-			videoStream.dir = (confVideoCapabilities) ? SalStreamSendOnly : SalStreamInactive;
+			videoStream.dir = (confVideoCapabilities && getParams()->videoEnabled()) ? SalStreamRecvOnly : SalStreamInactive;
 		} else {
 			videoStream.dir = getParams()->getPrivate()->getSalVideoDirection();
 		}
