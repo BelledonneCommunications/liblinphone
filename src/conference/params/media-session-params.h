@@ -44,6 +44,7 @@ class MediaSessionParams : public CallSessionParams {
 	friend class MS2AudioStream;
 	friend class MS2VideoStream;
 	friend class MS2RTTStream;
+	friend class ParticipantDevice;
 
 	friend class MediaConference::LocalConference;
 public:
