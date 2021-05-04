@@ -692,7 +692,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 				const bool_t remote_is_in = linphone_conference_is_in(remote_conference);
 				const LinphoneConferenceParams * remote_params = linphone_conference_get_current_params(remote_conference);
 				LinphoneMediaDirection audio_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_audio_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
-				LinphoneMediaDirection video_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_video_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendOnly;
+				LinphoneMediaDirection video_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_video_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
 				LinphoneMediaDirection text_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_chat_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
 				local_devices = linphone_participant_get_devices (p);
 				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
@@ -817,6 +817,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 
 	int expected_subscriptions = 0;
+	int expected_active_streams = 0;
 	if (conference) {
 		expected_subscriptions = linphone_conference_get_participant_count(conference);
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
@@ -826,6 +827,12 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			if (!event_log_enabled) {
 				expected_subscriptions--;
 			}
+
+			LinphoneCall * part_to_conf_call = linphone_core_get_call_by_remote_address2(m->lc, conf_mgr->identity);
+			BC_ASSERT_PTR_NOT_NULL(part_to_conf_call);
+			const LinphoneCallParams * part_to_conf_call_params = linphone_call_get_current_params(part_to_conf_call);
+			if (linphone_call_params_video_enabled(part_to_conf_call_params)) expected_active_streams++;
+
 		}
 	}
 
@@ -866,10 +873,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		// if layout is LinphoneConferenceLayoutActiveSpeaker, the stream speaker is added on top of one video stream for each participant
 		int nb_video_streams = 0;
 		int nb_active_video_streams = 0;
-		if (video_enabled) {
-			nb_video_streams = local_conf_participants + 2;
-			nb_active_video_streams = local_conf_participants + 1 + ((local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0);
-		}
 		idx = 0;
 		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -884,9 +887,13 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 				}
 			}
 
-			if (video_enabled) {
+			LinphoneCall * conf_to_part_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
+			BC_ASSERT_PTR_NOT_NULL(conf_to_part_call);
+
+			if (video_enabled && conf_to_part_call) {
 				nb_video_streams = local_conf_participants + 2;
-				nb_active_video_streams = local_conf_participants + 1 + ((local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0);
+				const LinphoneCallParams * conf_to_part_call_params = linphone_call_get_current_params(conf_to_part_call);
+				nb_active_video_streams = expected_active_streams + ((linphone_call_params_video_enabled(conf_to_part_call_params)) ? 1 : 0) + ((local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0);
 			} else {
 				nb_video_streams = initial_call_video_streams[idx];
 				nb_active_video_streams = 0;
@@ -896,6 +903,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			idx++;
 		}
 	}
+
 }
 
 void check_nb_streams(LinphoneCoreManager * m1, LinphoneCoreManager * m2, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams) {
