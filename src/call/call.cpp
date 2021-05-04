@@ -337,9 +337,11 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 	if (getConference()) {
 		auto conference = MediaConference::Conference::toCpp(getConference());
 		if (conference->getState() == ConferenceInterface::State::Created) {
-			conference->addParticipant(getSharedFromThis());
+			conference->enter();
 		} else {
-			lInfo() << "Unable to add participant because conference is in state " << linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+			char * conf_state = linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+			lInfo() << "Unable to add participant because conference is in state " << conf_state;
+			ms_free(conf_state);
 		}
 	} else {
 		lInfo() << "Unable to add participant because call is not attached to conference";
@@ -409,10 +411,16 @@ bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &sessio
 
 bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session) const {
 	const auto & cConference = getConference();
+lInfo() << "DEBUG DEBUG conference " << cConference;
 	if (cConference) {
 		const auto conference = MediaConference::Conference::toCpp(cConference);
 		const ConferenceId localConferenceId = ConferenceId(session->getLocalAddress(), session->getLocalAddress());
-		return (localConferenceId == conference->getConferenceId());
+		const auto & participant = conference->findParticipant(session);
+		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
+		StreamsGroup & sg = ms->getStreamsGroup();
+		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
+lInfo() << "DEBUG DEBUG participant " << participant << " attached to mixer " << attachedToMixer << " conference ID: expected " << localConferenceId << " actual " << conference->getConferenceId();
+		return (participant && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
 
 	return false;
@@ -486,6 +494,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		{
 
 			const auto op = session->getPrivate()->getOp();
+			if (op) lInfo() << "DEBUG DEBUG local address " << session->getLocalAddress().asString() << " remote address " << session->getRemoteAddress()->asString() << " subjct " << sal_custom_header_find(op->getRecvCustomHeaders(), "Subject") << " attached to local conference " << attachedToLocalConference(session);
+			else lInfo() << "DEBUG DEBUG Call in updated by remote has a null call op";
 			if (attachedToLocalConference(session)) {
 				// The remote participant requested to change subject
 				changeSubjectInLocalConference(op);
@@ -528,13 +538,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			// Try to add device to local conference
 			if (attachedToLocalConference(session)) {
 				auto conference = MediaConference::Conference::toCpp(getConference());
-				if (isInConference()) {
-					if(!conference->addParticipantDevice(getSharedFromThis())) {
-						conference->participantDeviceMediaChanged(session);
-					}
-				} else {
-					// Try to reenter conference if the call may have been part of one
-					reenterLocalConference(session);
+				// If the participant is already in the conference
+				if(!conference->addParticipantDevice(getSharedFromThis())) {
+					conference->participantDeviceMediaChanged(session);
 				}
 			} else if (attachedToRemoteConference(session)) {
 				// The participant rejoins the conference
