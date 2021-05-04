@@ -1558,7 +1558,15 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 	}
 
 	const SalStreamDescription &oldVideoStream = refMd ? refMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if ((conference && isInLocalConference) || getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	bool addVideoStream = false;
+	if (conference && isInLocalConference) {
+		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		const auto & currentConfParams = cppConference->getCurrentParams();
+		addVideoStream = currentConfParams.videoEnabled();
+	} else if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
+		addVideoStream = true;
+	}
+	if (addVideoStream) {
 		SalStreamDescription videoStream;
 		videoStream.main = true;
 		videoStream.proto = getParams()->getMediaProto();
