@@ -203,7 +203,7 @@ void Account::applyParamsChanges () {
 	if (mOldParams == nullptr
 		|| mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed
 		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed
-		|| linphone_push_notification_config_get_provider(mOldParams->mPushNotificationConfig) != linphone_push_notification_config_get_provider(mParams->mPushNotificationConfig))
+		|| !linphone_push_notification_config_is_equal(mOldParams->mPushNotificationConfig, mParams->mPushNotificationConfig))
 		onPushNotificationAllowedChanged(false);
 
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
@@ -886,7 +886,14 @@ string Account::getComputedPushNotificationParameters () {
 	}
 
 	string prid = L_C_TO_STRING(linphone_push_notification_config_get_prid(mParams->mPushNotificationConfig));
-	if (prid.empty()) {
+	
+	string oldVoipToken;
+	string oldRemoteToken;
+	if (mOldParams) {
+		oldVoipToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mOldParams->mPushNotificationConfig));
+		oldRemoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mOldParams->mPushNotificationConfig));
+	}
+	if (prid.empty() || oldVoipToken != voipToken || oldRemoteToken != remoteToken) {
 		char pn_prid[300];
 		memset(pn_prid, 0, sizeof(pn_prid));
 		if (basicPushAllowed) {
