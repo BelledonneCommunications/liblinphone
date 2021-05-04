@@ -1801,9 +1801,17 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 		}
-		const bool videoEnabled = (((conference && isInLocalConference) || getParams()->videoEnabled()) && !l.empty());
 
-		auto videoStream = makeLocalStreamDecription(md, videoEnabled, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+		bool addVideoStream = false;
+		if (conference && isInLocalConference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & currentConfParams = cppConference->getCurrentParams();
+			addVideoStream = currentConfParams.videoEnabled();
+		} else if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
+			addVideoStream = true;
+		}
+
+		auto videoStream = makeLocalStreamDecription(md, addVideoEnabled, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		videoStream.setSupportedEncryptions(encList);
 		videoStream.main = true;
