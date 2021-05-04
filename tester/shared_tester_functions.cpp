@@ -21,12 +21,15 @@
 
 #include "tester_utils.h"
 #include "call/call.h"
+#include "conference/participant-device.h"
+#include "conference/session/media-session.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
 #include "liblinphone_tester.h"
 #include "shared_tester_functions.h"
 #include "c-wrapper/internal/c-tools.h"
 
+using namespace std;
 using namespace LinphonePrivate;
 
 static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStreamType stream_type) {
@@ -223,6 +226,7 @@ void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audi
 	BC_ASSERT_LOWER(nb_active_video_streams, nb_video_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalVideo), nb_active_video_streams, int, "%i");
+ms_message("DEBUG DEBUG video streams - current activ video streams %0d expected active streams %0d\n", (int)call_local_desc->nbActiveStreamsOfType(SalVideo), nb_active_video_streams);
 	BC_ASSERT_LOWER(nb_active_text_streams, nb_text_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalText), nb_active_text_streams, int, "%i");
@@ -241,4 +245,34 @@ int _linphone_call_get_nb_video_steams(const LinphoneCall * call) {
 int _linphone_call_get_nb_text_steams(const LinphoneCall * call) {
 	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
 	return (int)call_local_desc->nbStreamsOfType(SalText);
+}
+
+bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device) {
+
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	
+	if (session) {
+		return (session->getCurrentParams()->audioEnabled()) ? TRUE : FALSE;
+	}
+	return FALSE;
+}
+
+bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device) {
+
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	
+	if (session) {
+		return (session->getCurrentParams()->videoEnabled()) ? TRUE : FALSE;
+	}
+	return FALSE;
+}
+
+bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device) {
+
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	
+	if (session) {
+		return (session->getCurrentParams()->realtimeTextEnabled()) ? TRUE : FALSE;
+	}
+	return FALSE;
 }
