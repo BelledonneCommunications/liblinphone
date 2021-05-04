@@ -4260,6 +4260,24 @@ static void remote_participant_adds_video_during_conference(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
+		BC_ASSERT_PTR_NOT_NULL(conf_call);
+		if (conf_call) {
+			const LinphoneCallParams * conf_call_params = linphone_call_get_current_params(conf_call);
+			BC_ASSERT_FALSE(linphone_call_params_video_enabled(conf_call_params));
+		}
+
+		LinphoneCall * p_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
+		BC_ASSERT_PTR_NOT_NULL(p_call);
+		if (p_call) {
+			const LinphoneCallParams * p_call_params = linphone_call_get_current_params(p_call);
+			BC_ASSERT_FALSE(linphone_call_params_video_enabled(p_call_params));
+		}
+	}
+
 	//marie creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_set_video_enabled(conf_params, TRUE);
@@ -4293,18 +4311,20 @@ static void remote_participant_adds_video_during_conference(void) {
 			BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params));
 		}
 
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
-		BC_ASSERT_PTR_NOT_NULL(conf_call);
-		if (conf_call) {
-			const LinphoneCallParams * conf_call_params = linphone_call_get_current_params(conf_call);
-			BC_ASSERT_FALSE(linphone_call_params_video_enabled(conf_call_params));
-		}
+		if (m != marie) {
+			LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
+			BC_ASSERT_PTR_NOT_NULL(conf_call);
+			if (conf_call) {
+				const LinphoneCallParams * conf_call_params = linphone_call_get_current_params(conf_call);
+				BC_ASSERT_FALSE(linphone_call_params_video_enabled(conf_call_params));
+			}
 
-		LinphoneCall * p_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
-		BC_ASSERT_PTR_NOT_NULL(p_call);
-		if (p_call) {
-			const LinphoneCallParams * p_call_params = linphone_call_get_current_params(p_call);
-			BC_ASSERT_FALSE(linphone_call_params_video_enabled(p_call_params));
+			LinphoneCall * p_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
+			BC_ASSERT_PTR_NOT_NULL(p_call);
+			if (p_call) {
+				const LinphoneCallParams * p_call_params = linphone_call_get_current_params(p_call);
+				BC_ASSERT_FALSE(linphone_call_params_video_enabled(p_call_params));
+			}
 		}
 	}
 
