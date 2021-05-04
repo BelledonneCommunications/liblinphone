@@ -23,6 +23,7 @@
 #include "call/call.h"
 #include "conference/participant-device.h"
 #include "conference/session/media-session.h"
+#include "conference/params/media-session-params.h"
 #include "sal/call-op.h"
 #include "sal/sal_media_description.h"
 #include "liblinphone_tester.h"
