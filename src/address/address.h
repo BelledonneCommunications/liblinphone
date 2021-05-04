@@ -38,10 +38,12 @@ class ConferenceAddress;
 class LINPHONE_PUBLIC Address : public ClonableObject {
 	// TODO: Remove me later.
 	friend class CallSession;
+#ifdef HAVE_ADVANCED_IM
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
+#endif // HAVE_ADVANCED_IM
 	friend class IdentityAddress;
 
 public:

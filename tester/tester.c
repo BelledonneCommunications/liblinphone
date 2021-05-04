@@ -719,7 +719,10 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 	const int no_new_participants = (int)bctbx_list_size(new_participants);
 	const int no_participants = (int)bctbx_list_size(participants);
+#ifdef HAVE_ADVANCED_IM
 	int no_participants_without_event_log = 0;
+	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE );
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + no_new_participants,3000));
 
@@ -738,7 +741,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 
 	int idx = 0;
-	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE );
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
@@ -747,6 +749,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		// Remote conference creation
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreationPending, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 
+	#ifdef HAVE_ADVANCED_IM
 		bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 		if (p_event_log_enabled) {
 			// Check subscriptions
@@ -795,6 +798,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 		// Number of subscription terminated should not change as they the participant should received a notification
 		BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionTerminated, new_participant_initial_stats[idx].number_of_LinphoneSubscriptionTerminated, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		idx++;
 	}
 
@@ -811,6 +815,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	int* subscription_count = ((int *)(conf_mgr->user_info));
 	BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count, expected_subscriptions,5000));
 	if (conf_event_log_enabled) {
@@ -826,8 +831,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	} else {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(conf_initial_stats.number_of_LinphoneSubscriptionTerminated + no_new_participants),3000));
 	}
-
-	ms_free(notifyExpected);
 
 	// Add a short wait to ensure that all NOTIFYs are replied
 	wait_for_list(lcs,NULL,0,1000);
@@ -852,7 +855,9 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			}
 		}
 	}
+#endif // HAVE_ADVANCED_IM
 
+	ms_free(notifyExpected);
 
 }
 
@@ -1257,6 +1262,7 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, lcm_stats[idx].number_of_LinphoneConferenceStateTerminated + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, lcm_stats[idx].number_of_LinphoneConferenceStateDeleted + 1, 5000));
 
+#ifdef HAVE_ADVANCED_IM
 		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 		// In case of a re-registration, the number of active subscriptions on the local conference side accounts the numbers of subscriptions before and after the re-registration
 		if ((m != conf_mgr) && (m->stat.number_of_LinphoneRegistrationOk == 1) && event_log_enabled) {
@@ -1267,6 +1273,7 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 				BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionActive, int, "%0d");
 			}
 		}
+#endif // HAVE_ADVANCED_IM
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
 

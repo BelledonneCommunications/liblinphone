@@ -30,7 +30,9 @@ class ConferenceNotifiedEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceNotifiedEvent : public ConferenceEvent {
 	friend class MainDbPrivate;
+#ifdef HAVE_ADVANCED_IM
 	friend class ClientGroupChatRoom;
+#endif // HAVE_ADVANCED_IM
 	friend class RemoteConference;
 public:
 	ConferenceNotifiedEvent (
