@@ -33,13 +33,13 @@
 LINPHONE_BEGIN_NAMESPACE
 
 ToneManager::ToneManager(std::shared_ptr<Core> core) : CoreAccessor(core) {
-    lInfo() << "[ToneManager] create ToneManager()";
+    lInfo() << "ToneManager[" << this << "] create ToneManager()";
 	mStats = new LinphoneCoreToneManagerStats;
 	*mStats = {0, 0, 0, 0, 0, 0, 0};
 }
 
 ToneManager::~ToneManager() {
-    lInfo() << "[ToneManager] destroy ToneManager()";
+    lInfo() << "ToneManager[" << this << "] destroy ToneManager()";
 	delete mStats;
 }
 
@@ -63,7 +63,7 @@ std::string ToneManager::stateToString(ToneManager::State state) {
 void ToneManager::printDebugInfo(const std::shared_ptr<CallSession> &session) {
 	auto callState = session->getState();
     auto toneState = getState(session);
-	lInfo() << "[ToneManager] [" << session << "] state changed : [" << stateToString(toneState)  << ", " << Utils::toString(callState) << "]";
+	lInfo() << "ToneManager[" << this << "], session[" << session << "] state changed : [" << stateToString(toneState)  << ", " << Utils::toString(callState) << "]";
 }
 
 // ---------------------------------------------------
@@ -123,20 +123,20 @@ void ToneManager::startNamedTone(const std::shared_ptr<CallSession> &session, Li
 
 void ToneManager::goToCall(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	doStop(session, State::Call);
 }
 
 void ToneManager::stop(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	doStop(session, State::None);
 }
 
 void ToneManager::removeSession(const std::shared_ptr<CallSession> &session) {
 	printDebugInfo(session);
 	mSessions.erase(session);
-	lInfo() << "[ToneManager] removeSession mSession size : " <<  mSessions.size();
+	lInfo() << "ToneManager[" << this << "] removeSession mSession size : " <<  mSessions.size();
 }
 
 /**
@@ -153,7 +153,7 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 		case CallSession::State::Released:
 			printDebugInfo(session);
 			if (isAnotherSessionInState(session, State::Ringtone)) {
-				lInfo() << "[ToneManager] start again ringtone";
+				lInfo() << "ToneManager[" << this << "] start again ringtone";
 				doStartRingtone(toneSession);
 				mStats->number_of_startRingtone++;
 			}
@@ -169,7 +169,7 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 // ---------------------------------------------------
 
 void ToneManager::linphoneCorePlayDtmf(char dtmf, int duration) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 
 	std::shared_ptr<CallSession> session = nullptr;
@@ -184,7 +184,7 @@ void ToneManager::linphoneCorePlayDtmf(char dtmf, int duration) {
 	MSFilter *f = getAudioResource(ToneGenerator, card, true);
 
 	if (f == NULL) {
-		lError() << "[ToneManager] No dtmf generator at this time !";
+		lError() << "ToneManager[" << this << "] No dtmf generator at this time !";
 		return;
 	}
 
@@ -196,7 +196,7 @@ void ToneManager::linphoneCorePlayDtmf(char dtmf, int duration) {
 }
 
 void ToneManager::linphoneCoreStopDtmf() {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	MSFilter *f = getAudioResource(ToneGenerator, NULL, false);
 	if (f != NULL) {
 		ms_filter_call_method_noarg (f, MS_DTMF_GEN_STOP);
@@ -204,12 +204,12 @@ void ToneManager::linphoneCoreStopDtmf() {
 }
 
 LinphoneStatus ToneManager::linphoneCorePlayLocal(const char *audiofile) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	return playFile(audiofile);
 }
 
 void ToneManager::linphoneCoreStartDtmfStream() {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 
 	/*make sure ring stream is started*/
@@ -217,12 +217,12 @@ void ToneManager::linphoneCoreStartDtmfStream() {
 }
 
 void ToneManager::linphoneCoreStopRinging() {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	doStopRingtone(nullptr);
 }
 
 void ToneManager::linphoneCoreStopDtmfStream() {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	doStopTone();
 }
 
@@ -231,10 +231,10 @@ void ToneManager::linphoneCoreStopDtmfStream() {
 // ---------------------------------------------------
 
 void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	if (!mTimer) {
 		auto callback = [this] () -> bool {
-			lInfo() << "[ToneManager] callback";
+			lInfo() << "ToneManager[" << this << "] callback";
 			LinphoneCore *lc = getCore()->getCCore();
 			auto source = lc->ringstream ? lc->ringstream->source : nullptr;
 			MSPlayerState state;
@@ -257,7 +257,7 @@ void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
 
 void ToneManager::deleteTimer() {
 	if (mTimer) {
-		lInfo() << "[ToneManager] " << __func__;
+		lInfo() << "ToneManager[" << this << "] " << __func__;
 		doStopTone();
 		mStats->number_of_stopTone++;
 		getCore()->destroyTimer(mTimer);
@@ -311,7 +311,7 @@ static void on_file_player_end(void *userData, MSFilter *f, unsigned int eventId
 void ToneManager::onFilePlayerEnd(unsigned int eventId) {
 	switch (eventId) {
 		case MS_PLAYER_EOF:
-			lInfo() << "[ToneManager] " << __func__;
+			lInfo() << "ToneManager[" << this << "] " << __func__;
 			doStopTone();
 			break;
 		default:
@@ -338,7 +338,7 @@ void ToneManager::resetStats() {
 /* set State for the session. Insert session if not present */
 void ToneManager::setState(const std::shared_ptr<CallSession> &session, ToneManager::State newState) {
 	if (mSessions.count(session) == 0) {
-		lInfo() << "[ToneManager] add new session [" << session << "]";
+		lInfo() << "ToneManager[" << this << "] add new session [" << session << "]";
 	}
 	mSessions[session] = newState;
 }
@@ -385,7 +385,7 @@ bool ToneManager::isThereACall() {
 // ---------------------------------------------------
 
 void ToneManager::doStartErrorTone(const std::shared_ptr<CallSession> &session, LinphoneReason reason) {
-	lInfo() << "[ToneManager] " << __func__ << " [" << Utils::toString(reason) << "]";
+	lInfo() << "ToneManager[" << this << "] " << __func__ << " [" << Utils::toString(reason) << "]";
 	LinphoneToneDescription *tone = getToneFromReason(reason);
 
 	if (tone) {
@@ -401,7 +401,7 @@ void ToneManager::doStartErrorTone(const std::shared_ptr<CallSession> &session, 
 }
 
 void ToneManager::doStartNamedTone(const std::shared_ptr<CallSession> &session, LinphoneToneID toneId) {
-	lInfo() << "[ToneManager] " << __func__ << " [" << Utils::toString(toneId) << "]";
+	lInfo() << "ToneManager[" << this << "] " << __func__ << " [" << Utils::toString(toneId) << "]";
 	LinphoneToneDescription *tone = getToneFromId(toneId);
 
 	if (tone && tone->audiofile) {
@@ -413,7 +413,7 @@ void ToneManager::doStartNamedTone(const std::shared_ptr<CallSession> &session, 
 }
 
 void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &session) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 
 	if (!lc->sound_conf.play_sndcard)
@@ -447,7 +447,7 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 }
 
 void ToneManager::doStartRingtone(const std::shared_ptr<CallSession> &session) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 	if (isAnotherSessionInState(session, State::Call)) {
 		/* play a tone within the context of the current call */
@@ -494,13 +494,13 @@ void ToneManager::doStop(const std::shared_ptr<CallSession> &session, ToneManage
 			}
 			break;
 		default:
-			lInfo() << "[ToneManager] nothing to stop";
+			lInfo() << "ToneManager[" << this << "] nothing to stop";
 			break;
 	}
 }
 
 void ToneManager::doStopRingbackTone() {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 	if (lc->ringstream) {
 		MSSndCard *card = ring_stream_get_output_ms_snd_card(lc->ringstream);
@@ -517,7 +517,7 @@ void ToneManager::doStopRingbackTone() {
 }
 
 void ToneManager::doStopTone() {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 
 	LinphoneCore *lc = getCore()->getCCore();
 	AudioDevice * audioDevice = nullptr;
@@ -553,7 +553,7 @@ void ToneManager::doStopTone() {
 }
 
 void ToneManager::doStopToneToPlaySomethingElse(const std::shared_ptr<CallSession> &session) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	if (isAnotherSessionInState(session, State::Tone)) {
 		doStopTone();
 	}
@@ -561,7 +561,7 @@ void ToneManager::doStopToneToPlaySomethingElse(const std::shared_ptr<CallSessio
 
 
 void ToneManager::doStopRingtone(const std::shared_ptr<CallSession> &session) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "ToneManager[" << this << "] " << __func__;
 	if (isAnotherSessionInState(session, State::Call)) {
 		/* stop the tone within the context of the current call */
 		doStopTone();
@@ -644,7 +644,7 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 			def.amplitude = 0.5f;// This tone can be in parallel of other calls. This will be played on a lighter amplitude
 		break;
 		default:
-			lWarning() << "[ToneManager] Unhandled tone id.";
+			lWarning() << "ToneManager[" << this << "] Unhandled tone id.";
 	}
 	return def;
 }
@@ -669,7 +669,7 @@ void ToneManager::playTone(const std::shared_ptr<CallSession> &session, MSDtmfGe
 
 	MSFilter *f = getAudioResource(ToneGenerator, card, true);
 	if (f == NULL) {
-		lError() << "[ToneManager] No tone generator at this time !";
+		lError() << "ToneManager[" << this << "] No tone generator at this time !";
 		return;
 	}
 	if (tone.duration > 0) {
