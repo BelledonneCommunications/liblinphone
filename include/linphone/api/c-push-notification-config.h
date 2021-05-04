@@ -44,6 +44,14 @@ LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_push_notification_confi
 LINPHONE_PUBLIC LinphonePushNotificationConfig* linphone_push_notification_config_clone(const LinphonePushNotificationConfig *push_cfg);
 
 /**
+ * Checks if two Push Notification Configurations are identical
+ * @param push_cfg The #LinphonePushNotificationConfig object to be compared. @notnil
+ * @param other_config The #LinphonePushNotificationConfig object to compare to. @notnil
+ * @return True only if the two configurations are identical. @notnil
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_config_is_equal(const LinphonePushNotificationConfig *push_cfg, const LinphonePushNotificationConfig *other_config);
+
+/**
 * Take a reference on a #LinphonePushNotificationConfig.
 * @param push_cfg the #LinphonePushNotificationConfig object @notnil
 * @return the same #LinphonePushNotificationConfig object @notnil
