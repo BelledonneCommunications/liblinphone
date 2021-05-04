@@ -20,6 +20,7 @@
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
 #include "conference/params/media-session-params.h"
+#include "conference/params/media-session-params-p.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
@@ -176,12 +177,12 @@ bool ParticipantDevice::updateMedia() {
 
 		if (currentParams) {
 			const auto & audioEnabled = currentParams->audioEnabled();
-			const auto & audioDir = currentParams->getAudioDirection();
-			mediaChanged |= setAudioDirection((!audioEnabled) ? LinphoneMediaDirectionInactive : audioDir);
+			const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
+			mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
 
 			const auto & videoEnabled = currentParams->videoEnabled();
-			const auto & videoDir = currentParams->getVideoDirection();
-			mediaChanged |= setVideoDirection((!videoEnabled) ? LinphoneMediaDirectionInactive : videoDir);
+			const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
+			mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
