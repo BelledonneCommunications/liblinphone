@@ -1733,7 +1733,7 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 	}
 
 	const SalStreamDescription &oldVideoStream = refMd ? refMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if (getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	if ((conference && isInLocalConference) ||  getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
@@ -1743,7 +1743,6 @@ lInfo() << "DEBUG session " << sal_address_as_string(getOp()->getRemoteContactAd
 			const auto & currentConfParams = cppConference->getCurrentParams();
 			const auto confVideoCapabilities = currentConfParams.videoEnabled();
 			videoDir = (confVideoCapabilities) ? SalStreamSendOnly : SalStreamInactive;
->>>>>>> Add checks for number of streams
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 		}
