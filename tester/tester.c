@@ -697,6 +697,16 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 				local_devices = linphone_participant_get_devices (p);
 				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
 					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+					if (_linphone_participant_device_get_audio_enabled(d) == FALSE) {
+						audio_direction = LinphoneMediaDirectionInactive;
+					}
+					if (_linphone_participant_device_get_video_enabled(d) == FALSE) {
+						video_direction = LinphoneMediaDirectionInactive;
+					}
+					if (_linphone_participant_device_get_real_time_text_enabled(d) == FALSE) {
+						text_direction = LinphoneMediaDirectionInactive;
+					}
+
 					BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), audio_direction, int, "%0d");
 					BC_ASSERT_EQUAL(linphone_participant_device_get_video_direction(d), video_direction, int, "%0d");
 					BC_ASSERT_EQUAL(linphone_participant_device_get_text_direction(d), text_direction, int, "%0d");
@@ -907,12 +917,13 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 }
 
 void check_nb_streams(LinphoneCoreManager * m1, LinphoneCoreManager * m2, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams) {
-ms_message("DEBUG DEBUG m1 %s m2 %s\n", linphone_address_as_string(m1->identity), linphone_address_as_string(m2->identity));
+ms_message("DEBUG DEBUG m1 to m2: m1 %s m2 %s\n", linphone_address_as_string(m1->identity), linphone_address_as_string(m2->identity));
 	LinphoneCall * m1_to_m2_call = linphone_core_get_call_by_remote_address2(m1->lc, m2->identity);
 	BC_ASSERT_PTR_NOT_NULL(m1_to_m2_call);
 	if (m1_to_m2_call) {
 		_linphone_call_check_nb_streams(m1_to_m2_call, nb_audio_streams, nb_video_streams, 0, nb_active_audio_streams, nb_active_video_streams, 0);
 	}
+ms_message("DEBUG DEBUG m2 to m1: m1 %s m2 %s\n", linphone_address_as_string(m1->identity), linphone_address_as_string(m2->identity));
 	LinphoneCall * m2_to_m1_call = linphone_core_get_call_by_remote_address2(m2->lc, m1->identity);
 	BC_ASSERT_PTR_NOT_NULL(m2_to_m1_call);
 	if (m2_to_m1_call) {
