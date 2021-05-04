@@ -39,7 +39,9 @@ class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class CallSession;
 	friend class CallSessionPrivate;
 	friend class MediaSessionPrivate;
+#ifdef HAVE_ADVANCED_IM
 	friend class ClientGroupChatRoom;
+#endif // HAVE_ADVANCED_IM
 	friend class ToneManager;
 
 public:
