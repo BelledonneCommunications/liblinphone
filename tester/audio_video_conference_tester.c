@@ -1442,6 +1442,7 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 
+#ifdef HAVE_ADVANCED_IM
 		// Check subscriptions
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,5000));
@@ -1450,6 +1451,7 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 
 		int* subscription_count = ((int *)(marie->user_info));
 		BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count,3,5000));
+#endif // HAVE_ADVANCED_IM
 
 		//make sure that the two calls from Marie's standpoint are in conference
 		marie_calls = linphone_core_get_calls(marie->lc);
@@ -1480,13 +1482,16 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminated,(initial_pauline_stat.number_of_LinphoneConferenceStateTerminated + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateDeleted,(initial_pauline_stat.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated,initial_pauline_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conf), 2, int, "%d");
-		BC_ASSERT_EQUAL(linphone_conference_is_in(conf), 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(initial_laure_stat.number_of_NotifyReceived + 2),3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(initial_michelle_stat.number_of_NotifyReceived + 2),3000));
+#endif // HAVE_ADVANCED_IM
+
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conf), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_conference_is_in(conf), 1, int, "%d");
 
 		initial_marie_stat = marie->stat;
 		initial_laure_stat = laure->stat;
@@ -1507,10 +1512,12 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminated,(initial_michelle_stat.number_of_LinphoneConferenceStateTerminated + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateDeleted,(initial_michelle_stat.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneSubscriptionTerminated,initial_michelle_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(initial_laure_stat.number_of_NotifyReceived + 2),10000));
+#endif // HAVE_ADVANCED_IM
 
 		// CHeck that conference is not destroyed
 		BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_laure_stat.number_of_LinphoneConferenceStateTerminationPending + 1),1000));
@@ -1541,8 +1548,6 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, initial_laure_stat.number_of_LinphoneCallEnd + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, initial_laure_stat.number_of_LinphoneCallReleased + 1, 10000));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,10000));
-
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_laure_stat.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,(initial_laure_stat.number_of_LinphoneConferenceStateTerminated + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateDeleted,(initial_laure_stat.number_of_LinphoneConferenceStateDeleted + 1),5000));
@@ -1551,7 +1556,10 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,(initial_marie_stat.number_of_LinphoneConferenceStateTerminated + 1),10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,(initial_marie_stat.number_of_LinphoneConferenceStateDeleted + 1),10000));
 
+#ifdef HAVE_ADVANCED_IM
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,initial_laure_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
+#endif // HAVE_ADVANCED_IM
 
 		end_call(marie, michelle);
 	}
@@ -7162,7 +7170,7 @@ static void simple_conference_with_volumes(void) {
 
 test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
-	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
+	TEST_NO_TAG("Simple conference established before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 	TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),
 	TEST_NO_TAG("Simple conference with participant removal from not admin", simple_conference_with_participant_removal_from_not_admin),
