@@ -1181,6 +1181,8 @@ void RemoteConference::finalizeCreation() {
 			eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 			eventHandler->subscribe(getConferenceId());
 		}
+	#else
+		setState(ConferenceInterface::State::Created);
 	#endif // HAVE_ADVANCED_IM
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
