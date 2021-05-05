@@ -6,11 +6,11 @@ Liblinphone is a high-level open source library that integrates all the SIP voic
 
 Liblinphone combines our media processing and streaming toolkit (Mediastreamer2) with our user-agent library for SIP signaling (belle-sip). Liblinphone has support for a variety of languages, each one has its own reference documentation:
 
- - C (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/c)
- - C++ (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/c++)
- - Swift (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/swift)
- - Java (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/java)
- - C# (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/cs)
+ - C (https://linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/c)
+ - C++ (https://linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/c++)
+ - Swift (https://linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/swift)
+ - Java (https://linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/java)
+ - C# (https://linphone.org/@LINPHONESDK_STATE@/docs/liblinphone/@STRIPPED_LINPHONE_VERSION@/cs)
  - Python (coming soon)
 
 Liblinphone is distributed under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html). Please understand the licencing details before using it!
