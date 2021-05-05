@@ -32,6 +32,7 @@ class PushNotificationConfig: public bellesip::HybridObject<LinphonePushNotifica
 
 	PushNotificationConfig* clone () const override;
 
+	bool isEqual (const PushNotificationConfig& other) const;
 	
 	const string &getProvider () const;
 	void setProvider (const string &provider);
