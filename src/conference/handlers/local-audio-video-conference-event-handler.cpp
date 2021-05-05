@@ -47,9 +47,7 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 		case ConferenceInterface::State::Created:
 		case ConferenceInterface::State::CreationFailed:
 		case ConferenceInterface::State::TerminationFailed:
-			break;
 		case ConferenceInterface::State::CreationPending:
-			getMediaConference()->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
 			if (getMediaConference()->getParticipantCount() == 0) getMediaConference()->setState(ConferenceInterface::State::Terminated);
