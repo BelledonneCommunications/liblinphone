@@ -256,7 +256,7 @@ public:
 	void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) override;
 	bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) override;
-	LinphoneConference *getCallSessionConference (const std::shared_ptr<CallSession> &session) override;
+	LinphoneConference *getCallSessionConference (const std::shared_ptr<CallSession> &session) const override;
 	void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *character) override;
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;

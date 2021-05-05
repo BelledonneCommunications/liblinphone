@@ -731,7 +731,7 @@ bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
 	return mPlayingRingbackTone;
 }
 
-LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSession> &session) {
+LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSession> &session) const {
 	return getConference();
 }
 
