@@ -498,6 +498,7 @@ LocalConference::LocalConference (
 
 	setConferenceAddress(contactAddress);
 	setState(ConferenceInterface::State::CreationPending);
+	finalizeCreation();
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
 }
@@ -954,9 +955,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 					}
 				}
 
-				setState(ConferenceInterface::State::TerminationPending);
-
 				leave();
+				setState(ConferenceInterface::State::TerminationPending);
 
 				/* invoke removeParticipant() recursively to remove this last participant. */
 				bool success = Conference::removeParticipant(remainingParticipant);
