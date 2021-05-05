@@ -217,13 +217,16 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 				LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
 				BC_ASSERT_PTR_NULL(pauline_conference);
 				linphone_address_unref(pauline_uri);
-				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, pauline_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
 				LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
 				LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
 				BC_ASSERT_PTR_NULL(laure_conference);
 				linphone_address_unref(laure_uri);
+
+			#ifdef HAVE_ADVANCED_IM
+				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, pauline_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated, laure_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
+			#endif // HAVE_ADVANCED_IM
 
 				LinphoneAddress *marie_uri = linphone_address_new(linphone_core_get_identity(marie->lc));
 				LinphoneConference * marie_conference = linphone_core_search_conference(marie->lc, NULL, marie_uri, marie_conference_address, NULL);
@@ -341,6 +344,7 @@ end:
 	}
 }
 
+#ifdef HAVE_ADVANCED_IM
 static void simple_conference_with_admin_changed(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -435,6 +439,7 @@ static void simple_conference_with_admin_changed(void) {
 
 
 	linphone_conference_set_participant_admin_status(marie_conference, pauline_participant, TRUE);
+
 	// Participants should receive the admin changed notification:
 	int idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
@@ -588,7 +593,9 @@ end :
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
+#endif // HAVE_ADVANCED_IM
 
+#ifdef HAVE_ADVANCED_IM
 static void simple_conference_with_participant_removal_from_not_admin(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -710,7 +717,9 @@ static void simple_conference_with_participant_removal_from_not_admin(void) {
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
+#endif // HAVE_ADVANCED_IM
 
+#ifdef HAVE_ADVANCED_IM
 static void simple_conference_with_participant_addition_from_not_admin(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -797,8 +806,10 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
 	wait_for_list(lcs,NULL,0,1000);
 
-	// Laure received the notification about Pauline's media changed
+	// Participants received the notification about Pauline's media changed
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,(marie_stats.number_of_NotifyReceived + 1),5000));
 	LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
 	LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
 	linphone_address_unref(laure_uri);
@@ -809,7 +820,6 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 	LinphoneAddress *michelle_uri = linphone_address_new(linphone_core_get_identity(michelle->lc));
 	LinphoneConference * michelle_conference = linphone_core_search_conference(michelle->lc, NULL, michelle_uri, marie_conference_address, NULL);
 	linphone_address_unref(michelle_uri);
@@ -820,7 +830,6 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 		BC_ASSERT_EQUAL(linphone_conference_is_in(michelle_conference), 1, int, "%d");
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,(marie_stats.number_of_NotifyReceived + 1),5000));
 	if (marie_conference) {
 		// Check that number pf participants on Marie's side is unchanged
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
@@ -914,7 +923,9 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
+#endif // HAVE_ADVANCED_IM
 
+#ifdef HAVE_ADVANCED_IM
 static void simple_conference_with_subject_change_from_not_admin(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -990,6 +1001,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 
 	const char * original_subject = "SEGABRT (signal 6)";
 	linphone_conference_set_subject(marie_conference, original_subject);
+
 	// Participants should have received the subject change notification
 	int idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
@@ -1039,6 +1051,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
+#endif // HAVE_ADVANCED_IM
 
 static void simple_conference_with_one_participant(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -1183,6 +1196,7 @@ static void simple_conference_with_one_participant(void) {
 	bctbx_list_free(all_manangers_in_conf);
 }
 
+#ifdef HAVE_ADVANCED_IM
 static void simple_conference_with_subject_change_from_admin(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -1318,6 +1332,7 @@ static void simple_conference_with_subject_change_from_admin(void) {
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
+#endif // HAVE_ADVANCED_IM
 
 static void simple_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -1631,6 +1646,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 
+#ifdef HAVE_ADVANCED_IM
 		// Check subscriptions
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,5000));
@@ -1638,6 +1654,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 
 		int* subscription_count = ((int *)(marie->user_info));
 		BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count,2,5000));
+#endif // HAVE_ADVANCED_IM
 
 		//make sure that the two calls from Marie's standpoint are in conference
 		marie_calls = linphone_core_get_calls(marie->lc);
@@ -2282,8 +2299,10 @@ static void participants_exit_conference_after_pausing(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused, laure_stats.number_of_LinphoneCallPaused + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote, marie_stats.number_of_LinphoneCallPausedByRemote + 1, 10000));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_parts, int, "%d");
 	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
@@ -2304,8 +2323,10 @@ static void participants_exit_conference_after_pausing(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPaused, pauline_stats.number_of_LinphoneCallPaused + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote, marie_stats.number_of_LinphoneCallPausedByRemote + 2, 10000));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 2),5000));
+#endif // HAVE_ADVANCED_IM
 
 	// Check that conferences are not terminated
 	BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(laure_stats.number_of_LinphoneConferenceStateTerminationPending + 1),1000));
@@ -2336,13 +2357,12 @@ static void participants_exit_conference_after_pausing(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminated,(michelle_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateDeleted,(michelle_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneSubscriptionTerminated,michelle_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+#endif // HAVE_ADVANCED_IM
 
 	linphone_core_terminate_all_calls(marie->lc);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,pauline_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(laure_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,(laure_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
@@ -2356,7 +2376,11 @@ static void participants_exit_conference_after_pausing(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,(marie_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,(marie_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + 3,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,pauline_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd, marie_stats.number_of_LinphoneCallEnd+marie_call_no,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd, laure_stats.number_of_LinphoneCallEnd+1,10000));
@@ -2537,7 +2561,9 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 	}
 
 	stats pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	stats michelle_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	stats marie_stats = marie->stat;
 	if (remote_participant_leaves) {
 		// Pauline leaves the conference temporarely
@@ -2561,7 +2587,9 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 		// Marie (the local participant) leaves the conference temporarely
 		if (marie_conference) {
 			linphone_conference_leave(marie_conference);
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),2, int, "%d");
 			BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
 			if (pauline_conference) {
@@ -2571,6 +2599,7 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	// If the remote participant leaves the conference, the other participants receive 2 NOTIFYs: one for the participant and one ofr the device
 	// If the local participant leaves the conference, the other participants receive 1 NOTIFYs only
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
@@ -2578,12 +2607,15 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),((remote_participant_leaves) ? 2 : 1), int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
+#endif // HAVE_ADVANCED_IM
 
 	// Wait a little bit
 	wait_for_list(lcs ,NULL, 0, 2000);
 
 	pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	michelle_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	marie_stats = marie->stat;
 	if (remote_participant_leaves) {
 		// Pauline rejoins conference
@@ -2604,7 +2636,10 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 		if (marie_conference) {
 			linphone_conference_enter(marie_conference);
 		}
+
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
+	#endif // HAVE_ADVANCED_IM
 	}
 
 	int conf_parts_no = 2;
@@ -2613,9 +2648,11 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 		BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	// If the remote participant leaves the conference, the other participants receive 2 NOTIFYs: one for the participant and one ofr the device
 	// If the local participant leaves the conference, the other participants receive 1 NOTIFYs only
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),conf_parts_no, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
@@ -2720,7 +2757,9 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	}
 
 	stats pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	stats michelle_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	stats marie_stats = marie->stat;
 	if (remote_participant_leaves) {
 		// Pauline leaves the conference temporarely
@@ -2732,8 +2771,10 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPausing,(pauline_stats.number_of_LinphoneCallPausing + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPaused,(pauline_stats.number_of_LinphoneCallPaused + 1), 5000));
+			#ifdef HAVE_ADVANCED_IM
 				BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + 1,1000));
 				BC_ASSERT_FALSE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,pauline_stats.number_of_LinphoneSubscriptionTerminated + 1,1000));
+			#endif // HAVE_ADVANCED_IM
 				BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
 			}
 		}
@@ -2754,7 +2795,9 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 			}
 		}
 		if (wait_for_updates) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
+		#endif // HAVE_ADVANCED_IM
 			if (pauline_conference) {
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),1, int, "%d");
 			}
@@ -2765,9 +2808,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	}
 
 	if (wait_for_updates) {
+	#ifdef HAVE_ADVANCED_IM
 		// If the remote participant leaves the conference, the other participants receive 2 NOTIFYs: one for the participant and one for the device
 		// If the local participant leaves the conference, the other participants receive 1 NOTIFYs only
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+	#endif // HAVE_ADVANCED_IM
 		if (michelle_conference) {
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),((remote_participant_leaves) ? 2 : 1), int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
@@ -2793,8 +2838,10 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 				BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPaused,(pauline_stats.number_of_LinphoneCallPaused + 1), 5000));
 
+			#ifdef HAVE_ADVANCED_IM
 				BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + 1,1000));
 				BC_ASSERT_FALSE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,pauline_stats.number_of_LinphoneSubscriptionTerminated + 1,1000));
+			#endif // HAVE_ADVANCED_IM
 
 				BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
 
@@ -2805,7 +2852,9 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 			}
 
 		} else {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),2, int, "%d");
 			BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
 			if (pauline_conference) {
@@ -2818,16 +2867,20 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	// Marie left the conference because she called Laure
 	BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	// Michelle is notifed that both Pauline and Marie left the conference
 	int expectedNotify = ((remote_participant_leaves) ? 2 : 1);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + expectedNotify),5000));
+#endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),1, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
 	pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	michelle_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	marie_stats = marie->stat;
 	stats laure_stats = laure->stat;
 	int conf_parts_no = 2;
@@ -2849,9 +2902,13 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
+#ifdef HAVE_ADVANCED_IM
 	if (!remote_participant_leaves) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 	}
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
+
 	if (pauline_conference) {
 		if (remote_participant_leaves) {
 			BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
@@ -2861,7 +2918,6 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		}
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),2, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
@@ -2892,7 +2948,9 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 
 	pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	michelle_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	marie_stats = marie->stat;
 	laure_stats = laure->stat;
 
@@ -2920,6 +2978,7 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), conf_parts_no, int, "%d");
 
+	#ifdef HAVE_ADVANCED_IM
 		// NOTIFY to resend list of conference participants
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 
@@ -2928,6 +2987,7 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		if (add_participant) {
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
 		}
+	#endif // HAVE_ADVANCED_IM
 	}
 
 	if (marie_conference) {
@@ -3125,9 +3185,11 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallPaused,(michelle_stats.number_of_LinphoneCallPaused + 1), 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_stats.number_of_LinphoneCallPausedByRemote + 3),5000));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 3),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 3),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 3),5000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),3, int, "%d");
 	BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
@@ -3168,7 +3230,9 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallResuming,(participants_initial_stats[counter].number_of_LinphoneCallResuming + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[counter].number_of_LinphoneCallStreamsRunning + 1),5000));
 
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(participants_initial_stats[counter].number_of_NotifyReceived + ((local_enters_first) ? 3 : 2)),5000));
+	#endif // HAVE_ADVANCED_IM
 
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
@@ -3205,10 +3269,12 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 			}
 		}
 
+	#ifdef HAVE_ADVANCED_IM
 		// NOTIFY that marie rejoined the conference
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
+	#endif // HAVE_ADVANCED_IM
 
 		//wait a bit to ensure that NOTIFYs reach their destination even if they are challenged
 		wait_for_list(lcs,NULL,0,5000);
@@ -3439,7 +3505,9 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),2, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
@@ -3477,9 +3545,11 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,(marie_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,(marie_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + 2,3000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneSubscriptionTerminated,michelle_stats.number_of_LinphoneSubscriptionTerminated + 1,3000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,pauline_stats.number_of_LinphoneSubscriptionTerminated + 1,3000));
+		#endif // HAVE_ADVANCED_IM
 
 			pauline_conference = linphone_core_search_conference(pauline->lc, NULL, NULL, marie_conference_address, NULL);
 			BC_ASSERT_PTR_NULL(pauline_conference);
@@ -3600,8 +3670,10 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	}
 
 	stats pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	stats michelle_stats = michelle->stat;
 	stats chloe_stats = chloe->stat;
+#endif // HAVE_ADVANCED_IM
 	stats marie_stats = marie->stat;
 	// Pauline leaves the conference temporarely
 	if (pauline_conference) {
@@ -3620,15 +3692,17 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 		}
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	// Notify Michelle that Pauline's media capabilities have changed
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+	// Notify Chloe that Pauline's media capabilities have changed
+	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),3, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
-	// Notify Chloe that Pauline's media capabilities have changed
-	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_stats.number_of_NotifyReceived + 1),5000));
 	if (chloe_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),3, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(chloe_conference));
@@ -3669,8 +3743,10 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	BC_ASSERT_PTR_NULL(pauline_conference);
 
 	pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	michelle_stats = michelle->stat;
 	chloe_stats = chloe->stat;
+#endif // HAVE_ADVANCED_IM
 	marie_stats = marie->stat;
 
 	// Marie calls Pauline again
@@ -3686,21 +3762,25 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	// Wait a little bit
 	wait_for_list(lcs ,NULL, 0, 1000);
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_stats.number_of_NotifyReceived + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 	if (chloe_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),1, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(chloe_conference));
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),1, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
 	pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	michelle_stats = michelle->stat;
 	chloe_stats = chloe->stat;
+#endif // HAVE_ADVANCED_IM
 	marie_stats = marie->stat;
 	int conf_parts_no = 2;
 	// If the local participant left earlier on, then she should join the conference again
@@ -3721,21 +3801,25 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	// Wait a little bit
 	wait_for_list(lcs ,NULL, 0, 1000);
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_stats.number_of_NotifyReceived + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 	if (chloe_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),conf_parts_no, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(chloe_conference));
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),conf_parts_no, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
 	pauline_stats = pauline->stat;
+#ifdef HAVE_ADVANCED_IM
 	michelle_stats = michelle->stat;
 	chloe_stats = chloe->stat;
+#endif // HAVE_ADVANCED_IM
 	marie_stats = marie->stat;
 	bctbx_list_t* additional_participants=NULL;
 	additional_participants=bctbx_list_append(additional_participants,pauline);
@@ -4030,9 +4114,11 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 
 	wait_for_list(lcs ,NULL, 0, 1000);
 
+#ifdef HAVE_ADVANCED_IM
 	// Wait for notification of marie's exit fo conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),3000));
+#endif // HAVE_ADVANCED_IM
 
 	LinphoneCall * marie_laure_call = linphone_core_get_call_by_remote_address2(marie->lc, laure->identity);
 	BC_ASSERT_PTR_NOT_NULL(marie_laure_call);
@@ -4101,8 +4187,10 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, marie_stats.number_of_LinphoneCallPaused + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallPausedByRemote, laure_stats.number_of_LinphoneCallPausedByRemote + 1, 5000));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
@@ -4274,8 +4362,10 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	stats marie_initial_stats = marie->stat;
+#ifdef HAVE_ADVANCED_IM
 	stats pauline_initial_stats = pauline->stat;
 	stats michelle_initial_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	stats laure_initial_stats = laure->stat;
 	stats chloe_initial_stats = chloe->stat;
 
@@ -4288,9 +4378,11 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 
+#ifdef HAVE_ADVANCED_IM
 	// Pauline and Michelle are notified of Laure media changes
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_initial_stats.number_of_NotifyReceived + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 
 	marie_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
@@ -4331,8 +4423,10 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
 
 	marie_initial_stats = marie->stat;
+#ifdef HAVE_ADVANCED_IM
 	pauline_initial_stats = pauline->stat;
 	michelle_initial_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	laure_initial_stats = laure->stat;
 	chloe_initial_stats = chloe->stat;
 
@@ -4351,8 +4445,10 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 1, unsigned int, "%u");
 
 		marie_initial_stats = marie->stat;
+	#ifdef HAVE_ADVANCED_IM
 		pauline_initial_stats = pauline->stat;
 		michelle_initial_stats = michelle->stat;
+	#endif // HAVE_ADVANCED_IM
 		laure_initial_stats = laure->stat;
 
 		linphone_call_resume(laure_calls_marie);
@@ -4361,6 +4457,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,laure_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,marie_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 
+	#ifdef HAVE_ADVANCED_IM
 		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(laure->lc), "misc", "conference_event_log_enabled", TRUE );
 
 		if (event_log_enabled) {
@@ -4371,11 +4468,14 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 			BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,(marie_initial_stats.number_of_LinphoneSubscriptionActive + 1),1000));
 
 		}
+	#endif // HAVE_ADVANCED_IM
 
 	}
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_initial_stats.number_of_NotifyReceived + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
@@ -4467,7 +4567,9 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
 	stats chloe_initial_stats = chloe->stat;
+#ifdef HAVE_ADVANCED_IM
 	stats michelle_initial_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 
 	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
 	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
@@ -4480,8 +4582,10 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneCallPaused,(chloe_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 
+#ifdef HAVE_ADVANCED_IM
 	// Michelle is notified that Laure and Chloe media capabilities changed
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 2),5000));
+#endif // HAVE_ADVANCED_IM
 
 	// As Marie is in a conference, the named tone should not be played even though the call is paused
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
@@ -4551,8 +4655,10 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,laure_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,marie_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_initial_stats.number_of_NotifyReceived + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_initial_stats.number_of_NotifyReceived + 1),5000));
+	#endif // HAVE_ADVANCED_IM
 
 		// Remote  conference
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
@@ -4577,9 +4683,11 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&marie->stat.number_of_LinphoneCallEnd,marie_initial_stats.number_of_LinphoneCallEnd + 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&laure->stat.number_of_LinphoneCallReleased,laure_initial_stats.number_of_LinphoneCallReleased + 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,laure->lc,&marie->stat.number_of_LinphoneCallReleased,marie_initial_stats.number_of_LinphoneCallReleased + 1));
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_LinphoneSubscriptionTerminated,chloe_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,10000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(laure_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,(laure_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
@@ -4664,7 +4772,9 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
+#ifdef HAVE_ADVANCED_IM
 	stats michelle_initial_stats = michelle->stat;
+#endif // HAVE_ADVANCED_IM
 	stats chloe_initial_stats = chloe->stat;
 
 	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
@@ -4676,8 +4786,10 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 
+#ifdef HAVE_ADVANCED_IM
 	// Michelle is notified that Laure media changed
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 
 	// As Marie is in a conference, the named tone should not be played even though the call is paused
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
@@ -4701,8 +4813,10 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,10000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(laure_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,(laure_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
@@ -4858,9 +4972,11 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 
 		}
 
+	#ifdef HAVE_ADVANCED_IM
 		// Focus removed and added
 		// Conference media changed
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats[idx].number_of_NotifyReceived + 3),5000));
+	#endif // HAVE_ADVANCED_IM
 
 		// Wait for first frame if video is enabled
 		if (enable_video) {
@@ -5581,10 +5697,12 @@ static void try_to_update_call_params_during_conference(void) {
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(pauline_called_by_marie));
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(pauline_called_by_marie));
 	if (pauline_called_by_marie) {
-		stats initial_marie_stat = marie->stat;
 		stats initial_pauline_stat = pauline->stat;
+	#ifdef HAVE_ADVANCED_IM
+		stats initial_marie_stat = marie->stat;
 		stats initial_laure_stat = laure->stat;
 		stats initial_michelle_stat = michelle->stat;
+	#endif // HAVE_ADVANCED_IM
 		linphone_core_terminate_call(marie->lc, pauline_called_by_marie);
 		new_participants=bctbx_list_remove(new_participants,pauline);
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
@@ -5597,11 +5715,13 @@ static void try_to_update_call_params_during_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminated,(initial_pauline_stat.number_of_LinphoneConferenceStateTerminated + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateDeleted,(initial_pauline_stat.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,initial_pauline_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(initial_laure_stat.number_of_NotifyReceived + 2),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(initial_michelle_stat.number_of_NotifyReceived + 2),5000));
+	#endif // HAVE_ADVANCED_IM
 	}
 
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
@@ -5694,8 +5814,10 @@ static void register_again_during_conference(void) {
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	linphone_core_set_network_reachable(laure->lc, FALSE);
 	linphone_core_set_network_reachable(marie->lc, FALSE);
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionTerminated, 1, 10000));
+#endif // HAVE_ADVANCED_IM
 
 	proxyConfig = linphone_core_get_default_proxy_config(laure->lc);
 	linphone_proxy_config_edit(proxyConfig);
@@ -5709,10 +5831,12 @@ static void register_again_during_conference(void) {
 	linphone_core_set_network_reachable(laure->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneRegistrationOk, initial_laure_stats.number_of_LinphoneRegistrationOk + 1, 10000));
 
+#ifdef HAVE_ADVANCED_IM
 	// Wait for subscriptins to be resent
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 5, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionActive, 2, 10000));
+#endif // HAVE_ADVANCED_IM
 
 	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),3, int, "%d");
@@ -5809,8 +5933,10 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateTerminated,(initial_participants_stats[idx].number_of_LinphoneConferenceStateTerminated + 1),5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateDeleted,(initial_participants_stats[idx].number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(wait_for_list(lcs,&local_conf->stat.number_of_LinphoneSubscriptionTerminated,initial_conf_stats.number_of_LinphoneSubscriptionTerminated + idx + 1,10000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,initial_participants_stats[idx].number_of_LinphoneSubscriptionTerminated + 1,3000));
+		#endif // HAVE_ADVANCED_IM
 
 			BC_ASSERT_TRUE(wait_for(local_conf->lc,m->lc,&m->stat.number_of_LinphoneCallReleased,(initial_participants_stats[idx].number_of_LinphoneCallReleased + 1)));
 			BC_ASSERT_TRUE(wait_for(local_conf->lc,m->lc,&local_conf->stat.number_of_LinphoneCallReleased,(initial_conf_stats.number_of_LinphoneCallReleased + idx + 1)));
@@ -5822,7 +5948,9 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 			ms_free(initial_participants_stats);
 		}
 
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs,&local_conf->stat.number_of_LinphoneSubscriptionTerminated,initial_conf_stats.number_of_LinphoneSubscriptionActive,10000));
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(wait_for_list(lcs,&local_conf->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_conf_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&local_conf->stat.number_of_LinphoneConferenceStateTerminated,(initial_conf_stats.number_of_LinphoneConferenceStateTerminated + 1),10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&local_conf->stat.number_of_LinphoneConferenceStateDeleted,(initial_conf_stats.number_of_LinphoneConferenceStateDeleted + 1),10000));
@@ -6616,10 +6744,12 @@ static void try_to_create_second_conference_with_local_participant(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, lcm_stats[idx].number_of_LinphoneConferenceStateTerminated + no_conference, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, lcm_stats[idx].number_of_LinphoneConferenceStateDeleted + no_conference, 5000));
 
+	#ifdef HAVE_ADVANCED_IM
 		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 		if ((m != marie) && event_log_enabled) {
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + no_conference,10000));
 		}
+	#endif // HAVE_ADVANCED_IM
 
 		LinphoneConference *conference = linphone_core_get_conference(c);
 
@@ -6776,10 +6906,12 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, lcm_stats[idx].number_of_LinphoneConferenceStateTerminated + no_conference, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, lcm_stats[idx].number_of_LinphoneConferenceStateDeleted + no_conference, 5000));
 
+	#ifdef HAVE_ADVANCED_IM
 		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 		if ((m != marie) && event_log_enabled) {
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + no_conference,10000));
 		}
+	#endif // HAVE_ADVANCED_IM
 
 		LinphoneConference *conference = linphone_core_get_conference(c);
 
@@ -6951,11 +7083,13 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference established before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
+#ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),
 	TEST_NO_TAG("Simple conference with participant removal from not admin", simple_conference_with_participant_removal_from_not_admin),
 	TEST_NO_TAG("Simple conference with participant addition from not admin", simple_conference_with_participant_addition_from_not_admin),
 	TEST_NO_TAG("Simple conference with subject change from not admin", simple_conference_with_subject_change_from_not_admin),
 	TEST_NO_TAG("Simple conference with subject change from admin", simple_conference_with_subject_change_from_admin),
+#endif // HAVE_ADVANCED_IM
 	TEST_NO_TAG("Simple conference with one participant", simple_conference_with_one_participant),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
