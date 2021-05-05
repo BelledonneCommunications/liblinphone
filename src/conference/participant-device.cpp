@@ -183,6 +183,7 @@ bool ParticipantDevice::updateMedia() {
 			const auto & videoEnabled = currentParams->videoEnabled();
 			const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
 			mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
+lInfo() << "DEBUG participant " << getAddress().asString() << " video dir " << getVideoDirection();
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
