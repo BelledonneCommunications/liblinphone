@@ -691,20 +691,41 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 			if (linphone_address_equal(p_address, remote_me_address)) {
 				const bool_t remote_is_in = linphone_conference_is_in(remote_conference);
 				const LinphoneConferenceParams * remote_params = linphone_conference_get_current_params(remote_conference);
-				LinphoneMediaDirection audio_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_audio_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
-				LinphoneMediaDirection video_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_video_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
-				LinphoneMediaDirection text_direction = ((remote_is_in == FALSE) || (!!linphone_conference_params_is_chat_enabled(remote_params) == FALSE)) ? LinphoneMediaDirectionInactive : LinphoneMediaDirectionSendRecv;
+				LinphoneMediaDirection audio_direction = LinphoneMediaDirectionInactive;
+				LinphoneMediaDirection video_direction = LinphoneMediaDirectionInactive;
+				LinphoneMediaDirection text_direction = LinphoneMediaDirectionInactive;
+
 				local_devices = linphone_participant_get_devices (p);
 				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
 					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-					if (_linphone_participant_device_get_audio_enabled(d) == FALSE) {
+					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_audio_enabled(remote_params) == FALSE)) {
 						audio_direction = LinphoneMediaDirectionInactive;
+					} else {
+						if (_linphone_participant_device_get_audio_enabled(d) == TRUE) {
+							audio_direction = LinphoneMediaDirectionSendRecv;
+						} else {
+							audio_direction = LinphoneMediaDirectionRecvOnly;
+						}
 					}
-					if (_linphone_participant_device_get_video_enabled(d) == FALSE) {
+
+					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_video_enabled(remote_params) == FALSE)) {
 						video_direction = LinphoneMediaDirectionInactive;
+					} else {
+						if (_linphone_participant_device_get_video_enabled(d) == TRUE) {
+							video_direction = LinphoneMediaDirectionSendRecv;
+						} else {
+							video_direction = LinphoneMediaDirectionRecvOnly;
+						}
 					}
-					if (_linphone_participant_device_get_real_time_text_enabled(d) == FALSE) {
+
+					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_chat_enabled(remote_params) == FALSE)) {
 						text_direction = LinphoneMediaDirectionInactive;
+					} else {
+						if (_linphone_participant_device_get_real_time_text_enabled(d) == TRUE) {
+							text_direction = LinphoneMediaDirectionSendRecv;
+						} else {
+							text_direction = LinphoneMediaDirectionRecvOnly;
+						}
 					}
 
 					BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), audio_direction, int, "%0d");
