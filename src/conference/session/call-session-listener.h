@@ -75,7 +75,7 @@ public:
 	virtual bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) { return true; }
 	virtual bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) { return false; }
 
-	virtual LinphoneConference * getCallSessionConference (const std::shared_ptr<CallSession> &session) { return nullptr; }
+	virtual LinphoneConference * getCallSessionConference (const std::shared_ptr<CallSession> &session) const { return nullptr; }
 
 	virtual void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {}
 	
