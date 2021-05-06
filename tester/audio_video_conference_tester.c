@@ -1292,7 +1292,9 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 
-		BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
+		if (conference) {
+			BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
+		}
 	}
 
 	stats* initial_participants_stats = NULL;
@@ -1330,7 +1332,9 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 
-		BC_ASSERT_TRUE(strcmp(new_subject, linphone_conference_get_subject(conference)) == 0);
+		if (conference) {
+			BC_ASSERT_TRUE(strcmp(new_subject, linphone_conference_get_subject(conference)) == 0);
+		}
 	}
 	bctbx_list_free(all_manangers_in_conf);
 
