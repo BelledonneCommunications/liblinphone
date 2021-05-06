@@ -787,7 +787,11 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
 	if (pauline_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_is_in(pauline_conference), 1, int, "%d");
 	}
 
@@ -816,7 +820,11 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	BC_ASSERT_PTR_NOT_NULL(laure_conference);
 	if (laure_conference) {
 		// Check that number pf participants on Laure's side is unchanged
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
 	}
 
@@ -826,7 +834,11 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	BC_ASSERT_PTR_NOT_NULL(michelle_conference);
 	if (michelle_conference) {
 		// Check that number pf participants on Pauline's side is unchanged
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_is_in(michelle_conference), 1, int, "%d");
 	}
 
@@ -884,12 +896,20 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	}
 	if (michelle_conference) {
 		// Check that Michelle was notified that Pauline rejoined the conference
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_is_in(michelle_conference), 1, int, "%d");
 	}
 	if (laure_conference) {
 		// Check that Laure was notified that Pauline rejoined the conference
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_is_in(laure_conference), 1, int, "%d");
 	}
 
@@ -907,7 +927,11 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 
 	if (pauline_conference) {
 		// Check that participant number has not changed
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_is_in(pauline_conference), 1, int, "%d");
 	}
 
@@ -1111,7 +1135,11 @@ static void simple_conference_with_one_participant(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 3, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (m == marie) ? 3 : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 		}
 	}
 
@@ -1137,7 +1165,11 @@ static void simple_conference_with_one_participant(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 2, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (m == marie) ? 2 : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 		}
 	}
 
@@ -1160,7 +1192,11 @@ static void simple_conference_with_one_participant(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 1, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (m == marie) ? 1 : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 		}
 	}
 
@@ -2278,18 +2314,30 @@ static void participants_exit_conference_after_pausing(void) {
 
 	LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),no_parts, int, "%d");
 	BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
+#ifdef HAVE_ADVANCED_IM
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 
 	LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(laure_conference);
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),no_parts, int, "%d");
 	BC_ASSERT_TRUE(linphone_conference_is_in(laure_conference));
+#ifdef HAVE_ADVANCED_IM
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 
 	LinphoneConference * michelle_conference = linphone_core_search_conference(michelle->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(michelle_conference);
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),no_parts, int, "%d");
 	BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
+#ifdef HAVE_ADVANCED_IM
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 
 	LinphoneCall * laure_call_marie = linphone_core_get_current_call(laure->lc);
 	linphone_core_pause_call(laure->lc, laure_call_marie);
@@ -2307,13 +2355,25 @@ static void participants_exit_conference_after_pausing(void) {
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_parts, int, "%d");
 	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 	BC_ASSERT_FALSE(linphone_conference_is_in(laure_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 
 	LinphoneCall * pauline_call_marie = linphone_core_get_current_call(pauline->lc);
@@ -2340,13 +2400,25 @@ static void participants_exit_conference_after_pausing(void) {
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_parts, int, "%d");
 	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),no_parts, int, "%d");
-	BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
+	BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 	BC_ASSERT_FALSE(linphone_conference_is_in(laure_conference));
 
+#ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),no_parts, int, "%d");
+#else
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+#endif // HAVE_ADVANCED_IM
 	BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 
 	// Remove Michelle from conference.
@@ -2555,7 +2627,11 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
-			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#ifdef HAVE_ADVANCED_IM
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -2593,7 +2669,11 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),2, int, "%d");
 			BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
 			if (pauline_conference) {
-				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),1, int, "%d");
+				#ifdef HAVE_ADVANCED_IM
+					BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 1, int, "%d");
+				#else
+					BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+				#endif // HAVE_ADVANCED_IM
 				BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 			}
 		}
@@ -2603,11 +2683,15 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 	// If the remote participant leaves the conference, the other participants receive 2 NOTIFYs: one for the participant and one ofr the device
 	// If the local participant leaves the conference, the other participants receive 1 NOTIFYs only
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+#endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),((remote_participant_leaves) ? 2 : 1), int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
-#endif // HAVE_ADVANCED_IM
 
 	// Wait a little bit
 	wait_for_list(lcs ,NULL, 0, 2000);
@@ -2654,11 +2738,19 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 #endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 	if (pauline_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 	}
 
@@ -2751,7 +2843,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
-			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#ifdef HAVE_ADVANCED_IM
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -2799,7 +2895,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 		#endif // HAVE_ADVANCED_IM
 			if (pauline_conference) {
-				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),1, int, "%d");
+				#ifdef HAVE_ADVANCED_IM
+					BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),1, int, "%d");
+				#else
+					BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+				#endif // HAVE_ADVANCED_IM
 			}
 		}
 		if (pauline_conference) {
@@ -2814,7 +2914,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 	#endif // HAVE_ADVANCED_IM
 		if (michelle_conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),((remote_participant_leaves) ? 2 : 1), int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 		}
 	}
@@ -2858,7 +2962,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),2, int, "%d");
 			BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
 			if (pauline_conference) {
+			#ifdef HAVE_ADVANCED_IM
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),1, int, "%d");
+			#else
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+			#endif // HAVE_ADVANCED_IM
 				BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 			}
 		}
@@ -2873,7 +2981,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + expectedNotify),5000));
 #endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),1, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
@@ -2913,13 +3025,21 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		if (remote_participant_leaves) {
 			BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
 		} else {
-			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),2, int, "%d");
+			#ifdef HAVE_ADVANCED_IM
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),2, int, "%d");
+			#else
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+			#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 		}
 	}
 
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),2, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
@@ -2961,7 +3081,11 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		BC_ASSERT_PTR_NULL(laure_conference);
 	}
 	if (laure_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),((add_participant) ? 3 : 2), int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(laure_conference));
 	}
 
@@ -2995,15 +3119,27 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 	}
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 	if (laure_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(laure_conference));
 	}
 	if (pauline_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
 	}
 
@@ -3145,7 +3281,11 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -3289,7 +3429,11 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),linphone_conference_get_participant_count(marie_conference), int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -3480,7 +3624,11 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),(c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -3509,7 +3657,11 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 #endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),2, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
@@ -3664,7 +3816,11 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),(c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -3699,12 +3855,20 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_NotifyReceived,(chloe_stats.number_of_NotifyReceived + 1),5000));
 #endif // HAVE_ADVANCED_IM
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),3, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
 	if (chloe_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),3, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(chloe_conference));
 	}
 
@@ -3767,12 +3931,20 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 #endif // HAVE_ADVANCED_IM
 	if (chloe_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),1, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(chloe_conference));
 	}
 
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),1, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
@@ -3806,12 +3978,20 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 #endif // HAVE_ADVANCED_IM
 	if (chloe_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(chloe_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(chloe_conference));
 	}
 
 	if (michelle_conference) {
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),conf_parts_no, int, "%d");
+	#else
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),0, int, "%d");
+	#endif // HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
 	}
 
@@ -3838,7 +4018,11 @@ static void participant_call_terminated_after_leaving_conference_base(bool_t loc
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),(c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 	}
@@ -4049,7 +4233,12 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
+		#ifdef HAVE_ADVANCED_IM
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+		#else
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? no_parts : 0, int, "%d");
+		#endif // HAVE_ADVANCED_IM
+
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 		}
 		if (c != marie->lc) {
@@ -4082,7 +4271,11 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		if (c != laure->lc) {
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
+			#ifdef HAVE_ADVANCED_IM
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+			#else
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? no_parts : 0, int, "%d");
+			#endif // HAVE_ADVANCED_IM
 				BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 			}
 			if (c != marie->lc) {
@@ -4147,7 +4340,12 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
 				int current_no_parts = (c == marie->lc) ? no_parts : (no_parts - (linphone_conference_is_in(l_conference) ? 0 : 1));
+			#ifdef HAVE_ADVANCED_IM
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),current_no_parts, int, "%d");
+			#else
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? current_no_parts : 0, int, "%d");
+			#endif // HAVE_ADVANCED_IM
+
 				if (c == marie->lc) {
 					BC_ASSERT_FALSE(linphone_conference_is_in(conference));
 				} else {
@@ -4200,7 +4398,11 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		if (c != laure->lc) {
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
+			#ifdef HAVE_ADVANCED_IM
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+			#else
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), (c == marie->lc) ? no_parts : 0, int, "%d");
+			#endif // HAVE_ADVANCED_IM
 				BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 			}
 			if (c != marie->lc) {
