@@ -1040,6 +1040,205 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 	bctbx_list_free(lcs);
 }
 
+static void simple_conference_with_user_defined_layout(const LinphoneConferenceLayout layout, bool_t local_change_layout, bool_t remote_change_layout) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
+
+	LinphoneCall* marie_call_pauline;
+	LinphoneCall* pauline_called_by_marie;
+	LinphoneCall* marie_call_laure;
+	LinphoneCall* laure_called_by_marie;
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
+	lcs=bctbx_list_append(lcs,michelle->lc);
+	lcs=bctbx_list_append(lcs,laure->lc);
+
+	BC_ASSERT_TRUE(call(marie,laure));
+	marie_call_laure=linphone_core_get_current_call(marie->lc);
+	laure_called_by_marie=linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
+
+	BC_ASSERT_TRUE(call(marie,pauline));
+	marie_call_pauline=linphone_core_get_current_call(marie->lc);
+	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
+
+	BC_ASSERT_TRUE(call(marie,michelle));
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,pauline);
+	participants=bctbx_list_append(participants,laure);
+
+	//marie creates the conference
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_one_participant_conference_enabled(conf_params, TRUE);
+	linphone_conference_params_set_layout(conf_params, layout);
+	LinphoneConference *conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
+	BC_ASSERT_PTR_NOT_NULL(conf);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
+
+	add_calls_to_local_conference(lcs, marie, NULL, participants);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
+
+	bctbx_list_t* all_manangers_in_conf=bctbx_list_copy(participants);
+	all_manangers_in_conf = bctbx_list_append(all_manangers_in_conf, marie);
+	const LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(conf);
+	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(m->lc));
+		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, uri, marie_conference_address, NULL);
+		BC_ASSERT_PTR_NOT_NULL(conference);
+		linphone_address_unref(uri);
+		if (conference) {
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 3, int, "%d");
+		}
+	}
+
+	bctbx_list_t* lcs2=bctbx_list_copy(lcs);
+	remove_participant_from_local_conference(lcs2, marie, pauline);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminationPending,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
+
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,1,1000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
+
+	lcs2 = bctbx_list_remove(lcs2, pauline->lc);
+	all_manangers_in_conf = bctbx_list_remove(all_manangers_in_conf, pauline);
+
+	if (local_change_layout) {
+		stats michelle_stats = michelle->stat;
+		stats laure_stats = laure->stat;
+		conf_params = linphone_core_create_conference_params(marie->lc);
+		LinphoneConferenceLayout new_layout = ((layout == LinphoneConferenceLayoutGrid) ? LinphoneConferenceLayoutActiveSpeaker : LinphoneConferenceLayoutGrid);
+		linphone_conference_params_set_layout(conf_params, new_layout);
+		linphone_conference_update_params(conf, conf_params);
+		linphone_conference_params_unref(conf_params);
+		BC_ASSERT_FALSE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,michelle_stats.number_of_NotifyReceived + 1,5000));
+		BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,laure_stats.number_of_NotifyReceived + 1,5000));
+		const LinphoneConferenceParams * local_conf_params = linphone_conference_get_current_params(conf);
+		const LinphoneConferenceLayout local_conf_layout = linphone_conference_params_get_layout(local_conf_params);
+		BC_ASSERT_EQUAL(new_layout, local_conf_layout, int, "%d");
+	}
+
+	if (remote_change_layout) {
+		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conf);
+		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(michelle->lc));
+		LinphoneConference * conference = linphone_core_search_conference(michelle->lc, NULL, uri, local_conference_address, NULL);
+		BC_ASSERT_PTR_NOT_NULL(conference);
+		linphone_address_unref(uri);
+		if (conference) {
+			stats laure_stats = laure->stat;
+			const LinphoneConferenceParams * remote_conf_params = linphone_conference_get_current_params(conference);
+			LinphoneConferenceLayout remote_conf_layout = linphone_conference_params_get_layout(remote_conf_params);
+
+			conf_params = linphone_conference_params_clone (remote_conf_params);
+			LinphoneConferenceLayout new_layout = ((remote_conf_layout == LinphoneConferenceLayoutGrid) ? LinphoneConferenceLayoutActiveSpeaker : LinphoneConferenceLayoutGrid);
+			linphone_conference_params_set_layout(conf_params, new_layout);
+			linphone_conference_update_params(conference, conf_params);
+			linphone_conference_params_unref(conf_params);
+			BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,laure_stats.number_of_NotifyReceived + 1,5000));
+			remote_conf_params = linphone_conference_get_current_params(conference);
+			remote_conf_layout = linphone_conference_params_get_layout(remote_conf_params);
+			BC_ASSERT_EQUAL(new_layout, remote_conf_layout, int, "%d");
+		}
+	}
+
+	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(m->lc));
+		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, uri, marie_conference_address, NULL);
+		BC_ASSERT_PTR_NOT_NULL(conference);
+		linphone_address_unref(uri);
+		if (conference) {
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 2, int, "%d");
+		}
+	}
+
+	remove_participant_from_local_conference(lcs2, marie, michelle);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminationPending,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
+
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,1,1000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
+
+	lcs2 = bctbx_list_remove(lcs2, michelle->lc);
+	all_manangers_in_conf = bctbx_list_remove(all_manangers_in_conf, michelle);
+	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(m->lc));
+		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, uri, marie_conference_address, NULL);
+		BC_ASSERT_PTR_NOT_NULL(conference);
+		linphone_address_unref(uri);
+		if (conference) {
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), 1, int, "%d");
+		}
+	}
+
+	remove_participant_from_local_conference(lcs2, marie, laure);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminationPending,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,1,1000));
+
+	int marie_call_no = (int)bctbx_list_size(linphone_core_get_calls(marie->lc));
+	linphone_core_terminate_all_calls(marie->lc);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallEnd, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallReleased, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallReleased, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, marie_call_no, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, marie_call_no, 10000));
+
+
+	linphone_conference_unref(conf);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(michelle);
+	bctbx_list_free(participants);
+	bctbx_list_free(lcs);
+	bctbx_list_free(lcs2);
+	bctbx_list_free(all_manangers_in_conf);
+}
+
+static void simple_conference_with_grid_layout(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, FALSE);
+}
+
+static void simple_conference_with_active_speaker_layout(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE);
+}
+
+static void simple_conference_with_layout_change_local_participant(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, TRUE, FALSE);
+
+}
+
+static void simple_conference_with_layout_change_remote_participant(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, TRUE);
+}
+
 static void simple_conference_with_one_participant(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
@@ -7579,6 +7778,10 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference with subject change from admin", simple_conference_with_subject_change_from_admin),
 	TEST_NO_TAG("Simple video conference with subject change from admin", simple_video_conference_with_subject_change_from_admin),
 	TEST_NO_TAG("Simple conference with one participant", simple_conference_with_one_participant),
+	TEST_NO_TAG("Simple conference with active speaker layout", simple_conference_with_active_speaker_layout),
+	TEST_NO_TAG("Simple conference with grid layout", simple_conference_with_grid_layout),
+	TEST_NO_TAG("Simple conference with layout change of local participant", simple_conference_with_layout_change_local_participant),
+	TEST_NO_TAG("Simple conference with layout change of remote participant", simple_conference_with_layout_change_remote_participant),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating conference", simple_4_participants_conference_ended_by_terminating_conference),
