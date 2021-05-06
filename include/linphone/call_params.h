@@ -483,7 +483,7 @@ LINPHONE_PUBLIC void linphone_call_params_clear_custom_sdp_media_attributes(Linp
 /**
  * Gets a list of #LinphoneContent set if exists
  * @param params The #LinphoneCallParams to get the custom Content from. @notnil
- * @return A list of #LinphoneContent set if exists, NULL otherwise. \bctbx_list{LinphoneContent}  @maybenil
+ * @return A list of #LinphoneContent set if exists, NULL otherwise. \bctbx_list{LinphoneContent}  @maybenil @tobefreed
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_custom_contents (const LinphoneCallParams *params);
