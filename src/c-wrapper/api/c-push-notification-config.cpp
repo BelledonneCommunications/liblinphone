@@ -32,6 +32,10 @@ LinphonePushNotificationConfig* linphone_push_notification_config_clone(const Li
 	return PushNotificationConfig::toCpp(push_cfg)->clone()->toC();
 }
 
+bool_t linphone_push_notification_config_is_equal(const LinphonePushNotificationConfig *push_cfg, const LinphonePushNotificationConfig *other_config) {
+	return PushNotificationConfig::toCpp(push_cfg)->isEqual(*PushNotificationConfig::toCpp(other_config));
+}
+
 LinphonePushNotificationConfig *linphone_push_notification_config_ref(LinphonePushNotificationConfig *push_cfg) {
 	if (push_cfg) {
 		PushNotificationConfig::toCpp(push_cfg)->ref();
