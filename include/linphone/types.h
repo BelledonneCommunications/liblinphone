@@ -48,6 +48,7 @@
  * The account set with linphone_core_set_default_proxy_config() will be used as default
  * for outgoing calls & chat messages unless specified otherwise.
  * @ingroup proxies
+ * @deprecated 06/04/2020 Use #LinphoneAccount object instead
 **/
 typedef struct _LinphoneProxyConfig LinphoneProxyConfig;
 
