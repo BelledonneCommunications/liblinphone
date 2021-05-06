@@ -529,7 +529,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			if (attachedToLocalConference(session)) {
 				auto conference = MediaConference::Conference::toCpp(getConference());
 				if (isInConference()) {
-					if(!conference->addParticipantDevice(getSharedFromThis())) {
+					if(conference->addParticipantDevice(getSharedFromThis()) == 1) {
 						conference->participantDeviceMediaChanged(session);
 					}
 				} else {
