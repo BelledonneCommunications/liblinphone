@@ -1024,7 +1024,6 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 			BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
 		}
 
-/*
 		LinphoneConference * conference = linphone_core_get_conference(focus_mgr->lc);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
@@ -1034,7 +1033,6 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 				BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+counter+update_counter),20000));
 			}
 		}
-*/
 
 		counter++;
 		update_counter += (update_counter+1);
@@ -1064,6 +1062,8 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 	ms_free(participants_initial_stats);
 	bctbx_list_free(participants);
 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+2*counter),5000));
+
 	// Remote  conference
 	if (conf_to_focus_call == NULL) {
 		// Asserts to verify that call between focus and confernece manager is correctly set up
@@ -1074,8 +1074,6 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,conf_initial_stats.number_of_LinphoneSubscriptionActive + 1,3000));
 //		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneSubscriptionActive,(focus_initial_stats.number_of_LinphoneSubscriptionActive + counter + 1),1000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(conf_initial_stats.number_of_LinphoneCallStreamsRunning+1),5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+counter+1),5000));
-
 		conf_to_focus_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, focus_mgr->identity);
 	}
 	BC_ASSERT_PTR_NOT_NULL(conf_to_focus_call);
