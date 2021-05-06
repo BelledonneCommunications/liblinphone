@@ -254,7 +254,7 @@ LINPHONE_PUBLIC const char *linphone_content_get_file_path (const LinphoneConten
  * If the content is an encrypted file, generate a temporary plain copy of the file and returns its paths
  * The caller is responsible to then delete this temporary copy and the returned string
  * @param[in] content #LinphoneContent object.
- * @return The file path set for this content if it has been set, NULL otherwise.
+ * @return The file path set for this content if it has been set, NULL otherwise. @tobefreed
  */
 LINPHONE_PUBLIC char *linphone_content_get_plain_file_path (const LinphoneContent *content);
 
