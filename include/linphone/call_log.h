@@ -156,7 +156,7 @@ LINPHONE_PUBLIC bool_t linphone_call_log_video_enabled(const LinphoneCallLog *ca
  * Get a human readable string describing the call.
  * @note: the returned string must be freed by the application (use ms_free()).
  * @param call_log #LinphoneCallLog object @notnil
- * @return A human readable string describing the call. @notnil
+ * @return A human readable string describing the call. @notnil @tobefreed
 **/
 LINPHONE_PUBLIC char * linphone_call_log_to_str(const LinphoneCallLog *call_log);
 

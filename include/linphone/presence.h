@@ -87,7 +87,7 @@ LINPHONE_PUBLIC time_t linphone_presence_model_get_timestamp(const LinphonePrese
 /**
  * Gets the contact of a presence model.
  * @param model The #LinphonePresenceModel object to get the contact from. @notnil
- * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil
+ * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil @tobefreed
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -291,7 +291,7 @@ LINPHONE_PUBLIC bool_t linphone_presence_model_is_online(const LinphonePresenceM
 /**
  * Gets the string representation of a presence basic status.
  * @param basic_status A #LinphonePresenceBasicStatus for which to get a string representation.
- * @return A pointer a dynamically allocated string representing the given basic status. @notnil
+ * @return A pointer a dynamically allocated string representing the given basic status. @notnil @tobefreed
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -311,7 +311,7 @@ LINPHONE_PUBLIC LinphonePresenceService * linphone_presence_service_new(const ch
 /**
  * Gets the id of a presence service.
  * @param service The #LinphonePresenceService object to get the id from. @notnil
- * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error. @maybenil
+ * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error. @maybenil @tobefreed
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -343,7 +343,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_basic_status(Linpho
 /**
  * Gets the contact of a presence service.
  * @param service The #LinphonePresenceService object to get the contact from. @notnil
- * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil
+ * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil @tobefreed
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -419,7 +419,7 @@ LINPHONE_PUBLIC LinphonePresencePerson * linphone_presence_person_new(const char
 /**
  * Gets the id of a presence person.
  * @param person The #LinphonePresencePerson object to get the id from.
- * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error. @maybenil
+ * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error. @maybenil @tobefreed
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -539,7 +539,7 @@ LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_activity_new(Linpho
 /**
  * Gets the string representation of a presence activity.
  * @param activity A pointer to the #LinphonePresenceActivity object for which to get a string representation. @notnil
- * @return A pointer a dynamically allocated string representing the given activity. @notnil
+ * @return A pointer a dynamically allocated string representing the given activity. @notnil @tobefreed
  *
  * The returned string is to be freed by calling ms_free().
  */

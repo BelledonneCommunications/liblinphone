@@ -137,7 +137,7 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
  * The returned bctbx_list_t contains URIs of all participant. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
  * @param conf A #LinphoneConference @notnil
- * @return The list of the participants' address. \bctbx_list{LinphoneAddress} @maybenil
+ * @return The list of the participants' address. \bctbx_list{LinphoneAddress} @maybenil @tobefreed
  * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conf);
@@ -145,7 +145,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const Linphon
 /**
  * Get list of all participants of one conference
  * @param conf A #LinphoneConference @notnil
- * @return A list of participants. \bctbx_list{LinphoneParticipant} @maybenil
+ * @return A list of participants. \bctbx_list{LinphoneParticipant} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conf);
 
