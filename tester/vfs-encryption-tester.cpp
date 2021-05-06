@@ -377,6 +377,7 @@ static void migration_test(void) {
 }
 
 static void file_transfer_test(const uint16_t encryptionModule, const char *random_id, const bool createUsers, const std::string basename="evfs_file_transfer_") {
+#ifdef HAVE_ADVANCED_IM
 	const bctbx_list_t * contents = NULL;
 	LinphoneContent * content = NULL;
 	LinphoneChatMessage *msg = NULL;
@@ -589,6 +590,7 @@ end:
 
 	// reset VFS encryption
 	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
+#endif // HAVE_ADVANCED_IM
 }
 
 static void file_transfer_test() {
@@ -605,8 +607,8 @@ static void file_transfer_test() {
 	file_transfer_test(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, true, "evfs_file_transfer");
 	file_transfer_test(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false, "evfs_file_transfer");
 	bctbx_free(id);
-
 }
+
 test_t vfs_encryption_tests[] = {
 	TEST_NO_TAG("Register user", register_user_test),
 	TEST_NO_TAG("ZRTP call", zrtp_call_test),
