@@ -82,11 +82,9 @@ public class LinphoneObject {
 
      - Returns: new LinphoneObject
   */
-	init(cPointer:OpaquePointer, _ allocated: Bool=false) {
+	init(cPointer:OpaquePointer) {
 		cPtr = cPointer
-		if (!allocated) {
-			belle_sip_object_ref(UnsafeMutableRawPointer(cPtr))
-		}
+		belle_sip_object_ref(UnsafeMutableRawPointer(cPtr))
 	}
 
 	deinit {
@@ -242,11 +240,12 @@ class {{interfaceName}}Manager
 				let delegate = sObject.currentDelegate
 				{{#classLists}}
 				var {{argName}}sList = [{{classType}}]()
-				var {{argName}}cList = {{argName}}
-				while ({{argName}}cList != nil) {
-					let data = unsafeBitCast({{argName}}cList!.pointee.data, to: OpaquePointer.self)
+				let {{argName}}cList = {{argName}}
+				var listTemp = {{argName}}cList
+				while (listTemp != nil) {
+					let data = unsafeBitCast(listTemp!.pointee.data, to: OpaquePointer.self)
 					{{argName}}sList.append({{classType}}.getSwiftObject(cObject: data))
-					{{argName}}cList = UnsafePointer<bctbx_list_t>({{argName}}cList!.pointee.next)
+					listTemp = UnsafePointer<bctbx_list_t>(listTemp!.pointee.next)
 				}
 				{{/classLists}}
 				{{#return_class}}return {{/return_class}}delegate?.{{cb_name}}({{{params}}}){{#return_class}}?.cPtr{{/return_class}}
@@ -282,13 +281,13 @@ public class {{className}} : LinphoneObject
 	var delegateManagers : [{{className}}DelegateManager] = []
 	{{/hasListener}}
 
-	static public func getSwiftObject(cObject:OpaquePointer, _ allocated: Bool=false) -> {{className}} {
+	static public func getSwiftObject(cObject:OpaquePointer) -> {{className}} {
 		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
 		if (result != nil) {
 			return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
 		}
 
-		let sObject = {{className}}(cPointer: cObject, allocated)
+		let sObject = {{className}}(cPointer: cObject)
 		belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
 
 		return sObject
@@ -423,17 +422,29 @@ public class {{className}} : LinphoneObject
 				return nil
 			}
 			{{/maybenil}}
-			return charArrayToString(charPointer: cPointer)
+			let result = charArrayToString(charPointer: cPointer)
+			{{#isAllocated}}
+			if (cPointer != nil) {
+				bctbx_free(cPointer)
+			}
+			{{/isAllocated}}
+			return result
 			{{/is_string}}
 			{{#is_bool}}
 			return {{getter_c_name}}({{cPtr}}) != 0
 			{{/is_bool}}
 			{{#is_class}}
-			{{^Instance}}let cPointer = {{getter_c_name}}({{cPtr}})
+			let cPointer = {{getter_c_name}}({{cPtr}})
+			{{^Instance}}
 			if (cPointer == nil) {
 				return nil
 			}
-			return {{{return}}}.getSwiftObject(cObject:cPointer!{{#isAllocated}}, true{{/isAllocated}}){{/Instance}}{{#Instance}}return {{{return}}}.getSwiftObject(cObject:{{getter_c_name}}({{cPtr}}){{#isAllocated}}, true{{/isAllocated}}){{/Instance}}
+			{{/Instance}}
+			let result = {{{return}}}.getSwiftObject(cObject:cPointer!)
+			{{#isAllocated}}
+			belle_sip_object_unref(UnsafeMutableRawPointer(cPointer))
+			{{/isAllocated}}
+			return result
 			{{/is_class}}
 			{{#is_enum}}
 			return {{{return}}}(rawValue: Int({{getter_c_name}}({{cPtr}}).rawValue)){{^isFlag}}!{{/isFlag}}
@@ -446,21 +457,29 @@ public class {{className}} : LinphoneObject
 			{{/is_generic}}
 			{{#is_string_list}}
 			var swiftList = [String]()
-			var cList = {{getter_c_name}}({{cPtr}})
-			while (cList != nil) {
-				swiftList.append(String(cString: unsafeBitCast(cList!.pointee.data, to: UnsafePointer<CChar>.self)))
-				cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList!.pointee.next)
+			let cList = {{getter_c_name}}({{cPtr}})
+			var listTemp = cList
+			while (listTemp != nil) {
+				swiftList.append(String(cString: unsafeBitCast(listTemp!.pointee.data, to: UnsafePointer<CChar>.self)))
+				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp!.pointee.next)
 			}
+			{{#isAllocated}}
+			bctbx_list_free(cList)
+			{{/isAllocated}}
 			return swiftList
 			{{/is_string_list}}
 			{{#is_class_list}}
 			var swiftList = [{{{list_type}}}]()
-			var cList = {{getter_c_name}}({{cPtr}})
-			while (cList != nil) {
-				let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
-				swiftList.append({{{list_type}}}.getSwiftObject(cObject: data{{#isAllocated}}, true{{/isAllocated}}))
-				cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
+			let cList = {{getter_c_name}}({{cPtr}})
+			var listTemp = cList
+			while (listTemp != nil) {
+				let data = unsafeBitCast(listTemp?.pointee.data, to: OpaquePointer.self)
+				swiftList.append({{{list_type}}}.getSwiftObject(cObject: data))
+				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 			}
+			{{#isAllocated}}
+			bctbx_list_free(cList)
+			{{/isAllocated}}
 			return swiftList
 			{{/is_class_list}}
 			{{/is_callbacks}}
@@ -583,17 +602,29 @@ public class {{className}} : LinphoneObject
 	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
 		{{#is_string}}
-		{{return}}charArrayToString(charPointer: {{c_name}}({{cPtr}}{{{c_args}}}))
+		let cstr = {{c_name}}({{cPtr}}{{{c_args}}})
+		{{#return}}let result = {{/return}}charArrayToString(charPointer: cstr)
+		{{#isAllocated}}
+		if (cstr != nil) {
+			bctbx_free(cstr)
+		}
+		{{/isAllocated}}
+		{{#return}}return result{{/return}}
 		{{/is_string}}
 		{{#is_bool}}
 		{{return}}{{c_name}}({{cPtr}}{{{c_args}}}) != 0
 		{{/is_bool}}
 		{{#is_class}}
 		let cPointer = {{c_name}}({{cPtr}}{{{c_args}}})
-		{{#return}}if (cPointer == nil) {
+		{{#return}}
+		if (cPointer == nil) {
 			{{#create_method}}throw LinphoneError.exception(result: "create null {{type}} value"){{/create_method}}{{^create_method}}return nil{{/create_method}}
-		}{{/return}}
-		{{return}}{{{type}}}.getSwiftObject(cObject: cPointer!{{#isAllocated}}, true{{/isAllocated}})
+		}
+		let result = {{/return}}{{{type}}}.getSwiftObject(cObject: cPointer!)
+		{{#isAllocated}}
+		belle_sip_object_unref(UnsafeMutableRawPointer(cPointer))
+		{{/isAllocated}}
+		{{#return}}return result{{/return}}
 		{{/is_class}}
 		{{#is_enum}}
 		{{#exception}}let exception_result = {{/exception}}{{#return}}{{return}}{{{type}}}(rawValue: Int({{/return}}{{c_name}}({{cPtr}}{{{c_args}}}){{#return}}.rawValue))!{{/return}}
@@ -621,21 +652,29 @@ public class {{className}} : LinphoneObject
 		{{/is_generic}}
 		{{#is_string_list}}
 		var swiftList = [String]()
-		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
-		while (cList != nil) {
-			swiftList.append(String(cString: unsafeBitCast(cList!.pointee.data, to: UnsafePointer<CChar>.self)))
-			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList!.pointee.next)
+		let cList = {{c_name}}({{cPtr}}{{{c_args}}})
+		var listTemp = cList
+		while (listTemp != nil) {
+			swiftList.append(String(cString: unsafeBitCast(listTemp!.pointee.data, to: UnsafePointer<CChar>.self)))
+			listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp!.pointee.next)
 		}
+		{{#isAllocated}}
+		bctbx_list_free(cList)
+		{{/isAllocated}}
 		return swiftList
 		{{/is_string_list}}
 		{{#is_class_list}}
 		var swiftList = [{{{list_type}}}]()
-		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
-		while (cList != nil) {
-			let data = unsafeBitCast(cList?.pointee.data, to: OpaquePointer.self)
-			swiftList.append({{{list_type}}}.getSwiftObject(cObject: data{{#isAllocated}}, true{{/isAllocated}}))
-			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList?.pointee.next)
+		let cList = {{c_name}}({{cPtr}}{{{c_args}}})
+		var listTemp = cList
+		while (listTemp != nil) {
+			let data = unsafeBitCast(listTemp?.pointee.data, to: OpaquePointer.self)
+			swiftList.append({{{list_type}}}.getSwiftObject(cObject: data))
+			listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 		}
+		{{#isAllocated}}
+		bctbx_list_free(cList)
+		{{/isAllocated}}
 		return swiftList
 		{{/is_class_list}}
 	}
