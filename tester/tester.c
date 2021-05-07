@@ -938,13 +938,11 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 }
 
 void check_nb_streams(LinphoneCoreManager * m1, LinphoneCoreManager * m2, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams) {
-ms_message("DEBUG DEBUG m1 to m2: m1 %s m2 %s\n", linphone_address_as_string(m1->identity), linphone_address_as_string(m2->identity));
 	LinphoneCall * m1_to_m2_call = linphone_core_get_call_by_remote_address2(m1->lc, m2->identity);
 	BC_ASSERT_PTR_NOT_NULL(m1_to_m2_call);
 	if (m1_to_m2_call) {
 		_linphone_call_check_nb_streams(m1_to_m2_call, nb_audio_streams, nb_video_streams, 0, nb_active_audio_streams, nb_active_video_streams, 0);
 	}
-ms_message("DEBUG DEBUG m2 to m1: m1 %s m2 %s\n", linphone_address_as_string(m1->identity), linphone_address_as_string(m2->identity));
 	LinphoneCall * m2_to_m1_call = linphone_core_get_call_by_remote_address2(m2->lc, m1->identity);
 	BC_ASSERT_PTR_NOT_NULL(m2_to_m1_call);
 	if (m2_to_m1_call) {
@@ -2342,7 +2340,6 @@ void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	if (counters->last_received_presence && linphone_presence_model_get_nb_activities(counters->last_received_presence) > 0) {
 		for (i=0;counters->last_received_presence&&i<linphone_presence_model_get_nb_activities(counters->last_received_presence); i++) {
 			LinphonePresenceActivity *activity = linphone_presence_model_get_nth_activity(counters->last_received_presence, i);
-ms_message("DEBUG Activity type %0d ",linphone_presence_activity_get_type(activity));
 			switch (linphone_presence_activity_get_type(activity)) {
 				case LinphonePresenceActivityAppointment:
 					counters->number_of_LinphonePresenceActivityAppointment++; break;

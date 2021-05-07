@@ -227,7 +227,6 @@ void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audi
 	BC_ASSERT_LOWER(nb_active_video_streams, nb_video_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalVideo), nb_active_video_streams, int, "%i");
-ms_message("DEBUG DEBUG video streams - current activ video streams %0d expected active streams %0d\n", (int)call_local_desc->nbActiveStreamsOfType(SalVideo), nb_active_video_streams);
 	BC_ASSERT_LOWER(nb_active_text_streams, nb_text_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalText), nb_active_text_streams, int, "%i");
