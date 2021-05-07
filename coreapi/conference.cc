@@ -1711,12 +1711,19 @@ void RemoteConference::setSubject (const std::string &subject) {
 }
 
 bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
-	if (!getMe()->isAdmin()) {
-		lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin";
-		return false;
+	// Any remote participant can change the layout of the conference
+	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
+	bool layoutChanged = (getCurrentParams().getLayout() != newLayout);
+	if (getMe()->isAdmin()) {
+		return Conference::update(newParameters);
+	} else if (layoutChanged) {
+		ConferenceParams newParametersWithLayoutChanged(getCurrentParams());
+		newParametersWithLayoutChanged.setLayout(newLayout);
+		return Conference::update(newParametersWithLayoutChanged);
 	}
 
-	return Conference::update(newParameters);
+	lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin";
+	return false;
 }
 
 void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
