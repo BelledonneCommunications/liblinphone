@@ -248,6 +248,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_cre
 LINPHONE_PUBLIC const char * linphone_account_creator_get_phone_number(const LinphoneAccountCreator *creator);
 
 /**
+ * Get the international prefix.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The international prefix (or phone country code) of the #LinphoneAccountCreator. @maybenil
+**/
+LINPHONE_PUBLIC const char * linphone_account_creator_get_phone_country_code(const LinphoneAccountCreator *creator);
+
+/**
  * Set the password.
  * @param creator #LinphoneAccountCreator object @notnil
  * @param password The password to set @maybenil
@@ -634,13 +641,6 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(Lin
 **/
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
 
-
-/**
- * Create and configure a proxy config and a authentication info for an account creator
- * @param creator #LinphoneAccountCreator object @notnil
- * @return A #LinphoneAccount object if successful, NULL otherwise. @maybenil
-**/
-LINPHONE_PUBLIC LinphoneAccount * linphone_account_creator_create_quentin_account(const LinphoneAccountCreator *creator);
 /**************/
 /* DEPRECATED */
 /**************/

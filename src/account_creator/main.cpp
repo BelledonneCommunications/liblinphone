@@ -173,6 +173,10 @@ const char * linphone_account_creator_get_phone_number(const LinphoneAccountCrea
 	return creator->phone_number;
 }
 
+const char * linphone_account_creator_get_phone_country_code(const LinphoneAccountCreator *creator) {
+	return creator->phone_country_code;
+}
+
 LinphoneAccountCreatorPasswordStatus linphone_account_creator_set_password(LinphoneAccountCreator *creator, const char *password) {
 	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_min_length", -1);
 	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_max_length", -1);
