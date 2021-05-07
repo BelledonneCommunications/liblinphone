@@ -20,6 +20,7 @@
 #include "conference.h"
 #include "conference/participant-device.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
@@ -133,7 +134,18 @@ void Conference::join () {}
 void Conference::leave () {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
+	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
+	bool layoutChanged = (confParams) ? (confParams->getLayout() != newLayout) : false;
 	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
+	if (layoutChanged) {
+		const auto & meSession = static_pointer_cast<MediaSession>(getMe()->getSession());
+		const MediaSessionParams * meParams = meSession->getMediaParams();
+		MediaSessionParams *clonedParams = meParams->clone();
+
+		std::string subject(std::string("Conference layout changed to ") + ((newLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
+
+		return meSession->update(clonedParams, subject);
+	}
 	return true;
 };
 
