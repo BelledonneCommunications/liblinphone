@@ -127,7 +127,7 @@ int CorePrivate::removeCall (const shared_ptr<Call> &call) {
 		lWarning() << "Could not find the call (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") to remove";
 		return -1;
 	}
-	lInfo() << "Removing the call (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") from the list attached to the core";
+	lInfo() << "Removing the call (local address " << call->getLocalAddress().asString() << " remote address " << (call->getRemoteAddress() ? call->getRemoteAddress()->asString() : "Unknown") << ") from the list attached to the core";
 
 	calls.erase(iter);
 	return 0;
