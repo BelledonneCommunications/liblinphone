@@ -38,7 +38,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
 )
 
-if(ENABLE_DOC AND ENABLE_CSHARP_WRAPPER)
+if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 	message(CHECK_START "Generate C# wrapper html site")
 	find_program(
         DOCFX_EXECUTABLE
@@ -57,13 +57,16 @@ if(ENABLE_DOC AND ENABLE_CSHARP_WRAPPER)
 		if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
 			set(LINPHONE_STATE "releases")
 		endif()
-		# Replace @LINPHONE_STATE@ and @LINPHONE_VERSION@ in site main page
+
+		# Remove everything after the last point in LINPHONE_VERSION (4.5.0 --> 4.5) to create STRIPPED_LINPHONE_VERSION
+		string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
+		# Replace @LINPHONE_STATE@ and @STRIPPED_LINPHONE_VERSION@ in site main page
 		configure_file(
 			"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md" 
 			"${CMAKE_CURRENT_BINARY_DIR}/docfx_project/index.md"
 		)
-		# Replace @LINPHONE_STATE@ and @LINPHONE_VERSION@ version.txt.in, this
-		# file will be used in doc upload
+		# Replace @LINPHONE_STATE@ and @STRIPPED_LINPHONE_VERSION@ version.txt.in, this
+		# file will be used for csharp doc upload
 		configure_file(
 			"${CMAKE_CURRENT_SOURCE_DIR}/version.txt.in"
 			"${CMAKE_CURRENT_BINARY_DIR}/version.txt"
