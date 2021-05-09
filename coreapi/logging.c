@@ -290,7 +290,7 @@ void linphone_logging_service_debug(LinphoneLoggingService *log_service, const c
 }
 
 void linphone_logging_service_trace(LinphoneLoggingService *log_service, const char *msg) {
-	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelTrace, 0);
+	bctbx_log(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelTrace), "%s",msg);
 }
 
 void linphone_logging_service_message(LinphoneLoggingService *log_service, const char *msg) {
