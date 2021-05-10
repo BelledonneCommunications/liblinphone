@@ -389,12 +389,14 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&register_test_suite);
 #ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&group_chat_test_suite);
+	bc_tester_add_suite(&conference_event_test_suite);
+	bc_tester_add_suite(&external_domain_test_suite);
+	bc_tester_add_suite(&local_conference_test_suite);
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 #endif
-	bc_tester_add_suite(&local_conference_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
@@ -426,9 +428,6 @@ void liblinphone_tester_add_suites() {
 #endif
 	bc_tester_add_suite(&stun_test_suite);
 	bc_tester_add_suite(&event_test_suite);
-#ifdef HAVE_ADVANCED_IM
-	bc_tester_add_suite(&conference_event_test_suite);
-#endif
 	bc_tester_add_suite(&contents_test_suite);
 	bc_tester_add_suite(&flexisip_test_suite);
 	bc_tester_add_suite(&remote_provisioning_test_suite);
@@ -460,7 +459,6 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);
 	bc_tester_add_suite(&shared_core_test_suite);
 	bc_tester_add_suite(&vfs_encryption_test_suite);
-	bc_tester_add_suite(&external_domain_test_suite);
 
 }
 
