@@ -1150,7 +1150,8 @@ void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const
 	L_Q();
 	if (stream.dir != SalStreamInactive) {
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
-		stream.rtcp_mux = rtcpMux;
+		/* rtcp-mux must be enabled when bundle mode is proposed.*/
+		stream.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled();
 		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 		stream.rtcp_cname = getMe()->getAddress().asString();
 
@@ -1528,6 +1529,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			audioStream.name = "Audio";
 			audioStream.payloads = l;
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, audioStream, "as");
+			fillRtpParameters(audioStream);
 
 			int downPtime = getParams()->getPrivate()->getDownPtime();
 			if (downPtime)
@@ -1535,8 +1537,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			else
 				audioStream.ptime = linphone_core_get_download_ptime(q->getCore()->getCCore());
 			audioStream.max_rate = pth.getMaxCodecSampleRate(l);
-
-			fillRtpParameters(audioStream);
 
 		} else {
 			lInfo() << "Don't put audio stream on local offer for CallSession [" << q << "]";
@@ -1585,9 +1585,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			videoStream.name = "Video";
 			videoStream.payloads = l;
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, videoStream, "vs");
-
 			fillRtpParameters(videoStream);
-
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
 			videoStream.dir = SalStreamInactive;
@@ -1625,7 +1623,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			textStream.name = "Text";
 			textStream.payloads = l;
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, textStream, "ts");
-
 			fillRtpParameters(textStream);
 		} else {
 			textStream.rtp_port = 0;
