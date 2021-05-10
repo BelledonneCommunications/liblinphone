@@ -2482,6 +2482,7 @@ LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_get_nat_policy(const LinphoneC
  * @param core #LinphoneCore object @notnil
  * @return An unmodifiable array of strings contanining the names of the available
  * sound devices that is NULL terminated. \bctbx_list{char *} @maybenil @tobefreed
+ * @deprecated 10/04/2021 Use linphone_core_get_audio_devices() instead.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_sound_devices_list(const LinphoneCore *core);
