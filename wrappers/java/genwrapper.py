@@ -304,9 +304,6 @@ class JavaTranslator:
             return {'notEmpty': False}
 
         if methodDict['hasListReturn']:
-            if _method.returnAllocatedObject:
-                methodDict['cPrefix'] = _method.returnType.containedTypeDesc.desc.name.to_snake_case(fullName=True)
-
             if isinstance(_method.returnType, AbsApi.BaseType) and _method.returnType.name == 'string_array':
                 methodDict['isStringObjectArray'] = True
             elif isinstance(_method.returnType.containedTypeDesc, AbsApi.BaseType):
