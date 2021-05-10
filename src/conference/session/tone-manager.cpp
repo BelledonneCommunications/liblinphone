@@ -453,8 +453,12 @@ void ToneManager::doStartRingtone(const std::shared_ptr<CallSession> &session) {
 	} else {
 		MSSndCard *ringcard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.ring_sndcard;
 		if (ringcard && !linphone_core_is_native_ringing_enabled(lc)) {
-			ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_RING);
-			linphone_ringtoneplayer_start(lc->factory, lc->ringtoneplayer, ringcard, lc->sound_conf.local_ring, 2000);
+			if (!linphone_core_callkit_enabled(lc)){
+				ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_RING);
+				linphone_ringtoneplayer_start(lc->factory, lc->ringtoneplayer, ringcard, lc->sound_conf.local_ring, 2000);
+			}else{
+				ms_message("Callkit is enabled, not playing ringtone.");
+			}
 		}
 	}
 }
