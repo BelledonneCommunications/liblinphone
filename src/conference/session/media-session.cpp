@@ -1148,25 +1148,23 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 
 void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const {
 	L_Q();
-	if (stream.dir != SalStreamInactive) {
-		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
-		/* rtcp-mux must be enabled when bundle mode is proposed.*/
-		stream.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled();
-		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
-		stream.rtcp_cname = getMe()->getAddress().asString();
+	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
+	/* rtcp-mux must be enabled when bundle mode is proposed.*/
+	stream.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled();
+	stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
+	stream.rtcp_cname = getMe()->getAddress().asString();
 
-		if ((stream.type == SalAudio) && (getParams()->audioMulticastEnabled())) {
-			stream.ttl = linphone_core_get_audio_multicast_ttl(q->getCore()->getCCore());
-			stream.multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
-		} else if ((stream.type == SalVideo) && (getParams()->videoMulticastEnabled())) {
-			stream.ttl = linphone_core_get_video_multicast_ttl(q->getCore()->getCCore());
-			stream.multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
-		}
+	if ((stream.type == SalAudio) && (getParams()->audioMulticastEnabled())) {
+		stream.ttl = linphone_core_get_audio_multicast_ttl(q->getCore()->getCCore());
+		stream.multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
+	} else if ((stream.type == SalVideo) && (getParams()->videoMulticastEnabled())) {
+		stream.ttl = linphone_core_get_video_multicast_ttl(q->getCore()->getCCore());
+		stream.multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
+	}
 
-		if (stream.type == SalVideo) {
-			/* this is a feature for tests only: */
-			stream.bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
-		}
+	if (stream.type == SalVideo) {
+		/* this is a feature for tests only: */
+		stream.bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 	}
 }
 
