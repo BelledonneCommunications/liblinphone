@@ -6571,7 +6571,6 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		LinphoneCore * c = m->lc;
-printf("%s - call between core conf %s particioant %s (el %p)\n", __func__, linphone_core_get_identity(local_conf->lc), linphone_core_get_identity(m->lc), it);
 		if (!BC_ASSERT_TRUE(call(local_conf,m)))
 			return;
 		lcs=bctbx_list_append(lcs,c);
