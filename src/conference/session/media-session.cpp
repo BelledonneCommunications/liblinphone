@@ -1391,18 +1391,20 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 					fillRtpParameters(newStream);
 
-					if (newStream.dir == SalStreamInactive) {
-						newStream.disable();
-						newStream.rtp_port = 0;
-						newStream.rtcp_port = 0;
-					} else if ((streamIdx < oldMd->streams.size()) && (oldMd->streams[streamIdx].rtp_port != 0)) {
+					if ((streamIdx < oldMd->streams.size()) && ((newStream.dir == SalStreamInactive) || (oldMd->streams[streamIdx].rtp_port != 0))) {
 						// Copy previous rtp and rtcp ports if they were already assigned
 						newStream.rtp_port = oldMd->streams[streamIdx].rtp_port;
 						newStream.rtcp_port = oldMd->streams[streamIdx].rtcp_port;
 					} else {
-						const auto rtp_port = q->getRandomRtpPort(newStream);
-						newStream.rtp_port = rtp_port;
-						newStream.rtcp_port = newStream.rtp_port + 1;
+						if (newStream.dir == SalStreamInactive) {
+							newStream.disable();
+							newStream.rtp_port = 0;
+							newStream.rtcp_port = 0;
+						} else {
+							const auto rtp_port = q->getRandomRtpPort(newStream);
+							newStream.rtp_port = rtp_port;
+							newStream.rtcp_port = newStream.rtp_port + 1;
+						}
 					}
 				}
 			}
