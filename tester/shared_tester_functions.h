@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
-void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams);
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams);
 int _linphone_call_get_nb_audio_steams(const LinphoneCall * call);
 int _linphone_call_get_nb_video_steams(const LinphoneCall * call);
 int _linphone_call_get_nb_text_steams(const LinphoneCall * call);

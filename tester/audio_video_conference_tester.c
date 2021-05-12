@@ -5695,13 +5695,10 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 	const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(l_conference);
 	const bool_t video_enabled = !!linphone_conference_params_is_video_enabled(conf_params);
 	BC_ASSERT_TRUE(video_enabled == enable_video);
-	const LinphoneConferenceLayout local_conf_layout = linphone_conference_params_get_layout(conf_params);
 	const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
 	const int nb_audio_streams = 1;
-	const int nb_active_audio_streams = 1;
 	// if layout is LinphoneConferenceLayoutActiveSpeaker, the stream speaker is added on top of one video stream for each participant
 	int nb_video_streams = 0;
-	int nb_active_video_streams = 0;
 
 	idx = 0;
 	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf->lc), "misc", "conference_event_log_enabled", TRUE );
@@ -5720,13 +5717,11 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 
 		if (video_enabled) {
 			nb_video_streams = local_conf_participants + 2;
-			nb_active_video_streams = local_conf_participants + 1 + ((local_conf_layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0);
 		} else {
 			nb_video_streams = initial_video_streams[idx];
-			nb_active_video_streams = 0;
 		}
 
-		check_nb_streams(conf, m, nb_audio_streams, nb_video_streams, 0, nb_active_audio_streams, nb_active_video_streams, 0);
+		check_nb_streams(conf, m, nb_audio_streams, nb_video_streams, 0);
 		idx++;
 
 	}
