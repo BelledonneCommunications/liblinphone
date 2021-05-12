@@ -211,7 +211,9 @@ typedef enum _LinphoneAccountCreatorStatus {
 
 	/** Server **/
 	LinphoneAccountCreatorStatusServerError, /**< Error server */
-
+	/** FlexiApi authentication token  */
+	LinphoneAccountCreatorStatusTokenNotSent,
+	
 	LinphoneAccountCreatorStatusPhoneNumberInvalid, /**< Error cannot send SMS */
 	LinphoneAccountCreatorStatusWrongActivationCode, /**< Error key doesn't match */
 	LinphoneAccountCreatorStatusPhoneNumberOverused, /**< Error too many SMS sent */

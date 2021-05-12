@@ -81,11 +81,25 @@ LINPHONE_PUBLIC void linphone_account_creator_reset(LinphoneAccountCreator *crea
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist(LinphoneAccountCreator *creator);
 
 /**
- * Send a request to create an account on server.
+ * Send a request to create an account on server. ONLY FOR XMLRPC BACKEND.
  * @param creator #LinphoneAccountCreator object @notnil
  * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent, #LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator);
+
+/**
+ * Send a request to create an account on server. ONLY FOR FLEXIAPI BACKEND.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent, #LinphoneAccountCreatorStatusRequestFailed otherwise
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token(LinphoneAccountCreator *creator);
+
+/**
+ * Send a request to  generate a push notification with a validation token for account creation on server. ONLY FOR FLEXIAPI BACKEND.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return #LinphoneAccountCreatorStatusRequestOk if the request has been sent, #LinphoneAccountCreatorStatusRequestFailed otherwise
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_send_token(LinphoneAccountCreator *creator);
 
 /**
  * Send a request to know if an account is activated on server.

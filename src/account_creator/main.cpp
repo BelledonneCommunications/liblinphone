@@ -459,7 +459,27 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist(LinphoneA
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator) {
-	return creator->service->create_account_request_cb(creator);
+	if (creator->service->create_account_request_cb) {
+		return creator->service->create_account_request_cb(creator);
+	}
+	ms_error("create_account_request_cb was not implemented in the LinphoneAccountCreatorService, this feature is only available when the account creator backend is configured to XMLRPC");
+	return LinphoneAccountCreatorStatusAccountNotCreated;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_send_token(LinphoneAccountCreator *creator) {
+	if (creator->service->send_token_request_cb) {
+		return creator->service->send_token_request_cb(creator);
+	}
+	ms_error("send_token_request_cb was not implemented in the LinphoneAccountCreatorService, this feature is only available when the account creator backend is configured to FlexiAPI");
+	return LinphoneAccountCreatorStatusTokenNotSent;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token(LinphoneAccountCreator *creator) {
+	if (creator->service->create_account_with_token_request_cb) {
+		return creator->service->create_account_with_token_request_cb(creator);
+	}
+	ms_error("create_account_with_token_request_cb was not implemented in the LinphoneAccountCreatorService, this feature is only available when the account creator backend is configured to FlexiAPI");
+	return LinphoneAccountCreatorStatusAccountNotCreated;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator) {
