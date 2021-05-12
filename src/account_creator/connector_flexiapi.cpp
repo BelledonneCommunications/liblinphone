@@ -46,7 +46,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_flexiapi(
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
-	flexiAPIClient->accountInfo(string(creator->username).append("@").append(creator->domain))
+	flexiAPIClient->accountInfo(string(creator->username ? creator->username : creator->phone_number).append("@").append(creator->domain))
 		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusAccountExist,
 											response.body.c_str());
