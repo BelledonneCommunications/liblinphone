@@ -217,19 +217,12 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 	return global_success;
 }
 
-void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams) {
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
 	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
 	BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->getNbActiveStreams(), nb_active_audio_streams + nb_active_video_streams + nb_active_text_streams, int, "%i");
-	BC_ASSERT_LOWER(nb_active_audio_streams, nb_audio_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalAudio), nb_active_audio_streams, int, "%i");
-	BC_ASSERT_LOWER(nb_active_video_streams, nb_video_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalVideo), nb_active_video_streams, int, "%i");
-	BC_ASSERT_LOWER(nb_active_text_streams, nb_text_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->nbActiveStreamsOfType(SalText), nb_active_text_streams, int, "%i");
 }
 
 int _linphone_call_get_nb_audio_steams(const LinphoneCall * call) {
