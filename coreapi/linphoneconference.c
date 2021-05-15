@@ -72,7 +72,7 @@ void linphone_conference_set_user_data (LinphoneConference *conference, void *ud
 	MediaConference::Conference::toCpp(conference)->setUserData(ud);
 }
 
-const char *linphone_conference_state_to_string (LinphoneConferenceState state) {
+char *linphone_conference_state_to_string (LinphoneConferenceState state) {
 	return ms_strdup(Utils::toString((LinphonePrivate::ConferenceInterface::State)state).c_str());
 }
 
@@ -307,7 +307,7 @@ LinphoneConferenceParams *linphone_conference_params_clone (const LinphoneConfer
 }
 
 void linphone_conference_params_set_audio_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+	ConferenceParams::toCpp(params)->enableAudio(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_audio_enabled (const LinphoneConferenceParams *params) {
@@ -323,7 +323,7 @@ bool_t linphone_conference_params_is_video_enabled (const LinphoneConferencePara
 }
 
 void linphone_conference_params_set_chat_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+	ConferenceParams::toCpp(params)->enableChat(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_chat_enabled (const LinphoneConferenceParams *params) {
@@ -345,6 +345,15 @@ void linphone_conference_params_set_one_participant_conference_enabled(LinphoneC
 bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params){
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
+
+void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout){
+	ConferenceParams::toCpp(params)->setLayout((ConferenceParams::Layout)layout);
+}
+
+LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params){
+	return (LinphoneConferenceLayout)ConferenceParams::toCpp(params)->getLayout();
+}
+
 
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getID().c_str();

@@ -102,7 +102,9 @@ public:
 	int getMainAudioStreamIndex () const { return mainAudioStreamIndex; }
 	int getMainTextStreamIndex () const { return mainTextStreamIndex; }
 	int getMainVideoStreamIndex () const { return mainVideoStreamIndex; }
-	std::shared_ptr<SalMediaDescription> getResultDesc () const { return resultDesc; }
+	std::shared_ptr<SalMediaDescription> getResultDesc () const {
+		return resultDesc;
+	}
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
@@ -163,17 +165,11 @@ private:
 #endif // ifdef TEST_EXT_RENDERER
 	static int sendDtmf (void *data, unsigned int revents);
 
-	
-
-	void assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md);
-	void assignStreamsIndexes(bool localIsOfferer);
-	int getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> & md, SalStreamType type);
 	void fixCallParams (std::shared_ptr<SalMediaDescription> & rmd, bool fromOffer);
 	void initializeParamsAccordingToIncomingCallParams () override;
 	void setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> & md);
 	void updateBiggestDesc (std::shared_ptr<SalMediaDescription> & md);
 	void updateRemoteSessionIdAndVer ();
-
 
 	void discoverMtu (const Address &remoteAddr);
 	void getLocalIp (const Address &remoteAddr);
@@ -242,6 +238,9 @@ private:
 	bool hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const;
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
+
+	void fillRtpParameters(SalStreamDescription & stream) const;
+
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;

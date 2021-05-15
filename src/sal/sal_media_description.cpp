@@ -39,6 +39,33 @@ SalMediaDescription::~SalMediaDescription(){
 }
 
 SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
+
+	name = other.name;
+	username = other.username;
+	addr = other.addr;
+
+	bandwidth = other.bandwidth;
+	session_ver = other.session_ver;
+	session_id = other.session_id;
+
+	dir = other.dir;
+	streams = other.streams;
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+	rtcp_xr = other.rtcp_xr;
+
+	ice_ufrag = other.ice_ufrag;
+	ice_pwd = other.ice_pwd;
+	ice_lite = other.ice_lite;
+
+	accept_bundles = other.accept_bundles;
+	bundles = other.bundles;
+
+	set_nortpproxy = other.set_nortpproxy;
+}
+
+SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & other) {
+
 	name = other.name;
 	username = other.username;
 	addr = other.addr;
@@ -63,6 +90,8 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	set_nortpproxy = other.set_nortpproxy;
 
 	haveLimeIk = other.haveLimeIk;
+
+	return *this;
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription() {
@@ -249,11 +278,18 @@ const SalStreamDescription & SalMediaDescription::findStream(SalMediaProto proto
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
+unsigned int SalMediaDescription::nbStreamsOfType(SalStreamType type) const {
+	unsigned int nb = 0;
+	for(const auto & stream : streams){
+		if (stream.getType() == type) nb++;
+	}
+	return nb;
+}
+
 unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) const {
 	unsigned int nb = 0;
 	for(const auto & stream : streams){
-		if (!stream.enabled()) continue;
-		if (stream.getType() == type) nb++;
+		if (stream.enabled() && (stream.getType() == type)) nb++;
 	}
 	return nb;
 }
@@ -283,6 +319,76 @@ const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType typ
 	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpAvp, type);
 	return desc;
 }
+
+int SalMediaDescription::findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const {
+	const auto & streamIt =  findStreamItWithSdpAttribute(name, value);
+	if (streamIt != streams.end()) {
+		return static_cast<int>(std::distance(streams.begin(), streamIt));
+	}
+	return -1;
+}
+
+const SalStreamDescription & SalMediaDescription::findStreamWithSdpAttribute(const std::string name, const std::string value) const {
+	const auto & streamIt =  findStreamItWithSdpAttribute(name, value);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(const std::string name, const std::string value) const {
+	return std::find_if(streams.cbegin(), streams.cend(), [&name, &value] (const auto & stream) {
+		const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
+		if (foundAttrVal) {
+			return (strcmp(foundAttrVal, value.c_str()) == 0);
+		} else {
+			return false;
+		}
+	});
+}
+
+int SalMediaDescription::findIdxMainStreamOfType(SalStreamType type) const {
+	const auto & streamIt =  findMainStreamItOfType(type);
+	if (streamIt != streams.end()) {
+		return static_cast<int>(std::distance(streams.begin(), streamIt));
+	}
+	return -1;
+}
+
+const SalStreamDescription & SalMediaDescription::findMainStreamOfType(SalStreamType type) const {
+	const auto & streamIt =  findMainStreamItOfType(type);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findMainStreamItOfType(SalStreamType type) const {
+	return std::find_if(streams.cbegin(), streams.cend(), [&type] (const auto & stream) {
+		return ((stream.getType()==type) && stream.isMain());
+	});
+}
+
+const SalStreamDescription SalMediaDescription::findFirstStreamOfType(SalStreamType type) const {
+	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type] (const auto & stream) {
+		return (stream.getType()==type);
+	});
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+const std::list<SalStreamDescription> SalMediaDescription::findAllStreamsOfType(SalStreamType type) const {
+	std::list<SalStreamDescription> streamList;
+	for (const auto & s : streams) {
+		if (s.getType()==type) {
+			streamList.push_back(s);
+		}
+	};
+	return streamList;
+}
+
 
 bool SalMediaDescription::isEmpty() const {
 	if (getNbActiveStreams() > 0) return false;
