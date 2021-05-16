@@ -157,7 +157,7 @@ LINPHONE_PUBLIC LinphoneSecurityEventType linphone_event_log_get_security_event_
 /**
  * Returns the faulty device address of a conference security event.
  * @param event_log A #LinphoneEventLog object. @notnil
- * @return The #LinphoneAddress of the faulty device. @maybenil
+ * @return The #LinphoneAddress of the faulty device. @maybenil @tobefreed
  */
 LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_device_address (const LinphoneEventLog *event_log);
 

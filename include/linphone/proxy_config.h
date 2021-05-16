@@ -448,7 +448,7 @@ LINPHONE_PUBLIC SipSetup *linphone_proxy_config_get_sip_setup(LinphoneProxyConfi
  * This function will always generate a normalized username if input is a phone number.
  * @param proxy_config #LinphoneProxyConfig object containing country code and/or escape symbol. If NULL passed, will use default configuration. @maybenil
  * @param username the string to parse @notnil
- * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil
+ * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil @tobefreed
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
 */
 LINPHONE_PUBLIC char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy_config, const char *username);
@@ -464,7 +464,7 @@ LINPHONE_PUBLIC char* linphone_proxy_config_normalize_phone_number(LinphoneProxy
  * The result is a syntactically correct SIP address.
  * @param proxy_config #LinphoneProxyConfig object containing country code, escape symbol and/or domain name. Can be NULL if domain is already provided. @maybenil
  * @param username the string to parse @notnil
- * @return NULL if invalid input, normalized sip address otherwise. @maybenil
+ * @return NULL if invalid input, normalized sip address otherwise. @maybenil @tobefreed
  * @deprecated 06/04/2020 Use #LinphoneAccount object instead
 */
 LINPHONE_PUBLIC LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *proxy_config, const char *username);
