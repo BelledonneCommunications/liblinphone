@@ -133,7 +133,7 @@ public:
 	
 	/**
 	 * @brief completeContact Fill LdapContactFields with the attribute. This function has to be call for each attributes.
-	 * The function use 'sip_scheme' and 'sip_domain' to complete the SIP attribute (scheme:attr_value@domain). These options can be empty to avoid this behaviour.
+	 * The function use 'sip_domain' to complete the SIP attribute (attr_value@domain). These options can be empty to avoid this behaviour.
 	 * @param lf the contact to fill
 	 * @param attr_name The attribute name from LDAP.
 	 * @param attr_value The value from LDAP.

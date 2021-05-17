@@ -270,17 +270,17 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() && (contact->mSip.second < 0 || (std::string(attr_value) != "" && contact->mSip.second > (int)attributeIndex)) ; ++attributeIndex){
 		if( attr_name == mSipAttributes[attributeIndex]){// Complete SIP with custom data (scheme and domain)
 			std::string sip;
-			if(mConfig.count("sip_scheme")>0 && mConfig.at("sip_scheme") != "")
-				sip = mConfig.at("sip_scheme")+":";
 			sip += attr_value;
-			if(mConfig.count("sip_domain")>0 && mConfig.at("sip_domain") != "")
-				sip += "@" + mConfig.at("sip_domain");
 // Test if this sip is ok	
 			LinphoneAddress* la = linphone_core_interpret_url(mCore->getCCore(), sip.c_str());
 			if( !la){
 			}else{
-				contact->mSip.first = sip;
+				if(mConfig.count("sip_domain")>0 && mConfig.at("sip_domain") != "")
+					linphone_address_set_domain(la, mConfig.at("sip_domain").c_str());
+				char *newSip = linphone_address_as_string(la);
+				contact->mSip.first = newSip;
 				contact->mSip.second = (int)attributeIndex;
+				ms_free(newSip);
 				linphone_address_unref(la);
 			}
 		}
