@@ -635,6 +635,8 @@ void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_
 
 void lime_delete_DRSessions(const char *limedb);
 
+void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct);// if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
+
 
 #ifdef __cplusplus
 };

@@ -2138,7 +2138,6 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	LinphoneCall* callee_call;
 	LinphoneCall* caller_call;
-	float fps = 0;
 
 	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
 	linphone_core_set_preferred_video_size_by_name(callee->lc, "QVGA");
@@ -2182,8 +2181,8 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 		linphone_call_cbs_unref(caller_cbs);
 
 		caller_stream = (VideoStream*) linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
-		ms_filter_call_method(caller_stream->source, MS_FILTER_SET_FPS, &fps);
-
+		// Set the FPS to 0 and keep away further set in order to simulate a defunct camera
+		liblinphone_tester_simulate_mire_defunct(caller_stream->source, TRUE);
 		BC_ASSERT_TRUE(wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallCameraNotWorking, 1, 10000));
 		camera = video_stream_get_camera(caller_stream);
 		if(BC_ASSERT_PTR_NOT_NULL(camera))
