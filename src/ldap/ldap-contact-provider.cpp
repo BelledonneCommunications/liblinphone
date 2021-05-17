@@ -267,20 +267,24 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 			contact->mName.second = (int)attributeIndex;
 		}
 	}
-	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() && (contact->mSip.second < 0 || (std::string(attr_value) != "" && contact->mSip.second > (int)attributeIndex)) ; ++attributeIndex){
+	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() && (contact->mSip.second < 0 || (std::string(attr_value) != "" && contact->mSip.second >= (int)attributeIndex)) ; ++attributeIndex){
 		if( attr_name == mSipAttributes[attributeIndex]){// Complete SIP with custom data (scheme and domain)
 			std::string sip;
-			if(mConfig.count("sip_scheme")>0 && mConfig.at("sip_scheme") != "")
-				sip = mConfig.at("sip_scheme")+":";
 			sip += attr_value;
-			if(mConfig.count("sip_domain")>0 && mConfig.at("sip_domain") != "")
-				sip += "@" + mConfig.at("sip_domain");
 // Test if this sip is ok	
 			LinphoneAddress* la = linphone_core_interpret_url(mCore->getCCore(), sip.c_str());
 			if( !la){
 			}else{
-				contact->mSip.first = sip;
+				if(mConfig.count("sip_domain")>0 && mConfig.at("sip_domain") != "")
+					linphone_address_set_domain(la, mConfig.at("sip_domain").c_str());
+				char *newSip = linphone_address_as_string(la);
+				if( contact->mSip.second != (int)attributeIndex){
+					contact->mSip.first.clear();
+					contact->mSip.second = (int)attributeIndex;
+				}
+				contact->mSip.first.push_back(newSip);
 				contact->mSip.second = (int)attributeIndex;
+				ms_free(newSip);
 				linphone_address_unref(la);
 			}
 		}
@@ -371,8 +375,13 @@ bool LdapContactProvider::iterate(void *data) {
 			std::string auth_mechanism = provider->mConfig.at("auth_method");
 			int ret=0;
 			if( (auth_mechanism == "ANONYMOUS") || (auth_mechanism == "SIMPLE") ) {
-				struct berval passwd = { (ber_len_t)provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
-				ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
+				std::string bindDn, password;
+				if( auth_mechanism == "SIMPLE" && provider->mConfig.count("bind_dn") > 0) {
+					bindDn = provider->mConfig.at("bind_dn");
+					password = provider->mConfig.at("password");
+				}//else : anonymous connection
+				struct berval passwd = { (ber_len_t)password.length(), ms_strdup(password.c_str())};
+				ret = ldap_sasl_bind(provider->mLd, bindDn.c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
 				ms_free(passwd.bv_val);
 				if( ret == LDAP_SUCCESS ) {
 					provider->mCurrentAction = ACTION_WAIT_BIND;
@@ -534,11 +543,13 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 					attr = ldap_next_attribute(mLd, entry, ber);
 				}
 				if( contact_complete ) {
-					LinphoneAddress* la = linphone_core_interpret_url(lc, ldapData.mSip.first.c_str());
-					if( la ){
-						linphone_address_set_display_name(la, ldapData.mName.first.c_str());
-						req->mFoundEntries = bctbx_list_append(req->mFoundEntries, la);
-						++req->mFoundCount;
+					for(size_t i = 0 ; i < ldapData.mSip.first.size() ; ++i){
+						LinphoneAddress* la = linphone_core_interpret_url(lc, ldapData.mSip.first[i].c_str());
+						if( la ){
+							linphone_address_set_display_name(la, ldapData.mName.first.c_str());
+							req->mFoundEntries = bctbx_list_append(req->mFoundEntries, la);
+							++req->mFoundCount;
+						}
 					}
 				}
 				if( ber ) ber_free(ber, 0);

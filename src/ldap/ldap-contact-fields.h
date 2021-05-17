@@ -21,6 +21,7 @@
 #define LINPHONE_LDAP_CONTACT_FIELDS_H_
 
 #include "linphone/types.h"
+#include <vector>
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -30,14 +31,14 @@ public:
 	LdapContactFields();
 
 	/**
-	 * Regroup findings and keep the best choice.
+	 * Regroup findings and keep the best choices.
 	 * 
-	 * A pair is the string to use with its priority. If -1, then there is not defined result.
+	 * A pair is the list of string to use with its priority. If -1, then there is not defined result.
 	 * It is used for giving priority on attributes (eg: mobile and then telephoneNumber if mobile is not good enough to take account)
-	 * 
+	 * A list can be all mobile numbers
 	 */
 	std::pair< std::string, int> mName;
-	std::pair< std::string, int> mSip;
+	std::pair< std::vector<std::string>, int> mSip;
 
 };
 
