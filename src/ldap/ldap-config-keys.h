@@ -39,30 +39,28 @@ public:
 	 * Available Keys : default.
 	 *   - "server" : "ldap:///", Required.
 	 * LDAP Server. eg: ldap:/// for a localhost server or ldap://ldap.example.org/
-	 *   - "bind_dn" : "", Required.
-	 * Bind DN to use for bindings. The bindDN DN is the credential that is used to authenticate against an LDAP.
+	 *   - "bind_dn" : "".
+	 * Bind DN to use for bindings. The bindDN DN is the credential that is used to authenticate against an LDAP. If empty, the connection will be Anonymous.
 	 * eg: cn=ausername,ou=people,dc=bc,dc=com
 	 *   - "base_object" : "dc=example,dc=com", Required.
 	 * BaseObject is a specification for LDAP Search Scopes that specifies that the Search Request should only be performed against the entry specified as the search base DN.
-	 * No entries below it will be considered.
+	 * No entries above it will be considered.
 	 *   - "timeout" : "5".
 	 * Timeout in seconds
 	 *   - "max_results" : "5".
 	 * The max results when requesting searches.
 	 *   - "auth_method" : "SIMPLE".
-	 * Authentification method. Only "SIMPLE" and "ANONYMOUS" are supported (Same simple mechanism)
+	 * Authentification method. Only "SIMPLE" and "ANONYMOUS" are supported.
 	 *   - "password" : "".
 	 * Password to pass to server when binding.
 	 *   - "filter" : "(sn=*%s*)".
-	 * The search is based on this filter to search friends.
+	 * The search is based on this filter to search contacts.
 	 *   - "name_attribute" : "sn".
 	 * Check these attributes to build Name Friend, separated by a comma and the first is the highest priority.
 	 *   - "sip_attribute" : "mobile,telephoneNumber,homePhone,sn".
 	 * Check these attributes to build the SIP username in address of Friend. Attributes are separated by a comma and the first is the highest priority.
-	 *   - "sip_scheme" : "sip".
-	 * Add the scheme to the sip address(scheme:username@domain).
 	 *   - "sip_domain" : "sip.linphone.org".
-	 * Add the domain to the sip address(scheme:username@domain).
+	 * Add the domain to the sip address(sip:username@domain).
 	 *   - "enable" : "1".
 	 * If this config is enabled.
 	 *   - "use_sal" : "0".
