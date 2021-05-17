@@ -1104,10 +1104,11 @@ static void search_friend_with_phone_number_2(void) {
 	linphone_friend_set_vcard(laureFriend, laureVcard);
 	linphone_core_add_friend(manager->lc, laureFriend);
 
-	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(manager->lc);
-	BC_ASSERT_PTR_NOT_NULL(lpc);
-	if (lpc) {
-		const char *prefix = linphone_proxy_config_get_dial_prefix(lpc);
+	LinphoneAccount *account = linphone_core_get_default_account(manager->lc);
+	BC_ASSERT_PTR_NOT_NULL(account);
+	if (account) {
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		const char *prefix = linphone_account_params_get_international_prefix(params);
 		BC_ASSERT_PTR_NULL(prefix);
 	}
 
@@ -1151,13 +1152,18 @@ static void search_friend_with_phone_number_2(void) {
 	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+ (33) 6 12 13 14 15");
 	BC_ASSERT_PTR_NULL(lf);
 
-	if (lpc) {
-		linphone_proxy_config_set_dial_prefix(lpc, "33");
-		const char *prefix = linphone_proxy_config_get_dial_prefix(lpc);
+	if (account) {
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		LinphoneAccountParams *cloned_params = linphone_account_params_clone(params);
+
+		linphone_account_params_set_international_prefix(cloned_params, "33");
+		linphone_account_set_params(account, cloned_params);
+		const char *prefix = linphone_account_params_get_international_prefix(cloned_params);
 		BC_ASSERT_PTR_NOT_NULL(prefix);
 		if (prefix) {
 			BC_ASSERT_STRING_EQUAL(prefix, "33");
 		}
+		linphone_account_params_unref(cloned_params);
 	}
 
 	// Exists as-is
