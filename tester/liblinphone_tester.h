@@ -644,7 +644,11 @@ LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) ;
 void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs);
 void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 
+
 void lime_delete_DRSessions(const char *limedb);
+
+void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct);// if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
+
 
 #ifdef __cplusplus
 };

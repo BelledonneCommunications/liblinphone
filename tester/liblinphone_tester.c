@@ -38,6 +38,16 @@ static const char* liblinphone_helper =
 		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names or 'none' for no overriding (default: tester_hosts)> (deprecated)\n"
 		;
 
+typedef struct _MireData{
+	MSVideoSize vsize;
+	MSPicture pict;
+	int index;
+	uint64_t starttime;
+	float fps;
+	mblk_t *pic;
+	bool_t keep_fps;
+}MireData;
+
 /*
  * Returns the list of ip address for the supplied host name using libc's dns resolver.
  * They are returned as a bctx_list_t of char*, to be freed with bctbx_list_free_with_data(list, bctbx_free).
@@ -496,6 +506,17 @@ int liblinphone_tester_set_log_file(const char *filename) {
 	ms_message("Redirecting traces to file [%s]", filename);
 	linphone_core_set_log_file(log_file);
 	return 0;
+}
+
+// if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
+void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct){
+	if( BC_ASSERT_PTR_NOT_NULL(filter) && BC_ASSERT_PTR_NOT_NULL(filter->data)){
+		if( defunct) {
+			float fps = 0;
+			ms_filter_call_method(filter, MS_FILTER_SET_FPS, &fps);
+		}
+		((MireData*)filter->data)->keep_fps = defunct;
+	}
 }
 
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
