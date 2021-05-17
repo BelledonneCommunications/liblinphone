@@ -2039,6 +2039,7 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 	end_call(marie,pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
 }
 
 static void video_call_with_re_invite_inactive_followed_by_re_invite(void) {
