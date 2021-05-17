@@ -36,7 +36,6 @@ static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys={
 	{"filter", LdapConfigKeys("(sn=*%s*)")},
 	{"name_attribute", LdapConfigKeys("sn")},
 	{"sip_attribute", LdapConfigKeys("mobile,telephoneNumber,homePhone,sn")},
-	{"sip_scheme", LdapConfigKeys("sip")},
 	{"sip_domain", LdapConfigKeys("sip.linphone.org")},
 	{"enable", LdapConfigKeys("1")},
 	{"use_sal", LdapConfigKeys("0")},
