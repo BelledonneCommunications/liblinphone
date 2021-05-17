@@ -470,13 +470,14 @@ bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *lf) {
 bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *phoneNumber) {
 	if (!lf || !phoneNumber) return FALSE;
 
-	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lf->lc);
-	if (phoneNumber == NULL || !linphone_account_is_phone_number(cfg->account, phoneNumber)) {
+	LinphoneAccount *account = linphone_core_get_default_account(lf->lc); 
+	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can handle it
+	if (phoneNumber == NULL || !linphone_account_is_phone_number(account, phoneNumber)) {
 		ms_warning("Phone number [%s] isn't valid", phoneNumber);
 		return FALSE;
 	}
 
-	char *normalized_phone_number = linphone_proxy_config_normalize_phone_number(cfg, phoneNumber);
+	char *normalized_phone_number = linphone_account_normalize_phone_number(account, phoneNumber);
 
 	bool_t found = FALSE;
 	if (linphone_core_vcard_supported()) {
@@ -484,7 +485,7 @@ bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *ph
 		bctbx_list_t *it = NULL;
 		for (it = numbers; it != NULL; it = bctbx_list_next(it)) {
 			const char *value = (const char *)bctbx_list_get_data(it);
-			char *normalized_value = linphone_proxy_config_normalize_phone_number(cfg, value);
+			char *normalized_value = linphone_account_normalize_phone_number(account, value);
 			if (normalized_value && strcmp(normalized_value, normalized_phone_number) == 0) {
 				found = TRUE;
 				ms_free(normalized_value);
