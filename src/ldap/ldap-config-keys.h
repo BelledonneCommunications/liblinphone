@@ -59,8 +59,6 @@ public:
 	 * Check these attributes to build Name Friend, separated by a comma and the first is the highest priority.
 	 *   - "sip_attribute" : "mobile,telephoneNumber,homePhone,sn".
 	 * Check these attributes to build the SIP username in address of Friend. Attributes are separated by a comma and the first is the highest priority.
-	 *   - "sip_scheme" : "sip".
-	 * Add the scheme to the sip address(scheme:username@domain).
 	 *   - "sip_domain" : "sip.linphone.org".
 	 * Add the domain to the sip address(scheme:username@domain).
 	 *   - "enable" : "1".
