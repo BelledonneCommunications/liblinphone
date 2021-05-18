@@ -27,10 +27,10 @@
  * @ingroup chatroom
  */
 typedef enum _LinphoneChatRoomSecurityLevel{
-	LinphoneChatRoomSecurityLevelUnsafe, /**< Security failure */
-	LinphoneChatRoomSecurityLevelClearText, /**< No encryption */
-	LinphoneChatRoomSecurityLevelEncrypted, /**< Encrypted */
-	LinphoneChatRoomSecurityLevelSafe /**< Encrypted and verified */
+	LinphoneChatRoomSecurityLevelUnsafe = 0, /**< Security failure */
+	LinphoneChatRoomSecurityLevelClearText = 1, /**< No encryption */
+	LinphoneChatRoomSecurityLevelEncrypted = 2, /**< Encrypted */
+	LinphoneChatRoomSecurityLevelSafe = 3 /**< Encrypted and verified */
 } LinphoneChatRoomSecurityLevel;
 
 #endif // ifndef _L_ENCRYPTION_ENGINE_ENUMS_H_

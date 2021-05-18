@@ -27,15 +27,15 @@
  * @ingroup chatroom
  */
 typedef enum _LinphoneChatMessageState{
-	LinphoneChatMessageStateIdle, /**< Initial state */
-	LinphoneChatMessageStateInProgress, /**< Delivery in progress */
-	LinphoneChatMessageStateDelivered, /**< Message successfully delivered and acknowledged by the server */
-	LinphoneChatMessageStateNotDelivered, /**< Message was not delivered */
-	LinphoneChatMessageStateFileTransferError, /**< Message was received and acknowledged but cannot get file from server */
-	LinphoneChatMessageStateFileTransferDone, /**< File transfer has been completed successfully */
-	LinphoneChatMessageStateDeliveredToUser, /**< Message successfully delivered an acknowledged by the remote user */
-	LinphoneChatMessageStateDisplayed, /**< Message successfully displayed to the remote user */
-	LinphoneChatMessageStateFileTransferInProgress, /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
+	LinphoneChatMessageStateIdle = 0, /**< Initial state */
+	LinphoneChatMessageStateInProgress = 1, /**< Delivery in progress */
+	LinphoneChatMessageStateDelivered = 2, /**< Message successfully delivered and acknowledged by the server */
+	LinphoneChatMessageStateNotDelivered = 3, /**< Message was not delivered */
+	LinphoneChatMessageStateFileTransferError = 4, /**< Message was received and acknowledged but cannot get file from server */
+	LinphoneChatMessageStateFileTransferDone = 5, /**< File transfer has been completed successfully */
+	LinphoneChatMessageStateDeliveredToUser = 6, /**< Message successfully delivered an acknowledged by the remote user */
+	LinphoneChatMessageStateDisplayed = 7, /**< Message successfully displayed to the remote user */
+	LinphoneChatMessageStateFileTransferInProgress = 8, /** <File transfer is in progress. If message is incoming it's a download, otherwise it's an upload. */
 } LinphoneChatMessageState;
 
 
@@ -44,8 +44,8 @@ typedef enum _LinphoneChatMessageState{
  * @ingroup chatroom
  */
 typedef enum _LinphoneChatMessageDirection{
-	LinphoneChatMessageDirectionIncoming, /**< Incoming message */
-	LinphoneChatMessageDirectionOutgoing, /**< Outgoing message */
+	LinphoneChatMessageDirectionIncoming = 0, /**< Incoming message */
+	LinphoneChatMessageDirectionOutgoing = 1, /**< Outgoing message */
 } LinphoneChatMessageDirection;
 
 

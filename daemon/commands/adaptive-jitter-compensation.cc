@@ -24,9 +24,9 @@ using namespace std;
 class AdaptiveBufferCompensationResponse : public Response {
 public:
 	enum StreamType {
-		AudioStream,
-		VideoStream,
-		AllStreams
+		AudioStream = 0,
+		VideoStream = 1,
+		AllStreams = 2
 	};
 
 	AdaptiveBufferCompensationResponse(LinphoneCore *core, StreamType type);
