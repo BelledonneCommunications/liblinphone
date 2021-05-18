@@ -28,10 +28,10 @@
 
 // enum the different methods for the client to retrieve the certificate
 enum class certProvider {
-	config_sip, /**< in the sip section (client_cert_chain and client_cert_key) of the config file */
-	config_auth_info_buffer, /**< in a dedicated auth_info section of the configuration file, set cert and key in a buffer -> they won't be written in the core config file */
-	config_auth_info_path, /**< in a dedicated auth_info section of the configuration file, set path to cert and key -> these will be written in the core config file */
-	callback /**< using a callback adding auth_info into the core :
+	config_sip = 0, /**< in the sip section (client_cert_chain and client_cert_key) of the config file */
+	config_auth_info_buffer = 1, /**< in a dedicated auth_info section of the configuration file, set cert and key in a buffer -> they won't be written in the core config file */
+	config_auth_info_path = 2, /**< in a dedicated auth_info section of the configuration file, set path to cert and key -> these will be written in the core config file */
+	callback = 3 /**< using a callback adding auth_info into the core :
 		   NOT IMPLEMENTED, Client certificate for lime user identification shall already be accessible to the core as
 		  user register to the flexisip server before. THIS IS NOT DONE THIS WAY IN THIS TEST SUITE : user register on
 		  flexisip user http digest and tls cert on lime server for test purpose, it is very unlikely to proceed this way*/
@@ -362,5 +362,3 @@ test_suite_t lime_server_auth_test_suite = {
 	liblinphone_tester_after_each,
 	sizeof(lime_server_auth_tests) / sizeof(lime_server_auth_tests[0]), lime_server_auth_tests
 };
-
-
