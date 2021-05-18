@@ -165,7 +165,7 @@ LINPHONE_PUBLIC void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, co
 /**
  * Returns the list of phone numbers in the vCard (all the TEL attributes) or NULL
  * @param vCard the #LinphoneVcard @notnil
- * @return The phone numbers as string. \bctbx_list{const char *} @maybenil
+ * @return The phone numbers as string. \bctbx_list{const char *} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 

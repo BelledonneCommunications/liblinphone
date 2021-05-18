@@ -92,7 +92,7 @@ LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_get_security_
 /**
  * Gets the list of devices from a chat room's participant.
  * @param participant A #LinphoneParticipant object @notnil
- * @return List of devices. \bctbx_list{LinphoneParticipantDevice} @notnil
+ * @return List of devices. \bctbx_list{LinphoneParticipantDevice} @notnil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant);
 
