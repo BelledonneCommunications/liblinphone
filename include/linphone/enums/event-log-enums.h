@@ -31,25 +31,25 @@
  * @ingroup events
  */
 typedef enum _EventLogType{
-	LinphoneEventLogTypeNone, /**< No defined event */
-	LinphoneEventLogTypeConferenceCreated, /**< Conference (created) event */
-	LinphoneEventLogTypeConferenceTerminated, /**< Conference (terminated) event */
-	LinphoneEventLogTypeConferenceCallStart, /**< Conference call (start) event */
-	LinphoneEventLogTypeConferenceCallEnd, /**< Conference call (end) event */
-	LinphoneEventLogTypeConferenceChatMessage, /**< Conference chat message event */
-	LinphoneEventLogTypeConferenceParticipantAdded, /**< Conference participant (added) event */
-	LinphoneEventLogTypeConferenceParticipantRemoved, /**< Conference participant (removed) event */
-	LinphoneEventLogTypeConferenceParticipantSetAdmin, /**< Conference participant (set admin) event */
-	LinphoneEventLogTypeConferenceParticipantUnsetAdmin, /**< Conference participant (unset admin) event */
-	LinphoneEventLogTypeConferenceParticipantDeviceAdded, /**< Conference participant device (added) event */
-	LinphoneEventLogTypeConferenceParticipantDeviceRemoved, /**< Conference participant device (removed) event */
-	LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged, /**< Conference participant device (media changed) event */
-	LinphoneEventLogTypeConferenceSubjectChanged, /**< Conference subject event */
-	LinphoneEventLogTypeConferenceAvailableMediaChanged, /**< Conference available media event */
-	LinphoneEventLogTypeConferenceSecurityEvent, /**< Conference encryption security event*/
-	LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged, /**< Conference ephemeral message (ephemeral message lifetime changed) event */
-	LinphoneEventLogTypeConferenceEphemeralMessageEnabled, /**< Conference ephemeral message (ephemeral message enabled) event */
-	LinphoneEventLogTypeConferenceEphemeralMessageDisabled, /**< Conference ephemeral message (ephemeral message disabled) event */
+	LinphoneEventLogTypeNone = 0, /**< No defined event */
+	LinphoneEventLogTypeConferenceCreated = 1, /**< Conference (created) event */
+	LinphoneEventLogTypeConferenceTerminated = 2, /**< Conference (terminated) event */
+	LinphoneEventLogTypeConferenceCallStart = 3, /**< Conference call (start) event */
+	LinphoneEventLogTypeConferenceCallEnd = 4, /**< Conference call (end) event */
+	LinphoneEventLogTypeConferenceChatMessage = 5, /**< Conference chat message event */
+	LinphoneEventLogTypeConferenceParticipantAdded = 6, /**< Conference participant (added) event */
+	LinphoneEventLogTypeConferenceParticipantRemoved = 7, /**< Conference participant (removed) event */
+	LinphoneEventLogTypeConferenceParticipantSetAdmin = 8, /**< Conference participant (set admin) event */
+	LinphoneEventLogTypeConferenceParticipantUnsetAdmin = 9, /**< Conference participant (unset admin) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceAdded = 10, /**< Conference participant device (added) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceRemoved = 11, /**< Conference participant device (removed) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged = 12, /**< Conference participant device (media changed) event */
+	LinphoneEventLogTypeConferenceSubjectChanged = 13, /**< Conference subject event */
+	LinphoneEventLogTypeConferenceAvailableMediaChanged = 14, /**< Conference available media event */
+	LinphoneEventLogTypeConferenceSecurityEvent = 15, /**< Conference encryption security event*/
+	LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged = 16, /**< Conference ephemeral message (ephemeral message lifetime changed) event */
+	LinphoneEventLogTypeConferenceEphemeralMessageEnabled = 17, /**< Conference ephemeral message (ephemeral message enabled) event */
+	LinphoneEventLogTypeConferenceEphemeralMessageDisabled = 18, /**< Conference ephemeral message (ephemeral message disabled) event */
 } LinphoneEventLogType;
 
 #endif // ifndef _L_EVENT_LOG_ENUMS_H_

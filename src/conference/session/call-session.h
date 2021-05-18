@@ -76,7 +76,7 @@ public:
 		Updating = LinphoneCallStateUpdating,
 		Released = LinphoneCallStateReleased,
 		EarlyUpdatedByRemote = LinphoneCallStateEarlyUpdatedByRemote,
-		EarlyUpdating
+		EarlyUpdating = LinphoneCallStateEarlyUpdating
 	};
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose

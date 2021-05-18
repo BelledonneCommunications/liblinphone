@@ -29,9 +29,9 @@ LINPHONE_BEGIN_NAMESPACE
  * MediaCapabilities is used to index participant and media capabilities.
  */
 enum class ConferenceMediaCapabilities {
-	Audio, // Audio text capabilities
-	Video, // Video capabilities
-	Text   // Text capabilities
+	Audio = 0, // Audio text capabilities
+	Video = 1, // Video capabilities
+	Text = 2   // Text capabilities
 };
 
 std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e);
