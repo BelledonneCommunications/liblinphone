@@ -1143,7 +1143,7 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
 			}
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_stats.number_of_LinphoneCallStreamsRunning + 1,5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
 
 			// Local conference
