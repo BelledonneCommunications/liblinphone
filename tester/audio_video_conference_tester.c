@@ -1869,7 +1869,7 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		linphone_call_update(m1_calls_m2, new_params);
 		linphone_call_params_unref (new_params);
 
-		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallUpdatedByRemote, initial_m2_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+		BC_ASSERT_TRUE(wait_for_until(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallUpdatedByRemote, initial_m2_stat.number_of_LinphoneCallUpdatedByRemote + 1, 10000));
 
 		int defer_update = !!linphone_config_get_int(linphone_core_get_config(m2->lc), "sip", "defer_update_default", FALSE);
 		if (defer_update == TRUE) {
@@ -3004,7 +3004,7 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 	// If core had a running call, it will be paused
 	unsigned int no_call_paused = no_callers - 1 + ((pausing_current_call) ? 1 : 0);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPausing, initial_callee_stat.number_of_LinphoneCallPausing + no_call_paused, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 20000));
 
 	int updated_by_remote_count = 0;
 	int call_checked_cnt = 0;
@@ -3383,16 +3383,12 @@ static void back_to_back_conferences(void) {
 static void try_to_create_second_conference_with_local_participant(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	linphone_core_set_inc_timeout(marie->lc, 10000);
 
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
-	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
-	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
-	linphone_core_set_inc_timeout(chloe->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
