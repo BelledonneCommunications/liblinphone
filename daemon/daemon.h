@@ -99,7 +99,7 @@ protected:
 class Response {
 public:
 	enum Status {
-		Ok, Error
+		Ok = 0, Error = 1
 	};
 	virtual ~Response() {
 	}
@@ -184,7 +184,7 @@ public:
 class CallPlayingStatsEvent: public Event {
 public:
 	CallPlayingStatsEvent(Daemon *daemon, int id);
-}; 
+};
 
 
 class DtmfEvent: public Event {
@@ -280,7 +280,7 @@ private:
 	void callStatsUpdated(LinphoneCall *call, const LinphoneCallStats *stats);
 	void dtmfReceived(LinphoneCall *call, int dtmf);
 	void messageReceived(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
-	
+
 	void execCommand(const std::string &command);
 	std::string readLine(const std::string&, bool*);
 	std::string readPipe();
