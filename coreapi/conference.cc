@@ -585,7 +585,7 @@ int LocalConference::participantDeviceMediaChanged(const IdentityAddress &addr) 
 
 int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
-	if (device->updateMedia()) {
+	if (device->updateMedia() && ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created))) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
 		const auto & updatedParticipantSession = device->getSession();
@@ -941,6 +941,7 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
+	lInfo() << "Terminate conference " << getConferenceAddress();
 	setState(ConferenceInterface::State::TerminationPending);
 	for (auto participant : participants){
 		for (const auto & device : participant->getDevices()) {
