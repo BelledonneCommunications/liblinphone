@@ -27,28 +27,28 @@
  * @ingroup call_control
  */
 typedef enum _LinphoneCallState{
-	LinphoneCallStateIdle, /**< Initial state */
-	LinphoneCallStateIncomingReceived, /**< Incoming call received */
-	LinphoneCallStatePushIncomingReceived, /**< PushIncoming call received */
-	LinphoneCallStateOutgoingInit, /**< Outgoing call initialized */
-	LinphoneCallStateOutgoingProgress, /**< Outgoing call in progress */
-	LinphoneCallStateOutgoingRinging, /**< Outgoing call ringing */
-	LinphoneCallStateOutgoingEarlyMedia, /**< Outgoing call early media */
-	LinphoneCallStateConnected, /**< Connected */
-	LinphoneCallStateStreamsRunning, /**< Streams running */
-	LinphoneCallStatePausing, /**< Pausing */
-	LinphoneCallStatePaused, /**< Paused */
-	LinphoneCallStateResuming, /**< Resuming */
-	LinphoneCallStateReferred, /**< Referred */
-	LinphoneCallStateError, /**< Error */
-	LinphoneCallStateEnd, /**< Call end */
-	LinphoneCallStatePausedByRemote, /**< Paused by remote */
-	LinphoneCallStateUpdatedByRemote, /**< The call&apos;s parameters are updated for example when video is asked by remote */
-	LinphoneCallStateIncomingEarlyMedia, /**< We are proposing early media to an incoming call */
-	LinphoneCallStateUpdating, /**< We have initiated a call update */
-	LinphoneCallStateReleased, /**< The call object is now released */
-	LinphoneCallStateEarlyUpdatedByRemote, /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */
-	LinphoneCallStateEarlyUpdating, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
+	LinphoneCallStateIdle = 0, /**< Initial state */
+	LinphoneCallStateIncomingReceived = 1, /**< Incoming call received */
+	LinphoneCallStatePushIncomingReceived = 2, /**< PushIncoming call received */
+	LinphoneCallStateOutgoingInit = 3, /**< Outgoing call initialized */
+	LinphoneCallStateOutgoingProgress = 4, /**< Outgoing call in progress */
+	LinphoneCallStateOutgoingRinging = 5, /**< Outgoing call ringing */
+	LinphoneCallStateOutgoingEarlyMedia = 6, /**< Outgoing call early media */
+	LinphoneCallStateConnected = 7, /**< Connected */
+	LinphoneCallStateStreamsRunning = 8, /**< Streams running */
+	LinphoneCallStatePausing = 9, /**< Pausing */
+	LinphoneCallStatePaused = 10, /**< Paused */
+	LinphoneCallStateResuming = 11, /**< Resuming */
+	LinphoneCallStateReferred = 12, /**< Referred */
+	LinphoneCallStateError = 13, /**< Error */
+	LinphoneCallStateEnd = 14, /**< Call end */
+	LinphoneCallStatePausedByRemote = 15, /**< Paused by remote */
+	LinphoneCallStateUpdatedByRemote = 16, /**< The call&apos;s parameters are updated for example when video is asked by remote */
+	LinphoneCallStateIncomingEarlyMedia = 17, /**< We are proposing early media to an incoming call */
+	LinphoneCallStateUpdating = 18, /**< We have initiated a call update */
+	LinphoneCallStateReleased = 19, /**< The call object is now released */
+	LinphoneCallStateEarlyUpdatedByRemote = 20, /**< The call is updated by remote while not yet answered (SIP UPDATE in early dialog received) */
+	LinphoneCallStateEarlyUpdating = 21, /**< We are updating the call while not yet answered (SIP UPDATE in early dialog sent) */
 } LinphoneCallState;
 
 /**
@@ -56,17 +56,17 @@ typedef enum _LinphoneCallState{
  * @ingroup audio
  */
 typedef enum _LinphoneAudioDeviceType {
-	LinphoneAudioDeviceTypeUnknown, /** Unknown */
-	LinphoneAudioDeviceTypeMicrophone, /** Microphone */
-	LinphoneAudioDeviceTypeEarpiece, /** Earpiece */
-	LinphoneAudioDeviceTypeSpeaker, /** Speaker */
-	LinphoneAudioDeviceTypeBluetooth, /** Bluetooth */
-	LinphoneAudioDeviceTypeBluetoothA2DP, /** Bluetooth A2DP */
-	LinphoneAudioDeviceTypeTelephony, /** Telephony */
-	LinphoneAudioDeviceTypeAuxLine, /** AuxLine */
-	LinphoneAudioDeviceTypeGenericUsb, /** GenericUsb */
-	LinphoneAudioDeviceTypeHeadset, /** Headset */
-	LinphoneAudioDeviceTypeHeadphones, /** Headphones */
+	LinphoneAudioDeviceTypeUnknown = 0, /** Unknown */
+	LinphoneAudioDeviceTypeMicrophone = 1, /** Microphone */
+	LinphoneAudioDeviceTypeEarpiece = 2, /** Earpiece */
+	LinphoneAudioDeviceTypeSpeaker = 3, /** Speaker */
+	LinphoneAudioDeviceTypeBluetooth = 4, /** Bluetooth */
+	LinphoneAudioDeviceTypeBluetoothA2DP = 5, /** Bluetooth A2DP */
+	LinphoneAudioDeviceTypeTelephony = 6, /** Telephony */
+	LinphoneAudioDeviceTypeAuxLine = 7, /** AuxLine */
+	LinphoneAudioDeviceTypeGenericUsb = 8, /** GenericUsb */
+	LinphoneAudioDeviceTypeHeadset = 9, /** Headset */
+	LinphoneAudioDeviceTypeHeadphones = 10, /** Headphones */
 } LinphoneAudioDeviceType;
 
 /**

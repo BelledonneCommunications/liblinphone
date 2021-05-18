@@ -22,18 +22,18 @@
 using namespace std;
 
 enum Protocol {
-	UDPProtocol,
-	TCPProtocol,
-	TLSProtocol
+	UDPProtocol = 0,
+	TCPProtocol = 1,
+	TLSProtocol = 2
 };
 
 class PortResponse : public Response {
 public:
 	enum PortType {
-		SIPPort,
-		AudioRTPPort,
-		VideoRTPPort,
-		AllPorts
+		SIPPort = 0,
+		AudioRTPPort = 1,
+		VideoRTPPort = 2,
+		AllPorts = 3
 	};
 
 	PortResponse(LinphoneCore *core, PortType type);
