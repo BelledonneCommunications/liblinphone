@@ -1592,10 +1592,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			PayloadTypeHandler::clearPayloadList(l);
 		}
 
-		if (videoStream.dir == SalStreamInactive) {
-			videoStream.disable();
-		}
-
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo);
 		if (customSdpAttributes) {
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
