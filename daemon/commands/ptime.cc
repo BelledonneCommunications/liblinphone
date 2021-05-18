@@ -24,9 +24,9 @@ using namespace std;
 class PtimeResponse : public Response {
 public:
 	enum Direction {
-		Upload,
-		Download,
-		BothDirections
+		Upload = 0,
+		Download = 1,
+		BothDirections = 2
 	};
 	PtimeResponse(LinphoneCore *core, Direction dir);
 };

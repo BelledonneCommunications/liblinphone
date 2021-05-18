@@ -29,9 +29,9 @@ typedef struct _lpc2xml_context lpc2xml_context;
 
 typedef enum _lpc2xml_log_level {
 	LPC2XML_DEBUG = 0,
-	LPC2XML_MESSAGE,
-	LPC2XML_WARNING,
-	LPC2XML_ERROR
+	LPC2XML_MESSAGE = 1,
+	LPC2XML_WARNING = 2,
+	LPC2XML_ERROR = 3
 } lpc2xml_log_level;
 
 typedef void(*lpc2xml_function)(void *ctx, lpc2xml_log_level level, const char *fmt, va_list list);
