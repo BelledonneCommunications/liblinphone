@@ -135,8 +135,8 @@ private:
 	// ---------------------------------------------------------------------------
 
 	enum class WrappedObjectOwner : int {
-		External,
-		Internal
+		External = 0,
+		Internal = 1
 	};
 
 	template<typename CppType>
