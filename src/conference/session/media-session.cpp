@@ -1571,21 +1571,27 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		videoStream.proto = getParams()->getMediaProto();
 		videoStream.type = SalVideo;
 
-		if (conference && isInLocalConference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & currentConfParams = cppConference->getCurrentParams();
-			const auto confVideoCapabilities = currentConfParams.videoEnabled();
-			videoStream.dir = (confVideoCapabilities && getParams()->videoEnabled()) ? SalStreamRecvOnly : SalStreamInactive;
-		} else {
-			videoStream.dir = getParams()->getPrivate()->getSalVideoDirection();
-		}
 		l = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		if (((conference && isInLocalConference) || getParams()->videoEnabled()) && !l.empty()){
-
 			videoStream.name = "Video";
 			videoStream.payloads = l;
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, videoStream, "vs");
 			fillRtpParameters(videoStream);
+
+			// Set direction appropriately to configuration
+			if (conference && isInLocalConference) {
+				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+				const auto & currentConfParams = cppConference->getCurrentParams();
+				const auto confVideoCapabilities = currentConfParams.videoEnabled();
+				if (confVideoCapabilities) {
+					videoStream.dir = (getParams()->videoEnabled()) ? SalStreamRecvOnly : SalStreamInactive;
+				} else {
+					videoStream.dir = SalStreamInactive;
+					videoStream.disable();
+				}
+			} else {
+				videoStream.dir = getParams()->getPrivate()->getSalVideoDirection();
+			}
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
 			videoStream.dir = SalStreamInactive;
