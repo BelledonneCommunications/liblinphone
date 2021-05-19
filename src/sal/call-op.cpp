@@ -616,6 +616,12 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 						op->mRoot->mCallbacks.call_accepted(op); // INVITE
 					} else if (method == "CANCEL") {
 						op->mRoot->mCallbacks.call_cancel_done(op);
+					} else if (method == "REFER") {
+						if (code >= 300) {
+							op->mRoot->mCallbacks.notify_refer(op, SalReferFailed);
+						}
+					} else {
+						lError() << "Received code [" << code << "] for method [" << method << "], nothing to do, dropping answer";
 					}
 					break;
 				case State::Terminating:
