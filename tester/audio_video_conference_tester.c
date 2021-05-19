@@ -3028,15 +3028,23 @@ static void conference_created_by_merging_video_calls_base(bool_t enable_video) 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
 
+	// Check that conference capabilities hasn't changed
+	current_conf_params = linphone_conference_get_current_params(l_conference);
+	BC_ASSERT_PTR_NOT_NULL(current_conf_params);
+	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(current_conf_params) == enable_video);
+
 	// Check that video is still on
+	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_laure), l_conference);
 	negotiated_call_params = linphone_call_get_current_params(marie_call_laure);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
 	negotiated_call_params = linphone_call_get_current_params(laure_called_by_marie);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_pauline), l_conference);
 	negotiated_call_params = linphone_call_get_current_params(marie_call_pauline);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
 	negotiated_call_params = linphone_call_get_current_params(pauline_called_by_marie);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_michelle), l_conference);
 	negotiated_call_params = linphone_call_get_current_params(marie_call_michelle);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
 	negotiated_call_params = linphone_call_get_current_params(michelle_called_by_marie);
