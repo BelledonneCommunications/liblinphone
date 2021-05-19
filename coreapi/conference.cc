@@ -658,6 +658,11 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
+				// If conference doesn't support video capabilities, then disable video
+				if (!getCurrentParams().videoEnabled()) {
+					const_cast<LinphonePrivate::MediaSessionParams*>(
+						call->getParams())->enableVideo(false);
+				}
 				// Conference resumes call that previously paused in order to add the participant
 				Conference::addParticipant(call);
 
@@ -670,6 +675,10 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call->toC());
 				linphone_call_params_set_in_conference(params, TRUE);
 				linphone_call_params_set_conference_id(params, confId.c_str());
+				// If conference doesn't support video capabilities, then disable video
+				if (!getCurrentParams().videoEnabled()) {
+					linphone_call_params_enable_video(params, FALSE);
+				}
 
 				Conference::addParticipant(call);
 
