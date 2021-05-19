@@ -1710,9 +1710,11 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		}
 		//wait a bit for the conference audio processing to run, despite we do not test it for the moment
 		wait_for_list(lcs,NULL,0,5000);
-		
+
+#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
+#endif // HAVE_ADVANCED_IM
 
 		terminate_conference(participants, marie, NULL, NULL);
 	}
@@ -1839,7 +1841,8 @@ static void video_conference_by_merging_calls(void){
 		
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,3,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,3,3000));
-		
+
+	#ifdef HAVE_ADVANCED_IM
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == TRUE);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == TRUE);
 		
@@ -1849,7 +1852,8 @@ static void video_conference_by_merging_calls(void){
 
 		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_IframeDecoded ,1, 5000));
 		BC_ASSERT_TRUE( wait_for_list(lcs ,&laure->stat.number_of_IframeDecoded, 1, 5000));
-		
+	#endif // HAVE_ADVANCED_IM
+
 		// Change camera, unfortunately there is no way to test its effectiveness for the moment. */
 		ms_message("Changing Marie's video device...");
 		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
@@ -5186,7 +5190,6 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		// Focus removed and added
 		// Conference media changed
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats[idx].number_of_NotifyReceived + 3),5000));
-	#endif // HAVE_ADVANCED_IM
 
 		// Wait for first frame if video is enabled
 		if (enable_video) {
@@ -5194,18 +5197,22 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 			liblinphone_tester_set_next_video_frame_decoded_cb(participant_call);
 			BC_ASSERT_TRUE( wait_for_list(lcs, &m->stat.number_of_IframeDecoded, initial_stats[idx].number_of_IframeDecoded + 1, 5000));
 		}
+	#endif // HAVE_ADVANCED_IM
 
 		// Remote  conference
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
-
+	#ifdef HAVE_ADVANCED_IM
 		const LinphoneCallParams * participant_call_params = linphone_call_get_current_params(participant_call);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(participant_call_params) == enable_video);
+	#endif // HAVE_ADVANCED_IM
 
 		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(conf_call);
+	#ifdef HAVE_ADVANCED_IM
 		const LinphoneCallParams * conf_call_params = linphone_call_get_current_params(conf_call);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(conf_call_params) == enable_video);
+	#endif // HAVE_ADVANCED_IM
 
 		LinphoneConference *pconference = linphone_call_get_conference(participant_call);
 		BC_ASSERT_PTR_NOT_NULL(pconference);
@@ -5294,6 +5301,7 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallStreamsRunning, initial_m2_stat.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallStreamsRunning, initial_m1_stat.number_of_LinphoneCallStreamsRunning + 1));
 
+	#ifdef HAVE_ADVANCED_IM
 		// Wait for first frame if video is enabled
 		if (exp_video_enabled) {
 			// Make sure video is received for participants. For conference we can't because of missing APIs.*/
@@ -5304,6 +5312,7 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		// Check video parameters
 		const LinphoneCallParams *m1_call_params = linphone_call_get_params(m1_calls_m2);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(m1_call_params) == exp_video_enabled);
+	#endif // HAVE_ADVANCED_IM
 		if (!m2_conference) {
 			const LinphoneCallParams *m2_call_params = linphone_call_get_params(m2_calls_m1);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(m2_call_params) == exp_video_enabled);
