@@ -337,6 +337,8 @@ set(SOURCE_FILES_OBJC )
 if(APPLE)
 	if (IOS)
 		list(APPEND SOURCE_FILES_OBJC liblinphone_tester_ios.m)
+	else()
+		list(APPEND SOURCE_FILES_OBJC liblinphone_tester_mac.m)
 	endif()
 endif()
 
@@ -476,13 +478,15 @@ if(NOT ANDROID)
 						)
 				endif()
 		endif()
-
 		install(TARGETS liblinphone_tester
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 		)
+		if(APPLE)
+			configure_file("${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/Info.plist")
+		endif()	
 
 		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
 		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")

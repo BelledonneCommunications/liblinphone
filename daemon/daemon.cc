@@ -939,8 +939,11 @@ static void sighandler(int signum){
 		the_app = NULL;
 	}
 }
-
+#if defined(__APPLE__)
+extern "C" int apple_main(int argc, char **argv){
+#else
 int main(int argc, char *argv[]) {
+#endif
 	const char *config_path = NULL;
 	const char *factory_config_path = NULL;
 	const char *pipe_name = NULL;
