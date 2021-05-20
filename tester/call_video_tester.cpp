@@ -2419,12 +2419,16 @@ static test_t call_video_tests[] = {
 };
 
 int init_msogl_call_suite(){
+#if defined( __ANDROID__ ) || TARGET_OS_IPHONE
+	return -1;
+#else
 	if(std::string(ms_factory_get_default_video_renderer(NULL)) == "MSOGL")
 		return -1;// Do not test MSOGL as it is already used by default tests
 	else{
 		g_display_filter = "MSOGL";
 		return 0;
 	}
+#endif
 }
 test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(call_video_tests) / sizeof(call_video_tests[0]), call_video_tests};
