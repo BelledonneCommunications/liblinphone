@@ -40,6 +40,10 @@
 #include <poll.h>
 #endif
 
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#endif
+
 #include "daemon.h"
 #include "commands/adaptive-jitter-compensation.h"
 #include "commands/jitterbuffer.h"
@@ -603,7 +607,13 @@ void Daemon::iterateStreamStats() {
 }
 
 void Daemon::iterate() {
+#if defined(__APPLE__) && !TARGET_OS_IPHONE
+    dispatch_sync(dispatch_get_main_queue(), ^(){
+        linphone_core_iterate(mLc);
+    });
+#else
 	linphone_core_iterate(mLc);
+#endif
 	iterateStreamStats();
 	if (mChildFd == (ortp_pipe_t)-1) {
 		if (!mEventQueue.empty()) {

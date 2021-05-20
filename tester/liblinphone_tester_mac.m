@@ -31,7 +31,6 @@
 #import <Carbon/Carbon.h>
 #import <AppKit/AppKit.h>
 
-
 extern int apple_main(int argc, char **argv);
 
 @interface MyApplicationDelegate: NSObject
