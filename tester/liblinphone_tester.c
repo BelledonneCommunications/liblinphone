@@ -415,9 +415,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_secure_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&call_video_test_suite);
-#if !defined(TARGET_OS_IPHONE) && !defined(__ANDROID__) && !defined(TARGET_OS_MAC)	// Mac is not yet fully supported for tests
-	bc_tester_add_suite(&call_video_msogl_test_suite);// Done only if MSOGL has not been tested in previous test
-#endif
+	bc_tester_add_suite(&call_video_msogl_test_suite);// Conditionals are defined in suite
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
@@ -520,12 +518,14 @@ void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct)
 }
 
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
-
+#if defined(__APPLE__)
+int apple_main (int argc, char *argv[])
+#else
 int main (int argc, char *argv[])
+#endif
 {
 	int ret = liblinphone_tester_start(argc, argv);
 	liblinphone_tester_stop();
 	return ret;
 }
-
 #endif
