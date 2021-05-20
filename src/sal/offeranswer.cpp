@@ -328,6 +328,25 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 	return res;
 }
 
+SalStreamDir OfferAnswerEngine::computeConferenceStreamDir(SalStreamDir dir){
+	SalStreamDir res=SalStreamSendRecv;
+	switch (dir) {
+		case SalStreamSendRecv:
+			res=SalStreamSendRecv;
+			break;
+		case SalStreamSendOnly:
+			res=SalStreamRecvOnly;
+			break;
+		case SalStreamRecvOnly:
+			res=SalStreamSendOnly;
+			break;
+		case SalStreamInactive:
+			res=SalStreamInactive;
+			break;
+	}
+	return res;
+}
+
 void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer,
 						const SalStreamDescription & remote_answer,
 						SalStreamDescription & result){
@@ -405,7 +424,13 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.dir=local_offer.dir;
 		result.multicast_role = SalMulticastSender;
 	} else {
-		result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
+//		const char * conferenceDeviceAttrName = "conference-device";
+//		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_offer.custom_sdp_attributes, conferenceDeviceAttrName));
+//		if (local_cap.isMain() || participantsAttrValue.empty()) {
+			result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
+//		} else {
+//			result.dir=OfferAnswerEngine::computeConferenceStreamDir(local_offer.dir);
+//		}
 	}
 
 	result.rtcp_mux = remote_answer.rtcp_mux && local_offer.rtcp_mux;
@@ -463,14 +488,20 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 	result.implicit_rtcp_fb = local_offer.implicit_rtcp_fb && remote_answer.implicit_rtcp_fb;
 }
 
-
 void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
 						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
 	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
 	result.proto=remote_offer.proto;
 	result.type=local_cap.type;
-	result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
+
+	const char * conferenceDeviceAttrName = "conference-device";
+	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
+	if (local_cap.isMain() || participantsAttrValue.empty()) {
+		result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
+	} else {
+		result.dir=OfferAnswerEngine::computeConferenceStreamDir(local_cap.dir);
+	}
 	
 	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
 		result.rtp_port=0;

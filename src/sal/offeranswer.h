@@ -61,6 +61,7 @@ class OfferAnswerEngine {
 		static bool_t onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l);
 		static bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);
 		static SalStreamDir computeDirIncoming(SalStreamDir local, SalStreamDir offered);
+		static SalStreamDir computeConferenceStreamDir(SalStreamDir dir);
 		static SalStreamDir computeDirOutgoing(SalStreamDir local, SalStreamDir answered);
 		static bool_t matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote, SalSrtpCryptoAlgo & result, unsigned int* choosen_local_tag, bool_t use_local_key);
 		static std::list<OrtpPayloadType*> matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool_t reading_response, bool_t one_matching_codec);
