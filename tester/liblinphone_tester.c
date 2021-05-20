@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -47,6 +47,7 @@ typedef struct _MireData{
 	mblk_t *pic;
 	bool_t keep_fps;
 }MireData;
+
 
 /*
  * Returns the list of ip address for the supplied host name using libc's dns resolver.

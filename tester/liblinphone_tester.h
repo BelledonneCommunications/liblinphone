@@ -646,10 +646,12 @@ void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 void lime_delete_DRSessions(const char *limedb);
 
 void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct);// if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
-
+void liblinphone_tester_core_iterate(LinphoneCore *lc);// An overloaded way to call linphone_core_iterate. Used for Mac in order to dispatch iterate in CFRunLoop
 
 #ifdef __cplusplus
 };
 #endif
+
+
 
 #endif /* LIBLINPHONE_TESTER_H_ */
