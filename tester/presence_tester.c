@@ -182,7 +182,7 @@ static void unsubscribe_while_subscribing(void) {
 	linphone_friend_done(friend);
 	linphone_core_add_friend(marie->lc,friend);
 	linphone_friend_unref(friend);
-	linphone_core_iterate(marie->lc);
+	liblinphone_tester_core_iterate(marie->lc);
 	linphone_core_manager_destroy(marie);
 }
 
