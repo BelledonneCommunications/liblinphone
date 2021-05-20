@@ -43,13 +43,13 @@ typedef enum _EventLogType{
 	LinphoneEventLogTypeConferenceParticipantUnsetAdmin = 9, /**< Conference participant (unset admin) event */
 	LinphoneEventLogTypeConferenceParticipantDeviceAdded = 10, /**< Conference participant device (added) event */
 	LinphoneEventLogTypeConferenceParticipantDeviceRemoved = 11, /**< Conference participant device (removed) event */
-	LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged = 12, /**< Conference participant device (media changed) event */
-	LinphoneEventLogTypeConferenceSubjectChanged = 13, /**< Conference subject event */
-	LinphoneEventLogTypeConferenceAvailableMediaChanged = 14, /**< Conference available media event */
-	LinphoneEventLogTypeConferenceSecurityEvent = 15, /**< Conference encryption security event*/
-	LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged = 16, /**< Conference ephemeral message (ephemeral message lifetime changed) event */
-	LinphoneEventLogTypeConferenceEphemeralMessageEnabled = 17, /**< Conference ephemeral message (ephemeral message enabled) event */
-	LinphoneEventLogTypeConferenceEphemeralMessageDisabled = 18, /**< Conference ephemeral message (ephemeral message disabled) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged = 17, /**< Conference participant device (media changed) event */
+	LinphoneEventLogTypeConferenceSubjectChanged = 12, /**< Conference subject event */
+	LinphoneEventLogTypeConferenceAvailableMediaChanged = 18, /**< Conference available media event */
+	LinphoneEventLogTypeConferenceSecurityEvent = 13, /**< Conference encryption security event*/
+	LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged = 14, /**< Conference ephemeral message (ephemeral message lifetime changed) event */
+	LinphoneEventLogTypeConferenceEphemeralMessageEnabled = 15, /**< Conference ephemeral message (ephemeral message enabled) event */
+	LinphoneEventLogTypeConferenceEphemeralMessageDisabled = 16, /**< Conference ephemeral message (ephemeral message disabled) event */
 } LinphoneEventLogType;
 
 #endif // ifndef _L_EVENT_LOG_ENUMS_H_
