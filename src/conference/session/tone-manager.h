@@ -69,16 +69,16 @@ class ToneManager : public CoreAccessor {
 
     private:
         using AudioResourceType = enum {
-            ToneGenerator,
-            LocalPlayer
+            ToneGenerator = 0,
+            LocalPlayer = 1
         };
 
         using State = enum {
-            None,     // No tone played, not in call (the session just started or will end soon)
-            Call,     // Running call
-            Ringback, // Play Ringback tone
-            Ringtone, // Play Ringtone or play a tone over the current call
-            Tone      // Play a DTMF tone or a tone file
+            None = 0,     // No tone played, not in call (the session just started or will end soon)
+            Call = 1,     // Running call
+            Ringback = 2, // Play Ringback tone
+            Ringtone = 3, // Play Ringtone or play a tone over the current call
+            Tone = 4      // Play a DTMF tone or a tone file
         };
         std::string stateToString(ToneManager::State state);
         void printDebugInfo(const std::shared_ptr<CallSession> &session);
