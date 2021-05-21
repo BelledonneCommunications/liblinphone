@@ -1754,7 +1754,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
-	if (getParams()->audioEnabled() || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	if ((localIsOfferer && getParams()->audioEnabled()) || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList));
 
 		auto audioStream = makeLocalStreamDecription(md, getParams()->audioEnabled(), "Audio", SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
@@ -1780,7 +1780,18 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	}
 
 	const SalStreamDescription &oldVideoStream = refMd ? refMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if ((conference && isInLocalConference) ||  getParams()->videoEnabled() || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	bool addVideoStream = false;
+	if (localIsOfferer) {
+		if (conference && isInLocalConference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & currentConfParams = cppConference->getCurrentParams();
+			addVideoStream = currentConfParams.videoEnabled();
+		} else if (getParams()->videoEnabled()) {
+			addVideoStream = true;
+		}
+	}
+
+	if ((localIsOffer && addVideoStream) || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
@@ -1794,16 +1805,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 		}
 
-		bool addVideoStream = false;
+		bool enableVideoStream = false;
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & currentConfParams = cppConference->getCurrentParams();
-			addVideoStream = currentConfParams.videoEnabled();
+			enableVideoStream = currentConfParams.videoEnabled();
 		} else if (getParams()->videoEnabled()) {
-			addVideoStream = true;
+			enableVideoStream = true;
 		}
 
-		auto videoStream = makeLocalStreamDecription(md, (addVideoStream || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())), "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+		auto videoStream = makeLocalStreamDecription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		videoStream.setSupportedEncryptions(encList);
 		videoStream.main = true;
@@ -1823,7 +1834,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 
 	const SalStreamDescription &oldTextStream = refMd ? refMd->findMainStreamOfType(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if (getParams()->realtimeTextEnabled() || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	if ((localIsOfferer && getParams()->realtimeTextEnabled()) || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto textCodecs = pth.makeCodecsList(SalText, 0, -1, ((oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldTextStream.already_assigned_payloads : emptyList));
 
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
