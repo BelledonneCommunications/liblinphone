@@ -1517,7 +1517,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findMainStreamOfType(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
-	if (getParams()->audioEnabled() || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	if ((localIsOfferer && getParams()->audioEnabled()) || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription audioStream;
 		audioStream.main = true;
 		audioStream.proto = getAudioProto(op ? op->getRemoteMediaDescription() : nullptr);
@@ -1558,12 +1558,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	const SalStreamDescription &oldVideoStream = refMd ? refMd->findMainStreamOfType(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	bool addVideoStream = false;
-	if (conference && isInLocalConference) {
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto & currentConfParams = cppConference->getCurrentParams();
-		addVideoStream = currentConfParams.videoEnabled();
-	} else if (getParams()->videoEnabled()) {
-		addVideoStream = true;
+	if (localIsOfferer) {
+		if (conference && isInLocalConference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & currentConfParams = cppConference->getCurrentParams();
+			addVideoStream = currentConfParams.videoEnabled();
+		} else if (getParams()->videoEnabled()) {
+			addVideoStream = true;
+		}
 	}
 	if (addVideoStream || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
 		SalStreamDescription videoStream;
@@ -1613,7 +1615,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 
 	const SalStreamDescription &oldTextStream = refMd ? refMd->findMainStreamOfType(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if (getParams()->realtimeTextEnabled() || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
+	if ((localIsOfferer && getParams()->realtimeTextEnabled()) || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		SalStreamDescription textStream;
 		textStream.proto = getParams()->getMediaProto();
 		textStream.main = true;
