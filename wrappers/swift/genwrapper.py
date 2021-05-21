@@ -375,6 +375,7 @@ class SwiftTranslator:
         methodDict['has_getter'] = True
         methodDict['has_setter'] = False
         methodDict['isDeprecated'] = prop.deprecated
+        methodDict['isAllocated'] = prop.returnAllocatedObject
         namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
         methodDict['return'] = prop.returnType.translate(self.langTranslator, namespace=namespace)
         if methodDict['return'].endswith('Delegate'):

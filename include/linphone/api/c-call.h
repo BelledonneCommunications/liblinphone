@@ -926,7 +926,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer (LinphoneCall *call, const
  * Returns the remote address associated to this call as a string.
  * The result string must be freed by user using ms_free().
  * @param call #LinphoneCall object. @notnil
- * @return the remote address as a string. @maybenil
+ * @return the remote address as a string. @maybenil @tobefreed
  * @deprecated 06/07/2020 use linphone_call_get_remote_address() instead.
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_call_get_remote_address_as_string (const LinphoneCall *call);
