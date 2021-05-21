@@ -230,6 +230,9 @@ public class CoreManager {
                 } else if (state == Call.State.StreamsRunning) {
                     Log.i("[Core Manager] Call active, ensure audio focus granted");
                     mAudioHelper.requestCallAudioFocus();
+                } else if (state == Call.State.Resuming) {
+                    Log.i("[Core Manager] Call resuming, ensure audio focus granted");
+                    mAudioHelper.requestCallAudioFocus();
                 }
             }
         };
@@ -317,6 +320,7 @@ public class CoreManager {
                     Log.i("[Core Manager] App has lost audio focus, pausing all calls");
                     mCore.pauseAllCalls();
                 }
+                mAudioHelper.releaseCallAudioFocus();
             } else {
                 Log.w("[Core Manager] Audio focus lost but keeping calls running");
             }
