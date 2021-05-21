@@ -189,7 +189,8 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_SPEECH)
             .build();
 
-        mCallRequest = new AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
+        // Android doc recommends TRANSIENT audio focus gain for VOIP calls: https://developer.android.com/reference/android/media/AudioManager#AUDIOFOCUS_GAIN_TRANSIENT
+        mCallRequest = new AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN_TRANSIENT)
             .setAudioAttributes(audioAttrs)
             .setOnAudioFocusChangeListener(this)
             .build();
@@ -211,6 +212,8 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             Log.i("[Audio Helper] Call audio focus request abandonned, restoring AudioManager mode to MODE_NORMAL");
             mCallRequest = null;
             mAudioManager.setMode(AudioManager.MODE_NORMAL);
+        } else {
+            Log.i("[Audio Helper] Call audio focus request was already abandonned");
         }
     }
 
