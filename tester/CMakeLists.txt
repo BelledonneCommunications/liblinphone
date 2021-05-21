@@ -262,7 +262,6 @@ set(SOURCE_FILES_C
 	flexisip_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
-	message_tester.c
 	player_tester.c
 	presence_server_tester.c
 	presence_tester.c
@@ -283,6 +282,7 @@ set(SOURCE_FILES_C
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND  SOURCE_FILES_C
+		message_tester.c
 		group_chat_tester.c
 		group_chat_secure_tester.c
 		external_domain_tester.c
