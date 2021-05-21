@@ -60,6 +60,22 @@ ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &
 	setChatRoom(cr);
 }
 
+ChatMessagePrivate::~ChatMessagePrivate () {
+	for (Content *content : contents) {
+		if (content->isFileTransfer()) {
+			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
+			delete fileTransferContent->getFileContent();
+		}
+		delete content;
+	}
+
+	if (salOp) {
+		salOp->setUserPointer(nullptr);
+		salOp->unref();
+	}
+	if (salCustomHeaders)
+		sal_custom_header_unref(salCustomHeaders);
+}
 
 void ChatMessagePrivate::setStorageId (long long id) {
 	L_Q();
@@ -1171,25 +1187,8 @@ ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMess
 ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getPublic()->getChatRoom()->getCore()) {}
 
 ChatMessage::~ChatMessage () {
-	L_D();
-
 	fileUploadEndBackgroundTask();
 	deleteChatMessageFromCache();
-
-	for (Content *content : d->contents) {
-		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			delete fileTransferContent->getFileContent();
-		}
-		delete content;
-	}
-
-	if (d->salOp) {
-		d->salOp->setUserPointer(nullptr);
-		d->salOp->unref();
-	}
-	if (d->salCustomHeaders)
-		sal_custom_header_unref(d->salCustomHeaders);
 }
 
 bool ChatMessage::isValid () const {

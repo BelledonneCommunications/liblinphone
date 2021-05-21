@@ -217,6 +217,7 @@ public:
 
 private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
+	virtual ~ChatMessagePrivate();
 
 public:
 	long long storageId = -1;
