@@ -61,6 +61,23 @@ PushNotificationConfig* PushNotificationConfig::clone () const {
 	return new PushNotificationConfig(*this);
 }
 
+bool PushNotificationConfig::isEqual(const PushNotificationConfig& other) const {
+	return mProvider == other.mProvider &&
+	mTeamId == other.mTeamId &&
+	mMsgStr == other.mMsgStr &&
+	mCallStr == other.mCallStr &&
+	mGroupChatStr == other.mGroupChatStr &&
+	mPrid == other.mPrid &&
+	mBundleIdentifer == other.mBundleIdentifer &&
+	mServices == other.mServices &&
+	mCallSnd == other.mCallSnd &&
+	mMsgSnd == other.mMsgSnd &&
+	mExtensions == other.mExtensions &&
+	mVoipToken == other.mVoipToken &&
+	mRemoteToken == other.mRemoteToken &&
+	mParam == other.mParam;
+}
+
 const string &PushNotificationConfig::getProvider() const {
 	return mProvider;
 }
