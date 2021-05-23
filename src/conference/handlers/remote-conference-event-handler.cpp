@@ -281,7 +281,13 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				if (state != StateType::deleted) {
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
-						const LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
+						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
+						// If on the local conference side the media is send-only, then on the remote conference side it is recv-ony and viceversa
+						if (mediaDirection == LinphoneMediaDirectionSendOnly) {
+							mediaDirection = LinphoneMediaDirectionRecvOnly;
+						} else if (mediaDirection == LinphoneMediaDirectionRecvOnly) {
+							mediaDirection = LinphoneMediaDirectionSendOnly;
+						}
 						if (mediaType.compare("audio") == 0) {
 							device->setAudioDirection(mediaDirection);
 						} else if (mediaType.compare("video") == 0) {
@@ -350,7 +356,7 @@ void RemoteConferenceEventHandler::subscribe () {
 	linphone_address_unref(peerAddr);
 	linphone_event_set_internal(lev, TRUE);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "event-handler-private", this, NULL);
-	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress << "with last notify: " << lastNotifyStr;
+	lInfo() << localAddress << " is subscribing to chat room or conference: " << peerAddress << " with last notify: " << lastNotifyStr;
 	linphone_event_send_subscribe(lev, nullptr);
 }
 
