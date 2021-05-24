@@ -1469,32 +1469,42 @@ static void file_transfer_2_messages_simultaneously(void) {
 					if (history) {
 						BC_ASSERT_TRUE(bctbx_list_size(history) == 2);
 						recvMsg = (LinphoneChatMessage*)history->data;
+						BC_ASSERT_PTR_NOT_NULL(recvMsg);
 						recvMsg2 = (LinphoneChatMessage*)history->next->data;
+						BC_ASSERT_PTR_NOT_NULL(recvMsg2);
 
-						LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
-						linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-						linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-						linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-						linphone_chat_message_add_callbacks(recvMsg, cbs);
-						linphone_chat_message_cbs_unref(cbs);
-						linphone_chat_message_download_file(recvMsg);
+						if (recvMsg) {
+							LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+							linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+							linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+							linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+							linphone_chat_message_add_callbacks(recvMsg, cbs);
+							linphone_chat_message_cbs_unref(cbs);
+							linphone_chat_message_download_file(recvMsg);
+						}
 
-						cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
-						linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-						linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-						linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
-						linphone_chat_message_add_callbacks(recvMsg2, cbs);
-						linphone_chat_message_cbs_unref(cbs);
-						linphone_chat_message_download_file(recvMsg2);
+						if (recvMsg2) {
+							cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+							linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+							linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+							linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
+							linphone_chat_message_add_callbacks(recvMsg2, cbs);
+							linphone_chat_message_cbs_unref(cbs);
+							linphone_chat_message_download_file(recvMsg2);
+						}
 
 						BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,50000));
 
 						BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
 						BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 2, int, "%d");
 						BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 2, int, "%d");
-						compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(recvMsg));
-						remove(linphone_chat_message_get_file_transfer_filepath(recvMsg));
-						remove(linphone_chat_message_get_file_transfer_filepath(recvMsg2));
+						if (recvMsg) {
+							compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(recvMsg));
+							remove(linphone_chat_message_get_file_transfer_filepath(recvMsg));
+						}
+						if (recvMsg2) {
+							remove(linphone_chat_message_get_file_transfer_filepath(recvMsg2));
+						}
 
 						bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 					}
