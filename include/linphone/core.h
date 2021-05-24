@@ -1059,7 +1059,7 @@ LINPHONE_PUBLIC void linphone_core_upload_log_collection(LinphoneCore *core);
 
 /**
  * Compress the log collection in a single file.
- * @return The path of the compressed log collection file (to be freed calling ms_free()). @notnil
+ * @return The path of the compressed log collection file (to be freed calling ms_free()). @notnil @tobefreed
  */
 LINPHONE_PUBLIC char * linphone_core_compress_log_collection(void);
 
@@ -1202,7 +1202,7 @@ LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *core, const char
  * @see linphone_proxy_config_normalize_sip_uri() for documentation.
  * @param core The core @notnil
  * @param url the url to parse @notnil
- * @return the #LinphoneAddress matching the url or NULL in case of failure. @maybenil
+ * @return the #LinphoneAddress matching the url or NULL in case of failure. @maybenil @tobefreed
  * @ingroup misc
  */
 LINPHONE_PUBLIC LinphoneAddress * linphone_core_interpret_url(LinphoneCore *core, const char *url);
@@ -1705,7 +1705,7 @@ LINPHONE_PUBLIC void linphone_core_set_dns_servers(LinphoneCore *core, const bct
  * Return the list of the available audio payload types.
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
- * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
+ * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref. @bctbx_list{LinphonePayloadType} @tobefreed @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_payload_types(LinphoneCore *core);
@@ -1724,7 +1724,7 @@ LINPHONE_PUBLIC void linphone_core_set_audio_payload_types(LinphoneCore *core, c
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the
- * list haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
+ * list haven't to be unref. @bctbx_list{LinphonePayloadType} @tobefreed @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_video_payload_types(LinphoneCore *core);
@@ -1743,7 +1743,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_payload_types(LinphoneCore *core, c
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the list
- * haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
+ * haven't to be unref. @bctbx_list{LinphonePayloadType} @tobefreed @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_text_payload_types(LinphoneCore *core);
@@ -1781,7 +1781,7 @@ LINPHONE_PUBLIC bool_t linphone_core_generic_comfort_noise_enabled(const Linphon
  * @param rate can be #LINPHONE_FIND_PAYLOAD_IGNORE_RATE
  * @param channels  number of channels, can be #LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS
  * @return Returns NULL if not found. If a #LinphonePayloadType is returned, it must be released with
- * linphone_payload_type_unref() after using it. @maybenil
+ * linphone_payload_type_unref() after using it. @maybenil @tobefreed
  * @warning The returned payload type is allocated as a floating reference i.e. the reference counter is initialized to 0.
  */
 LINPHONE_PUBLIC LinphonePayloadType *linphone_core_get_payload_type(LinphoneCore *core, const char *type, int rate, int channels);
@@ -2593,7 +2593,8 @@ LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_get_nat_policy(const LinphoneC
  * Gets the list of the available sound devices.
  * @param core #LinphoneCore object @notnil
  * @return An unmodifiable array of strings contanining the names of the available
- * sound devices that is NULL terminated. \bctbx_list{char *} @maybenil
+ * sound devices that is NULL terminated. \bctbx_list{char *} @maybenil @tobefreed
+ * @deprecated 10/04/2021 Use linphone_core_get_audio_devices() instead.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_sound_devices_list(const LinphoneCore *core);
@@ -3232,7 +3233,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_activation_policy(LinphoneCore *cor
  * Get the default policy for video.
  * See linphone_core_set_video_activation_policy() for more details.
  * @param core #LinphoneCore object @notnil
- * @return The video policy being used @notnil
+ * @return The video policy being used @tobefreed @notnil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_core_get_video_activation_policy(const LinphoneCore *core);
@@ -3408,7 +3409,7 @@ LINPHONE_PUBLIC void linphone_core_reload_video_devices(LinphoneCore *core);
 /**
  * Gets the list of the available video capture devices.
  * @param core #LinphoneCore object @notnil
- * @return An unmodifiable array of strings contanining the names of the available video capture devices that is NULL terminated. \bctbx_list{char *} @maybenil
+ * @return An unmodifiable array of strings contanining the names of the available video capture devices that is NULL terminated. \bctbx_list{char *} @maybenil @tobefreed
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_video_devices_list(const LinphoneCore *core);
@@ -4500,7 +4501,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_file_transfer_server(LinphoneCore
 /**
  * Returns a null terminated table of strings containing the file format extension supported for call recording.
  * @param core the core @notnil
- * @return The supported formats, typically 'wav' and 'mkv'. \bctbx_list{char *} @notnil
+ * @return The supported formats, typically 'wav' and 'mkv'. \bctbx_list{char *} @notnil @tobefreed
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_supported_file_formats_list(LinphoneCore *core);
@@ -5200,7 +5201,7 @@ LINPHONE_PUBLIC LinphoneFriend *linphone_core_find_friend_by_phone_number(const 
  * Search all #LinphoneFriend matching an address.
  * @param core #LinphoneCore object. @notnil
  * @param address The address to use to search the friends. @notnil
- * @return A list of #LinphoneFriend corresponding to the given address. \bctbx_list{LinphoneFriend} @maybenil
+ * @return A list of #LinphoneFriend corresponding to the given address. \bctbx_list{LinphoneFriend} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_find_friends(const LinphoneCore *core, const LinphoneAddress *address);
 
@@ -5562,7 +5563,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_vibration_on_incoming_call_enabled(Linph
  * Returns a list of audio devices, with only the first device for each type
  * To have the list of all audio devices, use #linphone_core_get_extended_audio_devices()
  * @param core The #LinphoneCore @notnil
- * @returns \bctbx_list{LinphoneAudioDevice} A list with the first #LinphoneAudioDevice of each type @maybenil
+ * @returns \bctbx_list{LinphoneAudioDevice} A list with the first #LinphoneAudioDevice of each type @maybenil @tobefreed
  * @ingroup audio
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore *core);
@@ -5570,7 +5571,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore
 /**
  * Returns the list of all audio devices
  * @param core The #LinphoneCore @notnil
- * @returns \bctbx_list{LinphoneAudioDevice} A list of all #LinphoneAudioDevice @maybenil
+ * @returns \bctbx_list{LinphoneAudioDevice} A list of all #LinphoneAudioDevice @maybenil @tobefreed
  * @ingroup audio
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_extended_audio_devices(const LinphoneCore *core);
@@ -6085,7 +6086,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_lime_available(const Li
  * Same as linphone_core_get_primary_contact() but the result is a #LinphoneAddress object
  * instead of const char *.
  * @param core the #LinphoneCore @notnil
- * @return a #LinphoneAddress object. @maybenil
+ * @return a #LinphoneAddress object. @maybenil @tobefreed
  * @ingroup proxies
  * @deprecated 22/10/2018 Use linphone_core_create_primary_contact_parsed() instead.
 **/
@@ -6665,7 +6666,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED MSVideoSize linphone_core_get_preferred_vide
 /**
  * Get the name of the current preferred video size for sending.
  * @param core #LinphoneCore object.
- * @return A string containing the name of the current preferred video size (to be freed with ms_free()).
+ * @return A string containing the name of the current preferred video size (to be freed with ms_free()).  @tobefreed
  * @deprecated 28/03/2017 Use linphone_core_get_preferred_video_defintion() and linphone_video_definition_get_name() instead
  * @donotwrap
  */
