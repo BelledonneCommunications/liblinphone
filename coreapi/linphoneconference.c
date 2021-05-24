@@ -156,6 +156,37 @@ bool_t linphone_conference_is_in (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->isIn();
 }
 
+void linphone_conference_set_input_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
+		aci->setInputDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+void linphone_conference_set_output_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
+		aci->setOutputDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+const LinphoneAudioDevice* linphone_conference_get_input_audio_device(const LinphoneConference *conference) {
+	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
+	LinphonePrivate::AudioDevice *audioDevice = aci->getInputDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
+const LinphoneAudioDevice* linphone_conference_get_output_audio_device(const LinphoneConference *conference) {
+	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
+	LinphonePrivate::AudioDevice *audioDevice = aci->getOutputDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
+
 int linphone_conference_mute_microphone (LinphoneConference *conference, bool_t val) {
 	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 	if (!aci) return -1;

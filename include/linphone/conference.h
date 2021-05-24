@@ -367,6 +367,34 @@ LINPHONE_PUBLIC bool_t linphone_conference_is_me(const LinphoneConference *confe
  */
 LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
 
+/**
+ * Sets the given #LinphoneAudioDevice as input for this conference only.
+ * @param conference The #LinphoneConference @notnil
+ * @param audio_device The #LinphoneAudioDevice. NULL does nothing. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_input_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as output for this conference only.
+ * @param conference The #LinphoneConference @notnil
+ * @param audio_device The #LinphoneAudioDevice. NULL does nothing. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_output_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the current input device for this conference.
+ * @param conference The #LinphoneConference @notnil
+ * @return the #LinphoneAudioDevice used by this conference as input or NULL if there is currently no soundcard configured (depending on the state of the conference) @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_conference_get_input_audio_device(const LinphoneConference *conference);
+
+/**
+ * Gets the current output device for this conference.
+ * @param conference The #LinphoneConference @notnil
+ * @return the #LinphoneAudioDevice used by this conference as output or NULL if there is currently no soundcard configured (depending on the state of the conference) @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_conference_get_output_audio_device(const LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
