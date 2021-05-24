@@ -597,6 +597,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 	switch (state) {
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
+		case CallSession::State::PushIncomingReceived:
 			break;
 		default:
 			lError() << "checkForAcceptation() CallSession [" << q << "] is in state [" << Utils::toString(state) << "], operation not permitted";

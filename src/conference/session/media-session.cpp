@@ -2408,7 +2408,7 @@ void MediaSession::initiateIncoming () {
 		if (d->deferIncomingNotification) {
 			auto incomingNotificationTask = [d](){
 				/* There is risk that the call can be terminated before this task is executed, for example if offer/answer fails.*/
-				if (d->state != State::Idle) return;
+				if (d->state != State::Idle && d->state != State::PushIncomingReceived) return;
 				d->deferIncomingNotification = false;
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 				d->startIncomingNotification();
