@@ -321,7 +321,6 @@ set(SOURCE_FILES_CXX
 	shared_tester_functions.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
-	vfs-encryption-tester.cpp
 	potential_configuration_tester.cpp
 )
 
@@ -338,6 +337,7 @@ if(ENABLE_ADVANCED_IM)
 	if(ENABLE_LIME_X3DH)
 		list(APPEND  SOURCE_FILES_CXX
 			lime-user-authentication-tester.cpp
+			vfs-encryption-tester.cpp
 		)
 	endif()
 endif()
