@@ -597,6 +597,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 	switch (state) {
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
+		case CallSession::State::PushIncomingReceived:
 			break;
 		default:
 			lError() << "checkForAcceptation() CallSession [" << q << "] is in state [" << Utils::toString(state) << "], operation not permitted";
@@ -1112,7 +1113,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 void CallSession::configure (LinphoneCallDir direction, const string &callid) {
 	L_D();
 	d->direction = direction;
-	d->log = linphone_call_log_new(direction, nullptr, nullptr);
+	d->log = linphone_call_log_new(direction, nullptr, linphone_address_new("\"Anonymous\"<sip:anonymous@anonymoushost>"));
 	linphone_call_log_set_call_id(d->log, callid.c_str());
 }
 
