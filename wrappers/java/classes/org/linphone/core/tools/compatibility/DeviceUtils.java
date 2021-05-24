@@ -62,7 +62,9 @@ public class DeviceUtils {
     }
 	
 	public static void logPreviousCrashesIfAny(Context context) {
-        if (Version.sdkAboveOrEqual(Version.API30_ANDROID_11)) {
+        if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
+            DeviceUtils31.logPreviousCrashesIfAny(context);
+        } else if (Version.sdkAboveOrEqual(Version.API30_ANDROID_11)) {
             DeviceUtils30.logPreviousCrashesIfAny(context);
         }
     }
