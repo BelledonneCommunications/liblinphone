@@ -80,7 +80,7 @@ public:
 
 	enum class Direction{
 		Incoming = LinphoneChatMessageDirectionIncoming,
-		Outgoing
+		Outgoing = LinphoneChatMessageDirectionOutgoing
 	};
 
 	//casting to int to get rid of the enum compare warning.

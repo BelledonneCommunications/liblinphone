@@ -26,15 +26,15 @@
  * @ingroup chatroom
  */
 typedef enum _LinphoneChatRoomState{
-	LinphoneChatRoomStateNone, /**< Initial state */
-	LinphoneChatRoomStateInstantiated, /**< Chat room is now instantiated on local */
-	LinphoneChatRoomStateCreationPending, /**< One creation request was sent to the server */
-	LinphoneChatRoomStateCreated, /**< Chat room was created on the server */
-	LinphoneChatRoomStateCreationFailed, /**< Chat room creation failed */
-	LinphoneChatRoomStateTerminationPending, /**< Wait for chat room termination */
-	LinphoneChatRoomStateTerminated, /**< Chat room exists on server but not in local */
-	LinphoneChatRoomStateTerminationFailed, /**< The chat room termination failed */
-	LinphoneChatRoomStateDeleted, /**< Chat room was deleted on the server */
+	LinphoneChatRoomStateNone = 0, /**< Initial state */
+	LinphoneChatRoomStateInstantiated = 1, /**< Chat room is now instantiated on local */
+	LinphoneChatRoomStateCreationPending = 2, /**< One creation request was sent to the server */
+	LinphoneChatRoomStateCreated = 3, /**< Chat room was created on the server */
+	LinphoneChatRoomStateCreationFailed = 4, /**< Chat room creation failed */
+	LinphoneChatRoomStateTerminationPending = 5, /**< Wait for chat room termination */
+	LinphoneChatRoomStateTerminated = 6, /**< Chat room exists on server but not in local */
+	LinphoneChatRoomStateTerminationFailed = 7, /**< The chat room termination failed */
+	LinphoneChatRoomStateDeleted = 8, /**< Chat room was deleted on the server */
 } LinphoneChatRoomState;
 
 /**

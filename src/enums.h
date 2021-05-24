@@ -27,10 +27,10 @@
 LINPHONE_BEGIN_NAMESPACE
 
 enum class Transport {
-	Udp,
-	Tcp,
-	Tls,
-	Dtls
+	Udp = 0,
+	Tcp = 1,
+	Tls = 2,
+	Dtls = 3
 };
 
 LINPHONE_END_NAMESPACE
