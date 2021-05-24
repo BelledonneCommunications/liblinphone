@@ -28,11 +28,11 @@
  */
 
 typedef enum _SecurityEventType{
-	LinphoneSecurityEventTypeNone, /**< Event is not a security event */
-	LinphoneSecurityEventTypeSecurityLevelDowngraded, /**< Chatroom security level downgraded event */
-	LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded, /**< Participant has exceeded the maximum number of device event */
-	LinphoneSecurityEventTypeEncryptionIdentityKeyChanged, /**< Peer device instant messaging encryption identity key has changed event */
-	LinphoneSecurityEventTypeManInTheMiddleDetected, /**< Man in the middle detected event */
+	LinphoneSecurityEventTypeNone = 0, /**< Event is not a security event */
+	LinphoneSecurityEventTypeSecurityLevelDowngraded = 1, /**< Chatroom security level downgraded event */
+	LinphoneSecurityEventTypeParticipantMaxDeviceCountExceeded = 2, /**< Participant has exceeded the maximum number of device event */
+	LinphoneSecurityEventTypeEncryptionIdentityKeyChanged = 3, /**< Peer device instant messaging encryption identity key has changed event */
+	LinphoneSecurityEventTypeManInTheMiddleDetected = 4, /**< Man in the middle detected event */
 } LinphoneSecurityEventType;
 
 
