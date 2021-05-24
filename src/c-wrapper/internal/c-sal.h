@@ -73,48 +73,48 @@ typedef struct SalCustomSdpAttribute SalCustomSdpAttribute;
 struct addrinfo;
 
 typedef enum {
-	SalTransportUDP, /*UDP*/
-	SalTransportTCP, /*TCP*/
-	SalTransportTLS, /*TLS*/
-	SalTransportDTLS, /*DTLS*/
+	SalTransportUDP = 0, /*UDP*/
+	SalTransportTCP = 1, /*TCP*/
+	SalTransportTLS = 2, /*TLS*/
+	SalTransportDTLS = 3, /*DTLS*/
 }SalTransport;
 
 typedef enum{
-	SalStreamSendRecv,
-	SalStreamSendOnly,
-	SalStreamRecvOnly,
-	SalStreamInactive
+	SalStreamSendRecv = 0,
+	SalStreamSendOnly = 1,
+	SalStreamRecvOnly = 2,
+	SalStreamInactive = 3
 }SalStreamDir;
 
 typedef enum {
-	SalAudio,
-	SalVideo,
-	SalText,
-	SalOther
+	SalAudio = 0,
+	SalVideo = 1,
+	SalText = 2,
+	SalOther = 3
 } SalStreamType;
 
 typedef enum{
-	SalProtoRtpAvp,
-	SalProtoRtpSavp,
-	SalProtoRtpAvpf,
-	SalProtoRtpSavpf,
-	SalProtoUdpTlsRtpSavp,
-	SalProtoUdpTlsRtpSavpf,
-	SalProtoOther
+	SalProtoRtpAvp = 0,
+	SalProtoRtpSavp = 1,
+	SalProtoRtpAvpf = 2,
+	SalProtoRtpSavpf = 3,
+	SalProtoUdpTlsRtpSavp = 4,
+	SalProtoUdpTlsRtpSavpf = 5,
+	SalProtoOther = 6
 }SalMediaProto;
 
 typedef enum {
-	SalDtlsRoleInvalid,
-	SalDtlsRoleIsServer,
-	SalDtlsRoleIsClient,
-	SalDtlsRoleUnset
+	SalDtlsRoleInvalid = 0,
+	SalDtlsRoleIsServer = 1,
+	SalDtlsRoleIsClient = 2,
+	SalDtlsRoleUnset = 3
 } SalDtlsRole;
 
 typedef enum {
-	SalMulticastInactive=0,
-	SalMulticastSender,
-	SalMulticastReceiver,
-	SalMulticastSenderReceiver
+	SalMulticastInactive = 0,
+	SalMulticastSender = 1,
+	SalMulticastReceiver = 2,
+	SalMulticastSenderReceiver = 3
 } SalMulticastRole;
 
 #define SAL_MEDIA_DESCRIPTION_UNCHANGED						0x00
@@ -203,8 +203,8 @@ const char* sal_stream_dir_to_string(SalStreamDir type);
 
 typedef enum {
 	SalOpSDPNormal = 0, /** No special handling for SDP */
-	SalOpSDPSimulateError, /** Will simulate an SDP parsing error */
-	SalOpSDPSimulateRemove /** Will simulate no SDP in the op */
+	SalOpSDPSimulateError = 1, /** Will simulate an SDP parsing error */
+	SalOpSDPSimulateRemove = 2 /** Will simulate no SDP in the op */
 } SalOpSDPHandling;
 
 #define SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED 65536
@@ -229,32 +229,32 @@ typedef struct SalMessage{
 }SalMessage;
 
 typedef enum SalReason{
-	SalReasonNone, /*no error, please leave first so that it takes 0 value*/
-	SalReasonDeclined,
-	SalReasonBusy,
-	SalReasonRedirect,
-	SalReasonTemporarilyUnavailable,
-	SalReasonRequestTimeout,
-	SalReasonNotFound,
-	SalReasonDoNotDisturb,
-	SalReasonUnsupportedContent,
-	SalReasonBadEvent,
-	SalReasonForbidden,
-	SalReasonUnknown,
-	SalReasonServiceUnavailable,
-	SalReasonRequestPending,
-	SalReasonUnauthorized,
-	SalReasonNotAcceptable,
-	SalReasonNoMatch, /*equivalent to 481 Transaction/Call leg does not exist*/
-	SalReasonMovedPermanently,
-	SalReasonGone,
-	SalReasonAddressIncomplete,
-	SalReasonNotImplemented,
-	SalReasonBadGateway,
-	SalReasonServerTimeout,
-	SalReasonSessionIntervalTooSmall,
-	SalReasonIOError,
-	SalReasonInternalError
+	SalReasonNone = 0, /*no error, please leave first so that it takes 0 value*/
+	SalReasonDeclined = 1,
+	SalReasonBusy = 2,
+	SalReasonRedirect = 3,
+	SalReasonTemporarilyUnavailable = 4,
+	SalReasonRequestTimeout = 5,
+	SalReasonNotFound = 6,
+	SalReasonDoNotDisturb = 7,
+	SalReasonUnsupportedContent = 8,
+	SalReasonBadEvent = 9,
+	SalReasonForbidden = 10,
+	SalReasonUnknown = 11,
+	SalReasonServiceUnavailable = 12,
+	SalReasonRequestPending = 13,
+	SalReasonUnauthorized = 14,
+	SalReasonNotAcceptable = 15,
+	SalReasonNoMatch = 16, /*equivalent to 481 Transaction/Call leg does not exist*/
+	SalReasonMovedPermanently = 17,
+	SalReasonGone = 18,
+	SalReasonAddressIncomplete = 19,
+	SalReasonNotImplemented = 20,
+	SalReasonBadGateway = 21,
+	SalReasonServerTimeout = 22,
+	SalReasonSessionIntervalTooSmall = 23,
+	SalReasonIOError = 24,
+	SalReasonInternalError = 25
 }SalReason;
 
 const char* sal_reason_to_string(const SalReason reason);
@@ -271,17 +271,17 @@ typedef struct SalErrorInfo{
 }SalErrorInfo;
 
 typedef enum SalPresenceStatus{
-	SalPresenceOffline,
-	SalPresenceOnline,
-	SalPresenceBusy,
-	SalPresenceBerightback,
-	SalPresenceAway,
-	SalPresenceOnthephone,
-	SalPresenceOuttolunch,
-	SalPresenceDonotdisturb,
-	SalPresenceMoved,
-	SalPresenceAltService,
-	SalPresenceOnVacation
+	SalPresenceOffline = 0,
+	SalPresenceOnline = 1,
+	SalPresenceBusy = 2,
+	SalPresenceBerightback = 3,
+	SalPresenceAway = 4,
+	SalPresenceOnthephone = 5,
+	SalPresenceOuttolunch = 6,
+	SalPresenceDonotdisturb = 7,
+	SalPresenceMoved = 8,
+	SalPresenceAltService = 9,
+	SalPresenceOnVacation = 10
 }SalPresenceStatus;
 
 struct _SalPresenceModel;
@@ -298,30 +298,30 @@ const char* sal_presence_status_to_string(const SalPresenceStatus status);
 #endif
 
 typedef enum SalReferStatus{
-	SalReferTrying,
-	SalReferSuccess,
-	SalReferFailed
+	SalReferTrying = 0,
+	SalReferSuccess = 1,
+	SalReferFailed = 2
 }SalReferStatus;
 
 typedef enum SalSubscribeStatus{
-	SalSubscribeNone,
-	SalSubscribePending,
-	SalSubscribeActive,
-	SalSubscribeTerminated
+	SalSubscribeNone = 0,
+	SalSubscribePending = 1,
+	SalSubscribeActive = 2,
+	SalSubscribeTerminated = 3
 }SalSubscribeStatus;
 
 typedef enum SalMessageDeliveryStatus{
-	SalMessageDeliveryInProgress,
-	SalMessageDeliveryDone,
-	SalMessageDeliveryFailed
+	SalMessageDeliveryInProgress = 0,
+	SalMessageDeliveryDone = 1,
+	SalMessageDeliveryFailed = 2
 }SalMessageDeliveryStatus;
 
 /**
  * auth event mode
  * */
 typedef enum SalAuthMode { /*this enum must be same as belle_sip_auth_mode_t*/
-	SalAuthModeHttpDigest, /** Digest authentication requested*/
-	SalAuthModeTls /** Client certificate requested*/
+	SalAuthModeHttpDigest = 0, /** Digest authentication requested*/
+	SalAuthModeTls = 1 /** Client certificate requested*/
 }SalAuthMode;
 
 /**

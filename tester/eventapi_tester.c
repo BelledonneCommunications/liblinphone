@@ -74,9 +74,9 @@ static void subscribe_test_declined(void) {
 }
 
 typedef enum RefreshTestType{
-	NoRefresh,
-	AutoRefresh,
-	ManualRefresh
+	NoRefresh = 0,
+	AutoRefresh = 1,
+	ManualRefresh = 2
 }RefreshTestType;
 
 static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTestType refresh_type) {
@@ -259,12 +259,12 @@ static void subscribe_loosing_dialog(void) {
 	/* now pauline looses internet connection and reboots, as ICMP error sent when flexisip tries to re-open the connection can be blocked by firewall, we directly send 503 from pauline1 */
 	sal_set_unconditional_answer(linphone_core_get_sal(pauline1->lc), 503);
 	sal_enable_unconditional_answer(linphone_core_get_sal(pauline1->lc), 1);
-	
+
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	/*let expire the incoming subscribe received by pauline */
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,5000));
-	
+
 
 	/* Marie will retry the subscription.
 	 * She will first receive a 503 Service unavailable from flexisip thanks the "no longer existing" Pauline1.
@@ -330,7 +330,7 @@ static void subscribe_loosing_dialog_2(void) {
 	/*make sure marie receives first notification before terminating*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
 
-	
+
 	/* now marie looses internet connection and reboots */
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	lcs = bctbx_list_remove(lcs, marie->lc);
@@ -338,7 +338,7 @@ static void subscribe_loosing_dialog_2(void) {
 	linphone_core_manager_destroy(marie);
 	marie = linphone_core_manager_new( "pauline_tcp_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,2000));
 	//now try a terminate the dialog
 	BC_ASSERT_PTR_NOT_NULL(pauline->lev);
@@ -561,7 +561,7 @@ test_t event_tests[] = {
 	TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
 	TEST_ONE_TAG("Publish without automatic refresh",publish_no_auto_test, "presence"),
 	TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence")
-	
+
 };
 
 test_suite_t event_test_suite = {"Event", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
