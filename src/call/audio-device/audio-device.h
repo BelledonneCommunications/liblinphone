@@ -39,7 +39,7 @@ public:
         AuxLine = LinphoneAudioDeviceTypeAuxLine,
         GenericUsb = LinphoneAudioDeviceTypeGenericUsb,
         Headset = LinphoneAudioDeviceTypeHeadset,
-        Headphones
+        Headphones = LinphoneAudioDeviceTypeHeadphones
 	};
 
     enum Capabilities {
