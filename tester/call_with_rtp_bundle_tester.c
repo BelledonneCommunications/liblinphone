@@ -97,6 +97,8 @@ static void simple_audio_call_with_srtp_dtls(void){
 	_simple_audio_call(TRUE);
 }
 
+#ifdef ENABLE_VIDEO
+
 typedef struct params{
 	bool_t with_ice;
 	bool_t with_dtls_srtp;
@@ -209,6 +211,7 @@ static void audio_video_call_with_ice_and_dtls_srtp(void) {
 	params.with_dtls_srtp = TRUE;
 	audio_video_call(&params);
 }
+#endif // ENABLE_VIDEO
 
 static void audio_video_call_with_forced_media_relay(void) {
 	params_t params = {0};
@@ -219,10 +222,12 @@ static void audio_video_call_with_forced_media_relay(void) {
 static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
 	TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
+	TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),
+#ifdef ENABLE_VIDEO
 	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
 	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
 	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp),
-	TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),
+#endif // ENABLE_VIDEO
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
