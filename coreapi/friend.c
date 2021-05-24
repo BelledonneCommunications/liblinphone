@@ -477,26 +477,32 @@ bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *ph
 		return FALSE;
 	}
 
-	char *normalized_phone_number = linphone_account_normalize_phone_number(account, phoneNumber);
-
 	bool_t found = FALSE;
-	if (linphone_core_vcard_supported()) {
-		bctbx_list_t *numbers = linphone_friend_get_phone_numbers(lf);
-		bctbx_list_t *it = NULL;
-		for (it = numbers; it != NULL; it = bctbx_list_next(it)) {
-			const char *value = (const char *)bctbx_list_get_data(it);
-			char *normalized_value = linphone_account_normalize_phone_number(account, value);
-			if (normalized_value && strcmp(normalized_value, normalized_phone_number) == 0) {
-				found = TRUE;
-				ms_free(normalized_value);
-				break;
-			}
-			if (normalized_value) ms_free(normalized_value);
-		}
-		bctbx_list_free(numbers);
-	}
+	const bctbx_list_t *elem;
+	const bctbx_list_t *accounts = linphone_core_get_account_list(lf->lc);
+	for (elem = accounts; elem != NULL; elem = bctbx_list_next(elem)) {
+		account = (LinphoneAccount *)bctbx_list_get_data(elem);
 
-	if (normalized_phone_number) ms_free(normalized_phone_number);
+		char *normalized_phone_number = linphone_account_normalize_phone_number(account, phoneNumber);
+		if (linphone_core_vcard_supported()) {
+			bctbx_list_t *numbers = linphone_friend_get_phone_numbers(lf);
+			bctbx_list_t *it = NULL;
+			for (it = numbers; it != NULL; it = bctbx_list_next(it)) {
+				const char *value = (const char *)bctbx_list_get_data(it);
+				char *normalized_value = linphone_account_normalize_phone_number(account, value);
+				if (normalized_value && strcmp(normalized_value, normalized_phone_number) == 0) {
+					found = TRUE;
+					ms_free(normalized_value);
+					break;
+				}
+				if (normalized_value) ms_free(normalized_value);
+			}
+			bctbx_list_free(numbers);
+		}
+		if (normalized_phone_number) ms_free(normalized_phone_number);
+
+		if (found) break;
+	}
 
 	return found;
 }

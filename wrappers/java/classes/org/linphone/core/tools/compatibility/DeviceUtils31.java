@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -34,17 +34,17 @@ import java.util.stream.Collectors;
 
 import org.linphone.core.tools.Log;
 
-public class DeviceUtils30 {
+public class DeviceUtils31 {
     public static void logPreviousCrashesIfAny(Context context) {
 		ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
 		List<ApplicationExitInfo> exitInfos = activityManager.getHistoricalProcessExitReasons(null, 0, 5);
 
 		for (ApplicationExitInfo exitInfo : exitInfos) {
 			Log.i("==== Previous exit reason information dump ====");
-			Log.i("REASON=", getReasonAsString(exitInfo.getReason()));
-			Log.i("TIMESTAMP=", getHumanReadableDateAndTimeFromTimestamp(exitInfo.getTimestamp()));
+			Log.i("REASON=", DeviceUtils30.getReasonAsString(exitInfo.getReason()));
+			Log.i("TIMESTAMP=", DeviceUtils30.getHumanReadableDateAndTimeFromTimestamp(exitInfo.getTimestamp()));
 			Log.i("DESCRIPTION=", exitInfo.getDescription());
-			if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR) {
+			if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR || exitInfo.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
 				try {
 					String trace = new BufferedReader(new InputStreamReader(exitInfo.getTraceInputStream())).lines().collect(Collectors.joining("\n"));
 					Log.w("TRACE=", trace);
@@ -54,44 +54,5 @@ public class DeviceUtils30 {
 			}
 			Log.i("=========================================");
 		}
-	}
-
-	public static String getReasonAsString(int reason) {
-		if (reason == ApplicationExitInfo.REASON_UNKNOWN) {
-			return "Unknown";
-		} else if (reason == ApplicationExitInfo.REASON_USER_REQUESTED) {
-			return "User requested";
-		} else if (reason == ApplicationExitInfo.REASON_USER_STOPPED) {
-			return "User stopped";
-		} else if (reason == ApplicationExitInfo.REASON_SIGNALED) {
-			return "Signaled";
-		} else if (reason == ApplicationExitInfo.REASON_PERMISSION_CHANGE) {
-			return "Permission changed";
-		} else if (reason == ApplicationExitInfo.REASON_OTHER) {
-			return "Other";
-		} else if (reason == ApplicationExitInfo.REASON_LOW_MEMORY) {
-			return "Low memory";
-		} else if (reason == ApplicationExitInfo.REASON_INITIALIZATION_FAILURE) {
-			return "Initialization failure";
-		} else if (reason == ApplicationExitInfo.REASON_EXIT_SELF) {
-			return "Self stop";
-		} else if (reason == ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE) {
-			return "Excessive resource usage";
-		} else if (reason == ApplicationExitInfo.REASON_DEPENDENCY_DIED) {
-			return "Dependency died";
-		} else if (reason == ApplicationExitInfo.REASON_CRASH_NATIVE) {
-			return "Native crash";
-		} else if (reason == ApplicationExitInfo.REASON_CRASH) {
-			return "Crash";
-		} else if (reason == ApplicationExitInfo.REASON_ANR) {
-			return "ANR";
-		}
-		return "Unexpected: " + reason;
-	}
-
-	public static String getHumanReadableDateAndTimeFromTimestamp(long timestamp) {
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(timestamp);
-		return DateFormat.format("dd-MM-yyyy HH:mm:ss", cal).toString();
 	}
 }
