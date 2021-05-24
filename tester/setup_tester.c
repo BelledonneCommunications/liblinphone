@@ -1166,6 +1166,18 @@ static void search_friend_with_phone_number_2(void) {
 		linphone_account_params_unref(cloned_params);
 	}
 
+	LinphoneAccountParams* new_params = linphone_core_create_account_params(manager->lc);
+	LinphoneAddress *identity_address = linphone_factory_create_address(linphone_factory_get(), "sip:chloe-finland@sip.example.org");
+	linphone_account_params_set_identity_address(new_params, identity_address);
+	linphone_address_unref(identity_address);
+	linphone_account_params_set_server_addr(new_params, "<sip:sip.example.org;transport=tls>");
+	linphone_account_params_set_outbound_proxy_enabled(new_params, TRUE);
+	linphone_account_params_set_international_prefix(new_params, "358");
+	LinphoneAccount *new_account = linphone_core_create_account(manager->lc, new_params);
+	linphone_core_add_account(manager->lc, new_account);
+	linphone_account_params_unref(new_params);
+	linphone_account_unref(new_account);
+
 	// Exists as-is
 	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+33641424344");
 	BC_ASSERT_PTR_NOT_NULL(lf);
@@ -1189,6 +1201,13 @@ static void search_friend_with_phone_number_2(void) {
 
 	// Can be found by adding the prefix if it is known
 	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+33633889977");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
+	}
+
+	// Exists also with secondary account prefix
+	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+358633889977");
 	BC_ASSERT_PTR_NOT_NULL(lf);
 	if (lf) {
 		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
