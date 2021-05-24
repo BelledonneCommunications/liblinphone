@@ -33,6 +33,7 @@ struct _LinphoneConferenceCbs {
 	LinphoneConferenceCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
 	LinphoneConferenceCbsStateChangedCb stateChangedCb;
 	LinphoneConferenceCbsSubjectChangedCb subjectChangedCb;
+	LinphoneConferenceCbsAudioDeviceChangedCb audioDeviceChangedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneConferenceCbs);
@@ -123,4 +124,12 @@ LinphoneConferenceCbsSubjectChangedCb linphone_conference_cbs_get_subject_change
 
 void linphone_conference_cbs_set_subject_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsSubjectChangedCb cb) {
 	cbs->subjectChangedCb = cb;
+}
+
+LinphoneConferenceCbsAudioDeviceChangedCb linphone_conference_cbs_get_audio_device_changed (const LinphoneConferenceCbs *cbs) {
+	return cbs->audioDeviceChangedCb;
+}
+
+void linphone_conference_cbs_set_audio_device_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAudioDeviceChangedCb cb) {
+	cbs->audioDeviceChangedCb = cb;
 }
