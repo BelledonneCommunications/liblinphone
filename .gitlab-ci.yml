@@ -1,0 +1,23 @@
+update-rootca:
+  stage: update-rootca
+  tags: [ "deploy" ]
+
+  only:
+    variables:
+      - $WEEKLY_MASTER
+
+  script:
+    - ./scripts/mk-ca-bundle.pl -d risk
+    - ./scripts/mk-ca-bundle.pl -u ./share/rootca.pem 2>&1 | tee status.txt
+    - EXIT=0;
+    - grep "Downloaded file identical to previous run's source file. Exiting" status.txt || EXIT=$?
+    - if [ ! "$EXIT" -eq 1 ]; then exit 0; fi; 
+    - git diff --compact-summary --raw share/rootca.pem
+    - git branch
+    - git show-ref
+    - git commit -a -m "Update rootca.pem"
+    - git pull --rebase origin $CI_COMMIT_REF_NAME
+    - git push https://jenkins:$TOKEN_JENKINS_WRITE_REPO@$CI_SERVER_HOST/$CI_PROJECT_PATH.git HEAD:$CI_COMMIT_REF_NAME
+
+stages:
+  - update-rootca
