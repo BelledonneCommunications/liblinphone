@@ -1175,6 +1175,7 @@ void FileTransferChatMessageModifier::releaseHttpRequest () {
 			httpListener = nullptr;
 		}
 	}
+	currentFileContentToTransfer = nullptr;
 }
 
 string FileTransferChatMessageModifier::createFakeFileTransferFromUrl (const string &url) {
