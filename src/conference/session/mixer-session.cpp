@@ -68,7 +68,7 @@ LinphoneCore *MixerSession::getCCore()const{
 
 void MixerSession::enableLocalParticipant(bool enabled){
 	for( const auto & p : mMixers){
-		p.second->enableLocalParticipant(enabled);
+		if (p.second) p.second->enableLocalParticipant(enabled);
 	}
 }
 
