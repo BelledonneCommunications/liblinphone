@@ -50,7 +50,7 @@ static void enable_disable_camera_after_camera_switches(void) {
 		linphone_core_set_video_device(marie->lc, newCamId);
 		BC_ASSERT_STRING_EQUAL(newCamId,ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
 		linphone_call_enable_camera(call,FALSE);
-		linphone_core_iterate(marie->lc);
+		liblinphone_tester_core_iterate(marie->lc);
 		linphone_call_enable_camera(call,TRUE);
 		BC_ASSERT_STRING_EQUAL(newCamId,ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
 	}
@@ -76,9 +76,9 @@ static void camera_switches_while_only_preview(void) {
 		}
 	}
 	linphone_core_set_video_device(marie->lc, camId);
-	linphone_core_iterate(marie->lc);
+	liblinphone_tester_core_iterate(marie->lc);
 	linphone_core_enable_video_preview(marie->lc, TRUE);
-	linphone_core_iterate(marie->lc);   // Let time to the core to set new values
+	liblinphone_tester_core_iterate(marie->lc);   // Let time to the core to set new values
 	VideoStream *vs = (VideoStream *)linphone_core_get_preview_stream(marie->lc);
 	if(BC_ASSERT_PTR_NOT_NULL(vs) && BC_ASSERT_PTR_NOT_NULL(vs->source) ){
 	    ms_filter_call_method(vs->source, MS_FILTER_SET_FPS,(void *)&fps);	//Simulate camera deficiency
