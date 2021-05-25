@@ -28,6 +28,9 @@
 #include "tester_utils.h"
 #include "belle-sip/sipstack.h"
 
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -147,6 +150,18 @@ bool_t liblinphone_tester_clock_elapsed(const MSTimeSpec *start, int value_ms){
 		return TRUE;
 	return FALSE;
 }
+
+#if defined(__APPLE__) && !TARGET_OS_IPHONE
+void liblinphone_tester_core_iterate(LinphoneCore *lc) {
+    dispatch_sync(dispatch_get_main_queue(), ^(){
+        linphone_core_iterate(lc);
+    });
+}
+#else
+void liblinphone_tester_core_iterate(LinphoneCore *lc){
+	linphone_core_iterate(lc);
+}
+#endif
 
 LinphoneAddress * create_linphone_address(const char * domain) {
 	return create_linphone_address_for_algo(domain,NULL);
@@ -286,7 +301,7 @@ bool_t wait_for_list_interval(bctbx_list_t* lcs,int* counter,int min, int max,in
 	liblinphone_tester_clock_start(&start);
 	while ((counter==NULL || *counter<min || *counter>max) && !liblinphone_tester_clock_elapsed(&start,timeout_ms)) {
 		for (iterator=lcs;iterator!=NULL;iterator=iterator->next) {
-			linphone_core_iterate((LinphoneCore*)(iterator->data));
+			liblinphone_tester_core_iterate((LinphoneCore*)(iterator->data));
 		}
 		bc_tester_process_events();
 #if !defined(LINPHONE_WINDOWS_UWP) && defined(LINPHONE_WINDOWS_DESKTOP)
@@ -311,7 +326,7 @@ bool_t wait_for_list(bctbx_list_t* lcs,int* counter,int value,int timeout_ms) {
 	liblinphone_tester_clock_start(&start);
 	while ((counter==NULL || *counter<value) && !liblinphone_tester_clock_elapsed(&start,timeout_ms)) {
 		for (iterator=lcs;iterator!=NULL;iterator=iterator->next) {
-			linphone_core_iterate((LinphoneCore*)(iterator->data));
+			liblinphone_tester_core_iterate((LinphoneCore*)(iterator->data));
 		}
 #ifdef LINPHONE_WINDOWS_UWP
 		{
@@ -337,7 +352,7 @@ bool_t wait_for_stun_resolution(LinphoneCoreManager *m) {
 	int timeout_ms = 10000;
 	liblinphone_tester_clock_start(&start);
 	while (linphone_core_get_stun_server_addrinfo(m->lc) == NULL && !liblinphone_tester_clock_elapsed(&start,timeout_ms)) {
-		linphone_core_iterate(m->lc);
+		liblinphone_tester_core_iterate(m->lc);
 		ms_usleep(20000);
 	}
 	return linphone_core_get_stun_server_addrinfo(m->lc) != NULL;
@@ -2861,8 +2876,8 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	while (caller_mgr->stat.number_of_LinphoneCallOutgoingRinging!=(initial_caller.number_of_LinphoneCallOutgoingRinging + 1)
 			&& caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia!=(initial_caller.number_of_LinphoneCallOutgoingEarlyMedia +1)
 			&& retry++ < 100) {
-			linphone_core_iterate(caller_mgr->lc);
-			linphone_core_iterate(callee_mgr->lc);
+			liblinphone_tester_core_iterate(caller_mgr->lc);
+			liblinphone_tester_core_iterate(callee_mgr->lc);
 			ms_usleep(20000);
 	}
 
