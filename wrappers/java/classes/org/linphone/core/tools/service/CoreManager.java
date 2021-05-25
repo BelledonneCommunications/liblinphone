@@ -35,6 +35,7 @@ import org.linphone.core.Call;
 import org.linphone.core.Config;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
+import org.linphone.core.GlobalState;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.audio.AudioHelper;
@@ -306,13 +307,23 @@ public class CoreManager {
     }
 
     public void onBluetoothHeadsetStateChanged() {
-        Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices");
-        mCore.reloadSoundDevices();
+		GlobalState globalState = mCore.getGlobalState();
+		if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
+			Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices");
+			mCore.reloadSoundDevices();
+		} else {
+			Log.i("[Core Manager] Bluetooth headset state changed but current Core global state is ", globalState, ", skipping...");
+		}
     }
 
     public void onHeadsetStateChanged() {
-        Log.i("[Core Manager] Headset state changed, reload sound devices");
-        mCore.reloadSoundDevices();
+		GlobalState globalState = mCore.getGlobalState();
+		if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
+			Log.i("[Core Manager] Headset state changed, reload sound devices");
+			mCore.reloadSoundDevices();
+		} else {
+			Log.i("[Core Manager] Headset state changed but current Core global state is ", globalState, ", skipping...");
+		}
     }
 
     public void onBackgroundMode() {
