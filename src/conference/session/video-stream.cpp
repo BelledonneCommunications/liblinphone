@@ -46,6 +46,10 @@ LINPHONE_BEGIN_NAMESPACE
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
 	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	const char * label = sal_custom_sdp_attribute_find(params.getLocalStreamDescription().custom_sdp_attributes, "label");
+	if (label) {
+		video_stream_set_label(mStream, label);
+	}
 	initializeSessions(&mStream->ms);
 }
 
