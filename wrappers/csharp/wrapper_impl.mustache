@@ -202,7 +202,7 @@ namespace Linphone
 					IntPtr cb = Marshal.GetFunctionPointerForDelegate(obj.onLinphoneListenerObjectDestroyed);
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, cb);
 #else
-					belle_sip_object_data_set(ptr, "cs_obj", objPtr, on_linphone_cbs_data_destroyed);
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, obj.on_linphone_cbs_data_destroyed);
 #endif
 				} else {
 #if WINDOWS_UWP
