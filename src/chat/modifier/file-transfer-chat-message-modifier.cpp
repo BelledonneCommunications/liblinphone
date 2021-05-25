@@ -51,6 +51,7 @@ void FileTransferChatMessageModifier::setHttpRequest (belle_http_request_t *requ
 }
 
 FileTransferChatMessageModifier::~FileTransferChatMessageModifier () {
+	currentFileContentToTransfer = nullptr;
 	if (isFileTransferInProgressAndValid())
 		cancelFileTransfer(); //to avoid body handler to still refference zombie FileTransferChatMessageModifier
 	else
@@ -329,7 +330,12 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 		int code = belle_http_response_get_status_code(event->response);
 		if (code == 204) { // this is the reply to the first post to the server - an empty msg
 			auto bh = prepare_upload_body_handler(message);
+
+			// Save currentFileContentToTransfer pointer as it will be set to NULL in releaseHttpRequest
+			FileContent *fileContent = currentFileContentToTransfer;
 			releaseHttpRequest();
+			currentFileContentToTransfer = fileContent;
+
 			fileUploadBeginBackgroundTask();
 			uploadFile(bh);
 		} else if (code == 200) { // file has been uploaded correctly, get server reply and send it
@@ -1175,6 +1181,7 @@ void FileTransferChatMessageModifier::releaseHttpRequest () {
 			httpListener = nullptr;
 		}
 	}
+	currentFileContentToTransfer = nullptr;
 }
 
 string FileTransferChatMessageModifier::createFakeFileTransferFromUrl (const string &url) {
