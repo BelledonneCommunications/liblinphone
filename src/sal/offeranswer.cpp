@@ -540,7 +540,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		resultCfg.ttl=localCfg.ttl;
 		resultCfg.dir=localCfg.getDirection();
 	} else {
-//		const char * conferenceDeviceAttrName = "conference-device";
+//		const char * conferenceDeviceAttrName = "label";
 //		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_offer.custom_sdp_attributes, conferenceDeviceAttrName));
 //		if (local_cap.isMain() || participantsAttrValue.empty()) {
 			resultCfg.dir=OfferAnswerEngine::computeDirOutgoing(localCfg.getDirection(),remoteCfg.getDirection());
@@ -753,7 +753,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	result.proto=remote_offer.proto;
 	result.type=local_cap.type;
 
-	const char * conferenceDeviceAttrName = "conference-device";
+	const char * conferenceDeviceAttrName = "label";
 	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
 	if (local_cap.isMain() || participantsAttrValue.empty()) {
 		result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
