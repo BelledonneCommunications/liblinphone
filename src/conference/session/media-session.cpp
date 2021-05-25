@@ -1471,7 +1471,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
 
-	const char * conferenceDeviceAttrName = "conference-device";
+	const char * conferenceDeviceAttrName = "label";
 	const char * layoutAttrName = "content";
 
 	if (refMd) {
@@ -1665,17 +1665,21 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		if (confVideoCapabilities) {
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
-					const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString());
+					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel());
+					if (dev->getLabel().empty()) {
+						char label[10];
+						belle_sip_random_token(label,sizeof(label));
+						dev->setLabel(label);
+					}
 					if (foundStreamIdx == -1) {
 						SalStreamDescription newStream;
 
 						newStream.main = false;
 						newStream.proto = getParams()->getMediaProto();
 						newStream.type = SalVideo;
-						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getAddress().asString().c_str());
+						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getLabel().c_str());
 
-
-						const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+						const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 						l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 						if (!l.empty()){
 
@@ -1696,7 +1700,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 									break;
 							}
 
-							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getAddress().asString());
+							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
 
 							fillRtpParameters(newStream);
 							const auto rtp_port = q->getRandomRtpPort(newStream);
@@ -1716,7 +1720,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				}
 			}
 
-			const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, me->getAddress().asString());
+			const auto & foundStreamIdx = (md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic") == -1) ? md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker") : md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic");
 			const auto & confLayout = currentConfParams.getLayout();
 
 			if (foundStreamIdx == -1) {
@@ -1725,10 +1729,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				newStream.main = false;
 				newStream.proto = getParams()->getMediaProto();
 				newStream.type = SalVideo;
-				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, me->getAddress().asString().c_str());
 				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
 
-				const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, me->getAddress().asString()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+				const auto & previousParticipantStream = oldMd ? 
+					((oldMd->findStreamWithSdpAttribute(layoutAttrName, "mosaic") == Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldMd->findStreamWithSdpAttribute(layoutAttrName, "speaker") : oldMd->findStreamWithSdpAttribute(layoutAttrName, "mosaic"))
+					: Utils::getEmptyConstRefObject<SalStreamDescription>();
 				l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 				if (!l.empty()){
 
