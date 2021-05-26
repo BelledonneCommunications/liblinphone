@@ -248,18 +248,24 @@ private:
 	}
 
 	static void participant_registration_subscription_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr) {
-		Focus *focus = (Focus*)(linphone_chat_room_cbs_get_user_data(linphone_chat_room_get_current_callbacks(cr)));
-		const IdentityAddress participant = *L_GET_CPP_PTR_FROM_C_OBJECT(participantAddr);
-		bctbx_list_t * devices = NULL;
-		auto participantRange = focus->mParticipantDevices.equal_range(participant);
-		for (auto participantIt = participantRange.first; participantIt != participantRange.second; participantIt++ ) {
-			LinphoneAddress *deviceAddr = linphone_address_new(participantIt->second.asString().c_str());
-			devices = bctbx_list_append(devices, linphone_factory_create_participant_device_identity(linphone_factory_get(),deviceAddr,""));
-			linphone_address_unref(deviceAddr);
+		BC_ASSERT_PTR_NOT_NULL(participantAddr);
+		if (participantAddr) {
+			const IdentityAddress participant = *L_GET_CPP_PTR_FROM_C_OBJECT(participantAddr);
+			BC_ASSERT_TRUE(participant.isValid());
+			if (participant.isValid()) {
+				Focus *focus = (Focus*)(linphone_chat_room_cbs_get_user_data(linphone_chat_room_get_current_callbacks(cr)));
+				bctbx_list_t * devices = NULL;
+				auto participantRange = focus->mParticipantDevices.equal_range(participant);
+				for (auto participantIt = participantRange.first; participantIt != participantRange.second; participantIt++ ) {
+					LinphoneAddress *deviceAddr = linphone_address_new(participantIt->second.asString().c_str());
+					devices = bctbx_list_append(devices, linphone_factory_create_participant_device_identity(linphone_factory_get(),deviceAddr,""));
+					linphone_address_unref(deviceAddr);
+				}
+				Address participantAddress(participant.asAddress().asString());
+				linphone_chat_room_set_participant_devices(cr,L_GET_C_BACK_PTR(&participantAddress),devices);
+				bctbx_list_free_with_data(devices,(bctbx_list_free_func)belle_sip_object_unref);
+			}
 		}
-		Address participantAddress(participant.asAddress().asString());
-		linphone_chat_room_set_participant_devices(cr,L_GET_C_BACK_PTR(&participantAddress),devices);
-		bctbx_list_free_with_data(devices,(bctbx_list_free_func)belle_sip_object_unref);
 	}
 
 	void configureFocus() {
@@ -767,6 +773,164 @@ static void group_chat_room_bulk_notify_to_participant (void) {
 	}
 }
 
+static void group_chat_room_add_participant_with_invalid_address (void) {
+	Focus focus("chloe_rc");
+	{//to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc_udp", focus.getIdentity().asAddress());
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+		focus.registerAsParticipantDevice(michelle);
+
+		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+		coresList = bctbx_list_append(coresList, michelle.getLc());
+		Address paulineAddr(pauline.getIdentity().asAddress());
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
+		Address invalidAddr;
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(L_GET_C_BACK_PTR(&invalidAddr)));
+		Address michelleAddr(michelle.getIdentity().asAddress());
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(L_GET_C_BACK_PTR(&michelleAddr)));
+
+		stats initialMarieStats = marie.getStats();
+		stats initialPaulineStats = pauline.getStats();
+		stats initialMichelleStats = michelle.getStats();
+
+		// Marie creates a new group chat room
+		const char *initialSubject = "Colleagues";
+		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, 2, FALSE);
+		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+		
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+		LinphoneChatRoom *michelleCr = check_creation_chat_room_client_side(coresList, michelle.getCMgr(), &initialMichelleStats, confAddr, initialSubject, 2, FALSE);
+		
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline,michelle}).wait([&focus] {
+			for (auto chatRoom :focus.getCore().getChatRooms()) {
+				for (auto participant: chatRoom->getParticipants()) {
+					for (auto device: participant->getDevices())
+						if (device->getState() != ParticipantDevice::State::Present) {
+							return false;
+						}
+				}
+			}
+			return true;
+		}));
+		
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneConferenceStateCreated, initialMichelleStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
+
+		// Marie now changes the subject
+		const char *newSubject = "Let's go drink a beer";
+		linphone_chat_room_set_subject(marieCr, newSubject);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_subject_changed, initialMarieStats.number_of_subject_changed + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed, initialPaulineStats.number_of_subject_changed + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_subject_changed, initialMichelleStats.number_of_subject_changed + 1, 5000));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), newSubject);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(michelleCr), newSubject);
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCr), 2, int, "%d");
+
+		initialMarieStats = marie.getStats();
+		initialPaulineStats = pauline.getStats();
+		initialMichelleStats = michelle.getStats();
+
+		linphone_chat_room_add_participant(marieCr, linphone_address_ref(L_GET_C_BACK_PTR(&invalidAddr)));
+
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getCMgr()->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getCMgr()->stat.number_of_participants_added, initialMarieStats.number_of_participants_added + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getCMgr()->stat.number_of_participant_devices_added, initialPaulineStats.number_of_participant_devices_added + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getCMgr()->stat.number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getCMgr()->stat.number_of_participant_devices_added, initialMichelleStats.number_of_participant_devices_added + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &michelle.getCMgr()->stat.number_of_participants_added, initialMichelleStats.number_of_participants_added + 1, 5000));
+
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCr), 2, int, "%d");
+
+		CoreManagerAssert({focus, marie, pauline,michelle}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
+
+		CoreManagerAssert({focus,marie}).waitUntil(std::chrono::seconds(2),[ ]{return false;});
+
+		for (auto chatRoom :focus.getCore().getChatRooms()) {
+			for (auto participant: chatRoom->getParticipants()) {
+				//  force deletion by removing devices
+				bctbx_list_t *empty = bctbx_list_new(NULL);
+				Address participantAddress(participant->getAddress().asAddress());
+				linphone_chat_room_set_participant_devices(  L_GET_C_BACK_PTR(chatRoom)
+														   , L_GET_C_BACK_PTR(&participantAddress)
+														   , NULL);
+				bctbx_list_free(empty);
+			}
+		}
+
+		//wait until chatroom is deleted server side
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([&focus] {
+			return focus.getCore().getChatRooms().size() == 0;
+		}));
+
+		//wait bit more to detect side effect if any
+		CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
+			return false;
+		});
+
+		//to avoid creation attempt of a new chatroom
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
+
+		linphone_address_unref(L_GET_C_BACK_PTR(&invalidAddr));
+		bctbx_list_free(coresList);
+	}
+}
+
+static void group_chat_room_with_only_participant_with_invalid_address (void) {
+	Focus focus("chloe_rc");
+	{//to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
+
+		focus.registerAsParticipantDevice(marie);
+
+		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		Address invalidAddr;
+		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&invalidAddr)));
+
+		stats initialMarieStats = marie.getStats();
+
+		// Marie creates a new group chat room
+		const char *initialSubject = "Colleagues";
+
+		LinphoneChatRoomParams *chatRoomParams = linphone_core_create_default_chat_room_params(marie.getLc());
+		linphone_chat_room_params_enable_encryption(chatRoomParams, FALSE);
+		linphone_chat_room_params_set_backend(chatRoomParams, LinphoneChatRoomBackendFlexisipChat);
+		linphone_chat_room_params_enable_group(chatRoomParams, TRUE);
+		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, 0, FALSE);
+		linphone_chat_room_params_unref(chatRoomParams);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+
+		// Check that the chat room has not been created
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getCMgr()->stat.number_of_LinphoneConferenceStateCreated, initialMarieStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getCMgr()->stat.number_of_LinphoneChatRoomConferenceJoined, initialMarieStats.number_of_LinphoneChatRoomConferenceJoined + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getCMgr()->stat.number_of_LinphoneConferenceStateCreationFailed, initialMarieStats.number_of_LinphoneConferenceStateCreationFailed + 1, 5000));
+
+		//to avoid creation attempt of a new chatroom
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
+
+		bctbx_list_free(coresList);
+	}
+}
+
 static void one_to_one_chatroom_exhumed_while_offline (void) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
@@ -1158,6 +1322,8 @@ static void multidomain_group_chat_room (void) {
 static test_t local_conference_tests[] = {
 	TEST_ONE_TAG("Group chat room creation local server", LinphoneTest::group_chat_room_creation_server,"LeaksMemory"), /* beacause of coreMgr restart*/
 	TEST_NO_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion),
+	TEST_NO_TAG("Group chat Add participant with invalid address", LinphoneTest::group_chat_room_add_participant_with_invalid_address),
+	TEST_NO_TAG("Group chat Only participant with invalid address", LinphoneTest::group_chat_room_with_only_participant_with_invalid_address),
 	TEST_ONE_TAG("Group chat room bulk notify to participant", LinphoneTest::group_chat_room_bulk_notify_to_participant,"LeaksMemory"), /* because of network up and down*/
 	TEST_ONE_TAG("One to one chatroom exhumed while participant is offline", LinphoneTest::one_to_one_chatroom_exhumed_while_offline,"LeaksMemory"), /* because of network up and down*/
 	TEST_ONE_TAG("Group chat Server chat room deletion with remote list event handler", LinphoneTest::group_chat_room_server_deletion_with_rmt_lst_event_handler,"LeaksMemory"), /* because of coreMgr restart*/
