@@ -419,6 +419,47 @@ void ServerGroupChatRoomPrivate::handleSubjectChange(SalCallOp *op){
 	}
 }
 
+void ServerGroupChatRoomPrivate::handleEphemeralSettingsChange(const shared_ptr<CallSession> &session){
+	const auto op = session->getPrivate()->getOp();
+	string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
+	if (capabilities & ServerGroupChatRoom::Capabilities::Ephemeral) {
+		if (ephemeralLifeTime.empty()) {
+			setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged, session);
+		} else {
+			setEphemeralLifetime(std::stol(ephemeralLifeTime, nullptr), session);
+		}
+	}
+}
+
+void ServerGroupChatRoomPrivate::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, const shared_ptr<CallSession> &session) {
+	L_Q();
+	lInfo() << q << ": New mode is: " << mode;
+	params->setEphemeralMode(mode);
+
+	const auto device = q->getConference()->findParticipantDevice(session);
+	if (device) {
+		time_t creationTime = time(nullptr);
+		const auto eventType = (mode == AbstractChatRoom::EphemeralMode::AdminManaged) ? EventLog::Type::ConferenceEphemeralMessageManagedByAdmin : EventLog::Type::ConferenceEphemeralMessageManagedByParticipants;
+		q->getConference()->notifyEphemeralModeChanged(creationTime, false, eventType, device);
+	} else {
+		lWarning() << "Unable to find device among those of the participants that changed ephemeral message mode to " << mode;
+	}
+}
+
+void ServerGroupChatRoomPrivate::setEphemeralLifetime(long lifetime, const shared_ptr<CallSession> &session){
+	L_Q();
+	lInfo() << q << ": New ephemeral time: " << lifetime;
+	params->setEphemeralLifetime(lifetime);
+
+	const auto device = q->getConference()->findParticipantDevice(session);
+	if (device) {
+		time_t creationTime = time(nullptr);
+		q->getConference()->notifyEphemeralChanged(creationTime, false, lifetime, device);
+	} else {
+		lWarning() << "Unable to find device among those of the participants that changed ephemeral message lifetime to " << lifetime;
+	}
+}
+
 /*
  * This function setups registration subscriptions if not already there.
  * If no registration subscription is started (because they were all running already), it returns false.
@@ -848,6 +889,10 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 			csp.addCustomHeader("One-To-One-Chat-Room", "true");
 		if (capabilities & ServerGroupChatRoom::Capabilities::Encrypted)
 			csp.addCustomHeader("End-To-End-Encrypted", "true");
+		if (capabilities & ClientGroupChatRoom::Capabilities::Ephemeral) {
+			csp.addCustomHeader("Ephemerable", "true");
+			csp.addCustomHeader("Ephemeral-Life-Time", to_string(params->getEphemeralLifetime()));
+		}
 		//csp.addCustomContactParameter("isfocus");
 		//csp.addCustomContactParameter("text");
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
@@ -1172,6 +1217,7 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 			if (participant && participant->isAdmin()) {
 				/* The only thing that a participant can change with re-INVITE is the subject. */
 				handleSubjectChange(session->getPrivate()->getOp());
+				handleEphemeralSettingsChange(session);
 			}
 		}
 		break;
@@ -1213,8 +1259,18 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "End-To-End-Encrypted"));
 	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
+	string ephemerable = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemerable"));
+	if (ephemerable == "true") {
+		d->capabilities |= ServerGroupChatRoom::Capabilities::Ephemeral;
+	}
 
 	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
+
+	if (ephemerable == "true") {
+		string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
+		long time = std::stol(ephemeralLifeTime, nullptr);
+		d->params->setEphemeralLifetime(time);
+	}
 
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));

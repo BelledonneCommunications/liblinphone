@@ -233,6 +233,14 @@ void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->markAsRead();
 }
 
+void linphone_chat_room_set_ephemeral_mode (LinphoneChatRoom *cr, LinphoneChatRoomEphemeralMode mode) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setEphemeralMode(static_cast<LinphonePrivate::AbstractChatRoom::EphemeralMode>(mode), true);
+}
+
+LinphoneChatRoomEphemeralMode linphone_chat_room_get_ephemeral_mode (const LinphoneChatRoom *cr) {
+	return static_cast<LinphoneChatRoomEphemeralMode>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getEphemeralMode());
+}
+
 void linphone_chat_room_enable_ephemeral (LinphoneChatRoom *cr, bool_t ephem) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->enableEphemeral(!!ephem, true);
 }

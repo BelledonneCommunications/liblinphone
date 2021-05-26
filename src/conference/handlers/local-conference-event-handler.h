@@ -30,6 +30,7 @@
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "conference/conference-id.h"
+#include "xml/conference-info-linphone-extension.h"
 #include "xml/conference-info.h"
 #include <memory>
 
@@ -53,16 +54,16 @@ public:
 	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus (LinphoneMediaDirection direction);
 	LocalConferenceEventHandler (Conference *conference, ConferenceListener* listener = nullptr);
 
-	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
+	void subscribeReceived (LinphoneEvent *lev);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
-	std::string getNotifyForId (int notifyId, bool oneToOne = false);
+	std::string getNotifyForId (int notifyId, LinphoneEvent *lev);
 
 //protected:
 	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
 	void notifyAllExcept (const std::string &notify, const std::shared_ptr<Participant> &exceptParticipant);
 	void notifyAll (const std::string &notify);
-	std::string createNotifyFullState (bool oneToOne = false);
+	std::string createNotifyFullState (LinphoneEvent * lev);
 	std::string createNotifyMultipart (int notifyId);
 	std::string createNotifyParticipantAdded (const Address & pAddress);
 	std::string createNotifyParticipantAdminStatusChanged (const Address & pAddress, bool isAdmin);
@@ -131,6 +132,19 @@ public:
 	* @param[in] device participant device that changed its media capabilities
 	*/
 	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	/*
+	* This fonction is called each time a participant device changes the ephemeral settings
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed the ephemeral settings
+	*/
+	virtual void onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
+	* This fonction is called each time a participant device changes the ephemeral mode
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed the ephemeral settings
+	*/
+	virtual void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	 * This fonction is called each time the conference transitions to a new state
@@ -146,7 +160,10 @@ protected:
 private:
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
+	std::string createConferenceInfoLinphoneExtensionNotify (Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension confInfo);
 	std::string createNotifySubjectChanged (const std::string &subject);
+	std::string createNotifyEphemeralLifetime (const long & lifetime);
+	std::string createNotifyEphemeralMode (const EventLog::Type & type);
 	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
 	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
 

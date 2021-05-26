@@ -723,6 +723,7 @@ LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextSta
 LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 	string newSubject(subject);
+
 	if (newSubject.empty()) {
 		if (isInConference())
 			newSubject = "Conference";
