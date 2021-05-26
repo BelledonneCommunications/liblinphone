@@ -223,6 +223,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/conference/conference-event.h
 	event-log/conference/conference-notified-event-p.h
 	event-log/conference/conference-notified-event.h
+	event-log/conference/conference-ephemeral-event.h
 	event-log/conference/conference-ephemeral-message-event.h
 	event-log/conference/conference-participant-device-event.h
 	event-log/conference/conference-participant-event-p.h
@@ -289,6 +290,7 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/remote-conference-event-handler.h
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h
+		xml/conference-info-linphone-extension.h
 		xml/imdn.h
 		xml/is-composing.h
 		xml/linphone-imdn.h
@@ -438,6 +440,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-subject-event.cpp
 	event-log/conference/conference-available-media-event.cpp
 	event-log/conference/conference-ephemeral-message-event.cpp
+	event-log/conference/conference-ephemeral-event.cpp
 	event-log/event-log.cpp
 	factory/factory.cpp
 	hacks/hacks.cpp
@@ -516,6 +519,7 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/remote-conference-event-handler.cpp
 		conference/handlers/remote-conference-list-event-handler.cpp
 		xml/conference-info.cpp
+		xml/conference-info-linphone-extension.cpp
 		xml/imdn.cpp
 		xml/is-composing.cpp
 		xml/linphone-imdn.cpp
