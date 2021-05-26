@@ -28,7 +28,8 @@
 #include <iostream>
 #include <fstream>
 
-static const int x3dhServer_creationTimeout = 5000;
+static const int x3dhServer_creationTimeout = 15000;
+
 static bool is_encrypted(const char *filepath) {
 	bool ret = false;
 	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");

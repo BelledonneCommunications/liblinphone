@@ -32,7 +32,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-static const int x3dhServer_creationTimeout = 10000;
+static const int x3dhServer_creationTimeout = 15000;
 
 static bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t callerValidation, bool_t calleeValidation) {
 	bool_t call_ok = FALSE;
