@@ -647,14 +647,19 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_marie)));
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
 
+		/* Wait for a received TMMBR for a specified bitrate interval, which means that congestion was detected. */
+		BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 100000, 200000, 20000));
+		ms_message("Congestion TMMBR received");
+		marie->stat.number_of_rtcp_generic_nack = 0;
+		/* Past this point, no NACK should be generated, so except a few ones in transit, almost no nack should be received. */
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 8000);
+		ms_message("Number of generic NACK received by Marie: %i", marie->stat.number_of_rtcp_generic_nack);
+		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 10, int, "%d");
 		liblinphone_tester_set_next_video_frame_decoded_cb(call_marie);
 		liblinphone_tester_set_next_video_frame_decoded_cb(call_pauline);
 
 		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,1));
 		BC_ASSERT_TRUE( wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
-		wait_for_until(pauline->lc, marie->lc, NULL, 0, 18000);
-		ms_message("Number of generic NACK received by Marie: %i", marie->stat.number_of_rtcp_generic_nack);
-		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 60, int, "%d");
 	}
 	end_call(pauline, marie);
 
