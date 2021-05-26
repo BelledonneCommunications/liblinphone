@@ -161,10 +161,8 @@ void MediaSessionPrivate::accepted () {
 							" the ICE gathering will only contain local candidates.";
 					}
 					getStreamsGroup().finishPrepare();
-					updateLocalMediaDescriptionFromIce(localIsOfferer);
+					updateLocalMediaDescriptionFromIce(localIsOfferer, true);
 				}
-				getStreamsGroup().finishPrepare();
-				updateLocalMediaDescriptionFromIce(localIsOfferer, true);
 			}
 		break;
 		default:
