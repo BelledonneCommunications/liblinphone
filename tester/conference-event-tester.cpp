@@ -657,7 +657,11 @@ void first_notify_parsing() {
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -699,7 +703,11 @@ void first_notify_parsing_wrong_conf() {
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -738,7 +746,11 @@ void participant_added_parsing() {
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -756,7 +768,11 @@ void participant_added_parsing() {
 	bctbx_free(aliceAddrStr);
 
 	snprintf(notify_added, size2, participant_added_notify, confUri);
-	tester->handler->notifyReceived(notify_added);
+
+	Content content_added;
+	content_added.setBodyFromUtf8(notify_added);
+	content_added.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_added);
 
 	delete[] notify_added;
 
@@ -792,7 +808,11 @@ void participant_not_added_parsing() {
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -810,7 +830,11 @@ void participant_not_added_parsing() {
 	bctbx_free(aliceAddrStr);
 
 	snprintf(notify_not_added, size2, participant_not_added_notify, confUri);
-	tester->handler->notifyReceived(notify_not_added);
+
+	Content content_not_added;
+	content_not_added.setBodyFromUtf8(notify_not_added);
+	content_not_added.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_not_added);
 
 	delete[] notify_not_added;
 
@@ -843,7 +867,11 @@ void participant_deleted_parsing() {
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -858,7 +886,11 @@ void participant_deleted_parsing() {
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 
 	snprintf(notify_deleted, size2, participant_deleted_notify, confUri);
-	tester->handler->notifyReceived(notify_deleted);
+
+	Content content_deleted;
+	content_deleted.setBodyFromUtf8(notify_deleted);
+	content_deleted.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_deleted);
 
 	delete[] notify_deleted;
 
@@ -892,7 +924,11 @@ void participant_admined_parsing() {
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -906,7 +942,11 @@ void participant_admined_parsing() {
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 
 	snprintf(notify_admined, size2, participant_admined_notify, confUri);
-	tester->handler->notifyReceived(notify_admined);
+
+	Content content_admined;
+	content_admined.setBodyFromUtf8(notify_admined);
+	content_admined.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_admined);
 
 	delete[] notify_admined;
 
@@ -940,7 +980,11 @@ void participant_unadmined_parsing() {
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	snprintf(notify, size, first_notify, confUri);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	delete[] notify;
 
@@ -954,7 +998,11 @@ void participant_unadmined_parsing() {
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 
 	snprintf(notify_unadmined, size2, participant_unadmined_notify, confUri);
-	tester->handler->notifyReceived(notify_unadmined);
+
+	Content content_unadmined;
+	content_unadmined.setBodyFromUtf8(notify_unadmined);
+	content_unadmined.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_unadmined);
 
 	delete[] notify_unadmined;
 
@@ -1000,10 +1048,14 @@ void send_first_notify() {
 
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
 	localConf->setConferenceAddress(ConferenceAddress(addr));
-	string notify = localHandler->createNotifyFullState();
+	string notify = localHandler->createNotifyFullState(NULL);
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
@@ -1768,14 +1820,20 @@ void one_to_one_keyword () {
 	bctbx_free(bobAddrStr);
 	linphone_address_unref(cBobAddr);
 
-	CallSessionParams params;
+	// Create basic chat room with OneToOne capability to ensure that one to one is added to notify
+	pauline->lc->cppPtr->getOrCreateBasicChatRoom (addr);
+
 	localConf->addParticipant(bobAddr);
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
 	localConf->setConferenceAddress(ConferenceAddress(addr));
-	string notify = localHandler->createNotifyFullState(true);
+	string notify = localHandler->createNotifyFullState(NULL);
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
-	tester->handler->notifyReceived(notify);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
 
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 1, int, "%d");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
