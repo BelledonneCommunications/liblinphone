@@ -702,6 +702,15 @@ long ChatRoom::getEphemeralLifetime () const {
 	return 0;
 }
 
+void ChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
+	lDebug() << "Ephemeral message is only supported in conference based chat room!";
+}
+
+AbstractChatRoom::EphemeralMode ChatRoom::getEphemeralMode() const {
+	lDebug() << "Ephemeral message is only supported in conference based chat room!";
+	return AbstractChatRoom::EphemeralMode::DeviceManaged;
+}
+
 bool ChatRoom::ephemeralSupportedByAllParticipants () const  {
 	return false;
 }
