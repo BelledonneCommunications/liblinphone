@@ -528,8 +528,14 @@ int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
 	}
 
 	// THIS IS ONLY FOR BACKWARD C API COMPAT
-	if (currentFileContentToTransfer->getFilePath().empty() && !message->getPrivate()->getFileTransferFilepath().empty()) {
-		currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
+	if (currentFileContentToTransfer != nullptr) {
+		if (currentFileContentToTransfer->getFilePath().empty() && !message->getPrivate()->getFileTransferFilepath().empty()) {
+			currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
+		}
+	} else {
+		lError() << "Sarting upload without a file content to transfer!";
+		return -1;
+
 	}
 
 	lastNotifiedPercentage = 0;
