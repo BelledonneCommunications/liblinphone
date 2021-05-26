@@ -699,11 +699,20 @@ bool ChatRoom::ephemeralEnabled() const {
 }
 
 void ChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
-	lDebug() << "Ephemeral message is only supported in conference based chat room!";
+	lError() << "Ephemeral message is only supported in conference based chat room!";
 }
 
 long ChatRoom::getEphemeralLifetime () const {
 	return 0;
+}
+
+void ChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
+	lError() << "Ephemeral message is only supported in conference based chat room!";
+}
+
+AbstractChatRoom::EphemeralMode ChatRoom::getEphemeralMode() const {
+	lError() << "Ephemeral message is only supported in conference based chat room!";
+	return AbstractChatRoom::EphemeralMode::DeviceManaged;
 }
 
 bool ChatRoom::ephemeralSupportedByAllParticipants () const  {

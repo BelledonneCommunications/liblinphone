@@ -19,6 +19,8 @@
 
 #include "chat-room-params.h"
 #include "chat-room.h"
+#include "core/core.h"
+#include "linphone/core.h"
 #include "logger/logger.h"
 
 using namespace std;
@@ -26,19 +28,27 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 ChatRoomParams::ChatRoomParams() {
-	mChatRoomBackend =	ChatRoomBackend::Basic;
+	mChatRoomBackend = ChatRoomBackend::Basic;
 	mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::None;
 	mEncrypted = false;
 	mGroup = false;
 	mRtt = false;
 	mSubject = "";
+	mEphemeralMode = AbstractChatRoom::EphemeralMode::DeviceManaged;
+	mEphemeralLifetime = 86400;
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
 	: ChatRoomParams("", encrypted, group, backend) {}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject) {
+	: ChatRoomParams(subject, encrypted, group, AbstractChatRoom::EphemeralMode::DeviceManaged, backend) {}
+
+ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, ChatRoomBackend backend)
+	: ChatRoomParams(subject, encrypted, group, mode, 86400, backend) {}
+
+ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, long lifetime, ChatRoomBackend backend)
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mEphemeralMode(mode), mEphemeralLifetime(lifetime) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}else
@@ -52,6 +62,8 @@ ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other
 	mGroup = other.mGroup;
 	mRtt = other.mRtt;
 	mSubject = other.mSubject;
+	mEphemeralMode = other.mEphemeralMode;
+	mEphemeralLifetime = other.mEphemeralLifetime;
 }
 
 ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
@@ -65,6 +77,10 @@ bool ChatRoomParams::isGroup() const { return mGroup; }
 bool ChatRoomParams::isRealTimeText() const { return mRtt; }
 
 const string& ChatRoomParams::getSubject() const { return mSubject; }
+
+AbstractChatRoom::EphemeralMode ChatRoomParams::getEphemeralMode() const { return mEphemeralMode; }
+
+long ChatRoomParams::getEphemeralLifetime() const { return mEphemeralLifetime; }
 
 void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 
@@ -89,13 +105,21 @@ void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
 
 void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
 
+void ChatRoomParams::setEphemeralMode(AbstractChatRoom::EphemeralMode mode) { mEphemeralMode = mode; }
+
+void ChatRoomParams::setEphemeralLifetime(long lifetime) { mEphemeralLifetime = lifetime; }
+
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
 	return ChatRoomParams::create();
 }
 
 //Later define default params from core specs (group chat enabled, lime enabled, ...)
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults(const std::shared_ptr<Core> &core) {
-	return getDefaults();
+	auto params = getDefaults();
+	const auto & cCore = core->getCCore();
+	params->mEphemeralMode = static_cast<decltype(params->mEphemeralMode)>(linphone_core_chat_room_get_default_ephemeral_mode(cCore));
+	params->mEphemeralLifetime = linphone_core_get_default_ephemeral_lifetime(cCore);
+	return params;
 }
 
 shared_ptr<ChatRoomParams> ChatRoomParams::fromCapabilities(ChatRoom::CapabilitiesMask capabilities) {
@@ -119,7 +143,13 @@ shared_ptr<ChatRoomParams> ChatRoomParams::fromCapabilities(ChatRoom::Capabiliti
 		params->setEncrypted(false);
 		params->setChatRoomEncryptionBackend(ChatRoomEncryptionBackend::None);
 	}
-	if (capabilities & ChatRoom::Capabilities::OneToOne) params->setGroup(false);
+	if (capabilities & ChatRoom::Capabilities::OneToOne) {
+		params->setGroup(false);
+	}
+
+	if (capabilities & ChatRoom::Capabilities::Ephemeral) {
+		params->setEphemeralMode(AbstractChatRoom::EphemeralMode::AdminManaged);
+	}
 	return params;
 }
 
@@ -133,6 +163,9 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 		mask |= ChatRoom::Capabilities::Conference;
 		if (!params->isGroup()) {
 			mask |= ChatRoom::Capabilities::OneToOne;
+		}
+		if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
+			mask |= ChatRoom::Capabilities::Ephemeral;
 		}
 	}
 	if (params->isEncrypted() && params->getChatRoomEncryptionBackend() != ChatRoomEncryptionBackend::None) {
@@ -158,6 +191,10 @@ bool ChatRoomParams::isValid() const {
 		lError() << "FlexisipChat backend must be used when group is enabled";
 		return false;
 	}
+	if ((mEphemeralMode == AbstractChatRoom::EphemeralMode::AdminManaged) && mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
+		lError() << "FlexisipChat backend must be used when ephemeral messages are enabled";
+		return false;
+	}
 	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
 		lError() << "Real time text chat room isn't compatible with FlexisipChat backend";
 		return false;
@@ -176,12 +213,16 @@ std::string ChatRoomParams::toString() const {
 	ss << "Encrypted[" << mEncrypted << "];";
 	ss << "Group[" << mGroup << "];";
 	ss << "Rtt[" << mRtt << "];";
+
 	ss << "Backend[";
 	if (mChatRoomBackend == ChatRoomBackend::Basic)
 		ss << "Basic];";
 	else
 		ss << "FlexisipChat];";
+	
 	ss << "EncryptionBackend[" << ((mChatRoomEncryptionBackend == ChatRoomEncryptionBackend::None) ? "None" : "Lime X3DH")  << "];";
+	ss << "EphemeralMode[" << mEphemeralMode << "];";
+
 	return ss.str();
 }
 
