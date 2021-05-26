@@ -468,6 +468,14 @@ bool ServerGroupChatRoomPrivate::initializeParticipants (const shared_ptr<Partic
 	handleSubjectChange(op);
 	// Handle participants addition
 	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->getRemoteBody());
+	for (auto it = identAddresses.begin(); it != identAddresses.end(); ) {
+		if (!((*it).isValid())) {
+			lError()<<"ServerGroupChatRoomPrivate::initializeParticipants(): removing invalid address " << ((*it).asString()) << " at position " << std::distance(it, identAddresses.begin());
+			it = identAddresses.erase(it);
+		} else {
+			++it;
+		}
+	}
 	if (identAddresses.empty()){
 		lError()<<"ServerGroupChatRoomPrivate::initializeParticipants(): empty list !";
 		return false;
