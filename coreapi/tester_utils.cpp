@@ -26,7 +26,9 @@
 
 #include "call/call.h"
 #include "chat/chat-room/chat-room-p.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room-p.h"
+#endif // HAVE_ADVANCED_IM
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/session/media-session-p.h"
@@ -225,8 +227,10 @@ char * linphone_core_get_download_path(LinphoneCore *lc) {
 	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDownloadPath().c_str());
 }
 
+#ifdef HAVE_ADVANCED_IM
 size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr) {
 	auto abstract = L_GET_CPP_PTR_FROM_C_OBJECT(cr);
 
 	return L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(abstract))->getPreviousConferenceIds().size();
 }
+#endif // HAVE_ADVANCED_IM
