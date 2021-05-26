@@ -43,6 +43,7 @@ std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 		case AbstractChatRoom::Capabilities::Migratable: lhs << "Migratable"; break;
 		case AbstractChatRoom::Capabilities::OneToOne: lhs << "OneToOne"; break;
 		case AbstractChatRoom::Capabilities::Encrypted: lhs << "Encrypted"; break;
+		case AbstractChatRoom::Capabilities::Ephemeral: lhs << "Ephemeral"; break;
 	}
 	return lhs;
 }

@@ -60,7 +60,8 @@ public:
 		Proxy = LinphoneChatRoomCapabilitiesProxy,
 		Migratable = LinphoneChatRoomCapabilitiesMigratable,
 		OneToOne = LinphoneChatRoomCapabilitiesOneToOne,
-		Encrypted = 1 << 6 //Entered like this to check enum order in static_assert below
+		Encrypted = LinphoneChatRoomCapabilitiesEncrypted,
+		Ephemeral = 1 << 7 // Entered like this to check enum order in static_assert below
 	};
 
 	enum class SecurityLevel{

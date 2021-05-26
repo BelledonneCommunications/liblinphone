@@ -157,6 +157,11 @@ static void call_received(SalCallOp *h) {
 			}
 		} else {
 			string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
+			string ephemerable = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "Ephemerable"));
+			string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
+			long parsedEphemeralLifeTime = 0;
+			if (ephemerable == "true") parsedEphemeralLifeTime = stol(ephemeralLifeTime, nullptr);
+
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
 				list<IdentityAddress> participantList = Conference::parseResourceLists(h->getRemoteBody());
@@ -192,7 +197,9 @@ static void call_received(SalCallOp *h) {
 					h->getSubject(),
 					ConferenceId(ConferenceAddress(Address(h->getRemoteContact())), ConferenceAddress(Address(h->getTo()))),
 					h->getRemoteBody(),
-					endToEndEncrypted == "true"
+					endToEndEncrypted == "true",
+					ephemerable == "true",
+					parsedEphemeralLifeTime
 				);
 			}
 
