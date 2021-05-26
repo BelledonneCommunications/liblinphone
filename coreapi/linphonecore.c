@@ -2531,30 +2531,16 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
 			if (linphone_content_is_multipart(body)) {
-				// TODO : migrate to c++ 'Content'.
-				int i = 0;
-				LinphoneContent *part = nullptr;
-				while ((part = linphone_content_get_part(body, i))) {
-					i++;
-					L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(part));
-					linphone_content_unref(part);
-				}
+				L_GET_PRIVATE(cgcr)->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			} else {
-				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(body));
+				L_GET_PRIVATE(cgcr)->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			}
 		} else if (audioVideoConference) {
 			shared_ptr<MediaConference::RemoteConference> conference = static_pointer_cast<MediaConference::RemoteConference>(audioVideoConference);
 			if (linphone_content_is_multipart(body)) {
-				// TODO : migrate to c++ 'Content'.
-				int i = 0;
-				LinphoneContent *part = nullptr;
-				while ((part = linphone_content_get_part(body, i))) {
-					i++;
-					conference->notifyReceived(linphone_content_get_utf8_text(part));
-					linphone_content_unref(part);
-				}
+				conference->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			} else {
-				conference->notifyReceived(linphone_content_get_utf8_text(body));
+				conference->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			}
 		}
 #else
@@ -8087,6 +8073,22 @@ const char *linphone_core_get_chat_database_path (const LinphoneCore *) {
 
 void linphone_core_enable_sdp_200_ack(LinphoneCore *lc, bool_t enable) {
 	linphone_config_set_int(lc->config,"sip","sdp_200_ack",lc->sip_conf.sdp_200_ack=enable);
+}
+
+LinphoneChatRoomEphemeralMode linphone_core_chat_room_get_default_ephemeral_mode(const LinphoneCore *lc) {
+	return (LinphoneChatRoomEphemeralMode)linphone_config_get_int(lc->config, "misc", "chat_room_ephemeral_mode", LinphoneChatRoomEphemeralModeDeviceManaged);
+}
+
+void linphone_core_chat_room_set_default_ephemeral_mode(LinphoneCore *lc, LinphoneChatRoomEphemeralMode mode) {
+	linphone_config_set_int(lc->config, "misc", "chat_room_ephemeral_mode", (int)mode);
+}
+
+long linphone_core_get_default_ephemeral_lifetime(const LinphoneCore *lc) {
+	return (long)linphone_config_get_int(lc->config, "misc", "ephemeral_lifetime", 86400);
+}
+
+void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) {
+	linphone_config_set_int64(lc->config, "misc", "ephemeral_lifetime", (int64_t)value);
 }
 
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {

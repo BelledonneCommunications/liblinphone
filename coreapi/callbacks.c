@@ -113,43 +113,35 @@ static void call_received(SalCallOp *h) {
 			if (chatRoom) {
 				L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmJoining(h);
 			} else if (_linphone_core_is_conference_creation(lc, toAddr)) {
-#ifdef HAVE_ADVANCED_IM
 				linphone_address_unref(toAddr);
 				linphone_address_unref(fromAddr);
-				if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
-					string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room"));
-					if (oneToOneChatRoom == "true") {
-						bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
-						if (!oneToOneChatRoomEnabled) {
-							h->decline(SalReasonNotAcceptable);
-							h->release();
-							return;
-						}
-						IdentityAddress from(h->getFrom());
-						list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
-						if (identAddresses.size() != 1) {
-							h->decline(SalReasonNotAcceptable);
-							h->release();
-							return;
-						}
-						const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
-						bool encrypted = endToEndEncryptedStr && strcmp(endToEndEncryptedStr, "true") == 0;
-
-						ConferenceAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
-						if (confAddr.isValid()) {
-							shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
-							L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
-							return;
-						}
+				string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room"));
+				if (oneToOneChatRoom == "true") {
+					bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
+					if (!oneToOneChatRoomEnabled) {
+						h->decline(SalReasonNotAcceptable);
+						h->release();
+						return;
 					}
-					_linphone_core_create_server_group_chat_room(lc, h);
+					IdentityAddress from(h->getFrom());
+					list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
+					if (identAddresses.size() != 1) {
+						h->decline(SalReasonNotAcceptable);
+						h->release();
+						return;
+					}
+					const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
+					bool encrypted = endToEndEncryptedStr && strcmp(endToEndEncryptedStr, "true") == 0;
+
+					ConferenceAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
+					if (confAddr.isValid()) {
+						shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
+						L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
+						return;
+					}
 				}
-				// TODO: handle media conference creation if the "text" feature tag is not present
+				_linphone_core_create_server_group_chat_room(lc, h);
 				return;
-#else
-				ms_warning("Advanced IM such as group chat is disabled!");
-				return;
-#endif
 			} else {
 				//invite is for an unknown chatroom
 				h->decline(SalReasonNotFound);
@@ -157,6 +149,11 @@ static void call_received(SalCallOp *h) {
 			}
 		} else {
 			string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
+			string ephemerable = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "Ephemerable"));
+			string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
+			long parsedEphemeralLifeTime = linphone_core_get_default_ephemeral_lifetime(lc);
+			if ((ephemerable == "true") && (!ephemeralLifeTime.empty())) parsedEphemeralLifeTime = stol(ephemeralLifeTime, nullptr);
+
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
 				list<IdentityAddress> participantList = Conference::parseResourceLists(h->getRemoteBody());
@@ -192,7 +189,9 @@ static void call_received(SalCallOp *h) {
 					h->getSubject(),
 					ConferenceId(ConferenceAddress(Address(h->getRemoteContact())), ConferenceAddress(Address(h->getTo()))),
 					h->getRemoteBody(),
-					endToEndEncrypted == "true"
+					endToEndEncrypted == "true",
+					((ephemerable == "true") && (!ephemeralLifeTime.empty())) ? AbstractChatRoom::EphemeralMode::AdminManaged : AbstractChatRoom::EphemeralMode::DeviceManaged,
+					parsedEphemeralLifeTime
 				);
 			}
 

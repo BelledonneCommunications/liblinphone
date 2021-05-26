@@ -157,11 +157,12 @@ LINPHONE_PUBLIC void linphone_chat_room_enable_ephemeral(LinphoneChatRoom *chat_
 LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled(const LinphoneChatRoom *chat_room);
 
 /**
- * Set lifetime (in seconds) for all new ephemral messages in the chat room.
+ * Set lifetime (in seconds) for all new ephemeral messages in the chat room.
  * After the message is read, it will be deleted after "time" seconds.
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
- * @param time The ephemral lifetime, default 24h, 86400s
+ * @param time The ephemeral lifetime, default 24h, 86400s
+ * @warning A value of "time" equal to 0 disables ephemeral messages
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *chat_room, long time);
 
@@ -173,6 +174,24 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom
  * @return the ephemeral lifetime (in secoonds)
  */
 LINPHONE_PUBLIC long linphone_chat_room_get_ephemeral_lifetime (const LinphoneChatRoom *chat_room);
+
+/**
+ * Set the ephemeral mode of the chat room
+ * @see linphone_chat_room_ephemeral_enabled()
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param mode The ephemeral mode #LinphoneChatRoomEphemeralMode
+ * @warning This function only changes the mode of ephemeral messages #LinphoneChatRoomEphemeralMode. It is required to manually enable ephemeral messages after setting the mode by calling linphone_chat_room_enable_ephemeral()
+ */
+LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_mode (LinphoneChatRoom *chat_room, LinphoneChatRoomEphemeralMode mode);
+
+/**
+ * Get the ephemeral mode of the chat room.
+ * @see linphone_chat_room_ephemeral_enabled()
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return the ephemeral mode #LinphoneChatRoomEphemeralMode
+ */
+LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_chat_room_get_ephemeral_mode (const LinphoneChatRoom *chat_room);
+
 
 /**
  * Uses linphone spec to check if all participants support ephemeral messages.

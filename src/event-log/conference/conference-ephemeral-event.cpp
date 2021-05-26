@@ -17,7 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference-ephemeral-message-event.h"
+#include "conference-notified-event-p.h"
+#include "conference-ephemeral-event.h"
 
 // =============================================================================
 
@@ -27,36 +28,34 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class ConferenceEphemeralMessageEventPrivate : public ConferenceEventPrivate {
+class ConferenceEphemeralEventPrivate : public ConferenceNotifiedEventPrivate {
 public:
 	long ephemeralLifetime;
 };
 
 // -----------------------------------------------------------------------------
 
-ConferenceEphemeralMessageEvent::ConferenceEphemeralMessageEvent (
+ConferenceEphemeralEvent::ConferenceEphemeralEvent (
 Type type,
 time_t creationTime,
 const ConferenceId &conferenceId,
 long ephemeralLifetime
-) : ConferenceEvent(
-	*new ConferenceEphemeralMessageEventPrivate,
+) : ConferenceNotifiedEvent(
+	*new ConferenceEphemeralEventPrivate,
 	type,
 	creationTime,
 	conferenceId
 ) {
 	L_D();
 	L_ASSERT(
-			 type == Type::ConferenceEphemeralMessageLifetimeChanged ||
 			 type == Type::ConferenceEphemeralMessageManagedByAdmin ||
 			 type == Type::ConferenceEphemeralMessageManagedByParticipants ||
-			 type == Type::ConferenceEphemeralMessageEnabled ||
-			 type == Type::ConferenceEphemeralMessageDisabled
+			 type == Type::ConferenceEphemeralLifetimeChanged
 			 );
 	d->ephemeralLifetime = ephemeralLifetime;
 }
 
-long ConferenceEphemeralMessageEvent::getEphemeralMessageLifetime () const {
+long ConferenceEphemeralEvent::getEphemeralLifetime () const {
 	L_D();
 	return d->ephemeralLifetime;
 }

@@ -103,16 +103,12 @@ public:
 		bool fallback
 	);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
-								     const IdentityAddress &conferenceFactoryUri,
-								     const ConferenceId &conferenceId,
-								     const Content &content,
-								     bool encrypted);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (const std::string &subject,
-								     const ConferenceId &conferenceId,
-								     const Content &content,
-								     bool encrypted);
+									 const ConferenceId &conferenceId,
+									 const Content &content,
+									 bool encrypted,
+									 AbstractChatRoom::EphemeralMode ephemerableMode,
+									 long ephemeralLifeTime);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
-	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, const Address *localAddress, AbstractChatRoom::CapabilitiesMask capabilities, bool fallback);
 
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
 							 const IdentityAddress &localAddr,
