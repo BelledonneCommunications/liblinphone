@@ -848,6 +848,11 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 			csp.addCustomHeader("One-To-One-Chat-Room", "true");
 		if (capabilities & ServerGroupChatRoom::Capabilities::Encrypted)
 			csp.addCustomHeader("End-To-End-Encrypted", "true");
+		if (capabilities & ClientGroupChatRoom::Capabilities::Ephemeral) {
+			csp.addCustomHeader("Ephemerable", "true");
+			// TODO: Store ephemeral lifetime value ?
+			//csp.addCustomHeader("Ephemeral-Life-Time", to_string(ephemeralLifetime));
+		}
 		//csp.addCustomContactParameter("isfocus");
 		//csp.addCustomContactParameter("text");
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
@@ -1213,8 +1218,20 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "End-To-End-Encrypted"));
 	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
+	string ephemerable = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemerable"));
+	if (ephemerable == "true") {
+		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
+	}
+
+	if (endToEndEncrypted == "true")
+		d->capabilities |= ServerGroupChatRoom::Capabilities::Ephemeral;
 
 	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
+	// TODO: Store ephemeral lifetime value ?
+	/*if (ephemerable == "true") {
+		string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
+		d->setEphemeralLifeTime(stol(ephemeralLifeTime, nullptr));
+	}*/
 
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
