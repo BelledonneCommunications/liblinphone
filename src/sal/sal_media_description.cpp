@@ -28,8 +28,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 // Called by makeLocalMediaDescription to create the local media decription
 SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps){
-	pad = false;
-
 	capabilityNegotiationSupported = capabilityNegotiation;
 	mergeTcapLines = mergeTcaps;
 
