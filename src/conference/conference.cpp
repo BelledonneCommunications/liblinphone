@@ -438,6 +438,22 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	return event;
 }
 
+shared_ptr<ConferenceEphemeralEvent> Conference::notifyEphemeralChanged (time_t creationTime,  const bool isFullState, long lifetime, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceEphemeralEvent> event = make_shared<ConferenceEphemeralEvent>(
+		EventLog::Type::ConferenceEphemeralLifetimeChanged,
+		creationTime,
+		conferenceId,
+		lifetime
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onEphemeralChanged(event, participantDevice);
+	}
+	return event;
+}
+
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	if (this->state != state) {
 		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
