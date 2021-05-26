@@ -18,7 +18,8 @@
  */
 
 #include "liblinphone_tester.h"
-static const int x3dhServer_creationTimeout = 5000;
+
+static const int x3dhServer_creationTimeout = 15000;
 
 static void simple_call(void) {
 	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE);
