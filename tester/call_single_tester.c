@@ -1183,7 +1183,7 @@ static void call_with_dns_time_out(void) {
 	LinphoneSipTransports transport = {9773,0,0,0};
 
 	linphone_core_set_sip_transports(marie->lc,&transport);
-	linphone_core_iterate(marie->lc);
+	liblinphone_tester_core_iterate(marie->lc);
 	sal_set_dns_timeout(linphone_core_get_sal(marie->lc),0);
 	linphone_core_invite(marie->lc,"\"t\x8et\x8e\" <sip:toto@toto.com>"); /*just to use non ascii values*/
 
@@ -1224,9 +1224,9 @@ static void early_cancelled_call(void) {
 	 */
 	int i = 0;
 	while(i < 300){
-		linphone_core_iterate(pauline->lc);
+		liblinphone_tester_core_iterate(pauline->lc);
 		if (pauline->stat.number_of_LinphoneCallIncomingReceived == 0){
-			linphone_core_iterate(marie->lc);
+			liblinphone_tester_core_iterate(marie->lc);
 		}else break;
 		ms_usleep(20000);
 		i++;
@@ -2755,10 +2755,10 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 		linphone_tunnel_set_mode(linphone_core_get_tunnel(marie->lc),LinphoneTunnelModeEnable);
 		for (i=0;i<100;i++) {
 			if (linphone_tunnel_connected(linphone_core_get_tunnel(marie->lc))) {
-				linphone_core_iterate(marie->lc);
+				liblinphone_tester_core_iterate(marie->lc);
 				break;
 			}
-			linphone_core_iterate(marie->lc);
+			liblinphone_tester_core_iterate(marie->lc);
 			ms_usleep(20000);
 		}
 		BC_ASSERT_TRUE(linphone_tunnel_connected(linphone_core_get_tunnel(marie->lc)));
@@ -2806,8 +2806,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 				pauline_token = linphone_call_get_authentication_token(pauline_call);
 				marie_token = linphone_call_get_authentication_token(marie_call);
 				if (pauline_token && marie_token) break;
-				linphone_core_iterate(marie->lc);
-				linphone_core_iterate(pauline->lc);
+				liblinphone_tester_core_iterate(marie->lc);
+				liblinphone_tester_core_iterate(pauline->lc);
 				ms_usleep(20000);
 			}
 			BC_ASSERT_PTR_NOT_NULL(pauline_token);
