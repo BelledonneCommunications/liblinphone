@@ -135,7 +135,7 @@ LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const Linph
 LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams = params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
-		return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
+		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
 	});
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat : false;
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
