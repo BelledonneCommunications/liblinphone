@@ -501,7 +501,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		}
 
 		if ((strlen(ice_check_list_local_pwd(cl)) != desc->ice_pwd.length()) || (desc->ice_pwd.compare(ice_check_list_local_pwd(cl)) != 0) || usePerStreamUfragPassword)
-			stream.cfgs[stream.getChosenConfigurationIndex()].ice_pwd = L_C_TO_STRING(ice_check_list_local_pwd(cl));
+			stream.ice_pwd = L_C_TO_STRING(ice_check_list_local_pwd(cl));
 		else
 			stream.ice_pwd.clear();
 
