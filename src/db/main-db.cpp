@@ -1988,23 +1988,23 @@ void MainDb::init () {
 			"    ON DELETE CASCADE"
 			") " + charset;
 
-			*session <<
-				"CREATE TABLE IF NOT EXISTS one_to_one_chat_room ("
-				"  chat_room_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+		*session <<
+			"CREATE TABLE IF NOT EXISTS one_to_one_chat_room ("
+			"  chat_room_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
-				"  participant_a_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
-				"  participant_b_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  participant_a_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  participant_b_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 
-				"  FOREIGN KEY (chat_room_id)"
-				"    REFERENCES chat_room(id)"
-				"    ON DELETE CASCADE,"
-				"  FOREIGN KEY (participant_a_sip_address_id)"
-				"    REFERENCES sip_address(id)"
-				"    ON DELETE CASCADE,"
-				"  FOREIGN KEY (participant_b_sip_address_id)"
-				"    REFERENCES sip_address(id)"
-				"    ON DELETE CASCADE"
-				") " + charset;
+			"  FOREIGN KEY (chat_room_id)"
+			"    REFERENCES chat_room(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (participant_a_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (participant_b_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant ("
