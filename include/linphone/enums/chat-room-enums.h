@@ -49,7 +49,8 @@ typedef enum _LinphoneChatRoomCapabilities{
 	LinphoneChatRoomCapabilitiesProxy = 1 << 3, /**< Special proxy chat room flag */
 	LinphoneChatRoomCapabilitiesMigratable = 1 << 4, /**< Chat room migratable from Basic to Conference */
 	LinphoneChatRoomCapabilitiesOneToOne = 1 << 5, /**< A communication between two participants (can be Basic or Conference) */
-	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6 /**< Chat room is encrypted */
+	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6, /**< Chat room is encrypted */
+	LinphoneChatRoomCapabilitiesEphemeral = 1 << 7 /**< Chat room can enable ephemeral messages */
 } LinphoneChatRoomCapabilities;
 
 

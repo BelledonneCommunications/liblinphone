@@ -32,13 +32,17 @@ ChatRoomParams::ChatRoomParams() {
 	mGroup = false;
 	mRtt = false;
 	mSubject = "";
+	mChatRoomWideEphemeralSettingsEnabled = false;
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
 	: ChatRoomParams("", encrypted, group, backend) {}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject) {
+	: ChatRoomParams(subject, encrypted, group, false, backend) {}
+
+ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, bool ephemerable, ChatRoomBackend backend)
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mChatRoomWideEphemeralSettingsEnabled(ephemerable) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}
@@ -51,6 +55,7 @@ ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other
 	mGroup = other.mGroup;
 	mRtt = other.mRtt;
 	mSubject = other.mSubject;
+	mChatRoomWideEphemeralSettingsEnabled = other.mChatRoomWideEphemeralSettingsEnabled;
 }
 
 ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
@@ -64,6 +69,8 @@ bool ChatRoomParams::isGroup() const { return mGroup; }
 bool ChatRoomParams::isRealTimeText() const { return mRtt; }
 
 const string& ChatRoomParams::getSubject() const { return mSubject; }
+
+bool ChatRoomParams::isChatRoomWideEphemeralMessagesEnabled() const { return mChatRoomWideEphemeralSettingsEnabled; }
 
 void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 
@@ -87,6 +94,8 @@ void ChatRoomParams::setGroup(bool group) {
 void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
 
 void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
+
+void ChatRoomParams::setChatRoomWideEphemeralMessagesEnabled(bool ephemerable) { mChatRoomWideEphemeralSettingsEnabled = ephemerable; }
 
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
 	return ChatRoomParams::create();
@@ -118,6 +127,9 @@ shared_ptr<ChatRoomParams> ChatRoomParams::fromCapabilities(ChatRoom::Capabiliti
 		params->setEncrypted(false);
 		params->setChatRoomEncryptionBackend(ChatRoomEncryptionBackend::None);
 	}
+	if (capabilities & ChatRoom::Capabilities::Ephemeral) {
+		params->setChatRoomWideEphemeralMessagesEnabled(true);
+	}
 	params->setGroup(~capabilities & ChatRoom::Capabilities::OneToOne);
 	return params;
 }
@@ -132,6 +144,9 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 		mask |= ChatRoom::Capabilities::Conference;
 		if (!params->isGroup()) {
 			mask |= ChatRoom::Capabilities::OneToOne;
+		}
+		if (params->isChatRoomWideEphemeralMessagesEnabled()) {
+			mask |= ChatRoom::Capabilities::Ephemeral;
 		}
 	}
 	if (params->isEncrypted() && params->getChatRoomEncryptionBackend() != ChatRoomEncryptionBackend::None) {
@@ -157,6 +172,14 @@ bool ChatRoomParams::isValid() const {
 		lError() << "FlexisipChat backend must be used when group is enabled";
 		return false;
 	}
+	if (mChatRoomWideEphemeralSettingsEnabled && mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
+		lError() << "FlexisipChat backend must be used when ephemeral messages are enabled";
+		return false;
+	}
+	if (mChatRoomWideEphemeralSettingsEnabled && !mEncrypted) {
+		lError() << "Encryption must be used when ephemeral messages are enabled";
+		return false;
+	}
 	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
 		lError() << "Real time text chat room isn't compatible with FlexisipChat backend";
 		return false;
@@ -175,12 +198,16 @@ std::string ChatRoomParams::toString() const {
 	ss << "Encrypted[" << mEncrypted << "];";
 	ss << "Group[" << mGroup << "];";
 	ss << "Rtt[" << mRtt << "];";
+
 	ss << "Backend[";
 	if (mChatRoomBackend == ChatRoomBackend::Basic)
 		ss << "Basic];";
 	else
 		ss << "FlexisipChat];";
+	
 	ss << "EncryptionBackend[" << ((mChatRoomEncryptionBackend == ChatRoomEncryptionBackend::None) ? "None" : "Lime X3DH")  << "];";
+	ss << "ChatRoomWideEphemeralSettingsEnabled[" << mChatRoomWideEphemeralSettingsEnabled << "];";
+
 	return ss.str();
 }
 
