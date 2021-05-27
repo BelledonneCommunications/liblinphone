@@ -4506,26 +4506,27 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		return NULL;
 
 	proxy = linphone_call_params_get_proxy_config(params);
-	if( proxy == NULL)
-		proxy=linphone_core_lookup_known_proxy(lc,addr);
+	if (proxy == NULL) proxy = linphone_core_lookup_known_proxy(lc, addr);
+
 	cp = linphone_call_params_copy(params);
 	if (!linphone_call_params_has_avpf_enabled_been_set(cp))
 	{
-		if (proxy!=NULL) {
-			from=linphone_proxy_config_get_identity(proxy);
+		if (proxy != NULL) {
 			linphone_call_params_enable_avpf(cp, linphone_proxy_config_avpf_enabled(proxy));
 			linphone_call_params_set_avpf_rr_interval(cp, (uint16_t)(linphone_proxy_config_get_avpf_rr_interval(proxy) * 1000));
-		}else{
-			linphone_call_params_enable_avpf(cp, linphone_core_get_avpf_mode(lc)==LinphoneAVPFEnabled);
+		} else {
+			linphone_call_params_enable_avpf(cp, linphone_core_get_avpf_mode(lc) == LinphoneAVPFEnabled);
 			if (linphone_call_params_avpf_enabled(cp))
 				linphone_call_params_set_avpf_rr_interval(cp, (uint16_t)(linphone_core_get_avpf_rr_interval(lc) * 1000));
 		}
 	}
-	/* if no proxy or no identity defined for this proxy, default to primary contact*/
-	if (from==NULL) from=linphone_core_get_primary_contact(lc);
 
-	parsed_url2=linphone_address_new(from);
-	call=linphone_call_new_outgoing(lc,parsed_url2,addr,cp,proxy);
+	if (proxy != NULL) from = linphone_proxy_config_get_identity(proxy);
+	/* if no proxy or no identity defined for this proxy, default to primary contact*/
+	if (from == NULL) from = linphone_core_get_primary_contact(lc);
+
+	parsed_url2 = linphone_address_new(from);
+	call = linphone_call_new_outgoing(lc, parsed_url2, addr, cp, proxy);
 	linphone_address_unref(parsed_url2);
 
 	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(Call::toCpp(call)->getSharedFromThis()) != 0) {
