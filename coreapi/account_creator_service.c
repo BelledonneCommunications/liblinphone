@@ -160,6 +160,14 @@ void linphone_account_creator_service_set_login_linphone_account_cb(LinphoneAcco
 	service->login_linphone_account_request_cb = cb;
 }
 
+LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_get_validation_account_cb(const LinphoneAccountCreatorService *service) {
+	return service->get_validation_account_request_cb;
+}
+
+void linphone_account_creator_service_set_get_validation_account_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
+	service->get_validation_account_request_cb = cb;
+}
+
 /************************** End Account Creator service **************************/
 
 void linphone_core_set_account_creator_service(LinphoneCore *lc, LinphoneAccountCreatorService *service) {
