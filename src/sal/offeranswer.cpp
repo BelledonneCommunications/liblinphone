@@ -515,6 +515,10 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		}
 	}
 
+	resultCfg.mixer_to_client_extension_id = remoteCfg.mixer_to_client_extension_id;
+	resultCfg.client_to_mixer_extension_id = remoteCfg.client_to_mixer_extension_id;
+	resultCfg.conference_ssrc = remoteCfg.conference_ssrc;
+
 	if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
 		resultCfg.ptime=remoteCfg.ptime;
 		resultCfg.maxptime=remoteCfg.maxptime;
@@ -712,6 +716,10 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		}
 		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 	}
+
+	resultCfg.mixer_to_client_extension_id = remoteCfg.mixer_to_client_extension_id;
+	resultCfg.client_to_mixer_extension_id = remoteCfg.client_to_mixer_extension_id;
+	resultCfg.conference_ssrc = localCfg.conference_ssrc;
 
 	if (resultCfg.hasSrtp() == true) {
 		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);

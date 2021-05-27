@@ -93,6 +93,14 @@ bool ParticipantDevice::isInConference() const {
 	}
 }
 
+void ParticipantDevice::setSsrc (uint32_t ssrc) {
+	mSsrc = ssrc;
+}
+
+uint32_t ParticipantDevice::getSsrc () const {
+	return mSsrc;
+}
+
 void *ParticipantDevice::getUserData () const{
 	return mUserData;
 }
