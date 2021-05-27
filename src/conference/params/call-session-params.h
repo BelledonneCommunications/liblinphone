@@ -21,6 +21,7 @@
 #define _L_CALL_SESSION_PARAMS_H_
 
 #include "object/clonable-object.h"
+#include "utils/general-internal.h"
 
 #include "linphone/types.h"
 #include "content/content.h"

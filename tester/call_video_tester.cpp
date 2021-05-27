@@ -1091,8 +1091,8 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
 	if (video_only) {
-		linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
-		linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
 		nb_audio_starts = 0;
 	}
 
@@ -1337,8 +1337,8 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	linphone_core_set_video_policy(pauline->lc,&vpol);
 	linphone_core_set_video_policy(marie->lc,&vpol);
 
-	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
-	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
+	linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
+	linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
 
 	out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	linphone_call_ref(out_call);
@@ -1412,7 +1412,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+	if (linphone_core_get_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(pauline->lc,"h264");
 		disable_all_video_codecs_except_one(marie->lc,"h264");
 	}
@@ -1755,7 +1755,7 @@ static void classic_video_entry_phone_setup(void) {
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_find_payload_type(caller_mgr->lc,"h264", -1, -1)!=NULL) {
+	if (linphone_core_get_payload_type(caller_mgr->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(caller_mgr->lc,"h264");
 		disable_all_video_codecs_except_one(callee_mgr->lc,"h264");
 
@@ -1983,7 +1983,7 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+	if (linphone_core_get_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(pauline->lc,"h264");
 		disable_all_video_codecs_except_one(marie->lc,"h264");
 	}
