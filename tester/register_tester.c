@@ -102,7 +102,7 @@ static void register_with_refresh_base_3_for_algo(
 	time_begin = bctbx_get_cur_time_ms();
 	while (counters->number_of_LinphoneRegistrationOk<1+(refresh!=0)
 			&& (bctbx_get_cur_time_ms() - time_begin) < (7000 /*only wait 7 s if final state is progress*/+(expected_final_state==LinphoneRegistrationProgress?0:4000))) {
-		linphone_core_iterate(lc);
+		liblinphone_tester_core_iterate(lc);
 		if (counters->number_of_auth_info_requested>0 && linphone_proxy_config_get_state(proxy_cfg) == LinphoneRegistrationFailed && late_auth_info) {
 			if (!linphone_core_get_auth_info_list(lc)) {
 				BC_ASSERT_EQUAL(linphone_proxy_config_get_error(proxy_cfg),LinphoneReasonUnauthorized, int, "%d");
@@ -190,7 +190,7 @@ static void register_with_refresh_with_send_error(void) {
 	/*simultate a network error*/
 	sal_set_send_error(linphone_core_get_sal(lcm->lc), -1);
 	while (counters->number_of_LinphoneRegistrationProgress<2 && retry++ <200) {
-			linphone_core_iterate(lcm->lc);
+			liblinphone_tester_core_iterate(lcm->lc);
 			ms_usleep(10000);
 	}
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,0, int, "%d");

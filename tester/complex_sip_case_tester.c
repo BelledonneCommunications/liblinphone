@@ -147,7 +147,7 @@ static LinphoneCoreManager * mgr_init(void) {
 	identity_char=linphone_address_as_string(mgr->identity);
 	linphone_core_set_primary_contact(mgr->lc,identity_char);
 	linphone_core_manager_start(mgr, FALSE);
-	linphone_core_iterate(mgr->lc);
+	liblinphone_tester_core_iterate(mgr->lc);
 	return mgr;
 }
 
