@@ -3062,75 +3062,18 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_stopRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
 
-	if ((matched_enc == LinphoneMediaEncryptionDTLS) || (matched_enc == LinphoneMediaEncryptionZRTP)) {
-		wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_caller.number_of_LinphoneCallEncryptedOn+1);
-		wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_callee.number_of_LinphoneCallEncryptedOn+1);
-	}
-
-	const LinphoneCallParams* caller_call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
-	const LinphoneMediaEncryption caller_enc = linphone_call_params_get_media_encryption(caller_call_param);
-	const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(linphone_core_get_current_call(callee_mgr->lc));
-	const LinphoneMediaEncryption callee_enc = linphone_call_params_get_media_encryption(callee_call_param);
-
-	// Ensure that encryption on both sides is the same
-	BC_ASSERT_EQUAL(caller_enc,matched_enc, int, "%d");
-	BC_ASSERT_EQUAL(callee_enc,matched_enc, int, "%d");
-	BC_ASSERT_EQUAL(caller_enc,callee_enc, int, "%d");
-
-	const bool_t calleeSendIceReInvite = linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
-	const bool_t callerSendIceReInvite = linphone_config_get_int(linphone_core_get_config(caller_mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
-
-	const bool_t calleeSendIceReInviteWithDtls = linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE);
-	const bool_t callerSendIceReInviteWithDtls = linphone_config_get_int(linphone_core_get_config(caller_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE);
-
-	const bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
-
-	/*wait ice and/or capability negotiation re-invite*/
-	// If caller sets mandatory encryption, potential configurations are not added to the SDP as there is no choice to be made
-	if (!caller_mand_enc && caller_capability_negotiations_enabled && callee_capability_negotiations_enabled && (caller_local_enc != caller_enc) && capability_negotiation_reinvite_enabled) {
-		// Capability negotiation re-invite
-		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
-		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
-	} else if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce
-			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
-			&& calleeSendIceReInvite
-			&& callerSendIceReInvite
-			&& ((caller_enc != LinphoneMediaEncryptionDTLS) || (calleeSendIceReInviteWithDtls && callerSendIceReInviteWithDtls))) {
-		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
-		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
-	} else if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce) {
-		/* check no ice re-invite received*/
-		BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2,2000));
-		BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2,2000));
-	}
-	if (caller_enc == LinphoneMediaEncryptionDTLS ) {
-		LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);
-		if(!BC_ASSERT_PTR_NOT_NULL(call)) return FALSE;
-		AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
-#ifdef VIDEO_ENABLED
-		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
-#endif
-		if (astream)
-			BC_ASSERT_TRUE(ms_media_stream_sessions_get_encryption_mandatory(&astream->ms.sessions));
-#ifdef VIDEO_ENABLED
-		if (vstream && video_stream_started(vstream))
-			BC_ASSERT_TRUE(ms_media_stream_sessions_get_encryption_mandatory(&vstream->ms.sessions));
-#endif
-	}
-
-	if (result) {
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_stopRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
-
+	if (result != 0) {
 		if ((matched_enc == LinphoneMediaEncryptionDTLS) || (matched_enc == LinphoneMediaEncryptionZRTP)) {
 			BC_ASSERT_TRUE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_caller.number_of_LinphoneCallEncryptedOn+1,10000));
 			BC_ASSERT_TRUE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_callee.number_of_LinphoneCallEncryptedOn+1,10000));
 		}
 
 		caller_call = linphone_core_get_current_call(caller_mgr->lc);
+		BC_ASSERT_PTR_NOT_NULL(caller_call);
 		const LinphoneCallParams* caller_call_param = linphone_call_get_current_params(caller_call);
 		const LinphoneMediaEncryption caller_enc = linphone_call_params_get_media_encryption(caller_call_param);
 		callee_call = linphone_core_get_current_call(callee_mgr->lc);
+		BC_ASSERT_PTR_NOT_NULL(callee_call);
 		const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(callee_call);
 		const LinphoneMediaEncryption callee_enc = linphone_call_params_get_media_encryption(callee_call_param);
 
@@ -3151,20 +3094,27 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			}
 		}
 
+		const bool_t calleeSendIceReInvite = linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
+		const bool_t callerSendIceReInvite = linphone_config_get_int(linphone_core_get_config(caller_mgr->lc), "sip", "update_call_when_ice_completed", TRUE);
+
+		const bool_t calleeSendIceReInviteWithDtls = linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE);
+		const bool_t callerSendIceReInviteWithDtls = linphone_config_get_int(linphone_core_get_config(caller_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE);
+
 		LinphoneNatPolicy * caller_policy = linphone_core_get_nat_policy(caller_mgr->lc);
 		LinphoneNatPolicy * callee_policy = linphone_core_get_nat_policy(callee_mgr->lc);
-		const bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
+		bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
+
 		/*wait ice and/or capability negotiation re-invite*/
 		// If caller sets mandatory encryption, potential configurations are not added to the SDP as there is no choice to be made
-		if (!caller_mand_enc && caller_capability_negotiations_enabled && callee_capability_negotiations_enabled && (caller_local_enc != matched_enc) && capability_negotiation_reinvite_enabled) {
+		if (!caller_mand_enc && caller_capability_negotiations_enabled && callee_capability_negotiations_enabled && (caller_local_enc != caller_enc) && capability_negotiation_reinvite_enabled) {
 			// Capability negotiation re-invite
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
 		} else if (linphone_nat_policy_ice_enabled(caller_policy)
 				&& linphone_nat_policy_ice_enabled(callee_policy)
-				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
-				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
-				&& caller_enc != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {
+				&& calleeSendIceReInvite
+				&& callerSendIceReInvite
+				&& ((caller_enc != LinphoneMediaEncryptionDTLS) || (calleeSendIceReInviteWithDtls && callerSendIceReInviteWithDtls))) {
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
 		} else if (linphone_nat_policy_ice_enabled(caller_policy)) {
@@ -3178,6 +3128,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 		if (caller_enc == LinphoneMediaEncryptionDTLS ) {
 			LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);
+			if(!BC_ASSERT_PTR_NOT_NULL(call)) return FALSE;
 			AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
 	#ifdef VIDEO_ENABLED
 			VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
@@ -3189,6 +3140,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 				BC_ASSERT_TRUE(ms_media_stream_sessions_get_encryption_mandatory(&vstream->ms.sessions));
 	#endif
 		}
+
 	}
 	return result;
 }
