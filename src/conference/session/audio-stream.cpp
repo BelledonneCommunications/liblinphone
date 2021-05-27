@@ -179,7 +179,12 @@ bool MS2AudioStream::prepare(){
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
 		// otherwise too slow to start.
-		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
+		bool allowRingingDuringEarlyMedia = linphone_core_get_ring_during_incoming_early_media(getCCore());
+		if (allowRingingDuringEarlyMedia) {
+			ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_RING);
+		} else {
+			ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
+		}
 	}
 	
 	if (getIceService().isActive()){
@@ -321,10 +326,15 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		captcard = playcard = nullptr;
 	}
 
-
 	if (playcard) {
-		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
+		bool allowRingingDuringEarlyMedia = linphone_core_get_ring_during_incoming_early_media(getCCore());
+		if (allowRingingDuringEarlyMedia) {
+			ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_RING);
+		} else {
+			ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
+		}
 	}
+
 	configureAudioStream();
 	bool useEc = captcard && linphone_core_echo_cancellation_enabled(getCCore());
 	audio_stream_enable_echo_canceller(mStream, useEc);
