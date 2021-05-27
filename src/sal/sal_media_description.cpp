@@ -433,6 +433,10 @@ const std::string SalMediaDescription::printDifferences(int result) {
 		out.append("FORCE_STREAM_RECONSTRUCTION ");
 		result &= ~SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
 	}
+	if (result & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED){
+		out.append("MIXER_TO_CLIENT_CHANGED");
+		result &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
+	}
 	if (result){
 		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::print_differences(), fix it");
 	}
