@@ -486,8 +486,6 @@ void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 }
 
 void LocalConference::addLocalEndpoint () {
-	confParams->enableLocalParticipant(true);
-	
 	StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
 	if (mixer) mixer->enableLocalParticipant(true);
 
@@ -503,8 +501,11 @@ void LocalConference::addLocalEndpoint () {
 		}
 	}
 
-	time_t creationTime = time(nullptr);
-	notifyParticipantAdded(creationTime, false, getMe());
+	if (!isIn()) {
+		confParams->enableLocalParticipant(true);
+		time_t creationTime = time(nullptr);
+		notifyParticipantAdded(creationTime, false, getMe());
+	}
 
 }
 
@@ -913,9 +914,7 @@ int LocalConference::enter () {
 	if (linphone_core_get_current_call(getCore()->getCCore()))
 		linphone_call_pause(linphone_core_get_current_call(getCore()->getCCore()));
 
-	if (!isIn()) {
-		addLocalEndpoint();
-	}
+	addLocalEndpoint();
 
 	return 0;
 }
