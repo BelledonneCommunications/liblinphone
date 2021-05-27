@@ -1244,6 +1244,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[audioStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[audioStreamIndex], "as");
 
+			if (isInConference()) md->streams[audioStreamIndex].mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
+
 			if (getParams()->audioMulticastEnabled()) {
 				md->streams[audioStreamIndex].ttl = linphone_core_get_audio_multicast_ttl(q->getCore()->getCCore());
 				md->streams[audioStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;

@@ -127,6 +127,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::string ice_pwd;
 		std::string mid; /* Media line identifier for RTP bundle mode */
 		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
+		int mixer_to_client_extension_id = 0;
+		int client_to_mixer_extension_id = 0;
 		bool ice_mismatch = false;
 		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 		bool rtcp_mux = false;
