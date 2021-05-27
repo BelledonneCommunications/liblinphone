@@ -374,6 +374,12 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 		}
 		// SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED monitors the number of streams, it is ignored here.
 		changesToHandle &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
+
+		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED){
+			stop();
+			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
+			return false;
+		}
 		
 		if (changesToHandle == 0){
 			// We've handled everything.
