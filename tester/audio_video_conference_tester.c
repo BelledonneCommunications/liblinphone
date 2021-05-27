@@ -25,6 +25,7 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 #include "mediastreamer2/msutils.h"
+#include "mediastreamer2/msvolume.h"
 #include "belle-sip/sipstack.h"
 #include "shared_tester_functions.h"
 
@@ -40,7 +41,7 @@ void destroy_mgr_in_conference(LinphoneCoreManager *mgr) {
 	linphone_core_manager_destroy(mgr);
 }
 
-static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, LinphoneCoreManager* laure, LinphoneCoreManager *focus, bool_t pause_and_hangup) {
+static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, LinphoneCoreManager* laure, LinphoneCoreManager *focus, bool_t pause_and_hangup, bool_t check_volumes) {
 	stats initial_marie_stat;
 	stats initial_pauline_stat;
 	stats initial_laure_stat;
@@ -54,6 +55,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	bool_t is_remote_conf;
 	bool_t focus_is_up = (focus && ((LinphoneConferenceServer *)focus)->reg_state == LinphoneRegistrationOk);
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+	AudioStream *audiostream;
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -159,6 +161,30 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
 	wait_for_list(lcs,NULL,0,1000);
+
+	if (check_volumes) {
+		// Check that laure received volumes from other participant's devices
+		LinphoneConference *laure_conf = linphone_call_get_conference(linphone_core_get_current_call(laure->lc));
+		bctbx_list_t *participants = linphone_conference_get_participant_list(laure_conf);
+
+		for (bctbx_list_t *it = participants; it != NULL; it = it->next) {
+			LinphoneParticipant *p = (LinphoneParticipant *) it->data;
+			bctbx_list_t *devices = linphone_participant_get_devices(p);
+
+			for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+				LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
+				BC_ASSERT_NOT_EQUAL(linphone_conference_get_participant_device_volume(laure_conf, d), AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
+				BC_ASSERT_GREATER(linphone_conference_get_participant_device_volume(laure_conf, d), MS_VOLUME_DB_LOWEST, int, "%d");
+			}
+			bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+		}
+		bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
+
+		audiostream = (AudioStream *) linphone_call_get_stream(linphone_core_get_current_call(laure->lc), LinphoneStreamTypeAudio);
+		BC_ASSERT_EQUAL(audiostream->mixer_to_client_extension_id, 3, int, "%d");
+	}
+
+	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 
 	LinphoneConference* l_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(l_conference);
@@ -1325,7 +1351,7 @@ static void simple_conference(void) {
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
-	simple_conference_base(marie,pauline,laure, NULL, FALSE);
+	simple_conference_base(marie,pauline,laure, NULL, FALSE, FALSE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
@@ -1902,7 +1928,7 @@ static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 		linphone_core_set_media_encryption(laure->lc,mode);
 
-		simple_conference_base(marie,pauline,laure,NULL,FALSE);
+		simple_conference_base(marie,pauline,laure,NULL,FALSE,FALSE);
 	} else {
 		ms_warning("No [%s] support available",linphone_media_encryption_to_string(mode));
 		BC_PASS("Passed");
@@ -1927,7 +1953,7 @@ static void conference_without_event_pkg_hang_up_call_on_hold(void) {
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
-	simple_conference_base(marie, pauline, laure, NULL, TRUE);
+	simple_conference_base(marie, pauline, laure, NULL, TRUE, FALSE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
@@ -1938,7 +1964,7 @@ static void conference_with_event_pkg_hang_up_call_on_hold(void) {
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
-	simple_conference_base(marie, pauline, laure, NULL, TRUE);
+	simple_conference_base(marie, pauline, laure, NULL, TRUE, FALSE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
@@ -6078,7 +6104,7 @@ static void simple_conference_with_participant_with_no_event_log(void) {
 	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "misc", "conference_event_log_enabled",FALSE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
-	simple_conference_base(marie,pauline,laure, NULL, FALSE);
+	simple_conference_base(marie,pauline,laure, NULL, FALSE, FALSE);
 
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
@@ -6106,7 +6132,7 @@ void simple_remote_conference(void) {
 	linphone_proxy_config_set_route(laure_proxy_config, laure_proxy_uri);
 	linphone_proxy_config_done(laure_proxy_config);
 
-	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
+	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE, FALSE);
 
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
@@ -6135,7 +6161,7 @@ void simple_remote_conference_shut_down_focus(void) {
 	linphone_proxy_config_set_route(laure_proxy_config, laure_proxy_uri);
 	linphone_proxy_config_done(laure_proxy_config);
 
-	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
+	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE, FALSE);
 
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
@@ -7123,6 +7149,17 @@ static void multiple_conferences_in_server_mode(void) {
 	destroy_mgr_in_conference(chloe);
 }
 
+static void simple_conference_with_volumes(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	simple_conference_base(marie,pauline,laure, NULL, FALSE, TRUE);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+}
+
 test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
@@ -7196,6 +7233,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
 	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
+	TEST_NO_TAG("Simple conference with volumes", simple_conference_with_volumes),
 };
 
 test_suite_t audio_video_conference_test_suite = {"Audio video conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

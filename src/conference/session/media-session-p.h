@@ -263,7 +263,7 @@ private:
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
-	static constexpr const int rtpExtHeaderMidNumber = 1;
+	static constexpr const int rtpExtHeaderMidNumber = RTP_EXTENSION_MID;
 
 	std::weak_ptr<Participant> me;
 

@@ -392,6 +392,16 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
 		if (mCurrentPlaybackCard) mCurrentPlaybackCard = ms_snd_card_ref(mCurrentPlaybackCard);
 
+		if (stream.mixer_to_client_extension_id > 0) {
+			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters properly
+			audio_stream_set_mixer_to_client_extension_id(mStream, stream.mixer_to_client_extension_id);
+		}
+
+		if (stream.client_to_mixer_extension_id > 0) {
+			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters properly
+			audio_stream_set_client_to_mixer_extension_id(mStream, stream.client_to_mixer_extension_id);
+		}
+
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();
