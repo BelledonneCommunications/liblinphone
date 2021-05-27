@@ -212,23 +212,6 @@ void Call::createPlayer () const{
 }
 
 // -----------------------------------------------------------------------------
-void Call::startRemoteRing () {
-	LinphoneCore *lc = getCore()->getCCore();
-	if (!lc->sound_conf.play_sndcard)
-		return;
-
-	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
-	std::shared_ptr<SalMediaDescription> md = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc();
-	if (md){
-		int maxRate = md->streams[0].max_rate;
-		if (maxRate > 0)
-			ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
-	}
-	if (lc->sound_conf.remote_ring) {
-		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
-		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, ringCard);
-	}
-}
 
 void Call::terminateBecauseOfLostMedia () {
 	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
