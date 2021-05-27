@@ -86,6 +86,9 @@ public:
 		return mCapabilityDescriptor;
 	}
 
+	void setSsrc (uint32_t ssrc);
+	uint32_t getSsrc () const;
+
 	void *getUserData () const;
 	void setUserData (void *ud);
 
@@ -107,6 +110,7 @@ private:
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
+	uint32_t mSsrc = 0;
 
 	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 

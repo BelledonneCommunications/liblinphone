@@ -119,6 +119,13 @@ LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_video_dir
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_text_direction(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get the SSRC of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the SSRC of the device
+ */
+LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 

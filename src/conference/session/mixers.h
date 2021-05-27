@@ -157,6 +157,9 @@ public:
 	
 	// Used for the tone manager.
 	AudioStream * getAudioStream();
+
+	// Used to retrieve participant volumes;
+	MSAudioConference * getAudioConference();
 private:
 	void onActiveTalkerChanged(MSAudioEndpoint *ep);
 	static void sOnActiveTalkerChanged(MSAudioConference *audioconf, MSAudioEndpoint *ep);

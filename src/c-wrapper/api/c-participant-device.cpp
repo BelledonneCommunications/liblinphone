@@ -76,3 +76,7 @@ LinphoneMediaDirection linphone_participant_device_get_video_direction (const Li
 LinphoneMediaDirection linphone_participant_device_get_text_direction (const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTextDirection();
 }
+
+uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSsrc();
+}

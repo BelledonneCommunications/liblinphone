@@ -708,6 +708,17 @@ bool LocalConference::addParticipants (const std::list<IdentityAddress> &address
 	return Conference::addParticipants(addresses);
 }
 
+int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) {
+	MS2AudioMixer * mixer = dynamic_cast<MS2AudioMixer*> (mMixerSession->getMixerByType(SalAudio));
+
+	if (mixer) {
+		MSAudioConference *conf = mixer->getAudioConference();
+		return ms_audio_conference_get_participant_volume(conf, device->getSsrc());
+	}
+
+	return AUDIOSTREAMVOLUMES_NOT_FOUND;
+}
+
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const auto & remoteAddress = call->getRemoteAddress();
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
@@ -1342,6 +1353,16 @@ int RemoteConference::participantDeviceMediaChanged(const IdentityAddress &addr)
 int RemoteConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	lError() << "RemoteConference::participantDeviceMediaChanged() not implemented";
 	return -1;
+}
+
+int RemoteConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) {
+	AudioStream *as = getAudioStream();
+
+	if (as != nullptr) {
+		return audio_stream_get_participant_volume(as, device->getSsrc());
+	}
+
+	return AUDIOSTREAMVOLUMES_NOT_FOUND;
 }
 
 bool RemoteConference::addParticipant (const IdentityAddress &participantAddress) {
