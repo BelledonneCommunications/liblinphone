@@ -435,7 +435,7 @@ void linphone_conference_on_call_terminating(LinphoneConference *conference, Lin
 
 LINPHONE_PUBLIC bool_t linphone_conference_check_class(LinphoneConference *conference, LinphoneConferenceClass _class);
 
-
+void linphone_conference_notify_audio_device_changed(LinphoneConference *conference, LinphoneAudioDevice *audio_device);
 
 /**
  * @}

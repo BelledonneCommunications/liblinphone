@@ -160,6 +160,8 @@ void linphone_conference_set_input_audio_device(LinphoneConference *conference, 
 	if (audio_device) {
 		AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 		aci->setInputDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+
+		linphone_conference_notify_audio_device_changed(conference, audio_device);
 	}
 }
 
@@ -167,7 +169,14 @@ void linphone_conference_set_output_audio_device(LinphoneConference *conference,
 	if (audio_device) {
 		AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 		aci->setOutputDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+
+		linphone_conference_notify_audio_device_changed(conference, audio_device);
 	}
+}
+
+void linphone_conference_notify_audio_device_changed(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
+	LinphoneCore * core = MediaConference::Conference::toCpp(conference)->getCore()->getCCore();
+	linphone_core_notify_audio_device_changed(core, audio_device);
 }
 
 const LinphoneAudioDevice* linphone_conference_get_input_audio_device(const LinphoneConference *conference) {
