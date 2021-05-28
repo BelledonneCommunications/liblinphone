@@ -424,13 +424,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.dir=local_offer.dir;
 		result.multicast_role = SalMulticastSender;
 	} else {
-//		const char * conferenceDeviceAttrName = "label";
-//		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_offer.custom_sdp_attributes, conferenceDeviceAttrName));
-//		if (local_cap.isMain() || participantsAttrValue.empty()) {
-			result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
-//		} else {
-//			result.dir=OfferAnswerEngine::computeConferenceStreamDir(local_offer.dir);
-//		}
+		result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
 	}
 
 	result.rtcp_mux = remote_answer.rtcp_mux && local_offer.rtcp_mux;
@@ -496,11 +490,14 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	result.type=local_cap.type;
 
 	const char * conferenceDeviceAttrName = "label";
+	const char * layoutAttrName = "content";
 	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
-	if (local_cap.isMain() || participantsAttrValue.empty()) {
-		result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
-	} else {
+	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
+	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
+	if (local_cap.isMain() && (!participantsAttrValue.empty() || !layoutAttrValue.empty())) {
 		result.dir=OfferAnswerEngine::computeConferenceStreamDir(local_cap.dir);
+	} else {
+		result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
 	}
 	
 	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
