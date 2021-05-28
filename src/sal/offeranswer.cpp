@@ -540,14 +540,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		resultCfg.ttl=localCfg.ttl;
 		resultCfg.dir=localCfg.getDirection();
 	} else {
-//		const char * conferenceDeviceAttrName = "label";
-//		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_offer.custom_sdp_attributes, conferenceDeviceAttrName));
-//		if (local_cap.isMain() || participantsAttrValue.empty()) {
-			resultCfg.dir=OfferAnswerEngine::computeDirOutgoing(localCfg.getDirection(),remoteCfg.getDirection());
-//		} else {
-//			result.dir=OfferAnswerEngine::computeConferenceStreamDir(localCfg.getDirection());
-//		}
-
+		resultCfg.dir=OfferAnswerEngine::computeDirOutgoing(localCfg.getDirection(),remoteCfg.getDirection());
 	}
 
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
@@ -620,7 +613,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	}
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
 
-<<<<<<< HEAD
 	resultCfg.acapIndexes = remoteCfg.acapIndexes;
 	resultCfg.tcapIndex = remoteCfg.tcapIndex;
 	resultCfg.index = remoteCfg.index;
@@ -737,7 +729,16 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
-	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
+	const char * conferenceDeviceAttrName = "label";
+	const char * layoutAttrName = "content";
+	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
+	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
+	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
+	if (local_cap.isMain() && (!participantsAttrValue.empty() || !layoutAttrValue.empty())) {
+		resultCfg.dir=OfferAnswerEngine::computeConferenceStreamDir(localCfg.getDirection());
+	} else {
+		resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
+	}
 
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
@@ -745,26 +746,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
 		success = false;
 		return std::make_pair(resultCfg, success);
-=======
-void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
-						const SalStreamDescription & remote_offer,
-						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
-	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
-	result.proto=remote_offer.proto;
-	result.type=local_cap.type;
-
-	const char * conferenceDeviceAttrName = "label";
-	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
-	if (local_cap.isMain() || participantsAttrValue.empty()) {
-		result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
-	} else {
-		result.dir=OfferAnswerEngine::computeConferenceStreamDir(local_cap.dir);
-	}
-	
-	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
-		result.rtp_port=0;
-		return;
->>>>>>> Dissociate answer to video streams of participants from local description
 	}
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
 		if (resultCfg.hasSrtp() == true) {
