@@ -414,6 +414,9 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		}
 	}
 
+	result.mixer_to_client_extension_id = remote_answer.mixer_to_client_extension_id;
+	result.client_to_mixer_extension_id = remote_answer.client_to_mixer_extension_id;
+
 	if (!result.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(result.payloads)){
 		result.rtp_addr=remote_answer.rtp_addr;
 		result.rtcp_addr=remote_answer.rtcp_addr;
@@ -511,6 +514,9 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		}
 		result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
+
+	result.mixer_to_client_extension_id = remote_offer.mixer_to_client_extension_id;
+	result.client_to_mixer_extension_id = remote_offer.client_to_mixer_extension_id;
 
 	if (result.hasSrtp() == TRUE) {
 		/* select crypto algo */
