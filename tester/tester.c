@@ -698,7 +698,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 				local_devices = linphone_participant_get_devices (p);
 				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
 					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_audio_enabled(remote_params) == FALSE)) {
+					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_is_audio_enabled(remote_params)) == FALSE)) {
 						audio_direction = LinphoneMediaDirectionInactive;
 					} else if (_linphone_participant_device_get_audio_enabled(d) == TRUE) {
 						audio_direction = LinphoneMediaDirectionSendRecv;
@@ -707,7 +707,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 						audio_direction = LinphoneMediaDirectionInactive;
 					}
 
-					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_video_enabled(remote_params) == FALSE)) {
+					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_is_video_enabled(remote_params)) == FALSE)) {
 						video_direction = LinphoneMediaDirectionInactive;
 					} else if (_linphone_participant_device_get_video_enabled(d) == TRUE) {
 						video_direction = LinphoneMediaDirectionSendRecv;

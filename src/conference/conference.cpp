@@ -202,6 +202,20 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const std::string &label) const {
+
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getLabel() == label)
+				return device;
+		}
+	}
+
+	lInfo() << "Unable to find participant device in conference " << this << " with label " << label;
+
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityAddress &addr) const {
 
 	for (const auto &participant : participants) {
