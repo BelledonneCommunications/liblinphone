@@ -589,7 +589,7 @@ int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<Linphon
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
 		const auto & updatedParticipantSession = device->getSession();
-		lInfo() << "Re-INVITing participants because participant device " << device->getAddress().asString() << " changed media directions.";
+		lInfo() << "Re-INVITing participants because participant device " << device->getAddress().asString() << " (label " << device->getLabel() << ") changed media directions.";
 		updateAllParticipantSessionsExcept(updatedParticipantSession);
 		return 0;
 	}
@@ -606,7 +606,7 @@ bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<C
 				const MediaSessionParams * params = devSession->getMediaParams();
 
 				MediaSessionParams *currentParams = params->clone();
-				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its session.";
+				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its media capabilities.";
 				std::string subject("Participant " + participantAddress->asString() + " updated session");
 				const auto updateResult = devSession->update(currentParams, subject);
 				result &= (updateResult == 0);
