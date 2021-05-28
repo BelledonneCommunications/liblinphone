@@ -1480,10 +1480,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			newStream.disable();
 			if (!s.isMain() && (s.type == SalVideo)) {
 				const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, conferenceDeviceAttrName));
-				if (!participantsAttrValue.empty()) {
-					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, participantsAttrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-					newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
-					const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, layoutAttrName));
+				const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, layoutAttrName));
+				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
+					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
+					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
+					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(attrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+					if (!participantsAttrValue.empty()) {
+						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
+					}
 					if (!layoutAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, layoutAttrValue.c_str());
 					}
@@ -1511,8 +1515,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 						const auto & currentConfParams = cppConference->getCurrentParams();
 						const auto confVideoCapabilities = currentConfParams.videoEnabled();
 
-						const auto & dev = cppConference->findParticipantDevice(IdentityAddress(participantsAttrValue));
-						const bool isMe = cppConference->isMe(IdentityAddress(participantsAttrValue));
+						const auto & dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
+						const bool isMe = !layoutAttrValue.empty();
 						if (confVideoCapabilities && (dev || isMe)) {
 
 							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
