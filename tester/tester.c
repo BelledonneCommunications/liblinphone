@@ -2955,9 +2955,9 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}else if (build_callee_params){
 		LinphoneCallParams *default_params=linphone_core_create_call_params(callee_mgr->lc,callee_call);
 		ms_message("Created default call params with video=%i", linphone_call_params_video_enabled(default_params));
-		callee_params = default_params;
 		linphone_call_accept_with_params(callee_call,default_params);
 		linphone_call_params_unref(default_params);
+		callee_params = linphone_call_get_params(callee_call);
 	}else if (callee_call) {
 		callee_params = linphone_call_get_params(callee_call);
 		linphone_call_accept(callee_call);
