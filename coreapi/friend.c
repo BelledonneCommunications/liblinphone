@@ -366,6 +366,7 @@ LinphoneStatus linphone_friend_set_address(LinphoneFriend *lf, const LinphoneAdd
 	if (mAddr && lf->friend_list) {
 		char *mainAddress = linphone_address_as_string_uri_only(mAddr);
 		remove_friend_from_list_map_if_already_in_it(lf, mainAddress);
+		ms_free(mainAddress);
 	}
 	linphone_address_clean(fr);
 

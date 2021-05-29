@@ -494,14 +494,14 @@ LINPHONE_PUBLIC bool_t linphone_config_relative_file_exists(const LinphoneConfig
 /**
  * Dumps the #LinphoneConfig as XML into a buffer
  * @param config The #LinphoneConfig object @notnil
- * @return The buffer that contains the XML dump @notnil
+ * @return The buffer that contains the XML dump @notnil @tobefreed
 **/
 LINPHONE_PUBLIC char* linphone_config_dump_as_xml(const LinphoneConfig *config);
 
 /**
  * Dumps the #LinphoneConfig as INI into a buffer
  * @param config The #LinphoneConfig object @notnil
- * @return The buffer that contains the config dump @notnil
+ * @return The buffer that contains the config dump @notnil @tobefreed
 **/
 LINPHONE_PUBLIC char* linphone_config_dump(const LinphoneConfig *config);
 
