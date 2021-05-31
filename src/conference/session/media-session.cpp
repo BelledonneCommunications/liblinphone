@@ -1729,10 +1729,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				newStream.proto = getParams()->getMediaProto();
 				newStream.type = SalVideo;
 
-				char label[10];
-				belle_sip_random_token(label,sizeof(label));
-
-				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, label);
 				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
 
 				const auto & previousParticipantStream = oldMd ? 
@@ -1815,20 +1811,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & currentConfParams = cppConference->getCurrentParams();
 			const auto confVideoCapabilities = currentConfParams.videoEnabled();
-
-			std::string participantsAttrValue = std::string();
-			if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
-				participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(oldVideoStream.custom_sdp_attributes, conferenceDeviceAttrName));
-			}
-
+			const auto & me = cppConference->getMe();
+			const auto & dev = me->getDevices().front();
 			// TODO: DELETE after Thimothee has implemented SDP label attribute
-			if (participantsAttrValue.empty()) {
+			if (dev->getLabel().empty()) {
 				char label[10];
 				belle_sip_random_token(label,sizeof(label));
-				participantsAttrValue = label;
+				dev->setLabel(label);
 			}
-
-			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
 
 			videoDir = (confVideoCapabilities && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
 		} else {
@@ -1845,6 +1835,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		}
 
 		auto videoStream = makeLocalStreamDecription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+
+		if (conference && isInLocalConference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & currentConfParams = cppConference->getCurrentParams();
+			const auto confVideoCapabilities = currentConfParams.videoEnabled();
+			const auto & me = cppConference->getMe();
+			const auto & dev = me->getDevices().front();
+			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getLabel().c_str());
+		}
 
 		videoStream.setSupportedEncryptions(encList);
 		videoStream.main = true;
