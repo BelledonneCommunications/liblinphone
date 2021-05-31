@@ -1670,6 +1670,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
 					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel());
+					// TODO: DELETE after Thimothee has implemented SDP label attribute
 					if (dev->getLabel().empty()) {
 						char label[10];
 						belle_sip_random_token(label,sizeof(label));
@@ -1733,6 +1734,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				newStream.main = false;
 				newStream.proto = getParams()->getMediaProto();
 				newStream.type = SalVideo;
+
+				char label[10];
+				belle_sip_random_token(label,sizeof(label));
+
+				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, label);
 				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
 
 				const auto & previousParticipantStream = oldMd ? 
@@ -1810,12 +1816,27 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
-		SalStreamDir videoDir = SalStreamInactive;
+		// Set direction appropriately to configuration
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & currentConfParams = cppConference->getCurrentParams();
 			const auto confVideoCapabilities = currentConfParams.videoEnabled();
-			videoDir = (confVideoCapabilities) ? SalStreamSendOnly : SalStreamInactive;
+
+			std::string participantsAttrValue = std::string();
+			if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+				participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(oldVideoStream.custom_sdp_attributes, conferenceDeviceAttrName));
+			}
+
+			// TODO: DELETE after Thimothee has implemented SDP label attribute
+			if (participantsAttrValue.empty()) {
+				char label[10];
+				belle_sip_random_token(label,sizeof(label));
+				participantsAttrValue = label;
+			}
+
+			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
+
+			videoDir = (confVideoCapabilities && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 		}
