@@ -220,7 +220,6 @@ public:
 	void setMicrophoneMuted (bool muted);
 	
 	// -----------------------------------------------------------------------------
-	void startRemoteRing ();
 	void terminateBecauseOfLostMedia ();
 	
 	// -----------------------------------------------------------------------------
