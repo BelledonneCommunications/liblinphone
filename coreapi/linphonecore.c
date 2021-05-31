@@ -1395,6 +1395,12 @@ static void sound_config_read(LinphoneCore *lc) {
 	linphone_core_set_sound_source(lc,tmpbuf[0]);
 */
 
+	bool_t default_native_ringing_value = FALSE;
+#ifdef __ANDROID__
+	default_native_ringing_value = TRUE;
+#endif
+	lc->native_ringing_enabled = !!linphone_config_get_int(lc->config, "sound", "use_native_ringing", default_native_ringing_value);
+
 	tmpbuf = linphone_config_get_string(lc->config, "sound", "local_ring", NULL);
 	if (tmpbuf) {
 		if (bctbx_file_exist(tmpbuf) == 0) {
@@ -1407,15 +1413,15 @@ static void sound_config_read(LinphoneCore *lc) {
 				ms_warning("'%s' ring file does not exist", tmpbuf);
 		}
 	} else {
-		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
-	}
-
-
-	bool_t default_native_ringing_value = FALSE;
 #ifdef __ANDROID__
-	default_native_ringing_value = TRUE;
+		// Null ring value is allowed, it means using the native ringtone if lc->native_ringing_enabled == true
+		if (!lc->native_ringing_enabled) {
+			linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
+		}
+#else
+		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
 #endif
-	lc->native_ringing_enabled = !!linphone_config_get_int(lc->config, "sound", "use_native_ringing", default_native_ringing_value);
+	}
 
 	string defaultRemoteRing = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(REMOTE_RING_WAV);
 	tmpbuf = linphone_config_get_string(lc->config, "sound", "remote_ring", defaultRemoteRing.c_str());
