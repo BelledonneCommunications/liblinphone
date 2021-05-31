@@ -197,9 +197,10 @@ void CallSessionPrivate::startIncomingNotification () {
 	if (listener)
 		listener->onBackgroundTaskToBeStopped(q->getSharedFromThis());
 
-	if (state == CallSession::State::IncomingReceived) {
-		if(tryStartRingtone)// The state is still in IncomingReceived state. Start ringing if it was needed
+	if (state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia) { // If early media was accepted during setState callback above
+		if (tryStartRingtone) { // The state is still in IncomingReceived state. Start ringing if it was needed
 			listener->onStartRingtone(q->getSharedFromThis());
+		}
 		handleIncomingReceivedStateInIncomingNotification();
 	}
 

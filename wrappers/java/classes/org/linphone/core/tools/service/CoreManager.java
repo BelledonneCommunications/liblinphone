@@ -192,8 +192,12 @@ public class CoreManager {
                 if (mAudioHelper == null) return;
                 if (call.getState() != state) {
                     // This can happen if a listener set earlier than this one in the app automatically accepts an incoming call for example.
-                    Log.w("[Core Manager] Call state changed callback state variable doesn't match current call state, skipping");
-                    return;
+					if (state == Call.State.IncomingReceived && call.getState() == Call.State.IncomingEarlyMedia) {
+						Log.w("[Core Manager] It seems call was accepted with early-media during the incoming received call state changed, continuing anyway");
+					} else {
+						Log.w("[Core Manager] Call state changed callback state variable doesn't match current call state, skipping");
+						return;
+					}
                 }
 
                 if (state == Call.State.IncomingReceived && core.getCallsNb() == 1) {
