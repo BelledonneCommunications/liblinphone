@@ -364,10 +364,6 @@ bool_t linphone_conference_params_is_chat_enabled (const LinphoneConferenceParam
 	return ConferenceParams::toCpp(params)->chatEnabled() ? TRUE : FALSE;
 }
 
-void linphone_conference_params_set_proxy_cfg(LinphoneConferenceParams *params, LinphoneProxyConfig * proxy_cfg){
-	ConferenceParams::toCpp(params)->setProxyCfg(proxy_cfg);
-}
-
 LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params){
 	return ConferenceParams::toCpp(params)->getProxyCfg();
 }
