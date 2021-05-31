@@ -131,6 +131,20 @@ LINPHONE_PUBLIC void linphone_conference_params_set_chat_enabled(LinphoneConfere
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
+ * Set proxy configuration for the conference.
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param proxy_cfg proxy configuration of the conference @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_proxy_cfg(LinphoneConferenceParams *params, LinphoneProxyConfig * proxy_cfg);
+
+/**
+ * Returns the proxy configuration for the conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return a pointer to the proxy configuration or NULL if it is not set. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params);
+
+/**
  * Enable local participant to enter the conference.
  * The local participant is the one driving the local #LinphoneCore. It uses the local sound devices.
  * The default value is TRUE. Setting to FALSE is mostly helpful when using liblinphone on a server application.

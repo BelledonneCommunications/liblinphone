@@ -8214,6 +8214,8 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
 		if (call) {
 			const LinphoneCallParams * remote_call_params = linphone_call_get_remote_params(call);
+			LinphoneProxyConfig * proxy_cfg = linphone_call_get_dest_proxy(call);
+			linphone_conference_params_set_proxy_cfg(params, proxy_cfg);
 			if (remote_call_params) {
 				linphone_conference_params_set_audio_enabled(params, linphone_call_params_audio_enabled(remote_call_params));
 				linphone_conference_params_set_video_enabled(params, linphone_call_params_video_enabled(remote_call_params));
