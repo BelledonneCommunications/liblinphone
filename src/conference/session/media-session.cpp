@@ -1427,6 +1427,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
 					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel());
+					// TODO: DELETE after Thimothee has implemented SDP label attribute
 					if (dev->getLabel().empty()) {
 						char label[10];
 						belle_sip_random_token(label,sizeof(label));
@@ -1490,6 +1491,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				newStream.main = false;
 				newStream.proto = getParams()->getMediaProto();
 				newStream.type = SalVideo;
+
+				char label[10];
+				belle_sip_random_token(label,sizeof(label));
+
+				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, label);
 				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
 
 				const auto & previousParticipantStream = oldMd ? 
@@ -1594,6 +1600,21 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 				const auto & currentConfParams = cppConference->getCurrentParams();
 				const auto confVideoCapabilities = currentConfParams.videoEnabled();
+
+				std::string participantsAttrValue = std::string();
+				if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+					participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(oldVideoStream.custom_sdp_attributes, conferenceDeviceAttrName));
+				}
+
+				// TODO: DELETE after Thimothee has implemented SDP label attribute
+				if (participantsAttrValue.empty()) {
+					char label[10];
+					belle_sip_random_token(label,sizeof(label));
+					participantsAttrValue = label;
+				}
+
+				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
+
 				if (confVideoCapabilities) {
 					videoStream.dir = (getParams()->videoEnabled()) ? SalStreamRecvOnly : SalStreamInactive;
 				} else {
