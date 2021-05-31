@@ -87,6 +87,9 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		void setLayout(const Layout l) { m_layout = l; };
 		Layout getLayout() const { return m_layout; };
 
+		void setProxyCfg(LinphoneProxyConfig * p) { m_proxyCfg = p; };
+		LinphoneProxyConfig * getProxyCfg() const { return m_proxyCfg; };
+
 	private:
 		bool m_enableVideo = false;
 		bool m_enableAudio = false;
@@ -98,6 +101,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		Address m_factoryAddress = Address();
 		std::string m_subject = "";
 		IdentityAddress m_me = IdentityAddress();
+		LinphoneProxyConfig * m_proxyCfg = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
