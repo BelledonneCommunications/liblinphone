@@ -2398,7 +2398,7 @@ void MediaSession::initiateIncoming () {
 	L_D();
 	CallSession::initiateIncoming();
 
-	if (linphone_nat_policy_ice_enabled(d->natPolicy)){
+	if (!CallSession::isDelinedByCallkit() && linphone_nat_policy_ice_enabled(d->natPolicy)){
 
 		d->deferIncomingNotification = d->getStreamsGroup().prepare();
 		/*

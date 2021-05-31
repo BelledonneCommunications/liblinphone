@@ -1635,4 +1635,8 @@ bool CallSession::isEarlyState (CallSession::State state) {
 	}
 }
 
+bool CallSession::isDelinedByCallkit () {
+	return mIsDeclining;
+}
+
 LINPHONE_END_NAMESPACE

@@ -141,6 +141,7 @@ public:
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();
+	bool isDelinedByCallkit ();
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
