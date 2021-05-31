@@ -50,6 +50,15 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
+
+	if (this->me->getDevices().empty() && this->confParams->getProxyCfg()) {
+		char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(this->confParams->getProxyCfg()));
+		if (devAddrStr) {
+			Address devAddr(devAddrStr);
+			this->me->addDevice(devAddr);
+			ms_free(devAddrStr);
+		}
+	}
 }
 
 Conference::~Conference () {
