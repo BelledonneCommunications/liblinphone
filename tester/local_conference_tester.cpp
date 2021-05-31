@@ -74,7 +74,7 @@ public:
 	CoreAssert(std::initializer_list<std::shared_ptr<Core>> cores) {
 		for (shared_ptr<Core> core: cores) {
 			addCustomIterate([core] {
-				linphone_core_iterate(L_GET_C_BACK_PTR(core));
+				liblinphone_tester_core_iterate(L_GET_C_BACK_PTR(core));
 			});
 		}
 	}
@@ -134,7 +134,7 @@ public:
 	CoreManagerAssert(std::initializer_list<std::reference_wrapper<CoreManager>> coreMgrs): BcAssert(){
 		for (CoreManager &coreMgr: coreMgrs) {
 			addCustomIterate([&coreMgr] {
-				linphone_core_iterate(coreMgr.getLc());
+				liblinphone_tester_core_iterate(coreMgr.getLc());
 			});
 		}
 	}
