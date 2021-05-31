@@ -144,6 +144,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, p);
 
+
 		success =  true;
 
 	} else {
@@ -164,7 +165,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		if (remoteContact) {
 			// If device is not found, then add it
 			if (p->findDevice(*remoteContact, false) == nullptr) {
-				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress();
+				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress() << " in conference " << getConferenceAddress().asString();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				call->setConference(toC());
 				device->setSession(call->getActiveSession());
@@ -533,6 +534,24 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 
 			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
 
+			if (!confParams->getProxyCfg()) {
+				auto callProxyCfg = linphone_call_get_dest_proxy(call);
+				if (callProxyCfg) {
+					confParams->setProxyCfg(callProxyCfg);
+				} else {
+					confParams->setProxyCfg(linphone_core_lookup_known_proxy(getCore()->getCCore(), address));
+				}
+			}
+
+			if (me->getDevices().empty() && confParams->getProxyCfg()) {
+				char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
+				if (devAddrStr) {
+					Address devAddr(devAddrStr);
+					me->addDevice(devAddr);
+					ms_free(devAddrStr);
+				}
+			}
+
 			if (!call){
 				lError() << "LocalConference::inviteAddresses(): could not invite participant";
 			} else {
@@ -637,6 +656,24 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	if (canAddParticipant) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
+
+		if (!confParams->getProxyCfg()) {
+			auto callProxyCfg = linphone_call_get_dest_proxy(call->toC());
+			if (callProxyCfg) {
+				confParams->setProxyCfg(callProxyCfg);
+			} else {
+				confParams->setProxyCfg(linphone_core_lookup_known_proxy(getCore()->getCCore(), linphone_call_get_to_address(call->toC())));
+			}
+		}
+
+		if (me->getDevices().empty() && confParams->getProxyCfg()) {
+			char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
+			if (devAddrStr) {
+				Address devAddr(devAddrStr);
+				me->addDevice(devAddr);
+				ms_free(devAddrStr);
+			}
+		}
 
 		switch(state){
 			case LinphoneCallOutgoingInit:
