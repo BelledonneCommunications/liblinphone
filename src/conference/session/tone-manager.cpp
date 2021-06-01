@@ -568,19 +568,22 @@ void ToneManager::doStopRingtone(const std::shared_ptr<CallSession> &session) {
 	} else {
 		LinphoneCore *lc = getCore()->getCCore();
 		if (linphone_ringtoneplayer_is_started(lc->ringtoneplayer)) {
-			RingStream * ringStream = linphone_ringtoneplayer_get_stream(lc->ringtoneplayer);
-			if (ringStream) {
-				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
-
-				if (card) {
-					AudioDevice * audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
-					if (audioDevice) {
-						getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
-					}
+			linphone_ringtoneplayer_stop(lc->ringtoneplayer);
+// reset the audio device to the playback output as we are currently ringing on ring stream
+			MSSndCard *playbackCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
+			std::shared_ptr<LinphonePrivate::Call> call = getCore()->getCurrentCall();
+			if (call) {
+				AudioDevice * audioDevice = call->getOutputAudioDevice();
+				if (audioDevice) {
+					playbackCard = audioDevice->getSoundCard();
 				}
 			}
-
-			linphone_ringtoneplayer_stop(lc->ringtoneplayer);
+			if(playbackCard){
+				AudioDevice * ringDevice = getCore()->findAudioDeviceMatchingMsSoundCard(playbackCard);
+				if (ringDevice) {
+					getCore()->getPrivate()->setOutputAudioDevice(ringDevice);
+				}
+			}
 		}
 	}
 }
