@@ -38,6 +38,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class PayloadTypeHandler;
 
 class MediaSessionPrivate : public CallSessionPrivate, private IceServiceListener {
 	friend class StreamsGroup;
@@ -180,6 +181,7 @@ private:
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
 	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize);
 	void makeLocalMediaDescription (bool localIsOfferer);
+	SalStreamDescription makeConferenceParticipantVideoStream(const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<ParticipantDevice> & dev, PayloadTypeHandler & pth);
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md);
