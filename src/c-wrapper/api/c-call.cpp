@@ -627,11 +627,6 @@ void linphone_call_start_basic_incoming_notification(LinphoneCall *call) {
 	Call::toCpp(call)->startBasicIncomingNotification();
 }
 
-void linphone_call_configure (LinphoneCall *call, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op) {
-	Call::toCpp(call)->configure(LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to), nullptr, op, nullptr);
-	LinphonePrivate::Call::toCpp(call)->initiateIncoming();
-}
-
 bool_t linphone_call_is_op_configured (const LinphoneCall *call) {
 	return Call::toCpp(call)->isOpConfigured();
 }
