@@ -46,10 +46,7 @@ LINPHONE_BEGIN_NAMESPACE
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
 	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
-	const char * label = sal_custom_sdp_attribute_find(params.getLocalStreamDescription().custom_sdp_attributes, "label");
-	if (label) {
-		video_stream_set_label(mStream, label);
-	}
+
 	initializeSessions(&mStream->ms);
 }
 
@@ -165,7 +162,12 @@ void MS2VideoStream::finishPrepare(){
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	
+
+	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
+	if (label) {
+		video_stream_set_label(mStream, label);
+	}
+
 	/* Shutdown preview */
 	MSFilter *source = nullptr;
 	if (getCCore()->previewstream) {
@@ -337,6 +339,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		ms_filter_destroy(source);
 	}
 	if (videoMixer){
+lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.dir << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << label;
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.dir == SalStreamRecvOnly));
 	}
