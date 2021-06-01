@@ -92,14 +92,14 @@ void simple_push_call_base(bool_t push, bool_t canceled, bool_t decline, bool_t 
 							,marie->lc
 							,&pauline->stat.number_of_LinphoneCallIncomingReceived
 							,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000);
-				BC_ASSERT_EQUAL(did_receive_call, 1, int, "%d");
-
-				if (did_receive_call) {
-					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
-					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
-					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
-					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
+				if (!push_early) {
+					BC_ASSERT_EQUAL(did_receive_call, 1, int, "%d");
 				}
+
+				wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1,3000);
+				wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1,3000);
+				wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1,3000);
+				wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1,3000);
 
 				goto end;
 			} else {
