@@ -593,7 +593,7 @@ void setup_mgr_for_conference(LinphoneCoreManager *mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 void check_conference_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
-LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants);
+LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants, bool_t one_by_one);
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
 LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
 LinphoneStatus terminate_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, LinphoneCoreManager * focus_mgr);
@@ -625,6 +625,12 @@ extern MSSndCardDesc dummy2_test_snd_card_desc;
 
 extern MSSndCardDesc dummy3_test_snd_card_desc;
 #define DUMMY3_TEST_SOUNDCARD "dummy3 test sound card"
+
+extern MSSndCardDesc dummy_playback_test_snd_card_desc;
+#define DUMMY_PLAYBACK_TEST_SOUNDCARD "dummy playback test sound card"
+
+extern MSSndCardDesc dummy_capture_test_snd_card_desc;
+#define DUMMY_CAPTURE_TEST_SOUNDCARD "dummy capture test sound card"
 
 /**
  * Set the requested curve and matching lime server url in the given core manager
