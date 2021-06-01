@@ -235,7 +235,8 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
 	}
-
+// we have to set the output audio device first, and then to take account of ringstream on special cases
+	static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
@@ -253,7 +254,6 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 			}
 			break;
 		default:
-			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 			break;
 	}
 }

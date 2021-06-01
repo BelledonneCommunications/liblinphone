@@ -429,13 +429,11 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 		// It is NULL otherwise
 		if (audioDevice) {
 			ringCard = audioDevice->getSoundCard();
-		}
-	}
-
-	if (ringCard) {
-		AudioDevice * ringDevice = getCore()->findAudioDeviceMatchingMsSoundCard(ringCard);
-		if (ringDevice) {
-			getCore()->getPrivate()->setOutputAudioDevice(ringDevice);
+		}else if(ringCard){
+			AudioDevice * ringDevice = getCore()->findAudioDeviceMatchingMsSoundCard(ringCard);
+			if (ringDevice) {
+				call->setOutputAudioDevice(ringDevice);
+			}
 		}
 	}
 
@@ -503,14 +501,6 @@ void ToneManager::doStopRingbackTone() {
 	lInfo() << "[ToneManager] " << __func__;
 	LinphoneCore *lc = getCore()->getCCore();
 	if (lc->ringstream) {
-		MSSndCard *card = ring_stream_get_output_ms_snd_card(lc->ringstream);
-
-		if (card) {
-			AudioDevice * audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
-			if (audioDevice) {
-				getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
-			}
-		}
 		ring_stop(lc->ringstream);
 		lc->ringstream = NULL;
 	}
@@ -520,18 +510,8 @@ void ToneManager::doStopTone() {
 	lInfo() << "[ToneManager] " << __func__;
 
 	LinphoneCore *lc = getCore()->getCCore();
-	AudioDevice * audioDevice = nullptr;
-	MSSndCard *card = nullptr;
 
 	if (lc->ringstream) {
-		card = ring_stream_get_output_ms_snd_card(lc->ringstream);
-
-		if (card) {
-			// Keep ref on card while stopping ringing and setting up call
-			ms_snd_card_ref(card);
-			audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
-		}
-
 		ring_stop(lc->ringstream);
 		lc->ringstream = NULL;
 	}
@@ -541,14 +521,6 @@ void ToneManager::doStopTone() {
 		if(f != NULL) ms_filter_call_method_noarg(f, MS_PLAYER_CLOSE);// MS_PLAYER is used while being in call
 		f = getAudioResource(ToneGenerator, NULL, FALSE);
 		if (f != NULL) ms_filter_call_method_noarg(f, MS_DTMF_GEN_STOP);
-		if (audioDevice) {
-			getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
-		}
-	}
-
-	// Unref card
-	if (card) {
-		ms_snd_card_unref(card);
 	}
 }
 
@@ -568,18 +540,13 @@ void ToneManager::doStopRingtone(const std::shared_ptr<CallSession> &session) {
 	} else {
 		LinphoneCore *lc = getCore()->getCCore();
 		if (linphone_ringtoneplayer_is_started(lc->ringtoneplayer)) {
-			RingStream * ringStream = linphone_ringtoneplayer_get_stream(lc->ringtoneplayer);
-			if (ringStream) {
-				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
-
-				if (card) {
-					AudioDevice * audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
-					if (audioDevice) {
-						getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
-					}
+			std::shared_ptr<LinphonePrivate::Call> call = getCore()->getCurrentCall();
+			if(call && !call->getOutputAudioDevice()){
+				AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
+				if (outputAudioDevice) {
+					call->setOutputAudioDevice(outputAudioDevice);
 				}
 			}
-
 			linphone_ringtoneplayer_stop(lc->ringtoneplayer);
 		}
 	}
