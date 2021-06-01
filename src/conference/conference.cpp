@@ -50,15 +50,8 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
+	tryAddMeDevice();
 
-	if (this->me->getDevices().empty() && this->confParams->getProxyCfg()) {
-		char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(this->confParams->getProxyCfg()));
-		if (devAddrStr) {
-			Address devAddr(devAddrStr);
-			this->me->addDevice(devAddr);
-			ms_free(devAddrStr);
-		}
-	}
 }
 
 Conference::~Conference () {
@@ -66,6 +59,22 @@ Conference::~Conference () {
 }
 
 // -----------------------------------------------------------------------------
+
+void Conference::tryAddMeDevice() {
+	if (me->getDevices().empty() && confParams->getProxyCfg()) {
+		char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
+		if (devAddrStr) {
+			Address devAddr(devAddrStr);
+			auto meDev = me->addDevice(devAddr);
+			ms_free(devAddrStr);
+			meDev->setAudioDirection(confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		}
+	}
+}
+
+
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
 	return activeParticipant;
@@ -231,7 +240,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const st
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << this << " with label " << label;
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with label " << label;
 
 	return nullptr;
 }
@@ -245,7 +254,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityA
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << this << " with address " << addr.asString();
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with address " << addr.asString();
 
 	return nullptr;
 }
@@ -259,7 +268,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << this << " with call session " << session;
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session " << session;
 
 	return nullptr;
 }
