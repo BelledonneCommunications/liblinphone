@@ -794,6 +794,10 @@ bool Call::isOpConfigured () const {
 	return getActiveSession()->isOpConfigured();
 }
 
+bool Call::isDeclinedEarly () const {
+	return getActiveSession()->isDelinedEarly();
+}
+
 // =============================================================================
 
 LinphoneStatus Call::accept (const MediaSessionParams *msp) {

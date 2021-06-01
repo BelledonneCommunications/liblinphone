@@ -205,8 +205,10 @@ void CallSessionPrivate::startIncomingNotification () {
 	}
 
 	if (q->mIsDeclining) {
+		lInfo() << "Call is delined early.";
 		q->decline(q->mErrorCache);
 	} else if (q->mIsAccepting && listener) {
+		lInfo() << "Call is accepted early.";
 		listener->onCallSessionAccepting(q->getSharedFromThis());
 	}
 }
@@ -1633,6 +1635,10 @@ bool CallSession::isEarlyState (CallSession::State state) {
 		default:
 			return false;
 	}
+}
+
+bool CallSession::isDelinedEarly () {
+	return mIsDeclining;
 }
 
 LINPHONE_END_NAMESPACE

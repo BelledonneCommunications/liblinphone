@@ -89,6 +89,7 @@ public:
 	);
 
 	bool isOpConfigured () const;
+	bool isDeclinedEarly () const;
 
 	LinphoneStatus accept (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptEarlyMedia (const MediaSessionParams *msp = nullptr);
