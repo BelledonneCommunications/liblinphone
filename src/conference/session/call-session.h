@@ -141,6 +141,8 @@ public:
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();
+	bool isDelinedEarly ();
+	const LinphoneErrorInfo * getErrorInfoCache () const;
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
