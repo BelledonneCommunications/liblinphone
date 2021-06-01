@@ -938,7 +938,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 
 }
 
-LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants) {
+LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants, bool_t one_by_one) {
 
 	stats conf_initial_stats = conf_mgr->stat;
 
@@ -977,51 +977,87 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 
 	LinphoneConference * conference_used = NULL;
 
-	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		stats initial_stats = m->stat;
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
-		BC_ASSERT_PTR_NOT_NULL(conf_call);
-		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
-		call_paused[counter - 1] = FALSE;
-		if (conf_call) {
-			bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
-			call_paused[counter - 1] = is_call_paused;
-			if (conference) {
-				linphone_conference_add_participant(conference,conf_call);
-				conference_used = conference;
-			} else {
-				linphone_core_add_to_conference(conf_mgr->lc,conf_call);
-				conference_used = linphone_core_get_conference(conf_mgr->lc);
+	if (one_by_one) {
+		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			stats initial_stats = m->stat;
+			LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
+			BC_ASSERT_PTR_NOT_NULL(conf_call);
+			call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
+			call_paused[counter - 1] = FALSE;
+			if (conf_call) {
+				bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
+				call_paused[counter - 1] = is_call_paused;
+				if (conference) {
+					linphone_conference_add_participant(conference,conf_call);
+					conference_used = conference;
+				} else {
+					linphone_core_add_to_conference(conf_mgr->lc,conf_call);
+					conference_used = linphone_core_get_conference(conf_mgr->lc);
+				}
+
+				if (is_call_paused) {
+					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
+				} else {
+					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
+					BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
+				}
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
+
+				// Local conference
+				BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_call));
 			}
 
-			if (is_call_paused) {
-				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
-			} else {
-				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
+			// Remote  conference
+			LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
+			BC_ASSERT_PTR_NOT_NULL(participant_call);
+			if (participant_call) {
+				LinphoneConference * pconf = linphone_call_get_conference(participant_call);
+				BC_ASSERT_PTR_NOT_NULL(pconf);
+				BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+				if (pconf) {
+					LinphoneParticipant * participant = linphone_conference_get_me(pconf);
+					BC_ASSERT_FALSE(linphone_participant_is_focus (participant));
+				}
 			}
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
 
-			// Local conference
-			BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_call));
+			counter++;
+		}
+	} else {
+		bctbx_list_t *calls = NULL;
+		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
+			BC_ASSERT_PTR_NOT_NULL(conf_call);
+			call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
+			call_paused[counter - 1] = FALSE;
+			if (conf_call) {
+				bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
+				call_paused[counter - 1] = is_call_paused;
+				calls = bctbx_list_append(calls, conf_call);
+			}
+			counter++;
 		}
 
-		// Remote  conference
-		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
-		BC_ASSERT_PTR_NOT_NULL(participant_call);
-		if (participant_call) {
-			LinphoneConference * pconf = linphone_call_get_conference(participant_call);
-			BC_ASSERT_PTR_NOT_NULL(pconf);
-			BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
-			if (pconf) {
-				LinphoneParticipant * participant = linphone_conference_get_me(pconf);
-				BC_ASSERT_FALSE(linphone_participant_is_focus (participant));
-			}
+		if (conference) {
+			conference_used = conference;
+		} else if (linphone_core_get_conference(conf_mgr->lc)) {
+			conference_used = linphone_core_get_conference(conf_mgr->lc);
+		} else {
+			LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(conf_mgr->lc);
+			conference_used = linphone_core_create_conference_with_params(conf_mgr->lc, conf_params);
+			linphone_conference_params_unref(conf_params);
+			linphone_conference_unref(conference_used); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */
 		}
 
-		counter++;
+		BC_ASSERT_PTR_NOT_NULL(conference_used);
+		linphone_conference_add_participants(conference_used,calls);
+
+		bctbx_list_free(calls);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + (int)bctbx_list_size(new_participants),3000));
+
 	}
 
 	check_participant_added_to_conference(lcs, conf_mgr, conf_initial_stats, new_participants, new_participants_initial_stats, call_paused, participants, participants_initial_stats, conference_used);
@@ -3524,6 +3560,68 @@ static MSSndCard* create_dummy3_test_snd_card(void) {
 
 static void dummy3_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy3_test_snd_card());
+}
+
+static void dummy_playback_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy_playback_test_snd_card_desc = {
+	"dummyPlaybackTest",
+	dummy_playback_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy_playback_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy_playback_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY_PLAYBACK_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy_playback_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy_playback_test_snd_card());
+}
+
+static void dummy_capture_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy_capture_test_snd_card_desc = {
+	"dummyCaptureTest",
+	dummy_capture_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy_capture_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy_capture_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY_CAPTURE_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy_capture_test_snd_card());
 }
 
 void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req) {
