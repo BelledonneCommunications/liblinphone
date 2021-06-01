@@ -1342,6 +1342,63 @@ void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const
 	}
 }
 
+SalStreamDescription MediaSessionPrivate::makeConferenceParticipantVideoStream(const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<ParticipantDevice> & dev, PayloadTypeHandler & pth) {
+
+	L_Q();
+
+	const bool isInLocalConference = getParams()->getPrivate()->getInConference();
+
+	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
+	std::list<OrtpPayloadType*> emptyList;
+	emptyList.clear();
+
+	// TODO: DELETE when labels will be implemented
+	const char * conferenceDeviceAttrName = "label";
+
+	SalStreamDescription newStream;
+
+	newStream.main = false;
+	newStream.proto = getParams()->getMediaProto();
+	newStream.type = SalVideo;
+	newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getLabel().c_str());
+
+	const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+	if (!l.empty()){
+
+		newStream.payloads = l;
+		newStream.name = "Video " + dev->getAddress().asString();
+
+		switch (dev->getVideoDirection()) {
+			case LinphoneMediaDirectionSendOnly:
+			case LinphoneMediaDirectionRecvOnly:
+			case LinphoneMediaDirectionInactive:
+				newStream.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
+				break;
+			case LinphoneMediaDirectionSendRecv:
+				newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+				break;
+			case LinphoneMediaDirectionInvalid:
+				newStream.dir = SalStreamInactive;
+				break;
+		}
+
+		fillRtpParameters(newStream);
+		const auto rtp_port = q->getRandomRtpPort(newStream);
+		newStream.rtp_port = rtp_port;
+		newStream.rtcp_port = newStream.rtp_port + 1;
+
+	} else {
+		lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
+		newStream.dir = SalStreamInactive;
+		newStream.disable();
+		newStream.rtp_port = 0;
+		newStream.rtcp_port = 0;
+		PayloadTypeHandler::clearPayloadList(l);
+	}
+	return newStream;
+}
+
 SalStreamDescription MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes) {
 	L_Q();
 	SalStreamDescription stream;
@@ -1461,10 +1518,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
 
+	// TODO: DELETE when labels will be implemented
 	const char * conferenceDeviceAttrName = "label";
 	const char * layoutAttrName = "content";
 
+	char * remoteContactAddressStr = getOp() ? sal_address_as_string(getOp()->getRemoteContactAddress()) : NULL;
+	const Address remoteContactAddress(L_C_TO_STRING(remoteContactAddressStr));
+	ms_free(remoteContactAddressStr);
+
 	if (refMd) {
+
+		// Copy participant video streams from previous local description
 		decltype(refMd->streams)::size_type streamIdx = 0;
 		for (const auto & s : refMd->streams) {
 			SalStreamDescription newStream;
@@ -1511,9 +1575,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 						const auto & currentConfParams = cppConference->getCurrentParams();
 						const auto confVideoCapabilities = currentConfParams.videoEnabled();
 
-						const auto & dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
-						const bool isMe = !layoutAttrValue.empty();
-						if (confVideoCapabilities && (dev || isMe)) {
+						const auto & dev = participantsAttrValue.empty() ? nullptr : cppConference->findParticipantDeviceByLabel(participantsAttrValue);
+						const auto & me = cppConference->getMe();
+						bool isMe = false;
+						for (const auto & meDev : me->getDevices()) {
+							if (isMe == false) {
+								isMe = (meDev->getLabel().compare(participantsAttrValue) == 0);
+							}
+						}
+						if (confVideoCapabilities && (dev || isMe || !layoutAttrValue.empty())) {
 
 							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 							if (!l.empty()){
@@ -1547,10 +1617,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 							newStream.disable();
 						}
 					} else {
-						char * remoteContactAddressStr = getOp() ? sal_address_as_string(getOp()->getRemoteContactAddress()) : NULL;
-						Address remoteContactAddress(remoteContactAddressStr);
-						ms_free(remoteContactAddressStr);
-
 						// If the call is in a remote conference
 						if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
 							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
@@ -1656,62 +1722,44 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto confVideoCapabilities = currentConfParams.videoEnabled();
 		const auto & me = cppConference->getMe();
+
 		if (confVideoCapabilities) {
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
-					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel());
-					// TODO: DELETE after Thimothee has implemented SDP label attribute
-					if (dev->getLabel().empty()) {
-						char label[10];
-						belle_sip_random_token(label,sizeof(label));
-						dev->setLabel(label);
-					}
-					if (foundStreamIdx == -1) {
-						SalStreamDescription newStream;
-
-						newStream.main = false;
-						newStream.proto = getParams()->getMediaProto();
-						newStream.type = SalVideo;
-						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getLabel().c_str());
-
-						const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(conferenceDeviceAttrName, dev->getLabel()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-						l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-						if (!l.empty()){
-
-							newStream.payloads = l;
-							newStream.name = "Video " + dev->getAddress().asString();
-
-							switch (dev->getVideoDirection()) {
-								case LinphoneMediaDirectionSendOnly:
-								case LinphoneMediaDirectionRecvOnly:
-								case LinphoneMediaDirectionInactive:
-									newStream.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
-									break;
-								case LinphoneMediaDirectionSendRecv:
-									newStream.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
-									break;
-								case LinphoneMediaDirectionInvalid:
-									newStream.dir = SalStreamInactive;
-									break;
-							}
-
-							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
-
-							fillRtpParameters(newStream);
-							const auto rtp_port = q->getRandomRtpPort(newStream);
-							newStream.rtp_port = rtp_port;
-							newStream.rtcp_port = newStream.rtp_port + 1;
-
-						} else {
-							lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
-							newStream.dir = SalStreamInactive;
-							newStream.disable();
-							newStream.rtp_port = 0;
-							newStream.rtcp_port = 0;
-							PayloadTypeHandler::clearPayloadList(l);
+lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " dev address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession();
+					if (!remoteContactAddress.isValid() || (remoteContactAddress != dev->getAddress().asAddress())) {
+						const auto & devLabel = dev->getLabel();
+						const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
+						// TODO: DELETE when labels will be implemented
+						if (devLabel.empty()) {
+							char label[10];
+							belle_sip_random_token(label,sizeof(label));
+							dev->setLabel(label);
 						}
-						md->streams.push_back(newStream);
+						if (foundStreamIdx == -1) {
+							auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
+							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
+							md->streams.push_back(newStream);
+						}
 					}
+				}
+			}
+
+			for (const auto & dev : me->getDevices()) {
+lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << dev->getAddress().asAddress().asString();
+				const auto & devLabel = dev->getLabel();
+				const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
+				// TODO: DELETE when labels will be implemented
+				if (devLabel.empty()) {
+					char label[10];
+					belle_sip_random_token(label,sizeof(label));
+					dev->setLabel(label);
+				}
+				if (foundStreamIdx == -1) {
+					auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
+					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
+
+					md->streams.push_back(newStream);
 				}
 			}
 
