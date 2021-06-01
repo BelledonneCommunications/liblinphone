@@ -383,6 +383,16 @@ LocalConference::LocalConference (
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
+	auto i = getAudioControlInterface();
+	// If audio stream doesn't have an input device, then use the default one of the core
+	if (!i->getInputDevice() && core->getDefaultInputAudioDevice()) {
+		i->setInputDevice(core->getDefaultInputAudioDevice());
+	}
+	// If audio stream doesn't have an output device, then use the default one of the core
+	if (!i->getOutputDevice() && core->getDefaultOutputAudioDevice()) {
+		i->setOutputDevice(core->getDefaultOutputAudioDevice());
+	}
+
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
 	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
@@ -568,6 +578,17 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
 				localEndpointCanBeAdded = true;
+
+				auto i = getAudioControlInterface();
+				// If audio stream doesn't have an input device, then use the one of the call
+				if (!i->getInputDevice() && call->getInputAudioDevice()) {
+					i->setInputDevice(call->getInputAudioDevice());
+				}
+				// If audio stream doesn't have an output device, then use the one of the call
+				if (!i->getOutputDevice() && call->getOutputAudioDevice()) {
+					i->setOutputDevice(call->getOutputAudioDevice());
+				}
+
 			}
 			break;
 			default:
