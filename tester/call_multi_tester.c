@@ -641,6 +641,9 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
 	bctbx_list_t *core_list = NULL;
 	
+	// Do not allow Pauline to use files as the goal of the test is to test audio routes on ring stream
+	linphone_core_set_use_files(pauline->lc, FALSE);
+	
 	core_list = bctbx_list_append(core_list, marie->lc);
 	core_list = bctbx_list_append(core_list, pauline->lc);
 	core_list = bctbx_list_append(core_list, laure->lc);
@@ -658,6 +661,7 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	BC_ASSERT_TRUE(wait_for_list(core_list, &pauline->stat.number_of_LinphoneCallIncomingReceived,2,10000));
 	pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
+	BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
 
 	linphone_call_decline(pauline_called_by_laure, LinphoneReasonDeclined);
 	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallEnd,1, 10000));
