@@ -64,6 +64,9 @@ public:
         return str;
     }
 
+    bool operator== (const AudioDevice &device) const;
+    bool operator!= (const AudioDevice &device) const;
+
 private:
     MSSndCard *soundCard;
     std::string deviceId;
