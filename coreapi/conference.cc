@@ -621,14 +621,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 				}
 			}
 
-			if (me->getDevices().empty() && confParams->getProxyCfg()) {
-				char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
-				if (devAddrStr) {
-					Address devAddr(devAddrStr);
-					me->addDevice(devAddr);
-					ms_free(devAddrStr);
-				}
-			}
+			tryAddMeDevice();
 
 			if (!call){
 				lError() << "LocalConference::inviteAddresses(): could not invite participant";
@@ -786,14 +779,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			}
 		}
 
-		if (me->getDevices().empty() && confParams->getProxyCfg()) {
-			char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
-			if (devAddrStr) {
-				Address devAddr(devAddrStr);
-				me->addDevice(devAddr);
-				ms_free(devAddrStr);
-			}
-		}
+		tryAddMeDevice();
 
 		switch(state){
 			case LinphoneCallOutgoingInit:
@@ -1199,6 +1185,11 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 		mediaCapabilities[ConferenceMediaCapabilities::Text] = newConfParams.chatEnabled();
 		time_t creationTime = time(nullptr);
 		notifyAvailableMediaChanged(creationTime, false, mediaCapabilities);
+	}
+	for (auto & meDev : me->getDevices()) {
+		meDev->setAudioDirection(this->confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		meDev->setVideoDirection(this->confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		meDev->setTextDirection(this->confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 	}
 	return ret;
 }

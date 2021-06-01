@@ -155,6 +155,8 @@ protected:
 	void resetLastNotify ();
 	void setConferenceId (const ConferenceId &conferenceId);
 
+	void tryAddMeDevice();
+
 	ConferenceId conferenceId;
 
 	std::shared_ptr<ConferenceParams> confParams = nullptr;
