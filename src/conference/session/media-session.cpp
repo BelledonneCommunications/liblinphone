@@ -2328,10 +2328,13 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	if (msp) {
 		setParams(new MediaSessionParams(*msp));
 	}
-	if (msp || localDesc == nullptr) makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), q->isCapabilityNegotiationEnabled(), false);
+	if (msp || (localDesc == nullptr)) makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), q->isCapabilityNegotiationEnabled(), false);
 
-	// already accepting
-	if (state == CallSession::State::IncomingReceived && params && (localDesc == nullptr)) makeLocalMediaDescription(false, q->isCapabilityNegotiationEnabled(), false, true);
+	// If call is going to be accepted, then recreate the local media description if there is no local description or encryption is mandatory.
+	// The initial INVITE sequence goes through the offer answer negotiation process twice.
+	// The first one generates the 180 Ringing and it ensures that the offer can be potentially accepted upon setting of a compatible set of parameters.
+	// The second offer answer negotiation is more thorough as the set of parameters to accept the call is known. In this case, if the encryption is mandatory a new local media description must be generated in order to populate the crypto keys with the set actually ued in the call
+	if ((state == CallSession::State::IncomingReceived) && params && (isEncryptionMandatory() || (localDesc == nullptr))) makeLocalMediaDescription(false, q->isCapabilityNegotiationEnabled(), false, true);
 
 	updateRemoteSessionIdAndVer();
 
