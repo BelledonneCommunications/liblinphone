@@ -7884,7 +7884,10 @@ bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore 
 	if (!capability_negotiation_supported || (supported_encryptions == NULL)) {
 		bctbx_list_t * default_encryption_list = linphone_core_get_supported_media_encryptions_at_compile_time();
 		if (lc->zrtp_not_available_simulation) {
-			default_encryption_list = bctbx_list_remove_custom(default_encryption_list, (bctbx_compare_func)string_compare, linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP));
+			bctbx_list_t * zrtp_encryption = bctbx_list_find_custom(default_encryption_list, (bctbx_compare_func)string_compare, linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP));
+//			default_encryption_list = bctbx_list_remove_custom(default_encryption_list, (bctbx_compare_func)string_compare, linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP));
+			default_encryption_list = bctbx_list_unlink(default_encryption_list, zrtp_encryption);
+			bctbx_list_free_with_data(zrtp_encryption, (bctbx_list_free_func)bctbx_free);
 		}
 		if (default_encryption_list) {
 			encryption_list = bctbx_list_copy_with_data(default_encryption_list, (bctbx_list_copy_func)bctbx_strdup);
