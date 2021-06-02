@@ -52,6 +52,16 @@ list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList (const list
 	L_Q();
 	list<IdentityAddress> cleanedList(addresses);
 
+	// Do not try to add participants with invalid address
+	for (auto it = cleanedList.begin(); it != cleanedList.end(); ) {
+		if (!((*it).isValid())) {
+			lError()<<"ServerGroupChatRoomPrivate::initializeParticipants(): removing invalid address " << ((*it).asString()) << " at position " << std::distance(it, cleanedList.begin());
+			it = cleanedList.erase(it);
+		} else {
+			++it;
+		}
+	}
+
 	cleanedList.sort();
 	cleanedList.unique();
 	for (auto it = cleanedList.begin(); it != cleanedList.end();) {
