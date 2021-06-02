@@ -429,11 +429,6 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 		// It is NULL otherwise
 		if (audioDevice) {
 			ringCard = audioDevice->getSoundCard();
-		}else if(ringCard){
-			AudioDevice * ringDevice = getCore()->findAudioDeviceMatchingMsSoundCard(ringCard);
-			if (ringDevice) {
-				call->setOutputAudioDevice(ringDevice);
-			}
 		}
 	}
 
@@ -540,13 +535,6 @@ void ToneManager::doStopRingtone(const std::shared_ptr<CallSession> &session) {
 	} else {
 		LinphoneCore *lc = getCore()->getCCore();
 		if (linphone_ringtoneplayer_is_started(lc->ringtoneplayer)) {
-			std::shared_ptr<LinphonePrivate::Call> call = getCore()->getCurrentCall();
-			if(call && !call->getOutputAudioDevice()){
-				AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
-				if (outputAudioDevice) {
-					call->setOutputAudioDevice(outputAudioDevice);
-				}
-			}
 			linphone_ringtoneplayer_stop(lc->ringtoneplayer);
 		}
 	}

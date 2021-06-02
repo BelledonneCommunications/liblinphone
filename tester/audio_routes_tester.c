@@ -1161,14 +1161,14 @@ static void simple_call_with_audio_devices_reload(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(pauline->lc));
-
+	const LinphoneAudioDevice *default_input = linphone_core_get_default_input_audio_device(pauline->lc);// Set default to NULL as Pauline is using a file player
+	//default_input can be the system sound card
 	BC_ASSERT_TRUE(call(marie, pauline));
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_input_audio_device(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(pauline->lc));
-	// Pauline is using a file player as input so no sound card
-	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(pauline->lc));
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(pauline->lc), default_input);
 	
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_output_audio_device(marie_call));
@@ -1176,8 +1176,7 @@ static void simple_call_with_audio_devices_reload(void) {
 	
 	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_output_audio_device(pauline_call));
-	// Pauline is using a file player as input so no sound card
-	BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(pauline_call));
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(pauline->lc), default_input);
 
 	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
 	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
