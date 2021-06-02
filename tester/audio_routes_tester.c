@@ -527,7 +527,7 @@ LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, Lin
 				} else {
 					linphone_core_set_output_audio_device(mgr->lc, next_dev);
 					const bctbx_list_t *calls = linphone_core_get_calls(mgr->lc);
-					devChanges += (int)bctbx_list_size(calls);
+					devChanges += (1 + ((int)bctbx_list_size(calls)));
 				}
 				BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), next_dev);
 			}
@@ -552,7 +552,7 @@ LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, Lin
 				} else {
 					linphone_core_set_input_audio_device(mgr->lc, next_dev);
 					const bctbx_list_t *calls = linphone_core_get_calls(mgr->lc);
-					devChanges += (int)bctbx_list_size(calls);
+					devChanges += (1 + (int)bctbx_list_size(calls));
 				}
 				BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), next_dev);
 			}
@@ -1822,7 +1822,7 @@ static void conference_with_simple_audio_device_change(void) {
 	BC_ASSERT_PTR_EQUAL(linphone_call_get_output_audio_device(laure_call), laure_current_dev);
 	BC_ASSERT_PTR_EQUAL(linphone_call_get_input_audio_device(laure_call), laure_current_dev);
 
-	add_calls_to_local_conference(lcs, laure, conf, participants);
+	add_calls_to_local_conference(lcs, laure, conf, participants, FALSE);
 
 	// wait a bit before Marie changes device
 	wait_for_list(lcs,NULL,0,2000);
@@ -2019,7 +2019,7 @@ static void simple_conference_with_audio_device_change_using_public_api(void) {
 		prev_mgr = m;
 	}
 
-	add_calls_to_local_conference(lcs, marie, conf, participants);
+	add_calls_to_local_conference(lcs, marie, conf, participants, FALSE);
 
 	BC_ASSERT_PTR_EQUAL(conf, linphone_core_get_conference(marie->lc));
 
