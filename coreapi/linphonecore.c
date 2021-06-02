@@ -7083,10 +7083,6 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
  * and change the state to "Off"
  */
 void _linphone_core_stop_async_end(LinphoneCore *lc) {
-#if TARGET_OS_IPHONE
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStopped();
-#endif
-
 	// Call uninit here because there may be the need to access DB while unregistering
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
@@ -7184,6 +7180,9 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 #endif
 
 	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
+#if TARGET_OS_IPHONE
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStopped();
+#endif
 }
 
 static void _linphone_core_stop(LinphoneCore *lc) {
