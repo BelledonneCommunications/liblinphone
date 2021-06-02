@@ -174,6 +174,7 @@ void Core::onStopAsyncBackgroundTaskStarted() {
 		}
 	};
 	function<void()> enableStopAsyncEnd = [d]() {
+		lWarning() << "Background task [Stop core async end] is now expiring";
 		d->stopAsyncEndEnabled = true;
 	};
 
