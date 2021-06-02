@@ -653,6 +653,7 @@ const MSCryptoSuite * linphone_core_generate_srtp_crypto_suites_array_from_strin
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc){
 	const char *config= linphone_core_get_srtp_crypto_suites(lc);
+ms_message("%s - DEBUG DEBUG crypto suites %s\n", __func__, config);
 	return linphone_core_generate_srtp_crypto_suites_array_from_string(lc, config);
 }
 
