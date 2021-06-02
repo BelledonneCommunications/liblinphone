@@ -563,14 +563,27 @@ void LocalConference::addLocalEndpoint () {
 
 	if (confParams->videoEnabled()){
 		mixer = mMixerSession->getMixerByType(SalVideo);
+
 		if (mixer){
 			mixer->enableLocalParticipant(true);
 			VideoControlInterface *vci = getVideoControlInterface();
 			if (vci){
 				vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
 				vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
+
+				const auto & dev = me->getDevices().front();
+				if (dev->getLabel().empty()) {
+					// TODO: DELETE when labels will be implemented
+					char label[10];
+					belle_sip_random_token(label,sizeof(label));
+					dev->setLabel(label);
+				}
+	lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream " << dynamic_cast<MS2VideoControl*>(vci)->getVideoStream() << " of local participant " << dev->getAddress() << " video control interface " << vci;
+				video_stream_set_label(dynamic_cast<MS2VideoControl*>(vci)->getVideoStream(), dev->getLabel().c_str());
 			}
+
 		}
+
 	}
 
 	if (!isIn()) {
