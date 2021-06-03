@@ -35,6 +35,9 @@
 
 #include "sqlite3_bctbx_vfs.h"
 
+#include "../src/chat/modifier/file-transfer-chat-message-modifier.h"
+#include "../src/content/file-transfer-content.h"
+
 #include <math.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -996,38 +999,18 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "http_request_listener", l, belle_sip_object_unref); // Ensure the listener object is destroyed when the request is destroyed
 			belle_http_provider_send_request(core->http_provider, req, l);
 		} else if (code == 200) { /* The file has been uploaded correctly, get the server reply */
-			xmlDocPtr xmlMessageBody;
-			xmlNodePtr cur;
-			xmlChar *file_url = NULL;
 			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
-			xmlMessageBody = xmlParseDoc((const xmlChar *)body);
-			cur = xmlDocGetRootElement(xmlMessageBody);
-			if (cur != NULL) {
-				cur = cur->xmlChildrenNode;
-				while (cur != NULL) {
-					if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) { /* we found a file info node, check it has a type="file" attribute */
-						xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
-						if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) { /* this is the node we are looking for */
-							cur = cur->xmlChildrenNode; /* now loop on the content of the file-info node */
-							while (cur != NULL) {
-								if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
-									file_url = xmlGetProp(cur, (const xmlChar *)"url");
-								}
-								cur=cur->next;
-							}
-							xmlFree(typeAttribute);
-							break;
-						}
-						xmlFree(typeAttribute);
-					}
-					cur = cur->next;
-				}
+			FileTransferChatMessageModifier fileTransferModifier = FileTransferChatMessageModifier(NULL);
+			FileTransferContent *content = new FileTransferContent();
+			fileTransferModifier.parseFileTransferXmlIntoContent(body, content);
+			string fileUrl = content->getFileUrl();
+			
+			if (!fileUrl.empty()) {
+				const char *url = fileUrl.c_str();
+				linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateDelivered, url);
 			}
-			if (file_url != NULL) {
-				linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateDelivered, (const char *)file_url);
-				xmlFree(file_url);
-			}
-			xmlFreeDoc(xmlMessageBody);
+			
+			delete content;
 			clean_log_collection_upload_context(core);
 		} else {
 			ms_error("Unexpected HTTP response code %i during log collection upload to %s", code, linphone_core_get_log_collection_upload_server_url(core));

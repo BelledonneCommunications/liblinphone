@@ -66,6 +66,13 @@ public:
 	std::string createFakeFileTransferFromUrl (const std::string &url);
 	void fileUploadEndBackgroundTask ();
 
+	void parseFileTransferXmlIntoContent (const char *xml, FileTransferContent *fileTransferContent) const;
+	std::string dumpFileTransferContentAsXmlString(
+		const FileTransferContent *parsedXmlFileTransferContent, 
+		const unsigned char *contentKey, size_t contentKeySize, 
+		const unsigned char *contentAuthTag, size_t contentAuthTagSize,
+		const std::string& realFileName) const;
+
 private:
 	// Body handler is optional, but if set this method takes owneship of it, even in error cases.
 	int uploadFile (belle_sip_body_handler_t *bh);
