@@ -114,7 +114,7 @@ const AudioDevice::Type& AudioDevice::getType() const {
 
 string AudioDevice::toString() const {
     std::ostringstream ss;
-    ss << driverName << ": driver [" << driverName << "], type [";
+    ss << deviceName << ": driver [" << driverName << "], type [";
     switch (deviceType) {
         case AudioDevice::Type::Microphone:
             ss << "Microphone";
