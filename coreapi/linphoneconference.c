@@ -166,7 +166,6 @@ void linphone_conference_set_input_audio_device(LinphoneConference *conference, 
 void linphone_conference_set_output_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
 		MediaConference::Conference::toCpp(conference)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
-		linphone_conference_notify_audio_device_changed(conference, audio_device);
 	}
 }
 
