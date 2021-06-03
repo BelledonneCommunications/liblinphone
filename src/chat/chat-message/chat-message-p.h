@@ -85,6 +85,7 @@ public:
 	void setImdnMessageId (const std::string &imdnMessageId);
 
 	void setForwardInfo (const std::string &fInfo);
+	void setReplyToMessageIdAndSenderAddress (const std::string &id, const IdentityAddress &sender);
 
 	void enableEphemeralWithTime (long time);
 
@@ -268,6 +269,8 @@ private:
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
 	std::string forwardInfo;
+	std::string replyingToMessageId;
+	IdentityAddress replyingToMessageSender;
 
 	bool isEphemeral = false;
 	long ephemeralLifetime = 86400; // 24h
