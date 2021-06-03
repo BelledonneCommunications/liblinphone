@@ -417,6 +417,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 							
 							linphone_content_unref(presence_part);
 							linphone_presence_model_unref((LinphonePresenceModel *)presence);
+							ms_free(uri);
 						}
 					}
 					linphone_free_xml_text_content(cid);
