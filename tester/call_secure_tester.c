@@ -557,15 +557,13 @@ static void recreate_zrtpdb_when_corrupted(void) {
 	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionZRTP))) {
 		void *db;
 		const char* db_file;
-		const char *filepath;
-		const char *filepath2;
 		const char *corrupt = "corrupt mwahahahaha";
 		FILE *f;
 
-		remove(bc_tester_file("tmpZIDCacheMarie.sqlite"));
-		filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
-		remove(bc_tester_file("tmpZIDCachePauline.sqlite"));
-		filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
+		char *filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
+		remove(filepath);
+		char *filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
+		remove(filepath2);
 		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
 		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
 		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
@@ -631,6 +629,10 @@ static void recreate_zrtpdb_when_corrupted(void) {
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
 		end_call(marie, pauline);
+
+		ms_free(filepath);
+		ms_free(filepath2);
+
 	}
 
 	linphone_core_manager_destroy(marie);
