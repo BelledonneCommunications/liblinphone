@@ -628,6 +628,12 @@ extern MSSndCardDesc dummy2_test_snd_card_desc;
 extern MSSndCardDesc dummy3_test_snd_card_desc;
 #define DUMMY3_TEST_SOUNDCARD "dummy3 test sound card"
 
+extern MSSndCardDesc dummy_playback_test_snd_card_desc;
+#define DUMMY_PLAYBACK_TEST_SOUNDCARD "dummy playback test sound card"
+
+extern MSSndCardDesc dummy_capture_test_snd_card_desc;
+#define DUMMY_CAPTURE_TEST_SOUNDCARD "dummy capture test sound card"
+
 /**
  * Set the requested curve and matching lime server url in the given core manager
  * WARNING: uses a dirty trick: the linphone_core_set_lime_x3dh_server_url will actually restart
