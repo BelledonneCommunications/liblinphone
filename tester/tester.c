@@ -3562,6 +3562,68 @@ static void dummy3_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy3_test_snd_card());
 }
 
+static void dummy_playback_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy_playback_test_snd_card_desc = {
+	"dummyPlaybackTest",
+	dummy_playback_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy_playback_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy_playback_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY_PLAYBACK_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy_playback_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy_playback_test_snd_card());
+}
+
+static void dummy_capture_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy_capture_test_snd_card_desc = {
+	"dummyCaptureTest",
+	dummy_capture_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy_capture_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy_capture_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY_CAPTURE_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy_capture_test_snd_card());
+}
+
 void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req) {
 	if (curveId == 448) {
 		// Change the curve setting before the server URL
