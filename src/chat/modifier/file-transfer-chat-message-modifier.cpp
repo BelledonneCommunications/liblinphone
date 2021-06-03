@@ -341,86 +341,33 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 		} else if (code == 200) { // file has been uploaded correctly, get server reply and send it
 			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
 			if (body && strlen(body) > 0) {
+				FileTransferContent *parsedXmlFileTransferContent = new FileTransferContent();
+				parseFileTransferXmlIntoContent(body, parsedXmlFileTransferContent);
+
+				if (parsedXmlFileTransferContent->getFileName().empty() || parsedXmlFileTransferContent->getFileUrl().empty()) {
+					lWarning() << "Received response from server but unable to parse file name or URL, file transfer failed";
+					message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
+					delete currentFileTransferContent;
+					currentFileTransferContent = nullptr;
+
+					message->getPrivate()->setState(ChatMessage::State::NotDelivered);
+					releaseHttpRequest();
+					fileUploadEndBackgroundTask();
+
+					delete parsedXmlFileTransferContent;
+					return;
+				}
+
 				// if we have an encryption key for the file, we must insert it into the msg and restore the correct filename
 				const unsigned char *contentKey = reinterpret_cast<const unsigned char *>(currentFileTransferContent->getFileKey().data());
 				size_t contentKeySize = currentFileTransferContent->getFileKeySize();
-				if (contentKeySize > 0) {
-					// parse the msg body
-					xmlDocPtr xmlMessageBody = xmlParseDoc((const xmlChar *)body);
+				const unsigned char *contentAuthTag = reinterpret_cast<const unsigned char *>(currentFileTransferContent->getFileAuthTag().data());
+				size_t contentAuthTagSize = currentFileTransferContent->getFileAuthTagSize();
 
-					xmlNodePtr cur = xmlDocGetRootElement(xmlMessageBody);
-					if (cur != nullptr) {
-						cur = cur->xmlChildrenNode;
-						while (cur != nullptr) {
-							// we found a file info node, check it has a type="file" attribute
-							if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) {
-								xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
-								// this is the node we are looking for : add a file-key children node
-								if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) {
-									// need to parse the children node to update the file-name one
-									xmlNodePtr fileInfoNodeChildren = cur->xmlChildrenNode;
-									// convert key to base64
-									size_t b64Size=0;
-									bctbx_base64_encode(nullptr, &b64Size, contentKey, contentKeySize);
-									unsigned char *keyb64 = (unsigned char *)ms_malloc0(b64Size + 1);
-
-									bctbx_base64_encode(keyb64, &b64Size, contentKey, contentKeySize);
-									keyb64[b64Size] = '\0'; // libxml need a null terminated string
-
-									// add the node containing the key to the file-info node
-									xmlNewTextChild(cur, nullptr, (const xmlChar *)"file-key", (const xmlChar *)keyb64);
-
-									//cleaning
-									xmlFree(typeAttribute);
-									bctbx_clean(keyb64, b64Size);
-									ms_free(keyb64);
-
-									// Do we have an authentication tag? If yes insert it
-									size_t contentAuthTagSize = currentFileTransferContent->getFileAuthTagSize();
-									if (contentAuthTagSize>0) {
-										const unsigned char *contentAuthTag = reinterpret_cast<const unsigned char *>(currentFileTransferContent->getFileAuthTag().data());
-										// Convert it to b64
-										b64Size=0;
-										bctbx_base64_encode(nullptr, &b64Size, contentAuthTag, contentAuthTagSize);
-										unsigned char *authTagb64 = (unsigned char *)ms_malloc0(b64Size + 1);
-
-										bctbx_base64_encode(authTagb64, &b64Size, contentAuthTag, contentAuthTagSize);
-										authTagb64[b64Size] = '\0'; // libxml need a null terminated string
-
-										// add the node containing the key to the file-info node
-										xmlNewTextChild(cur, nullptr, (const xmlChar *)"file-authTag", (const xmlChar *)authTagb64);
-
-										// cleaning
-										ms_free(authTagb64);
-									}
-
-									// look for the file-name node and update its content
-									while (fileInfoNodeChildren != nullptr) {
-										// we found a the file-name node, update its content with the real filename
-										if (!xmlStrcmp(fileInfoNodeChildren->name, (const xmlChar *)"file-name")) {
-											// update node content
-											xmlNodeSetContent(fileInfoNodeChildren, (const xmlChar *)(currentFileContentToTransfer->getFileName().c_str()));
-											break;
-										}
-										fileInfoNodeChildren = fileInfoNodeChildren->next;
-									}
-
-									// dump the xml into msg->message
-									char *buffer;
-									int xmlStringLength;
-									xmlDocDumpFormatMemoryEnc(xmlMessageBody, (xmlChar **)&buffer, &xmlStringLength, "UTF-8", 0);
-									currentFileTransferContent->setBodyFromUtf8(buffer);
-									break;
-								}
-								xmlFree(typeAttribute);
-							}
-							cur = cur->next;
-						}
-					}
-					xmlFreeDoc(xmlMessageBody);
-				} else { // no encryption key, transfer in plain, just copy the msg sent by server
-					currentFileTransferContent->setBodyFromUtf8(body);
-				}
+				string xml_body = dumpFileTransferContentAsXmlString(parsedXmlFileTransferContent, contentKey, contentKeySize, contentAuthTag, contentAuthTagSize, currentFileContentToTransfer->getFileName());
+				delete parsedXmlFileTransferContent;
+				
+				currentFileTransferContent->setBodyFromUtf8(xml_body.c_str());
 				currentFileTransferContent = nullptr;
 
 				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
@@ -610,104 +557,6 @@ void FileTransferChatMessageModifier::fileUploadEndBackgroundTask () {
 
 // ----------------------------------------------------------
 
-/* clean the download file name: we must avoid any directory separator (/ or \)
- * so the file is saved in the intended directory */
-static std::string cleanDownloadFileName(std::string fileName) {
-	auto dirSepPos = fileName.find_last_of("/\\");
-	if (dirSepPos == std::string::npos) {
-		return fileName;
-	}
-	return fileName.substr(dirSepPos+1);
-}
-static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTransferContent *fileTransferContent) {
-	xmlChar *fileUrl = nullptr;
-	xmlDocPtr xmlMessageBody;
-	xmlNodePtr cur;
-	/* parse the msg body to get all informations from it */
-	xmlMessageBody = xmlParseDoc((const xmlChar *)fileTransferContent->getBodyAsString().c_str());
-
-	cur = xmlDocGetRootElement(xmlMessageBody);
-	if (cur) {
-		cur = cur->xmlChildrenNode;
-		while (cur) {
-			if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) {
-				/* we found a file info node, check if it has a type="file" attribute */
-				xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
-				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) { /* this is the node we are looking for */
-					cur = cur->xmlChildrenNode; /* now loop on the content of the file-info node */
-					while (cur) {
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-size")) {
-							xmlChar *fileSizeString = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							size_t size = (size_t)strtol((const char *)fileSizeString, nullptr, 10);
-							fileTransferContent->setFileSize(size);
-							xmlFree(fileSizeString);
-						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
-							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileTransferContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
-							xmlFree(filename);
-						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
-							fileUrl = xmlGetProp(cur, (const xmlChar *)"url");
-						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-key")) {
-							// There is a key in the msg: file has been encrypted.
-							// Convert the key from base 64.
-							xmlChar *keyb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							if (keyb64) {
-								size_t keyb64Length = strlen(reinterpret_cast<char *>(keyb64));
-
-								size_t keyLength;
-								bctbx_base64_decode(nullptr, &keyLength, keyb64, keyb64Length);
-
-								uint8_t *keyBuffer = static_cast<uint8_t *>(malloc(keyLength + 1));
-
-								// Decode the key into local key buffer.
-								bctbx_base64_decode(keyBuffer, &keyLength, keyb64, keyb64Length);
-								keyBuffer[keyLength] = '\0';
-								fileTransferContent->setFileKey(reinterpret_cast<char *>(keyBuffer), keyLength);
-								xmlFree(keyb64);
-								free(keyBuffer);
-							}
-						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-authTag")) {
-							// There is authentication tag in the msg: file has been encrypted.
-							// Convert the tag from base 64.
-							xmlChar *authTagb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							if (authTagb64) {
-								size_t authTagb64Length = strlen(reinterpret_cast<char *>(authTagb64));
-
-								size_t authTagLength;
-								bctbx_base64_decode(nullptr, &authTagLength, authTagb64, authTagb64Length);
-
-								uint8_t *authTagBuffer = static_cast<uint8_t *>(malloc(authTagLength + 1));
-
-								// Decode the authTag into local authTag buffer.
-								bctbx_base64_decode(authTagBuffer, &authTagLength, authTagb64, authTagb64Length);
-								authTagBuffer[authTagLength] = '\0';
-								fileTransferContent->setFileAuthTag(reinterpret_cast<char *>(authTagBuffer), authTagLength);
-								xmlFree(authTagb64);
-								free(authTagBuffer);
-							}
-						}
-
-						cur = cur->next;
-					}
-					xmlFree(typeAttribute);
-					break;
-				}
-				xmlFree(typeAttribute);
-			}
-			cur = cur->next;
-		}
-	}
-	xmlFreeDoc(xmlMessageBody);
-
-	fileTransferContent->setFileUrl(fileUrl ? (const char *)fileUrl : "");
-
-	xmlFree(fileUrl);
-}
-
 ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	chatMessage = message;
 
@@ -716,7 +565,8 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const share
 		FileTransferContent *fileTransferContent = new FileTransferContent();
 		fileTransferContent->setContentType(internalContent.getContentType());
 		fileTransferContent->setBody(internalContent.getBody());
-		fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml(fileTransferContent);
+		string xml_body = fileTransferContent->getBodyAsString();
+		parseFileTransferXmlIntoContent(xml_body.c_str(), fileTransferContent);
 		message->addContent(fileTransferContent);
 		return ChatMessageModifier::Result::Done;
 	}
@@ -724,98 +574,14 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const share
 	for (Content *content : message->getContents()) {
 		if (content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml(fileTransferContent);
+			string xml_body = fileTransferContent->getBodyAsString();
+			parseFileTransferXmlIntoContent(xml_body.c_str(), fileTransferContent);
 		}
 	}
 	return ChatMessageModifier::Result::Done;
 }
 
 // ----------------------------------------------------------
-
-static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferContent *fileTransferContent) {
-	xmlChar *fileUrl = nullptr;
-	xmlDocPtr xmlMessageBody;
-	xmlNodePtr cur;
-	/* parse the msg body to get all informations from it */
-	xmlMessageBody = xmlParseDoc((const xmlChar *)fileTransferContent->getBodyAsString().c_str());
-	FileContent *fileContent = new FileContent();
-
-	cur = xmlDocGetRootElement(xmlMessageBody);
-	if (cur) {
-		cur = cur->xmlChildrenNode;
-		while (cur) {
-			if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) {
-				/* we found a file info node, check if it has a type="file" attribute */
-				xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
-				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) { /* this is the node we are looking for */
-					cur = cur->xmlChildrenNode; /* now loop on the content of the file-info node */
-					while (cur) {
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-size")) {
-							xmlChar *fileSizeString = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							size_t size = (size_t)strtol((const char *)fileSizeString, nullptr, 10);
-							fileContent->setFileSize(size);
-							xmlFree(fileSizeString);
-						}
-
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
-							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
-
-							xmlFree(filename);
-						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
-							xmlChar *content_type = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							int contentTypeIndex = 0;
-							char *type;
-							char *subtype;
-							while (content_type[contentTypeIndex] != '/' && content_type[contentTypeIndex] != '\0') {
-								contentTypeIndex++;
-							}
-							type = ms_strndup((char *)content_type, contentTypeIndex);
-							subtype = ms_strdup(((char *)content_type + contentTypeIndex + 1));
-							ContentType contentType(type, subtype);
-							fileContent->setContentType(contentType);
-							ms_free(subtype);
-							ms_free(type);
-							ms_free(content_type);
-						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
-							fileUrl = xmlGetProp(cur, (const xmlChar *)"url");
-						}
-
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-key")) {
-							// there is a key in the msg: file has been encrypted
-							// convert the key from base 64
-							xmlChar *keyb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							size_t keyLength;
-							bctbx_base64_decode(NULL, &keyLength, (unsigned char *)keyb64, strlen((const char *)keyb64));
-							uint8_t *keyBuffer = (uint8_t *)malloc(keyLength);
-							// decode the key into local key buffer
-							bctbx_base64_decode(keyBuffer, &keyLength, (unsigned char *)keyb64, strlen((const char *)keyb64));
-							fileTransferContent->setFileKey((const char *)keyBuffer, keyLength);
-							// duplicate key value into the linphone content private structure
-							xmlFree(keyb64);
-							free(keyBuffer);
-						}
-
-						cur = cur->next;
-					}
-					xmlFree(typeAttribute);
-					break;
-				}
-				xmlFree(typeAttribute);
-			}
-			cur = cur->next;
-		}
-	}
-	xmlFreeDoc(xmlMessageBody);
-
-	fileContent->setFilePath(fileTransferContent->getFilePath()); // Copy file path from file transfer content to file content for file body handler
-	// Link the FileContent to the FileTransferContent
-	fileTransferContent->setFileContent(fileContent);
-
-	xmlFree(fileUrl);
-}
 
 static void _chat_message_on_recv_body (belle_sip_user_body_handler_t *bh, belle_sip_message_t *m, void *data, size_t offset, uint8_t *buffer, size_t size) {
 	FileTransferChatMessageModifier *d = (FileTransferChatMessageModifier *)data;
@@ -1084,6 +850,18 @@ void FileTransferChatMessageModifier::processResponseFromGetFile (const belle_ht
 	}
 }
 
+static void createFileContentFromFileTransferContent (FileTransferContent *fileTransferContent) {
+	FileContent *fileContent = new FileContent();
+
+	fileContent->setFileName(fileTransferContent->getFileName());
+	fileContent->setFileSize(fileTransferContent->getFileSize());
+	fileContent->setFilePath(fileTransferContent->getFilePath());
+	fileContent->setContentType(fileTransferContent->getContentType());
+
+	// Link the FileContent to the FileTransferContent
+	fileTransferContent->setFileContent(fileContent);
+}
+
 bool FileTransferChatMessageModifier::downloadFile (
 	const shared_ptr<ChatMessage> &message,
 	FileTransferContent *fileTransferContent
@@ -1100,7 +878,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 		return false;
 	}
 
-	createFileTransferInformationsFromVndGsmaRcsFtHttpXml(fileTransferContent);
+	createFileContentFromFileTransferContent(fileTransferContent);
 	FileContent *fileContent = fileTransferContent->getFileContent();
 	currentFileContentToTransfer = fileContent;
 	if (!currentFileContentToTransfer)
@@ -1190,6 +968,8 @@ void FileTransferChatMessageModifier::releaseHttpRequest () {
 	currentFileContentToTransfer = nullptr;
 }
 
+/* -------------------------------------------------------------------------------------- */
+
 string FileTransferChatMessageModifier::createFakeFileTransferFromUrl (const string &url) {
 	string fileName = url.substr(url.find_last_of("/") + 1);
 	stringstream fakeXml;
@@ -1202,6 +982,170 @@ string FileTransferChatMessageModifier::createFakeFileTransferFromUrl (const str
 	fakeXml << "</file-info>\r\n";
 	fakeXml << "</file>";
 	return fakeXml.str();
+}
+
+string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
+		const FileTransferContent *parsedXmlFileTransferContent, 
+		const unsigned char *contentKey, size_t contentKeySize, 
+		const unsigned char *contentAuthTag, size_t contentAuthTagSize,
+		const string& realFileName) const 
+{
+	stringstream fakeXml;
+	fakeXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
+	fakeXml << "<file xmlns=\"urn:gsma:params:xml:ns:rcs:rcs:fthttp\">\r\n";
+	fakeXml << "<file-info type=\"file\">\r\n";
+	fakeXml << "<file-size>" << parsedXmlFileTransferContent->getFileSize() << "</file-size>\r\n";
+
+	if (contentKeySize > 0) {
+		size_t b64Size = 0;
+		bctbx_base64_encode(nullptr, &b64Size, contentKey, contentKeySize);
+		unsigned char *keyb64 = (unsigned char *)ms_malloc0(b64Size + 1);
+
+		bctbx_base64_encode(keyb64, &b64Size, contentKey, contentKeySize);
+		keyb64[b64Size] = '\0';
+		fakeXml << "<file-key>" << keyb64 << "</file-key>\r\n";
+
+		if (contentAuthTagSize > 0) {
+			// Convert it to b64
+			b64Size = 0;
+			bctbx_base64_encode(nullptr, &b64Size, contentAuthTag, contentAuthTagSize);
+			unsigned char *authTagb64 = (unsigned char *)ms_malloc0(b64Size + 1);
+
+			bctbx_base64_encode(authTagb64, &b64Size, contentAuthTag, contentAuthTagSize);
+			authTagb64[b64Size] = '\0';
+
+			// add the node containing the key to the file-info node
+			fakeXml << "<file-authTag>" << authTagb64 << "</file-authTag>\r\n";
+
+			// cleaning
+			ms_free(authTagb64);
+		}
+
+		// Use real file-name
+		fakeXml << "<file-name>" << realFileName << "</file-name>\r\n";
+	} else {
+		fakeXml << "<file-name>" << parsedXmlFileTransferContent->getFileName() << "</file-name>\r\n";
+	}
+	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getContentType() << "</content-type>\r\n";
+
+	Variant variant = parsedXmlFileTransferContent->getProperty("validUntil");
+	if (variant.isValid()) {
+		string validUntil = variant.getValue<string>();
+		fakeXml << "<data url=\"" << parsedXmlFileTransferContent->getFileUrl() << "\" until=\"" << validUntil << "\"/>\r\n";
+	} else {
+		fakeXml << "<data url=\"" << parsedXmlFileTransferContent->getFileUrl() << "\"/>\r\n";
+	}
+
+	fakeXml << "</file-info>\r\n";
+	fakeXml << "</file>";
+
+	string result = fakeXml.str();
+	lDebug() << "[File Transfer Chat Message Modifier] Generated XML is: " << result;
+	return result;
+}
+
+/* clean the download file name: we must avoid any directory separator (/ or \)
+ * so the file is saved in the intended directory */
+static std::string cleanDownloadFileName(std::string fileName) {
+	auto dirSepPos = fileName.find_last_of("/\\");
+	if (dirSepPos == std::string::npos) {
+		return fileName;
+	}
+	return fileName.substr(dirSepPos+1);
+}
+
+void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const char *xml, FileTransferContent *fileTransferContent) const {
+	xmlDocPtr xmlMessageBody;
+	xmlNodePtr cur;
+	/* parse the msg body to get all informations from it */
+	xmlMessageBody = xmlParseDoc((const xmlChar *)xml);
+
+	cur = xmlDocGetRootElement(xmlMessageBody);
+	if (cur) {
+		cur = cur->xmlChildrenNode;
+		while (cur) {
+			if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) {
+				/* we found a file info node, check if it has a type="file" attribute */
+				xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
+				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) { /* this is the node we are looking for */
+					cur = cur->xmlChildrenNode; /* now loop on the content of the file-info node */
+					while (cur) {
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-size")) {
+							xmlChar *fileSizeString = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							size_t size = (size_t)strtol((const char *)fileSizeString, nullptr, 10);
+							fileTransferContent->setFileSize(size);
+							xmlFree(fileSizeString);
+						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
+							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							fileTransferContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
+							xmlFree(filename);
+						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
+							xmlChar *fileUrl = nullptr;
+							fileUrl = xmlGetProp(cur, (const xmlChar *)"url");
+							fileTransferContent->setFileUrl(fileUrl ? (const char *)fileUrl : "");
+							xmlFree(fileUrl);
+
+							xmlChar *validUntil = nullptr;
+							validUntil = xmlGetProp(cur, (const xmlChar *)"until");
+							if (validUntil != NULL) { // Will be null when fake XML is made for external body URL message
+								fileTransferContent->setProperty("validUntil", std::string((char *)validUntil));
+								xmlFree(validUntil);
+							}
+						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-key")) {
+							// There is a key in the msg: file has been encrypted.
+							// Convert the key from base 64.
+							xmlChar *keyb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							if (keyb64) {
+								size_t keyb64Length = strlen(reinterpret_cast<char *>(keyb64));
+
+								size_t keyLength;
+								bctbx_base64_decode(nullptr, &keyLength, keyb64, keyb64Length);
+
+								uint8_t *keyBuffer = static_cast<uint8_t *>(malloc(keyLength + 1));
+
+								// Decode the key into local key buffer.
+								bctbx_base64_decode(keyBuffer, &keyLength, keyb64, keyb64Length);
+								keyBuffer[keyLength] = '\0';
+								fileTransferContent->setFileKey(reinterpret_cast<char *>(keyBuffer), keyLength);
+								xmlFree(keyb64);
+								free(keyBuffer);
+							}
+						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-authTag")) {
+							// There is authentication tag in the msg: file has been encrypted.
+							// Convert the tag from base 64.
+							xmlChar *authTagb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							if (authTagb64) {
+								size_t authTagb64Length = strlen(reinterpret_cast<char *>(authTagb64));
+
+								size_t authTagLength;
+								bctbx_base64_decode(nullptr, &authTagLength, authTagb64, authTagb64Length);
+
+								uint8_t *authTagBuffer = static_cast<uint8_t *>(malloc(authTagLength + 1));
+
+								// Decode the authTag into local authTag buffer.
+								bctbx_base64_decode(authTagBuffer, &authTagLength, authTagb64, authTagb64Length);
+								authTagBuffer[authTagLength] = '\0';
+								fileTransferContent->setFileAuthTag(reinterpret_cast<char *>(authTagBuffer), authTagLength);
+								xmlFree(authTagb64);
+								free(authTagBuffer);
+							}
+						}
+
+						cur = cur->next;
+					}
+					xmlFree(typeAttribute);
+					break;
+				}
+				xmlFree(typeAttribute);
+			}
+			cur = cur->next;
+		}
+	}
+	xmlFreeDoc(xmlMessageBody);
 }
 
 LINPHONE_END_NAMESPACE
