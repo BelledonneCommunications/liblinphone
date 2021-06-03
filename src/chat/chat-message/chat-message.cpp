@@ -37,6 +37,7 @@
 #include "conference/participant.h"
 #include "conference/participant-imdn-state.h"
 #include "content/content-disposition.h"
+#include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "core/core.h"
 #include "core/core-p.h"
@@ -1272,6 +1273,31 @@ void ChatMessagePrivate::setCallId (const string &id) {
 
 void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 	forwardInfo = fInfo;
+}
+
+void ChatMessagePrivate::setReplyToMessageIdAndSenderAddress (const string &id, const IdentityAddress& sender) {
+	replyingToMessageId = id;
+	replyingToMessageSender = sender;
+}
+
+bool ChatMessage::isReply () const {
+	L_D();
+	return !d->replyingToMessageId.empty();
+}
+
+const string& ChatMessage::getReplyToMessageId () const {
+	L_D();
+	return d->replyingToMessageId;
+}
+
+const IdentityAddress& ChatMessage::getReplyToSenderAddress () const {
+	L_D();
+	return d->replyingToMessageSender;
+}
+
+shared_ptr<ChatMessage> ChatMessage::getReplyToMessage() const {
+	if (!isReply()) return nullptr;
+	return getChatRoom()->findChatMessage(getReplyToMessageId());
 }
 
 void ChatMessagePrivate::enableEphemeralWithTime (long time) {
