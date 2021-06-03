@@ -144,6 +144,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, p);
 
+
 		success =  true;
 
 	} else {
@@ -164,7 +165,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		if (remoteContact) {
 			// If device is not found, then add it
 			if (p->findDevice(*remoteContact, false) == nullptr) {
-				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress();
+				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress() << " in conference " << getConferenceAddress().asString();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				call->setConference(toC());
 				device->setSession(call->getActiveSession());
@@ -491,14 +492,27 @@ void LocalConference::addLocalEndpoint () {
 
 	if (confParams->videoEnabled()){
 		mixer = mMixerSession->getMixerByType(SalVideo);
+
 		if (mixer){
 			mixer->enableLocalParticipant(true);
 			VideoControlInterface *vci = getVideoControlInterface();
 			if (vci){
 				vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
 				vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
+
+				const auto & dev = me->getDevices().front();
+				if (dev->getLabel().empty()) {
+					// TODO: DELETE when labels will be implemented
+					char label[10];
+					belle_sip_random_token(label,sizeof(label));
+					dev->setLabel(label);
+				}
+	lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream " << dynamic_cast<MS2VideoControl*>(vci)->getVideoStream() << " of local participant " << dev->getAddress() << " video control interface " << vci;
+				video_stream_set_label(dynamic_cast<MS2VideoControl*>(vci)->getVideoStream(), dev->getLabel().c_str());
 			}
+
 		}
+
 	}
 
 	if (!isIn()) {
@@ -532,6 +546,17 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 			linphone_call_params_set_conference_id(new_params, confId.c_str());
 
 			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
+
+			if (!confParams->getProxyCfg()) {
+				auto callProxyCfg = linphone_call_get_dest_proxy(call);
+				if (callProxyCfg) {
+					confParams->setProxyCfg(callProxyCfg);
+				} else {
+					confParams->setProxyCfg(linphone_core_lookup_known_proxy(getCore()->getCCore(), address));
+				}
+			}
+
+			tryAddMeDevice();
 
 			if (!call){
 				lError() << "LocalConference::inviteAddresses(): could not invite participant";
@@ -585,12 +610,41 @@ int LocalConference::participantDeviceMediaChanged(const IdentityAddress &addr) 
 
 int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
-	if (device->updateMedia()) {
+	if (device->updateMedia() && ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created))) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
+		const auto & updatedParticipantSession = device->getSession();
+		lInfo() << "Re-INVITing participants because participant device " << device->getAddress().asString() << " (label " << device->getLabel() << ") changed media directions.";
+		updateAllParticipantSessionsExcept(updatedParticipantSession);
 		return 0;
 	}
 	return success;
+}
+
+bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> & session) {
+	bool result = true;
+	const Address * participantAddress = session->getRemoteContactAddress();
+	for (const auto & p : participants) {
+		for (const auto & dev : p->getDevices()) {
+			const auto & devSession = static_pointer_cast<MediaSession>(dev->getSession());
+			if (devSession != session) {
+				const MediaSessionParams * params = devSession->getMediaParams();
+
+				MediaSessionParams *currentParams = params->clone();
+				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its media capabilities.";
+				std::string subject("Participant " + participantAddress->asString() + " updated session");
+				const auto updateResult = devSession->update(currentParams, subject);
+				result &= (updateResult == 0);
+				delete currentParams;
+			}
+		}
+	}
+
+	if (!result) {
+		lInfo() << "Update of participant session following changes in call session of device " << participantAddress->asString() << " failed";
+	}
+
+	return result;
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -609,6 +663,17 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
 
+		if (!confParams->getProxyCfg()) {
+			auto callProxyCfg = linphone_call_get_dest_proxy(call->toC());
+			if (callProxyCfg) {
+				confParams->setProxyCfg(callProxyCfg);
+			} else {
+				confParams->setProxyCfg(linphone_core_lookup_known_proxy(getCore()->getCCore(), linphone_call_get_to_address(call->toC())));
+			}
+		}
+
+		tryAddMeDevice();
+
 		switch(state){
 			case LinphoneCallOutgoingInit:
 			case LinphoneCallOutgoingProgress:
@@ -618,6 +683,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
+				Conference::addParticipant(call);
 			break;
 			case LinphoneCallPaused:
 			{
@@ -629,9 +695,14 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
-				const_cast<LinphonePrivate::MediaSessionParams *>(
-					call->getParams())->enableVideo(getCurrentParams().videoEnabled());
+				// If conference doesn't support video capabilities, then disable video
+				if (!getCurrentParams().videoEnabled()) {
+					const_cast<LinphonePrivate::MediaSessionParams*>(
+						call->getParams())->enableVideo(false);
+				}
 				// Conference resumes call that previously paused in order to add the participant
+				Conference::addParticipant(call);
+
 				call->resume();
 			}
 			break;
@@ -640,8 +711,13 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			{
 				LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call->toC());
 				linphone_call_params_set_in_conference(params, TRUE);
-				linphone_call_params_enable_video(params, getCurrentParams().videoEnabled());
 				linphone_call_params_set_conference_id(params, confId.c_str());
+				// If conference doesn't support video capabilities, then disable video
+				if (!getCurrentParams().videoEnabled()) {
+					linphone_call_params_enable_video(params, FALSE);
+				}
+
+				Conference::addParticipant(call);
 
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -655,10 +731,16 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			break;
 		}
 
+		const auto & newParticipantSession = call->getActiveSession();
+		if (getCurrentParams().videoEnabled()) {
+			if (newParticipantSession->getRemoteContactAddress()) {
+				lInfo() << "Re-INVITing participants because participant device " << newParticipantSession->getRemoteContactAddress()->asString() << " joined conference " << getConferenceAddress();
+			}
+			updateAllParticipantSessionsExcept(newParticipantSession);
+		}
 		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
-		Conference::addParticipant(call);
 		if (localEndpointCanBeAdded){
 			/*
 			 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
@@ -670,7 +752,10 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		return true;
 	}
 
-	lError() << "Unable to add participant to conference " << getConferenceAddress() << " because it is in state " << linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(getState()));
+	char * confState = linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(getState()));
+	lError() << "Unable to add participant to conference " << getConferenceAddress() << " because it is in state " << confState;
+	ms_free(confState);
+
 	return false;
 }
 
@@ -698,6 +783,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		return -1;
 	}
 
+	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
+	if (participant) {
+		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
+		Conference::removeParticipant(participant);
+		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
+	}
+
 	CallSession::State sessionState = session->getState();
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
@@ -716,6 +808,11 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 
+		// Detach call from conference
+		if (call) {
+			call->setConference(nullptr);
+		}
+
 		if (participant->getPreserveSession()) {
 			// If the session is already paused,then send an update to kick the participant out of the conference, pause the call otherwise
 			if (sessionState == CallSession::State::Paused) {
@@ -726,6 +823,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				if (contactAddress.hasUriParam("conf-id")) {
 					err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->updateFromConference(currentParams);
 				}
+				delete currentParams;
 			} else {
 				/* Kick the session out of the conference by moving to the Paused state. */
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
@@ -742,17 +840,11 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->terminate();
 			}
 		}
-		// Detach call from conference
-		if (call) {
-			call->setConference(nullptr);
+
+		if (getCurrentParams().videoEnabled()) {
+			lInfo() << "Re-INVITing participants because participant device " << session->getRemoteContactAddress()->asString() << " left conference " << getConferenceAddress();
+			updateAllParticipantSessionsExcept(session);
 		}
-	}
-	
-	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
-	if (participant) {
-		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
-		Conference::removeParticipant(participant);
-		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 	}
 
 	// If conference is in termination pending state, terminate method is already taking care of state kicking participants out of the conference
@@ -894,6 +986,7 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
+	lInfo() << "Terminate conference " << getConferenceAddress();
 	setState(ConferenceInterface::State::TerminationPending);
 	for (auto participant : participants){
 		for (const auto & device : participant->getDevices()) {
@@ -950,12 +1043,13 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 			if (session){
 
 				const MediaSessionParams * params = session->getMediaParams();
-				MediaSessionParams *currentParams = params->clone();
 
-				if ((!!currentParams->videoEnabled()) != newConfParams.videoEnabled()){
+				if ((!!params->videoEnabled()) != newConfParams.videoEnabled()){
+					MediaSessionParams *currentParams = params->clone();
 					lInfo() << "Re-INVITing participant " << participant->getAddress().asString() << " to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
 					currentParams->enableVideo(newConfParams.videoEnabled());
 					session->update(currentParams);
+					delete currentParams;
 				}
 			}
 		}
@@ -973,6 +1067,11 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 		mediaCapabilities[ConferenceMediaCapabilities::Text] = newConfParams.chatEnabled();
 		time_t creationTime = time(nullptr);
 		notifyAvailableMediaChanged(creationTime, false, mediaCapabilities);
+	}
+	for (auto & meDev : me->getDevices()) {
+		meDev->setAudioDirection(this->confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		meDev->setVideoDirection(this->confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		meDev->setTextDirection(this->confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 	}
 	return ret;
 }
@@ -1662,12 +1761,19 @@ void RemoteConference::setSubject (const std::string &subject) {
 }
 
 bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
-	if (!getMe()->isAdmin()) {
-		lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin";
-		return false;
+	// Any remote participant can change the layout of the conference
+	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
+	bool layoutChanged = (getCurrentParams().getLayout() != newLayout);
+	if (getMe()->isAdmin()) {
+		return Conference::update(newParameters);
+	} else if (layoutChanged) {
+		ConferenceParams newParametersWithLayoutChanged(getCurrentParams());
+		newParametersWithLayoutChanged.setLayout(newLayout);
+		return Conference::update(newParametersWithLayoutChanged);
 	}
 
-	return Conference::update(newParameters);
+	lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin";
+	return false;
 }
 
 void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {

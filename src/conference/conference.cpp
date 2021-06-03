@@ -20,6 +20,7 @@
 #include "conference.h"
 #include "conference/participant-device.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
@@ -39,14 +40,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-
-ConferenceParams::ConferenceParams(const LinphoneCore *core) {
-	if(core) {
-		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
-		if(policy->automatically_initiate) m_enableVideo = true;
-	}
-}
-
 Conference::Conference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -57,6 +50,8 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
+	tryAddMeDevice();
+
 }
 
 Conference::~Conference () {
@@ -64,6 +59,22 @@ Conference::~Conference () {
 }
 
 // -----------------------------------------------------------------------------
+
+void Conference::tryAddMeDevice() {
+	if (me->getDevices().empty() && confParams->getProxyCfg()) {
+		char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
+		if (devAddrStr) {
+			Address devAddr(devAddrStr);
+			auto meDev = me->addDevice(devAddr);
+			ms_free(devAddrStr);
+			meDev->setAudioDirection(confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		}
+	}
+}
+
+
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
 	return activeParticipant;
@@ -141,7 +152,18 @@ void Conference::join () {}
 void Conference::leave () {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
+	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
+	bool layoutChanged = (confParams) ? (confParams->getLayout() != newLayout) : false;
 	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
+	if (layoutChanged) {
+		const auto & meSession = static_pointer_cast<MediaSession>(getMe()->getSession());
+		const MediaSessionParams * meParams = meSession->getMediaParams();
+		MediaSessionParams *clonedParams = meParams->clone();
+
+		std::string subject(std::string("Conference layout changed to ") + ((newLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
+
+		return meSession->update(clonedParams, subject);
+	}
 	return true;
 };
 
@@ -177,6 +199,7 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
 	for (const auto &participant : participants) {
+		lInfo() << "DEBUG Searching participant with address " << searchedAddr.asString() << " current participant " << participant->getAddress();
 		if (participant->getAddress() == searchedAddr) {
 			return participant;
 		}
@@ -197,6 +220,34 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const std::string &label) const {
+
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getLabel() == label)
+				return device;
+		}
+	}
+
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with label " << label;
+
+	return nullptr;
+}
+
+shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityAddress &addr) const {
+
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getAddress() == addr)
+				return device;
+		}
+	}
+
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with address " << addr.asString();
+
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_ptr<const CallSession> &session) const {
 
 	for (const auto &participant : participants) {
@@ -206,7 +257,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << this << " with call session " << session;
+	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session " << session;
 
 	return nullptr;
 }
