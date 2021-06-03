@@ -2946,6 +2946,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	bool_t caller_capability_negotiations_enabled = linphone_call_params_capability_negotiations_enabled(caller_params);
+	bool_t caller_capability_negotiation_reinvite_enabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
 	const LinphoneMediaEncryption caller_local_enc = linphone_call_params_get_media_encryption(caller_params);
 	const bool_t caller_mand_enc = linphone_call_params_mandatory_media_encryption_enabled (caller_params);
 	bctbx_list_t* caller_supported_encs = linphone_call_params_get_supported_encryptions (caller_params);
@@ -2968,6 +2969,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	bool_t callee_capability_negotiations_enabled = linphone_call_params_capability_negotiations_enabled(callee_params);
+	bool_t callee_capability_negotiation_reinvite_enabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params);
 	const LinphoneMediaEncryption callee_local_enc = linphone_call_params_get_media_encryption(callee_params);
 	const bool_t callee_mand_enc = linphone_call_params_mandatory_media_encryption_enabled (callee_params);
 
@@ -3066,7 +3068,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 		LinphoneNatPolicy * caller_policy = linphone_core_get_nat_policy(caller_mgr->lc);
 		LinphoneNatPolicy * callee_policy = linphone_core_get_nat_policy(callee_mgr->lc);
-		bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
+		bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc) ? callee_capability_negotiation_reinvite_enabled : caller_capability_negotiation_reinvite_enabled;
 
 		/*wait ice and/or capability negotiation re-invite*/
 		// If caller sets mandatory encryption, potential configurations are not added to the SDP as there is no choice to be made
