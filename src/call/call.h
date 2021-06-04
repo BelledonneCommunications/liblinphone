@@ -89,12 +89,14 @@ public:
 	);
 
 	bool isOpConfigured () const;
+	bool isDeclinedEarly () const;
 
 	LinphoneStatus accept (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptEarlyMedia (const MediaSessionParams *msp = nullptr);
 	std::shared_ptr<MediaSession> getMediaSession()const;
 	LinphoneStatus acceptUpdate (const MediaSessionParams *msp);
 	void cancelDtmfs ();
+	LinphoneStatus decline ();
 	LinphoneStatus decline (LinphoneReason reason);
 	LinphoneStatus decline (const LinphoneErrorInfo *ei);
 	LinphoneStatus deferUpdate ();
