@@ -220,20 +220,21 @@ void Call::terminateBecauseOfLostMedia () {
 	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
 }
 
-void Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
+bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
-		return;
+		return false;
 	}
 
 	static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
+	return true;
 
 }
 
-void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
+bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
-		return;
+		return false;
 	}
 
 	RingStream *ringStream = nullptr;
@@ -256,6 +257,8 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 			break;
 	}
+
+	return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -1177,15 +1180,15 @@ void Call::setSpeakerVolumeGain (float value) {
 }
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
-	setInputAudioDevicePrivate(audioDevice);
-
-	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	if (setInputAudioDevicePrivate(audioDevice)) {
+		linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	}
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
-	setOutputAudioDevicePrivate(audioDevice);
-
-	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	if (setOutputAudioDevicePrivate(audioDevice)) {
+		linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	}
 }
 
 AudioDevice* Call::getInputAudioDevice() const {

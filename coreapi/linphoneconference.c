@@ -159,7 +159,6 @@ bool_t linphone_conference_is_in (const LinphoneConference *conference) {
 void linphone_conference_set_input_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
 		MediaConference::Conference::toCpp(conference)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
-		linphone_conference_notify_audio_device_changed(conference, audio_device);
 	}
 }
 
