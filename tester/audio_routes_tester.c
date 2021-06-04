@@ -534,19 +534,23 @@ static void call_with_disconnecting_device_after_ringback(void) {
 	call_with_disconnecting_device_base(FALSE, FALSE, TRUE);
 }
 
+static LinphoneAudioDevice * dev_mux(LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
+	LinphoneAudioDevice *next_dev = NULL;
+	if (current_dev == dev0) {
+		next_dev = dev1;
+	} else {
+		next_dev = dev0;
+	}
+	return next_dev;
+}
+
 LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1) {
 
 	// Unref current_dev
 	linphone_audio_device_unref(current_dev);
 
 	if (enable) {
-		LinphoneAudioDevice *next_dev = NULL;
-
-		if (current_dev == dev0) {
-			next_dev = dev1;
-		} else {
-			next_dev = dev0;
-		}
+		LinphoneAudioDevice *next_dev = dev_mux(current_dev, dev0, dev1);
 
 		BC_ASSERT_PTR_NOT_NULL(next_dev);
 		next_dev = linphone_audio_device_ref(next_dev);
@@ -818,12 +822,12 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 
 	if (before_ringback) {
 		linphone_audio_device_unref(current_output_dev);
-		current_output_dev = dev1;
+		current_output_dev = dev_mux(current_output_dev, dev0, dev1);
 		BC_ASSERT_PTR_NOT_NULL(current_output_dev);
 		linphone_audio_device_ref(current_output_dev);
 
 		linphone_audio_device_unref(current_input_dev);
-		current_input_dev = dev0;
+		current_input_dev = dev_mux(current_input_dev, dev0, dev1);
 		BC_ASSERT_PTR_NOT_NULL(current_input_dev);
 		linphone_audio_device_ref(current_input_dev);
 
@@ -864,12 +868,12 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 
 	if (during_ringback) {
 		linphone_audio_device_unref(current_output_dev);
-		current_output_dev = dev0;
+		current_output_dev = dev_mux(current_output_dev, dev0, dev1);
 		BC_ASSERT_PTR_NOT_NULL(current_output_dev);
 		linphone_audio_device_ref(current_output_dev);
 
 		linphone_audio_device_unref(current_input_dev);
-		current_input_dev = dev1;
+		current_input_dev = dev_mux(current_input_dev, dev0, dev1);
 		BC_ASSERT_PTR_NOT_NULL(current_input_dev);
 		linphone_audio_device_ref(current_input_dev);
 
@@ -904,12 +908,12 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 
 	if (during_call) {
 		linphone_audio_device_unref(current_output_dev);
-		current_output_dev = dev1;
+		current_output_dev = dev_mux(current_output_dev, dev0, dev1);
 		BC_ASSERT_PTR_NOT_NULL(current_output_dev);
 		linphone_audio_device_ref(current_output_dev);
 
 		linphone_audio_device_unref(current_input_dev);
-		current_input_dev = dev0;
+		current_input_dev = dev_mux(current_input_dev, dev0, dev1);
 		BC_ASSERT_PTR_NOT_NULL(current_input_dev);
 		linphone_audio_device_ref(current_input_dev);
 
