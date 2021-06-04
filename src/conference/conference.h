@@ -129,6 +129,8 @@ public:
 	virtual void join () override;
 	// TODO: End Delete
 
+	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call);
+
 	/* ConferenceInterface */
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 	std::shared_ptr<Participant> getMe () const override;
