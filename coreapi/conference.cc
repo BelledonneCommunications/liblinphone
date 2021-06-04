@@ -81,6 +81,10 @@ Conference::~Conference() {
 }
 
 void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
+	if (audioDevice == getInputAudioDevice()) {
+		lInfo() << "Input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") used conference " << getConferenceAddress() << " is unchanged";
+		return;
+	}
 	if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) != 0)) {
 		AudioControlInterface *aci =getAudioControlInterface();
 		if (aci) {
@@ -96,6 +100,10 @@ void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
 }
 
 void Conference::setOutputAudioDevice(AudioDevice *audioDevice) {
+	if (audioDevice == getOutputAudioDevice()) {
+		lInfo() << "Output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") used conference " << getConferenceAddress() << " is unchanged";
+		return;
+	}
 	if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) != 0)) {
 		AudioControlInterface *aci =getAudioControlInterface();
 		if (aci) {
