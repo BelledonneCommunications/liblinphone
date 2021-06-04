@@ -5138,12 +5138,16 @@ static void simple_call_with_gruu_only_one_device_ring(void) {
 	pauline_cfg = linphone_core_get_default_proxy_config(pauline->lc);
 	pauline_addr = linphone_proxy_config_get_contact(pauline_cfg);
 	BC_ASSERT_PTR_NOT_NULL(pauline_addr);
-	BC_ASSERT_PTR_NOT_NULL(strstr(linphone_address_as_string_uri_only(pauline_addr), "gr"));
+	char * pauline_addr_str = linphone_address_as_string_uri_only(pauline_addr);
+	BC_ASSERT_PTR_NOT_NULL(strstr(pauline_addr_str, "gr"));
 	pauline_cfg2 = linphone_core_get_default_proxy_config(pauline2->lc);
 	pauline_addr2 = linphone_proxy_config_get_contact(pauline_cfg2);
 	BC_ASSERT_PTR_NOT_NULL(pauline_addr2);
-	BC_ASSERT_PTR_NOT_NULL(strstr(linphone_address_as_string_uri_only(pauline_addr2), "gr"));
-	BC_ASSERT_NOT_EQUAL(linphone_address_as_string_uri_only(pauline_addr), linphone_address_as_string_uri_only(pauline_addr2), char*, "%s"); // Not same GRUU
+	char * pauline_addr2_str = linphone_address_as_string_uri_only(pauline_addr2);
+	BC_ASSERT_PTR_NOT_NULL(strstr(pauline_addr2_str, "gr"));
+	BC_ASSERT_NOT_EQUAL(pauline_addr_str, pauline_addr2_str, char*, "%s"); // Not same GRUU
+	ms_free(pauline_addr_str);
+	ms_free(pauline_addr2_str);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline_addr);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);

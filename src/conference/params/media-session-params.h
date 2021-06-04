@@ -36,7 +36,7 @@ namespace MediaConference {
 	class LocalConference;
 }
 
-class MediaSessionParams : public CallSessionParams {
+class LINPHONE_PUBLIC MediaSessionParams : public CallSessionParams {
 	friend class Call;
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
@@ -44,6 +44,7 @@ class MediaSessionParams : public CallSessionParams {
 	friend class MS2AudioStream;
 	friend class MS2VideoStream;
 	friend class MS2RTTStream;
+	friend class ParticipantDevice;
 
 	friend class MediaConference::LocalConference;
 public:

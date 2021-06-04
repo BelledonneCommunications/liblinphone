@@ -52,10 +52,17 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
 		const SalStreamDescription & findStream(SalMediaProto proto, SalStreamType type) const;
+		unsigned int nbStreamsOfType(SalStreamType type) const;
 		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
 		const SalStreamDescription & getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
 		const SalStreamDescription findSecureStreamOfType(SalStreamType type) const;
 		const SalStreamDescription findBestStream(SalStreamType type) const;
+		const SalStreamDescription & findMainStreamOfType(SalStreamType type) const;
+		const SalStreamDescription & findStreamWithSdpAttribute(const std::string name, const std::string value) const;
+		const SalStreamDescription findFirstStreamOfType(SalStreamType type) const;
+		const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
+		int findIdxMainStreamOfType(SalStreamType type) const;
+		int findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const;
 
 		bool isEmpty() const;
 
@@ -72,6 +79,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasLimeIk() const;
 		bool hasIpv6() const;
 
+		SalMediaDescription &operator=(const SalMediaDescription & other);
 		bool operator==(const SalMediaDescription & other) const;
 		bool operator!=(const SalMediaDescription & other) const;
 		int equal(const SalMediaDescription & otherMd) const;
@@ -102,6 +110,9 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool haveLimeIk = false; /**< flag for lime Ik presence */
 
 	private:
+		std::vector<SalStreamDescription>::const_iterator findMainStreamItOfType(SalStreamType type) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const std::string name, const std::string value) const;
+
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
 

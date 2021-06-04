@@ -149,12 +149,12 @@ void MediaSessionParamsPrivate::adaptToNetwork (LinphoneCore *core, int pingTime
 
 SalStreamDir MediaSessionParamsPrivate::getSalAudioDirection () const {
 	L_Q();
-	return mediaDirectionToSalStreamDir(q->getAudioDirection());
+	return MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(q->getAudioDirection());
 }
 
 SalStreamDir MediaSessionParamsPrivate::getSalVideoDirection () const {
 	L_Q();
-	return mediaDirectionToSalStreamDir(q->getVideoDirection());
+	return MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(q->getVideoDirection());
 }
 
 // -----------------------------------------------------------------------------

@@ -131,6 +131,13 @@ LINPHONE_PUBLIC void linphone_conference_params_set_chat_enabled(LinphoneConfere
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
+ * Returns the proxy configuration for the conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return a pointer to the proxy configuration or NULL if it is not set. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params);
+
+/**
  * Enable local participant to enter the conference.
  * The local participant is the one driving the local #LinphoneCore. It uses the local sound devices.
  * The default value is TRUE. Setting to FALSE is mostly helpful when using liblinphone on a server application.
@@ -160,6 +167,19 @@ LINPHONE_PUBLIC void linphone_conference_params_set_one_participant_conference_e
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params);
 
+/**
+ * Enable conference with one participant.
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param layout #LinphoneConferenceLayout to use for the conference
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout);
+
+/**
+ * Returns whether conference can have only one participant
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return the #LinphoneConferenceLayout chosen for the conference
+ */
+LINPHONE_PUBLIC LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params);
 
 /**
  * Take a reference on a #LinphoneConference.
