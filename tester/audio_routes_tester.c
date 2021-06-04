@@ -1238,6 +1238,7 @@ static void simple_call_with_audio_devices_reload(void) {
 	// Pauline is using a file player as input so no sound card
 	BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(pauline_call));
 
+	int noDevChanges = marie->stat.number_of_LinphoneCoreAudioDeviceChanged;
 	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
 	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
 	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
@@ -1251,11 +1252,14 @@ static void simple_call_with_audio_devices_reload(void) {
 	linphone_audio_device_ref(audio_device);
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
+	// Core should not be notified of audio device changed
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, noDevChanges, int, "%d");
+
 	linphone_core_set_output_audio_device(marie->lc, audio_device);
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 6, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges+2), int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), audio_device);
 	linphone_core_set_input_audio_device(marie->lc, audio_device);
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, 8, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges+4), int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), audio_device);
 
 	end_call(marie, pauline);
