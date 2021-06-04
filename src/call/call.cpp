@@ -221,6 +221,10 @@ void Call::terminateBecauseOfLostMedia () {
 }
 
 bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
+	if (!audioDevice) {
+		lError() << "Unable to use audio device [" << audioDevice << "] to record incoming sound";
+		return false;
+	}
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return false;
@@ -231,12 +235,19 @@ bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 }
 
 bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
+	if (!audioDevice) {
+		lError() << "Unable to use audio device [" << audioDevice << "] to play outgoing sound";
+		return false;
+	}
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return false;
 	}
 
-	bool ret = (audioDevice != getOutputAudioDevice());
+	const auto & currentOutputDevice = getOutputAudioDevice();
+	// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
+	bool ret = currentOutputDevice ? ((audioDevice != currentOutputDevice) || (*audioDevice != *currentOutputDevice)) : true;
+
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:

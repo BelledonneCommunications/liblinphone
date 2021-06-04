@@ -81,40 +81,56 @@ Conference::~Conference() {
 }
 
 void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
-	if (audioDevice == getInputAudioDevice()) {
-		lInfo() << "Input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") used conference " << getConferenceAddress() << " is unchanged";
-		return;
-	}
-	if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) != 0)) {
-		AudioControlInterface *aci =getAudioControlInterface();
-		if (aci) {
-			lInfo() << "Set input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
-			aci->setInputDevice(audioDevice);
-			linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+	if (audioDevice) {
+		const auto & currentInputDevice = getInputAudioDevice();
+		// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
+		bool change = currentInputDevice ? ((audioDevice != currentInputDevice) || (*audioDevice != *currentInputDevice)) : true;
+
+		if (!change) {
+			lInfo() << "Input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") used conference " << getConferenceAddress() << " is unchanged";
+			return;
+		}
+		if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) != 0)) {
+			AudioControlInterface *aci =getAudioControlInterface();
+			if (aci) {
+				lInfo() << "Set input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+				aci->setInputDevice(audioDevice);
+				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+			} else {
+				lError() << "Unable to set input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+			}
 		} else {
-			lError() << "Unable to set input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+			lError() << "Unable to set input audio device to [" << audioDevice->toString() << "] (" << audioDevice << ") for conference " << getConferenceAddress() << " due to missing record capability";
 		}
 	} else {
-		lError() << "Unable to set input audio device to [" << audioDevice->toString() << "] (" << audioDevice << ") for conference " << getConferenceAddress();
+		lError() << "Unable to set input audio device to [" << (audioDevice ? audioDevice->toString() : "Undefined") << "] (" << audioDevice << ") for conference " << getConferenceAddress();
 	}
 }
 
 void Conference::setOutputAudioDevice(AudioDevice *audioDevice) {
-	if (audioDevice == getOutputAudioDevice()) {
-		lInfo() << "Output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") used conference " << getConferenceAddress() << " is unchanged";
-		return;
-	}
-	if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) != 0)) {
-		AudioControlInterface *aci =getAudioControlInterface();
-		if (aci) {
-			lInfo() << "Set output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
-			aci->setOutputDevice(audioDevice);
-			linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+	if (audioDevice) {
+		const auto & currentOutputDevice = getOutputAudioDevice();
+		// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
+		bool change = currentOutputDevice ? ((audioDevice != currentOutputDevice) || (*audioDevice != *currentOutputDevice)) : true;
+
+		if (!change) {
+			lInfo() << "Output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") used conference " << getConferenceAddress() << " is unchanged";
+			return;
+		}
+		if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) != 0) {
+			AudioControlInterface *aci =getAudioControlInterface();
+			if (aci) {
+				lInfo() << "Set output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+				aci->setOutputDevice(audioDevice);
+				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+			} else {
+				lError() << "Unable to set output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+			}
 		} else {
-			lError() << "Unable to set output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+			lError() << "Unable to set output audio device to [" << audioDevice->toString() << "] (" << audioDevice << ") for conference " << getConferenceAddress() << " due to missing play capability";
 		}
 	} else {
-		lError() << "Unable to set output audio device to [" << audioDevice->toString() << "] (" << audioDevice << ") for conference " << getConferenceAddress();
+		lError() << "Unable to set output audio device to [" << (audioDevice ? audioDevice->toString() : "Undefined") << "] (" << audioDevice << ") for conference " << getConferenceAddress();
 	}
 }
 
