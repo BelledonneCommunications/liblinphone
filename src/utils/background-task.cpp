@@ -98,8 +98,6 @@ void ExtraBackgroundTask::handleTimeout() {
 }
 
 void ExtraBackgroundTask::handleSalTimeout() {
-	BackgroundTask::handleSalTimeout();
-
 	sExtraSalFunc();
 }
 
