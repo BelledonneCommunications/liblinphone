@@ -226,8 +226,7 @@ bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 		return false;
 	}
 
-	static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
-	return true;
+	return static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
 
 }
 
@@ -237,6 +236,7 @@ bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 		return false;
 	}
 
+	bool ret = (audioDevice != getOutputAudioDevice());
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
@@ -254,11 +254,11 @@ bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 			}
 			break;
 		default:
-			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
+			ret = static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 			break;
 	}
 
-	return true;
+	return ret;
 }
 
 // -----------------------------------------------------------------------------

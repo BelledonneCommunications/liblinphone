@@ -3117,18 +3117,28 @@ StreamsGroup & MediaSession::getStreamsGroup()const{
 	return d->getStreamsGroup();
 }
 
-void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
+bool MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
-	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	d->setCurrentInputAudioDevice(audioDevice);
-	if (i) i->setInputDevice(audioDevice);
+	if (audioDevice != getInputAudioDevice()) {
+		AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+		d->setCurrentInputAudioDevice(audioDevice);
+		if (i) i->setInputDevice(audioDevice);
+		return true;
+	}
+
+	return false;
 }
 
-void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
+bool MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
-	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	d->setCurrentOutputAudioDevice(audioDevice);
-	if (i) i->setOutputDevice(audioDevice);
+	if (audioDevice != getOutputAudioDevice()) {
+		AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+		d->setCurrentOutputAudioDevice(audioDevice);
+		if (i) i->setOutputDevice(audioDevice);
+		return true;
+	}
+
+	return false;
 }
 
 AudioDevice* MediaSession::getInputAudioDevice() const {
