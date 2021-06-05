@@ -935,6 +935,7 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 				content = (LinphoneContent *)bctbx_list_get_data(contents);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				compare_files(send_filepath, linphone_content_get_file_path(content));
+				BC_ASSERT_STRING_NOT_EQUAL(linphone_content_get_subtype(content), "vnd.gsma.rcs-ft-http+xml");
 
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));

@@ -41,6 +41,7 @@ public:
 	size_t fileSize = 0;
 	std::vector<char> fileKey;
 	std::vector<char> fileAuthTag;
+	ContentType fileContentType;
 	~FileTransferContentPrivate() {
 		if (!fileKey.empty()) {
 			bctbx_clean(fileKey.data(), fileKey.size());
@@ -64,6 +65,7 @@ FileTransferContent::FileTransferContent (const FileTransferContent &other) : Co
 	d->fileSize = other.getFileSize();
 	d->fileKey = other.getFileKey();
 	d->fileAuthTag = other.getFileAuthTag();
+	d->fileContentType = other.getFileContentType();
 }
 
 FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
@@ -76,6 +78,7 @@ FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content
 	d->fileSize = move(other.getPrivate()->fileSize);
 	d->fileKey = move(other.getPrivate()->fileKey);
 	d->fileAuthTag = move(other.getPrivate()->fileAuthTag);
+	d->fileContentType = move(other.getPrivate()->fileContentType);
 }
 
 FileTransferContent &FileTransferContent::operator= (const FileTransferContent &other) {
@@ -89,6 +92,7 @@ FileTransferContent &FileTransferContent::operator= (const FileTransferContent &
 		d->fileSize = other.getFileSize();
 		d->fileKey = other.getFileKey();
 		d->fileAuthTag = other.getFileAuthTag();
+		d->fileContentType = other.getFileContentType();
 	}
 
 	return *this;
@@ -104,6 +108,7 @@ FileTransferContent &FileTransferContent::operator= (FileTransferContent &&other
 	d->fileSize = move(other.getPrivate()->fileSize);
 	d->fileKey = move(other.getPrivate()->fileKey);
 	d->fileAuthTag = move(other.getPrivate()->fileAuthTag);
+	d->fileContentType = move(other.getPrivate()->fileContentType);
 
 	return *this;
 }
@@ -114,7 +119,8 @@ bool FileTransferContent::operator== (const FileTransferContent &other) const {
 		d->fileName == other.getFileName() &&
 		d->fileUrl == other.getFileUrl() &&
 		d->filePath == other.getFilePath() &&
-		d->fileSize == other.getFileSize();
+		d->fileSize == other.getFileSize() &&
+		d->fileContentType == other.getFileContentType();
 }
 
 void FileTransferContent::setFileName (const string &name) {
@@ -195,6 +201,16 @@ const vector<char> &FileTransferContent::getFileAuthTag () const {
 size_t FileTransferContent::getFileAuthTagSize() const {
 	L_D();
 	return d->fileAuthTag.size();
+}
+
+void FileTransferContent::setFileContentType(const ContentType& contentType) {
+	L_D();
+	d->fileContentType = contentType;
+}
+
+const ContentType& FileTransferContent::getFileContentType () const {
+	L_D();
+	return d->fileContentType;
 }
 
 bool FileTransferContent::isFile () const {
