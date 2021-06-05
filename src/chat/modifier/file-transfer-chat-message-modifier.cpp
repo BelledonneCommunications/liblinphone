@@ -856,7 +856,7 @@ static void createFileContentFromFileTransferContent (FileTransferContent *fileT
 	fileContent->setFileName(fileTransferContent->getFileName());
 	fileContent->setFileSize(fileTransferContent->getFileSize());
 	fileContent->setFilePath(fileTransferContent->getFilePath());
-	fileContent->setContentType(fileTransferContent->getContentType());
+	fileContent->setContentType(fileTransferContent->getFileContentType());
 
 	// Link the FileContent to the FileTransferContent
 	fileTransferContent->setFileContent(fileContent);
@@ -1026,7 +1026,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 	} else {
 		fakeXml << "<file-name>" << parsedXmlFileTransferContent->getFileName() << "</file-name>\r\n";
 	}
-	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getContentType() << "</content-type>\r\n";
+	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getFileContentType() << "</content-type>\r\n";
 
 	Variant variant = parsedXmlFileTransferContent->getProperty("validUntil");
 	if (variant.isValid()) {
@@ -1080,6 +1080,22 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
 							fileTransferContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
 							xmlFree(filename);
+						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
+							xmlChar *content_type = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							int contentTypeIndex = 0;
+							char *type;
+							char *subtype;
+							while (content_type[contentTypeIndex] != '/' && content_type[contentTypeIndex] != '\0') {
+								contentTypeIndex++;
+							}
+							type = ms_strndup((char *)content_type, contentTypeIndex);
+							subtype = ms_strdup(((char *)content_type + contentTypeIndex + 1));
+							ContentType contentType(type, subtype);
+							fileTransferContent->setFileContentType(contentType);
+							ms_free(subtype);
+							ms_free(type);
+							ms_free(content_type);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
 							xmlChar *fileUrl = nullptr;
