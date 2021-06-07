@@ -2990,7 +2990,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
-			d->makeLocalMediaDescription(true, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
+			d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
 
 		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
 			L_D();
