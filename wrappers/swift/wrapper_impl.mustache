@@ -566,6 +566,7 @@ public class {{className}} : LinphoneObject
 			cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
 		}
 		let exception_result = {{setter_c_name}}(cPtr, cList)
+		bctbx_list_free(cList)
 		{{/is_string_list}}
 		{{#is_class_list}}
 		var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
@@ -573,6 +574,7 @@ public class {{className}} : LinphoneObject
 			cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
 		}
 		let exception_result = {{setter_c_name}}(cPtr, cList)
+		bctbx_list_free(cList)
 		{{/is_class_list}}
 		guard exception_result == 0 else {
 			throw LinphoneError.exception(result: "username setter returned value \(exception_result)")

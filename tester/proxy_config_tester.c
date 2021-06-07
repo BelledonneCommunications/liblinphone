@@ -274,6 +274,36 @@ static void single_route(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void multiple_route(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
+
+	linphone_proxy_config_set_routes(marie_cfg, NULL);// Clear routes
+	const bctbx_list_t *empty_routes = linphone_proxy_config_get_routes(marie_cfg);
+	BC_ASSERT_EQUAL(bctbx_list_size(empty_routes), 0, int, "%d");
+
+	bctbx_list_t * new_routes = NULL;
+	new_routes = bctbx_list_append(new_routes, ms_strdup("<sip:sip.example.org;transport=tcp>"));
+	new_routes = bctbx_list_append(new_routes, ms_strdup("sip:sip.linphone.org"));
+	new_routes = bctbx_list_append(new_routes, ms_strdup("s:sip.linphone.org"));
+	new_routes = bctbx_list_append(new_routes, ms_strdup("false_ero\nbad\\url::"));
+
+	linphone_proxy_config_set_routes(marie_cfg, new_routes);
+
+	const bctbx_list_t *routes = linphone_proxy_config_get_routes(marie_cfg);
+	BC_ASSERT_PTR_NOT_NULL(routes);
+	BC_ASSERT_EQUAL(bctbx_list_size(routes), 2, int, "%d");// 2 are good, 2 are bad
+
+	const char *route = (const char *)bctbx_list_get_data(routes);
+	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "<sip:sip.example.org;transport=tcp>");
+	BC_ASSERT_STRING_EQUAL(route, "<sip:sip.example.org;transport=tcp>");
+	route = (const char *)bctbx_list_get_data(bctbx_list_next(routes));
+	BC_ASSERT_STRING_EQUAL(route, "sip:sip.linphone.org");
+
+	linphone_core_manager_destroy(marie);
+}
+
 /*
  * Dependent proxy config scenario: pauline@example.org, marie@example.org and marie@sip2.linphone.org
  * marie@sip2.linphone.org is marked 'Dependent' on marie@example.org.
@@ -1063,6 +1093,7 @@ test_t proxy_config_tests[] = {
 	TEST_NO_TAG("SIP URI normalization", sip_uri_normalization),
 	TEST_NO_TAG("Load new default value for proxy config", load_dynamic_proxy_config),
 	TEST_NO_TAG("Single route", single_route),
+	TEST_NO_TAG("Multiple routes", multiple_route),
 	TEST_NO_TAG("Proxy dependency", dependent_proxy_config),
 	TEST_NO_TAG("Dependent proxy dependency register", proxy_config_dependent_register),
 	TEST_NO_TAG("Dependent proxy state changed", proxy_config_dependent_register_state_changed),
