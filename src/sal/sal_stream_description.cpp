@@ -87,6 +87,8 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	ice_pwd = other.ice_pwd;
 	mid = other.mid;
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
+	mixer_to_client_extension_id = other.mixer_to_client_extension_id;
+	client_to_mixer_extension_id = other.client_to_mixer_extension_id;
 	ice_mismatch = other.ice_mismatch;
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
@@ -261,10 +263,15 @@ SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaD
 
 		if (strcasecmp(attr_name, "extmap") == 0){
 			char *extmap_urn = (char*)bctbx_malloc0(strlen(attr_value) + 1);
-			int rtp_ext_header_id = 0;
-			if (sscanf(attr_value, "%i %s", &rtp_ext_header_id, extmap_urn) > 0
-				&& strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0){
-				mid_rtp_ext_header_id = rtp_ext_header_id;
+			int value = 0;
+			if (sscanf(attr_value, "%i %s", &value, extmap_urn) > 0){
+				if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0){
+					mid_rtp_ext_header_id = value;
+				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:csrc-audio-level") == 0) {
+					mixer_to_client_extension_id = value;
+				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:ssrc-audio-level") == 0) {
+					client_to_mixer_extension_id = value;
+				}
 			}
 			bctbx_free(extmap_urn);
 		}
@@ -313,6 +320,8 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	ice_pwd = other.ice_pwd;
 	mid = other.mid;
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
+	mixer_to_client_extension_id = other.mixer_to_client_extension_id;
+	client_to_mixer_extension_id = other.client_to_mixer_extension_id;
 	ice_mismatch = other.ice_mismatch;
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
@@ -416,10 +425,13 @@ int SalStreamDescription::equal(const SalStreamDescription & other) const {
 	if (ice_ufrag.compare(other.ice_ufrag) != 0 && !other.ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 	if (ice_pwd.compare(other.ice_pwd) != 0 && !other.ice_pwd.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 
-
 	/*DTLS*/
 	if (dtls_role != other.dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 	if (dtls_fingerprint.compare(other.dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+
+	/* Extensions */
+	if (mixer_to_client_extension_id != other.mixer_to_client_extension_id) result |= SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
+	if (client_to_mixer_extension_id != other.client_to_mixer_extension_id) result |= SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED;
 
 	return result;
 }
@@ -654,6 +666,18 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 	}
 	addMidAttributesToSdp(media_desc);
+
+	if (mixer_to_client_extension_id != 0) {
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:csrc-audio-level", mixer_to_client_extension_id);
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
+		bctbx_free(value);
+	}
+
+	if (client_to_mixer_extension_id != 0) {
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:ssrc-audio-level vad=off", client_to_mixer_extension_id);
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
+		bctbx_free(value);
+	}
 
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
