@@ -534,7 +534,7 @@ void Account::registerAccount () {
 		linphone_address_unref(proxy);
 		if (mOp)
 			mOp->release();
-		mOp = new SalRegisterOp(mCore->sal);
+		mOp = new SalRegisterOp(mCore->sal.get());
 
 		linphone_configure_op(mCore, mOp, mParams->mIdentityAddress, mSentHeaders, FALSE);
 
