@@ -697,7 +697,7 @@ namespace LinphonePrivate {
 	MSFactory* factory; \
 	MSList* vtable_refs; \
 	int vtable_notify_recursion; \
-	LinphonePrivate::Sal *sal; \
+	std::shared_ptr<LinphonePrivate::Sal> sal; \
 	void *platform_helper; \
 	LinphoneGlobalState state; \
 	struct _LpConfig *config; \

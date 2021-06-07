@@ -944,7 +944,7 @@ void ChatMessagePrivate::send () {
 		LinphoneAddress *peer = linphone_address_new(toAddress.asString().c_str());
 		LinphoneAddress *local = linphone_address_new(fromAddress.asString().c_str());
 		/* Sending out of call */
-		salOp = op = new SalMessageOp(core->getCCore()->sal);
+		salOp = op = new SalMessageOp(core->getCCore()->sal.get());
 		linphone_configure_op_2(
 			core->getCCore(), op, local, peer, getSalCustomHeaders(),
 			!!linphone_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)

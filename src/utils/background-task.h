@@ -57,7 +57,7 @@ private:
 	static void sHandleTimeout(void *data);
 
 	belle_sip_source_t *mTimeout = nullptr;
-	Sal *mSal = nullptr;
+	std::weak_ptr<Sal> mSal;
 	std::string mName;
 	unsigned long mId = 0;
 };

@@ -140,7 +140,7 @@ static LinphoneEvent * linphone_event_new_base(LinphoneCore *lc, LinphoneSubscri
 }
 
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires){
-	LinphoneEvent *lev=linphone_event_new_base(lc, dir, name, new SalSubscribeOp(lc->sal));
+	LinphoneEvent *lev=linphone_event_new_base(lc, dir, name, new SalSubscribeOp(lc->sal.get()));
 	lev->expires=expires;
 	return lev;
 }
@@ -352,7 +352,7 @@ LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneAccount
 	if (!resource && account)
 		resource = linphone_account_params_get_identity_address(linphone_account_get_params(account));
 
-	lev = linphone_event_new_with_op(lc, new SalPublishOp(lc->sal), LinphoneSubscriptionInvalidDir, event);
+	lev = linphone_event_new_with_op(lc, new SalPublishOp(lc->sal.get()), LinphoneSubscriptionInvalidDir, event);
 	lev->expires = expires;
 	if (!account) account = linphone_core_lookup_known_account(lc, resource);
 	linphone_configure_op_with_account(lc,lev->op,resource,NULL, !!linphone_config_get_int(lc->config,"sip","publish_msg_with_contact",0),account);
