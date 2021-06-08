@@ -193,6 +193,7 @@
 			}
 			deviceIt = deviceIt->next;
 		}
+		bctbx_list_free_with_data(deviceIt, (void (*)(void *))linphone_audio_device_unref);
 		
 		if (inputRequiresUpdate) {
 			ms_warning("Current audio route input is '%s', but we could not find the matching device in the linphone devices list", currentInputPort.c_str());

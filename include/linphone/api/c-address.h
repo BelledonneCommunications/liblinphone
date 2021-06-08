@@ -199,7 +199,7 @@ LINPHONE_PUBLIC void linphone_address_clean (LinphoneAddress *address);
  * Returns the address as a string.
  * The returned char * must be freed by the application. Use ms_free().
  * @param address a #LinphoneAddress object. @notnil
- * @return a string representation of the address. @notnil
+ * @return a string representation of the address. @notnil @tobefreed
  **/
 LINPHONE_PUBLIC char *linphone_address_as_string (const LinphoneAddress *address);
 
@@ -207,7 +207,7 @@ LINPHONE_PUBLIC char *linphone_address_as_string (const LinphoneAddress *address
  * Returns the SIP uri only as a string, that is display name is removed.
  * The returned char * must be freed by the application. Use ms_free().
  * @param address a #LinphoneAddress object. @notnil
- * @return a string representation of the address. @notnil
+ * @return a string representation of the address. @notnil @tobefreed
  **/
 LINPHONE_PUBLIC char *linphone_address_as_string_uri_only (const LinphoneAddress *address);
 
