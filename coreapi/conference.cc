@@ -50,7 +50,6 @@
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #endif // HAVE_ADVANCED_IM
 
-
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
@@ -59,7 +58,6 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 namespace MediaConference{
-
 
 Conference::Conference(
 	const shared_ptr<Core> &core,
@@ -78,6 +76,80 @@ Conference::Conference(
 
 Conference::~Conference() {
 	bctbx_list_free_with_data(mCallbacks, (void(*)(void *))belle_sip_object_unref);
+}
+
+void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
+	if (audioDevice) {
+		const auto & currentInputDevice = getInputAudioDevice();
+		// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
+		bool change = currentInputDevice ? ((audioDevice != currentInputDevice) || (*audioDevice != *currentInputDevice)) : true;
+
+		if (!change) {
+			lInfo() << "Ignoring request to change input audio device of conference " << getConferenceAddress() << " to [" << audioDevice->toString() << "] (" << audioDevice << ") because it is the same as the one currently used";
+			return;
+		}
+		if (audioDevice && ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) != 0)) {
+			AudioControlInterface *aci =getAudioControlInterface();
+			if (aci) {
+				lInfo() << "Set input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+				aci->setInputDevice(audioDevice);
+				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+			} else {
+				lError() << "Unable to set input audio device [" << audioDevice->toString() << "] (" << audioDevice << ") of conference " << getConferenceAddress() << " because audio control interface is NULL";
+			}
+		} else {
+			lError() << "Unable to set input audio device to [" << audioDevice->toString() << "] (" << audioDevice << ") for conference " << getConferenceAddress() << " due to missing record capability";
+		}
+	} else {
+		lError() << "Unable to set undefined input audio device (" << audioDevice << ") for conference " << getConferenceAddress();
+	}
+}
+
+void Conference::setOutputAudioDevice(AudioDevice *audioDevice) {
+	if (audioDevice) {
+		const auto & currentOutputDevice = getOutputAudioDevice();
+		// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
+		bool change = currentOutputDevice ? ((audioDevice != currentOutputDevice) || (*audioDevice != *currentOutputDevice)) : true;
+
+		if (!change) {
+			lInfo() << "Ignoring request to change output audio device of conference " << getConferenceAddress() << " to [" << audioDevice->toString() << "] (" << audioDevice << ") because it is the same as the one currently used";
+			return;
+		}
+		if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) != 0) {
+			AudioControlInterface *aci =getAudioControlInterface();
+			if (aci) {
+				lInfo() << "Set output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") to audio control interface " << aci << " for conference " << getConferenceAddress();
+				aci->setOutputDevice(audioDevice);
+				linphone_conference_notify_audio_device_changed(toC(), audioDevice->toC());
+			} else {
+				lError() << "Unable to set output audio device [" << audioDevice->toString() << "] (" << audioDevice << ") of conference " << getConferenceAddress() << " because audio control interface is NULL";
+			}
+		} else {
+			lError() << "Unable to set output audio device to [" << audioDevice->toString() << "] (" << audioDevice << ") for conference " << getConferenceAddress() << " due to missing play capability";
+		}
+	} else {
+		lError() << "Unable to set undefined output audio device (" << audioDevice << ") for conference " << getConferenceAddress();
+	}
+}
+
+AudioDevice* Conference::getInputAudioDevice() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->getInputDevice();
+	}
+
+	lError() << "Unable to retrieve input audio device from undefined audio control interface of conference " << getConferenceAddress();
+	return nullptr;
+}
+
+AudioDevice* Conference::getOutputAudioDevice() const {
+	AudioControlInterface *aci = getAudioControlInterface();
+	if (aci) {
+		return aci->getOutputDevice();
+	}
+
+	lError() << "Unable to retrieve output audio device from undefined audio control interface of conference " << getConferenceAddress();
+	return nullptr;
 }
 
 void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
@@ -122,7 +194,6 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 
 	return 0;
 }
-
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const Address &remoteAddress = *call->getRemoteAddress();
@@ -510,6 +581,13 @@ void LocalConference::addLocalEndpoint () {
 }
 
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
+
+	const auto & coreCurrentCall = getCore()->getCurrentCall();
+	const bool startingConference = (getState() == ConferenceInterface::State::CreationPending);
+
+	const auto & outputDevice = (coreCurrentCall) ? coreCurrentCall->getOutputAudioDevice() : nullptr;
+	const auto & inputDevice = (coreCurrentCall) ? coreCurrentCall->getInputAudioDevice() : nullptr;
+
 	for (const auto &address : addresses) {
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(getCore()->getCCore(), address);
 		char *cAddress = linphone_address_as_string(address);
@@ -554,6 +632,17 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 		addLocalEndpoint();
 		Call::toCpp(call)->setConference(toC());
 	}
+
+	// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
+	if (startingConference) {
+		if (outputDevice) {
+			setOutputAudioDevice(outputDevice);
+		}
+		if (inputDevice) {
+			setInputAudioDevice(inputDevice);
+		}
+	}
+
 	return 0;
 }
 
@@ -593,6 +682,31 @@ int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<Linphon
 	return success;
 }
 
+bool LocalConference::addParticipants (const std::list<std::shared_ptr<Call>> &calls) {
+	const auto & coreCurrentCall = getCore()->getCurrentCall();
+	const bool startingConference = (getState() == ConferenceInterface::State::CreationPending);
+	const auto & outputDevice = (coreCurrentCall) ? coreCurrentCall->getOutputAudioDevice() : nullptr;
+	const auto & inputDevice = (coreCurrentCall) ? coreCurrentCall->getInputAudioDevice() : nullptr;
+
+	bool success = Conference::addParticipants(calls);
+	// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
+	// Do not change audio route if participant addition is not successful
+	if (success && startingConference) {
+		if (outputDevice) {
+			setOutputAudioDevice(outputDevice);
+		}
+		if (inputDevice) {
+			setInputAudioDevice(inputDevice);
+		}
+	}
+
+	return success;
+}
+
+bool LocalConference::addParticipants (const std::list<IdentityAddress> &addresses) {
+	return Conference::addParticipants(addresses);
+}
+
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
 		lError() << "Already in conference";
@@ -602,6 +716,12 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	const Address & conferenceAddress = getConferenceAddress().asAddress();
 	const string & confId = conferenceAddress.getUriParamValue("conf-id");
 	const string & callConfId = call->getConferenceId();
+
+	const auto & coreCurrentCall = getCore()->getCurrentCall();
+	const bool startingConference = (getState() == ConferenceInterface::State::CreationPending);
+
+	const auto & outputDevice = (coreCurrentCall) ? coreCurrentCall->getOutputAudioDevice() : nullptr;
+	const auto & inputDevice = (coreCurrentCall) ? coreCurrentCall->getInputAudioDevice() : nullptr;
 
 	// Add participant only if creation is successful or call was previously part of the conference
 	bool canAddParticipant = ((callConfId.compare(confId) == 0) || ((getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created)));
@@ -665,6 +785,17 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			 * resources (mic and camera), which is done during the joinStreamsGroup() step.
 			 */
 			enter();
+
+			// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
+			if (startingConference) {
+				if (outputDevice) {
+					setOutputAudioDevice(outputDevice);
+				}
+				if (inputDevice) {
+					setInputAudioDevice(inputDevice);
+				}
+			}
+
 		}
 		setState(ConferenceInterface::State::Created);
 		return true;
@@ -1653,7 +1784,6 @@ void RemoteConference::setSubject (const std::string &subject) {
 		lInfo() << "Participants will be notified of the conference state changed once the conference is in state created";
 		return;
 	}
-
 
 	shared_ptr<CallSession> session = m_focusCall->getActiveSession();
 	if (session) {

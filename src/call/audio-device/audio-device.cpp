@@ -88,6 +88,20 @@ AudioDevice::~AudioDevice() {
     ms_snd_card_unref(soundCard);
 }
 
+bool AudioDevice::operator== (const AudioDevice &device) const {
+    return ((soundCard == device.getSoundCard()) &&
+            (deviceId.compare(device.getId()) == 0) &&
+            (deviceName.compare(device.getDeviceName()) == 0) &&
+            (driverName.compare(device.getDriverName()) == 0) &&
+            (capabilities == device.getCapabilities()) &&
+            (deviceType == device.getType())
+           );
+}
+
+bool AudioDevice::operator!= (const AudioDevice &device) const {
+	return !(*this == device);
+}
+
 MSSndCard *AudioDevice::getSoundCard() const {
     return soundCard;
 }
@@ -114,7 +128,7 @@ const AudioDevice::Type& AudioDevice::getType() const {
 
 string AudioDevice::toString() const {
     std::ostringstream ss;
-    ss << driverName << ": driver [" << driverName << "], type [";
+    ss << deviceName << ": driver [" << driverName << "], type [";
     switch (deviceType) {
         case AudioDevice::Type::Microphone:
             ss << "Microphone";
