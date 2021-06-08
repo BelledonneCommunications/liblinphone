@@ -279,8 +279,17 @@ static void call_received(SalCallOp *h) {
 
 	LinphoneCall *call = linphone_core_get_call_by_callid(lc, h->getCallId().c_str());
 	if (call) {
-		// There is already a call created when PushIncomingReceived
-		linphone_call_configure(call, fromAddr, toAddr, h);
+		lInfo() << "There is already a call created when PushIncomingReceived, do configure";
+		LinphonePrivate::Call::toCpp(call)->configure(LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(fromAddr), *L_GET_CPP_PTR_FROM_C_OBJECT(toAddr), nullptr, h, nullptr);
+		if (LinphonePrivate::Call::toCpp(call)->isDeclinedEarly()) {
+			lInfo() << "CallSession [" << LinphonePrivate::Call::toCpp(call)->getActiveSession() << "] is delined early.";
+			LinphonePrivate::Call::toCpp(call)->decline();
+			linphone_address_unref(fromAddr);
+			linphone_address_unref(toAddr);
+			return;
+		}
+		
+		LinphonePrivate::Call::toCpp(call)->initiateIncoming();
 	} else {
 		call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
 	}
