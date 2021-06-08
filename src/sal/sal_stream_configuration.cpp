@@ -300,7 +300,20 @@ const uint8_t * SalStreamConfiguration::getZrtpHash() const {
 }
 
 bool SalStreamConfiguration::hasZrtp() const {
-	return (haveZrtpHash==1);
+	if (haveZrtpHash==1) {
+		switch (proto){
+			case SalProtoRtpAvp:
+			case SalProtoRtpAvpf:
+				return true;
+			case SalProtoUdpTlsRtpSavpf:
+			case SalProtoUdpTlsRtpSavp:
+			case SalProtoRtpSavp:
+			case SalProtoRtpSavpf:
+			case SalProtoOther:
+				return false;
+		}
+	}
+	return false;
 }
 
 bool SalStreamConfiguration::hasLimeIk() const {
