@@ -133,6 +133,18 @@ LinphoneCallStats *Call::getPrivateStats (LinphoneStreamType type) const {
 
 void Call::initiateIncoming () {
 	getActiveSession()->initiateIncoming();
+	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
+	if (outputAudioDevice) {
+		setOutputAudioDevicePrivate(outputAudioDevice);
+	} else {
+		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
+	}
+	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
+	if (inputAudioDevice) {
+		setInputAudioDevicePrivate(inputAudioDevice);
+	} else {
+		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+	}
 }
 
 bool Call::initiateOutgoing () {
@@ -235,7 +247,8 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
 	}
-
+// we have to set the output audio device first, and then to take account of ringstream on special cases
+	static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
@@ -253,7 +266,6 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 			}
 			break;
 		default:
-			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 			break;
 	}
 }
