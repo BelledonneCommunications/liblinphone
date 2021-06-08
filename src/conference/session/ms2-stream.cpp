@@ -214,8 +214,9 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
-	// Add ZRTP attributes if the negotiated encryption is ZRTP
-	const bool addZrtpAttributes = (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionZRTP);
+	// Add ZRTP attributes if the negotiated encryption is ZRTP in case of internal update or it is the preferred media encryption
+	const auto mediaEncryption = (getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate() ? getMediaSessionPrivate().getNegotiatedMediaEncryption() : getMediaSessionPrivate().getParams()->getMediaEncryption());
+	const bool addZrtpAttributes = (mediaEncryption == LinphoneMediaEncryptionZRTP) && ((localDesc.getChosenConfiguration().getProto() == SalProtoRtpAvp) || (localDesc.getChosenConfiguration().getProto() == SalProtoRtpAvpf));
 	if (addZrtpAttributes) {
 		/* set the hello hash */
 		uint8_t enableZrtpHash = false;
