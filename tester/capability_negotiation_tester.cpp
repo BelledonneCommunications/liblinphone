@@ -215,7 +215,6 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 	linphone_core_reset_tone_manager_stats(caller->lc);
 	linphone_core_reset_tone_manager_stats(callee->lc);
 
-
 	bool_t caller_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(caller_params);
 	bool_t callee_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(callee_params);
 	const LinphoneMediaEncryption caller_encryption = linphone_call_params_get_media_encryption(caller_params);
@@ -317,18 +316,12 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
 		}
 
-		LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
-		BC_ASSERT_PTR_NOT_NULL(callee_call);
-
-		LinphoneCall * caller_call = linphone_core_get_current_call(caller->lc);
-		BC_ASSERT_PTR_NOT_NULL(caller_call);
-
 		if (!enable_video) {
-			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
-			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
+			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(calleeCall)));
+			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(callerCall)));
 
-			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
-			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
+			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(calleeCall)));
+			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(callerCall)));
 		}
 #ifdef VIDEO_ENABLED
 		else {
@@ -336,9 +329,9 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			reset_counters(&callee->stat);
 			stats caller_stat = caller->stat;
 			stats callee_stat = callee->stat;
-			LinphoneCallParams * params = linphone_core_create_call_params(callee->lc, callee_call);
+			LinphoneCallParams * params = linphone_core_create_call_params(callee->lc, calleeCall);
 			linphone_call_params_enable_video(params, TRUE);
-			linphone_call_update(callee_call, params);
+			linphone_call_update(calleeCall, params);
 			linphone_call_params_unref(params);
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallUpdating,(callee_stat.number_of_LinphoneCallUpdating+1)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallUpdatedByRemote,(caller_stat.number_of_LinphoneCallUpdatedByRemote+1)));
@@ -346,25 +339,27 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
 
+			// Update expected encryotion
 			get_expected_encryption_from_call_params(calleeCall, callerCall, &expectedEncryption, &potentialConfigurationChosen);
 
 			const bool_t capabilityNegotiationReinviteEnabledAfterUpdate = linphone_core_sdp_200_ack_enabled(callee->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(callerCall)) : linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(calleeCall));
 			bool sendReInviteAfterUpdate = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabledAfterUpdate) || (caller_ice_enabled && callee_ice_enabled);
+
 			const int expectedStreamsRunningAfterUpdate = 1 + ((sendReInviteAfterUpdate) ? 1 : 0);
 
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunningAfterUpdate)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunningAfterUpdate)));
-			liblinphone_tester_set_next_video_frame_decoded_cb(caller_call);
-			liblinphone_tester_set_next_video_frame_decoded_cb(callee_call);
+			liblinphone_tester_set_next_video_frame_decoded_cb(callerCall);
+			liblinphone_tester_set_next_video_frame_decoded_cb(calleeCall);
 
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_IframeDecoded,(callee_stat.number_of_IframeDecoded+1)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_IframeDecoded,(caller_stat.number_of_IframeDecoded+1)));
 
-			BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
-			BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
+			BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(calleeCall)));
+			BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(callerCall)));
 
-			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
-			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
+			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(calleeCall)));
+			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callerCall)));
 
 			int dummy=0;
 			wait_for_until(caller->lc,callee->lc,&dummy,1,3000); /*just to sleep while iterating 1s*/
