@@ -167,7 +167,11 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 	// When a stream is inactive, refpt->mime_type might be null
 	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
-		ret = ms_offer_answer_context_match_payload(ctx, Utils::listToBctbxList(local_payloads), refpt, Utils::listToBctbxList(remote_payloads), reading_response);
+		bctbx_list_t* remote_payload_list = Utils::listToBctbxList(remote_payloads);
+		bctbx_list_t* local_payload_list = Utils::listToBctbxList(local_payloads);
+		ret = ms_offer_answer_context_match_payload(ctx, local_payload_list, refpt, remote_payload_list, reading_response);
+		bctbx_list_free(local_payload_list);
+		bctbx_list_free(remote_payload_list);
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
@@ -324,9 +328,32 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 	return res;
 }
 
+SalStreamDir OfferAnswerEngine::computeConferenceStreamDir(SalStreamDir dir){
+	SalStreamDir res=SalStreamSendRecv;
+	switch (dir) {
+		case SalStreamSendRecv:
+			res=SalStreamSendRecv;
+			break;
+		case SalStreamSendOnly:
+			res=SalStreamRecvOnly;
+			break;
+		case SalStreamRecvOnly:
+			res=SalStreamSendOnly;
+			break;
+		case SalStreamInactive:
+			res=SalStreamInactive;
+			break;
+	}
+	return res;
+}
+
 void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer,
 						const SalStreamDescription & remote_answer,
 						SalStreamDescription & result){
+
+	result.proto=remote_answer.proto;
+	result.type=local_offer.type;
+
 	if (remote_answer.enabled())
 		result.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
 	else {
@@ -334,8 +361,6 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.rtp_port=0;
 		return;
 	}
-	result.proto=remote_answer.proto;
-	result.type=local_offer.type;
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
 			/*6.2 Multicast Streams
@@ -439,6 +464,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 	}
 	result.rtp_ssrc=local_offer.rtp_ssrc;
 	result.rtcp_cname=local_offer.rtcp_cname;
+	result.main=local_offer.main;
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
 	if ((local_offer.dtls_role!=SalDtlsRoleInvalid) && (remote_answer.dtls_role!=SalDtlsRoleInvalid)
@@ -456,14 +482,23 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 	result.implicit_rtcp_fb = local_offer.implicit_rtcp_fb && remote_answer.implicit_rtcp_fb;
 }
 
-
 void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
 						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
 	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
 	result.proto=remote_offer.proto;
 	result.type=local_cap.type;
-	result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
+
+	const char * conferenceDeviceAttrName = "label";
+	const char * layoutAttrName = "content";
+	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
+	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
+	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
+	if (local_cap.isMain() && (!participantsAttrValue.empty() || !layoutAttrValue.empty())) {
+		result.dir=OfferAnswerEngine::computeConferenceStreamDir(local_cap.dir);
+	} else {
+		result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
+	}
 	
 	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
 		result.rtp_port=0;
@@ -544,6 +579,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	result.name = local_cap.name;
 	result.rtp_ssrc=local_cap.rtp_ssrc;
 	result.rtcp_cname=local_cap.rtcp_cname;
+	result.main=local_cap.main;
 
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
