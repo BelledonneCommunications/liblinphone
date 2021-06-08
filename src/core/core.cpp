@@ -1002,13 +1002,19 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 
 
 AudioDevice* Core::getDefaultInputAudioDevice() const {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
-	return findAudioDeviceMatchingMsSoundCard(card);
+	if(!getCCore()->use_files) {
+		MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+		return findAudioDeviceMatchingMsSoundCard(card);
+	}else
+		return nullptr;
 }
 
 AudioDevice* Core::getDefaultOutputAudioDevice() const {
-	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
-	return findAudioDeviceMatchingMsSoundCard(card);
+	if(!getCCore()->use_files) {
+		MSSndCard *card = getCCore()->sound_conf.play_sndcard;
+		return findAudioDeviceMatchingMsSoundCard(card);
+	}else
+		return nullptr;
 }
 
 // -----------------------------------------------------------------------------

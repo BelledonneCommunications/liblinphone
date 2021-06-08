@@ -136,13 +136,13 @@ void Call::initiateIncoming () {
 	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
 	if (outputAudioDevice) {
 		setOutputAudioDevicePrivate(outputAudioDevice);
-	} else {
+	} else if(!getCore()->getCCore()->use_files){
 		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
 	}
 	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
 	if (inputAudioDevice) {
 		setInputAudioDevicePrivate(inputAudioDevice);
-	} else {
+	} else if(!getCore()->getCCore()->use_files){
 		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
 	}
 }
