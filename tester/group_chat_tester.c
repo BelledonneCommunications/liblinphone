@@ -3628,7 +3628,7 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 	const char *textMessage = "Hello";
 	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
 	const bctbx_list_t *contents = linphone_chat_message_get_contents(message);
-	BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int , "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
