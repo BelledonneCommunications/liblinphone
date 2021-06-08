@@ -118,8 +118,8 @@ public:
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
 
-	void setInputAudioDevice(AudioDevice *audioDevice);
-	void setOutputAudioDevice(AudioDevice *audioDevice);
+	bool setInputAudioDevice(AudioDevice *audioDevice);
+	bool setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
 	

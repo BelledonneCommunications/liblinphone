@@ -87,7 +87,6 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 		return false;
 	}
 	participant = Participant::create(this,participantAddress);
-	// TODO: Use conference parameters to fill args
 	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
 	participant->setFocus(participantAddress == getConferenceAddress());
 	participant->setPreserveSession(false);
@@ -107,6 +106,18 @@ bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	bool soFarSoGood = true;
 	for (const auto &address : sortedAddresses)
 		soFarSoGood &= addParticipant(address);
+	return soFarSoGood;
+}
+
+bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls) {
+	list<std::shared_ptr<Call>> sortedCalls(calls);
+	sortedCalls.sort();
+	sortedCalls.unique();
+
+	bool soFarSoGood = true;
+	for (const auto &call : sortedCalls)
+		soFarSoGood &= addParticipant(call);
+
 	return soFarSoGood;
 }
 
