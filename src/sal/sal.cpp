@@ -947,7 +947,7 @@ using namespace LinphonePrivate;
 extern "C" {
 
 LINPHONE_PUBLIC Sal *linphone_core_get_sal (const LinphoneCore *lc) {
-	return lc->sal;
+	return lc->sal.get();
 }
 
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op (const LinphoneProxyConfig *cfg) {

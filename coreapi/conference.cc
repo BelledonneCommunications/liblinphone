@@ -1631,7 +1631,7 @@ void RemoteConference::setParticipantAdminStatus (const shared_ptr<Participant> 
 
 	LinphoneCore *cCore = getCore()->getCCore();
 
-	SalReferOp *referOp = new SalReferOp(cCore->sal);
+	SalReferOp *referOp = new SalReferOp(cCore->sal.get());
 	LinphoneAddress *lAddr = linphone_address_new(m_focusCall->getRemoteContact().c_str());
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);

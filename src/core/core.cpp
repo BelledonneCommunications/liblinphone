@@ -398,7 +398,7 @@ belle_sip_main_loop_t *CorePrivate::getMainLoop(){
 }
 
 Sal * CorePrivate::getSal(){
-	return getPublic()->getCCore()->sal;
+	return getPublic()->getCCore()->sal.get();
 }
 
 LinphoneCore *CorePrivate::getCCore() const {
