@@ -78,7 +78,7 @@ LINPHONE_PUBLIC bool_t linphone_payload_type_enabled(const LinphonePayloadType *
  * Return a string describing a payload type. The format of the string is
  * &lt;mime_type&gt;/&lt;clock_rate&gt;/&lt;channels&gt;.
  * @param payload_type the #LinphonePayloadType object @notnil
- * @return The description of the payload type. Must be release after use. @notnil
+ * @return The description of the payload type. Must be release after use. @notnil @tobefreed
  */
 LINPHONE_PUBLIC char *linphone_payload_type_get_description(const LinphonePayloadType *payload_type);
 
