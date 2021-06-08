@@ -2777,7 +2777,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	lc->data=userdata;
 
 	// We need the Sal on the Android platform helper init
-	lc->sal=new Sal(NULL);
+	lc->sal = std::make_shared<LinphonePrivate::Sal>(nullptr);
 	lc->sal->setRefresherRetryAfter(linphone_config_get_int(lc->config, "sip", "refresher_retry_after", 60000));
 	lc->sal->setHttpProxyHost(L_C_TO_STRING(linphone_core_get_http_proxy_host(lc)));
 	lc->sal->setHttpProxyPort(linphone_core_get_http_proxy_port(lc));
@@ -3599,7 +3599,7 @@ static void __linphone_core_invalidate_registers(LinphoneCore* lc){
 }
 
 int _linphone_core_apply_transports(LinphoneCore *lc){
-	Sal *sal=lc->sal;
+	std::shared_ptr<Sal> sal=lc->sal;
 	const char *anyaddr;
 	LinphoneSipTransports *tr=&lc->sip_conf.transports;
 	const char* listening_address;
@@ -6854,7 +6854,6 @@ void sip_config_uninit(LinphoneCore *lc)
 	if (lc->nat_policy) linphone_nat_policy_release(lc->nat_policy);
 
 	for (i = 0; i < 5 ; ++i) lc->sal->iterate(); /*make sure event are purged*/
-	delete lc->sal;
 	lc->sal=NULL;
 
 

@@ -218,7 +218,7 @@ bool CallSessionPrivate::startPing () {
 		 * send an option request back to the caller so that we get a chance to discover our nat'd address
 		 * before answering for incoming call */
 		pingReplied = false;
-		pingOp = new SalOp(q->getCore()->getCCore()->sal);
+		pingOp = new SalOp(q->getCore()->getCCore()->sal.get());
 		if (direction == LinphoneCallIncoming) {
 			string from = pingOp->getFrom();
 			string to = pingOp->getTo();
@@ -855,7 +855,7 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 	L_Q();
 	if (op)
 		op->release();
-	op = new SalCallOp(q->getCore()->getCCore()->sal);
+	op = new SalCallOp(q->getCore()->getCCore()->sal.get());
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer())
 		op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());

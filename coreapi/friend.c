@@ -201,7 +201,7 @@ void __linphone_friend_do_subscribe(LinphoneFriend *fr){
 			fr->outsub->release();
 			fr->outsub=NULL;
 		}
-		fr->outsub=new SalPresenceOp(lc->sal);
+		fr->outsub=new SalPresenceOp(lc->sal.get());
 		linphone_configure_op(lc,fr->outsub,addr,NULL,TRUE);
 		fr->outsub->subscribe(linphone_config_get_int(lc->config,"sip","subscribe_expires",600));
 		fr->subscribe_active=TRUE;
