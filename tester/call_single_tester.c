@@ -3992,7 +3992,7 @@ static void call_with_generic_cn(void) {
 		err=stat(recorded_file,&stbuf);
 		BC_ASSERT_EQUAL(err, 0, int, "%d");
 		if (err==0){
-			BC_ASSERT_GREATER(stbuf.st_size,120000,int, "%d");
+			BC_ASSERT_GREATER((int)stbuf.st_size,120000,int, "%d");
 		}
 	}
 
