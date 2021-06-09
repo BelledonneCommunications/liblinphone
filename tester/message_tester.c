@@ -246,7 +246,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 
 					// On a basic chat room we won't have the contents from the original message
 					const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
-					BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int , "%d");
+					BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
 
 					linphone_chat_message_send(rmsg);
 					
@@ -266,7 +266,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 														linphone_chat_message_get_from_address(recv_msg)));
 							BC_ASSERT_TRUE(linphone_chat_message_get_reply_message_id(recv_msg) == NULL);
 							contents = linphone_chat_message_get_contents(recv_msg);
-							BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int , "%d");
+							BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
 							linphone_chat_message_unref(recv_msg);
 						}
 					}
