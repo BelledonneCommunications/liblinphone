@@ -1843,13 +1843,6 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
 	lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
 
-	if (negotiatedEncryption == LinphoneMediaEncryptionNone) {
-		// Invalidate authentification token if no encryption is negotiated
-		getStreamsGroup().setAuthTokenValid(false);
-	} else if ((negotiatedEncryption == LinphoneMediaEncryptionZRTP) && !getStreamsGroup().getAuthenticationToken().empty()) {
-		getStreamsGroup().setAuthTokenValid(true);
-	}
-
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op->getRemoteMediaDescription();
@@ -2152,8 +2145,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	 * Typically there can be inactive streams for which the media layer has no idea of whether they are encrypted or not.
 	 */
 
-	bool authTokenValid = getStreamsGroup().getAuthenticationTokenValid();
-	string authToken = authTokenValid ? getStreamsGroup().getAuthenticationToken() : std::string();
+	string authToken = getStreamsGroup().getAuthenticationToken();
 
 	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
 
@@ -2200,19 +2192,14 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			validNegotiatedEncryption = ((getNbActiveStreams() == 0) || allStreamsEncrypted());
 			break;
 		case LinphoneMediaEncryptionNone:
-			/* Check if we actually switched to ZRTP */
 			updateEncryption = true;
 			validNegotiatedEncryption = true;
-			if (atLeastOneStreamStarted() && allStreamsEncrypted() && !authToken.empty()) {
-				negotiatedEncryption = LinphoneMediaEncryptionZRTP;
-			}
 			break;
 	}
 
 	if (updateEncryption) {
 		if (validNegotiatedEncryption) {
-			// Call getNegotiatedMediaEncryption() because the value of negotiated encryption may have changed, hence use the one that is up to date
-			getCurrentParams()->setMediaEncryption(getNegotiatedMediaEncryption());
+			getCurrentParams()->setMediaEncryption(enc);
 		} else {
 			/* To avoid too many traces */
 			lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
