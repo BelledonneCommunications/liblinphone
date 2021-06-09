@@ -309,7 +309,6 @@ void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, Lin
 		linphone_address_clone(linphone_call_log_get_to_address(log)),
 		ei,
 		log->call_id);
-	linphone_call_unref(this->toC());
 }
 
 void Call::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
