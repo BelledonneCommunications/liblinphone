@@ -669,10 +669,11 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	if (set_nortpproxy == TRUE) {
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("nortpproxy","yes"));
 	}
+
 	if (ice_mismatch == TRUE) {
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-mismatch",NULL));
 	} else {
-		if (rtp_port != 0) {
+		if (rtp_port != 0 && ice_remote_candidates.size() > 0) {
 			if (!ice_pwd.empty())
 				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-pwd",L_STRING_TO_C(ice_pwd)));
 			if (!ice_ufrag.empty())
