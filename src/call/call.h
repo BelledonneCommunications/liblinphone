@@ -187,9 +187,9 @@ public:
 	// -----------------------------------------------------------------------------
 	
 	void setInputAudioDevice(AudioDevice *audioDevice);
-	void setInputAudioDevicePrivate(AudioDevice *audioDevice);
+	bool setInputAudioDevicePrivate(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
-	void setOutputAudioDevicePrivate(AudioDevice *audioDevice);
+	bool setOutputAudioDevicePrivate(AudioDevice *audioDevice);
 	AudioDevice *getInputAudioDevice() const;
 	AudioDevice *getOutputAudioDevice() const;
 	

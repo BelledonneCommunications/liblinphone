@@ -23,6 +23,7 @@
 #include "linphone/core.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
+#include "call/audio-device/audio-device.h"
 
 #include "belle-sip/object++.hh"
 
@@ -122,6 +123,11 @@ public:
 	virtual void leave() override = 0;
 	virtual bool isIn() const = 0;
 
+	void setInputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDevice(AudioDevice *audioDevice);
+	AudioDevice *getInputAudioDevice() const;
+	AudioDevice *getOutputAudioDevice() const;
+
 	virtual AudioControlInterface * getAudioControlInterface() const = 0;
 	virtual VideoControlInterface * getVideoControlInterface() const = 0;
 	virtual AudioStream *getAudioStream() = 0; /* Used by the tone manager, revisit.*/
@@ -192,6 +198,8 @@ public:
 	virtual ~LocalConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
+	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
+	virtual bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 
