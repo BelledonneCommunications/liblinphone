@@ -1004,8 +1004,8 @@ bool OfferAnswerEngine::fillZrtpAttributes(const SalStreamDescription & localStr
 		} else {
 			if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
 				strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
-				resultCfg.haveZrtpHash =  1;
 			}
+			resultCfg.haveZrtpHash = ((localCfg.zrtphash[0] != 0) || (remoteCfg.zrtphash[0] != 0)) ? 1 : 0;
 		}
 	}
 
