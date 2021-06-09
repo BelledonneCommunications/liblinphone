@@ -869,7 +869,7 @@ const list<AudioDevice *> Core::getExtendedAudioDevices() const {
 
 void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
-	
+	if(getCCore()->use_files) return;// Do nothing
 	bool success = d->setInputAudioDevice(audioDevice);
 
 	if (success) {
@@ -879,7 +879,7 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
-
+	if(getCCore()->use_files) return;// Do nothing
 	bool success = d->setOutputAudioDevice(audioDevice);
 
 	if (success) {
@@ -1002,13 +1002,21 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 
 
 AudioDevice* Core::getDefaultInputAudioDevice() const {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
-	return findAudioDeviceMatchingMsSoundCard(card);
+	if(getCCore()->use_files)
+		return nullptr;
+	else{
+		MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+		return findAudioDeviceMatchingMsSoundCard(card);
+	}
 }
 
 AudioDevice* Core::getDefaultOutputAudioDevice() const {
-	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
-	return findAudioDeviceMatchingMsSoundCard(card);
+	if(getCCore()->use_files)
+		return nullptr;
+	else{
+		MSSndCard *card = getCCore()->sound_conf.play_sndcard;
+		return findAudioDeviceMatchingMsSoundCard(card);
+	}
 }
 
 // -----------------------------------------------------------------------------
