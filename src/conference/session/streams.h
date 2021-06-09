@@ -416,13 +416,11 @@ public:
 	float getCurrentQuality();
 	float getAverageQuality();
 	void setAuthTokenVerified(bool value);
-	void setAuthTokenValid(const bool valid);
 	size_t getActiveStreamsCount() const;
 	size_t size()const{ return mStreams.size(); }
 	void refreshSockets();
 	const std::string & getAuthenticationToken()const{ return mAuthToken; }
 	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
-	bool getAuthenticationTokenValid() const{ return mAuthTokenValid; }
 	const OfferAnswerContext & getCurrentOfferAnswerContext()const{ return mCurrentOfferAnswerState; };
 	CallSession::State getCurrentSessionState() const{ return mCurrentSessionState;};
 
@@ -490,7 +488,6 @@ private:
 	MixerSession *mMixerSession = nullptr;
 	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
-	bool mAuthTokenValid = false;
 	bool mFinished = false;
 
 };
