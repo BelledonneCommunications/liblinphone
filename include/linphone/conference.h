@@ -227,6 +227,7 @@ LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(Linph
 
 /**
  * Invite participants to the conference, by supplying a list of #LinphoneAddress
+ * If the conference is in the state LinphoneConferenceStateCreationPending, then the conference will start on the input and output audio devices used for the currently active call, if any
  * @param conference The #LinphoneConference object. @notnil
  * @param addresses A list of SIP addresses to invite. @bctbx_list{LinphoneAddress} @notnil
  * @param params #LinphoneCallParams to use for inviting the participants. @maybenil
@@ -234,7 +235,15 @@ LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(Linph
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneConference *conference, const bctbx_list_t *addresses, const LinphoneCallParams *params);
 
 /**
+ * Add participants to the conference, by supplying a list of #LinphoneCall. If the conference is in the state LinphoneConferenceStateCreationPending, then the conference will start on the input and output audio devices used for the currently active call, if any
+ * @param conference The #LinphoneConference object. @notnil
+ * @param calls A list of calls to add to the conference. @bctbx_list{LinphoneCall} @notnil
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participants(LinphoneConference *conference, const bctbx_list_t *calls);
+
+/**
  * Join an existing call to the conference.
+ * If the conference is in the state LinphoneConferenceStateCreationPending, then the conference will start on the input and output audio devices used for the currently active call, if any
  * @param conference The #LinphoneConference object. @notnil
  * @param call a #LinphoneCall that has to be added to the conference. @notnil
  */

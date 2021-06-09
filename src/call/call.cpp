@@ -220,21 +220,33 @@ void Call::terminateBecauseOfLostMedia () {
 	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
 }
 
-void Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
+bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
+	if (!audioDevice) {
+		lError() << "Unable to use audio device [" << audioDevice << "] as recording device";
+		return false;
+	}
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
-		return;
+		return false;
 	}
 
-	static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
+	return static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
 
 }
 
-void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
+bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
+	if (!audioDevice) {
+		lError() << "Unable to use audio device [" << audioDevice << "] as playback device";
+		return false;
+	}
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
-		return;
+		return false;
 	}
+
+	const auto & currentOutputDevice = getOutputAudioDevice();
+	// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
+	bool ret = currentOutputDevice ? ((audioDevice != currentOutputDevice) || (*audioDevice != *currentOutputDevice)) : true;
 
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
@@ -253,9 +265,11 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 			}
 			break;
 		default:
-			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
+			ret = static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 			break;
 	}
+
+	return ret;
 }
 
 // -----------------------------------------------------------------------------
@@ -1185,15 +1199,15 @@ void Call::setSpeakerVolumeGain (float value) {
 }
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
-	setInputAudioDevicePrivate(audioDevice);
-
-	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	if (setInputAudioDevicePrivate(audioDevice)) {
+		linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	}
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
-	setOutputAudioDevicePrivate(audioDevice);
-
-	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	if (setOutputAudioDevicePrivate(audioDevice)) {
+		linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	}
 }
 
 AudioDevice* Call::getInputAudioDevice() const {
