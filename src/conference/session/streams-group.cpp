@@ -296,9 +296,15 @@ void StreamsGroup::propagateEncryptionChanged () {
 	getMediaSessionPrivate().propagateEncryptionChanged();
 }
 
+void StreamsGroup::setAuthTokenValid(const bool valid) {
+	mAuthTokenValid = valid;
+	lInfo() << "Authentication token " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified") << ") is " << (mAuthTokenValid ? "" : "no longer ") << "considered valid";
+}
+
 void StreamsGroup::authTokenReady(const string &authToken, bool verified) {
 	mAuthToken = authToken;
 	mAuthTokenVerified = verified;
+	mAuthTokenValid = true;
 	lInfo() << "Authentication token is " << mAuthToken << "(" << (mAuthTokenVerified ? "verified" : "unverified") << ")";
 }
 

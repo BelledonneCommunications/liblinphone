@@ -1839,14 +1839,15 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	updateBiggestDesc(localDesc);
 	resultDesc = newMd;
 
-	// Capability negotiation may have changed the encryption of the streams hence call params must be updated
-	if (q->isCapabilityNegotiationEnabled()) {
-		const auto & enc = getEncryptionFromMediaDescription(newMd);
-		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
-		// Set negotiated encryption to correctly create parameters for the reINVITE
-		negotiatedEncryption = enc;
-	} else {
-		negotiatedEncryption = getParams()->getMediaEncryption();
+	// Encryption may have changed during the offer answer process and not being the default one. Typical example of this scenario is when capability negotiation is enabled and if ZRTP is only enabled on one side and the other side supports it
+	negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
+	lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+
+	if (negotiatedEncryption == LinphoneMediaEncryptionNone) {
+		// Invalidate authentification token if no encryption is negotiated
+		getStreamsGroup().setAuthTokenValid(false);
+	} else if ((negotiatedEncryption == LinphoneMediaEncryptionZRTP) && !getStreamsGroup().getAuthenticationToken().empty()) {
+		getStreamsGroup().setAuthTokenValid(true);
 	}
 
 	OfferAnswerContext ctx;
@@ -2150,7 +2151,9 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	 * mechanism and encryption status from media which is much stronger than only result of offer/answer.
 	 * Typically there can be inactive streams for which the media layer has no idea of whether they are encrypted or not.
 	 */
-	string authToken = getStreamsGroup().getAuthenticationToken();
+
+	bool authTokenValid = getStreamsGroup().getAuthenticationTokenValid();
+	string authToken = authTokenValid ? getStreamsGroup().getAuthenticationToken() : std::string();
 
 	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
 
