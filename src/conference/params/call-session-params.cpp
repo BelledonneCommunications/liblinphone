@@ -35,6 +35,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	conferenceId = src->conferenceId;
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
+	noIceUpdate = src->noIceUpdate;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);

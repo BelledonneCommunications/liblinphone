@@ -44,6 +44,8 @@ public:
 	void setInternalCallUpdate (bool value) { internalCallUpdate = value; }
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
+	bool getNoIceUpdate () const { return noIceUpdate; }
+	void setNoIceUpdate (bool value) { noIceUpdate = value; }
 
 	SalCustomHeader * getCustomHeaders () const;
 	void setCustomHeaders (const SalCustomHeader *ch);
@@ -60,6 +62,7 @@ public:
 	LinphoneProxyConfig * proxyConfig = NULL;
 
 private:
+	bool noIceUpdate = false;
 	bool inConference = false;
 	bool internalCallUpdate = false;
 	bool noUserConsent = false; /* When set to true an UPDATE request will be used instead of reINVITE */

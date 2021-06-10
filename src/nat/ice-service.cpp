@@ -148,7 +148,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		stream->iceStateChanged();
 	}
 	
-	if (!params.localIsOfferer){
+	if (!params.localIsOfferer || params.noIceUpdate){
 		if (params.remoteMediaDescription){
 			// This may delete the ice session.
 			updateFromRemoteMediaDescription(params.localMediaDescription, params.remoteMediaDescription, true);
