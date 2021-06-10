@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
+bool_t check_ice_sdp (LinphoneCall *call);
 
 #ifdef __cplusplus
 }

@@ -1323,8 +1323,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	localDesc = md;
 
 	OfferAnswerContext ctx;
+	/*
+	 When noIceUpdate is true, iceSession can be closed when ice is not supported by remote.
+	 */
+	ctx.noIceUpdate = getParams()->getPrivate()->getNoIceUpdate();
 	ctx.localMediaDescription = localDesc;
-	ctx.remoteMediaDescription = localIsOfferer ? nullptr : ( op ? op->getRemoteMediaDescription() : nullptr);
+	ctx.remoteMediaDescription = (localIsOfferer || ctx.noIceUpdate) ? nullptr : ( op ? op->getRemoteMediaDescription() : nullptr);
 	ctx.localIsOfferer = localIsOfferer;
 	/* Now instanciate the streams according to the media description. */
 	getStreamsGroup().createStreams(ctx);
@@ -1829,6 +1833,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	}
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
+	getParams()->getPrivate()->setNoIceUpdate(true);
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
 
@@ -2512,6 +2517,7 @@ LinphoneStatus MediaSession::resume () {
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
 	d->setState(CallSession::State::Resuming, "Resuming");
+	d->getParams()->getPrivate()->setNoIceUpdate(true);
 	d->makeLocalMediaDescription(true);
 	d->localDesc->setDir(SalStreamSendRecv);
 
