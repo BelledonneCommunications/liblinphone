@@ -129,18 +129,6 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	mIceService->createStreams(params);
 }
 
-void StreamsGroup::startEncryption(const std::shared_ptr<SalMediaDescription> & md) {
-	for(size_t index = 0; index < md->streams.size(); ++index){
-		const auto & sd = md->streams[index];
-		Stream *s;
-		if (index < mStreams.size() && (s = mStreams[index].get()) != nullptr){
-			if (sd.supportZrtp()) {
-				s->startZrtp();
-			}
-		}
-	}
-}
-
 bool StreamsGroup::prepare(){
 	if (mFinished){
 		lError() << "StreamsGroup finished, cannot be used anymore.";
