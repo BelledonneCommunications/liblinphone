@@ -5235,6 +5235,7 @@ void linphone_core_set_default_sound_devices(LinphoneCore *lc){
 		linphone_core_set_ringer_device(lc, NULL);
 		linphone_core_set_playback_device(lc, NULL);
 		linphone_core_set_capture_device(lc, NULL);
+		linphone_core_set_media_device(lc, NULL);
 }
 
 void linphone_core_reload_sound_devices(LinphoneCore *lc){
@@ -6640,6 +6641,26 @@ void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
 
 void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno){
 	lc->use_files=yesno;
+	if(yesno){
+		if (lc->sound_conf.ring_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.ring_sndcard);
+			lc->sound_conf.ring_sndcard = NULL;
+		}
+		if (lc->sound_conf.play_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.play_sndcard);
+			lc->sound_conf.play_sndcard = NULL;
+		}
+		if (lc->sound_conf.capt_sndcard) {
+			ms_snd_card_unref(lc->sound_conf.capt_sndcard);
+			lc->sound_conf.capt_sndcard = NULL;
+		}
+		if (lc->sound_conf.media_sndcard)  {
+			ms_snd_card_unref(lc->sound_conf.media_sndcard);
+			lc->sound_conf.media_sndcard = NULL;
+		}
+	}else {
+		linphone_core_set_default_sound_devices(lc);
+	}
 }
 
 bool_t linphone_core_get_use_files(LinphoneCore *lc) {
