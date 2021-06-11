@@ -2963,12 +2963,6 @@ LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp
 	return update(msp, false, subject);
 }
 
-
-void MediaSession::enableStreamEncryption() {
-	L_D();
-	getStreamsGroup().startEncryption(d->localDesc);
-}
-
 LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool isCapabilityNegotiationUpdate, const string &subject) {
 	L_D();
 	CallSession::State nextState;
@@ -2988,8 +2982,6 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
 			d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
-
-		enableStreamEncryption();
 
 		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
 			L_D();
