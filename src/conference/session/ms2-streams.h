@@ -150,6 +150,7 @@ public:
 	virtual void stop() override;
 	virtual void finish() override;
 	virtual void initZrtp() override;
+	virtual void startZrtp() override;
 	
 	/* AudioControlInterface */
 	virtual void enableMic(bool value) override;
@@ -258,15 +259,15 @@ public:
 	virtual void finish() override;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
 	virtual void initZrtp() override;
-	
+	virtual void startZrtp() override;
+
 	virtual MediaStream *getMediaStream()const override;
 	virtual VideoStream *getVideoStream()const override;
 	virtual MSWebCam *getVideoDevice()const override;
-	
-	
+
 	void oglRender();
 	MSWebCam * getVideoDevice(CallSession::State targetState)const;
-	
+
 	virtual ~MS2VideoStream();
 protected:
 	AudioStream *getPeerAudioStream();
@@ -280,7 +281,6 @@ private:
 	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	void cameraNotWorkingCb (const char *cameraName);
 	static void sCameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam);
-	void activateZrtp();
 	MS2VideoMixer *getVideoMixer();
 	VideoStream *mStream = nullptr;
 	struct _MSVideoEndpoint *mConferenceEndpoint = nullptr;
@@ -298,6 +298,7 @@ public:
 	virtual void stop() override;
 	virtual void finish() override;
 	virtual void initZrtp() override;
+	virtual void startZrtp() override;
 	virtual ~MS2RTTStream();
 
 private:
