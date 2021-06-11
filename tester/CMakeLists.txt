@@ -303,6 +303,9 @@ set(SOURCE_FILES_CXX
 	call_ice_tester.cpp
 	capability_negotiation_tester.cpp
 	ice_capability_negotiation_tester.cpp
+	srtp_capability_negotiation_tester.cpp
+	zrtp_capability_negotiation_tester.cpp
+	dtls_srtp_capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
