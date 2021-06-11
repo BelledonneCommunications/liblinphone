@@ -122,6 +122,7 @@ public:
 	virtual float getCurrentQuality() = 0;
 	virtual float getAverageQuality() = 0;
 	virtual void startDtls(const OfferAnswerContext &params) = 0;
+	virtual void startZrtp() = 0;
 	virtual bool isMuted()const = 0;
 	virtual void refreshSockets() = 0;
 	virtual void updateBandwidthReports() = 0;
@@ -357,6 +358,7 @@ public:
 	 * Statistics (LinphoneCallStats ) must remain until destruction.
 	 */
 	virtual void finish() override;
+	void startEncryption(const std::shared_ptr<SalMediaDescription> & md);
 	void joinMixerSession(MixerSession *mixerSession);
 	void unjoinMixerSession();
 	Stream * getStream(size_t index);

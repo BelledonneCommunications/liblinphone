@@ -116,6 +116,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 		bool supportRtcp() const;
+		bool supportSrtp() const;
+		bool supportDtls() const;
+		bool supportZrtp() const;
 		bool hasSrtp() const;
 		bool hasDtls() const;
 		bool hasZrtp() const;
