@@ -163,11 +163,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 
-	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
-	if (label) {
-		video_stream_set_label(mStream, label);
-	}
-
 	/* Shutdown preview */
 	MSFilter *source = nullptr;
 	if (getCCore()->previewstream) {
@@ -338,8 +333,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		lWarning() << "Video preview (" << source << ") not reused: destroying it";
 		ms_filter_destroy(source);
 	}
+	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
+	if (label) {
+		video_stream_set_label(mStream, label);
+	}
 	if (videoMixer){
-lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.dir << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << label;
+		lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.dir << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.dir == SalStreamRecvOnly));
 	}
