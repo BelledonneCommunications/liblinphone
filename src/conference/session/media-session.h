@@ -125,6 +125,9 @@ public:
 	AudioDevice* getOutputAudioDevice() const;
 	
 	StreamsGroup & getStreamsGroup()const;
+
+	void enableStreamEncryption();
+
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

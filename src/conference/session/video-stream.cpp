@@ -141,7 +141,7 @@ void MS2VideoStream::initZrtp() {
 
 }
 
-void MS2VideoStream::activateZrtp(){
+void MS2VideoStream::startZrtp(){
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
 	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
 
@@ -328,7 +328,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */
 		if (audioStream && audioStream->isEncrypted()) {
-			activateZrtp();
+			startZrtp();
 			if (remoteStream.getChosenConfiguration().hasZrtpHash() == 1) {
 				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remoteStream.getChosenConfiguration().getZrtpHash())));
 				if (retval != 0)
@@ -384,7 +384,7 @@ void MS2VideoStream::handleEvent(const OrtpEvent *ev){
 void MS2VideoStream::zrtpStarted(Stream *mainZrtpStream){
 	if (getState() == Running){
 		lInfo() << "Trying to start ZRTP encryption on video stream";
-		activateZrtp();
+		startZrtp();
 		if (getMediaSessionPrivate().isEncryptionMandatory()) {
 			/* Nothing could have been sent yet so generating key frame */
 			video_stream_send_vfu(mStream);
