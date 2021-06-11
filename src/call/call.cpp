@@ -133,6 +133,18 @@ LinphoneCallStats *Call::getPrivateStats (LinphoneStreamType type) const {
 
 void Call::initiateIncoming () {
 	getActiveSession()->initiateIncoming();
+	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
+	if (outputAudioDevice) {
+		setOutputAudioDevicePrivate(outputAudioDevice);
+	} else if(!getCore()->getCCore()->use_files){
+		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
+	}
+	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
+	if (inputAudioDevice) {
+		setInputAudioDevicePrivate(inputAudioDevice);
+	} else if(!getCore()->getCCore()->use_files){
+		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+	}
 }
 
 bool Call::initiateOutgoing () {
@@ -252,7 +264,7 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
 	}
-
+	bool ret = static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
@@ -270,7 +282,6 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 			}
 			break;
 		default:
-			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 			break;
 	}
 }
@@ -1108,15 +1119,23 @@ void Call::setSpeakerVolumeGain (float value) {
 }
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
-	setInputAudioDevicePrivate(audioDevice);
-
-	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	if(getCore()->getCCore()->use_files) {
+		lInfo() << "Trying to change input audio device on call while use_files mode is on : do nothing";
+		return;
+	}
+	if (setInputAudioDevicePrivate(audioDevice)) {
+		linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	}
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
-	setOutputAudioDevicePrivate(audioDevice);
-
-	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	if(getCore()->getCCore()->use_files) {
+		lInfo() << "Trying to change output audio device on call while use_files mode is on : do nothing";
+		return;
+	}
+	if (setOutputAudioDevicePrivate(audioDevice)) {
+		linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
+	}
 }
 
 AudioDevice* Call::getInputAudioDevice() const {

@@ -229,6 +229,43 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 						}
 					}
 					linphone_chat_message_unref(fmsg);
+				} else if (reply_message) {
+					LinphoneChatMessage* rmsg = linphone_chat_room_create_reply_message(marieCr, recv_msg);
+					BC_ASSERT_TRUE(linphone_chat_message_is_reply(rmsg));
+					LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(rmsg);
+					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+					linphone_chat_message_add_utf8_text_content(rmsg, "<3");
+					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
+														linphone_chat_message_get_from_address(recv_msg)));
+					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_reply_message_id(rmsg), linphone_chat_message_get_message_id(recv_msg));
+
+					// On a basic chat room we won't have the contents from the original message
+					const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
+					BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
+
+					linphone_chat_message_send(rmsg);
+					
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
+					BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
+					if (pauline->stat.last_received_chat_message != NULL) {
+						LinphoneChatRoom *paulineCr = linphone_core_get_chat_room(pauline->lc, marie->identity);
+						BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int," %i");
+					
+						if (linphone_chat_room_get_history_size(paulineCr) > 1) {
+							LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
+							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recv_msg), "<3");
+							BC_ASSERT_FALSE(linphone_chat_message_is_reply(recv_msg));
+							BC_ASSERT_PTR_NULL(linphone_chat_message_get_reply_message(recv_msg));
+							BC_ASSERT_FALSE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
+														linphone_chat_message_get_from_address(recv_msg)));
+							BC_ASSERT_TRUE(linphone_chat_message_get_reply_message_id(recv_msg) == NULL);
+							contents = linphone_chat_message_get_contents(recv_msg);
+							BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
+							linphone_chat_message_unref(recv_msg);
+						}
+					}
+					linphone_chat_message_unref(rmsg);
 				}
 			
 				bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
