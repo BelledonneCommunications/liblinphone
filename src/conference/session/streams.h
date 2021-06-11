@@ -358,7 +358,6 @@ public:
 	 * Statistics (LinphoneCallStats ) must remain until destruction.
 	 */
 	virtual void finish() override;
-	void startEncryption(const std::shared_ptr<SalMediaDescription> & md);
 	void joinMixerSession(MixerSession *mixerSession);
 	void unjoinMixerSession();
 	Stream * getStream(size_t index);
