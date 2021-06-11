@@ -802,6 +802,36 @@ bool SalStreamDescription::supportRtcp() const {
 	return getChosenConfiguration().supportRtcp();
 }
 
+bool SalStreamDescription::supportSrtp() const {
+	for (const auto & cfgEl : cfgs) {
+		const auto & cfg = cfgEl.second;
+		if (cfg.hasSrtp()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool SalStreamDescription::supportZrtp() const {
+	for (const auto & cfgEl : cfgs) {
+		const auto & cfg = cfgEl.second;
+		if (cfg.hasZrtp()) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool SalStreamDescription::supportDtls() const {
+	for (const auto & cfgEl : cfgs) {
+		const auto & cfg = cfgEl.second;
+		if (cfg.hasDtls()) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool SalStreamDescription::hasSrtp() const {
 	return getChosenConfiguration().hasSrtp();
 }

@@ -214,8 +214,11 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
-	// Add ZRTP attributes if the negotiated encryption is ZRTP in case of internal update or it is the preferred media encryption
-	const auto mediaEncryption = (getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate() ? getMediaSessionPrivate().getNegotiatedMediaEncryption() : getMediaSessionPrivate().getParams()->getMediaEncryption());
+	// The negotiated encryption must remain unchanged if:
+	// - internal update
+	// - pausing a call
+	// - resuming a call
+	const auto mediaEncryption = (((getMediaSession().getState() == CallSession::State::Resuming) || (getMediaSession().getState() == CallSession::State::Pausing) || getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate()) ? getMediaSessionPrivate().getNegotiatedMediaEncryption() : getMediaSessionPrivate().getParams()->getMediaEncryption());
 	const bool addZrtpAttributes = (mediaEncryption == LinphoneMediaEncryptionZRTP) && ((localDesc.getChosenConfiguration().getProto() == SalProtoRtpAvp) || (localDesc.getChosenConfiguration().getProto() == SalProtoRtpAvpf));
 	if (addZrtpAttributes) {
 		/* set the hello hash */
@@ -806,7 +809,7 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
 		}
 	} else if (mSessions.srtp_context && (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionNone)) {
-		// If the stream has SRTP disable, set the key to a NULL value
+		// If the stream has SRTP disabled, set the key to a NULL value
 		MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
 		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL);
 		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL);
@@ -825,6 +828,8 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 			// Copy newly created zrtp context into mSessions
 			media_stream_reclaim_sessions(ms, &mSessions);
 		}
+	} else if (mSessions.zrtp_context) {
+		media_stream_reset_zrtp_context(ms);
 	}
 
 	if (resultStreamDesc.hasDtls()) {

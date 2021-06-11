@@ -1068,7 +1068,6 @@ void CallSession::accepting () {
 
 LinphoneStatus CallSession::acceptUpdate (const CallSessionParams *csp) {
 	L_D();
-lInfo() << "Call session " << __func__ << " Call is in state " << Utils::toString(d->state) << " csp " << csp;
 	if (d->state != CallSession::State::UpdatedByRemote) {
 		lError() << "CallSession::acceptUpdate(): invalid state " << Utils::toString(d->state) << " to call this method";
 		return -1;

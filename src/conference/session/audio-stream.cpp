@@ -416,7 +416,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
-	
+
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
 	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP) && isMain()) {
 		getMediaSessionPrivate().performMutualAuthentication();
@@ -489,9 +489,7 @@ void MS2AudioStream::stop(){
 	mCurrentPlaybackCard = nullptr;
 }
 
-//To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
-void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
-	const auto & remote = params.getRemoteStreamDescription();
+void MS2AudioStream::startZrtp() {
 	if (!mSessions.zrtp_context) {
 		initZrtp();
 		// Copy newly created zrtp context into mSessions
@@ -499,6 +497,12 @@ void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 		media_stream_reclaim_sessions(ms, &mSessions);
 	}
 	audio_stream_start_zrtp(mStream);
+}
+//To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
+void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
+	startZrtp();
+
+	const auto & remote = params.getRemoteStreamDescription();
 	if (remote.getChosenConfiguration().hasZrtpHash() == 1) {
 		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remote.getChosenConfiguration().getZrtpHash())));
 		if (retval != 0)
