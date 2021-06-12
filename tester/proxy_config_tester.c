@@ -191,7 +191,6 @@ static void phone_normalization_with_dial_escape_plus(void){
 		linphone_proxy_config_unref(proxy); \
 	}
 
-
 static void sip_uri_normalization(void) {
 	char* expected ="sip:%d9%a1@linphone.org";
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_normalize_sip_uri(NULL, "test"));
