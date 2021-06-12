@@ -2106,7 +2106,7 @@ static void dial_plan(void) {
 		const char *calling_code = linphone_dial_plan_get_country_calling_code(dialplan);
 		BC_ASSERT_EQUAL((int)(strlen(e164)-strlen(calling_code) -1) ,linphone_dial_plan_get_national_number_length(dialplan),int,"%i");
 		BC_ASSERT_EQUAL(	  linphone_dial_plan_lookup_ccc_from_e164(e164)
-							, strtol(calling_code, NULL,10)
+							, (int)strtol(calling_code, NULL,10)
 							, int
 							, "%i");
 		ms_free(e164);
