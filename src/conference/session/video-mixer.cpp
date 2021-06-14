@@ -23,6 +23,7 @@
 #include "linphone/core.h"
 #include "private.h"
 
+#include "c-wrapper/internal/c-tools.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -129,9 +130,12 @@ void MS2VideoMixer::addLocalParticipant(){
 		return;
 	}
 
-	video_stream_set_label(st, getLocalLabel().c_str());
+	if (!mLocalParticipantLabel.empty()) {
+		video_stream_set_label(st, L_STRING_TO_C(mLocalParticipantLabel));
+	}
+
 	if (!st->label) {
-		lError() << "Conference[all to all]: Can not add video endpoint with empty label";
+		lError() << "Video Mixer Conference[all to all]: Can not add video endpoint with empty label";
 	}
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
@@ -174,6 +178,14 @@ void MS2VideoMixer::onSnapshotTaken(const std::string &filepath){
 MS2VideoMixer::~MS2VideoMixer(){
 	removeLocalParticipant();
 	ms_video_conference_destroy(mConference);
+}
+
+void MS2VideoMixer::setLocalParticipantLabel(const std::string & label) {
+	mLocalParticipantLabel = label;
+}
+
+std::string MS2VideoMixer::setLocalParticipantLabel() const {
+	return mLocalParticipantLabel;
 }
 
 LINPHONE_END_NAMESPACE
