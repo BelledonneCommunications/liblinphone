@@ -32,6 +32,8 @@ import androidx.media.AudioAttributesCompat;
 import androidx.media.AudioAttributesCompat.Builder;
 import androidx.media.AudioManagerCompat;
 import androidx.media.AudioFocusRequestCompat;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 
 import java.io.IOException;
 import java.io.FileInputStream;
@@ -48,6 +50,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     private AudioFocusRequestCompat mRingingRequest;
     private AudioFocusRequestCompat mCallRequest;
     private MediaPlayer mPlayer;
+    private Ringtone mRingtone;
     private int mVolumeBeforeEchoTest;
     private AudioDevice mPreviousDefaultOutputAudioDevice;
     private HeadsetReceiver mHeadsetReceiver;
@@ -62,6 +65,17 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         context.registerReceiver(mHeadsetReceiver, filter);
         
         Log.i("[Audio Helper] Helper created");
+    }
+
+    public void destroy(Context context) {
+        if (mHeadsetReceiver != null) {
+            context.unregisterReceiver(mHeadsetReceiver);
+            mHeadsetReceiver = null;
+        }
+
+        stopRinging();
+        releaseRingingAudioFocus();
+        releaseCallAudioFocus();
     }
 
     public void startAudioForEchoTestOrCalibration() {
@@ -89,7 +103,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     public void startRinging(Context context, String ringtone) {
-        if (mPlayer != null) {
+        if (mPlayer != null || mRingtone != null) {
             Log.w("[Audio Helper] Already ringing, skipping...");
             return;
         }
@@ -101,40 +115,47 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build();
 
-        mPlayer = new MediaPlayer();
-        mPlayer.setAudioAttributes(audioAttrs);
-
         if (ringtone == null || ringtone.isEmpty()) {
             Log.i("[Audio Helper] Core ringtone path is null, using device ringtone if possible");
-            ringtone = Settings.System.DEFAULT_RINGTONE_URI.toString();
-        }
 
-        try {
-            if (ringtone.startsWith("content://")) {
-                mPlayer.setDataSource(context, Uri.parse(ringtone));
+            Uri defaultRingtoneUri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE);
+            if (defaultRingtoneUri == null) {
+                Log.i("[Audio Helper] Couldn't get default ringtone URI through RingtoneManager, trying with Settings.System.DEFAULT_RINGTONE_URI");
+                ringtone = Settings.System.DEFAULT_RINGTONE_URI.toString();
+                playSoundUsingMediaPlayer(context, audioAttrs, ringtone);
             } else {
-                FileInputStream fis = new FileInputStream(ringtone);
-                mPlayer.setDataSource(fis.getFD());
-                fis.close();
+                mRingtone = RingtoneManager.getRingtone(context, defaultRingtoneUri);
+                if (mRingtone != null) {
+                    mRingtone.setAudioAttributes(audioAttrs);
+                    mRingtone.setLooping(true);
+                    mRingtone.play();
+                    Log.i("[Audio Helper] Ringtone ringing started");
+                } else {
+                    Log.e("[Audio Helper] Couldn't retrieve Ringtone object from manager!");
+                }
             }
 
-            mPlayer.prepare();
-            mPlayer.setLooping(true);
-            mPlayer.start();
-            Log.i("[Audio Helper] Ringing started");
-        } catch (IOException e) {
-            Log.e(e, "[Audio Helper] Cannot set ringtone ", ringtone);
+        } else {
+            playSoundUsingMediaPlayer(context, audioAttrs, ringtone);
         }
     }
 
     public void stopRinging() {
+        if (mRingtone != null) {
+            releaseRingingAudioFocus();
+
+            mRingtone.stop();
+            mRingtone = null;
+            Log.i("[Audio Helper] Ringtone ringing stopped");
+        }
+
         if (mPlayer != null) {
             releaseRingingAudioFocus();
             
             mPlayer.stop();
             mPlayer.release();
             mPlayer = null;
-            Log.i("[Audio Helper] Ringing stopped");
+            Log.i("[Audio Helper] Media player ringing stopped");
         }
     }
 
@@ -264,5 +285,31 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             }
         }
         Log.e("[Audio Helper] Couldn't find speaker audio device");
+    }
+
+    private void playSoundUsingMediaPlayer(Context context, AudioAttributes audioAttrs, String ringtone) {
+        Log.i("[Audio Helper] Trying to play ringtone [", ringtone, "]");
+
+        mPlayer = new MediaPlayer();
+        mPlayer.setAudioAttributes(audioAttrs);
+
+        try {
+            if (ringtone.startsWith("content://")) {
+                mPlayer.setDataSource(context, Uri.parse(ringtone));
+            } else {
+                FileInputStream fis = new FileInputStream(ringtone);
+                mPlayer.setDataSource(fis.getFD());
+                fis.close();
+            }
+
+            mPlayer.prepare();
+            mPlayer.setLooping(true);
+            mPlayer.start();
+            Log.i("[Audio Helper] Media player ringing started");
+        } catch (IOException ioe) {
+            Log.e("[Audio Helper] Cannot play ringtone [", ringtone, "]: ", ioe);
+        } catch (SecurityException se) {
+            Log.e("[Audio Helper] Cannot play ringtone [", ringtone, "]: ", se);
+        }
     }
 }
