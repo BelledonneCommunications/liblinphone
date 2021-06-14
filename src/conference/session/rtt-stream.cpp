@@ -126,6 +126,9 @@ MediaStream *MS2RTTStream::getMediaStream()const{
 void MS2RTTStream::handleEvent(const OrtpEvent *ev){
 }
 
+std::string MS2RTTStream::getLabel()const {
+	return std::string();
+}
 
 
 

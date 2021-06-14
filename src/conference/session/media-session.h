@@ -122,6 +122,9 @@ public:
 	bool setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
+
+	void setWindowId(void *windowId, const std::string & label);
+	void * getWindowId(const std::string & label) const;
 	
 	StreamsGroup & getStreamsGroup()const;
 private:

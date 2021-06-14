@@ -100,6 +100,9 @@ public:
 	bool setTextDirection(const LinphoneMediaDirection direction);
 	bool updateMedia();
 
+	void setWindowId(void * windowId);
+	void * getWindowId() const;
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;

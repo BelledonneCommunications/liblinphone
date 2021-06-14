@@ -131,6 +131,10 @@ MSWebCam *MS2VideoStream::getVideoDevice()const{
 	
 }
 
+std::string MS2VideoStream::getLabel()const {
+	return L_C_TO_STRING(mStream->label);
+}
+
 void MS2VideoStream::activateZrtp(){
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);

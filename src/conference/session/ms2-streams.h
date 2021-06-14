@@ -166,6 +166,7 @@ public:
 	virtual void setOutputDevice(AudioDevice *audioDevice) override;
 	virtual AudioDevice* getInputDevice() const override;
 	virtual AudioDevice* getOutputDevice() const override;
+	virtual std::string getLabel()const override;
 	
 	virtual MediaStream *getMediaStream()const override;
 	virtual ~MS2AudioStream();
@@ -252,6 +253,7 @@ public:
 	virtual MediaStream *getMediaStream()const override;
 	virtual VideoStream *getVideoStream()const override;
 	virtual MSWebCam *getVideoDevice()const override;
+	virtual std::string getLabel()const override;
 	
 	
 	void oglRender();
@@ -287,6 +289,7 @@ public:
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	virtual void finish() override;
+	virtual std::string getLabel()const override;
 	virtual ~MS2RTTStream();
 private:
 	void realTimeTextCharacterReceived(MSFilter *f, unsigned int id, void *arg);
