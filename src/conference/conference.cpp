@@ -50,7 +50,6 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
-	tryAddMeDevice();
 
 }
 
@@ -60,7 +59,7 @@ Conference::~Conference () {
 
 // -----------------------------------------------------------------------------
 
-void Conference::tryAddMeDevice() {
+bool Conference::tryAddMeDevice() {
 	if (me->getDevices().empty() && confParams->getProxyCfg()) {
 		char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
 		if (devAddrStr) {
@@ -70,8 +69,17 @@ void Conference::tryAddMeDevice() {
 			meDev->setAudioDirection(confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+
+			// TODO: DELETE when labels will be implemented
+			char label[10];
+			belle_sip_random_token(label,sizeof(label));
+			meDev->setLabel(label);
+
+			return true;
 		}
 	}
+
+	return false;
 }
 
 
