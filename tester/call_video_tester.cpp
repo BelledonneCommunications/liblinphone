@@ -24,6 +24,8 @@
 #include "sal/sal_media_description.h"
 #include "sal/call-op.h"
 #include "shared_tester_functions.h"
+#include "mediastreamer2/msanalysedisplay.h"
+#include "mediastreamer2/msmire.h"
 
 #ifdef VIDEO_ENABLED
 std::string g_display_filter = "";// Global variable to test unit in order to select the display filter to use : "" use the default
@@ -2351,6 +2353,75 @@ static void call_paused_resumed_with_automatic_video_accept(void) {
 	call_paused_resumed_base(FALSE,FALSE,TRUE);
 }
 
+static void video_call_with_mire_and_analyse(void) {
+	LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	
+	LinphoneCall* callee_call;
+	LinphoneCall* caller_call;
+	LinphoneVideoPolicy callee_policy;
+	callee_policy.automatically_accept=TRUE;
+	linphone_core_set_video_policy(callee->lc,&callee_policy);
+
+	linphone_core_set_video_device(callee->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(caller->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_display(callee->lc, TRUE);
+	linphone_core_enable_video_capture(callee->lc, TRUE);
+	linphone_core_enable_video_display(caller->lc, TRUE);
+	linphone_core_enable_video_capture(caller->lc, TRUE);
+	linphone_core_set_video_display_filter(callee->lc, "MSAnalyseDisplay");
+	linphone_core_set_video_display_filter(caller->lc, "MSAnalyseDisplay");
+
+	LinphoneCallParams * callee_params=linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_video(callee_params,TRUE);
+	LinphoneCallParams * caller_params=linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_video(caller_params,TRUE);
+
+	BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
+	callee_call=linphone_core_get_current_call(callee->lc);
+	caller_call=linphone_core_get_current_call(caller->lc);
+
+	linphone_call_params_unref(caller_params);
+	linphone_call_params_unref(callee_params);
+
+	BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,1));
+	BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,1));
+
+	if (callee_call && caller_call ) {
+		VideoStream *vstream_callee = (VideoStream *)linphone_call_get_stream(callee_call, LinphoneStreamTypeVideo);
+		BC_ASSERT_PTR_NOT_NULL(vstream_callee);
+		VideoStream *vstream_caller = (VideoStream *)linphone_call_get_stream(caller_call, LinphoneStreamTypeVideo);
+		BC_ASSERT_PTR_NOT_NULL(vstream_caller);
+		BC_ASSERT_TRUE(vstream_callee && vstream_callee->source && ms_filter_get_id(vstream_callee->source)== MS_MIRE_ID);
+		BC_ASSERT_TRUE(vstream_caller && vstream_caller->source && ms_filter_get_id(vstream_caller->source)== MS_MIRE_ID);
+		MSMireControl c1 = {{0,5,10,15,20,25}};
+		MSMireControl c2 = {{100,105,110,115,120,125}};
+
+		if (vstream_callee && vstream_callee->source && ms_filter_get_id(vstream_callee->source)== MS_MIRE_ID) {
+			ms_filter_call_method(vstream_callee->source, MS_MIRE_SET_COLOR, &c1);
+		}
+		if (vstream_caller && vstream_caller->source && ms_filter_get_id(vstream_caller->source)== MS_MIRE_ID) {
+			ms_filter_call_method(vstream_caller->source, MS_MIRE_SET_COLOR, &c2);
+		}
+
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 2000);
+
+		BC_ASSERT_TRUE(vstream_callee && vstream_callee->output && ms_filter_get_id(vstream_callee->output)== MS_ANALYSE_DISPLAY_ID);
+		if (vstream_callee && vstream_callee->output && ms_filter_get_id(vstream_callee->output)== MS_ANALYSE_DISPLAY_ID){
+			BC_ASSERT_TRUE(ms_filter_call_method(vstream_callee->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &c2) == 0) ;
+		}
+
+		BC_ASSERT_TRUE(vstream_caller && vstream_caller->output && ms_filter_get_id(vstream_caller->output)== MS_ANALYSE_DISPLAY_ID);
+		if (vstream_caller && vstream_caller->output && ms_filter_get_id(vstream_caller->output)== MS_ANALYSE_DISPLAY_ID){
+			BC_ASSERT_TRUE(ms_filter_call_method(vstream_caller->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &c1) == 0);
+		}
+	}
+
+	end_call(caller, callee);
+	linphone_core_manager_destroy(callee);
+	linphone_core_manager_destroy(caller);
+}
+
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
@@ -2421,6 +2492,7 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only", video_call_with_auto_video_accept_disabled_on_one_end),
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
 	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
+	TEST_NO_TAG("Video call with mire and analyse", video_call_with_mire_and_analyse),
 };
 
 int init_msogl_call_suite(){
