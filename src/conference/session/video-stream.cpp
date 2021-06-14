@@ -160,6 +160,26 @@ void MS2VideoStream::startZrtp(){
 	}
 }
 
+void MS2VideoStream::activateZrtp(){
+	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
+		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
+		if (audioStream){
+			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
+			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+			// Since the zrtp session is now initialized, make sure it is retained for future use.
+			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
+			video_stream_start_zrtp(mStream);
+		}else{
+			lError() << "Error while enabling zrtp on video stream: ZRTP context is NULL";
+		}
+	}
+}
+
+std::string MS2VideoStream::getLabel()const {
+	return L_C_TO_STRING(mStream->label);
+}
+
+
 
 bool MS2VideoStream::prepare(){
 	

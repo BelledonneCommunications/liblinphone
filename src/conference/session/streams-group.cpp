@@ -323,6 +323,16 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 	mAuthTokenVerified = value;
 }
 
+Stream * StreamsGroup::lookupStream(const std::string & label) const {
+	for (auto &s : mStreams){
+		const auto streamLabel = s->getLabel();
+		if (!streamLabel.empty() && (label.compare(streamLabel) == 0)) {
+			return s.get();
+		}
+	}
+	return nullptr;
+}
+
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
 		if (stream->isMain() && stream->getType() == type){
@@ -331,7 +341,6 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	}
 	return nullptr;
 }
-
 
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
@@ -535,6 +544,22 @@ void StreamsGroup::unjoinMixerSession(){
 	detachMixers();
 	mMixerSession = nullptr;
 }
+
+void StreamsGroup::setWindowId(void * windowId, const std::string & label){
+	Stream * s = lookupStream(label);
+	if (s->getType() == SalVideo) {
+		dynamic_cast<MS2VideoStream *>(s)->setNativeWindowId(windowId);
+	}
+}
+
+void * StreamsGroup::getWindowId(const std::string & label) const {
+	Stream * s = lookupStream(label);
+	if (s->getType() == SalVideo) {
+		return dynamic_cast<MS2VideoStream *>(s)->getNativeWindowId();
+	}
+	return nullptr;
+}
+
 
 LINPHONE_END_NAMESPACE
 
