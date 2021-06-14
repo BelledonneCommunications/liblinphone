@@ -211,3 +211,11 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 	if (realtime_text_enabled) global_success = global_success && text_success;
 	return global_success;
 }
+
+bool_t check_ice_sdp (LinphoneCall *call) {
+	SalMediaDescription *desc = _linphone_call_get_local_desc(call);
+	belle_sdp_session_description_t *sdp = desc->toSdp();
+	const char *value=belle_sdp_session_description_get_attribute_value(sdp,"ice-ufrag");
+	if (value) return TRUE;
+	return FALSE;
+}
