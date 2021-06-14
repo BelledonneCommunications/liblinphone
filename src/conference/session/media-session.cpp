@@ -3725,6 +3725,16 @@ const CallSessionParams * MediaSession::getParams () const {
 	return d->params;
 }
 
+void MediaSession::setWindowId(void * windowId, const std::string & label){
+	L_D();
+	d->getStreamsGroup().setWindowId(windowId, label);
+}
+
+void * MediaSession::getWindowId(const std::string & label)const {
+	L_D();
+	return d->getStreamsGroup().getWindowId(label);
+}
+
 float MediaSession::getPlayVolume () const {
 	L_D();
 	AudioControlInterface *iface = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
