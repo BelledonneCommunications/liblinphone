@@ -245,7 +245,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				notifyParticipantDeviceAdded(creationTime, false, p, device);
 
 				lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device " << remoteContact->asString() << " to conference " << getConferenceAddress();
-
 				return true;
 			}
 		} else {
@@ -501,6 +500,7 @@ LocalConference::LocalConference (
 	setState(ConferenceInterface::State::CreationPending);
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
+
 }
 
 LocalConference::~LocalConference() {
@@ -558,38 +558,36 @@ void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 }
 
 void LocalConference::addLocalEndpoint () {
-	StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
-	if (mixer) mixer->enableLocalParticipant(true);
+	if (confParams->localParticipantEnabled()) {
+		StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
+		if (mixer) mixer->enableLocalParticipant(true);
 
-	if (confParams->videoEnabled()){
-		mixer = mMixerSession->getMixerByType(SalVideo);
+		if (confParams->videoEnabled()){
+			mixer = mMixerSession->getMixerByType(SalVideo);
 
-		if (mixer){
-			const auto & dev = me->getDevices().front();
-			if (dev->getLabel().empty()) {
-				// TODO: DELETE when labels will be implemented
-				char label[10];
-				belle_sip_random_token(label,sizeof(label));
-				dev->setLabel(label);
-			}
-			lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream of local participant " << dev->getAddress();
-			mixer->setLocalLabel(dev->getLabel());
+			if (mixer){
+				for (auto & device : me->getDevices()) {
+					if (mixer) {
+						auto mixer = dynamic_cast<MS2VideoMixer*>(mMixerSession->getMixerByType(SalVideo));
+						mixer->setLocalParticipantLabel(device->getLabel());
+					}
+				}
+				mixer->enableLocalParticipant(true);
+				VideoControlInterface *vci = getVideoControlInterface();
+				if (vci){
+					vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
+					vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
 
-			mixer->enableLocalParticipant(true);
-			VideoControlInterface *vci = getVideoControlInterface();
-			if (vci){
-				vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
-				vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
+				}
 			}
 
 		}
 
-	}
-
-	if (!isIn()) {
-		confParams->enableLocalParticipant(true);
-		time_t creationTime = time(nullptr);
-		notifyParticipantAdded(creationTime, false, getMe());
+		if (!isIn()) {
+			mIsIn = true;
+			time_t creationTime = time(nullptr);
+			notifyParticipantAdded(creationTime, false, getMe());
+		}
 	}
 
 }
@@ -759,6 +757,22 @@ bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<C
 	}
 
 	return result;
+}
+
+bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
+
+	bool success = Conference::addParticipantDevice(call);
+
+	if (success) {
+		auto device = findParticipantDevice (call->getActiveSession());
+		// TODO: DELETE when labels will be implemented
+		char label[10];
+		belle_sip_random_token(label,sizeof(label));
+		device->setLabel(label);
+	}
+
+	return success;
+
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -1133,6 +1147,7 @@ int LocalConference::terminate () {
 }
 
 int LocalConference::enter () {
+
 	if (linphone_core_sound_resources_locked(getCore()->getCCore()))
 		return -1;
 	if (linphone_core_get_current_call(getCore()->getCCore()))
@@ -1144,8 +1159,9 @@ int LocalConference::enter () {
 }
 
 void LocalConference::removeLocalEndpoint () {
-	confParams->enableLocalParticipant(false);
 	mMixerSession->enableLocalParticipant(false);
+
+	mIsIn = false;
 
 	time_t creationTime = time(nullptr);
 	notifyParticipantRemoved(creationTime, false, getMe());
@@ -1232,7 +1248,7 @@ int LocalConference::stopRecording () {
 }
 
 bool LocalConference::isIn() const{
-	return confParams->localParticipantEnabled();
+	return mIsIn;
 }
 
 AudioControlInterface *LocalConference::getAudioControlInterface()const{

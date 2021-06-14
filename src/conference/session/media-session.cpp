@@ -1494,16 +1494,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		if (confVideoCapabilities) {
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
-lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " dev address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession();
+lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " dev address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel();
 					if (!remoteContactAddress.isValid() || (remoteContactAddress != dev->getAddress().asAddress())) {
 						const auto & devLabel = dev->getLabel();
 						const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
-						// TODO: DELETE when labels will be implemented
-						if (devLabel.empty()) {
-							char label[10];
-							belle_sip_random_token(label,sizeof(label));
-							dev->setLabel(label);
-						}
 						if (foundStreamIdx == -1) {
 							auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
 							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
@@ -1513,21 +1507,17 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 				}
 			}
 
-			for (const auto & dev : me->getDevices()) {
-lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << dev->getAddress().asAddress().asString();
-				const auto & devLabel = dev->getLabel();
-				const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
-				// TODO: DELETE when labels will be implemented
-				if (devLabel.empty()) {
-					char label[10];
-					belle_sip_random_token(label,sizeof(label));
-					dev->setLabel(label);
-				}
-				if (foundStreamIdx == -1) {
-					auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
-					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
+			if (cppConference->isIn()) {
+				for (const auto & dev : me->getDevices()) {
+	lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << dev->getAddress().asAddress().asString() << " label " << dev->getLabel();
+					const auto & devLabel = dev->getLabel();
+					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
+					if (foundStreamIdx == -1) {
+						auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
+						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, "vs " + dev->getLabel());
 
-					md->streams.push_back(newStream);
+						md->streams.push_back(newStream);
+					}
 				}
 			}
 
@@ -1649,14 +1639,9 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 				shared_ptr<ParticipantDevice> dev = cppConference->findParticipantDevice(remoteContactAddress);
 				// TODO: DELETE when labels will be implemented
 				const auto & devLabel = dev->getLabel();
-				if (devLabel.empty()) {
-					char label[10];
-					belle_sip_random_token(label,sizeof(label));
-					dev->setLabel(label);
-				}
 
 lInfo() << "DEBUG DEBUG " << __func__ << " reconly remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << dev->getAddress().asAddress().asString();
-				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, devLabel.c_str());
+				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(devLabel));
 
 				if (confVideoCapabilities) {
 					videoStream.dir = (getParams()->videoEnabled()) ? SalStreamRecvOnly : SalStreamInactive;

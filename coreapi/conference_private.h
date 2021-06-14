@@ -102,7 +102,7 @@ public:
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 
-	bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
 
 	virtual int removeParticipantDevice(const std::shared_ptr<LinphonePrivate::CallSession> & session);
 	int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call);
@@ -203,6 +203,8 @@ public:
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
+
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
@@ -252,6 +254,7 @@ private:
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
+	bool mIsIn = false;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
