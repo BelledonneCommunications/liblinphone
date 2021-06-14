@@ -128,6 +128,7 @@ public:
 	virtual void refreshSockets() = 0;
 	virtual void updateBandwidthReports() = 0;
 	virtual float getCpuUsage()const = 0;
+	virtual std::string getLabel()const = 0;
 	size_t getIndex()const { return mIndex; }
 	SalStreamType getType()const{ return mStreamType;}
 	LinphoneCore *getCCore()const;
@@ -371,6 +372,8 @@ public:
 	 * Lookup the main stream for a given stream type.
 	 */
 	Stream * lookupMainStream(SalStreamType type);
+	Stream * lookupStream(const std::string & label) const;
+
 	/*
 	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.
 	 */
@@ -465,6 +468,10 @@ public:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	Core & getCore()const;
+
+	void setWindowId(void *windowId, const std::string & label);
+	void * getWindowId(const std::string & label) const;
+
 protected:
 
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
