@@ -30,6 +30,11 @@ using namespace::std;
 LINPHONE_BEGIN_NAMESPACE
 
 IceService::IceService(StreamsGroup & sg) : mStreamsGroup(sg){
+	LinphoneConfig *config = linphone_core_get_config(getCCore());
+	
+	mAllowLateIce = !!linphone_config_get_int(config, "net", "allow_late_ice", 0);
+	mEnableIntegrityCheck = !!linphone_config_get_int(config, "net", "ice_session_enable_message_integrity_check", 1);
+	mDontDefaultToStunCandidates = linphone_config_get_int(config, "net", "dont_default_to_stun_candidates", 0);
 }
 
 IceService::~IceService(){
@@ -67,25 +72,23 @@ void IceService::checkSession (IceRole role, bool preferIpv6DefaultCandidates) {
 		return;
 	}
 	
+	if (!mIceSession && mIceWasDisabled){
+		/* 
+		 * No ICE session because it was disabled previously.
+		 * Unless allow_late_ice is TRUE, don't re-create the session.
+		 */
+		if (!mAllowLateIce) return;
+	}
+	
 	// Already created.
 	if (mIceSession)
 		return;
-
-	LinphoneConfig *config = linphone_core_get_config(getCCore());
-	
-	if (linphone_config_get_int(config, "net", "force_ice_disablement", 0)){
-		lWarning()<<"ICE is disabled in this version";
-		return;
-	}
 	
 	mIceSession = ice_session_new();
 
 	// For backward compatibility purposes, shall be enabled by default in the future.
-	ice_session_enable_message_integrity_check(
-		mIceSession,
-		!!linphone_config_get_int(config, "net", "ice_session_enable_message_integrity_check", 1)
-	);
-	if (linphone_config_get_int(config, "net", "dont_default_to_stun_candidates", 0)) {
+	ice_session_enable_message_integrity_check(mIceSession, mEnableIntegrityCheck);
+	if (mDontDefaultToStunCandidates) {
 		IceCandidateType types[ICT_CandidateTypeMax];
 		types[0] = ICT_HostCandidate;
 		types[1] = ICT_RelayedCandidate;
@@ -153,6 +156,10 @@ void IceService::createStreams(const OfferAnswerContext &params){
 			// This may delete the ice session.
 			updateFromRemoteMediaDescription(params.localMediaDescription, params.remoteMediaDescription, true);
 		}
+	}
+	if (!mIceSession){
+		/* ICE was disabled. */
+		mIceWasDisabled = true;
 	}
 }
 
