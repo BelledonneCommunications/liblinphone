@@ -40,7 +40,10 @@ public:
 	
 	/* Returns true if ICE has completed succesfully. */
 	bool hasCompleted() const;
-	
+
+	/* Returns true if ICE is running. */
+	bool isRunning() const;
+
 	/* Returns true if ICE has finished with the check lists processing, even if it has failed for some of the check list.*/
 	bool hasCompletedCheckList()const;
 	
@@ -128,7 +131,7 @@ private:
 	
 };
 
-class IceServiceListener{
+class LINPHONE_INTERNAL_PUBLIC IceServiceListener{
 public:
 	virtual void onGatheringFinished(IceService &service) = 0;
 	virtual void onIceCompleted(IceService &service) = 0;

@@ -126,7 +126,12 @@ MediaStream *MS2RTTStream::getMediaStream()const{
 void MS2RTTStream::handleEvent(const OrtpEvent *ev){
 }
 
+void MS2RTTStream::initZrtp() {
 
+}
 
+void MS2RTTStream::startZrtp() {
+
+}
 
 LINPHONE_END_NAMESPACE
