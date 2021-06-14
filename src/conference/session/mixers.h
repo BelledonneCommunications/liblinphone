@@ -197,6 +197,8 @@ public:
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
+	void setLocalParticipantLabel(const std::string & label);
+	std::string setLocalParticipantLabel() const;
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
@@ -210,6 +212,7 @@ private:
 	MSVideoConference *mConference = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
+	std::string mLocalParticipantLabel;
 	RtpProfile *mLocalDummyProfile = nullptr;
 	static constexpr int sVP8PayloadTypeNumber = 95;
 };

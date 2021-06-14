@@ -244,7 +244,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				notifyParticipantDeviceAdded(creationTime, false, p, device);
 
 				lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device " << remoteContact->asString() << " to conference " << getConferenceAddress();
-
 				return true;
 			}
 		} else {
@@ -471,6 +470,7 @@ LocalConference::LocalConference (
 	setState(ConferenceInterface::State::CreationPending);
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
+
 }
 
 LocalConference::~LocalConference() {
@@ -537,16 +537,13 @@ void LocalConference::addLocalEndpoint () {
 			if (mixer){
 				mixer->enableLocalParticipant(true);
 
-				const auto & dev = me->getDevices().front();
-				if (dev->getLabel().empty()) {
-					// TODO: DELETE when labels will be implemented
-					char label[10];
-					belle_sip_random_token(label,sizeof(label));
-					dev->setLabel(label);
+				for (auto & device : me->getDevices()) {
+					if (mixer) {
+						auto mixer = dynamic_cast<MS2VideoMixer*>(mMixerSession->getMixerByType(SalVideo));
+						mixer->setLocalParticipantLabel(device->getLabel());
+					}
 				}
-				mixer->setLocalLabel(dev->getLabel());
 		lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream " << dynamic_cast<MS2VideoControl*>(vci)->getVideoStream() << " of local participant " << dev->getAddress() << " video control interface " << vci;
-
 				VideoControlInterface *vci = getVideoControlInterface();
 				if (vci){
 					vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
@@ -739,6 +736,21 @@ bool LocalConference::addParticipants (const std::list<std::shared_ptr<Call>> &c
 
 bool LocalConference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return Conference::addParticipants(addresses);
+}
+
+bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
+
+	bool success = Conference::addParticipantDevice(call);
+
+	if (success) {
+		auto device = findParticipantDevice (call->getActiveSession());
+		// TODO: DELETE when labels will be implemented
+		char label[10];
+		belle_sip_random_token(label,sizeof(label));
+		device->setLabel(label);
+	}
+
+	return success;
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -1125,6 +1137,7 @@ int LocalConference::terminate () {
 }
 
 int LocalConference::enter () {
+
 	if (linphone_core_sound_resources_locked(getCore()->getCCore()))
 		return -1;
 	if (linphone_core_get_current_call(getCore()->getCCore()))
