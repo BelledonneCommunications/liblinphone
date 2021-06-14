@@ -158,7 +158,7 @@ protected:
 	void resetLastNotify ();
 	void setConferenceId (const ConferenceId &conferenceId);
 
-	void tryAddMeDevice();
+	bool tryAddMeDevice();
 
 	ConferenceId conferenceId;
 
