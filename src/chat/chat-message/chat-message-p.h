@@ -60,6 +60,9 @@ public:
 		Sending = 1 << 9
 	};
 
+
+	virtual ~ChatMessagePrivate();
+
 	void setApplyModifiers (bool value) { applyModifiers = value; }
 
 	void setStorageId (long long id);
