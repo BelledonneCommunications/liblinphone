@@ -513,6 +513,74 @@ static void call_with_early_media_ice_and_no_sdp_in_200(void){
 	early_media_without_sdp_in_200_base(FALSE, TRUE);
 }
 
+static void call_paused_resumed_with_ice (bool_t caller_ice) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall* call_pauline = NULL;
+	LinphoneCall* call_marie = NULL;
+
+	bool_t call_ok;
+
+	if (caller_ice) {
+		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+	}
+	linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+
+	BC_ASSERT_TRUE((call_ok=call(marie, pauline)));
+
+	if (!call_ok) goto end;
+	
+	call_marie = linphone_core_get_current_call(marie->lc);
+	linphone_call_ref(call_marie);
+	if (caller_ice) {
+		BC_ASSERT_TRUE(check_ice_sdp(call_marie));
+	} else {
+		BC_ASSERT_FALSE(check_ice_sdp(call_marie));
+	}
+	
+	
+	call_pauline = linphone_core_get_current_call(pauline->lc);
+	linphone_call_ref(call_pauline);
+
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 3000);
+
+	linphone_call_pause(call_pauline);
+	if (caller_ice) {
+		BC_ASSERT_TRUE(check_ice_sdp(call_pauline));
+	} else {
+		BC_ASSERT_FALSE(check_ice_sdp(call_pauline));
+	}
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausing,1));
+
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
+
+	/*stay in pause a little while in order to generate traffic*/
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
+
+	linphone_call_resume(call_pauline);
+
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
+
+	end_call(pauline, marie);
+end:
+	if(call_pauline)
+		linphone_call_unref(call_pauline);
+	if (call_marie)
+		linphone_call_unref(call_marie);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_paused_resumed_with_callee_ice() {
+	call_paused_resumed_with_ice(FALSE);
+}
+
+static void call_paused_resumed_with_both_ice() {
+	call_paused_resumed_with_ice(TRUE);
+}
 
 static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE in IPv4 with IPv6 enabled", call_with_ice_in_ipv4_with_v6_enabled, "ICE"),
@@ -545,7 +613,9 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE and stun server not responding", call_with_ice_stun_not_responding, "ICE"),
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line", call_with_ice_ufrag_and_password_set_in_sdp_m_line, "ICE"),
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 2", call_with_ice_ufrag_and_password_set_in_sdp_m_line_2, "ICE"),
-	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 3", call_with_ice_ufrag_and_password_set_in_sdp_m_line_3, "ICE")
+	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 3", call_with_ice_ufrag_and_password_set_in_sdp_m_line_3, "ICE"),
+	TEST_NO_TAG("Call with ICE pause and resume with callee ice", call_paused_resumed_with_callee_ice),
+	TEST_NO_TAG("Call with ICE pause and resume with both ice", call_paused_resumed_with_both_ice)
 };
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
