@@ -106,6 +106,9 @@ public:
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
 
+	void setWindowId(void * windowId);
+	void * getWindowId() const;
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;

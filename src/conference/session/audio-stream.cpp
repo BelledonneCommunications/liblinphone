@@ -855,6 +855,10 @@ MS2AudioMixer *MS2AudioStream::getAudioMixer(){
 	return nullptr;
 }
 
+std::string MS2AudioStream::getLabel()const {
+	return std::string();
+}
+
 MS2AudioStream::~MS2AudioStream(){
 	if (mStream)
 		finish();

@@ -19,6 +19,7 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "conference/params/media-session-params.h"
 #include "conference/params/media-session-params-p.h"
 #include "participant-device.h"
@@ -216,4 +217,13 @@ void ParticipantDevice::enableAdminModeSupport(bool support) {
 	mSupportAdminMode = support;
 
 }
+
+void ParticipantDevice::setWindowId(void * windowId) {
+	static_pointer_cast<MediaSession>(mSession)->setWindowId(windowId, mLabel);
+}
+
+void * ParticipantDevice::getWindowId() const {
+	return static_pointer_cast<MediaSession>(mSession)->getWindowId(mLabel);
+}
+
 LINPHONE_END_NAMESPACE
