@@ -1705,7 +1705,7 @@ LINPHONE_PUBLIC void linphone_core_set_dns_servers(LinphoneCore *core, const bct
  * Return the list of the available audio payload types.
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
- * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref. @bctbx_list{LinphonePayloadType} @tobefreed @maybenil
+ * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_payload_types(LinphoneCore *core);
@@ -1724,7 +1724,7 @@ LINPHONE_PUBLIC void linphone_core_set_audio_payload_types(LinphoneCore *core, c
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the
- * list haven't to be unref. @bctbx_list{LinphonePayloadType} @tobefreed @maybenil
+ * list haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_video_payload_types(LinphoneCore *core);
@@ -1743,7 +1743,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_payload_types(LinphoneCore *core, c
  * @param core The core. @notnil
  * @return A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the list
- * haven't to be unref. @bctbx_list{LinphonePayloadType} @tobefreed @maybenil
+ * haven't to be unref. @bctbx_list{LinphonePayloadType} @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_text_payload_types(LinphoneCore *core);
