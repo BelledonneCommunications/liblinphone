@@ -463,9 +463,9 @@ public class {{className}} : LinphoneObject
 				swiftList.append(String(cString: unsafeBitCast(listTemp!.pointee.data, to: UnsafePointer<CChar>.self)))
 				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp!.pointee.next)
 			}
-			{{#isAllocated}}
+			{{#isNotConst}}
 			bctbx_list_free(cList)
-			{{/isAllocated}}
+			{{/isNotConst}}
 			return swiftList
 			{{/is_string_list}}
 			{{#is_class_list}}
@@ -477,9 +477,9 @@ public class {{className}} : LinphoneObject
 				swiftList.append({{{list_type}}}.getSwiftObject(cObject: data))
 				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 			}
-			{{#isAllocated}}
+			{{#isNotConst}}
 			bctbx_list_free(cList)
-			{{/isAllocated}}
+			{{/isNotConst}}
 			return swiftList
 			{{/is_class_list}}
 			{{/is_callbacks}}
@@ -660,9 +660,9 @@ public class {{className}} : LinphoneObject
 			swiftList.append(String(cString: unsafeBitCast(listTemp!.pointee.data, to: UnsafePointer<CChar>.self)))
 			listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp!.pointee.next)
 		}
-		{{#isAllocated}}
+		{{#isNotConst}}
 		bctbx_list_free(cList)
-		{{/isAllocated}}
+		{{/isNotConst}}
 		return swiftList
 		{{/is_string_list}}
 		{{#is_class_list}}
@@ -674,9 +674,9 @@ public class {{className}} : LinphoneObject
 			swiftList.append({{{list_type}}}.getSwiftObject(cObject: data))
 			listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 		}
-		{{#isAllocated}}
+		{{#isNotConst}}
 		bctbx_list_free(cList)
-		{{/isAllocated}}
+		{{/isNotConst}}
 		return swiftList
 		{{/is_class_list}}
 	}

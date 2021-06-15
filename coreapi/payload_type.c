@@ -313,7 +313,7 @@ OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt
 BELLE_SIP_INSTANCIATE_VPTR(LinphonePayloadType, belle_sip_object_t,
 	_payload_type_uninit , // uninit
 	_payload_type_clone , // clone
-	NULL, // marshale
+	NULL, // marshal
 	TRUE // unown
 );
 
