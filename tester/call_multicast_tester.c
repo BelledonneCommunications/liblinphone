@@ -75,7 +75,7 @@ static void call_multicast_with_os_defined_rtp_ports(void)  {
 }
 
 static void multicast_audio_with_pause_resume(void) {
-	call_paused_resumed_base(TRUE,FALSE);
+	call_paused_resumed_base(TRUE,FALSE,FALSE);
 }
 #ifdef VIDEO_ENABLED
 static void call_multicast_video(void)  {
