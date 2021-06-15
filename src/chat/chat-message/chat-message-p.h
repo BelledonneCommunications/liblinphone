@@ -91,6 +91,8 @@ public:
 
 	void setEphemeralExpireTime (time_t expireTime);
 
+	void startEphemeralCountDown ();
+
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
 		this->authenticatedFromAddress = authenticatedFromAddress;
 	}

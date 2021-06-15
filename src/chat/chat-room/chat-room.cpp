@@ -669,6 +669,7 @@ void ChatRoom::markAsRead () {
 	CorePrivate *dCore = getCore()->getPrivate();
 	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
 		chatMessage->getPrivate()->markAsRead();
+		
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
 			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
