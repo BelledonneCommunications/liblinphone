@@ -27,6 +27,7 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
+
 #[friend_0]
 #url="Mariette" <sip:marie@sip.example.org>
 #pol=accept
@@ -51,7 +52,6 @@ device=StaticImage: Static picture
 echocancellation=0 #to not overload cpu in case of VG
 
 [net]
-
 stun_server=stun.example.org
 
 [tester]

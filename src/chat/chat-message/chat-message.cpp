@@ -102,7 +102,7 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 
 	if (!q->isValid())
 		return;
-
+	
 	if (q->getChatRoom()->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
 		// Basic Chat Room doesn't support participant state
 		setState(newState);
@@ -112,11 +112,11 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
 	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
 	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
+
 	if (!isValidStateTransition(currentState, newState))
 		return;
 
-	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving participant '" << participantAddress.asString() << "' state to "
-		<< Utils::toString(newState);
+	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving participant '" << participantAddress.asString() << "' state to " << Utils::toString(newState);
 	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
@@ -166,10 +166,18 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 
 	if (nbNotDeliveredStates > 0)
 		setState(ChatMessage::State::NotDelivered);
-	else if (nbDisplayedStates == states.size())
+	else if (nbDisplayedStates == states.size()) {
 		setState(ChatMessage::State::Displayed);
+	}
 	else if ((nbDisplayedStates + nbDeliveredToUserStates) == states.size())
 		setState(ChatMessage::State::DeliveredToUser);
+
+	// When we already marked an incoming message as displayed, start ephemeral countdown when all other recipients have displayed it as well
+	if (isEphemeral && state == ChatMessage::State::Displayed) {
+		if (direction == ChatMessage::Direction::Incoming && nbDisplayedStates == states.size() - 1) { // -1 is for ourselves, our own display state isn't stored in db
+			startEphemeralCountDown();
+		}
+	}
 }
 
 void ChatMessagePrivate::setState (ChatMessage::State newState) {
@@ -183,8 +191,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 
 	// 2. Update state and notify changes.
-	lInfo() << "Chat message " << sharedMessage << ": moving from " << Utils::toString(state) <<
-		" to " << Utils::toString(newState);
+	lInfo() << "Chat message " << sharedMessage << ": moving from " << Utils::toString(state) << " to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
 
@@ -234,34 +241,75 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	}
 
 	// 5. Send notification
-	if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming)) {
+	if ((state == ChatMessage::State::Displayed) && direction == ChatMessage::Direction::Incoming) {
 		// Wait until all files are downloaded before sending displayed IMDN
 		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(sharedMessage);
 	}
 
 	// 6. update in database for ephemeral message if necessary.
-	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
-		// set ephemeral message expired time
-		ephemeralExpireTime = ::ms_time(NULL) + (long)ephemeralLifetime;
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(storageId, ephemeralExpireTime);
+	if (isEphemeral && state == ChatMessage::State::Displayed) {
+		bool allParticipantsAreInDisplayedState = false;
+		if (q->getChatRoom()->getCapabilities().isSet(ChatRoom::Capabilities::OneToOne)) {
+			allParticipantsAreInDisplayedState = true;
+		} else {
+			if (direction == ChatMessage::Direction::Incoming) {
+				unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+				shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
 
-		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(sharedMessage);
-
-		// notify start !
-		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
-		unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
-		shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(mainDb, q->getStorageId());
-		if (chatRoom && event) {
-			_linphone_chat_room_notify_ephemeral_message_timer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
-			if (cbs && linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs))
-				linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs)(msg);
-			_linphone_chat_message_notify_ephemeral_message_timer_started(msg);
+				list<ChatMessage::State> states = mainDb->getChatMessageParticipantStates(eventLog);
+				size_t nbDisplayedStates = 0;
+				for (const auto &state : states) {
+					switch (state) {
+						case ChatMessage::State::Displayed:
+							nbDisplayedStates++;
+							break;
+						default:
+							break;
+					}
+				}
+				
+				allParticipantsAreInDisplayedState = nbDisplayedStates == states.size() - 1; // -1 is for ourselves, our own display state isn't stored in db
+			} else {
+				// For outgoing messages state is never displayed until all participants are in display state
+				allParticipantsAreInDisplayedState = true;
+			}
+		}
+		
+		if (allParticipantsAreInDisplayedState) {
+			lInfo() << "All participants are in displayed state, starting ephemeral countdown";
+			startEphemeralCountDown();
 		}
 	}
 
 	// 7. Update in database if necessary.
 	if (state != ChatMessage::State::InProgress && state != ChatMessage::State::FileTransferError && state != ChatMessage::State::FileTransferInProgress) {
 		updateInDb();
+	}
+}
+
+void ChatMessagePrivate::startEphemeralCountDown () {
+	L_Q();
+
+	// set ephemeral message expired time
+	ephemeralExpireTime = ::ms_time(NULL) + (long)ephemeralLifetime;
+	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
+	q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(storageId, ephemeralExpireTime);
+
+	const shared_ptr<ChatMessage>& sharedMessage = q->getSharedFromThis();
+	q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(sharedMessage);
+
+	lInfo() << "Starting ephemeral countdown with life time: " << ephemeralLifetime;
+
+	// notify start !
+	shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
+	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(mainDb, q->getStorageId());
+	if (chatRoom && event) {
+		_linphone_chat_room_notify_ephemeral_message_timer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
+		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+		if (cbs && linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs))
+			linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs)(msg);
+		_linphone_chat_message_notify_ephemeral_message_timer_started(msg);
 	}
 }
 
