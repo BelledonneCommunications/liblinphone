@@ -1113,7 +1113,9 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 void CallSession::configure (LinphoneCallDir direction, const string &callid) {
 	L_D();
 	d->direction = direction;
-	d->log = linphone_call_log_new(direction, nullptr, linphone_address_new("\"Anonymous\"<sip:anonymous@anonymoushost>"));
+	
+	// Keeping a valid address while following https://www.ietf.org/rfc/rfc3323.txt guidelines.
+	d->log = linphone_call_log_new(direction, linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"), linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"));
 	linphone_call_log_set_call_id(d->log, callid.c_str());
 }
 
