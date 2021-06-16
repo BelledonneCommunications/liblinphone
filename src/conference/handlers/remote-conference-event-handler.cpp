@@ -284,6 +284,12 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 						const LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
 						if (mediaType.compare("audio") == 0) {
 							device->setAudioDirection(mediaDirection);
+
+							if (media.getSrcId()) {
+								const std::string srcId = media.getSrcId().get();
+								unsigned long ssrc = std::stoul(srcId);
+								device->setSsrc((uint32_t) ssrc);
+							}
 						} else if (mediaType.compare("video") == 0) {
 							device->setVideoDirection(mediaDirection);
 						} else if (mediaType.compare("text") == 0) {

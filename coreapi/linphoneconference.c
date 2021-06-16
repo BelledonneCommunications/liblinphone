@@ -183,6 +183,10 @@ const LinphoneAudioDevice* linphone_conference_get_output_audio_device(const Lin
 	return NULL;
 }
 
+int linphone_conference_get_participant_device_volume(LinphoneConference *conference, LinphoneParticipantDevice *device) {
+	return MediaConference::Conference::toCpp(conference)->getParticipantDeviceVolume(ParticipantDevice::toCpp(device)->getSharedFromThis());
+}
+
 int linphone_conference_mute_microphone (LinphoneConference *conference, bool_t val) {
 	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 	if (!aci) return -1;
