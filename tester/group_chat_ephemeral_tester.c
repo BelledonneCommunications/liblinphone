@@ -609,11 +609,11 @@ static void ephemeral_group_message_test_curve (const int curveId) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 2, 60000));
 
 	bctbx_list_t *pauline_history = linphone_chat_room_get_history(paulineCr, 0);
-	BC_ASSERT_EQUAL(bctbx_list_size(pauline_history), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(pauline_history), 2, int, "%i");
 	set_ephemeral_cbs(pauline_history);
 
 	bctbx_list_t *laure_history = linphone_chat_room_get_history(laureCr, 0);
-	BC_ASSERT_EQUAL(bctbx_list_size(laure_history), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(laure_history), 2, int, "%i");
 	set_ephemeral_cbs(laure_history);
 
 	// Check that the message has been delivered to Pauline & Laure
