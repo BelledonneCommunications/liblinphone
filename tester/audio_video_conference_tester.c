@@ -2386,16 +2386,19 @@ end:
 	}
 }
 
-static void add_participant_after_conference_started(void) {
+static void add_participant_after_conference_started_base(bool_t pause_all_calls) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
 
-	LinphoneCall* marie_call_pauline;
-	LinphoneCall* pauline_called_by_marie;
-	LinphoneCall* marie_call_laure;
+	LinphoneCall* marie_call_pauline = NULL;
+	LinphoneCall* pauline_called_by_marie = NULL;
+	LinphoneCall* marie_call_michelle = NULL;
+	LinphoneCall* michelle_called_by_marie = NULL;
+	LinphoneCall* marie_call_laure = NULL;
+	LinphoneCall* laure_called_by_marie = NULL;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,michelle->lc);
@@ -2407,6 +2410,12 @@ static void add_participant_after_conference_started(void) {
 
 	if (!BC_ASSERT_TRUE(call(marie,michelle)))
 		goto end;
+
+	marie_call_michelle=linphone_core_get_current_call(marie->lc);
+	michelle_called_by_marie=linphone_core_get_current_call(michelle->lc);
+	if (pause_all_calls) {
+		BC_ASSERT_TRUE(pause_call_1(marie,marie_call_michelle,michelle,michelle_called_by_marie));
+	}
 
 	bctbx_list_t* participants=NULL;
 	bctbx_list_t* new_participants=NULL;
@@ -2426,6 +2435,10 @@ static void add_participant_after_conference_started(void) {
 	BC_ASSERT_TRUE(call(marie,laure));
 
 	marie_call_laure=linphone_core_get_current_call(marie->lc);
+	laure_called_by_marie=linphone_core_get_current_call(laure->lc);
+	if (pause_all_calls) {
+		BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
+	}
 
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
 
@@ -2464,6 +2477,14 @@ end:
 	destroy_mgr_in_conference(michelle);
 	destroy_mgr_in_conference(marie);
 	bctbx_list_free(lcs);
+}
+
+static void add_participant_after_conference_started(void) {
+	add_participant_after_conference_started_base(FALSE);
+}
+
+static void add_paused_calls_to_conference(void) {
+	add_participant_after_conference_started_base(TRUE);
 }
 
 static void simple_participant_leaves_conference_base(bool_t remote_participant_leaves) {
@@ -6965,6 +6986,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Conference with conference event package pauses and terminate call", conference_with_event_pkg_hang_up_call_on_hold),
 	TEST_NO_TAG("Participants exit conference after pausing", participants_exit_conference_after_pausing),
 	TEST_NO_TAG("Add participant after conference started", add_participant_after_conference_started),
+	TEST_NO_TAG("Add paused calls to conference", add_paused_calls_to_conference),
 	TEST_NO_TAG("Focus takes quick call after conference started and then resumes it", focus_takes_quick_call_after_conference_started),
 	TEST_NO_TAG("Focus takes call after conference started and participants leave", focus_takes_call_after_conference_started_and_participants_leave),
 	TEST_NO_TAG("Participant quits conference and is called by focus", participant_quits_conference_and_is_called_by_focus),
