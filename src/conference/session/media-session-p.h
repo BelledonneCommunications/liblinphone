@@ -257,6 +257,9 @@ private:
 
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
+
+	bool tryEnterConference();
+
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;

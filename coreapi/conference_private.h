@@ -121,7 +121,6 @@ public:
 
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
-	virtual bool isIn() const = 0;
 
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
@@ -251,6 +250,7 @@ private:
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
+	bool mIsIn = false;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
