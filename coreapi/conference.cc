@@ -248,7 +248,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				return true;
 			}
 		} else {
-			lError() << "Unable to add device to participant with address " << call->getRemoteAddress()->asString() << " in conference " << getConferenceAddress();
+			lError() << "Unable to add device to participant with address " << call->getRemoteAddress()->asString() << " to conference " << getConferenceAddress();
 		}
 	}
 
@@ -557,27 +557,28 @@ void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 }
 
 void LocalConference::addLocalEndpoint () {
-	StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
-	if (mixer) mixer->enableLocalParticipant(true);
+	if (confParams->localParticipantEnabled()) {
+		StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
+		if (mixer) mixer->enableLocalParticipant(true);
 
-	if (confParams->videoEnabled()){
-		mixer = mMixerSession->getMixerByType(SalVideo);
-		if (mixer){
-			mixer->enableLocalParticipant(true);
-			VideoControlInterface *vci = getVideoControlInterface();
-			if (vci){
-				vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
-				vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
+		if (confParams->videoEnabled()){
+			mixer = mMixerSession->getMixerByType(SalVideo);
+			if (mixer){
+				mixer->enableLocalParticipant(true);
+				VideoControlInterface *vci = getVideoControlInterface();
+				if (vci){
+					vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
+					vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
+				}
 			}
 		}
-	}
 
-	if (!isIn()) {
-		confParams->enableLocalParticipant(true);
-		time_t creationTime = time(nullptr);
-		notifyParticipantAdded(creationTime, false, getMe());
+		if (!isIn()) {
+			mIsIn = true;
+			time_t creationTime = time(nullptr);
+			notifyParticipantAdded(creationTime, false, getMe());
+		}
 	}
-
 }
 
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
@@ -708,8 +709,9 @@ bool LocalConference::addParticipants (const std::list<IdentityAddress> &address
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
+	const auto & remoteAddress = call->getRemoteAddress();
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
-		lError() << "Already in conference";
+		lError() << "Call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is already in conference";
 		return false;
 	}
 
@@ -727,11 +729,11 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	bool canAddParticipant = ((callConfId.compare(confId) == 0) || ((getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created)));
 	if (canAddParticipant) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
-		bool localEndpointCanBeAdded = false;
 
 		switch(state){
 			case LinphoneCallOutgoingInit:
 			case LinphoneCallOutgoingProgress:
+			case LinphoneCallOutgoingRinging:
 			case LinphoneCallIncomingReceived:
 			case LinphoneCallPausing:
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
@@ -766,11 +768,10 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
 				// Add local endpoint if the call was not previously in the conference
-				localEndpointCanBeAdded = (callConfId.compare(confId) != 0);
 			}
 			break;
 			default:
-				lError() << "Call " << call << " is in state " << Utils::toString(call->getState()) << ", it cannot be added to the conference";
+				lError() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is in state " << Utils::toString(call->getState()) << ", it cannot be added to the conference";
 				return false;
 			break;
 		}
@@ -779,24 +780,22 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 		Conference::addParticipant(call);
-		if (localEndpointCanBeAdded){
-			/*
-			 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
-			 * resources (mic and camera), which is done during the joinStreamsGroup() step.
-			 */
-			enter();
+		/*
+		 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
+		 * resources (mic and camera), which is done during the joinStreamsGroup() step.
+		 */
+		enter();
 
-			// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
-			if (startingConference) {
-				if (outputDevice) {
-					setOutputAudioDevice(outputDevice);
-				}
-				if (inputDevice) {
-					setInputAudioDevice(inputDevice);
-				}
+		// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
+		if (startingConference) {
+			if (outputDevice) {
+				setOutputAudioDevice(outputDevice);
 			}
-
+			if (inputDevice) {
+				setInputAudioDevice(inputDevice);
+			}
 		}
+
 		setState(ConferenceInterface::State::Created);
 		return true;
 	}
@@ -1051,8 +1050,9 @@ int LocalConference::enter () {
 }
 
 void LocalConference::removeLocalEndpoint () {
-	confParams->enableLocalParticipant(false);
 	mMixerSession->enableLocalParticipant(false);
+
+	mIsIn = false;
 
 	time_t creationTime = time(nullptr);
 	notifyParticipantRemoved(creationTime, false, getMe());
@@ -1133,7 +1133,7 @@ int LocalConference::stopRecording () {
 }
 
 bool LocalConference::isIn() const{
-	return confParams->localParticipantEnabled();
+	return mIsIn;
 }
 
 AudioControlInterface *LocalConference::getAudioControlInterface()const{

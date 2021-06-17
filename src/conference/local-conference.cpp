@@ -66,6 +66,10 @@ LocalConference::~LocalConference () {
 #endif
 }
 
+bool LocalConference::isIn() const{
+	return true;
+}
+
 // -----------------------------------------------------------------------------
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
