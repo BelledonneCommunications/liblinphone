@@ -224,7 +224,6 @@ void Call::createPlayer () const{
 }
 
 // -----------------------------------------------------------------------------
-
 void Call::terminateBecauseOfLostMedia () {
 	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
 		<< " is lost, call is going to be terminated";
@@ -1026,6 +1025,10 @@ LinphoneCallLog *Call::getLog () const {
 	return getActiveSession()->getLog();
 }
 
+bool Call::supportRtcp () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->supportRtcp();
+}
+
 RtpTransport *Call::getMetaRtcpTransport (int streamIndex) const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getMetaRtcpTransport(streamIndex);
 }
@@ -1256,6 +1259,10 @@ AudioDevice* Call::getOutputAudioDevice() const {
 	}
 
 	return nullptr;
+}
+
+const std::list<LinphoneMediaEncryption> Call::getSupportedEncryptions() const {
+	return getActiveSession()->getSupportedEncryptions();
 }
 
 // -----------------------------------------------------------------------------

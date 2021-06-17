@@ -413,6 +413,11 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_recovery_test_suite);
 	bc_tester_add_suite(&call_with_ice_test_suite);
 	bc_tester_add_suite(&call_secure_test_suite);
+	bc_tester_add_suite(&capability_negotiation_test_suite);
+	bc_tester_add_suite(&srtp_capability_negotiation_test_suite);
+	bc_tester_add_suite(&zrtp_capability_negotiation_test_suite);
+	bc_tester_add_suite(&dtls_srtp_capability_negotiation_test_suite);
+	bc_tester_add_suite(&ice_capability_negotiation_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&call_video_test_suite);
 	bc_tester_add_suite(&call_video_msogl_test_suite);// Conditionals are defined in suite
@@ -469,6 +474,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&shared_core_test_suite);
 	bc_tester_add_suite(&vfs_encryption_test_suite);
 	bc_tester_add_suite(&external_domain_test_suite);
+	bc_tester_add_suite(&potential_configuration_graph_test_suite);
 
 }
 
