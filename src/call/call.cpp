@@ -349,7 +349,7 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 	if (getConference()) {
 		auto conference = MediaConference::Conference::toCpp(getConference());
 		if (conference->getState() == ConferenceInterface::State::Created) {
-			conference->addParticipant(getSharedFromThis());
+			conference->enter();
 		} else {
 			lInfo() << "Unable to add participant because conference is in state " << linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
 		}
@@ -540,13 +540,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			// Try to add device to local conference
 			if (attachedToLocalConference(session)) {
 				auto conference = MediaConference::Conference::toCpp(getConference());
-				if (isInConference()) {
-					if(!conference->addParticipantDevice(getSharedFromThis())) {
-						conference->participantDeviceMediaChanged(session);
-					}
-				} else {
-					// Try to reenter conference if the call may have been part of one
-					reenterLocalConference(session);
+				if(!conference->addParticipantDevice(getSharedFromThis())) {
+					conference->participantDeviceMediaChanged(session);
 				}
 			} else if (attachedToRemoteConference(session)) {
 				// The participant rejoins the conference
@@ -590,6 +585,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					if (conference) {
 						setConference(conference->toC());
 						reenterLocalConference(session);
+						conference->addParticipantDevice(getSharedFromThis());
 					}
 				}
 			}
