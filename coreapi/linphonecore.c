@@ -1004,12 +1004,12 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			FileTransferContent *content = new FileTransferContent();
 			fileTransferModifier.parseFileTransferXmlIntoContent(body, content);
 			string fileUrl = content->getFileUrl();
-			
+
 			if (!fileUrl.empty()) {
 				const char *url = fileUrl.c_str();
 				linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateDelivered, url);
 			}
-			
+
 			delete content;
 			clean_log_collection_upload_context(core);
 		} else {
@@ -2654,7 +2654,8 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 
 	#ifdef HAVE_FLEXIAPI
-	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendFlexiAPI)
+	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendFlexiAPI
+	 && linphone_config_get_string(lc->config, "account_creator", "url", NULL) != NULL)
 		== LinphoneAccountCreatorBackendXMLRPC) {
 	#endif
 		linphone_account_creator_service_set_constructor_cb(service, linphone_account_creator_constructor_linphone_xmlrpc);
