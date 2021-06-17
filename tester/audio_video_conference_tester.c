@@ -2531,6 +2531,11 @@ static void add_call_not_accepted_to_conference(void) {
 	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),1, int, "%d");
 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneSubscriptionActive, 1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive, 1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,1,3000));
+
 	const LinphoneAddress * l_conference_address = linphone_conference_get_conference_address(l_conference);
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -2557,7 +2562,6 @@ static void add_call_not_accepted_to_conference(void) {
 	participants=bctbx_list_append(participants,pauline);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	add_calls_to_local_conference(lcs, marie, NULL, new_participants, TRUE);
-	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -2596,6 +2600,13 @@ static void add_call_not_accepted_to_conference(void) {
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,3,5000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneSubscriptionActive, 1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive, 3,3000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,3,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,5,3000));
 
 	participants=bctbx_list_append(participants,laure);
 
