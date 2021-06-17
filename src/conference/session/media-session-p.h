@@ -242,6 +242,9 @@ private:
 	bool hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const;
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
+
+	bool tryEnterConference();
+
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
