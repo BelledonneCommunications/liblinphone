@@ -299,6 +299,7 @@ private:
 
 	void changeSubjectInLocalConference(SalCallOp *op);
 	void terminateConference();
+	void cleanupSessionAndUnrefCObjectCall();
 	
 	void *mUserData = nullptr;
 };
