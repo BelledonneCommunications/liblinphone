@@ -540,7 +540,7 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 void configure_core_for_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs);
 
 void liblinphone_tester_set_next_video_frame_decoded_cb(LinphoneCall *call);
-void call_paused_resumed_base(bool_t multicast,bool_t with_losses);
+void call_paused_resumed_base(bool_t multicast,bool_t with_losses,bool_t accept_video);
 void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body);
 void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body);
 void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t with_ice,bool_t with_ice_reinvite);
