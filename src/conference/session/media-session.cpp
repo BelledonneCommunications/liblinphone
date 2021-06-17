@@ -106,6 +106,7 @@ bool MediaSessionPrivate::tryEnterConference() {
 		if (conference) {
 			// Send update to notify that the call enters conference
 			MediaSessionParams *newParams = q->getMediaParams()->clone();
+			lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
 			q->update(newParams);
 			delete newParams;
 			return true;

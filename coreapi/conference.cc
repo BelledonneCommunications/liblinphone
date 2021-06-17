@@ -733,6 +733,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		switch(state){
 			case LinphoneCallOutgoingInit:
 			case LinphoneCallOutgoingProgress:
+			case LinphoneCallOutgoingRinging:
 			case LinphoneCallIncomingReceived:
 			case LinphoneCallPausing:
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
