@@ -274,8 +274,11 @@ void CallSessionPrivate::accepted () {
 		case CallSession::State::OutgoingProgress:
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
+		{
 			/* Immediately notify the connected state */
 			setState(CallSession::State::Connected, "Connected");
+
+		}
 			break;
 		default:
 			break;

@@ -248,7 +248,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				return true;
 			}
 		} else {
-			lError() << "Unable to add device to participant with address " << call->getRemoteAddress()->asString() << " in conference " << getConferenceAddress();
+			lError() << "Unable to add device to participant with address " << call->getRemoteAddress()->asString() << " to conference " << getConferenceAddress();
 		}
 	}
 
