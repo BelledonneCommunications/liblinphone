@@ -279,6 +279,15 @@ bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 	return ret;
 }
 
+void Call::cleanupSessionAndUnrefCObjectCall() {
+	auto session = getActiveSession();
+	if (session)
+		session->getPrivate()->setCallSessionListener(nullptr);
+	linphone_call_unref(this->toC());
+}
+
+   
+
 // -----------------------------------------------------------------------------
 
 void Call::onAckBeingSent (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
@@ -309,10 +318,11 @@ void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, Lin
 		linphone_address_clone(linphone_call_log_get_to_address(log)),
 		ei,
 		log->call_id);
+	cleanupSessionAndUnrefCObjectCall();
 }
 
 void Call::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
-	linphone_call_unref(this->toC());
+	cleanupSessionAndUnrefCObjectCall();
 }
 
 void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
@@ -791,10 +801,6 @@ Call::Call (
 }
 
 Call::~Call () {
-	auto session = getActiveSession();
-	if (session)
-		session->getPrivate()->setCallSessionListener(nullptr);
-	
 	bctbx_list_free_with_data(mCallbacks, (bctbx_list_free_func)linphone_call_cbs_unref);
 }
 
