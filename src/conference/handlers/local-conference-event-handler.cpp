@@ -186,8 +186,6 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 
 	list<Content> contents;
 	for (const auto &eventLog : events) {
-		Content *content = new Content();
-		content->setContentType(ContentType::ConferenceInfo);
 		string body;
 		shared_ptr<ConferenceNotifiedEvent> notifiedEvent = static_pointer_cast<ConferenceNotifiedEvent>(eventLog);
 		int eventNotifyId = static_cast<int>(notifiedEvent->getNotifyId());
