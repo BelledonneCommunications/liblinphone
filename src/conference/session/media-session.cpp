@@ -132,6 +132,29 @@ LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() cons
 
 // -----------------------------------------------------------------------------
 
+bool MediaSessionPrivate::tryEnterConference() {
+	L_Q();
+
+	const auto & confId = getConferenceId();
+	char * contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
+		contactAddress.setUriParam("conf-id",confId);
+		ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
+		shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(localConferenceId, false);
+		// If the call conference ID is not an empty string but no conference is linked to the call means that it was added to the conference after the INVITE session was started but before its completition
+		if (conference) {
+			// Send update to notify that the call enters conference
+			MediaSessionParams *newParams = q->getMediaParams()->clone();
+			q->update(newParams);
+			delete newParams;
+			return true;
+		}
+	}
+	return false;
+}
+
 void MediaSessionPrivate::accepted () {
 	L_Q();
 	CallSessionPrivate::accepted();
@@ -227,6 +250,11 @@ void MediaSessionPrivate::accepted () {
 			//getIceAgent().updateIceStateInCallStats();
 			updateStreams(md, nextState);
 			fixCallParams(rmd, false);
+
+			if (!tryEnterConference()) {
+				setState(nextState, nextStateMsg);
+			}
+
 			setState(nextState, nextStateMsg);
 			LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
@@ -2957,7 +2985,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 	if (!d->isUpdateAllowed(nextState))
 		return -1;
 	if (d->getCurrentParams() == msp)
-		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
+		lWarning() << "MediaSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
 		d->localIsOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->broken = false;
