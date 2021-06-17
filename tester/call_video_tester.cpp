@@ -2347,8 +2347,13 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	linphone_core_manager_destroy(callee);
 }
 
+static void call_paused_resumed_with_automatic_video_accept(void) {
+	call_paused_resumed_base(FALSE,FALSE,TRUE);
+}
+
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
+	TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
 	TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
 	TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers", call_paused_resumed_with_no_sdp_ack_using_video_policy),
 	TEST_NO_TAG("Call paused, updated and resumed with video no sdk ack using video policy for resume offers", call_paused_updated_resumed_with_no_sdp_ack_using_video_policy),
