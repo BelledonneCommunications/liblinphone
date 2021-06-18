@@ -301,6 +301,11 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
+	capability_negotiation_tester.cpp
+	ice_capability_negotiation_tester.cpp
+	srtp_capability_negotiation_tester.cpp
+	zrtp_capability_negotiation_tester.cpp
+	dtls_srtp_capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
@@ -310,6 +315,7 @@ set(SOURCE_FILES_CXX
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
 	vfs-encryption-tester.cpp
+	potential_configuration_tester.cpp
 )
 
 if(ENABLE_FLEXIAPI)
@@ -328,6 +334,7 @@ endif()
 set(HEADER_FILES
 	audio_quality_tester.h
 	shared_tester_functions.h
+	capability_negotiation_tester.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
