@@ -105,11 +105,18 @@ bool MediaSessionPrivate::tryEnterConference() {
 			shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(localConferenceId, false);
 			// If the call conference ID is not an empty string but no conference is linked to the call means that it was added to the conference after the INVITE session was started but before its completition
 			if (conference) {
-				// Send update to notify that the call enters conference
-				MediaSessionParams *newParams = q->getMediaParams()->clone();
-				lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
-				q->update(newParams);
-				delete newParams;
+lInfo() << "DEBUG DEBUG Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " state " << Utils::toString(state);
+				if (state == CallSession::State::Paused) {
+					// Resume call as it was added to conference
+					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was being paused. Resuming the session.";
+					q->resume();
+				} else {
+					// Send update to notify that the call enters conference
+					MediaSessionParams *newParams = q->getMediaParams()->clone();
+					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
+					q->update(newParams);
+					delete newParams;
+				}
 				return true;
 			}
 		}
@@ -209,10 +216,10 @@ void MediaSessionPrivate::accepted () {
 			//getIceAgent().updateIceStateInCallStats();
 			updateStreams(md, nextState);
 			fixCallParams(rmd, false);
+			setState(nextState, nextStateMsg);
 
-			if (!tryEnterConference()) {
-				setState(nextState, nextStateMsg);
-			}
+			// Add to conference if it was added after last INVITE message sequence started
+			tryEnterConference();
 		}
 	} else { /* Invalid or no SDP */
 		switch (prevState) {
