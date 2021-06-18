@@ -121,7 +121,6 @@ public:
 
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
-	virtual bool isIn() const = 0;
 
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);

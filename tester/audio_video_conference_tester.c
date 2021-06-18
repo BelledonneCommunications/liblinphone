@@ -520,8 +520,8 @@ static void simple_conference_with_admin_changed(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminated, 1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateDeleted, 1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, 1,1000));
-	// Participants should have received 4 notifications:
-	// - participant removed and admin rights removed
+	// Participants should have received 3 notifications:
+	// - participant removed
 	// - participant device removed
 	// - admin rights of participant exiting from the conference are removed
 	idx = 0;
@@ -573,6 +573,7 @@ static void simple_conference_with_admin_changed(void) {
 		}
 		BC_ASSERT_FALSE(admin_found);
 		bctbx_list_free_with_data(participants_after_removal, (void(*)(void *))linphone_participant_unref);
+
 	}
 	bctbx_list_free(all_manangers_in_conf);
 
