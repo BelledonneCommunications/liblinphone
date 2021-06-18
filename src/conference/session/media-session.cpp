@@ -135,22 +135,29 @@ LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() cons
 bool MediaSessionPrivate::tryEnterConference() {
 	L_Q();
 
-	const auto & confId = getConferenceId();
 	if (getOp() && getOp()->getContactAddress()) {
 		char * contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
+		const auto & confId = getConferenceId();
 		if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
 			contactAddress.setUriParam("conf-id",confId);
 			ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
 			shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(localConferenceId, false);
 			// If the call conference ID is not an empty string but no conference is linked to the call means that it was added to the conference after the INVITE session was started but before its completition
 			if (conference) {
-				// Send update to notify that the call enters conference
-				MediaSessionParams *newParams = q->getMediaParams()->clone();
-				lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
-				q->update(newParams);
-				delete newParams;
+lInfo() << "DEBUG DEBUG Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " state " << Utils::toString(state);
+				if (state == CallSession::State::Paused) {
+					// Resume call as it was added to conference
+					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was being paused. Resuming the session.";
+					q->resume();
+				} else {
+					// Send update to notify that the call enters conference
+					MediaSessionParams *newParams = q->getMediaParams()->clone();
+					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
+					q->update(newParams);
+					delete newParams;
+				}
 				return true;
 			}
 		}
@@ -254,11 +261,9 @@ void MediaSessionPrivate::accepted () {
 			updateStreams(md, nextState);
 			fixCallParams(rmd, false);
 
-			if (!tryEnterConference()) {
-				setState(nextState, nextStateMsg);
-			}
-
 			setState(nextState, nextStateMsg);
+
+			bool capabilityNegotiationReInviteSent = false;
 			LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
@@ -278,6 +283,7 @@ void MediaSessionPrivate::accepted () {
 						MediaSessionParams newParams(*getParams());
 						newParams.getPrivate()->setInternalCallUpdate(true);
 						q->update(&newParams, true);
+						capabilityNegotiationReInviteSent = true;
 					} else {
 						lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
 					}
@@ -285,6 +291,13 @@ void MediaSessionPrivate::accepted () {
 					lInfo() << "Capability negotiation and ICE are both enabled hence wait for the end of ICE checklist completion to send a reINVITE";
 				}
 			}
+
+			// If the call was added to a conference after the last INVITE session was started, the reINVITE to enter conference must be sent only if capability negotiation reINVITE was not sent
+			if (!capabilityNegotiationReInviteSent) {
+				// Add to conference if it was added after last INVITE message sequence started
+				tryEnterConference();
+			}
+
 		}
 	} else { /* Invalid or no SDP */
 		switch (prevState) {
