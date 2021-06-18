@@ -41,8 +41,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 static JavaVM *jvm = nullptr;
 static const char* LogDomain = "Linphone";
-static jmethodID loghandler_id;
-static jobject handler_obj=nullptr;
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *ajvm, void *reserved) {
 #ifdef __ANDROID__
@@ -121,18 +119,7 @@ static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel l
     	default:			prio = ANDROID_LOG_DEFAULT;	break;
     }
 
-    if (handler_obj) {
-    	JNIEnv *env = ms_get_jni_env();
-    	jstring jdomain = env->NewStringUTF(LogDomain);
-    	jstring jlevname = env->NewStringUTF(levname);
-    	jstring jstr = env->NewStringUTF(str);
-    	env->CallVoidMethod(handler_obj, loghandler_id, jdomain, (jint)lev, jlevname, jstr, nullptr);
-    	if (jdomain) env->DeleteLocalRef(jdomain);
-    	if (jlevname) env->DeleteLocalRef(jlevname);
-    	if (jstr) env->DeleteLocalRef(jstr);
-    } else {
-    	linphone_android_log_handler(prio, str);
-    }
+    linphone_android_log_handler(prio, str);
     bctbx_free(str);
 }
 
@@ -142,6 +129,18 @@ JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_setDebugMode(JNIEnv* e
 		linphone_core_enable_logs_with_cb(linphone_android_ortp_log_handler);
 	} else {
 		linphone_core_disable_logs();
+	}
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_setLoggerDomain(JNIEnv* env, jobject thiz, jstring jdebugTag) {
+	LogDomain = GetStringUTFChars(env, jdebugTag);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_enableLogcatLogs(JNIEnv* env, jobject thiz, jboolean enableLogcat) {
+	if (enableLogcat) {
+		linphone_core_set_log_handler(linphone_android_ortp_log_handler);
+	} else {
+		linphone_core_set_log_handler(NULL);
 	}
 }
 
