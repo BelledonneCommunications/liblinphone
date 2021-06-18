@@ -145,6 +145,9 @@ public:
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+
+	virtual bool isIn() const = 0;
+
 	bool update(const ConferenceParamsInterface &newParameters) override;
 	const ConferenceParams &getCurrentParams() const {return *confParams;}
 

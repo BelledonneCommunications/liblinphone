@@ -95,7 +95,7 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	std::list<std::shared_ptr<Participant>> participants(conf->getParticipants());
 
 	// Add local participant only if it is enabled
-	if (confParams.localParticipantEnabled()) {
+	if (confParams.localParticipantEnabled() && conf->isIn()) {
 		std::shared_ptr<Participant> me = conf->getMe();
 		if (me) {
 			participants.push_front(me);
