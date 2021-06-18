@@ -58,6 +58,10 @@ RemoteConference::~RemoteConference () {
 #endif // HAVE_ADVANCED_IM
 }
 
+bool RemoteConference::isIn() const{
+	return true;
+}
+
 // -----------------------------------------------------------------------------
 
 void RemoteConference::onConferenceCreated (const ConferenceAddress &) {}
