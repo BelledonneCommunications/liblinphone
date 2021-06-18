@@ -281,7 +281,7 @@ static void multiple_route(void) {
 
 	linphone_proxy_config_set_routes(marie_cfg, NULL);// Clear routes
 	const bctbx_list_t *empty_routes = linphone_proxy_config_get_routes(marie_cfg);
-	BC_ASSERT_EQUAL(bctbx_list_size(empty_routes), 0, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(empty_routes), 0, int, "%d");
 
 	bctbx_list_t * new_routes = NULL;
 	new_routes = bctbx_list_append(new_routes, ms_strdup("<sip:sip.example.org;transport=tcp>"));
@@ -293,7 +293,7 @@ static void multiple_route(void) {
 
 	const bctbx_list_t *routes = linphone_proxy_config_get_routes(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(routes);
-	BC_ASSERT_EQUAL(bctbx_list_size(routes), 2, int, "%d");// 2 are good, 2 are bad
+	BC_ASSERT_EQUAL((int)bctbx_list_size(routes), 2, int, "%d");// 2 are good, 2 are bad
 
 	const char *route = (const char *)bctbx_list_get_data(routes);
 	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "<sip:sip.example.org;transport=tcp>");
