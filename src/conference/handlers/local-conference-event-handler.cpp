@@ -159,6 +159,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	MediaType audio = MediaType("1");
 	audio.setDisplayText("audio");
 	audio.setType("audio");
+	if (device->getSsrc() > 0) audio.setSrcId(std::to_string(device->getSsrc()));
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
