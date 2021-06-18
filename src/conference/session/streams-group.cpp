@@ -100,7 +100,8 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 
 void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	size_t index;
-	for(index = 0; index < params.localMediaDescription->streams.size(); ++index){
+	const auto & localMd = params.localMediaDescription;
+	for(index = 0; index < localMd->streams.size(); ++index){
 		Stream *s;
 		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
 		
@@ -292,7 +293,6 @@ bool StreamsGroup::allStreamsEncrypted () const {
 	return activeStreamsCount > 0;
 }
 
-
 void StreamsGroup::propagateEncryptionChanged () {
 	getMediaSessionPrivate().propagateEncryptionChanged();
 }
@@ -342,9 +342,9 @@ void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 		
 		const auto & newStream = params.getRemoteStreamDescription();
 		
-		if ((refStream.type == newStream.type) && !refStream.payloads.empty() && !newStream.payloads.empty()) {
-			OrtpPayloadType *refpt = refStream.payloads.front();
-			OrtpPayloadType *newpt = newStream.payloads.front();
+		if ((refStream.type == newStream.type) && !refStream.getPayloads().empty() && !newStream.getPayloads().empty()) {
+			const OrtpPayloadType *refpt = refStream.getPayloads().front();
+			const OrtpPayloadType *newpt = newStream.getPayloads().front();
 			if ((strcmp(refpt->mime_type, newpt->mime_type) == 0) && (refpt->clock_rate == newpt->clock_rate)
 				&& (payload_type_get_number(refpt) == payload_type_get_number(newpt))) {
 					s->tryEarlyMediaForking(params);
