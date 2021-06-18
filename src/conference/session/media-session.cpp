@@ -136,21 +136,23 @@ bool MediaSessionPrivate::tryEnterConference() {
 	L_Q();
 
 	const auto & confId = getConferenceId();
-	char * contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
-	Address contactAddress(contactAddressStr);
-	ms_free(contactAddressStr);
-	if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
-		contactAddress.setUriParam("conf-id",confId);
-		ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
-		shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(localConferenceId, false);
-		// If the call conference ID is not an empty string but no conference is linked to the call means that it was added to the conference after the INVITE session was started but before its completition
-		if (conference) {
-			// Send update to notify that the call enters conference
-			MediaSessionParams *newParams = q->getMediaParams()->clone();
-			lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
-			q->update(newParams);
-			delete newParams;
-			return true;
+	if (getOp() && getOp()->getContactAddress()) {
+		char * contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
+			contactAddress.setUriParam("conf-id",confId);
+			ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
+			shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(localConferenceId, false);
+			// If the call conference ID is not an empty string but no conference is linked to the call means that it was added to the conference after the INVITE session was started but before its completition
+			if (conference) {
+				// Send update to notify that the call enters conference
+				MediaSessionParams *newParams = q->getMediaParams()->clone();
+				lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
+				q->update(newParams);
+				delete newParams;
+				return true;
+			}
 		}
 	}
 	return false;
