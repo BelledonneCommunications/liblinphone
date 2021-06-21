@@ -355,6 +355,11 @@ void CorePrivate::notifyEnteringBackground () {
 
 	ms_message("Core [%p] notify enter background", q);
 	isInBackground = true;
+
+#ifdef __ANDROID__
+	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(q)->platform_helper)->updateNetworkReachability();
+#endif
+
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
@@ -375,6 +380,10 @@ void CorePrivate::notifyEnteringForeground () {
 		return;
 
 	isInBackground = false;
+
+#ifdef __ANDROID__
+	static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(q)->platform_helper)->updateNetworkReachability();
+#endif
 
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(lc);

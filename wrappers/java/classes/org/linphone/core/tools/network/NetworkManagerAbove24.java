@@ -211,7 +211,7 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
             // Device is restricting metered network activity while application is running on background.
             // In this state, application should not try to use the network while running on background, because it would be denied.
             Log.w("[Platform Helper] [Network Manager 24] Device is restricting metered network activity while application is running on background");
-            if (mHelper.isInBackground()) {
+            if (mConnectivityManager.isActiveNetworkMetered() && mHelper.isInBackground()) {
                 Log.w("[Platform Helper] [Network Manager 24] Device is in background, returning false");
                 return false;
             }
