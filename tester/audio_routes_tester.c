@@ -193,7 +193,7 @@ static void call_with_unreliable_device(void) {
 	// This should be the device the core falls back when the current is unregistered
 	register_device(pauline, &dummy3_test_snd_card_desc);
 
-	// Marie is calling (sound played on the ringstream) and Paulign is receiving the call (sound played on the ringtone player)
+	// Marie is calling (sound played on the ringstream) and Pauline is receiving the call (sound played on the ringtone player)
 	LinphoneCall * marie_call = linphone_core_invite_address(marie->lc,pauline->identity);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
 
