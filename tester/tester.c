@@ -27,6 +27,7 @@
 #include <bctoolbox/vfs.h>
 #include "tester_utils.h"
 #include "belle-sip/sipstack.h"
+#include "shared_tester_functions.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -2859,6 +2860,8 @@ void check_stream_encryption(LinphoneCall * call) {
 		if (astream && audio_stream_started((AudioStream*)astream)) {
 			if (enc == LinphoneMediaEncryptionNone) {
 				BC_ASSERT_FALSE(media_stream_secured(astream));
+			} else if (enc == LinphoneMediaEncryptionSRTP) {
+				BC_ASSERT_TRUE(media_stream_secured(astream) == is_srtp_secured(call, LinphoneStreamTypeAudio));
 			} else {
 				BC_ASSERT_TRUE(media_stream_secured(astream));
 			}
@@ -2868,6 +2871,8 @@ void check_stream_encryption(LinphoneCall * call) {
 		if (vstream && video_stream_started((VideoStream *)vstream)) {
 			if (enc == LinphoneMediaEncryptionNone) {
 				BC_ASSERT_FALSE(media_stream_secured(vstream));
+			} else if (enc == LinphoneMediaEncryptionSRTP) {
+				BC_ASSERT_TRUE(media_stream_secured(vstream) == is_srtp_secured(call, LinphoneStreamTypeVideo));
 			} else {
 				BC_ASSERT_TRUE(media_stream_secured(vstream));
 			}

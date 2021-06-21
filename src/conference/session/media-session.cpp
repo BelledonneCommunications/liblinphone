@@ -2152,11 +2152,10 @@ void MediaSessionPrivate::updateCurrentParams () const {
 				const auto & stream = getStreamsGroup().getStream(idx);
 				for (const auto & crypto : streamCryptos) {
 					const auto & algo = crypto.algo;
-					const bool & isRtpRtcpUnencrypted = (algo == MS_AES_128_SHA1_80_NO_CIPHER);
 					if (isEncryptionMandatory()) {
 						srtpEncryptionMatch &= !ms_crypto_suite_is_unencrypted(algo) && stream->isEncrypted();
 					} else {
-						srtpEncryptionMatch &= ((isRtpRtcpUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
+						srtpEncryptionMatch &= ((ms_crypto_suite_is_unencrypted(algo)) ? !stream->isEncrypted() : stream->isEncrypted());
 					}
 				}
 			}
@@ -3122,17 +3121,6 @@ float MediaSession::getCurrentQuality () const {
 const MediaSessionParams * MediaSession::getMediaParams () const {
 	L_D();
 	return d->getParams();
-}
-
-bool MediaSession::supportRtcp () const {
-	L_D();
-	bool mdSupportRtcp = true;
-
-	if (d->resultDesc) {
-		mdSupportRtcp = d->resultDesc->supportRtcp();
-	}
-
-	return linphone_core_rtcp_enabled(getCore()->getCCore()) && mdSupportRtcp;
 }
 
 RtpTransport * MediaSession::getMetaRtcpTransport (int streamIndex) const {
