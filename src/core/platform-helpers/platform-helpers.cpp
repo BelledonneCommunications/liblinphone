@@ -105,6 +105,8 @@ bool GenericPlatformHelpers::isNetworkReachable () {
 	return mNetworkReachable;
 }
 
+void GenericPlatformHelpers::updateNetworkReachability() { }
+
 bool GenericPlatformHelpers::isActiveNetworkWifiOnlyCompliant () const {
 	return false;
 }
