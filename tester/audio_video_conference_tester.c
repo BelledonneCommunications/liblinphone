@@ -28,6 +28,9 @@
 #include "mediastreamer2/msvolume.h"
 #include "belle-sip/sipstack.h"
 #include "shared_tester_functions.h"
+#include "mediastreamer2/msanalysedisplay.h"
+#include "mediastreamer2/msmire.h"
+
 
 #ifdef _WIN32
 #define unlink _unlink
@@ -8675,15 +8678,12 @@ static void simple_conference_with_volumes(void) {
 		linphone_core_set_video_device(c, liblinphone_tester_mire_id);
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
-		//linphone_core_set_video_display_filter(c, "MSAnanlyseDisplay");
+		linphone_core_set_video_display_filter(c, "MSAnalyseDisplay");
 
 		LinphoneVideoActivationPolicy * cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
 		linphone_video_activation_policy_unref(cpol);
 	}
-	/*linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "cam_color", 50);
-	linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "cam_color", 100);
-	linphone_config_set_int(linphone_core_get_config(laure->lc), "misc", "cam_color", 150);*/
 
 	linphone_video_activation_policy_unref(pol);
 
@@ -8786,6 +8786,8 @@ static void simple_conference_with_volumes(void) {
 	}
 
 	wait_for_list(lcs ,NULL, 0, 2000);
+	check_video_conference(pauline, laure);
+	
 
 	terminate_conference(participants, marie, conf, NULL);
 
