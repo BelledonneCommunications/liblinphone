@@ -28,6 +28,7 @@
 #include "call-session.h"
 #include "media-description-renderer.h"
 #include "call/audio-device/audio-device.h"
+#include "mediastreamer2/msmire.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -373,6 +374,7 @@ public:
 	 */
 	Stream * lookupMainStream(SalStreamType type);
 	Stream * lookupStream(const std::string & label) const;
+	bool compareVideoColor(MSMireControl &cl);
 
 	/*
 	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.

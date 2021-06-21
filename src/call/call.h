@@ -33,6 +33,7 @@
 //#include "call/audio-device/audio-device.h"
 #include "conference/session/call-session-listener.h"
 #include "utils/background-task.h"
+#include "mediastreamer2/msmire.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -236,6 +237,7 @@ public:
 	unsigned int getTextStartCount () const;
 	// don't make new code relying on this method.
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
+	bool compareVideoColor (MSMireControl &cl);
 	SalCallOp *getOp () const;
 	bool getSpeakerMuted () const;
 	void setSpeakerMuted (bool muted);
