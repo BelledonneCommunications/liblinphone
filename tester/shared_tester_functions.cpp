@@ -210,3 +210,33 @@ bool_t check_ice_sdp (LinphoneCall *call) {
 	if (value) return TRUE;
 	return FALSE;
 }
+
+bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype) {
+	SalStreamType type = SalOther;
+	switch(ctype){
+		case LinphoneStreamTypeAudio:
+			type = SalAudio;
+		break;
+		case LinphoneStreamTypeVideo:
+			type = SalVideo;
+		break;
+		case LinphoneStreamTypeText:
+			type = SalText;
+		break;
+		default:
+			type = SalOther;
+		break;
+	}
+	SalMediaDescription *desc = _linphone_call_get_result_desc(call);
+	const SalStreamDescription & stream = desc->findBestStream(type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) return FALSE;
+	if (stream.hasSrtp()) {
+		const auto & streamCryptos = stream.getCryptos();
+		for (const auto & crypto : streamCryptos) {
+			const auto & algo = crypto.algo;
+			//return (!ms_crypto_suite_is_unencrypted(algo) && !ms_crypto_suite_is_unauthenticated(algo));
+			return (!ms_crypto_suite_is_unencrypted(algo));
+		}
+	}
+	return FALSE;
+}
