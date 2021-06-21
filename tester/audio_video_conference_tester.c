@@ -1343,6 +1343,7 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 		}
 	}
 
+	marie_conference_address = linphone_conference_get_conference_address(conf);
 	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
@@ -7878,7 +7879,7 @@ static void conference_broadcast_created_by_merging_video_calls(void) {
 	linphone_call_params_unref(pauline_call_params);
 	linphone_call_params_unref(marie_call_params);
 
-	linphone_config_set_bool(linphone_core_get_config(marie->lc), "video_conf", "all_to_all", TRUE);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", TRUE);
 
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_set_layout(conf_params, LinphoneConferenceLayoutGrid);
