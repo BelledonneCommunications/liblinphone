@@ -27,8 +27,8 @@
 #include <map>
 #include <list>
 
+#include "utils/general-internal.h"
 #include "bctoolbox/utils.hh"
-
 #include "belle-sip/belle-sip.h"
 
 LINPHONE_BEGIN_NAMESPACE
@@ -76,7 +76,7 @@ struct config_attribute {
 	#pragma warning(push)
 	#pragma warning(disable: 4251)
 #endif // ifdef _WIN32
-class PotentialCfgGraph {
+class LINPHONE_INTERNAL_PUBLIC PotentialCfgGraph {
 
 	public:
 
