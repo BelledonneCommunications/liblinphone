@@ -792,6 +792,7 @@ namespace LinphonePrivate {
 	struct _LinphoneAccountCreatorService *default_ac_service; \
 	MSBandwidthController *bw_controller; \
 	bctbx_list_t *chat_rooms; \
+	bctbx_list_t *supported_encryptions; \
 	bctbx_list_t *callsCache; \
 	bool_t dns_set_by_app; \
 	int auto_download_incoming_files_max_size; \
