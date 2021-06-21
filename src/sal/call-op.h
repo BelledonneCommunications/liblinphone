@@ -27,8 +27,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC SalCallOp : public SalOp, public SalMessageOpInterface {
 public:
-	SalCallOp (Sal *sal);
+	SalCallOp (Sal *sal, const bool capabilityNegotiation = false);
 	virtual ~SalCallOp ();
+
+	void enableCapabilityNegotiation (const bool enable);
+	bool capabilityNegotiationEnabled () const;
 
 	std::shared_ptr<SalMediaDescription> getLocalMediaDescription () const { return mLocalMedia; }
 	int setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc);
@@ -131,6 +134,7 @@ private:
 	static const int MIN_SE = 1800; // Min-Session-Expires, in seconds
 
 	// Attributes
+	bool capabilityNegotiation = false;
 	std::shared_ptr<SalMediaDescription> mLocalMedia = nullptr;
 	std::shared_ptr<SalMediaDescription> mRemoteMedia = nullptr;
 	Content mLocalBody;

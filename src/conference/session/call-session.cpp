@@ -553,12 +553,15 @@ void CallSessionPrivate::init () {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::accept (const CallSessionParams *csp) {
+	L_Q();
 	/* Try to be best-effort in giving real local or routable contact address */
 	setContactOp();
-	if (csp)
+	if (csp) 
 		setParams(new CallSessionParams(*csp));
-	if (params)
+	if (params) {
+		op->enableCapabilityNegotiation (q->isCapabilityNegotiationEnabled());
 		op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
+	}
 
 	op->accept();
 	setState(CallSession::State::Connected, "Connected");
@@ -854,11 +857,14 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 	L_Q();
 	if (op)
 		op->release();
-	op = new SalCallOp(q->getCore()->getCCore()->sal.get());
+
+	const auto & core = q->getCore()->getCCore();
+
+	op = new SalCallOp(core->sal.get(), q->isCapabilityNegotiationEnabled());
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer())
 		op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
-	linphone_configure_op(q->getCore()->getCCore(), op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
+	linphone_configure_op(core, op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by proxy */
@@ -1063,7 +1069,6 @@ void CallSession::accepting () {
 
 LinphoneStatus CallSession::acceptUpdate (const CallSessionParams *csp) {
 	L_D();
-lInfo() << "Call session " << __func__ << " Call is in state " << Utils::toString(d->state) << " csp " << csp;
 	if (d->state != CallSession::State::UpdatedByRemote) {
 		lError() << "CallSession::acceptUpdate(): invalid state " << Utils::toString(d->state) << " to call this method";
 		return -1;
@@ -1077,9 +1082,11 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	d->setDestProxy(cfg);
 	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
+
+	const auto & core = getCore()->getCCore();
 	if (!d->destProxy) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
-		d->setDestProxy( linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr) );
+		d->setDestProxy( linphone_core_lookup_known_proxy(core, toAddr) );
 	}
 
 	if (d->log) {
@@ -1092,9 +1099,10 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* We already have an op for incoming calls */
 		d->op = op;
 		d->op->setUserPointer(this);
+		op->enableCapabilityNegotiation (isCapabilityNegotiationEnabled());
 		op->enableCnxIpTo0000IfSendOnly(
 			!!linphone_config_get_default_int(
-				linphone_core_get_config(getCore()->getCCore()), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
+				linphone_core_get_config(core), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
 		linphone_call_log_set_call_id(d->log, op->getCallId().c_str()); /* Must be known at that time */
@@ -1184,6 +1192,42 @@ LinphoneStatus CallSession::deferUpdate () {
 	}
 	d->deferUpdate = true;
 	return 0;
+}
+
+const std::list<LinphoneMediaEncryption> CallSession::getSupportedEncryptions() const {
+	L_D();
+	if ((d->direction == LinphoneCallIncoming) && (d->state == CallSession::State::Idle)) {
+		// If we are in the IncomingReceived state, we support all encryptions the core had enabled at compile time
+		// In fact, the policy is to preliminary accept (i.e. send 180 Ringing) the wider possible range of offers.
+		// Note that special treatment is dedicated to ZRTP as, for testing purposes, a core can have its member zrtp_not_available_simulation set to TRUE which prevent the core to accept calls with ZRTP encryptions
+		// The application can then decline a call based on the call parameter the call was accepted with
+		const auto core = getCore()->getCCore();
+		const auto encList = linphone_core_get_supported_media_encryptions_at_compile_time();
+		std::list<LinphoneMediaEncryption> encEnumList;
+		for(bctbx_list_t * enc = encList;enc!=NULL;enc=enc->next){
+			const auto encEnum = static_cast<LinphoneMediaEncryption>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(enc)));
+			// Do not add ZRTP if it is not supported by core even though the core was compile with it on
+			if ((encEnum != LinphoneMediaEncryptionZRTP) || ((encEnum == LinphoneMediaEncryptionZRTP) && !core->zrtp_not_available_simulation)) {
+				encEnumList.push_back(encEnum);
+			}
+		}
+
+		if (encList) {
+			bctbx_list_free(encList);
+		}
+
+		return encEnumList;
+	} else if (getParams()) {
+		return getParams()->getPrivate()->getSupportedEncryptions();
+	}
+	return getCore()->getSupportedMediaEncryptions();
+}
+
+bool CallSession::isCapabilityNegotiationEnabled() const {
+	if (getParams()) {
+		return getParams()->getPrivate()->capabilityNegotiationEnabled();
+	}
+	return !!linphone_core_capability_negociation_enabled(getCore()->getCCore());
 }
 
 bool CallSession::hasTransferPending () {
@@ -1305,8 +1349,9 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	char *from = linphone_address_as_string(d->log->from);
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
-	if (content)
+	if (content) {
 		d->op->setLocalBody(*content);
+	}
 
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
 	for (auto& content : d->params->getCustomContents()) {
@@ -1398,6 +1443,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (csp)
 		d->setParams(new CallSessionParams(*csp));
+
 	d->op->setLocalBody(content ? *content : Content());
 	LinphoneStatus result = d->startUpdate(subject);
 	if (result && (d->state != initialState)) {

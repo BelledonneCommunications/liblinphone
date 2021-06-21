@@ -282,7 +282,6 @@ set(SOURCE_FILES_C
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
-	shared_core_tester.c
 	local_conference_tester.cpp
 	video_tester.c
 )
@@ -301,6 +300,11 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
+	capability_negotiation_tester.cpp
+	ice_capability_negotiation_tester.cpp
+	srtp_capability_negotiation_tester.cpp
+	zrtp_capability_negotiation_tester.cpp
+	dtls_srtp_capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
@@ -310,6 +314,7 @@ set(SOURCE_FILES_CXX
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
 	vfs-encryption-tester.cpp
+	potential_configuration_tester.cpp
 )
 
 if(ENABLE_FLEXIAPI)
@@ -328,6 +333,7 @@ endif()
 set(HEADER_FILES
 	audio_quality_tester.h
 	shared_tester_functions.h
+	capability_negotiation_tester.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
@@ -349,7 +355,12 @@ set(GROUP_CHAT_BENCHMARK_SOURCE_C
 	group_chat_benchmark.c
 )
 
+set(GROUP_CHAT_BENCHMARK_SOURCE_CXX
+	shared_tester_functions.cpp
+)
+
 set(GROUP_CHAT_BENCHMARK_HEADERS
+	shared_tester_functions.h
 	liblinphone_tester.h
 	tools/tester.h
 )
@@ -377,6 +388,7 @@ bc_apply_compile_flags(SOURCE_FILES_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 
 bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
+bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 
 add_definitions("-DLINPHONE_TESTER")
 
@@ -488,7 +500,7 @@ if(NOT ANDROID)
 			configure_file("${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/Info.plist")
 		endif()	
 
-		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
+		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
 		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)

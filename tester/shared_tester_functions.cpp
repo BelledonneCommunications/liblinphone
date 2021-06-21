@@ -195,15 +195,6 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 			linphone_call_stats_unref(stats2);
 	}
 
-	/*make sure encryption mode are preserved*/
-	if (c1) {
-		const LinphoneCallParams* call_param = linphone_call_get_current_params(c1);
-		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller->lc), int, "%d");
-	}
-	if (c2) {
-		const LinphoneCallParams* call_param = linphone_call_get_current_params(c2);
-		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(callee->lc), int, "%d");
-	}
 	linphone_call_unref(c1);
 	linphone_call_unref(c2);
 	if (audio_enabled) global_success = global_success && audio_success;
@@ -217,5 +208,35 @@ bool_t check_ice_sdp (LinphoneCall *call) {
 	belle_sdp_session_description_t *sdp = desc->toSdp();
 	const char *value=belle_sdp_session_description_get_attribute_value(sdp,"ice-ufrag");
 	if (value) return TRUE;
+	return FALSE;
+}
+
+bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype) {
+	SalStreamType type = SalOther;
+	switch(ctype){
+		case LinphoneStreamTypeAudio:
+			type = SalAudio;
+		break;
+		case LinphoneStreamTypeVideo:
+			type = SalVideo;
+		break;
+		case LinphoneStreamTypeText:
+			type = SalText;
+		break;
+		default:
+			type = SalOther;
+		break;
+	}
+	SalMediaDescription *desc = _linphone_call_get_result_desc(call);
+	const SalStreamDescription & stream = desc->findBestStream(type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) return FALSE;
+	if (stream.hasSrtp()) {
+		const auto & streamCryptos = stream.getCryptos();
+		for (const auto & crypto : streamCryptos) {
+			const auto & algo = crypto.algo;
+			//return (!ms_crypto_suite_is_unencrypted(algo) && !ms_crypto_suite_is_unauthenticated(algo));
+			return (!ms_crypto_suite_is_unencrypted(algo));
+		}
+	}
 	return FALSE;
 }
