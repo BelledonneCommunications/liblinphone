@@ -29,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2VideoControl(session.getCore()){
 	MSVideoConferenceParams params = {0};
-	if (linphone_config_get_bool(session.getCore().getCCore()->config, "video_conf", "all_to_all", 0)) {
+	if (linphone_config_get_bool(session.getCore().getCCore()->config, "misc", "all_to_all", 0)) {
 		params.all_to_all = 1;
 	}
 	params.codec_mime_type = "VP8";
@@ -136,6 +136,9 @@ void MS2VideoMixer::addLocalParticipant(){
 
 	if (!st->label) {
 		lError() << "Video Mixer Conference[all to all]: Can not add video endpoint with empty label";
+	}
+	if (linphone_config_get_bool(mSession.getCCore()->config, "misc", "all_to_all", 0)) {
+		video_stream_enable_router(st, true);
 	}
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
