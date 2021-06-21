@@ -29,6 +29,7 @@
 #include "liblinphone_tester.h"
 #include "shared_tester_functions.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "mediastreamer2/msmire.h"
 
 using namespace std;
 using namespace LinphonePrivate;
@@ -321,4 +322,33 @@ bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphonePar
 		return (session->getCurrentParams()->realtimeTextEnabled()) ? TRUE : FALSE;
 	}
 	return FALSE;
+}
+
+void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2) {
+	LinphoneCall *call1=linphone_core_get_current_call(lc1->lc);
+	LinphoneCall *call2=linphone_core_get_current_call(lc2->lc);
+	BC_ASSERT_PTR_NOT_NULL(call1);
+	BC_ASSERT_PTR_NOT_NULL(call2);
+	if (call1 && call2) {
+		VideoStream *vstream1s = (VideoStream *)linphone_call_get_stream(call1, LinphoneStreamTypeVideo);
+		BC_ASSERT_PTR_NOT_NULL(vstream1s);
+		VideoStream *vstream2s = (VideoStream *)linphone_call_get_stream(call2, LinphoneStreamTypeVideo);
+		BC_ASSERT_PTR_NOT_NULL(vstream2s);
+		BC_ASSERT_TRUE(vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID);
+		BC_ASSERT_TRUE(vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID);
+		MSMireControl c1 = {{0,5,10,15,20,25}};
+		MSMireControl c2 = {{100,105,110,115,120,125}};
+
+		if (vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID) {
+				ms_filter_call_method(vstream1s->source, MS_MIRE_SET_COLOR, &c1);
+		}
+		if (vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID) {
+			ms_filter_call_method(vstream2s->source, MS_MIRE_SET_COLOR, &c2);
+		}
+
+		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 2000);
+		
+		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2));
+		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1));
+	}
 }

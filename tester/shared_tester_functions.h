@@ -37,6 +37,7 @@ int _linphone_call_get_nb_text_steams(const LinphoneCall * call);
 bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device);
+void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2);
 
 #ifdef __cplusplus
 }
