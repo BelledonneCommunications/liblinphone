@@ -285,19 +285,19 @@ const SalStreamDescription & SalMediaDescription::getActiveStreamOfType(SalStrea
 }
 
 const SalStreamDescription SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
-	auto desc = findStream(SalProtoRtpSavpf, type);
-	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpSavp, type);
-	return desc;
+	auto stream = findStream(SalProtoRtpSavpf, type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpSavp, type);
+	return stream;
 }
 
 const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType type) const {
-	auto desc = findStream(SalProtoUdpTlsRtpSavpf, type);
-	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoUdpTlsRtpSavp, type);
-	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpSavpf, type);
-	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpSavp, type);
-	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpAvpf, type);
-	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpAvp, type);
-	return desc;
+	auto stream = findStream(SalProtoUdpTlsRtpSavpf, type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoUdpTlsRtpSavp, type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpSavpf, type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpSavp, type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpAvpf, type);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpAvp, type);
+	return stream;
 }
 
 bool SalMediaDescription::isEmpty() const {
@@ -349,15 +349,6 @@ bool SalMediaDescription::hasImplicitAvpf() const {
 		if (stream.hasImplicitAvpf() != true) return false;
 	}
 	return true;
-}
-
-bool SalMediaDescription::supportRtcp() const {
-	if (streams.empty()) return false;
-	for(const auto & stream : streams){
-		if (!stream.enabled()) continue;
-		if (stream.supportRtcp()) return true;
-	}
-	return false;
 }
 
 bool SalMediaDescription::hasSrtp() const {

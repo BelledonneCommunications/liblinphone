@@ -67,7 +67,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasDir(const SalStreamDir & stream_dir) const;
 		bool hasAvpf() const;
 		bool hasImplicitAvpf() const;
-		bool supportRtcp() const;
 		bool hasSrtp() const;
 		bool hasDtls() const;
 		bool hasZrtp() const;

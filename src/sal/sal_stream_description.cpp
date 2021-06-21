@@ -142,11 +142,6 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	createActualCfg(salMediaDesc, sdp, media_desc);
-
-	auto actualCfg = getActualConfiguration();
-	if (!actualCfg.supportRtcp()) {
-		rtcp_port = 0;
-	}
 }
 
 void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
@@ -784,7 +779,6 @@ void SalStreamDescription::disable(){
 	cfgs[getChosenConfigurationIndex()].disable();
 }
 
-/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 bool SalStreamDescription::hasAvpf() const {
 	return getChosenConfiguration().hasAvpf();
 }
@@ -795,11 +789,6 @@ bool SalStreamDescription::hasIpv6() const {
 
 bool SalStreamDescription::hasImplicitAvpf() const {
 	return getChosenConfiguration().hasImplicitAvpf();
-}
-
-/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-bool SalStreamDescription::supportRtcp() const {
-	return getChosenConfiguration().supportRtcp();
 }
 
 bool SalStreamDescription::supportSrtp() const {
