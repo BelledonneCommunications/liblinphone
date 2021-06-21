@@ -73,7 +73,7 @@ public:
 	bool isRecording ();
 	void terminateBecauseOfLostMedia ();
 	LinphoneStatus updateFromConference (const MediaSessionParams *msp, const std::string &subject = "");
-	LinphoneStatus update (const MediaSessionParams *msp, const std::string &subject = "");
+	LinphoneStatus update (const MediaSessionParams *msp, const bool isCapabilityNegotiationUpdate = false, const std::string &subject = "");
 
 	void requestNotifyNextVideoFrameDecoded ();
 	LinphoneStatus takePreviewSnapshot (const std::string& file);
@@ -124,6 +124,7 @@ public:
 	AudioDevice* getOutputAudioDevice() const;
 	
 	StreamsGroup & getStreamsGroup()const;
+
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);
