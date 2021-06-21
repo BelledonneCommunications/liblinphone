@@ -105,6 +105,12 @@ MediaStream *Call::getMediaStream (LinphoneStreamType type) const {
 	return s->getMediaStream();
 }
 
+bool Call::compareVideoColor (MSMireControl &cl) {
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	return sg.compareVideoColor(cl);
+}
+
 SalCallOp * Call::getOp () const {
 	return getActiveSession()->getPrivate()->getOp();
 }

@@ -31,6 +31,7 @@
 #include "nat/ice-service.h"
 #include "linphone/core.h"
 #include "mixers.h"
+#include "mediastreamer2/msanalysedisplay.h"
 
 #include <iomanip>
 
@@ -331,6 +332,20 @@ Stream * StreamsGroup::lookupStream(const std::string & label) const {
 		}
 	}
 	return nullptr;
+}
+
+
+bool StreamsGroup::compareVideoColor(MSMireControl &cl) {
+	for (auto &stream : mStreams){
+		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+		if(stream->getType() == SalVideo) {
+			VideoStream *vs = (VideoStream *) s->getMediaStream();
+			if (vs && vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
+				return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
+			}
+		}
+	}
+	return false;
 }
 
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
