@@ -58,6 +58,7 @@ public:
 	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
+	void updateNetworkReachability() override;
 	bool isActiveNetworkWifiOnlyCompliant () const override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setDnsServers () override;
@@ -106,6 +107,7 @@ private:
 	jmethodID mOnLinphoneCoreStopId = nullptr;
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jmethodID mIsActiveNetworkWifiOnlyCompliantId = nullptr;
+	jmethodID mUpdateNetworkReachabilityId = nullptr;
 
 	// CoreManager methods
 	jmethodID mCoreManagerDestroyId = nullptr;
@@ -214,6 +216,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 	mIsActiveNetworkWifiOnlyCompliantId = getMethodId(env, klass, "isActiveNetworkWifiOnlyCompliant", "()Z");
+	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -350,6 +353,13 @@ void AndroidPlatformHelpers::resizeVideoPreview (int width, int height) {
 
 bool AndroidPlatformHelpers::isNetworkReachable() {
 	return mNetworkReachable;
+}
+
+void AndroidPlatformHelpers::updateNetworkReachability() {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mUpdateNetworkReachabilityId);
+	}
 }
 
 bool AndroidPlatformHelpers::isActiveNetworkWifiOnlyCompliant() const {

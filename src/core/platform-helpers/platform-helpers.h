@@ -71,6 +71,7 @@ public:
 
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
 	virtual bool isNetworkReachable () = 0;
+	virtual void updateNetworkReachability () = 0;
 	virtual bool isActiveNetworkWifiOnlyCompliant () const = 0;
 	virtual void onWifiOnlyEnabled (bool enabled) = 0;
 	virtual void setDnsServers () = 0;
@@ -130,6 +131,7 @@ public:
 	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
+	void updateNetworkReachability() override;
 	bool isActiveNetworkWifiOnlyCompliant () const override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setDnsServers () override;
