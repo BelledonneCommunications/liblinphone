@@ -130,14 +130,14 @@ LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphonePart
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param window_id the window ID of the device @maybenil
  */
-LINPHONE_PUBLIC void linphone_participant_device_set_window_id(LinphoneParticipantDevice *participant_device, void * window_id);
+LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void * window_id);
 
 /**
  * Get window ID.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the window ID of the device @maybenil
  */
-LINPHONE_PUBLIC void * linphone_participant_device_get_window_id(const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}
