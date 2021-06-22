@@ -1289,7 +1289,7 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 
-	add_calls_to_local_conference(lcs, marie, NULL, participants);
+	add_calls_to_local_conference(lcs, marie, NULL, participants, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -3202,7 +3202,7 @@ static void remove_participant_from_video_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, conf, new_participants);
+	add_calls_to_local_conference(lcs, marie, conf, new_participants, FALSE);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
@@ -3398,7 +3398,7 @@ static void conference_created_by_merging_video_calls_base(bool_t enable_video, 
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, conf, new_participants);
+	add_calls_to_local_conference(lcs, marie, conf, new_participants, FALSE);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
@@ -4902,7 +4902,7 @@ static void remote_participant_adds_video_during_conference(void) {
 	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);
 
-	add_calls_to_local_conference(lcs, marie, NULL, participants);
+	add_calls_to_local_conference(lcs, marie, NULL, participants, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -8110,7 +8110,7 @@ static void simple_conference_with_volumes(void) {
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, conf, new_participants);
+	add_calls_to_local_conference(lcs, marie, conf, new_participants, TRUE);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
