@@ -90,6 +90,11 @@ extern test_suite_t tunnel_test_suite;
 extern test_suite_t upnp_test_suite;
 extern test_suite_t utils_test_suite;
 extern test_suite_t video_test_suite;
+extern test_suite_t capability_negotiation_test_suite;
+extern test_suite_t srtp_capability_negotiation_test_suite;
+extern test_suite_t zrtp_capability_negotiation_test_suite;
+extern test_suite_t dtls_srtp_capability_negotiation_test_suite;
+extern test_suite_t ice_capability_negotiation_test_suite;
 extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
@@ -99,6 +104,7 @@ extern test_suite_t lime_server_auth_test_suite;
 extern test_suite_t vfs_encryption_test_suite;
 extern test_suite_t local_conference_test_suite;
 extern test_suite_t external_domain_test_suite;
+extern test_suite_t potential_configuration_graph_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
@@ -562,6 +568,8 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts);
 
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr);
+void check_stream_encryption(LinphoneCall * call);
+bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr);
 
 LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted);
 LinphoneChatRoom * create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params);
@@ -606,6 +614,7 @@ LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const 
 FILE *sip_start(const char *senario, const char* dest_username, const char *passwd, LinphoneAddress* dest_addres);
 
 void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice );
+void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_ice);
 void linphone_conf_event_notify(LinphoneEvent *lev);
 void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone);
 
