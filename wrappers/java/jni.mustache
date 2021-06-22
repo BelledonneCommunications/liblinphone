@@ -105,22 +105,22 @@ void linphone_android_log_handler(int prio, char *str) {
 
 static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel lev, const char *fmt, va_list args) {
 	char* str = bctbx_strdup_vprintf(fmt, args);
-    const char *levname = "undef";
+	const char *levname = "undef";
 
-    if (str == nullptr) return;
+	if (str == nullptr) return;
 
-    int prio;
-    switch(lev) {
-    	case ORTP_DEBUG:	prio = ANDROID_LOG_DEBUG;	levname="debug"; break;
-    	case ORTP_MESSAGE:	prio = ANDROID_LOG_INFO;	levname="message"; break;
-    	case ORTP_WARNING:	prio = ANDROID_LOG_WARN;	levname="warning"; break;
-    	case ORTP_ERROR:	prio = ANDROID_LOG_ERROR;	levname="error"; break;
-    	case ORTP_FATAL:	prio = ANDROID_LOG_FATAL;	levname="fatal"; break;
-    	default:			prio = ANDROID_LOG_DEFAULT;	break;
-    }
+	int prio;
+	switch(lev) {
+		case ORTP_DEBUG:	prio = ANDROID_LOG_DEBUG;	levname="debug"; break;
+		case ORTP_MESSAGE:	prio = ANDROID_LOG_INFO;	levname="message"; break;
+		case ORTP_WARNING:	prio = ANDROID_LOG_WARN;	levname="warning"; break;
+		case ORTP_ERROR:	prio = ANDROID_LOG_ERROR;	levname="error"; break;
+		case ORTP_FATAL:	prio = ANDROID_LOG_FATAL;	levname="fatal"; break;
+		default:			prio = ANDROID_LOG_DEFAULT;	break;
+	}
 
-    linphone_android_log_handler(prio, str);
-    bctbx_free(str);
+	linphone_android_log_handler(prio, str);
+	bctbx_free(str);
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_setDebugMode(JNIEnv* env, jobject thiz, jboolean isDebug, jstring jdebugTag) {
@@ -145,56 +145,56 @@ JNIEXPORT void JNICALL Java_org_linphone_core_FactoryImpl_enableLogcatLogs(JNIEn
 }
 
 static jstring get_jstring_from_char(JNIEnv *env, const char* cString) {
-    int len;
-    jmethodID constructorString;
-    jbyteArray bytesArray = nullptr;
-    jstring javaString = nullptr;
-    jclass classString = env->FindClass("java/lang/String");
-    if (classString == nullptr) {
-        bctbx_error("Cannot find java.lang.String class.\n");
-        goto error;
-    }
+	int len;
+	jmethodID constructorString;
+	jbyteArray bytesArray = nullptr;
+	jstring javaString = nullptr;
+	jclass classString = env->FindClass("java/lang/String");
+	if (classString == nullptr) {
+		bctbx_error("Cannot find java.lang.String class.\n");
+		goto error;
+	}
 
-    constructorString = env->GetMethodID(classString, "<init>", "([BLjava/lang/String;)V");
-    if (constructorString == nullptr) {
-        bctbx_error("Cannot find String <init> method.\n");
-        goto error;
-    }
+	constructorString = env->GetMethodID(classString, "<init>", "([BLjava/lang/String;)V");
+	if (constructorString == nullptr) {
+		bctbx_error("Cannot find String <init> method.\n");
+		goto error;
+	}
 
-    len = (int)strlen(cString);
-    bytesArray = env->NewByteArray(len);
+	len = (int)strlen(cString);
+	bytesArray = env->NewByteArray(len);
 
-    if (bytesArray) {
-        env->SetByteArrayRegion(bytesArray, 0, len, (jbyte *)cString);
-        jstring UTF8 = env->NewStringUTF("UTF8");
-        javaString = (jstring)env->NewObject(classString, constructorString, bytesArray, UTF8);
-        env->DeleteLocalRef(bytesArray);
-        env->DeleteLocalRef(UTF8);
-    }
+	if (bytesArray) {
+		env->SetByteArrayRegion(bytesArray, 0, len, (jbyte *)cString);
+		jstring UTF8 = env->NewStringUTF("UTF8");
+		javaString = (jstring)env->NewObject(classString, constructorString, bytesArray, UTF8);
+		env->DeleteLocalRef(bytesArray);
+		env->DeleteLocalRef(UTF8);
+	}
 
-    error:
-    if (classString) env->DeleteLocalRef(classString);
+	error:
+	if (classString) env->DeleteLocalRef(classString);
 
-    return javaString;
+	return javaString;
 }
 
 #ifdef __ANDROID__
 int dumbMethodForAllowingUsageOfCpuFeaturesFromStaticLibMediastream() {
-        return (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM && (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0);
+	return (android_getCpuFamily() == ANDROID_CPU_FAMILY_ARM && (android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0);
 }
 
 int dumbMethodForAllowingUsageOfMsAudioDiffFromStaticLibMediastream() {
-        return ms_audio_diff(nullptr, nullptr, nullptr, 0, nullptr, nullptr);
+	return ms_audio_diff(nullptr, nullptr, nullptr, 0, nullptr, nullptr);
 }
 
 JNIEXPORT void JNICALL setAndroidLogHandler() {
-        linphone_core_enable_logs_with_cb(linphone_android_ortp_log_handler);
+	linphone_core_enable_logs_with_cb(linphone_android_ortp_log_handler);
 }
 
 JNIEXPORT void JNICALL setMediastreamerAndroidContext(JNIEnv *env, void *context) {
-        jclass ms_class = env->FindClass("org/linphone/mediastream/MediastreamerAndroidContext");
-        jmethodID set_context = env->GetStaticMethodID(ms_class, "setContext", "(Ljava/lang/Object;)V");
-        env->CallStaticVoidMethod(ms_class, set_context, (jobject)context);
+	jclass ms_class = env->FindClass("org/linphone/mediastream/MediastreamerAndroidContext");
+	jmethodID set_context = env->GetStaticMethodID(ms_class, "setContext", "(Ljava/lang/Object;)V");
+	env->CallStaticVoidMethod(ms_class, set_context, (jobject)context);
 }
 #endif
 
@@ -215,11 +215,11 @@ JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_d(JNIEnv* env, jobject t
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_i(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
-    java_log(env, BCTBX_LOG_MESSAGE, jdomain, jmsg);
+	java_log(env, BCTBX_LOG_MESSAGE, jdomain, jmsg);
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_w(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
-    java_log(env, BCTBX_LOG_WARNING, jdomain, jmsg);
+	java_log(env, BCTBX_LOG_WARNING, jdomain, jmsg);
 }
 
 JNIEXPORT void JNICALL Java_org_linphone_core_tools_Log_e(JNIEnv* env, jobject thiz, jstring jdomain, jstring jmsg) {
@@ -657,6 +657,15 @@ JNIEXPORT void JNICALL Java_org_linphone_core_CoreImpl_setNativeVideoWindowId(JN
 		return;
 	}
 	linphone_core_set_native_video_window_id(cptr, (void *)id);
+}
+
+JNIEXPORT void JNICALL Java_org_linphone_core_ParticipantDeviceImpl_setNativeVideoWindowId(JNIEnv *env, jobject thiz, jlong ptr, jobject id) {
+	LinphoneParticipantDevice *cptr = (LinphoneParticipantDevice*)ptr;
+	if (cptr == 0) {
+		bctbx_error("Java_org_linphone_core_ParticipantDeviceImpl_setNativeVideoWindowId's LinphoneCore C ptr is null!");
+		return;
+	}
+	linphone_participant_device_set_native_video_window_id(cptr, (void *)id);
 }
 
 JNIEXPORT jobject JNICALL Java_org_linphone_core_FactoryImpl_getCore(JNIEnv *env, jobject thiz, jlong ptr, jlong lcPtr) {
