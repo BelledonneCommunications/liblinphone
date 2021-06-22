@@ -21,10 +21,8 @@
 #ifndef __LINPHONE_CALL_PARAMS_H__
 #define __LINPHONE_CALL_PARAMS_H__
 
-
 #include "linphone/types.h"
 #include "linphone/payload_type.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +82,78 @@ LINPHONE_PUBLIC void linphone_call_params_enable_low_bandwidth(LinphoneCallParam
  * @param enabled A boolean value telling whether to enable audio or not.
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_params, bool_t enabled);
+
+/**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
+
+/**
+ * Define whether capability negotiation (RFC5939) reINVITE is enabled
+ * @param params the #LinphoneCallParams @notnil
+ * @param enable TRUE to enable capability negotiation reINVITE; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_call_params_enable_capability_negotiation_reinvite(LinphoneCallParams *params, bool_t enable);
+
+/**
+ * Indicates whether capability negotiations (RFC5939) is enabled.
+ * @param params the #LinphoneCallParams @notnil
+ * @return a boolean indicating the enablement of capability negotiations.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiations_enabled (const LinphoneCallParams *params);
+
+/**
+ * Enable capability negotiations (RFC5939).
+ * @param params #LinphoneCallParams object @notnil
+ * @param enabled A boolean value telling whether to enable capability negotiations or not.
+**/
+LINPHONE_PUBLIC void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enabled);
+
+/**
+ * Indicates whether tcap lines with consecutive indexes are going to be merged or not if capability negotiations (RFC5939) is enabled.
+ * @param params the #LinphoneCallParams @notnil
+ * @return a boolean indicating the enablement of tcap line merging
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_tcap_lines_merged (const LinphoneCallParams *params);
+
+/**
+ * Enable merging of tcap lines with consecutive indexes if capability negotiations (RFC5939) is enabled.
+ * @param params #LinphoneCallParams object @notnil
+ * @param enabled A boolean value telling whether to merge tcap lines
+**/
+LINPHONE_PUBLIC void linphone_call_params_enable_tcap_line_merging (LinphoneCallParams *params, bool_t enabled);
+
+/**
+ * Returns the encryption is supported
+ * @param params the #LinphoneCallParams @notnil
+ * @param encryption The #LinphoneMediaEncryption to check whether is supported
+ * @return a boolean indicating whether the encryption is supported
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_is_media_encryption_supported (const LinphoneCallParams *params, const LinphoneMediaEncryption encryption);
+
+/**
+ * Returns the list of supported encryptions in the call
+ * @param params the #LinphoneCallParams @notnil
+ * @return a list of encryptions supported in a given call \bctbx_list{LinphoneMediaEncryption} @notnil
+ * @ingroup media_parameters
+ * @donotwrap
+ */
+LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_supported_encryptions (const LinphoneCallParams *params);
+
+/**
+ * Sets the list of supported encryptions
+ * @param params #LinphoneCallParams object @notnil
+ * @param encs list with the list of encryptions supported in a given call \bctbx_list{LinphoneMediaEncryption} @notnil
+ * @donotwrap
+**/
+LINPHONE_PUBLIC void linphone_call_params_set_supported_encryptions (LinphoneCallParams *params, bctbx_list_t* encs);
 
 /**
  * Enable video stream.
@@ -319,8 +389,8 @@ int linphone_call_params_get_audio_bandwidth_limit(const LinphoneCallParams *par
 bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_has_avpf_enabled_been_set(const LinphoneCallParams *params);
-bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
-void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);
+LINPHONE_PUBLIC bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
+LINPHONE_PUBLIC void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);
 uint16_t linphone_call_params_get_avpf_rr_interval(const LinphoneCallParams *params);
 void linphone_call_params_set_avpf_rr_interval(LinphoneCallParams *params, uint16_t value);
 

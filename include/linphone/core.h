@@ -4229,13 +4229,29 @@ LINPHONE_PUBLIC void linphone_core_set_max_calls(LinphoneCore *core, int max);
 LINPHONE_PUBLIC bool_t linphone_core_sound_resources_locked(LinphoneCore *core);
 
 /**
+ * Set the crypto suites available to the core
+ * @param core core @notnil
+ * @param suites comma separated list of supported suites @notnil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, const char *suites);
+
+/**
+ * Get the crypto suites available to the core
+ * @param core core @notnil
+ * @return a comma separated list of supported suites @notnil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core);
+
+/**
  * Check if a media encryption type is supported
  * @param core core @notnil
  * @param menc #LinphoneMediaEncryption
  * @return whether a media encryption scheme is supported by the #LinphoneCore engine
  * @ingroup initializing
 **/
-LINPHONE_PUBLIC bool_t linphone_core_media_encryption_supported(const LinphoneCore *core, LinphoneMediaEncryption menc);
+LINPHONE_PUBLIC bool_t linphone_core_media_encryption_supported(LinphoneCore *core, LinphoneMediaEncryption menc);
 
 /**
  * Choose the media encryption policy to be used for RTP packets.
@@ -4252,7 +4268,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *
  * @return The #LinphoneMediaEncryption policy being used.
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(const LinphoneCore *core);
 
 /**
  * Check if the configured media encryption is mandatory or not.
@@ -4263,6 +4279,33 @@ LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(Linph
 LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *core);
 
 /**
+ * Sets the supported media encryptions
+ * @param core #LinphoneCore object. @notnil
+ * @param enc_list The supported media encryptions. Elements of the list are pointers to the values of enum #LinphoneMediaEncryption. \bctbx_list{LinphoneCoreMediaEncryption} @notnil
+ * @ingroup media_parameters
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, const bctbx_list_t * encs);
+
+/**
+ * Get list of supported media descriptions.
+ * @param core #LinphoneCore object. @notnil
+ * @return list of supported media encryptions as intptr_t. \bctbx_list{LinphoneCoreMediaEncryption} @notnil
+ * @ingroup media_parameters
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_supported_media_encryptions(LinphoneCore *lc);
+
+/**
+ * Check if media encryption is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param menc The media encryption policy to be used.
+ * @return TRUE if the media encryption is supported, FALSE otherwise
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_supported(LinphoneCore *core, LinphoneMediaEncryption menc);
+
+/**
  * Define whether the configured media encryption is mandatory, if it is and the negotation cannot result
  * in the desired media encryption then the call will fail. If not an INVITE will be resent with encryption
  * disabled.
@@ -4271,6 +4314,54 @@ LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore 
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_media_encryption_mandatory(LinphoneCore *core, bool_t mandatory);
+
+/**
+ * Check if tcap lines are going to the merged if the capability negotiation (RFC5939) is supported or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if tcap lines with consecutive indexes are going to be merged; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_tcap_lines_merging_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether tcap lines are going to be merged if capability negotiation (RFC5939) is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param merge TRUE to merge tcap lines with consecutive indexes; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_tcap_line_merging(LinphoneCore *core, bool_t merge);
+
+/**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether capability negotiation (RFC5939) reINVITE is enabled
+ * @param core #LinphoneCore object. @notnil
+ * @param enable TRUE to enable capability negotiation reINVITE; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *core, bool_t enable);
+
+/**
+ * Check if the capability negotiation (RFC5939) is supported or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if capability negotiation is supported; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_capability_negociation_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether capability negotiation (RFC5939) is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param support TRUE to support RFC5939; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_capability_negociation(LinphoneCore *core, bool_t support);
 
 /**
  * Init call params using LinphoneCore's current configuration

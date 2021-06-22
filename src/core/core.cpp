@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <iterator>
 
+#include "bctoolbox/utils.hh"
 #include <mediastreamer2/mscommon.h>
 
 #ifdef HAVE_ADVANCED_IM
@@ -758,7 +759,7 @@ void Core::setSpecs (const std::string &pSpecs) {
 		setSpecsList(d->specs);
 	} else {
 		//Assume a list of coma-separated values
-		setSpecsList(Utils::toList(Utils::split(pSpecs, ",")));
+		setSpecsList(Utils::toList(bctoolbox::Utils::split(pSpecs, ",")));
 	}
 }
 
@@ -1357,4 +1358,13 @@ bool Core::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) 
 	return linphone_core_is_media_encryption_mandatory(lc) && linphone_core_get_media_encryption(lc)==LinphoneMediaEncryptionSRTP && !md->hasSrtp();
 }
 
+const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() const {
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	std::list<LinphoneMediaEncryption> encEnumList;
+	const auto encList = linphone_core_get_supported_media_encryptions(lc);
+	for(const bctbx_list_t * enc = encList;enc!=NULL;enc=enc->next){
+		encEnumList.push_back(static_cast<LinphoneMediaEncryption>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(enc))));
+	}
+	return encEnumList;
+}
 LINPHONE_END_NAMESPACE

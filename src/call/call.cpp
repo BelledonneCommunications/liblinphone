@@ -224,7 +224,6 @@ void Call::createPlayer () const{
 }
 
 // -----------------------------------------------------------------------------
-
 void Call::terminateBecauseOfLostMedia () {
 	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
 		<< " is lost, call is going to be terminated";
@@ -1262,6 +1261,10 @@ AudioDevice* Call::getOutputAudioDevice() const {
 	}
 
 	return nullptr;
+}
+
+const std::list<LinphoneMediaEncryption> Call::getSupportedEncryptions() const {
+	return getActiveSession()->getSupportedEncryptions();
 }
 
 // -----------------------------------------------------------------------------
