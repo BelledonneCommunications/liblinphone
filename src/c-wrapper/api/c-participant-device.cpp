@@ -77,10 +77,10 @@ LinphoneMediaDirection linphone_participant_device_get_text_direction (const Lin
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTextDirection();
 }
 
-void linphone_participant_device_set_window_id(LinphoneParticipantDevice *participant_device, void* window_id){
+void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void* window_id){
 	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setWindowId(window_id);
 }
 
-void * linphone_participant_device_get_window_id(const LinphoneParticipantDevice *participant_device){
+void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device){
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
 }
