@@ -271,6 +271,7 @@ void check_media_stream(LinphoneCall *call, bool_t is_null) {
 	}
 }
 
+<<<<<<< HEAD
 void check_result_desc_rtp_rtcp_ports (LinphoneCall *call, int rtp_port, int rtcp_port) {
 	SalMediaDescription *desc = _linphone_call_get_result_desc(call);
 	for (auto & stream : desc->streams) {
@@ -323,7 +324,7 @@ void check_local_desc_stream (LinphoneCall *call) {
 	}
 }
 
-void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams, const int nb_active_audio_streams, const int nb_active_video_streams, const int nb_active_text_streams) {
+void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
 	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
 	BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
 	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
