@@ -128,7 +128,11 @@ void MS2VideoMixer::addLocalParticipant(){
 		video_stream_stop(st);
 		return;
 	}
-	
+
+	video_stream_set_label(st, getLocalLabel().c_str());
+	if (!st->label) {
+		lError() << "Conference[all to all]: Can not add video endpoint with empty label";
+	}
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding video local endpoint");
