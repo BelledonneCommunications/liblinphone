@@ -125,7 +125,10 @@ private:
 	IceSession * mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;
 	bool mGatheringFinished = false;
-	
+	bool mAllowLateIce = false;
+	bool mDontDefaultToStunCandidates = false;
+	bool mEnableIntegrityCheck = true;
+	bool mIceWasDisabled = false; // Remember that at some point ICE was disabled by an incoming offer or answer.
 };
 
 class IceServiceListener{
