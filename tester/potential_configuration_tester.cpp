@@ -142,7 +142,7 @@ static void checkCfg(const PotentialCfgGraph::media_description_config & cfg, co
 		const auto acapValuesInCfg = (acapSize == 0) ? 1 : acapSize;
 		const auto & tcapSize = cfgAttr.tcap.size();
 		const auto tcapValuesInCfg = (tcapSize == 0) ? 1 : tcapSize;
-		noCfg += (tcapValuesInCfg*acapValuesInCfg);
+		noCfg += (unsigned int)(tcapValuesInCfg*acapValuesInCfg);
 
 	}
 	BC_ASSERT_EQUAL(noCfg, expNoCfg, std::size_t, "%0zu");
