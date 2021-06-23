@@ -108,8 +108,16 @@ public:
 	 * Enable a local participant in this Mixer.
 	 */
 	virtual void enableLocalParticipant(bool enabled) = 0;
+	virtual void setLocalLabel(const std::string &label) {
+		mLocalLabel = label;
+	};
+	virtual std::string getLocalLabel() const {
+		return mLocalLabel;
+	};
 protected:
+	
 	MixerSession & mSession;
+	std::string mLocalLabel;
 };
 
 inline std::ostream & operator<<(std::ostream &str, const StreamMixer & mixer){
