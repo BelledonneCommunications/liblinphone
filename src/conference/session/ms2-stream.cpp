@@ -1232,9 +1232,10 @@ bool MS2Stream::isEncrypted() const{
 		}else{
 			lError() << "MS2Stream::isEncrypted(): no bundle owner !";
 		}
-		return false;
+	} else if (getMediaStream()) {
+		return media_stream_secured(getMediaStream());
 	}
-	return media_stream_secured(getMediaStream());
+	return false;
 }
 
 bool MS2Stream::isMuted()const{
