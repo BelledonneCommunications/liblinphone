@@ -338,6 +338,10 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
+		if (!mStream->label) {
+			lError() << "Conference[all to all]: Can not add video endpoint with empty label";
+			return;
+		}
 		lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.dir << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.dir == SalStreamRecvOnly));
