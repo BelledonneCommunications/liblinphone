@@ -566,12 +566,14 @@ void LocalConference::addLocalEndpoint () {
 			mixer = mMixerSession->getMixerByType(SalVideo);
 
 			if (mixer){
+#ifdef VIDEO_ENABLED
 				for (auto & device : me->getDevices()) {
 					if (mixer) {
 						auto mixer = dynamic_cast<MS2VideoMixer*>(mMixerSession->getMixerByType(SalVideo));
 						mixer->setLocalParticipantLabel(device->getLabel());
 					}
 				}
+#endif
 				mixer->enableLocalParticipant(true);
 				VideoControlInterface *vci = getVideoControlInterface();
 				if (vci){
