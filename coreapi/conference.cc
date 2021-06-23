@@ -536,14 +536,15 @@ void LocalConference::addLocalEndpoint () {
 			mixer = mMixerSession->getMixerByType(SalVideo);
 			if (mixer){
 				mixer->enableLocalParticipant(true);
-
+#ifdef VIDEO_ENABLED
 				for (auto & device : me->getDevices()) {
 					if (mixer) {
 						auto mixer = dynamic_cast<MS2VideoMixer*>(mMixerSession->getMixerByType(SalVideo));
 						mixer->setLocalParticipantLabel(device->getLabel());
 					}
 				}
-		lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream " << dynamic_cast<MS2VideoControl*>(vci)->getVideoStream() << " of local participant " << dev->getAddress() << " video control interface " << vci;
+lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream " << dynamic_cast<MS2VideoControl*>(vci)->getVideoStream() << " of local participant " << dev->getAddress() << " video control interface " << vci;
+#endif // VIDEO_ENABLED
 				VideoControlInterface *vci = getVideoControlInterface();
 				if (vci){
 					vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
