@@ -973,13 +973,13 @@ static void call_with_incompatible_encs_in_call_params(void) {
 	BC_ASSERT_NOT_EQUAL(paulineEncryption, marieEncryption, int, "%i");
 
 	bctbx_list_t* pauline_supported_encs = linphone_call_params_get_supported_encryptions (pauline_params);
-	BC_ASSERT_EQUAL(bctbx_list_size(pauline_supported_encs), 1, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(pauline_supported_encs), 1, int, "%d");
 	if (pauline_supported_encs) {
 		bctbx_list_free(pauline_supported_encs);
 	}
 
 	bctbx_list_t* marie_supported_encs = linphone_call_params_get_supported_encryptions (marie_params);
-	BC_ASSERT_EQUAL(bctbx_list_size(marie_supported_encs), 1, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(marie_supported_encs), 1, int, "%d");
 	if (marie_supported_encs) {
 		bctbx_list_free(marie_supported_encs);
 	}
