@@ -730,17 +730,9 @@ unsigned int PotentialCfgGraph::getFreeTcapIdx() const {
 	const auto & globalTcaps = getGlobalTcap();
 	std::for_each(globalTcaps.begin(), globalTcaps.end(), addToIndexList);
 	const auto & streamTcaps = getStreamTcap();
-#if __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-lambda-capture"
-#endif
-	std::for_each(streamTcaps.begin(), streamTcaps.end(), [&tcapIndexes, &addToIndexList] (const std::pair<unsigned int, PotentialCfgGraph::media_description_base_cap> & tcapList) {
+	std::for_each(streamTcaps.begin(), streamTcaps.end(), [&addToIndexList] (const std::pair<unsigned int, PotentialCfgGraph::media_description_base_cap> & tcapList) {
 		std::for_each(tcapList.second.begin(), tcapList.second.end(), addToIndexList);
 	});
-#if __clang__
-#pragma clang diagnostic pop
-#endif
-
 	return PotentialCfgGraph::getFreeIdx(tcapIndexes);
 }
 
@@ -753,18 +745,10 @@ unsigned int PotentialCfgGraph::getFreeAcapIdx() const {
 	std::for_each(globalAcaps.begin(), globalAcaps.end(), addToIndexList);
 	const auto & streamAcaps = getStreamAcap();
 	
-#if __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-lambda-capture"
-#endif
-	std::for_each(streamAcaps.begin(), streamAcaps.end(), [&acapIndexes, &addToIndexList] (const std::pair<unsigned int, PotentialCfgGraph::media_description_acap> & acapList) {
+	std::for_each(streamAcaps.begin(), streamAcaps.end(), [&addToIndexList] (const std::pair<unsigned int, PotentialCfgGraph::media_description_acap> & acapList) {
 		std::for_each(acapList.second.begin(), acapList.second.end(), addToIndexList);
 	});
-#if __clang__
-#pragma clang diagnostic pop
-#endif
 	return PotentialCfgGraph::getFreeIdx(acapIndexes);
-
 }
 
 unsigned int PotentialCfgGraph::getFreeCfgIdx(const PotentialCfgGraph::session_description_config::key_type & idx) const {
