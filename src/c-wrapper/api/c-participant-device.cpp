@@ -22,6 +22,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant-device.h"
+#include "private.h"
 
 // =============================================================================
 
@@ -78,7 +79,12 @@ LinphoneMediaDirection linphone_participant_device_get_text_direction (const Lin
 }
 
 void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void* window_id){
+#ifdef __ANDROID__
+	LinphoneCore *lc = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCore()->getCCore();
+	getPlatformHelpers(lc)->setParticipantDeviceVideoWindow(participant_device, window_id);
+#else
 	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setWindowId(window_id);
+#endif
 }
 
 void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device){
