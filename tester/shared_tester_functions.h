@@ -29,6 +29,7 @@ extern "C" {
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
 bool_t check_ice_sdp (LinphoneCall *call);
 bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype);
+void check_media_stream(LinphoneCall *call, bool_t is_null);
 
 #ifdef __cplusplus
 }
