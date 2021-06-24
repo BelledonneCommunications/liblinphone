@@ -629,6 +629,15 @@ struct _LinphoneRange {
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneRange);
 
+struct _LinphoneVideoSize {
+	belle_sip_object_t base;
+	void *user_data;
+	int width;
+	int height;
+};
+
+BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneVideoSize);
+
 struct _LinphoneTransports {
 	belle_sip_object_t base;
 	void *user_data;
