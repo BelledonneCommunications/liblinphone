@@ -172,7 +172,7 @@ void LdapContactProvider::initializeLdap(){
 		}else {
 			int err;
 			ldap_get_option(mLd, LDAP_OPT_RESULT_CODE, &err);
-			ms_error("[LDAP] Cannot initialize address to %s : %x, err %x (%s)",mConfig["server"].c_str(), ret, err, ldap_err2string(err));
+			ms_error("[LDAP] Cannot initialize address to %s : %x (%s), err %x (%s)",mConfig["server"].c_str(), ret, ldap_err2string(ret), err, ldap_err2string(err));
 			mCurrentAction = ACTION_ERROR;
 		}
 	}
