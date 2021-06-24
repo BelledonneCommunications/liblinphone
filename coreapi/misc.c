@@ -1037,7 +1037,37 @@ void linphone_range_set_max(LinphoneRange *range, int max) {
 	range->max = max;
 }
 
+BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneVideoSize);
 
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneVideoSize, belle_sip_object_t,
+	NULL, // destroy
+	NULL, // clone
+	NULL, // marshal
+	FALSE
+);
+
+LinphoneVideoSize *linphone_video_size_new() {
+	LinphoneVideoSize *size = belle_sip_object_new(LinphoneVideoSize);
+	size->width = 0;
+	size->height = 0;
+	return size;
+}
+
+LinphoneVideoSize* linphone_video_size_ref(LinphoneVideoSize* size) {
+	return (LinphoneVideoSize*) belle_sip_object_ref(size);
+}
+
+void linphone_video_size_unref(LinphoneVideoSize* size) {
+	belle_sip_object_unref(size);
+}
+
+int linphone_video_size_get_width(const LinphoneVideoSize* size) {
+	return size->width;
+}
+
+int linphone_video_size_get_height(const LinphoneVideoSize* size) {
+	return size->height;
+}
 
 LinphoneHeaders * linphone_headers_ref(LinphoneHeaders *obj){
 	sal_custom_header_ref((SalCustomHeader*)obj);

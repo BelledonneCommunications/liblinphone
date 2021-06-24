@@ -226,4 +226,8 @@ void * ParticipantDevice::getWindowId() const {
 	return static_pointer_cast<MediaSession>(mSession)->getWindowId(mLabel);
 }
 
+MSVideoSize ParticipantDevice::getReceivedVideoSize() const {
+	return static_pointer_cast<MediaSession>(mSession)->getReceivedVideoSize(mLabel);
+}
+
 LINPHONE_END_NAMESPACE
