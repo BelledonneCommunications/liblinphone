@@ -7087,7 +7087,10 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	if (lc->state != LinphoneGlobalOff) {
 		_linphone_core_stop(lc);
 	}
-
+	
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
+	
 	linphone_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
