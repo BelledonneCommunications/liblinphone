@@ -242,6 +242,37 @@ LINPHONE_PUBLIC void linphone_range_set_min(LinphoneRange *range, int min);
  */
 LINPHONE_PUBLIC void linphone_range_set_max(LinphoneRange *range, int max);
 
+/**
+ * Increment refcount.
+ * @param size #LinphoneVideoSize object @notnil
+ * @return the same #LinphoneVideoSize object @notnil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphoneVideoSize* linphone_video_size_ref(LinphoneVideoSize* size);
+
+/**
+ * Decrement refcount and possibly free the object.
+ * @param size #LinphoneVideoSize object @notnil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_video_size_unref(LinphoneVideoSize* size);
+
+/**
+ * Gets the width of vide size
+ * @param size a #LinphoneVideoSize @notnil
+ * @return The width
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC int linphone_video_size_get_width(const LinphoneVideoSize* size);
+
+/**
+ * Gets the height of vide size
+ * @param size a #LinphoneVideoSize @notnil
+ * @return The height
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC int linphone_video_size_get_height(const LinphoneVideoSize* size);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

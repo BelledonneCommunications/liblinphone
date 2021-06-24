@@ -102,6 +102,7 @@ public:
 
 	void setWindowId(void * windowId);
 	void * getWindowId() const;
+	MSVideoSize getReceivedVideoSize() const;
 
 private:
 	Participant *mParticipant = nullptr;

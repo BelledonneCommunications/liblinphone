@@ -3387,6 +3387,11 @@ void * MediaSession::getWindowId(const std::string & label)const {
 	return d->getStreamsGroup().getWindowId(label);
 }
 
+MSVideoSize MediaSession::getReceivedVideoSize(const std::string &label) const {
+	L_D();
+	return d->getStreamsGroup().getReceivedVideoSize(label);
+}
+
 float MediaSession::getPlayVolume () const {
 	L_D();
 	AudioControlInterface *iface = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);

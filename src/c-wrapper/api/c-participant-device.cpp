@@ -90,3 +90,12 @@ void linphone_participant_device_set_native_video_window_id(LinphoneParticipantD
 void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device){
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
 }
+
+LinphoneVideoSize *linphone_participant_device_get_received_video_size(const LinphoneParticipantDevice *participant_device) {
+	LinphoneVideoSize *result = linphone_video_size_new();
+	MSVideoSize size = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getReceivedVideoSize();
+	result->width = size.width;
+	result->height = size.height;
+	return result;
+}
+

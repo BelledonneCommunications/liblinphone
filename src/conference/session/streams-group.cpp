@@ -579,5 +579,14 @@ void * StreamsGroup::getWindowId(const std::string & label) const {
 	return nullptr;
 }
 
+MSVideoSize StreamsGroup::getReceivedVideoSize(const std::string & label) const {
+#ifdef VIDEO_ENABLED
+	Stream * s= lookupStream(label);
+	if (s->getType() == SalVideo) {
+		return video_stream_get_received_video_size((VideoStream *)s);
+	}
+#endif
+	return MS_VIDEO_SIZE_UNKNOWN;
+}
 
 LINPHONE_END_NAMESPACE

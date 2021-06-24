@@ -1266,4 +1266,10 @@ typedef int LinphoneStatus;
 **/
 typedef struct _LinphoneHeaders LinphoneHeaders;
 
+/**
+ * @brief Video size
+ * @ingroup misc
+ */
+typedef struct _LinphoneVideoSize LinphoneVideoSize;
+
 #endif /* LINPHONE_TYPES_H_ */
