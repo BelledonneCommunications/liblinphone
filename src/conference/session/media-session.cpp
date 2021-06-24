@@ -2022,6 +2022,10 @@ void MediaSessionPrivate::startAccept(){
 
 	SalMediaDescription *newMd = op->getFinalMediaDescription();
 	if (newMd) {
+		// If negotiated media description doesn't contain a video stream after the first INVITE message sequence, then disable video in the local call parameters
+		if (getParams()->videoEnabled() && (sal_media_description_find_best_stream(newMd, SalVideo) == NULL)) {
+			getParams()->enableVideo(false);
+		}
 		updateStreams(newMd, CallSession::State::StreamsRunning);
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
 	} else
