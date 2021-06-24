@@ -140,6 +140,13 @@ LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(Linp
 LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get received video size.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return The received video size @notnil @tobefreed
+ */
+LINPHONE_PUBLIC LinphoneVideoSize *linphone_participant_device_get_received_video_size(const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 

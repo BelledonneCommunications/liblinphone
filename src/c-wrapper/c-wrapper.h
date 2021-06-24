@@ -178,7 +178,8 @@ BELLE_SIP_TYPE_ID(LinphoneVideoActivationPolicy),
 BELLE_SIP_TYPE_ID(LinphoneVideoDefinition),
 BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequest),
 BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequestCbs),
-BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession)
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession),
+BELLE_SIP_TYPE_ID(LinphoneVideoSize)
 BELLE_SIP_DECLARE_TYPES_END
 
 #undef L_REGISTER_ID

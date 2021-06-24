@@ -561,6 +561,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc, MSZrt
 LinphoneImEncryptionEngineCbs * linphone_im_encryption_engine_cbs_new(void);
 
 LinphoneRange *linphone_range_new(void);
+LinphoneVideoSize *linphone_video_size_new(void);
 
 LINPHONE_PUBLIC LinphoneTransports *linphone_transports_new(void);
 
