@@ -57,6 +57,8 @@ LinphoneRingtonePlayer* linphone_ringtoneplayer_ios_new() {
 
 void linphone_ringtoneplayer_ios_destroy(LinphoneRingtonePlayer* rp) {
 	linphone_ringtoneplayer_ios_stop(rp);
+	[rp->playerDelegate release];
+	rp->playerDelegate = nil;
 	ms_free(rp);
 }
 
