@@ -473,6 +473,7 @@ public:
 
 	void setWindowId(void *windowId, const std::string & label);
 	void * getWindowId(const std::string & label) const;
+	MSVideoSize getReceivedVideoSize(const std::string &label) const;
 
 protected:
 
