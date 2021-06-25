@@ -60,7 +60,6 @@
 #include "linphone/player.h"
 #include "linphone/presence.h"
 #include "linphone/proxy_config.h"
-#include "linphone/recorder.h"
 #include "linphone/ringtoneplayer.h"
 #include "linphone/vcard.h"
 #include "linphone/video_definition.h"
@@ -110,16 +109,15 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *
 /**
 * Create a media file recorder.
 * This recorder support WAVE and MATROSKA formats.
-* @param lc A #LinphoneCore object
-* @param sound_card_name Recording sound card. If NULL, the ringer sound card set in #LinphoneCore will be used
-* @param web_cam_name Recording web cam. If NULL, no video will be recorded.
-* @param video_display_name Video display. If NULL, the video display set in #LinphoneCore will be used
-* @param window_id Id of the drawing window. Depend of video out
-* @param format File format we want to record to, MS_FILE_FORMAT_WAVE or MS_FILE_FORMAT_MATROSKA
-* @param video_codec Codec of the video if we record video. "vp8" or "h264"
-* @return A pointer on the new instance. NULL if failed.
+* @param lc A #LinphoneCore object @notnil
+* @param device Recording #LinphoneAudioDevice. If NULL, the audio device set in #LinphoneCore will be used @maybenil
+* @param web_cam_name Recording web cam. If NULL, no video will be recorded. @maybenil
+* @param window_id Id of the drawing window. Depend of video out @maybenil
+* @param format #LinphoneRecorderFileFormat File format we want to record to.
+* @param video_codec Codec of the video if we record video. "vp8" or "h264" @maybenil
+* @return A pointer on the new instance. NULL if failed. @maybenil
 */
-LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const char *sound_card_name, const char *web_cam_name, const char *video_display_name, void *window_id, MSFileFormat format, const char *video_codec);
+LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const LinphoneAudioDevice *device, const char *web_cam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec);
 
 /**
  * Creates an empty info message.

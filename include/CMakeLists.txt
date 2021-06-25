@@ -53,7 +53,6 @@ set(ROOT_HEADER_FILES
 	player.h
 	presence.h
 	proxy_config.h
-	recorder.h
 	ringtoneplayer.h
 	sipsetup.h
 	tunnel.h
@@ -103,6 +102,8 @@ set(C_API_HEADER_FILES
 	c-participant-imdn-state.h
 	c-push-notification-message.h
 	c-push-notification-config.h
+	c-recorder.h
+	c-recorder-params.h
 	c-search-result.h
 	c-types.h
 )

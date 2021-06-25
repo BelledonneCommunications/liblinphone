@@ -257,6 +257,26 @@ typedef enum _LinphoneCallStatus {
 	LinphoneCallDeclinedElsewhere = 6 /**<The call was declined on another device*/
 } LinphoneCallStatus;
 
+/**
+ * @brief Enum representing the file format of a recording.
+ * @ingroup call_control
+**/
+typedef enum _LinphoneRecorderFileFormat {
+	LINPHONE_RECORDER_FILE_FORMAT_UNKNOWN,
+	LINPHONE_RECORDER_FORMAT_WAVE,
+	LINPHONE_RECORDER_FORMAT_MATROSKA
+} LinphoneRecorderFileFormat;
+
+/**
+ * @brief Enum representing the state of a recording.
+ * @ingroup call_control
+**/
+typedef enum _LinphoneRecorderState {
+	LinphoneRecorderClosed, /**< No file is opened for recording. */
+	LinphoneRecorderPaused, /**< The recorder is paused. */
+	LinphoneRecorderRunning /**< The recorder is running. */
+} LinphoneRecorderState;
+
 // -----------------------------------------------------------------------------
 // Friends.
 // -----------------------------------------------------------------------------
@@ -767,22 +787,6 @@ typedef enum LinphonePlayerState {
 	LinphonePlayerPaused = 1, /**< The player is paused. */
 	LinphonePlayerPlaying = 2 /**< The player is playing. */
 } LinphonePlayerState;
-
-/**
- * @brief Recorder interface.
- * @ingroup call_control
- **/
-typedef struct _LinphoneRecorder LinphoneRecorder;
-
-/**
- * @brief The state of a LinphoneRecorder`.
- * @ingroup call_control
- */
-typedef enum LinphoneRecorderState {
-	LinphoneRecorderClosed, /**< No file is opened for recording. */
-	LinphoneRecorderPaused, /**< The recorder is paused. */
-	LinphoneRecorderRunning /**< The recorder is running. */
-} LinphoneRecorderState;
 
 /**
  * @brief Presence activity type holding information about a presence activity.

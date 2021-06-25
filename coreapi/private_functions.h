@@ -514,15 +514,6 @@ LinphonePlayer * linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
 void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
 
-
-/*****************************************************************************
- * Recorder interface                                                          *
- ****************************************************************************/
-
-LinphoneRecorder * linphone_recorder_new(void);
-void _linphone_recorder_destroy(LinphoneRecorder *recorder);
-
-
 /*****************************************************************************
  * XML UTILITY FUNCTIONS                                                     *
  ****************************************************************************/
