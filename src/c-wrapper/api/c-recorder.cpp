@@ -66,6 +66,10 @@ LinphoneRecorderState linphone_recorder_get_state(LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getState();
 }
 
+int linphone_recorder_get_duration(LinphoneRecorder *recorder) {
+	return Recorder::toCpp(recorder)->getDuration();
+}
+
 void linphone_recorder_set_params(LinphoneRecorder *recorder, LinphoneRecorderParams *params) {
 	Recorder::toCpp(recorder)->setParams(RecorderParams::toCpp(params)->getSharedFromThis());
 }

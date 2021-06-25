@@ -50,6 +50,7 @@ public:
 	LinphoneStatus pause ();
 
 	LinphoneRecorderState getState () const;
+	int getDuration () const;
 
 	void setParams (std::shared_ptr<RecorderParams> params);
 	std::shared_ptr<const RecorderParams> getParams() const;
@@ -63,6 +64,7 @@ protected:
 private:
 	MSMediaRecorder *mRecorder = nullptr;
 	std::shared_ptr<RecorderParams> mParams;
+	time_t mRecordingStartTime; 
 	void *mUserData = nullptr;
 };
 

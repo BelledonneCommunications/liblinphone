@@ -68,6 +68,8 @@ void Recorder::init () {
 		(MSFileFormat) mParams->getFileFormat(),
 		mParams->getVideoCodec().empty() ? NULL : mParams->getVideoCodec().c_str()
 	);
+
+	mRecordingStartTime = ms_time(NULL);
 }
 
 LinphoneStatus Recorder::open (const std::string &filename) {
@@ -83,6 +85,7 @@ void Recorder::removeFile (const std::string &filename) {
 }
 
 LinphoneStatus Recorder::start () {
+	mRecordingStartTime = ms_time(NULL);
 	return ms_media_recorder_start(mRecorder) ? 0 : -1;
 }
 
@@ -101,6 +104,10 @@ LinphoneRecorderState Recorder::getState () const {
 		default:
 			return LinphoneRecorderClosed;
 	}
+}
+
+int Recorder::getDuration () const {
+	return (int) difftime(ms_time(NULL), mRecordingStartTime);
 }
 
 void Recorder::setParams (std::shared_ptr<RecorderParams> params) {

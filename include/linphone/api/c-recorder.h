@@ -94,6 +94,13 @@ LINPHONE_PUBLIC LinphoneStatus linphone_recorder_pause(LinphoneRecorder *recorde
 LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(LinphoneRecorder *recorder);
 
 /**
+ * Gets the duration of the recording.
+ * @param recorder The #LinphoneRecorder object. @notnil
+ * @return the duration of the recording, in seconds.
+ */
+LINPHONE_PUBLIC int linphone_recorder_get_duration(LinphoneRecorder *recorder); 
+
+/**
  * Set the #LinphoneRecorderParams object.
  * @param recorder The #LinphoneRecorder object. @notnil
  * @param params The #LinphoneRecorderParams object to set. @notnil
@@ -117,7 +124,7 @@ LINPHONE_PUBLIC void linphone_recorder_set_user_data(LinphoneRecorder *recorder,
 /**
  * Retrieve the user data.
  * @param recorder The #LinphoneRecorder object. @notnil
- * @param The user data to retrieve. @maybenil
+ * @return the user data to retrieve. @maybenil
  */
 LINPHONE_PUBLIC void *linphone_recorder_get_user_data(LinphoneRecorder *recorder);
 
