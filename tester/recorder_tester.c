@@ -21,6 +21,42 @@
 #include <mediastreamer2/mediastream.h>
 #include <sys/stat.h>
 
+
+#ifdef _WIN32
+#	include <io.h>
+#	ifndef R_OK
+#		define R_OK 0x2
+#	endif
+#	ifndef W_OK
+#		define W_OK 0x6
+#	endif
+#   ifndef F_OK
+#       define F_OK 0x0
+#   endif
+
+#	ifndef S_IRUSR
+#	define S_IRUSR S_IREAD
+#	endif
+
+#	ifndef S_IWUSR
+#	define S_IWUSR S_IWRITE
+#	endif
+
+#	define open _open
+#	define read _read
+#	define write _write
+#	define close _close
+#	define access _access
+#	define lseek _lseek
+#else /*_WIN32*/
+
+#	ifndef O_BINARY
+#	define O_BINARY 0
+#	endif
+
+#endif /*!_WIN32*/
+
+
 static void record_file(const char *filename, bool_t supported_format, const char *audio_mime, const char *video_mime, LinphoneRecorderFileFormat format) {
 	LinphoneCoreManager *lc_manager = linphone_core_manager_create("marie_rc");
 	LinphoneRecorder *recorder;
@@ -50,7 +86,7 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	res2 = state == LinphoneRecorderPaused;
 	BC_ASSERT_TRUE(res2);
 	if(!res2) goto fail;
-	printf("We check if the recorder is in stand by, res2 = %d\n", res2);
+	ms_message("We check if the recorder is in stand by, res2 = %d\n", res2);
 	res = linphone_recorder_start(recorder);
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
 	if(res == -1) goto fail;
@@ -58,12 +94,12 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	state = linphone_recorder_get_state(recorder);
 	res2 = state == LinphoneRecorderRunning;
 	BC_ASSERT_TRUE(res2);
-	printf("We check if the recorder is running, res2 = %d\n", res2);
+	ms_message("We check if the recorder is running, res2 = %d\n", res2);
 	if(!res2) goto fail;
 
-	sleep(5);
+	wait_for_until(lc_manager->lc, NULL, NULL, 0, 5000);
 
-  	linphone_recorder_close(recorder);
+	linphone_recorder_close(recorder);
 	int duration = linphone_recorder_get_duration(recorder);
 	BC_ASSERT_GREATER(duration, 5, int , "%d");
 
@@ -73,7 +109,7 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	state = linphone_recorder_get_state(recorder);
 	res2 = state == LinphoneRecorderClosed;
 	BC_ASSERT_TRUE(res2);
-	printf("We check if the recorder is closed, res2 = %d\n", res2);
+	ms_message("We check if the recorder is closed, res2 = %d\n", res2);
 	if(!res2) goto fail;
 
 	duration = linphone_recorder_get_duration(recorder);
@@ -87,15 +123,15 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 
 	res = access(filename, F_OK | W_OK);
 	BC_ASSERT_EQUAL(res, 0, int, "%d");
-	printf("We check if the file exists, res = %d\n", res);
+	ms_message("We check if the file exists, res = %d\n", res);
 	if(res == 0) {
 		struct stat st;
 		res = stat(filename, &st);
 		BC_ASSERT_EQUAL(res, 0, int, "%d");
-		printf("We check if the file can be opened, res = %d\n", res);
+		ms_message("We check if the file can be opened, res = %d\n", res);
 		res2 = st.st_size > 0;
 		BC_ASSERT_TRUE(res2);
-		printf("We check if the file has non zero size, res2 = %d\n", res2);
+		ms_message("We check if the file has non zero size, res2 = %d\n", res2);
 		linphone_recorder_remove_file(recorder, filename);
 	}
 
