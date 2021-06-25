@@ -70,6 +70,14 @@ int linphone_recorder_get_duration(LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getDuration();
 }
 
+LinphoneContent *linphone_recorder_create_content(LinphoneRecorder *recorder) {
+	LinphonePrivate::Content *fileContent = Recorder::toCpp(recorder)->createContent();
+	if (fileContent != nullptr) {
+		return L_GET_C_BACK_PTR(fileContent);
+	}
+	return nullptr;
+}
+
 void linphone_recorder_set_params(LinphoneRecorder *recorder, LinphoneRecorderParams *params) {
 	Recorder::toCpp(recorder)->setParams(RecorderParams::toCpp(params)->getSharedFromThis());
 }

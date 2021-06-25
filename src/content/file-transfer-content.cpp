@@ -39,6 +39,7 @@ public:
 	string filePath;
 	FileContent *fileContent = nullptr;
 	size_t fileSize = 0;
+	int fileDuration = 0;
 	std::vector<char> fileKey;
 	std::vector<char> fileAuthTag;
 	ContentType fileContentType;
@@ -66,6 +67,7 @@ FileTransferContent::FileTransferContent (const FileTransferContent &other) : Co
 	d->fileKey = other.getFileKey();
 	d->fileAuthTag = other.getFileAuthTag();
 	d->fileContentType = other.getFileContentType();
+	d->fileDuration = other.getFileDuration();
 }
 
 FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content(*new FileTransferContentPrivate) {
@@ -79,6 +81,7 @@ FileTransferContent::FileTransferContent (FileTransferContent &&other) : Content
 	d->fileKey = move(other.getPrivate()->fileKey);
 	d->fileAuthTag = move(other.getPrivate()->fileAuthTag);
 	d->fileContentType = move(other.getPrivate()->fileContentType);
+	d->fileDuration = move(other.getPrivate()->fileDuration);
 }
 
 FileTransferContent &FileTransferContent::operator= (const FileTransferContent &other) {
@@ -93,6 +96,7 @@ FileTransferContent &FileTransferContent::operator= (const FileTransferContent &
 		d->fileKey = other.getFileKey();
 		d->fileAuthTag = other.getFileAuthTag();
 		d->fileContentType = other.getFileContentType();
+		d->fileDuration = other.getFileDuration();
 	}
 
 	return *this;
@@ -109,6 +113,7 @@ FileTransferContent &FileTransferContent::operator= (FileTransferContent &&other
 	d->fileKey = move(other.getPrivate()->fileKey);
 	d->fileAuthTag = move(other.getPrivate()->fileAuthTag);
 	d->fileContentType = move(other.getPrivate()->fileContentType);
+	d->fileDuration = move(other.getPrivate()->fileDuration);
 
 	return *this;
 }
@@ -120,7 +125,8 @@ bool FileTransferContent::operator== (const FileTransferContent &other) const {
 		d->fileUrl == other.getFileUrl() &&
 		d->filePath == other.getFilePath() &&
 		d->fileSize == other.getFileSize() &&
-		d->fileContentType == other.getFileContentType();
+		d->fileContentType == other.getFileContentType() &&
+		d->fileDuration == other.getFileDuration();
 }
 
 void FileTransferContent::setFileName (const string &name) {
@@ -171,6 +177,16 @@ void FileTransferContent::setFileSize (size_t size) {
 size_t FileTransferContent::getFileSize () const {
 	L_D();
 	return d->fileSize;
+}
+
+void FileTransferContent::setFileDuration (int durationInSeconds) {
+	L_D();
+	d->fileDuration = durationInSeconds;
+}
+
+int FileTransferContent::getFileDuration () const {
+	L_D();
+	return d->fileDuration;
 }
 
 void FileTransferContent::setFileKey (const char *key, size_t size) {

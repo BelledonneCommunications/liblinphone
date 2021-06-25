@@ -98,7 +98,15 @@ LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(LinphoneRecord
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the duration of the recording, in seconds.
  */
-LINPHONE_PUBLIC int linphone_recorder_get_duration(LinphoneRecorder *recorder); 
+LINPHONE_PUBLIC int linphone_recorder_get_duration(LinphoneRecorder *recorder);
+
+/**
+ * Create a content from the recording, for example to send it in a chat message.
+ * @warning Recorder must be in Closed state!
+ * @param recorder The #LinphoneRecorder object. @notnil
+ * @return the #LinphoneContent matching the recording, or NULL. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneContent *linphone_recorder_create_content(LinphoneRecorder *recorder);
 
 /**
  * Set the #LinphoneRecorderParams object.

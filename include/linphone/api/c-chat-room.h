@@ -98,7 +98,16 @@ LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_forward_message (
  * @param message #LinphoneChatMessage message to reply to. @notnil
  * @return a new #LinphoneChatMessage @notnil
  */
-LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_reply_message (LinphoneChatRoom *cr, LinphoneChatMessage *message);
+LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_reply_message (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
+
+ /**
+ * Creates a chat message with a voice recording attached to the given chat room.
+ * @warning If the recorder isn't in Closed state, it will return an empty message!
+ * @param chat_room the #LinphoneChatRoom object. @notnil
+ * @param recorder the #LinphoneRecorder object used to record the voice message. @notnil
+ * @return a new #LinphoneChatMessage @notnil
+ */
+LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_voice_recording_message (LinphoneChatRoom *chat_room, LinphoneRecorder *recorder);
 
 /**
  * Get the peer address associated to this chat room.

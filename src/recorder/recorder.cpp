@@ -73,6 +73,7 @@ void Recorder::init () {
 }
 
 LinphoneStatus Recorder::open (const std::string &filename) {
+	mFilePath = filename;
 	return ms_media_recorder_open(mRecorder, filename.c_str(), linphone_core_get_device_rotation(getCore()->getCCore())) ? 0 : -1;
 }
 
@@ -108,6 +109,19 @@ LinphoneRecorderState Recorder::getState () const {
 
 int Recorder::getDuration () const {
 	return (int) difftime(ms_time(NULL), mRecordingStartTime);
+}
+
+FileContent* Recorder::createContent () const {
+	LinphoneRecorderState currentState = getState();
+	if (currentState != LinphoneRecorderClosed) {
+		lError() << "Cannot create Content from Recorder that isn't in Closed state, current state is " << currentState;
+		return nullptr;
+	}
+
+	FileContent *fileContent = new FileContent();
+	fileContent->setFilePath(mFilePath);
+	fileContent->setContentType(ContentType::VoiceRecording);
+	return fileContent;
 }
 
 void Recorder::setParams (std::shared_ptr<RecorderParams> params) {

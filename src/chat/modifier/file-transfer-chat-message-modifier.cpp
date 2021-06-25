@@ -251,6 +251,7 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 	fileTransferContent->setContentType(ContentType::FileTransfer);
 	fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
 	fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
+	fileTransferContent->setFileDuration(currentFileContentToTransfer->getFileDuration()); // Copy file duration information
 	
 	currentFileTransferContent = fileTransferContent;
 	currentFileTransferContent->setFileContent(currentFileContentToTransfer);
@@ -857,6 +858,7 @@ static void createFileContentFromFileTransferContent (FileTransferContent *fileT
 	fileContent->setFileSize(fileTransferContent->getFileSize());
 	fileContent->setFilePath(fileTransferContent->getFilePath());
 	fileContent->setContentType(fileTransferContent->getFileContentType());
+	fileContent->setFileDuration(fileTransferContent->getFileDuration());
 
 	// Link the FileContent to the FileTransferContent
 	fileTransferContent->setFileContent(fileContent);
@@ -992,7 +994,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 {
 	stringstream fakeXml;
 	fakeXml << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
-	fakeXml << "<file xmlns=\"urn:gsma:params:xml:ns:rcs:rcs:fthttp\">\r\n";
+	fakeXml << "<file xmlns=\"urn:gsma:params:xml:ns:rcs:rcs:fthttp\" xmlns:am=\"urn:gsma:params:xml:ns:rcs:rcs:rram\">\r\n";
 	fakeXml << "<file-info type=\"file\">\r\n";
 	fakeXml << "<file-size>" << parsedXmlFileTransferContent->getFileSize() << "</file-size>\r\n";
 
@@ -1027,6 +1029,10 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 		fakeXml << "<file-name>" << parsedXmlFileTransferContent->getFileName() << "</file-name>\r\n";
 	}
 	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getFileContentType() << "</content-type>\r\n";
+	
+	if (parsedXmlFileTransferContent->getFileContentType() == ContentType::VoiceRecording) {
+		fakeXml << "<am:playing-length>" << parsedXmlFileTransferContent->getFileDuration() << "</am:playing-length>\r\n";
+	}
 
 	Variant variant = parsedXmlFileTransferContent->getProperty("validUntil");
 	if (variant.isValid()) {
@@ -1096,6 +1102,12 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 							ms_free(subtype);
 							ms_free(type);
 							ms_free(content_type);
+						}
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"am:playing-length")) {
+							xmlChar *fileDuration = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							int duration = (int) strtod((char *)fileDuration, NULL);
+							fileTransferContent->setFileDuration(duration);
+							xmlFree(fileDuration);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
 							xmlChar *fileUrl = nullptr;

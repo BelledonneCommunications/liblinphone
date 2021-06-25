@@ -30,6 +30,7 @@
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
 #include "recorder-params.h"
+#include "content/file-content.h"
 
 // =============================================================================
 
@@ -51,6 +52,7 @@ public:
 
 	LinphoneRecorderState getState () const;
 	int getDuration () const;
+	FileContent* createContent () const;
 
 	void setParams (std::shared_ptr<RecorderParams> params);
 	std::shared_ptr<const RecorderParams> getParams() const;
@@ -64,7 +66,8 @@ protected:
 private:
 	MSMediaRecorder *mRecorder = nullptr;
 	std::shared_ptr<RecorderParams> mParams;
-	time_t mRecordingStartTime; 
+	time_t mRecordingStartTime;
+	std::string mFilePath;
 	void *mUserData = nullptr;
 };
 
