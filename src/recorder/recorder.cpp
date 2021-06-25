@@ -121,6 +121,7 @@ FileContent* Recorder::createContent () const {
 	FileContent *fileContent = new FileContent();
 	fileContent->setFilePath(mFilePath);
 	fileContent->setContentType(ContentType::VoiceRecording);
+	fileContent->setFileDuration(getDuration());
 	return fileContent;
 }
 

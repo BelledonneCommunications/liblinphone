@@ -98,13 +98,14 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	if(!res2) goto fail;
 
 	wait_for_until(lc_manager->lc, NULL, NULL, 0, 5000);
-
-	linphone_recorder_close(recorder);
+	
 	int duration = linphone_recorder_get_duration(recorder);
 	BC_ASSERT_GREATER(duration, 5, int , "%d");
 
 	LinphoneContent *content = linphone_recorder_create_content(recorder);
 	BC_ASSERT_PTR_NULL(content);
+
+	linphone_recorder_close(recorder);
 
 	state = linphone_recorder_get_state(recorder);
 	res2 = state == LinphoneRecorderClosed;
@@ -118,6 +119,8 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	if (content != NULL) {
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_file_path(content), filename);
 		BC_ASSERT_EQUAL(linphone_content_get_file_duration(content), duration, int, "%d");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "audio");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "wav");
 		linphone_content_unref(content);
 	}
 
