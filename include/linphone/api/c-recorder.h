@@ -87,8 +87,9 @@ LINPHONE_PUBLIC LinphoneStatus linphone_recorder_start(LinphoneRecorder *recorde
 LINPHONE_PUBLIC LinphoneStatus linphone_recorder_pause(LinphoneRecorder *recorder);
 
 /**
- * Start the recording into the opened file.
+ * Gets the current state of the recorder.
  * @param recorder The #LinphoneRecorder object. @notnil
+ * @return the current #LinphoneRecorderState.
  */
 LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(LinphoneRecorder *recorder);
 
