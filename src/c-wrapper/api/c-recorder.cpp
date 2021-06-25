@@ -33,7 +33,7 @@ LinphoneRecorder* linphone_recorder_new(LinphoneCore *core, LinphoneRecorderPara
 	return Recorder::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(core), RecorderParams::toCpp(params)->getSharedFromThis());
 }
 
-LinphoneRecorder* linphone_recorder_params_ref(LinphoneRecorder *recorder) {
+LinphoneRecorder* linphone_recorder_ref(LinphoneRecorder *recorder) {
 	Recorder::toCpp(recorder)->ref();
 	return recorder;
 }
