@@ -266,6 +266,13 @@ LINPHONE_PUBLIC char *linphone_content_get_plain_file_path (const LinphoneConten
 LINPHONE_PUBLIC void linphone_content_set_file_path (LinphoneContent *content, const char *file_path);
 
 /**
+ * Gets the file duration in seconds, if information is available.
+ * @param content #LinphoneContent object. @notnil
+ * @param The duration of the file in seconds or -1 if information isn't available.
+ */
+LINPHONE_PUBLIC int linphone_content_get_file_duration(LinphoneContent *content);
+
+/**
  * Tells whether or not this content contains text.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content contains plain text, FALSE otherwise.

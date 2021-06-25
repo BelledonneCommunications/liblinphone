@@ -63,13 +63,27 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 
 	sleep(5);
 
-  linphone_recorder_close(recorder);
+  	linphone_recorder_close(recorder);
+	int duration = linphone_recorder_get_duration(recorder);
+	BC_ASSERT_GREATER(duration, 5, int , "%d");
+
+	LinphoneContent *content = linphone_recorder_create_content(recorder);
+	BC_ASSERT_PTR_NULL(content);
 
 	state = linphone_recorder_get_state(recorder);
 	res2 = state == LinphoneRecorderClosed;
 	BC_ASSERT_TRUE(res2);
 	printf("We check if the recorder is closed, res2 = %d\n", res2);
 	if(!res2) goto fail;
+
+	duration = linphone_recorder_get_duration(recorder);
+	content = linphone_recorder_create_content(recorder);
+	BC_ASSERT_PTR_NOT_NULL(content);
+	if (content != NULL) {
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_file_path(content), filename);
+		BC_ASSERT_EQUAL(linphone_content_get_file_duration(content), duration, int, "%d");
+		linphone_content_unref(content);
+	}
 
 	res = access(filename, F_OK | W_OK);
 	BC_ASSERT_EQUAL(res, 0, int, "%d");

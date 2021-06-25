@@ -362,6 +362,15 @@ void linphone_content_set_file_path (LinphoneContent *content, const char *file_
 	content->cache.file_path = L_C_TO_STRING(file_path);
 }
 
+int linphone_content_get_file_duration (LinphoneContent *content) {
+	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile())
+		return static_cast<LinphonePrivate::FileContent *>(c)->getFileDuration();
+	if (c->isFileTransfer())
+		return static_cast<LinphonePrivate::FileTransferContent *>(c)->getFileDuration();
+	return -1;
+}
+
 bool_t linphone_content_is_text (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	return c->getContentType() == LinphonePrivate::ContentType::PlainText;
