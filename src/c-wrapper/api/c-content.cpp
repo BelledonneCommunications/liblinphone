@@ -376,6 +376,11 @@ bool_t linphone_content_is_text (const LinphoneContent *content) {
 	return c->getContentType() == LinphonePrivate::ContentType::PlainText;
 }
 
+bool_t linphone_content_is_voice_recording (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	return c->getContentType().strongEqual(LinphonePrivate::ContentType::VoiceRecording);
+}
+
 bool_t linphone_content_is_file (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	return c->isFile(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list

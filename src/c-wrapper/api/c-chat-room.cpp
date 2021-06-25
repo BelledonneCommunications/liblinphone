@@ -189,10 +189,11 @@ LinphoneChatMessage *linphone_chat_room_create_reply_message (LinphoneChatRoom *
 LinphoneChatMessage *linphone_chat_room_create_voice_recording_message (LinphoneChatRoom *cr, LinphoneRecorder *recorder) {
 	LinphoneChatMessage *chat_message = linphone_chat_room_create_empty_message(cr);
 
-	LinphoneContent *content = linphone_recorder_create_content(recorder);
-	if (content != nullptr) {
-		linphone_chat_message_add_content(chat_message, content);
-		linphone_content_unref(content);
+	LinphoneContent *c_content = linphone_recorder_create_content(recorder);
+	if (c_content != nullptr) {
+		LinphonePrivate::Content *content = static_cast<LinphonePrivate::FileContent *>(L_GET_CPP_PTR_FROM_C_OBJECT(c_content));
+		L_GET_CPP_PTR_FROM_C_OBJECT(chat_message)->addContent(content);
+		linphone_content_unref(c_content);
 	}
 
 	return chat_message;

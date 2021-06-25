@@ -280,6 +280,13 @@ LINPHONE_PUBLIC int linphone_content_get_file_duration(LinphoneContent *content)
 LINPHONE_PUBLIC bool_t linphone_content_is_text (const LinphoneContent *content);
 
 /**
+ * Tells whether or not this content contains a voice recording by checking it's content type.
+ * @param content #LinphoneContent object. @notnil
+ * @return TRUE if this content type is 'audio/wav;voice-recording=yes', FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_content_is_voice_recording (const LinphoneContent *content);
+
+/**
  * Tells whether or not this content contains a file.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content contains a file, FALSE otherwise.

@@ -307,10 +307,9 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 
 	belle_sip_body_handler_add_header(first_part_bh,
 		belle_sip_header_create("Content-disposition", first_part_header.c_str()));
-	belle_sip_body_handler_add_header(first_part_bh,
-		(belle_sip_header_t *)belle_sip_header_content_type_create(
-			currentFileContentToTransfer->getContentType().getType().c_str(),
-			currentFileContentToTransfer->getContentType().getSubType().c_str()));
+	belle_sip_body_handler_add_header(first_part_bh, 
+		(belle_sip_header_t *)belle_sip_header_content_type_parse(currentFileContentToTransfer->getContentType().asString().c_str()));
+	
 
 	// insert it in a multipart body handler which will manage the boundaries of multipart msg
 	return (BELLE_SIP_BODY_HANDLER(belle_sip_multipart_body_handler_new(_chat_message_file_transfer_on_progress, this, first_part_bh, nullptr)));
@@ -364,6 +363,11 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				size_t contentKeySize = currentFileTransferContent->getFileKeySize();
 				const unsigned char *contentAuthTag = reinterpret_cast<const unsigned char *>(currentFileTransferContent->getFileAuthTag().data());
 				size_t contentAuthTagSize = currentFileTransferContent->getFileAuthTagSize();
+
+				// Also restore the file duration if any, used for voice recording messages
+				parsedXmlFileTransferContent->setFileDuration(currentFileContentToTransfer->getFileDuration());
+				// Temporary workaround required because file transfer server removes content type parameter
+				parsedXmlFileTransferContent->setFileContentType(currentFileContentToTransfer->getContentType());
 
 				string xml_body = dumpFileTransferContentAsXmlString(parsedXmlFileTransferContent, contentKey, contentKeySize, contentAuthTag, contentAuthTagSize, currentFileContentToTransfer->getFileName());
 				delete parsedXmlFileTransferContent;
@@ -1030,7 +1034,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 	}
 	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getFileContentType() << "</content-type>\r\n";
 	
-	if (parsedXmlFileTransferContent->getFileContentType() == ContentType::VoiceRecording) {
+	if (parsedXmlFileTransferContent->getFileContentType().strongEqual(ContentType::VoiceRecording)) {
 		fakeXml << "<am:playing-length>" << parsedXmlFileTransferContent->getFileDuration() << "</am:playing-length>\r\n";
 	}
 
@@ -1089,21 +1093,11 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
 							xmlChar *content_type = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							int contentTypeIndex = 0;
-							char *type;
-							char *subtype;
-							while (content_type[contentTypeIndex] != '/' && content_type[contentTypeIndex] != '\0') {
-								contentTypeIndex++;
-							}
-							type = ms_strndup((char *)content_type, contentTypeIndex);
-							subtype = ms_strdup(((char *)content_type + contentTypeIndex + 1));
-							ContentType contentType(type, subtype);
+							ContentType contentType((char*)content_type);
 							fileTransferContent->setFileContentType(contentType);
-							ms_free(subtype);
-							ms_free(type);
 							ms_free(content_type);
 						}
-						if (!xmlStrcmp(cur->name, (const xmlChar *)"am:playing-length")) {
+						if (!xmlStrcmp(cur->name, (const xmlChar *)"playing-length")) {
 							xmlChar *fileDuration = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
 							int duration = (int) strtod((char *)fileDuration, NULL);
 							fileTransferContent->setFileDuration(duration);

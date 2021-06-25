@@ -122,6 +122,10 @@ FileContent* Recorder::createContent () const {
 	fileContent->setFilePath(mFilePath);
 	fileContent->setContentType(ContentType::VoiceRecording);
 	fileContent->setFileDuration(getDuration());
+
+	string fileName = mFilePath.substr(mFilePath.find_last_of("/\\") + 1);
+	fileContent->setFileName(fileName);
+
 	return fileContent;
 }
 
