@@ -186,7 +186,7 @@ const char *linphone_content_get_name (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())
 		return static_cast<const LinphonePrivate::FileContent *>(c)->getFileName().c_str();
-	if (c->isFileTransfer())
+	else if (c->isFileTransfer())
 		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFileName().c_str();
 	return content->cache.name.c_str();
 }
@@ -340,7 +340,7 @@ const char *linphone_content_get_file_path (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())
 		return static_cast<const LinphonePrivate::FileContent *>(c)->getFilePath().c_str();
-	if (c->isFileTransfer())
+	else if (c->isFileTransfer())
 		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFilePath().c_str();
 	return content->cache.file_path.c_str();
 }
@@ -357,14 +357,33 @@ void linphone_content_set_file_path (LinphoneContent *content, const char *file_
 	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())
 		static_cast<LinphonePrivate::FileContent *>(c)->setFilePath(L_C_TO_STRING(file_path));
-	if (c->isFileTransfer())
+	else if (c->isFileTransfer())
 		static_cast<LinphonePrivate::FileTransferContent *>(c)->setFilePath(L_C_TO_STRING(file_path));
 	content->cache.file_path = L_C_TO_STRING(file_path);
+}
+
+int linphone_content_get_file_duration (LinphoneContent *content) {
+	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile())
+		return static_cast<LinphonePrivate::FileContent *>(c)->getFileDuration();
+	else if (c->isFileTransfer())
+		return static_cast<LinphonePrivate::FileTransferContent *>(c)->getFileDuration();
+	return -1;
 }
 
 bool_t linphone_content_is_text (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	return c->getContentType() == LinphonePrivate::ContentType::PlainText;
+}
+
+bool_t linphone_content_is_voice_recording (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile()) {
+		return c->getContentType().strongEqual(LinphonePrivate::ContentType::VoiceRecording);
+	} else if (c->isFileTransfer()) {
+		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFileContentType().strongEqual(LinphonePrivate::ContentType::VoiceRecording);
+	}
+	return false;
 }
 
 bool_t linphone_content_is_file (const LinphoneContent *content) {

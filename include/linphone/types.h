@@ -257,6 +257,26 @@ typedef enum _LinphoneCallStatus {
 	LinphoneCallDeclinedElsewhere = 6 /**<The call was declined on another device*/
 } LinphoneCallStatus;
 
+/**
+ * @brief Enum representing the file format of a recording.
+ * @ingroup call_control
+**/
+typedef enum _LinphoneRecorderFileFormat {
+	LinphoneRecorderFileFormatUnknown,
+	LinphoneRecorderFileFormatWav,
+	LinphoneRecorderFileFormatMkv
+} LinphoneRecorderFileFormat;
+
+/**
+ * @brief Enum representing the state of a recording.
+ * @ingroup call_control
+**/
+typedef enum _LinphoneRecorderState {
+	LinphoneRecorderClosed, /**< No file is opened for recording. */
+	LinphoneRecorderPaused, /**< The recorder is paused. */
+	LinphoneRecorderRunning /**< The recorder is running. */
+} LinphoneRecorderState;
+
 // -----------------------------------------------------------------------------
 // Friends.
 // -----------------------------------------------------------------------------

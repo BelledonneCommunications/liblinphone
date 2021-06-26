@@ -20,6 +20,8 @@
 #include <sstream>
 
 #include "linphone/api/c-content.h"
+#include "linphone/api/c-recorder.h"
+#include "linphone/api/c-recorder-params.h"
 #include "linphone/core_utils.h"
 #include "linphone/core.h"
 #include "linphone/logging.h"
@@ -5337,6 +5339,13 @@ void linphone_core_set_sound_source(LinphoneCore *lc, char source) {
 
 }
 
+LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const LinphoneAudioDevice *device, const char *web_cam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec) {
+	LinphoneRecorderParams *params = linphone_recorder_params_new(device, web_cam_name, window_id, format, video_codec);
+	LinphoneRecorder *recorder = linphone_recorder_new(lc, params);
+	linphone_recorder_params_unref(params);
+
+	return recorder;
+}
 
 void linphone_core_set_ring(LinphoneCore *lc,const char *path){
 	if (lc->sound_conf.local_ring != 0) {

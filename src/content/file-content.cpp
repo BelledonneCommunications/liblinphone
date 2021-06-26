@@ -38,6 +38,7 @@ public:
 	string fileName;
 	string filePath;
 	size_t fileSize = 0;
+	int fileDuration = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -50,6 +51,7 @@ FileContent::FileContent (const FileContent &other) : Content(*new FileContentPr
 	d->fileName = other.getFileName();
 	d->filePath = other.getFilePath();
 	d->fileSize = other.getFileSize();
+	d->fileDuration = other.getFileDuration();
 }
 
 FileContent::FileContent (FileContent &&other) : Content(*new FileContentPrivate) {
@@ -58,6 +60,7 @@ FileContent::FileContent (FileContent &&other) : Content(*new FileContentPrivate
 	d->fileName = move(other.getPrivate()->fileName);
 	d->filePath = move(other.getPrivate()->filePath);
 	d->fileSize = move(other.getPrivate()->fileSize);
+	d->fileDuration = move(other.getPrivate()->fileDuration);
 }
 
 FileContent &FileContent::operator= (const FileContent &other) {
@@ -66,6 +69,7 @@ FileContent &FileContent::operator= (const FileContent &other) {
 	d->fileName = other.getFileName();
 	d->filePath = other.getFilePath();
 	d->fileSize = other.getFileSize();
+	d->fileDuration = other.getFileDuration();
 	return *this;
 }
 
@@ -75,6 +79,7 @@ FileContent &FileContent::operator= (FileContent &&other) {
 	d->fileName = move(other.getPrivate()->fileName);
 	d->filePath = move(other.getPrivate()->filePath);
 	d->fileSize = move(other.getPrivate()->fileSize);
+	d->fileDuration = move(other.getPrivate()->fileDuration);
 	return *this;
 }
 
@@ -83,7 +88,8 @@ bool FileContent::operator== (const FileContent &other) const {
 	return Content::operator==(other) &&
 		d->fileName == other.getFileName() &&
 		d->filePath == other.getFilePath() &&
-		d->fileSize == other.getFileSize();
+		d->fileSize == other.getFileSize() &&
+		d->fileDuration == other.getFileDuration();
 }
 
 void FileContent::setFileSize (size_t size) {
@@ -114,6 +120,16 @@ void FileContent::setFilePath (const string &path) {
 const string &FileContent::getFilePath () const {
 	L_D();
 	return d->filePath;
+}
+
+void FileContent::setFileDuration (int durationInSeconds) {
+	L_D();
+	d->fileDuration = durationInSeconds;
+}
+
+int FileContent::getFileDuration () const {
+	L_D();
+	return d->fileDuration;
 }
 
 bool FileContent::isFile () const {
