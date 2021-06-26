@@ -249,6 +249,20 @@ typedef struct _LinphoneCallCbs LinphoneCallCbs;
 typedef struct _LinphoneCallParams LinphoneCallParams;
 
 /**
+ * @brief Object used to record the audio or video of a call.
+ * 
+ * @ingroup call_control
+**/
+typedef struct _LinphoneRecorder LinphoneRecorder;
+
+/**
+ * @brief Object containing various parameters of a #LinphoneRecorder.
+ * 
+ * @ingroup call_control
+**/
+typedef struct _LinphoneRecorderParams LinphoneRecorderParams;
+
+/**
  * @brief Object used to keep track of all calls initiated, received or missed.
  * 
  * It contains the call ID, date & time at which the call took place and it's duration (0 if it wasn't answered).

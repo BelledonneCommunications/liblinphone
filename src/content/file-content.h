@@ -52,6 +52,9 @@ public:
 	void setFilePath (const std::string &path);
 	const std::string &getFilePath () const;
 
+	void setFileDuration (int durationInSeconds);
+	int getFileDuration () const;
+
 	bool isFile () const override;
 	bool isFileTransfer () const override;
 

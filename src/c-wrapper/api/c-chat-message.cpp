@@ -365,6 +365,7 @@ void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneC
 	}
 
 	fileContent->setFileSize(linphone_content_get_size(c_content));
+	fileContent->setFileDuration(linphone_content_get_file_duration(c_content));
 	fileContent->setBody(content->getBody());
 	fileContent->setUserData(content->getUserData());
 

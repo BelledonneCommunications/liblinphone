@@ -514,7 +514,6 @@ LinphonePlayer * linphone_player_new(LinphoneCore *core);
 void _linphone_player_destroy(LinphonePlayer *player);
 void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlayerCbs *cbs);
 
-
 /*****************************************************************************
  * XML UTILITY FUNCTIONS                                                     *
  ****************************************************************************/

@@ -1216,6 +1216,52 @@ static void transfer_message_4(void) {
 	transfer_message_base(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, -1, FALSE, FALSE);
 }
 
+static void message_with_voice_recording(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
+	// Force auto download
+	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+
+	LinphoneRecorder *recorder = linphone_core_create_recorder(pauline->lc, linphone_core_get_output_audio_device(pauline->lc), NULL, NULL, LINPHONE_RECORDER_FORMAT_WAVE, "");
+	char *filename = bctbx_strdup_printf("%s/voice_record.wav", bc_tester_get_writable_dir_prefix());
+	linphone_recorder_open(recorder, filename);
+	wait_for_until(pauline->lc, NULL, NULL, 0, 5000);
+	linphone_recorder_close(recorder);
+	int duration = linphone_recorder_get_duration(recorder);
+
+	LinphoneChatMessage* msg = linphone_chat_room_create_voice_recording_message(room, recorder);
+	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(msg);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDelivered,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
+	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+
+	if (marie->stat.last_received_chat_message != NULL) {
+		LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(marie->stat.last_received_chat_message)->data);
+		BC_ASSERT_EQUAL(linphone_content_get_file_duration(content), duration, int, "%d");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "audio");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "wav");
+		BC_ASSERT_TRUE(linphone_content_is_voice_recording(content));
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
+	linphone_chat_message_unref(msg);
+
+	// Give some time for IMDN's 200 OK to be received so it doesn't leak
+	bctbx_free(filename);
+	linphone_recorder_unref(recorder);
+	wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void transfer_message_legacy(void) {
 	transfer_message_base(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, -1, FALSE, TRUE);
 }
@@ -3646,6 +3692,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message 2", transfer_message_2),
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),
 	TEST_NO_TAG("Transfer message 4", transfer_message_4),
+	TEST_NO_TAG("Message with voice recording", message_with_voice_recording),
 	TEST_NO_TAG("Transfer message legacy", transfer_message_legacy),
 	TEST_NO_TAG("Transfer message with 2 files", transfer_message_2_files),
 	TEST_NO_TAG("Transfer message auto download", transfer_message_auto_download),
