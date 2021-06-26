@@ -262,9 +262,9 @@ typedef enum _LinphoneCallStatus {
  * @ingroup call_control
 **/
 typedef enum _LinphoneRecorderFileFormat {
-	LINPHONE_RECORDER_FILE_FORMAT_UNKNOWN,
-	LINPHONE_RECORDER_FORMAT_WAVE,
-	LINPHONE_RECORDER_FORMAT_MATROSKA
+	LinphoneRecorderFileFormatUnknown,
+	LinphoneRecorderFileFormatWav,
+	LinphoneRecorderFileFormatMkv
 } LinphoneRecorderFileFormat;
 
 /**

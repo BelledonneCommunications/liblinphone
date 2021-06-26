@@ -148,7 +148,7 @@ static void record_wav_pcm_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordpcm.wav", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "pcm";
 	const char *video_mime = "";
-	record_file(filename, TRUE, audio_mime, video_mime, LINPHONE_RECORDER_FORMAT_WAVE);
+	record_file(filename, TRUE, audio_mime, video_mime, LinphoneRecorderFileFormatWav);
 	ms_free(filename);
 }
 
@@ -166,7 +166,7 @@ static void record_mkv_opus_vp8_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordopusvp8.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "vp8";
-	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LINPHONE_RECORDER_FORMAT_MATROSKA);
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneRecorderFileFormatMkv);
 	ms_free(filename);
 }
 
