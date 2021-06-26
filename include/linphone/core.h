@@ -115,7 +115,7 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *
 * @param window_id Id of the drawing window. Depend of video out @maybenil
 * @param format #LinphoneRecorderFileFormat File format we want to record to.
 * @param video_codec Codec of the video if we record video. "vp8" or "h264" @maybenil
-* @return A pointer on the new instance. NULL if failed. @maybenil
+* @return A pointer on the new instance. NULL if failed. @notnil
 */
 LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, const LinphoneAudioDevice *device, const char *web_cam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec);
 
