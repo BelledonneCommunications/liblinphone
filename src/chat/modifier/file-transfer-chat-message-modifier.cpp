@@ -252,6 +252,7 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 	fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
 	fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
 	fileTransferContent->setFileDuration(currentFileContentToTransfer->getFileDuration()); // Copy file duration information
+	fileTransferContent->setFileContentType(currentFileContentToTransfer->getContentType()); // Copy file content type information
 	
 	currentFileTransferContent = fileTransferContent;
 	currentFileTransferContent->setFileContent(currentFileContentToTransfer);
