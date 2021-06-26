@@ -33,7 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 class RecorderParams : public bellesip::HybridObject<LinphoneRecorderParams, RecorderParams> {
 public:
 	RecorderParams (std::shared_ptr<const AudioDevice> device, const std::string &webcamName, void *windowId,
-				   LinphoneRecorderFileFormat format = LINPHONE_RECORDER_FORMAT_WAVE, const std::string &videoCodec = "");
+				   LinphoneRecorderFileFormat format = LinphoneRecorderFileFormatWav, const std::string &videoCodec = "");
 	RecorderParams (const RecorderParams &other);
 	~RecorderParams () = default;
 
