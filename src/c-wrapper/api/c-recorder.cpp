@@ -42,16 +42,16 @@ void linphone_recorder_unref(LinphoneRecorder *recorder) {
 	Recorder::toCpp(recorder)->unref();
 }
 
-LinphoneStatus linphone_recorder_open(LinphoneRecorder *recorder, const char *filename) {
-	return Recorder::toCpp(recorder)->open(L_C_TO_STRING(filename));
+LinphoneStatus linphone_recorder_open(LinphoneRecorder *recorder, const char *file) {
+	return Recorder::toCpp(recorder)->open(L_C_TO_STRING(file));
 }
 
 void linphone_recorder_close(LinphoneRecorder *recorder) {
 	Recorder::toCpp(recorder)->close();
 }
 
-void linphone_recorder_remove_file(LinphoneRecorder *recorder, const char *filename) {
-	Recorder::toCpp(recorder)->removeFile(L_C_TO_STRING(filename));
+const char* linphone_recorder_get_file(LinphoneRecorder *recorder) {
+	return L_STRING_TO_C(Recorder::toCpp(recorder)->getFile());
 }
 
 LinphoneStatus linphone_recorder_start(LinphoneRecorder *recorder) {

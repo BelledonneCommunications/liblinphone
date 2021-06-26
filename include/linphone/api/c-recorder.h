@@ -57,9 +57,9 @@ LINPHONE_PUBLIC void linphone_recorder_unref(LinphoneRecorder *recorder);
 /**
  * Open a file for recording.
  * @param recorder The #LinphoneRecorder object. @notnil
- * @param filename The path to the file to open. @notnil
+ * @param file The path to the file to open. @notnil
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_recorder_open(LinphoneRecorder *recorder, const char *filename);
+LINPHONE_PUBLIC LinphoneStatus linphone_recorder_open(LinphoneRecorder *recorder, const char *file);
 
 /**
  * Close the opened file.
@@ -68,11 +68,11 @@ LINPHONE_PUBLIC LinphoneStatus linphone_recorder_open(LinphoneRecorder *recorder
 LINPHONE_PUBLIC void linphone_recorder_close(LinphoneRecorder *recorder);
 
 /**
- * Remove the specified file.
+ * Gets the file used for recording.
  * @param recorder The #LinphoneRecorder object. @notnil
- * @param filename The path to the file to remove. @notnil
+ * @return the file used for the recording if any. @maybenil
  */
-LINPHONE_PUBLIC void linphone_recorder_remove_file(LinphoneRecorder *recorder, const char *filename);
+LINPHONE_PUBLIC const char* linphone_recorder_get_file(LinphoneRecorder *recorder);
 
 /**
  * Start the recording into the opened file.
@@ -96,7 +96,7 @@ LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(LinphoneRecord
 /**
  * Gets the duration of the recording.
  * @param recorder The #LinphoneRecorder object. @notnil
- * @return the duration of the recording, in seconds.
+ * @return the duration of the recording, in milliseconds.
  */
 LINPHONE_PUBLIC int linphone_recorder_get_duration(LinphoneRecorder *recorder);
 

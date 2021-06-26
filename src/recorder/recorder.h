@@ -43,9 +43,9 @@ public:
 
 	Recorder* clone () const override;
 
-	LinphoneStatus open (const std::string &filename);
+	LinphoneStatus open (const std::string &file);
 	void close ();
-	void removeFile (const std::string &filename);
+	const std::string& getFile () const;
 
 	LinphoneStatus start ();
 	LinphoneStatus pause ();
@@ -66,7 +66,8 @@ protected:
 private:
 	MSMediaRecorder *mRecorder = nullptr;
 	std::shared_ptr<RecorderParams> mParams;
-	time_t mRecordingStartTime;
+	struct timeval mStartTime;
+	struct timeval mEndTime;
 	std::string mFilePath;
 	void *mUserData = nullptr;
 };

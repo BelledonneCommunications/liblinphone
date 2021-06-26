@@ -100,7 +100,7 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	wait_for_until(lc_manager->lc, NULL, NULL, 0, 5000);
 	
 	int duration = linphone_recorder_get_duration(recorder);
-	BC_ASSERT_GREATER(duration, 5, int , "%d");
+	BC_ASSERT_GREATER(duration, 5000, int , "%d");
 
 	LinphoneContent *content = linphone_recorder_create_content(recorder);
 	BC_ASSERT_PTR_NULL(content);
@@ -135,7 +135,7 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 		res2 = st.st_size > 0;
 		BC_ASSERT_TRUE(res2);
 		ms_message("We check if the file has non zero size, res2 = %d\n", res2);
-		linphone_recorder_remove_file(recorder, filename);
+		remove(filename);
 	}
 
 
@@ -148,7 +148,7 @@ static void record_wav_pcm_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordpcm.wav", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "pcm";
 	const char *video_mime = "";
-	record_file(filename, TRUE, audio_mime, video_mime, LINPHONE_RECORDER_FORMAT_WAVE);
+	record_file(filename, TRUE, audio_mime, video_mime, LinphoneRecorderFileFormatWav);
 	ms_free(filename);
 }
 
@@ -166,7 +166,7 @@ static void record_mkv_opus_vp8_test(void) {
 	char *filename = bctbx_strdup_printf("%s/testrecordopusvp8.mkv", bc_tester_get_writable_dir_prefix());
 	const char *audio_mime = "opus";
 	const char *video_mime = "vp8";
-	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LINPHONE_RECORDER_FORMAT_MATROSKA);
+	record_file(filename, linphone_recorder_matroska_supported(), audio_mime, video_mime, LinphoneRecorderFileFormatMkv);
 	ms_free(filename);
 }
 

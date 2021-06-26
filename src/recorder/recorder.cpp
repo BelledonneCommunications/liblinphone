@@ -68,30 +68,34 @@ void Recorder::init () {
 		(MSFileFormat) mParams->getFileFormat(),
 		mParams->getVideoCodec().empty() ? NULL : mParams->getVideoCodec().c_str()
 	);
-
-	mRecordingStartTime = ms_time(NULL);
 }
 
-LinphoneStatus Recorder::open (const std::string &filename) {
-	mFilePath = filename;
-	return ms_media_recorder_open(mRecorder, filename.c_str(), linphone_core_get_device_rotation(getCore()->getCCore())) ? 0 : -1;
+LinphoneStatus Recorder::open (const std::string &file) {
+	mFilePath = file;
+	return ms_media_recorder_open(mRecorder, file.c_str(), linphone_core_get_device_rotation(getCore()->getCCore())) ? 0 : -1;
 }
 
 void Recorder::close () {
+	if (getState() == LinphoneRecorderRunning) {
+		pause();
+	}
 	ms_media_recorder_close(mRecorder);
 }
 
-void Recorder::removeFile (const std::string &filename) {
-	ms_media_recorder_remove_file(mRecorder, filename.c_str());
+const std::string& Recorder::getFile () const {
+	return mFilePath;
 }
 
 LinphoneStatus Recorder::start () {
-	mRecordingStartTime = ms_time(NULL);
+	ortp_gettimeofday(&mStartTime, nullptr);
+
 	return ms_media_recorder_start(mRecorder) ? 0 : -1;
 }
 
 LinphoneStatus Recorder::pause () {
 	ms_media_recorder_pause(mRecorder);
+	ortp_gettimeofday(&mEndTime, nullptr);
+
 	return 0;
 }
 
@@ -108,7 +112,15 @@ LinphoneRecorderState Recorder::getState () const {
 }
 
 int Recorder::getDuration () const {
-	return (int) difftime(ms_time(NULL), mRecordingStartTime);
+	if (getState() == LinphoneRecorderRunning) {
+		struct timeval cur;
+		ortp_gettimeofday(&cur, nullptr);
+		double elapsed = static_cast<double>(cur.tv_sec - mStartTime.tv_sec) * 1000 + static_cast<double>(cur.tv_usec - mStartTime.tv_usec) / 1000;
+		return (int) elapsed;
+	} else {
+		double elapsed = static_cast<double>(mEndTime.tv_sec - mStartTime.tv_sec) * 1000 + static_cast<double>(mEndTime.tv_usec - mStartTime.tv_usec) / 1000;
+		return (int) elapsed;
+	}
 }
 
 FileContent* Recorder::createContent () const {
