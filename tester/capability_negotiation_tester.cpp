@@ -2821,8 +2821,54 @@ void call_with_toggling_encryption_base(const LinphoneMediaEncryption encryption
 	BC_PASS("Test temporarely disabled");
 }
 
+static void call_with_ack_not_sent(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_enable_capability_negociation(marie->lc, TRUE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+
+	LinphoneCall* in_call = NULL;
+	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
+	BC_ASSERT_PTR_NOT_NULL(out_call);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallOutgoingInit,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1));
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1));
+	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(marie->lc));
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1));
+	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(marie->lc));
+
+	linphone_call_accept(in_call);
+
+	// Pauline goes offline so that it cannot send the ACK
+	linphone_core_set_network_reachable(pauline->lc,FALSE);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1,60000));
+
+	check_media_stream(in_call, TRUE);
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(in_call)), LinphoneMediaEncryptionSRTP, int, "%i");
+
+	// Pauline comes back online to answer the BYE
+	linphone_core_set_network_reachable(pauline->lc,TRUE);
+
+	// Check that Pauline never went to the streams running state
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, 0, int, "%d");
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+
+
 test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with no encryption", call_with_no_encryption),
+	TEST_NO_TAG("Call with ACK not sent", call_with_ack_not_sent),
 	TEST_NO_TAG("Call with capability negotiation failure", call_with_capability_negotiation_failure),
 	TEST_NO_TAG("Call with capability negotiation failure and multiple potential configurations", call_with_capability_negotiation_failure_multiple_potential_configurations),
 	TEST_NO_TAG("Call with capability negotiation disabled at call level", call_with_capability_negotiation_disable_call_level),
