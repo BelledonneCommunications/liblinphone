@@ -106,7 +106,7 @@ public:
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
 
-	void setWindowId(void * windowId);
+	void setWindowId(void * newWindowId);
 	void * getWindowId() const;
 	MSVideoSize getReceivedVideoSize() const;
 
@@ -122,6 +122,7 @@ private:
 	time_t mTimeOfJoining;
 	uint32_t mSsrc = 0;
 	bool mSupportAdminMode = false;
+	void * mWindowId = NULL;
 
 	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 
