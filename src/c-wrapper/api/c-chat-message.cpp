@@ -365,6 +365,7 @@ void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneC
 	}
 
 	fileContent->setFileSize(linphone_content_get_size(c_content));
+	fileContent->setFileDuration(linphone_content_get_file_duration(c_content));
 	fileContent->setBody(content->getBody());
 	fileContent->setUserData(content->getUserData());
 
@@ -389,12 +390,18 @@ void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *msg, cons
 }
 
 void linphone_chat_message_add_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
-	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
-	LinphonePrivate::Content *cppContent = new LinphonePrivate::Content();
-	cppContent->setContentType(content->getContentType());
-	cppContent->setBody(content->getBody());
-	cppContent->setUserData(content->getUserData());
-	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(cppContent);
+	if (linphone_content_is_voice_recording(c_content)) {
+		linphone_content_ref(c_content);
+		LinphonePrivate::Content *content = static_cast<LinphonePrivate::FileContent *>(L_GET_CPP_PTR_FROM_C_OBJECT(c_content));
+		L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
+	} else {
+		LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+		LinphonePrivate::Content *cppContent = new LinphonePrivate::Content();
+		cppContent->setContentType(content->getContentType());
+		cppContent->setBody(content->getBody());
+		cppContent->setUserData(content->getUserData());
+		L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(cppContent);
+	}
 }
 
 void linphone_chat_message_remove_content (LinphoneChatMessage *msg, LinphoneContent *content) {

@@ -26,6 +26,7 @@
 #include "mediastreamer2/msvideo.h"
 #include "mediastreamer2/mediastream.h"
 #include "mediastreamer2/bitratecontrol.h"
+#include "mediastreamer2/msmediaplayer.h"
 
 #include "linphone/defs.h"
 #include "linphone/types.h"
@@ -104,6 +105,28 @@ LINPHONE_PUBLIC LinphoneAddress * linphone_core_create_address(LinphoneCore *cor
  * @return A pointer on the new instance. NULL if failed. @maybenil
  */
 LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *core, const char *sound_card_name, const char *video_display_name, void *window_id);
+
+/**
+* Create a recorder params that will hold parameters.
+* This recorder support WAVE and MATROSKA formats.
+* @param lc A #LinphoneCore object @notnil
+* @param device Recording #LinphoneAudioDevice. If NULL, the audio device set in #LinphoneCore will be used @maybenil
+* @param web_cam_name Recording web cam. If NULL, no video will be recorded. @maybenil
+* @param window_id Id of the drawing window. Depend of video out @maybenil
+* @param format #LinphoneRecorderFileFormat File format we want to record to.
+* @param video_codec Codec of the video if we record video. "vp8" or "h264" @maybenil
+* @return A pointer on the new instance. NULL if failed. @notnil
+*/
+LINPHONE_PUBLIC LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc);
+
+/**
+* Create a media file recorder.
+* This recorder support WAVE and MATROSKA formats.
+* @param lc A #LinphoneCore object. @notnil
+* @param params The #LinphoneRecorderParams that will contains all recorder parameters. @notnil
+* @return A pointer on the new instance. NULL if failed. @notnil
+*/
+LINPHONE_PUBLIC LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, LinphoneRecorderParams *params);
 
 /**
  * Creates an empty info message.

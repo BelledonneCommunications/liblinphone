@@ -62,7 +62,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 15);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 16);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -307,8 +307,8 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 	const long long &contentTypeId = insertContentType(content.getContentType().getMediaType());
 	const string &body = content.getBodyAsUtf8String();
 	*session << "INSERT INTO chat_message_content (event_id, content_type_id, body, body_encoding_type) VALUES"
-		" (:chatMessageId, :contentTypeId, :body, 1)", soci::use(chatMessageId), soci::use(contentTypeId),
-		soci::use(body);
+		" (:chatMessageId, :contentTypeId, :body, 1)", 
+		soci::use(chatMessageId), soci::use(contentTypeId), soci::use(body);
 
 	const long long &chatMessageContentId = dbSession.getLastInsertId();
 	if (content.isFile()) {
@@ -316,9 +316,10 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 		const string &name = fileContent.getFileName();
 		const size_t &size = fileContent.getFileSize();
 		const string &path = fileContent.getFilePath();
-		*session << "INSERT INTO chat_message_file_content (chat_message_content_id, name, size, path) VALUES"
-			" (:chatMessageContentId, :name, :size, :path)",
-			soci::use(chatMessageContentId), soci::use(name), soci::use(size), soci::use(path);
+		int duration = fileContent.getFileDuration();
+		*session << "INSERT INTO chat_message_file_content (chat_message_content_id, name, size, path, duration) VALUES"
+			" (:chatMessageContentId, :name, :size, :path, :duration)",
+			soci::use(chatMessageContentId), soci::use(name), soci::use(size), soci::use(path), soci::use(duration);
 	}
 
 	for (const auto &appData : content.getAppDataMap())
@@ -1612,6 +1613,10 @@ void MainDbPrivate::updateSchema () {
 		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"
 		"  LEFT JOIN chat_message_ephemeral_event ON chat_message_ephemeral_event.event_id = event.id"
 		"  LEFT JOIN conference_ephemeral_message_event ON conference_ephemeral_message_event.event_id = event.id";
+	}
+
+	if (version < makeVersion(1, 0, 16)) {
+		*session << "ALTER TABLE chat_message_file_content ADD COLUMN duration INT NOT NULL DEFAULT -1";
 	}
 #endif
 }
@@ -3301,15 +3306,17 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 				string name;
 				int size;
 				string path;
+				int duration;
 
-				*session << "SELECT name, size, path FROM chat_message_file_content"
+				*session << "SELECT name, size, path, duration FROM chat_message_file_content"
 					" WHERE chat_message_content_id = :contentId",
-					soci::into(name), soci::into(size), soci::into(path), soci::use(contentId);
+					soci::into(name), soci::into(size), soci::into(path), soci::into(duration), soci::use(contentId);
 				if (session->got_data()) {
 					FileContent *fileContent = new FileContent();
 					fileContent->setFileName(name);
 					fileContent->setFileSize(size_t(size));
 					fileContent->setFilePath(path);
+					fileContent->setFileDuration(duration);
 					content = fileContent;
 				} else {
 					content = new Content();

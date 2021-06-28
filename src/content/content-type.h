@@ -83,6 +83,7 @@ public:
 	static const ContentType Rlmi;
 	static const ContentType Sdp;
 	static const ContentType SipFrag;
+	static const ContentType VoiceRecording;
 
 private:
 	L_DECLARE_PRIVATE(ContentType);
