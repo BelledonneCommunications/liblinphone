@@ -1,5 +1,5 @@
 [account_creator]
-backend=flexiapi
+backend=1
 url=http://subscribe.example.org/flexiapi/api/
 
 [sip]
