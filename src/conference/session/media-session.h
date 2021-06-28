@@ -123,10 +123,9 @@ public:
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
 
-	void setWindowId(void *windowId, const std::string & label);
-	void * getWindowId(const std::string & label) const;
 	MSVideoSize getReceivedVideoSize(const std::string &label) const;
-	
+	void * getParticipantWindowId(const std::string label);
+
 	StreamsGroup & getStreamsGroup()const;
 private:
 	L_DECLARE_PRIVATE(MediaSession);

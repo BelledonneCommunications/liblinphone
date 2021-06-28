@@ -100,7 +100,7 @@ public:
 	bool setTextDirection(const LinphoneMediaDirection direction);
 	bool updateMedia();
 
-	void setWindowId(void * windowId);
+	void setWindowId(void * newWindowId);
 	void * getWindowId() const;
 	MSVideoSize getReceivedVideoSize() const;
 
@@ -114,6 +114,7 @@ private:
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
+	void * mWindowId = NULL;
 
 	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 

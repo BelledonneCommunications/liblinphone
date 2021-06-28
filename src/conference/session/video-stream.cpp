@@ -173,6 +173,8 @@ void MS2VideoStream::finishPrepare(){
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+	MS2VideoMixer * videoMixer = getVideoMixer();
+	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
 
 	/* Shutdown preview */
 	MSFilter *source = nullptr;
@@ -241,13 +243,19 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
 		video_stream_set_sent_video_size(mStream, vsize);
 	}
+lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
-	if (mNativeWindowId)
+	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	else if (getCCore()->video_window_id)
+	} else if (videoMixer && label && getMediaSession().getParticipantWindowId(label)) {
+		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
+lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer << " native window ID " << mNativeWindowId;
+	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
-	if (getCCore()->preview_window_id)
+	}
+	if (getCCore()->preview_window_id) {
 		video_stream_set_native_preview_window_id(mStream, getCCore()->preview_window_id);
+	}
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
 	
 	MS2Stream::render(ctx, targetState);
@@ -278,10 +286,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}else if (vstream.multicast_role == SalMulticastSender){
 		dir = MediaStreamSendOnly;
 	}
-	
+
 	MSWebCam *cam = getVideoDevice(targetState);
-	MS2VideoMixer * videoMixer = getVideoMixer();
-	
+
 	getMediaSession().getLog()->video_enabled = true;
 	media_stream_set_direction(&mStream->ms, dir);
 	lInfo() << "Device rotation =" << getCCore()->device_rotation;
@@ -344,12 +351,13 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		lWarning() << "Video preview (" << source << ") not reused: destroying it";
 		ms_filter_destroy(source);
 	}
-	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
 	if (label) {
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
 		lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.dir << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
+
+lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 		if (!mStream->label) {
 			lError() << "Video Stream Conference[all to all]: Can not add video endpoint with empty label";
 			return;

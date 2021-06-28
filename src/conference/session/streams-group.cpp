@@ -560,25 +560,6 @@ void StreamsGroup::unjoinMixerSession(){
 	mMixerSession = nullptr;
 }
 
-void StreamsGroup::setWindowId(void * windowId, const std::string & label){
-#ifdef VIDEO_ENABLED
-	Stream * s = lookupStream(label);
-	if (s->getType() == SalVideo) {
-		dynamic_cast<MS2VideoStream *>(s)->setNativeWindowId(windowId);
-	}
-#endif
-}
-
-void * StreamsGroup::getWindowId(const std::string & label) const {
-#ifdef VIDEO_ENABLED
-	Stream * s = lookupStream(label);
-	if (s->getType() == SalVideo) {
-		return dynamic_cast<MS2VideoStream *>(s)->getNativeWindowId();
-	}
-#endif
-	return nullptr;
-}
-
 MSVideoSize StreamsGroup::getReceivedVideoSize(const std::string & label) const {
 #ifdef VIDEO_ENABLED
 	Stream * s= lookupStream(label);
