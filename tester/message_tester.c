@@ -1227,7 +1227,11 @@ static void message_with_voice_recording(void) {
 	// Force auto download
 	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
 
-	LinphoneRecorder *recorder = linphone_core_create_recorder(pauline->lc, linphone_core_get_output_audio_device(pauline->lc), NULL, NULL, LinphoneRecorderFileFormatWav, "");
+	LinphoneRecorderParams *params = linphone_core_create_recorder_params(pauline->lc);
+	linphone_recorder_params_set_file_format(params, LinphoneRecorderFileFormatWav);
+	LinphoneRecorder *recorder = linphone_core_create_recorder(pauline->lc, params);
+	linphone_params_unref(params);
+
 	char *filename = bctbx_strdup_printf("%s/voice_record.wav", bc_tester_get_writable_dir_prefix());
 	linphone_recorder_open(recorder, filename);
 	wait_for_until(pauline->lc, NULL, NULL, 0, 5000);

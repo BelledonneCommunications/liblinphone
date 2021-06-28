@@ -33,14 +33,9 @@ extern "C" {
 
 /**
  * Create a new #LinphoneRecorderParams object.
- * @param device The #LinphoneAudioDevice object. @maybenil
- * @param webcam_name The webcam name. @maybenil
- * @param window_id The widow id. @maybenil
- * @param format The #LinphoneRecorderFileFormat format to use.
- * @param video_codec The video codec to use. @maybenil
  * @return the newly created #LinphoneRecorderParams object. @notnil
  */
-LINPHONE_PUBLIC LinphoneRecorderParams* linphone_recorder_params_new(const LinphoneAudioDevice *device, const char *webcam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec);
+LINPHONE_PUBLIC LinphoneRecorderParams* linphone_recorder_params_new();
 
 /**
  * Clone a #LinphoneRecorderParams object.
