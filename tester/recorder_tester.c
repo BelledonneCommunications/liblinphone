@@ -72,9 +72,12 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 		}
 	}
 
-	recorder = linphone_core_create_recorder(lc_manager->lc, linphone_core_get_output_audio_device(lc_manager->lc),
-																					 linphone_core_get_video_device(lc_manager->lc),
-																					 0, format, video_mime);
+	LinphoneRecorderParams *params = linphone_core_create_recorder_params(lc_manager->lc);
+	linphone_recorder_params_set_webcam_name(params, linphone_core_get_video_device(lc_manager->lc));
+	linphone_recorder_params_set_file_format(params, format);
+	linphone_recorder_params_set_video_codec(params, video_mime);
+	recorder = linphone_core_create_recorder(lc_manager->lc, params);
+	linphone_recorder_params_unref(params);
 	BC_ASSERT_PTR_NOT_NULL(recorder);
 	if(recorder == NULL) goto fail;
 

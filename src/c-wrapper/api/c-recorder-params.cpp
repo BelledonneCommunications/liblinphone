@@ -28,8 +28,8 @@
 
 using namespace LinphonePrivate;
 
-LinphoneRecorderParams* linphone_recorder_params_new(const LinphoneAudioDevice *device, const char *webcam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec) {
-	return RecorderParams::createCObject(device ? AudioDevice::toCpp(device)->getSharedFromThis() : nullptr, L_C_TO_STRING(webcam_name), window_id, format, L_C_TO_STRING(video_codec));
+LinphoneRecorderParams* linphone_recorder_params_new() {
+	return RecorderParams::createCObject(nullptr, "", nullptr, LinphoneRecorderFileFormatUnknown, "");
 }
 
 LinphoneRecorderParams* linphone_recorder_params_clone(const LinphoneRecorderParams *params) {

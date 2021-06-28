@@ -5339,8 +5339,11 @@ void linphone_core_set_sound_source(LinphoneCore *lc, char source) {
 
 }
 
-LinphoneRecorderParams *linphone_core_create_recorder_params(LinphoneCore *lc, const LinphoneAudioDevice *device, const char *web_cam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec) {
-	return linphone_recorder_params_new(device, web_cam_name, window_id, format, video_codec);
+LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc) {
+	LinphoneRecorderParams *params = linphone_recorder_params_new();
+	const LinphoneAudioDevice *device = linphone_core_get_default_input_audio_device(lc);
+	linphone_recorder_params_set_audio_device(params, device);
+	return params;
 }
 
 LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, LinphoneRecorderParams *params) {
