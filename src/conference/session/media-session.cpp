@@ -3776,16 +3776,6 @@ const CallSessionParams * MediaSession::getParams () const {
 	return d->params;
 }
 
-void MediaSession::setWindowId(void * windowId, const std::string & label){
-	L_D();
-	d->getStreamsGroup().setWindowId(windowId, label);
-}
-
-void * MediaSession::getWindowId(const std::string & label)const {
-	L_D();
-	return d->getStreamsGroup().getWindowId(label);
-}
-
 MSVideoSize MediaSession::getReceivedVideoSize(const std::string &label) const {
 	L_D();
 	return d->getStreamsGroup().getReceivedVideoSize(label);
@@ -4013,5 +4003,25 @@ AudioDevice* MediaSession::getOutputAudioDevice() const {
 	if (i) return i->getOutputDevice();
 	return nullptr;
 }
+
+void * MediaSession::getParticipantWindowId(const std::string label) {
+	L_D();
+
+	LinphoneConference * conference = nullptr;
+	bool isInLocalConference = d->getParams()->getPrivate()->getInConference();
+	if (d->listener && isInLocalConference) {
+		conference = d->listener->getCallSessionConference(getSharedFromThis());
+		if (conference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & device = cppConference->findParticipantDeviceByLabel(label);
+			if (device) {
+				return device->getWindowId();
+			}
+		}
+	}
+
+	return nullptr;
+}
+
 
 LINPHONE_END_NAMESPACE
