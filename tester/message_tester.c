@@ -1216,7 +1216,7 @@ static void transfer_message_4(void) {
 	transfer_message_base(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, -1, FALSE, FALSE);
 }
 
-static void message_with_voice_recording(void) {
+static void message_with_voice_recording_base(bool_t create_message_from_recorder) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
@@ -1227,14 +1227,27 @@ static void message_with_voice_recording(void) {
 	// Force auto download
 	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
 
-	LinphoneRecorder *recorder = linphone_core_create_recorder(pauline->lc, linphone_core_get_output_audio_device(pauline->lc), NULL, NULL, LinphoneRecorderFileFormatWav, "");
+	LinphoneRecorderParams *params = linphone_core_create_recorder_params(pauline->lc);
+	linphone_recorder_params_set_file_format(params, LinphoneRecorderFileFormatWav);
+	LinphoneRecorder *recorder = linphone_core_create_recorder(pauline->lc, params);
+	linphone_recorder_params_unref(params);
+
 	char *filename = bctbx_strdup_printf("%s/voice_record.wav", bc_tester_get_writable_dir_prefix());
 	linphone_recorder_open(recorder, filename);
 	wait_for_until(pauline->lc, NULL, NULL, 0, 5000);
 	linphone_recorder_close(recorder);
 	int duration = linphone_recorder_get_duration(recorder);
 
-	LinphoneChatMessage* msg = linphone_chat_room_create_voice_recording_message(room, recorder);
+	LinphoneChatMessage* msg;
+	if (create_message_from_recorder) {
+		msg = linphone_chat_room_create_voice_recording_message(room, recorder);
+	} else {
+		msg = linphone_chat_room_create_empty_message(room);
+		LinphoneContent *content = linphone_recorder_create_content(recorder);
+		linphone_chat_message_add_content(msg, content);
+		linphone_content_unref(content);
+	}
+	
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
@@ -1260,6 +1273,14 @@ static void message_with_voice_recording(void) {
 	wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+}
+
+static void message_with_voice_recording(void) {
+	message_with_voice_recording_base(TRUE);
+}
+
+static void message_with_voice_recording_2(void) {
+	message_with_voice_recording_base(FALSE);
 }
 
 static void transfer_message_legacy(void) {
@@ -3693,6 +3714,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),
 	TEST_NO_TAG("Transfer message 4", transfer_message_4),
 	TEST_NO_TAG("Message with voice recording", message_with_voice_recording),
+	TEST_NO_TAG("Message with voice recording 2", message_with_voice_recording_2),
 	TEST_NO_TAG("Transfer message legacy", transfer_message_legacy),
 	TEST_NO_TAG("Transfer message with 2 files", transfer_message_2_files),
 	TEST_NO_TAG("Transfer message auto download", transfer_message_auto_download),

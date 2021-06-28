@@ -117,7 +117,7 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *
 * @param video_codec Codec of the video if we record video. "vp8" or "h264" @maybenil
 * @return A pointer on the new instance. NULL if failed. @notnil
 */
-LINPHONE_PUBLIC LinphoneRecorderParams *linphone_core_create_recorder_params(LinphoneCore *lc, const LinphoneAudioDevice *device, const char *web_cam_name, void *window_id, LinphoneRecorderFileFormat format, const char *video_codec) {
+LINPHONE_PUBLIC LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc);
 
 /**
 * Create a media file recorder.
