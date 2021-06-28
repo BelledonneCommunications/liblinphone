@@ -208,12 +208,15 @@ lInfo() << "DEBUG participant " << getAddress().asString() << " video dir " << g
 	return mediaChanged;
 }
 
-void ParticipantDevice::setWindowId(void * windowId) {
-	static_pointer_cast<MediaSession>(mSession)->setWindowId(windowId, mLabel);
+void ParticipantDevice::setWindowId(void * newWindowId) {
+#ifdef VIDEO_ENABLED
+lInfo() << __func__ << " DEBUG participant " << getAddress().asString() << " window ID " << newWindowId << " label " << mLabel;
+	mWindowId = newWindowId;
+#endif
 }
 
 void * ParticipantDevice::getWindowId() const {
-	return static_pointer_cast<MediaSession>(mSession)->getWindowId(mLabel);
+	return mWindowId;
 }
 
 MSVideoSize ParticipantDevice::getReceivedVideoSize() const {
