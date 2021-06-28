@@ -148,6 +148,12 @@ LINPHONE_PUBLIC const char *linphone_tunnel_mode_to_string(LinphoneTunnelMode mo
 LINPHONE_PUBLIC bool_t linphone_local_player_matroska_supported(void);
 
 /**
+ * Check whether Matroksa format is supported by the recorder
+ * @return TRUE if it is supported
+ */
+LINPHONE_PUBLIC bool_t linphone_recorder_matroska_supported(void);
+
+/**
  * Converts a #LinphoneTransportType enum to a lowercase string.
  * @param transport a #LinphoneTransportType to convert to string
  * @return the string representation of the #LinphoneTransportType @notnil

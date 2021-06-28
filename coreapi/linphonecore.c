@@ -20,6 +20,8 @@
 #include <sstream>
 
 #include "linphone/api/c-content.h"
+#include "linphone/api/c-recorder.h"
+#include "linphone/api/c-recorder-params.h"
 #include "linphone/core_utils.h"
 #include "linphone/core.h"
 #include "linphone/logging.h"
@@ -5337,6 +5339,16 @@ void linphone_core_set_sound_source(LinphoneCore *lc, char source) {
 
 }
 
+LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc) {
+	LinphoneRecorderParams *params = linphone_recorder_params_new();
+	const LinphoneAudioDevice *device = linphone_core_get_default_input_audio_device(lc);
+	linphone_recorder_params_set_audio_device(params, device);
+	return params;
+}
+
+LinphoneRecorder *linphone_core_create_recorder(LinphoneCore *lc, LinphoneRecorderParams *params) {
+	return  linphone_recorder_new(lc, params);
+}
 
 void linphone_core_set_ring(LinphoneCore *lc,const char *path){
 	if (lc->sound_conf.local_ring != 0) {

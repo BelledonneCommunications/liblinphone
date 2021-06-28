@@ -102,6 +102,8 @@ set(C_API_HEADER_FILES
 	c-participant-imdn-state.h
 	c-push-notification-message.h
 	c-push-notification-config.h
+	c-recorder.h
+	c-recorder-params.h
 	c-search-result.h
 	c-types.h
 )
