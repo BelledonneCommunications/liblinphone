@@ -2654,9 +2654,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 
 	#ifdef HAVE_FLEXIAPI
-	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendFlexiAPI
-	 && linphone_config_get_string(lc->config, "account_creator", "url", NULL) != NULL)
-		== LinphoneAccountCreatorBackendXMLRPC) {
+	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendXMLRPC) == LinphoneAccountCreatorBackendXMLRPC) {
 	#endif
 		linphone_account_creator_service_set_constructor_cb(service, linphone_account_creator_constructor_linphone_xmlrpc);
 		linphone_account_creator_service_set_destructor_cb(service, NULL);
