@@ -229,8 +229,10 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 
 	if (!linphoneNsName.empty()) {
 		auto timeHeader = cpimMessage->getMessageHeader(linphoneEphemeralHeader, linphoneNsName);
-		long time = (long)Utils::stod(timeHeader->getValue());
-		message->getPrivate()->enableEphemeralWithTime(time);
+		if (timeHeader) {
+			long time = (long)Utils::stod(timeHeader->getValue());
+			message->getPrivate()->enableEphemeralWithTime(time);
+		}
 	}
 
 	if (messageIdHeader)
