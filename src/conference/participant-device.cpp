@@ -215,4 +215,25 @@ MSVideoSize ParticipantDevice::getReceivedVideoSize() const {
 	return static_pointer_cast<MediaSession>(mSession)->getReceivedVideoSize(mLabel);
 }
 
+bctbx_list_t *ParticipantDevice::getCallbacksList () const {
+	return mCallbacks;
+}
+
+LinphoneParticipantDeviceCbs *ParticipantDevice::getCurrentCbs () const{
+	return mCurrentCbs;
+}
+
+void ParticipantDevice::setCurrentCbs (LinphoneParticipantDeviceCbs *cbs) {
+	mCurrentCbs = cbs;
+}
+
+void ParticipantDevice::addCallbacks (LinphoneParticipantDeviceCbs *cbs) {
+	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
+}
+
+void ParticipantDevice::removeCallbacks (LinphoneParticipantDeviceCbs *cbs) {
+	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
+	belle_sip_object_unref(cbs);
+}
+
 LINPHONE_END_NAMESPACE
