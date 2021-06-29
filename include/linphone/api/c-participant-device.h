@@ -23,6 +23,8 @@
 #include "time.h"
 
 #include "linphone/api/c-types.h"
+#include "linphone/api/c-participant-device-cbs.h"
+#include "linphone/wrapper_utils.h"
 
 // =============================================================================
 
@@ -144,11 +146,11 @@ LINPHONE_PUBLIC LinphoneVideoSize *linphone_participant_device_get_received_vide
  * invoked sequencially.
  * @param participant_device #LinphoneParticipantDevice object. @notnil
  * @param cbs A #LinphoneParticipantDeviceCbs object holding the callbacks you need. A reference is taken by the #LinphoneParticipantDevice until you invoke linphone_participant_device_remove_callbacks(). @notnil
-  */
+ */
 LINPHONE_PUBLIC void linphone_participant_device_add_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs);
 
 /**
- * Remove a listener from a LinphoneParticipantDevice
+ * Remove a listener from a #LinphoneParticipantDevice
  * @param participant_device #LinphoneParticipantDevice object. @notnil
  * @param cbs #LinphoneParticipantDeviceCbs object to remove. @notnil
  */

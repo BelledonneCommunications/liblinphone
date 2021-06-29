@@ -37,41 +37,41 @@
 
 /**
  * Acquire a reference to the participant device callbacks object.
- * @param[in] cbs The participant device callbacks object
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
  * @return The same participant device callbacks object
 **/
 LINPHONE_PUBLIC LinphoneParticipantDeviceCbs * linphone_participant_device_cbs_ref (LinphoneParticipantDeviceCbs *cbs);
 
 /**
  * Release reference to the participant device callbacks object.
- * @param[in] cr The participant device callbacks object
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
 **/
 LINPHONE_PUBLIC void linphone_participant_device_cbs_unref (LinphoneParticipantDeviceCbs *cbs);
 
 /**
  * Retrieve the user pointer associated with the participant device callbacks object.
- * @param[in] cr The participant device callbacks object
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
  * @return The user pointer associated with the participant device callbacks object
 **/
 LINPHONE_PUBLIC void * linphone_participant_device_cbs_get_user_data (const LinphoneParticipantDeviceCbs *cbs);
 
 /**
  * Assign a user pointer to the participant device callbacks object.
- * @param[in] cr The participant device callbacks object
- * @param[in] ud The user pointer to associate with the participant device callbacks object
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] ud The user pointer to associate with the participant device callbacks object @maybenil
 **/
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_user_data (LinphoneParticipantDeviceCbs *cbs, void *ud);
 
 /**
  * Get the capture video size changed callback.
- * @param[in] cbs #LinphoneParticipantDeviceCbs object.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
  * @return The current capture video size changed callback.
  */
 LINPHONE_PUBLIC LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb linphone_participant_device_cbs_get_capture_video_size_changed (const LinphoneParticipantDeviceCbs *cbs);
 
 /**
  * Set the capture video size changed callback.
- * @param[in] cbs #LinphoneParticipantDeviceCbs object.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
  * @param[in] cb The capture video size changed callback to be used.
  */
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_capture_video_size_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb cb);
