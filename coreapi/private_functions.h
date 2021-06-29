@@ -42,6 +42,7 @@ extern "C" {
 
 LinphoneCallCbs *_linphone_call_cbs_new(void);
 LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
+LinphoneParticipantDeviceCbs *_linphone_participant_device_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
@@ -324,6 +325,9 @@ void _linphone_conference_notify_participant_device_removed(LinphoneConference *
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant);
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
+
+void _linphone_participant_device_notify_capture_video_size_changed(LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size);
+
 
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);

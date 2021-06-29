@@ -106,6 +106,12 @@ public:
 	void setWindowId(void * newWindowId);
 	void * getWindowId() const;
 	MSVideoSize getReceivedVideoSize() const;
+	
+	bctbx_list_t *getCallbacksList () const;
+	LinphoneParticipantDeviceCbs *getCurrentCbs () const;
+	void setCurrentCbs (LinphoneParticipantDeviceCbs *cbs);
+	void addCallbacks (LinphoneParticipantDeviceCbs *cbs);
+	void removeCallbacks (LinphoneParticipantDeviceCbs *cbs);
 
 private:
 	Participant *mParticipant = nullptr;
@@ -126,6 +132,9 @@ private:
 
 	bool setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceMediaCapabilities capIdx);
 	LinphoneMediaDirection getMediaDirection(const ConferenceMediaCapabilities capIdx) const;
+
+	bctbx_list_t *mCallbacks = nullptr;
+	LinphoneParticipantDeviceCbs *mCurrentCbs = nullptr;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
