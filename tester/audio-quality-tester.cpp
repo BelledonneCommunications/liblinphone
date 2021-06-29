@@ -155,11 +155,17 @@ static void audio_mono_call_opus(void){
 	audio_call_stereo_call("opus", 48000, 150, FALSE);
 }
 
+// Opus issue : Results can contain random silences on FEC. Their number depend on the gain (a very low gain leads to get a silence on all FEC)
+// This cannot be solved by the similarity alone because of the randomness behaviour.
+// This test is about having a better result with high fec on 2 tries from a first one with the worst fec (not 0)
 static void audio_call_loss_resilience(const char *codec_name, int clock_rate, int bitrate_override, int jitterBufferMs, bool_t stereo, std::pair<double,double> threshold ) {
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	LinphoneCoreManager *marie = nullptr, *pauline = nullptr;
 	char *recordPath = nullptr;
-	char *referenceFile = bc_tester_res("sounds/vrroom.wav");
+	char *playFile = bc_tester_res("sounds/continuous_48000_stereo.wav");
+	char *referenceFile = nullptr;
+	double similarity=0.0;
+	double similarityRef = 0.0;
 
 	OrtpNetworkSimulatorParams simparams = { 0 };
 	PayloadType *mariePt, *paulinePt;
@@ -167,12 +173,10 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	std::string recordFileNameRoot = "loss-record.wav", recordFileName, refRecordFileName;
 	FmtpManager marieFmtp, paulineFmtp;
 	std::vector<std::string> useinbandfec = {"1"};
-	std::vector<float> lossRates = {50};
-	std::vector<std::string> packetLossPercentage = {"50","100"};
+	std::vector<float> lossRates = {50.0f};
+	std::vector<std::string> packetLossPercentage = {"99"};
 	MSAudioDiffParams audioCmpParams = audio_cmp_params;
 
-	// Add jitterBufferMs to the shift
-        audioCmpParams.max_shift_percent = static_cast<int>(std::floor((audioCmpParams.max_shift_percent*sampleLength+jitterBufferMs)/((double)sampleLength+jitterBufferMs)));
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	
@@ -195,7 +199,7 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	if(bitrate_override) linphone_core_set_payload_type_bitrate(marie->lc, mariePt, bitrate_override);
 	if(bitrate_override) linphone_core_set_payload_type_bitrate(pauline->lc, paulinePt, bitrate_override);
 	linphone_core_set_use_files(marie->lc, TRUE);
-	linphone_core_set_play_file(marie->lc, referenceFile);
+	linphone_core_set_play_file(marie->lc, playFile);
 	linphone_core_set_use_files(pauline->lc, TRUE);
 	linphone_core_set_record_file(pauline->lc, recordPath);
 	/*stereo is supported only without volume control, echo canceller...*/
@@ -203,104 +207,74 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	linphone_config_set_string(linphone_core_get_config(pauline->lc),"sound","features","REMOTE_PLAYING");
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "jitter_buffer_min_size", jitterBufferMs);
 	linphone_core_set_audio_jittcomp(pauline->lc, jitterBufferMs);
+	linphone_core_enable_audio_adaptive_jittcomp(pauline->lc, TRUE);
 	linphone_core_enable_adaptive_rate_control(marie->lc, FALSE); // We don't want adaptive rate control here, in order to not interfere with loss recovery algorithms
+	linphone_core_enable_adaptive_rate_control(pauline->lc, FALSE);
+	linphone_core_enable_generic_comfort_noise(marie->lc, FALSE);
+	linphone_core_enable_generic_comfort_noise(pauline->lc, FALSE);
+	
+// Make a call with almost no fec in order to compare the final result
+	marieFmtp.setFmtp("useinbandfec", "1");
+	marieFmtp.setFmtp("packetlosspercentage", "1");
+	refRecordFileName= "result_ref_"+recordFileNameRoot;
+	referenceFile = bc_tester_file(refRecordFileName.c_str());
+	linphone_core_set_record_file(pauline->lc, referenceFile);
+	paulineFmtp = marieFmtp;
+	payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
+	payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
+	unlink(referenceFile);
+	if (BC_ASSERT_TRUE(call(pauline,marie))){
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength+jitterBufferMs);
+		end_call(pauline, marie);
+	}
 
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
-        simparams.consecutive_loss_probability = 0.000001f;// Ensure to have fec in n+1 packets
+    simparams.consecutive_loss_probability = 0.000001f;// Ensure to have fec in n+1 packets
 	for(size_t inbandIndex = 0 ; inbandIndex < useinbandfec.size() ; ++inbandIndex){// Loop to test the impact of useinbandfec
 		marieFmtp.setFmtp("useinbandfec", useinbandfec[inbandIndex]);
 		for(size_t lossRateIndex = 0 ; lossRateIndex < lossRates.size() ; ++lossRateIndex){// Loop to test the impact of loosing packets
-			double similarityRef = 0.0, similarity=0.0;
-			bool_t noError = TRUE;
 			simparams.loss_rate = lossRates[lossRateIndex];
 			linphone_core_set_network_simulator_params(marie->lc, &simparams);
-			
-// Compute similarity reference
-			marieFmtp.setFmtp("packetlosspercentage", "0");
-			paulineFmtp = marieFmtp;
-			payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
-			payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
-			refRecordFileName= useinbandfec[inbandIndex]+"_"+std::to_string(lossRates[lossRateIndex])+"_ref_"+recordFileNameRoot;
-			bc_free(recordPath);
-			recordPath = bc_tester_file(refRecordFileName.c_str());
-			linphone_core_set_record_file(pauline->lc, recordPath);
-			unlink(recordPath);
-			if (BC_ASSERT_TRUE(call(pauline,marie))){
-				wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength+jitterBufferMs);
-				end_call(pauline, marie);
-				BC_ASSERT_EQUAL(ms_audio_diff(referenceFile, recordPath,&similarityRef,&audioCmpParams,NULL,NULL), 0, int, "%d");
-			}
 			for(size_t packetLossIndex = 0 ; packetLossIndex < packetLossPercentage.size() ; ++packetLossIndex){
-// Set packetloss. Similarity must be greater than having no packetloss
+				double similarityMin=1.0, similarityMax=0.0;
 				marieFmtp.setFmtp("packetlosspercentage", packetLossPercentage[packetLossIndex]);
 				paulineFmtp = marieFmtp;
 				payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
 				payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
-				recordFileName= useinbandfec[inbandIndex]+"_"+std::to_string(lossRates[lossRateIndex])+"_"+packetLossPercentage[packetLossIndex]+"_out_"+recordFileNameRoot;
-				bc_free(recordPath);
-				recordPath = bc_tester_file(recordFileName.c_str());
-				linphone_core_set_record_file(pauline->lc, recordPath);
-				unlink(recordPath);
-				if (BC_ASSERT_TRUE(call(pauline,marie))){
-					wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength+jitterBufferMs);
-					end_call(pauline, marie);
-					BC_ASSERT_EQUAL(ms_audio_diff(referenceFile, recordPath,&similarity,&audioCmpParams,NULL,NULL), 0, int, "%d");
+				for(int loopIndex = 0 ; loopIndex < 2 ; ++loopIndex) {
+					recordFileName= useinbandfec[inbandIndex]+"_"+std::to_string(lossRates[lossRateIndex])+"_"+std::to_string(lossRates[loopIndex])+"_"+packetLossPercentage[packetLossIndex]+"_out_"+recordFileNameRoot;
+					bc_free(recordPath);
+					recordPath = bc_tester_file(recordFileName.c_str());
+					linphone_core_set_record_file(pauline->lc, recordPath);
+					unlink(recordPath);
+					if (BC_ASSERT_TRUE(call(pauline,marie))){
+						wait_for_until(marie->lc, pauline->lc, NULL, 0, sampleLength+jitterBufferMs);
+						end_call(pauline, marie);
+						BC_ASSERT_EQUAL(ms_audio_diff(recordPath, referenceFile,&similarity,&audioCmpParams,NULL,NULL), 0, int, "%d");
+					}
+					similarityMin = min(similarityMin, similarity);
+					similarityMax = max(similarityMax, similarity);
 				}
-				BC_ASSERT_GREATER(similarity, similarityRef, double, "%g");
-				if(similarity>=similarityRef){
-					unlink(refRecordFileName.c_str());
-				}else
-					noError = FALSE;
-				similarityRef = similarity;
+				BC_ASSERT_GREATER(similarityMax, similarityRef, double, "%g");
+				similarityRef = similarityMin;// Min is used if we want to test more than 1 packetLossPercentage
 			}
-			if(noError){
-				unlink(recordFileName.c_str());
-			}
+			unlink(recordFileName.c_str());
 		}
 	}
-
+	unlink(referenceFile);
 end:
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	bc_free(recordPath);
 	bc_free(referenceFile);
+	bc_free(playFile);
 #endif
 }
 
 static void audio_call_loss_resilience_opus(){
-	audio_call_loss_resilience("opus", 48000, 120, 300, TRUE, std::pair<double,double>(0.8,1.0));
-}
-
-static void audio_call_test_diff() {
-	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
-	const char *recordPath = "1_50_0_0.5915.wav";
-	std::vector<double> values;
-	
-	for(int i = 0 ; i < 20 ; ++i) {
-		double similar = 1.0;
-		ms_audio_diff(stereo_file, recordPath,&similar,&audio_cmp_params,NULL,NULL);
-		values.push_back(similar);
-	}
-	for(size_t i = 0 ; i < values.size() ; ++i)
-		printf("%f", values[i]);
-}
-
-
-static void audio_call_test_audio_diff() {
-	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
-	std::vector<double> values;
-	
-	for(int i = 0 ; i < 20 ; ++i) {
-		double similar = 1.0;
-		ms_audio_diff(stereo_file, stereo_file,&similar,&audio_cmp_params,NULL,NULL);
-		values.push_back(similar);
-	}
-	for(size_t i = 0 ; i < values.size() ; ++i)
-		printf("%f", values[i]);
-		
-	bc_free(stereo_file);
+	audio_call_loss_resilience("opus", 48000, 120, 1000, TRUE, std::pair<double,double>(0.7,1.0));
 }
 
 test_t audio_quality_tests[] = {
@@ -308,8 +282,6 @@ test_t audio_quality_tests[] = {
 	TEST_NO_TAG("Simple stereo call with L16", audio_stereo_call_l16),
 	TEST_NO_TAG("Simple stereo call with opus", audio_stereo_call_opus),
 	TEST_NO_TAG("Simple mono call with opus", audio_mono_call_opus),
-	TEST_NO_TAG("Audio test diff", audio_call_test_diff),
-	TEST_NO_TAG("Audio test audio diff", audio_call_test_audio_diff),
 };
 
 test_suite_t 	audio_quality_test_suite = {
