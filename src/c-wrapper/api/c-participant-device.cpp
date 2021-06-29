@@ -103,3 +103,30 @@ LinphoneVideoSize *linphone_participant_device_get_received_video_size(const Lin
 	return result;
 }
 
+void linphone_participant_device_add_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->addCallbacks(cbs);
+}
+
+void linphone_participant_device_remove_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->removeCallbacks(cbs);
+}
+
+LinphoneParticipantDeviceCbs *linphone_participant_device_get_current_callbacks (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCurrentCbs();
+}
+
+const bctbx_list_t *linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCallbacksList();
+}
+
+#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
+for (bctbx_list_t *it = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCallbacksList(); it; it = bctbx_list_next(it)) { \
+LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setCurrentCbs(reinterpret_cast<LinphoneParticipantDeviceCbs *>(bctbx_list_get_data(it))); \
+	LinphoneParticipantDeviceCbs ## cbName ## Cb cb = linphone_participant_device_cbs_get_ ## functionName (LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCurrentCbs()); \
+	if (cb) \
+		cb(__VA_ARGS__); \
+}
+
+void _linphone_participant_device_notify_capture_video_size_changed(LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size) {
+	NOTIFY_IF_EXIST(CaptureVideoSizeChanged, capture_video_size_changed, participant_device, size)
+}
