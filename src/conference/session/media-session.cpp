@@ -4004,7 +4004,7 @@ AudioDevice* MediaSession::getOutputAudioDevice() const {
 	return nullptr;
 }
 
-void * MediaSession::getParticipantWindowId(const std::string label) {
+shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::string label) {
 	L_D();
 
 	LinphoneConference * conference = nullptr;
@@ -4014,10 +4014,17 @@ void * MediaSession::getParticipantWindowId(const std::string label) {
 		if (conference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & device = cppConference->findParticipantDeviceByLabel(label);
-			if (device) {
-				return device->getWindowId();
-			}
+			return device;
 		}
+	}
+
+	return nullptr;
+}
+
+void * MediaSession::getParticipantWindowId(const std::string label) {
+	const auto & device = getParticipantDevice(label);
+	if (device) {
+		return device->getWindowId();
 	}
 
 	return nullptr;
