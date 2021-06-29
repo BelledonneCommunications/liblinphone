@@ -35,13 +35,13 @@ namespace Linphone
 		public const string VERSION = "{{version}}";
 #if __IOS__
 		public const string LIB_NAME = "linphone.framework/linphone";
-#elif WINDOWS_UWP
+#elif (_WIN32 || WINDOWS_UWP)
 		public const string LIB_NAME = "liblinphone"; // With this, it automatically finds liblinphone.dll
 #else
 		public const string LIB_NAME = "linphone"; // With this, it automatically finds liblinphone.so
 #endif
 
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 		public const string BELLE_SIP_LIB_NAME = "bellesip";
 		public const string BCTOOLBOX_LIB_NAME = "bctoolbox";
 #else
@@ -74,7 +74,7 @@ namespace Linphone
 	/// <summary>
 	/// All methods that returns a LinphoneStatus with a value != 0 as an error code in C are translated in C# by throwing a LinphoneException
 	/// </summary>
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 	public class LinphoneException : System.Exception
 	{
 		public LinphoneException() : base() { }
@@ -110,7 +110,7 @@ namespace Linphone
 		internal delegate void OnLinphoneObjectDataDestroyed(IntPtr data);
 
 		[DllImport(LinphoneWrapper.BELLE_SIP_LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 		internal static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, IntPtr cb);
 #else
 		internal static extern int belle_sip_object_data_set(IntPtr ptr, string name, IntPtr data, OnLinphoneObjectDataDestroyed cb);
@@ -197,7 +197,7 @@ namespace Linphone
 				objPtr = GCHandle.ToIntPtr(obj.handle);
 
 				if (isListener) {
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 					obj.onLinphoneListenerObjectDestroyed = obj.on_linphone_cbs_data_destroyed;
 					IntPtr cb = Marshal.GetFunctionPointerForDelegate(obj.onLinphoneListenerObjectDestroyed);
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, cb);
@@ -205,7 +205,7 @@ namespace Linphone
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, obj.on_linphone_cbs_data_destroyed);
 #endif
 				} else {
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, IntPtr.Zero);
 #else
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, null);
@@ -375,7 +375,7 @@ namespace Linphone
 		{{#methods}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		{{#cb_setter}}
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 		static extern void {{name}}(IntPtr thiz, IntPtr cb);
 #else
 		static extern void {{name}}(IntPtr thiz, {{name_private}} cb);
@@ -428,7 +428,7 @@ namespace Linphone
 			set
 			{
 				{{var_public}} = value;
-#if WINDOWS_UWP
+#if (_WIN32 || WINDOWS_UWP)
 				{{var_private}} = {{cb_name}};
 				IntPtr cb = Marshal.GetFunctionPointerForDelegate({{var_private}});
 				{{c_name_setter}}(nativePtr, cb);
