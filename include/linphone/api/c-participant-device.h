@@ -24,7 +24,7 @@
 
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-participant-device-cbs.h"
-#include "linphone/wrapper_utils.h"
+
 
 // =============================================================================
 
