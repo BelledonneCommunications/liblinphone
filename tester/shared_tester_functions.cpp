@@ -240,3 +240,28 @@ bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype) {
 	}
 	return FALSE;
 }
+
+void check_media_stream(LinphoneCall *call, bool_t is_null) {
+
+	LinphonePrivate::Call * c = LinphonePrivate::Call::toCpp(call);
+
+	if (is_null || !linphone_call_params_audio_enabled(linphone_call_get_current_params(call))) {
+		BC_ASSERT_PTR_NULL(c->getMediaStream(LinphoneStreamTypeAudio));
+	} else {
+		BC_ASSERT_PTR_NOT_NULL(c->getMediaStream(LinphoneStreamTypeAudio));
+	}
+
+	if (is_null || !linphone_call_params_video_enabled(linphone_call_get_current_params(call))) {
+		BC_ASSERT_PTR_NULL(c->getMediaStream(LinphoneStreamTypeVideo));
+	} else {
+		BC_ASSERT_PTR_NOT_NULL(c->getMediaStream(LinphoneStreamTypeVideo));
+	}
+
+	if (is_null || !linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call))) {
+		BC_ASSERT_PTR_NULL(c->getMediaStream(LinphoneStreamTypeText));
+	} else {
+		BC_ASSERT_PTR_NOT_NULL(c->getMediaStream(LinphoneStreamTypeText));
+	}
+}
+
+
