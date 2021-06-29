@@ -1259,7 +1259,6 @@ static void call_called_without_any_response(void) {
 	/* we don't schedule marie, because we want NO response at all.*/
 	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallOutgoingInit,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1));
 
 	/* Wait a bit. */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
