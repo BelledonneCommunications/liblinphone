@@ -96,6 +96,14 @@ void MS2VideoStream::videoStreamEventCb (const MSFilter *f, const unsigned int e
 			MSVideoSize size = *(MSVideoSize *)args;
 			lInfo() << "Camera video preview size changed: " << size.width << "x" << size.height;
 			linphone_core_resize_video_preview(getCCore(), size.width, size.height);
+
+			shared_ptr<ParticipantDevice> device = getMediaSession().getParticipantDevice(getLabel());
+			if (device) {
+				LinphoneVideoSize *result = linphone_video_size_new();
+				result->width = size.width;
+				result->height = size.height;
+				_linphone_participant_device_notify_capture_video_size_changed(device->toC(), result);
+			}
 			break;
 		}
 		default:
