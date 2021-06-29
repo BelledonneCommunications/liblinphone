@@ -190,6 +190,15 @@ typedef struct _LinphoneParticipant LinphoneParticipant;
 typedef struct _LinphoneParticipantDevice LinphoneParticipantDevice;
 
 /**
+ * @brief An object to handle the callbacks for the handling a #LinphoneParticipantDevice objects.
+ *
+ * Use linphone_factory_create_participant_device_cbs() to create an instance.
+ * Then pass the object to a #LinphoneParticipantDevice instance through linphone_participant_device_add_callbacks().
+ * @ingroup conference
+ */
+typedef struct _LinphoneParticipantDeviceCbs LinphoneParticipantDeviceCbs;
+
+/**
  * @brief This object represents the delivery/display state of a given chat message for a given participant.
  * 
  * It also contains a timestamp at which this participant state has changed.

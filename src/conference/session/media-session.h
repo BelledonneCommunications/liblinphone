@@ -122,6 +122,7 @@ public:
 	bool setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
+	std::shared_ptr<ParticipantDevice> getParticipantDevice(const std::string label);
 
 	MSVideoSize getReceivedVideoSize(const std::string &label) const;
 	void * getParticipantWindowId(const std::string label);
