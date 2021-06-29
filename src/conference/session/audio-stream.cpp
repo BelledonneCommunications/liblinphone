@@ -779,11 +779,13 @@ void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
 }
 
 AudioDevice* MS2AudioStream::getInputDevice() const {
+	if (!mStream) return nullptr;
 	MSSndCard *card = audio_stream_get_input_ms_snd_card(mStream);
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
 
 AudioDevice* MS2AudioStream::getOutputDevice() const {
+	if (!mStream) return nullptr;
 	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
