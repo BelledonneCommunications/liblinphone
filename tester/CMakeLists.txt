@@ -56,6 +56,9 @@ if(ZLIB_FOUND)
 		list(APPEND OTHER_LIBS_FOR_TESTER ${ZLIB_LIBRARIES})
 	endif()
 endif()
+if(OPENLDAP_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${OPENLDAP_LIBRARIES})
+endif()
 
 set(SOUND_FILES
 	sounds/ahbahouaismaisbon.wav
