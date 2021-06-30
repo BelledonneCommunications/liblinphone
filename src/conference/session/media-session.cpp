@@ -164,6 +164,14 @@ bool MediaSessionPrivate::tryEnterConference() {
 	return false;
 }
 
+bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> & remoteMd, const std::shared_ptr<SalMediaDescription> & finalMd) const {
+	L_Q();
+	if (remoteMd && remoteMd->isEmpty() && linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(q->getCore()->getCCore())) {
+		return false;
+	}
+	return (finalMd && (finalMd->isEmpty() || incompatibleSecurity(finalMd)));
+}
+
 void MediaSessionPrivate::accepted () {
 	L_Q();
 	CallSessionPrivate::accepted();
@@ -209,8 +217,9 @@ void MediaSessionPrivate::accepted () {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (md && (md->isEmpty() || incompatibleSecurity(md)))
+	if (rejectMediaSession(rmd, md)) {
 		md = nullptr;
+	}
 	if (md) {
 		/* There is a valid SDP in the response, either offer or answer, and we're able to start/update the streams */
 		CallSession::State nextState = CallSession::State::Idle;
@@ -223,8 +232,9 @@ void MediaSessionPrivate::accepted () {
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::Updating:
 			case CallSession::State::UpdatedByRemote:
+				// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
 				if (!localDesc->hasDir(SalStreamInactive)
-					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive))) {
+					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 					nextState = CallSession::State::PausedByRemote;
 					nextStateMsg = "Call paused by remote";
 				} else {
@@ -274,7 +284,6 @@ void MediaSessionPrivate::accepted () {
 			fixCallParams(rmd, false);
 
 			setState(nextState, nextStateMsg);
-
 			bool capabilityNegotiationReInviteSent = false;
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
@@ -591,7 +600,34 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
 			useNegotiatedMediaProtocol = false;
 		}
-		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, useNegotiatedMediaProtocol);
+
+		// Reenable all streams if we are the offerer
+		// This occurs with clients such as Avaya and FreeSwitch that put a call on hold by setting streams with inactive direction and RTP port to 0
+		// Scenario:
+		// - client1 sends an INVITE without SDP
+		// - client2 puts its offer down in the 200Ok
+		// - client1 answers with inactive stream and RTP port set to 0
+		// Without the workaround, a deadlock is created - client1 has inactive streams and client2 has audio/video/text capabilities disabled in its local call parameters because the stream was rejected earlier on. Therefore it would be impossible to resume the streams if we are asked to make an offer.
+		const bool makeOffer = (rmd == nullptr);
+		if (makeOffer || ((state == CallSession::State::PausedByRemote) && (prevState == CallSession::State::UpdatedByRemote))) {
+			for (const auto & stream : localDesc->streams) {
+				switch (stream.getType()) {
+					case SalAudio:
+						getParams()->enableAudio(true);
+						break;
+					case SalVideo:
+						getParams()->enableVideo(true);
+						break;
+					case SalText:
+						getParams()->enableRealtimeText(true);
+						break;
+					case SalOther:
+						break;
+				}
+			}
+		}
+
+		makeLocalMediaDescription(makeOffer, enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
 	// Fix local parameter after creating new local media description
 	fixCallParams(rmd, true);
@@ -600,7 +636,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
 		std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
-		if (md && (md->isEmpty() || incompatibleSecurity(md))) {
+		if (rejectMediaSession(rmd, md)) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
@@ -1040,6 +1076,7 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 	const char *ip = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "bind_address", nullptr);
 	if (ip) {
 		mediaLocalIp = ip;
+		lInfo() << "Found media local-ip from configuration file: " << mediaLocalIp;
 		return;
 	}
 
@@ -1052,8 +1089,8 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 				// Case where we've decided to use IPv4 in selectOutgoingIpVersion(), but the signaling local ip address is IPv6.
 				// We'll use the default media localip
 			} else {
-				lInfo() << "Found media local-ip from signaling.";
 				mediaLocalIp = ip;
+				lInfo() << "Found media local-ip from signaling: " << mediaLocalIp;
 				return;
 			}
 		}
@@ -1174,6 +1211,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 	}
 	// Fill the media_localip default value since we have it here
 	mediaLocalIp = (af == AF_INET6) ? ipv6 : ipv4;
+	lInfo() << "Media local-ip for streams advertised in SDP: " << mediaLocalIp;
 }
 
 // -----------------------------------------------------------------------------
@@ -1307,12 +1345,12 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
 	md->streams[idx].type = type;
+	const auto & core = q->getCore()->getCCore();
 	if (enabled && !codecs.empty()) {
 		md->streams[idx].name = name;
-		cfg.dir = dir;
-		const auto & core = q->getCore()->getCCore();
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
 		cfg.rtcp_mux = rtcpMux;
+		cfg.dir = dir;
 		md->streams[idx].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 
 		cfg.replacePayloads(codecs);
@@ -1328,8 +1366,8 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 
 	} else {
 		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
-		cfg.dir = SalStreamInactive;
 		md->streams[idx].rtp_port = 0;
+		cfg.dir = linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? dir : SalStreamInactive;
 	}
 	if (customSdpAttributes)
 		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
@@ -1364,6 +1402,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		getLocalIp(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
 	}
 
+	md->origin_addr = mediaLocalIp;
 	md->addr = mediaLocalIp;
 
 	LinphoneAddress *addr = nullptr;
@@ -1491,8 +1530,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainVideoStreamIndex));
 	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainTextStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
-	getStreamsGroup().fillLocalMediaDescription(ctx);
-
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
@@ -1893,8 +1930,12 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	resultDesc = newMd;
 
 	// Encryption may have changed during the offer answer process and not being the default one. Typical example of this scenario is when capability negotiation is enabled and if ZRTP is only enabled on one side and the other side supports it
-	negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
-	lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+	if (newMd->isEmpty()) {
+		lInfo() << "All streams have been rejected, hence negotiated media encryption keeps being " << linphone_media_encryption_to_string(negotiatedEncryption);
+	} else {
+		negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
+		lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+	}
 
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
@@ -2036,8 +2077,9 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
-	else
-		op->notifyRinging(false);
+	else {
+		op->notifyRinging(false, linphone_core_get_100rel_support_level(q->getCore()->getCCore()));
+	}
 
 	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
@@ -2064,7 +2106,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	if (isInLocalConference) {
 		char * contactAddressStr = NULL;
 		const auto account = linphone_core_lookup_known_account(q->getCore()->getCCore(), L_GET_C_BACK_PTR(&(q->getLocalAddress())));
-		if (op) {
+		if (op && op->getContactAddress()) {
 			contactAddressStr = sal_address_as_string(op->getContactAddress());
 		} else if (account && Account::toCpp(account)->getOp()) {
 			contactAddressStr = sal_address_as_string(Account::toCpp(account)->getOp()->getContactAddress());
@@ -2144,10 +2186,12 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
+	const bool doNotAddSdpToInvite = q->getCore()->getCCore()->sip_conf.sdp_200_ack && !getParams()->getPrivate()->getInternalCallUpdate();
+	if (doNotAddSdpToInvite) {
 		op->setLocalMediaDescription(nullptr);
+	}
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
+	if (doNotAddSdpToInvite) {
 		// We are NOT offering, set local media description after sending the call so that we are ready to
 		// process the remote offer when it will arrive.
 		op->setLocalMediaDescription(localDesc);
@@ -2638,7 +2682,7 @@ LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 		d->makeLocalMediaDescription(false, isCapabilityNegotiationEnabled(), false);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
-	d->op->notifyRinging(true);
+	d->op->notifyRinging(true, linphone_core_get_100rel_support_level(getCore()->getCCore()));
 	d->setState(CallSession::State::IncomingEarlyMedia, "Incoming call early media");
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md)
@@ -2846,13 +2890,15 @@ LinphoneStatus MediaSession::resume () {
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
 		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
-	} else {
+	} else if (d->op && d->op->getContactAddress()) {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
 	}
-	Address contactAddress(contactAddressStr);
-	ms_free(contactAddressStr);
-	updateContactAddress(contactAddress);
-	d->op->setContactAddress(contactAddress.getInternalAddress());
+	if (contactAddressStr) {
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		updateContactAddress(contactAddress);
+		d->op->setContactAddress(contactAddress.getInternalAddress());
+	}
 
 	if (d->op->update(subject.c_str(), false) != 0)
 		return -1;
@@ -2910,17 +2956,16 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
 
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
-	if (md) {
-		if (md->isEmpty() || d->incompatibleSecurity(md)) {
-			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
-			/* When call state is PushIncomingReceived, not notify early failed.
-			   Because the call is already added in core, need to be released. */
-			if (d->state != CallSession::State::PushIncomingReceived &&  d->listener)
-				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
-			d->op->decline(SalReasonNotAcceptable);
-			return;
-		}
+
+	if (md && (md->isEmpty() || d->incompatibleSecurity(md))) {
+		LinphoneErrorInfo *ei = linphone_error_info_new();
+		linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
+		/* When call state is PushIncomingReceived, not notify early failed.
+		   Because the call is already added in core, need to be released. */
+		if (d->state != CallSession::State::PushIncomingReceived &&  d->listener)
+			d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+		d->op->decline(SalReasonNotAcceptable);
+		return;
 	}
 
 	CallSession::startIncomingNotification(notifyRinging);

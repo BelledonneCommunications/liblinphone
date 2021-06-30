@@ -45,7 +45,7 @@ public:
 	std::shared_ptr<SalMediaDescription> & getFinalMediaDescription ();
 
 	int call (const std::string &from, const std::string &to, const std::string &subject);
-	int notifyRinging (bool earlyMedia);
+	int notifyRinging (bool earlyMedia, const LinphoneSupportLevel supportLevel100Rel);
 	int accept ();
 	int decline (SalReason reason, const std::string &redirectionUri = "");
 	int declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr = nullptr);
