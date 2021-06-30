@@ -142,7 +142,7 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 	for(int i = 0; i < parameters->Length; ++i){
 		std::wstring parameter = parameters[i]->Data();
 		if(parameter.length() > 0){
-			int length = wcstombs(NULL, parameter.c_str(), 256)+1;
+			int length = (int)wcstombs(NULL, parameter.c_str(), 256)+1;
 			_args[countArgs] = (char*)malloc(sizeof(char)*length);
 			wcstombs(_args[countArgs++], parameter.c_str(), length);
 			if( parameter == L"--log-file")
@@ -166,6 +166,17 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 		bc_tester_parse_args(2, args, 0);//xmlFile memory is passed to tester. Do not free it
 	}
 	bc_tester_set_process_events_func(processEvents);
+	if (flexisip_tester_dns_server != NULL) {
+		/*
+		 * We have to remove ipv6 addresses because flexisip-tester internally uses a dnsmasq configuration that does
+		 * not listen on ipv6.
+		 */
+		flexisip_tester_dns_ip_addresses =
+			liblinphone_tester_remove_v6_addr(liblinphone_tester_resolve_name_to_ip_address(flexisip_tester_dns_server));
+		if (flexisip_tester_dns_ip_addresses == NULL) {
+			ms_error("Cannot resolve the flexisip-tester's dns server name '%s'.", flexisip_tester_dns_server);
+		}
+	}
 }
 
 bool NativeTester::run(Platform::String^ suiteName, Platform::String^ caseName, Platform::Boolean verbose)
@@ -192,6 +203,10 @@ void NativeTester::runAllToXml()
 {
 	auto workItem = ref new WorkItemHandler([this](IAsyncAction ^workItem) {
 		bc_tester_start(NULL);
+		if (flexisip_tester_dns_ip_addresses) {
+			bctbx_list_free_with_data(flexisip_tester_dns_ip_addresses, bctbx_free);
+			flexisip_tester_dns_ip_addresses = NULL;
+		}
 		bc_tester_uninit();
 	});
 	_asyncAction = ThreadPool::RunAsync(workItem);
@@ -243,10 +258,10 @@ void NativeTester::parseArgs(Platform::String^ commandLine, std::vector<std::str
 				argv->push_back(currentParameter);
 				currentParameter = "";
 			}else{
-				currentParameter += data[i];
+				currentParameter += (char)data[i];
 			}
 		}else
-			currentParameter += data[i];
+			currentParameter += (char)data[i];
 	}
 	if(currentParameter != "")
 		argv->push_back(currentParameter);
