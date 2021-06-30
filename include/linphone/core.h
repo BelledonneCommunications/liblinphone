@@ -4384,7 +4384,23 @@ LINPHONE_PUBLIC bool_t linphone_core_capability_negociation_enabled(const Linpho
  * @param support TRUE to support RFC5939; FALSE otherwise.
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC void linphone_core_enable_capability_negociation(LinphoneCore *core, bool_t support);
+LINPHONE_PUBLIC void linphone_core_enable_capability_negociation(LinphoneCore *core, bool_t enable);
+
+/**
+ * Check if the contact address is added to 180 Ringing message
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if the contact address is added to 180 Ringing message; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_contact_address_in_180_ringing_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether the contact address is added to 180 Ringing message
+ * @param core #LinphoneCore object. @notnil
+ * @param support TRUE to add the contact address to 180 Ringing message; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_contact_address_in_180_ringing(LinphoneCore *core, bool_t enable);
 
 /**
  * Init call params using LinphoneCore's current configuration

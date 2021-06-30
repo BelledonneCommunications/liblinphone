@@ -7865,6 +7865,14 @@ void linphone_core_enable_capability_negociation(LinphoneCore *lc, bool_t enable
 	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)enable);
 }
 
+bool_t linphone_core_contact_address_in_180_ringing_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "contact_address_in_180_ringing", 0);
+}
+
+void linphone_core_enable_contact_address_in_180_ringing(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "contact_address_in_180_ringing", (int)enable);
+}
+
 bool_t linphone_core_tcap_lines_merging_enabled(const LinphoneCore *lc) {
 	bool_t capability_negotiation_supported = linphone_core_capability_negociation_enabled(lc);
 	if (capability_negotiation_supported) {
