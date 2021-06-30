@@ -1158,7 +1158,7 @@ int SalCallOp::call (const string &from, const string &to, const string &subject
 	return sendRequest(invite);
 }
 
-int SalCallOp::notifyRinging (bool earlyMedia) {
+int SalCallOp::notifyRinging (bool earlyMedia, const LinphoneSupportLevel supportLevel100Rel) {
 	int statusCode = earlyMedia ? 183 : 180;
 	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
 	belle_sip_response_t *ringingResponse = createResponseFromRequest(request, statusCode);
@@ -1166,19 +1166,47 @@ int SalCallOp::notifyRinging (bool earlyMedia) {
 	if (earlyMedia)
 		handleOfferAnswerResponse(ringingResponse);
 
-	const char *tags = nullptr;
-	auto requireHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Require");
-	if (requireHeader)
-		tags = belle_sip_header_get_unparsed_value(requireHeader);
+	const char *requireTags = nullptr;
+	auto requireHeaderTags = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Require");
+	if (requireHeaderTags) {
+		requireTags = belle_sip_header_get_unparsed_value(requireHeaderTags);
+	}
+
+	const char *supportedTags = nullptr;
+	auto supportedHeaderTags = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Supported");
+	if (supportedHeaderTags) {
+		supportedTags = belle_sip_header_get_unparsed_value(supportedHeaderTags);
+	}
+
+	int ret = 0;
+	bool add100RelAttribute = false;
+
+	switch (supportLevel100Rel) {
+		case LinphoneSupportLevelNoSupport:
+			// No required tags or 100rel is not among the required tags
+			ret = (!requireTags || (requireTags && (strstr(requireTags, "100rel") == 0))) ? 0 : -1;;
+			add100RelAttribute = false;
+			break;
+		case LinphoneSupportLevelOptional:
+			ret = 0;
+			// 100rel is mandatory in the offer
+			add100RelAttribute = (requireTags && (strstr(requireTags, "100rel") != 0));
+			break;
+		case LinphoneSupportLevelMandatory:
+			// 100rel is mandatory in the offer or at least supported
+			ret = ((requireTags && (strstr(requireTags, "100rel") != 0)) || (supportedTags && (strstr(supportedTags, "100rel") != 0))) ? 0 : -1;
+			add100RelAttribute = true;
+			break;
+	}
 	// If client requires 100rel, then add necessary stuff
-	if (tags && (strstr(tags, "100rel") != 0)) {
+	if (add100RelAttribute) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(ringingResponse), belle_sip_header_create("Require", "100rel"));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(ringingResponse), belle_sip_header_create("RSeq", "1"));
 	}
 
 #ifndef SAL_OP_CALL_FORCE_CONTACT_IN_RINGING
-	if (tags && (strstr(tags, "100rel") != 0))
-#endif
+	if (add100RelAttribute)
+#endif // SAL_OP_CALL_FORCE_CONTACT_IN_RINGING
 	{
 		auto contact = reinterpret_cast<const belle_sip_header_address_t *>(getContactAddress());
 		belle_sip_header_contact_t *contactHeader;
@@ -1186,7 +1214,7 @@ int SalCallOp::notifyRinging (bool earlyMedia) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(ringingResponse), BELLE_SIP_HEADER(contactHeader));
 	}
 	belle_sip_server_transaction_send_response(mPendingServerTransaction, ringingResponse);
-	return 0;
+	return ret;
 }
 
 int SalCallOp::accept () {

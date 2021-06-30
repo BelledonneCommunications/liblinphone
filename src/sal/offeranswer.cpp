@@ -454,7 +454,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 				result.disable();
 			}
 
-			lInfo() << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+			lInfo() << " Found matching configurations: local offered configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
 		} else {
 			result.disable();
 		}
@@ -472,6 +472,12 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 
 	bool success = true;
 
+	if ((localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) || (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>())) {
+		lInfo() << "[Initiate Outgoing Configuration] Unable to find valid configurations to compare against - local configuration found: " << (localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) << " remote configuration found: " << (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>());
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
@@ -479,9 +485,13 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
 
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		if (localCfg.getProto() != remoteCfg.getProto() && localCfg.hasAvpf()) {
+			lWarning() << "Received a downgraded AVP answer (transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote answer stream configuration at index " << remoteCfgIdx << " for our AVPF offer (transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local offered stream configuration at index " << localCfgIdx << ")";
+			const_cast<SalStreamConfiguration &>(localCfg).proto = remoteCfg.getProto();
+		}
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
-		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
+		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local offered stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -650,7 +660,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			* In this case it must set the bundle-only attribute, and set port to zero.*/
 			result.rtp_port = 0;
 		}
-		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
+		lInfo() << "Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
 	} else {
 		result.disable();
 	}
@@ -669,12 +679,22 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 
 	bool success = true;
 
+	if ((localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) || (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>())) {
+		lInfo() << "[Initiate Incoming Configuration] Unable to find valid configurations to compare against - local configuration found: " << (localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) << " remote configuration found: " << (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>());
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
 	const auto & availableEncs = local_cap.getSupportedEncryptions();
 	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, false, one_matching_codec);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		if (localCfg.getProto() != remoteCfg.getProto() && remoteCfg.hasAvpf()) {
+			lWarning() << "Sending a downgraded AVP answer (transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx << ") for the received AVPF offer (transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << ")";
+			const_cast<SalStreamConfiguration &>(remoteCfg).proto = localCfg.getProto();
+		}
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
-		lInfo() << __func__ << " -  the transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
+		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx;
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -773,6 +793,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.tcapIndex = remoteCfg.tcapIndex;
 	resultCfg.acapIndexes = remoteCfg.acapIndexes;
 	resultCfg.index = remoteCfg.index;
+
 	return std::make_pair(resultCfg, success);
 }
 
@@ -823,10 +844,6 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		const SalStreamDescription & rs = remote_answer->streams[i];
 		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
-			if (ls.getProto() != rs.getProto() && ls.hasAvpf()) {
-				ls.setProto(rs.getProto());
-				ms_warning("Received a downgraded AVP answer for our AVPF offer");
-			}
 			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
 			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
@@ -841,6 +858,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		else ms_warning("No matching stream for %zu",i);
 	}
 	result->bandwidth=remote_answer->bandwidth;
+	result->origin_addr=remote_answer->origin_addr;
 	result->addr=remote_answer->addr;
 	result->ice_pwd = local_offer->ice_pwd;
 	result->ice_ufrag = local_offer->ice_ufrag;
@@ -892,10 +910,6 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 
 		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
-			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
-				rs.setProto(ls.getProto());
-				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
-			}
 			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
@@ -942,6 +956,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
 	result->bandwidth=local_capabilities->bandwidth;
+	result->origin_addr=local_capabilities->origin_addr;
 	result->session_ver=local_capabilities->session_ver;
 	result->session_id=local_capabilities->session_id;
 	result->ice_pwd = local_capabilities->ice_pwd;
