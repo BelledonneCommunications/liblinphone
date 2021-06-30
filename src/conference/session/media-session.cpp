@@ -1969,8 +1969,9 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
-	else
-		op->notifyRinging(false);
+	else {
+		op->notifyRinging(false, linphone_core_contact_address_in_180_ringing_enabled(q->getCore()->getCCore()));
+	}
 
 	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
@@ -2571,7 +2572,7 @@ LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 		d->makeLocalMediaDescription(false, isCapabilityNegotiationEnabled(), false);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
-	d->op->notifyRinging(true);
+	d->op->notifyRinging(true, false);
 	d->setState(CallSession::State::IncomingEarlyMedia, "Incoming call early media");
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md)
