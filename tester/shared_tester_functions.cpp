@@ -68,7 +68,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 				expected_addr = result_stream.getRtpAddress();
 			}
 			if (expected_addr.empty()) {
-				expected_addr = result_desc->getAddress();
+				expected_addr = result_desc->getConnectionAddress();
 			}
 			astream = (AudioStream *)linphone_call_get_stream(c1, LinphoneStreamTypeAudio);
 			if ((expected_addr.find(':') == std::string::npos) && (astream->ms.sessions.rtp_session->rtp.gs.rem_addr.ss_family == AF_INET6)) {
@@ -244,24 +244,75 @@ bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype) {
 void check_media_stream(LinphoneCall *call, bool_t is_null) {
 
 	LinphonePrivate::Call * c = LinphonePrivate::Call::toCpp(call);
+	const auto & params = linphone_call_get_current_params(call);
 
-	if (is_null || !linphone_call_params_audio_enabled(linphone_call_get_current_params(call))) {
+	if (is_null || (params && !linphone_call_params_audio_enabled(params))) {
 		BC_ASSERT_PTR_NULL(c->getMediaStream(LinphoneStreamTypeAudio));
 	} else {
 		BC_ASSERT_PTR_NOT_NULL(c->getMediaStream(LinphoneStreamTypeAudio));
 	}
 
-	if (is_null || !linphone_call_params_video_enabled(linphone_call_get_current_params(call))) {
+	if (is_null || (params && !linphone_call_params_video_enabled(params))) {
 		BC_ASSERT_PTR_NULL(c->getMediaStream(LinphoneStreamTypeVideo));
 	} else {
 		BC_ASSERT_PTR_NOT_NULL(c->getMediaStream(LinphoneStreamTypeVideo));
 	}
 
-	if (is_null || !linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call))) {
+	if (is_null || (params && !linphone_call_params_realtime_text_enabled(params))) {
 		BC_ASSERT_PTR_NULL(c->getMediaStream(LinphoneStreamTypeText));
 	} else {
 		BC_ASSERT_PTR_NOT_NULL(c->getMediaStream(LinphoneStreamTypeText));
 	}
 }
 
+void check_result_desc_rtp_rtcp_ports (LinphoneCall *call, int rtp_port, int rtcp_port) {
+	SalMediaDescription *desc = _linphone_call_get_result_desc(call);
+	for (auto & stream : desc->streams) {
+		BC_ASSERT_EQUAL(stream.rtp_port, rtp_port, int, "%d");
+		BC_ASSERT_EQUAL(stream.rtcp_port, rtcp_port, int, "%d");
+	}
+}
 
+void check_local_desc_stream (LinphoneCall *call) {
+	const auto & desc = _linphone_call_get_local_desc(call);
+	const auto & core = linphone_call_get_core(call);
+	const auto & params = linphone_call_get_params(call);
+
+	const auto & audioStream = desc->findBestStream(SalAudio);
+	if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		const auto & streamDir = audioStream.getDirection();
+		const auto & callParamsAudioDir = sal_dir_from_call_params_dir(linphone_call_params_get_audio_direction(params));
+		if (params && linphone_call_params_audio_enabled(params)) {
+			BC_ASSERT_EQUAL(streamDir, callParamsAudioDir, int, "%d");
+		} else {
+			BC_ASSERT_EQUAL(streamDir, linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? callParamsAudioDir : SalStreamInactive, int, "%d");
+			BC_ASSERT_EQUAL(audioStream.rtp_port, 0, int, "%d");
+			BC_ASSERT_EQUAL(audioStream.rtcp_port, 0, int, "%d");
+		}
+	}
+
+	const auto & videoStream = desc->findBestStream(SalVideo);
+	if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		const auto & streamDir = videoStream.getDirection();
+		const auto & callParamsVideoDir = sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
+		if (params && linphone_call_params_video_enabled(params)) {
+			BC_ASSERT_EQUAL(streamDir, callParamsVideoDir, int, "%d");
+		} else {
+			BC_ASSERT_EQUAL(streamDir, linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? callParamsVideoDir : SalStreamInactive, int, "%d");
+			BC_ASSERT_EQUAL(videoStream.rtp_port, 0, int, "%d");
+			BC_ASSERT_EQUAL(videoStream.rtcp_port, 0, int, "%d");
+		}
+	}
+
+	const auto & textStream = desc->findBestStream(SalText);
+	if (textStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		const auto & streamDir = textStream.getDirection();
+		if (params && linphone_call_params_realtime_text_enabled(params)) {
+			BC_ASSERT_EQUAL(streamDir, SalStreamSendRecv, int, "%d");
+		} else {
+			BC_ASSERT_EQUAL(streamDir, linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? SalStreamSendRecv : SalStreamInactive, int, "%d");
+			BC_ASSERT_EQUAL(textStream.rtp_port, 0, int, "%d");
+			BC_ASSERT_EQUAL(textStream.rtcp_port, 0, int, "%d");
+		}
+	}
+}

@@ -2367,6 +2367,35 @@ static void call_with_no_sdp_cap_neg_on_both_sides(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_avpf_and_cap_neg_on_caller(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_avpf_and_cap_neg_on_callee(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_avpf_and_cap_neg_on_both_sides(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
+	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 void simple_call_with_capability_negotiations_with_different_encryption_after_resume(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption optionalEncryption, const LinphoneMediaEncryption encryptionAfterResume) {
 	linphone_core_enable_capability_negociation(caller->lc, 1);
 	linphone_core_enable_capability_negociation(callee->lc, 1);
@@ -2418,6 +2447,7 @@ void simple_call_with_capability_negotiations_with_different_encryption_after_re
 		stats caller_stat = caller->stat;
 		stats callee_stat = callee->stat;
 
+		// Update call params before resuming call
 		LinphoneCallParams * callerParams = linphone_core_create_call_params(caller->lc, callerCall);
 		encryption_list = bctbx_list_append(NULL, LINPHONE_INT_TO_PTR(encryptionAfterResume));
 		linphone_call_params_set_supported_encryptions(callerParams,encryption_list);
@@ -2881,6 +2911,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with no SDP and capability negotiations on caller", call_with_no_sdp_cap_neg_on_caller),
 	TEST_NO_TAG("Call with no SDP and capability negotiations on callee", call_with_no_sdp_cap_neg_on_callee),
 	TEST_NO_TAG("Call with no SDP and capability negotiations on both sides", call_with_no_sdp_cap_neg_on_both_sides),
+	TEST_NO_TAG("Call with AVPF and capability negotiations on caller", call_with_avpf_and_cap_neg_on_caller),
+	TEST_NO_TAG("Call with AVPF and capability negotiations on callee", call_with_avpf_and_cap_neg_on_callee),
+	TEST_NO_TAG("Call with AVPF and capability negotiations on both sides", call_with_avpf_and_cap_neg_on_both_sides),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on caller", call_with_no_sdp_on_update_cap_neg_caller),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on callee", call_with_no_sdp_on_update_cap_neg_callee),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides with reINVITE", call_with_no_sdp_on_update_cap_neg_both_sides_with_reinvite),
