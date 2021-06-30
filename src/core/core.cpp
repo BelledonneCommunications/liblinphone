@@ -476,7 +476,7 @@ void CorePrivate::stopEphemeralMessageTimer () {
 
 bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_Q();
-	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+	if (audioDevice && ( (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) ) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return false;
 	}
@@ -500,7 +500,7 @@ bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 
 bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_Q();
-	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+	if (audioDevice && ( (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) ) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return false;
 	}
@@ -984,8 +984,10 @@ void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
 			d->setOutputAudioDevice(audioDevice);
 			return;
 		}
-	}
-	lError() << "[ " << __func__ << " ] Unable to find suitable output audio device";
+	} else // No cards available : remove the device. This will allow to restart it if a new one is detected.
+		d->setOutputAudioDevice(nullptr);
+	if(card)// Having no device when a card is requested is an error
+		lError() << "[ " << __func__ << " ] Unable to find suitable output audio device";
 }
 
 void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
@@ -1011,8 +1013,10 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 			d->setInputAudioDevice(audioDevice);
 			return;
 		}
-	}
-	lError() << "[ " << __func__ << " ] Unable to find suitable input audio device";
+	}else// No cards available : remove the device. This will allow to restart it if a new one is detected.
+		d->setInputAudioDevice(nullptr);
+	if (card) // Having no device when a card is requested is an error
+		lError() << "[ " << __func__ << " ] Unable to find suitable input audio device";
 }
 
 
