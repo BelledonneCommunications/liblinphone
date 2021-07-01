@@ -99,8 +99,10 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 
 	media=belle_sdp_media_description_get_media ( media_desc );
 
+lInfo() << __func__ << " DEBUG DEBUG parsing connection " << belle_sdp_media_description_get_connection ( media_desc );
 	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		rtp_addr = L_C_TO_STRING(belle_sdp_connection_get_address ( cnx ));
+lInfo() << __func__ << " DEBUG DEBUG rtp address " << rtp_addr;
 	}
 
 	rtp_port=belle_sdp_media_get_media_port ( media );
@@ -152,10 +154,12 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	if (salMediaDesc->supportCapabilityNegotiation()) {
 
 		for (const auto & acap : attrs.acaps) {
+lInfo() << __func__ << " DEBUG DEBUG acap index " << acap->index << " name " << acap->name << " value " << acap->value;
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
 		}
 
 		for (const auto & tcap : attrs.tcaps) {
+lInfo() << __func__ << " DEBUG DEBUG tcap index " << tcap->index << " value " << tcap->value;
 			tcaps[tcap->index] = tcap->value;
 		}
 
@@ -286,6 +290,7 @@ void SalStreamDescription::createPotentialConfigurationAtIdx(const unsigned int 
 		auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
 
 		cfg.index = idx;
+lInfo() << __func__ << " DEBUG DEBUG Adding configuration at index " << cfg.index << " with media proto " << sal_media_proto_to_string(cfg.getProto());
 		insertOrMergeConfiguration(idx, cfg);
 	}
 }
@@ -344,6 +349,7 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 	}
 
 	for (auto & cfg : cfgList) {
+lInfo() << __func__ << " DEBUG DEBUG Adding configuration at index " << cfg.index << " with media proto " << sal_media_proto_to_string(cfg.getProto());
 		insertOrMergeConfiguration(cfg.index, cfg);
 	}
 

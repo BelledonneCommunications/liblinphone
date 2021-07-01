@@ -516,6 +516,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 	}
 	
 	info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
+lInfo() << __func__ << " DEBUG DEBUG stream address " << stream.rtp_addr << " media address " << params.resultMediaDescription->addr << " RTP address " << info->rtpAddr;
 	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
 	info->rtpPort = stream.rtp_port;
 	info->rtcpAddr = stream.rtcp_addr.empty() == false ? stream.rtcp_addr : info->rtpAddr;
@@ -578,6 +579,7 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const auto & stream = params.getResultStreamDescription();
 	std::string rtpAddr = (stream.rtp_addr.empty() == false) ? stream.rtp_addr : params.resultMediaDescription->addr;
+lInfo() << __func__ << " DEBUG DEBUG stream address " << stream.rtp_addr << " media address " << params.resultMediaDescription->addr << " RTP address " << rtpAddr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr.c_str());
 	MediaStream *ms = getMediaStream();
 	
