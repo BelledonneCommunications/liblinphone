@@ -1158,7 +1158,7 @@ int SalCallOp::call (const string &from, const string &to, const string &subject
 	return sendRequest(invite);
 }
 
-int SalCallOp::notifyRinging (bool earlyMedia, bool addContactAddress) {
+int SalCallOp::notifyRinging (bool earlyMedia, const LinphoneSupportLevel supportLevel100Rel) {
 	int statusCode = earlyMedia ? 183 : 180;
 	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
 	belle_sip_response_t *ringingResponse = createResponseFromRequest(request, statusCode);
@@ -1167,17 +1167,20 @@ int SalCallOp::notifyRinging (bool earlyMedia, bool addContactAddress) {
 		handleOfferAnswerResponse(ringingResponse);
 
 	const char *tags = nullptr;
-	auto supportedHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Supported");
-	if (supportedHeader)
-		tags = belle_sip_header_get_unparsed_value(supportedHeader);
+	const char *headerName = (supportLevel100Rel == LinphoneSupportLevelOptional) ? "Supported" : "Require";
+	auto headerTags = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), headerName);
+	if (headerTags)
+		tags = belle_sip_header_get_unparsed_value(headerTags);
 
 	// If client requires 100rel, then add necessary stuff
-	if (tags && (strstr(tags, "100rel") != 0)) {
+	if ((supportLevel100Rel != LinphoneSupportLevelNoSupport) && tags && (strstr(tags, "100rel") != 0)) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(ringingResponse), belle_sip_header_create("Require", "100rel"));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(ringingResponse), belle_sip_header_create("RSeq", "1"));
 	}
 
-	if (addContactAddress || (tags && (strstr(tags, "100rel") != 0)))
+#ifndef SAL_OP_CALL_FORCE_CONTACT_IN_RINGING
+	if ((supportLevel100Rel != LinphoneSupportLevelNoSupport) && tags && (strstr(tags, "100rel") != 0))
+#endif // SAL_OP_CALL_FORCE_CONTACT_IN_RINGING
 	{
 		auto contact = reinterpret_cast<const belle_sip_header_address_t *>(getContactAddress());
 		belle_sip_header_contact_t *contactHeader;
