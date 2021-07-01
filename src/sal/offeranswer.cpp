@@ -454,7 +454,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 				result.disable();
 			}
 
-			lInfo() << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+			lInfo() << " Found matching configurations: local offered configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
 		} else {
 			result.disable();
 		}
@@ -481,7 +481,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
-		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
+		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local offered stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -577,6 +577,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.tcapIndex = remoteCfg.tcapIndex;
 	resultCfg.index = remoteCfg.index;
 
+lInfo() << __func__ <<  " DEBUG DEBUG result configs passed checks The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local offered stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
 	return std::make_pair(resultCfg, success);
 }
 
@@ -650,7 +651,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			* In this case it must set the bundle-only attribute, and set port to zero.*/
 			result.rtp_port = 0;
 		}
-		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
+		lInfo() << "Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
 	} else {
 		result.disable();
 	}
@@ -674,7 +675,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
-		lInfo() << __func__ << " -  the transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
+		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx;
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -773,6 +774,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.tcapIndex = remoteCfg.tcapIndex;
 	resultCfg.acapIndexes = remoteCfg.acapIndexes;
 	resultCfg.index = remoteCfg.index;
+
+lInfo() << __func__ <<  " DEBUG DEBUG result configs passed checks The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx;
+lInfo() << __func__ << " DEBUG DEBUG Result configuration index " << resultCfg.index << " with media proto " << sal_media_proto_to_string(resultCfg.getProto());
 	return std::make_pair(resultCfg, success);
 }
 
@@ -841,6 +845,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		else ms_warning("No matching stream for %zu",i);
 	}
 	result->bandwidth=remote_answer->bandwidth;
+	result->origin_addr=remote_answer->origin_addr;
 	result->addr=remote_answer->addr;
 	result->ice_pwd = local_offer->ice_pwd;
 	result->ice_ufrag = local_offer->ice_ufrag;
@@ -942,6 +947,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
 	result->bandwidth=local_capabilities->bandwidth;
+	result->origin_addr=local_capabilities->origin_addr;
 	result->session_ver=local_capabilities->session_ver;
 	result->session_id=local_capabilities->session_id;
 	result->ice_pwd = local_capabilities->ice_pwd;
