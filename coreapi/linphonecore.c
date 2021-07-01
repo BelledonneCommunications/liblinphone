@@ -1743,6 +1743,10 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.vfu_with_info = !!linphone_config_get_int(lc->config,"sip","vfu_with_info",1);
 	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 63000));
 	lc->sal->setSupportedTags(linphone_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
+	LinphoneSupportLevel level_100rel = linphone_core_get_100rel_support_level(lc);
+	if (level_100rel != LinphoneSupportLevelNoSupport) {
+		linphone_core_add_supported_tag(lc, "100rel");
+	}
 	lc->sip_conf.save_auth_info = !!linphone_config_get_int(lc->config, "sip", "save_auth_info", 1);
 	lc->sal->setUnreliableConnectionTimeout(linphone_config_get_int(lc->config, "sip", "unreliable_connection_timeout", 120));
 
@@ -7887,12 +7891,17 @@ void linphone_core_enable_capability_negociation(LinphoneCore *lc, bool_t enable
 	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)enable);
 }
 
-bool_t linphone_core_contact_address_in_180_ringing_enabled(const LinphoneCore *lc) {
-	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "contact_address_in_180_ringing", 0);
+LinphoneSupportLevel linphone_core_get_100rel_support_level(const LinphoneCore *lc) {
+	return (LinphoneSupportLevel)linphone_config_get_int(lc->config, "sip", "100rel_support_level", LinphoneSupportLevelNoSupport);
 }
 
-void linphone_core_enable_contact_address_in_180_ringing(LinphoneCore *lc, bool_t enable) {
-	linphone_config_set_int(lc->config, "sip", "contact_address_in_180_ringing", (int)enable);
+void linphone_core_set_100rel_support_level(LinphoneCore *lc, LinphoneSupportLevel level) {
+	linphone_config_set_int(lc->config, "sip", "100rel_support_level", (int)level);
+	if (level == LinphoneSupportLevelNoSupport) {
+		linphone_core_remove_supported_tag(lc, "100rel");
+	} else {
+		linphone_core_add_supported_tag(lc, "100rel");
+	}
 }
 
 bool_t linphone_core_tcap_lines_merging_enabled(const LinphoneCore *lc) {
