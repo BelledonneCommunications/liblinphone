@@ -90,8 +90,8 @@ static void _video_call_with_explicit_bandwidth_limit(bool_t bandwidth_is_specif
 				if (bandwidth_is_specific_for_video){
 					BC_ASSERT_EQUAL(vconf.required_bitrate, bandwidth_limit * 1000, int, "%d");
 				}else{
-					BC_ASSERT_LOWER(vconf.required_bitrate, 100000, int, "%d");
-					BC_ASSERT_GREATER(vconf.required_bitrate, 80000, int, "%d");
+					BC_ASSERT_LOWER(vconf.required_bitrate, 1000000, int, "%d");
+					BC_ASSERT_GREATER(vconf.required_bitrate, 800000, int, "%d");
 				}
 			}
 		}
