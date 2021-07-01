@@ -402,6 +402,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			audio_stream_set_client_to_mixer_extension_id(mStream, streamCfg.getClientToMixerExtensionId());
 		}
 
+lInfo() << __func__ << " audio DEBUG DEBUG RTP address " << dest.rtpAddr;
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();
