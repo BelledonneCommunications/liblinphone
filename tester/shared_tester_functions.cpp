@@ -68,7 +68,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 				expected_addr = result_stream.getRtpAddress();
 			}
 			if (expected_addr.empty()) {
-				expected_addr = result_desc->getAddress();
+				expected_addr = result_desc->getConnectionAddress();
 			}
 			astream = (AudioStream *)linphone_call_get_stream(c1, LinphoneStreamTypeAudio);
 			if ((expected_addr.find(':') == std::string::npos) && (astream->ms.sessions.rtp_session->rtp.gs.rem_addr.ss_family == AF_INET6)) {
