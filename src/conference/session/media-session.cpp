@@ -2032,7 +2032,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
 	else {
-		op->notifyRinging(false, linphone_core_contact_address_in_180_ringing_enabled(q->getCore()->getCCore()));
+		op->notifyRinging(false, linphone_core_get_100rel_support_level(q->getCore()->getCCore()));
 	}
 
 	acceptOrTerminateReplacedSessionInIncomingNotification();
@@ -2639,7 +2639,7 @@ lInfo() << __func__ << " local is offerer false";
 		d->makeLocalMediaDescription(false, isCapabilityNegotiationEnabled(), false);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
-	d->op->notifyRinging(true, false);
+	d->op->notifyRinging(true, linphone_core_get_100rel_support_level(getCore()->getCCore()));
 	d->setState(CallSession::State::IncomingEarlyMedia, "Incoming call early media");
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md)
