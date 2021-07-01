@@ -77,7 +77,7 @@ bool_t liblinphone_tester_keep_uuid = FALSE;
 bool_t liblinphone_tester_tls_support_disabled = FALSE;
 int manager_count = 0;
 int leaked_objects_count = 0;
-const MSAudioDiffParams audio_cmp_params = {10,2000};
+const MSAudioDiffParams audio_cmp_params = {10,200};
 
 const char* flexisip_tester_dns_server = "fs-test-3.linphone.org";
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
