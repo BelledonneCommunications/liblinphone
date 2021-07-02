@@ -135,7 +135,7 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 	wwritable_dir = dataPath->Data();
 	wcstombs(writable_dir, wwritable_dir, sizeof(writable_dir));
 	bc_tester_set_resource_dir_prefix(writable_dir);
-	bool_t haveLogFile = FALSE, haveXmlFile = FALSE;
+	bool_t haveLogFile = FALSE, haveXmlFile = FALSE, forceNoXml = FALSE;
 
 	_args = (char**)malloc(sizeof(char**)*(parameters->Length+1));
 	int countArgs = 0;
@@ -149,6 +149,8 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 				haveLogFile = TRUE;
 			else if(parameter == L"--xml-file")
 				haveXmlFile = TRUE;
+			else if (parameter == L"--no-xml")
+				forceNoXml = TRUE;
 		}
 	}
 	_args[countArgs] = NULL;
@@ -160,7 +162,7 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 		char *logArgs[] = { "--log-file", logFile };
 		bc_tester_parse_args(2, logArgs, 0);//logFile memory is passed to tester. Do not free it
 	}
-	if(!haveXmlFile){
+	if(!haveXmlFile && !forceNoXml){
 		char *xmlFile = bc_tester_file("LibLinphoneWindows10");
 		char *args[] = { "--xml-file", xmlFile };
 		bc_tester_parse_args(2, args, 0);//xmlFile memory is passed to tester. Do not free it

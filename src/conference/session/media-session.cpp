@@ -3398,14 +3398,17 @@ bool MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 		return false;
 	}
 
-	const auto & currentInputDevice = getInputAudioDevice();
+	const auto &currentInputDevice = getInputAudioDevice();
 	// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
 	bool change = currentInputDevice ? ((audioDevice != currentInputDevice) || (*audioDevice != *currentInputDevice)) : true;
 
 	if (change) {
+//		MS2AudioStream *as = d->getStreamsGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
+//		as->stop();
 		AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 		d->setCurrentInputAudioDevice(audioDevice);
 		if (i) i->setInputDevice(audioDevice);
+//		d->updateStreams(d->resultDesc, d->state);
 		return true;
 	}
 
@@ -3420,14 +3423,17 @@ bool MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 		return false;
 	}
 
-	const auto & currentOutputDevice = getOutputAudioDevice();
+	const auto &currentOutputDevice = getOutputAudioDevice();
 	// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
 	bool change = currentOutputDevice ? ((audioDevice != currentOutputDevice) || (*audioDevice != *currentOutputDevice)) : true;
 
 	if (change) {
+//		MS2AudioStream *as = d->getStreamsGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
+//		as->stop();
 		AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 		d->setCurrentOutputAudioDevice(audioDevice);
 		if (i) i->setOutputDevice(audioDevice);
+//		d->updateStreams(d->resultDesc, d->state);
 		return true;
 	}
 
