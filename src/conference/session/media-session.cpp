@@ -148,6 +148,7 @@ void MediaSessionPrivate::accepted () {
 				if (!localIsOfferer) {
 					// We were waiting for an incoming offer. Now prepare the local media description according to remote offer.
 					initializeParamsAccordingToIncomingCallParams();
+lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() ? localIsOfferer : true);
 					makeLocalMediaDescription(op->getRemoteMediaDescription() ? localIsOfferer : true, q->isCapabilityNegotiationEnabled(), false);
 				}
 				/*
@@ -536,6 +537,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
 			useNegotiatedMediaProtocol = false;
 		}
+lInfo() << __func__ << " local is offerer " << (rmd == nullptr);
 		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
 	// Fix local parameter after creating new local media description
@@ -1281,6 +1283,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
+lInfo() << __func__ << " local is offerer " << localIsOfferer;
 	this->localIsOfferer = localIsOfferer;
 	assignStreamsIndexes(localIsOfferer);
 
@@ -1290,6 +1293,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if (!subject.empty()) {
 		md->name = subject;
 	}
+	md->origin_addr = mediaLocalIp;
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 
@@ -1838,6 +1842,7 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op->getRemoteMediaDescription();
 	ctx.resultMediaDescription = resultDesc;
+lInfo() << __func__ << " local is offerer " << localIsOfferer;
 	ctx.localIsOfferer = localIsOfferer;
 	getStreamsGroup().render(ctx, targetState);
 
@@ -1969,8 +1974,9 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
-	else
-		op->notifyRinging(false);
+	else {
+		op->notifyRinging(false, linphone_core_get_100rel_support_level(q->getCore()->getCCore()));
+	}
 
 	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
@@ -2038,6 +2044,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	}
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
+lInfo() << __func__ << " local is offerer true";
 	makeLocalMediaDescription(true, false, true);
 	op->update(subject.c_str(), false);
 
@@ -2055,6 +2062,7 @@ int MediaSessionPrivate::restartInvite () {
 	L_Q();
 	stopStreams();
 	getStreamsGroup().clearStreams();
+lInfo() << __func__ << " local is offerer true";
 	makeLocalMediaDescription(true, q->isCapabilityNegotiationEnabled(), false);
 	return CallSessionPrivate::restartInvite();
 }
@@ -2316,6 +2324,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	const bool isOfferer = (op->getRemoteMediaDescription() ? false : true);
 
+lInfo() << __func__ << " local is offerer " << isOfferer;
 	if (msp || (localDesc == nullptr)) makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false);
 
 	// If call is going to be accepted, then recreate the local media description if there is no local description or encryption is mandatory.
@@ -2371,6 +2380,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		getParams()->enableVideo(false);
 	}
 	updateRemoteSessionIdAndVer();
+lInfo() << __func__ << " local is offerer " << isRemoteDescNull;
 	makeLocalMediaDescription(isRemoteDescNull, q->isCapabilityNegotiationEnabled(), false);
 
 	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
@@ -2568,10 +2578,11 @@ LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 	/* If parameters are passed, update the media description */
 	if (msp) {
 		d->setParams(new MediaSessionParams(*msp));
+lInfo() << __func__ << " local is offerer false";
 		d->makeLocalMediaDescription(false, isCapabilityNegotiationEnabled(), false);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
-	d->op->notifyRinging(true);
+	d->op->notifyRinging(true, linphone_core_get_100rel_support_level(getCore()->getCCore()));
 	d->setState(CallSession::State::IncomingEarlyMedia, "Incoming call early media");
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md)
@@ -2613,6 +2624,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->selectOutgoingIpVersion();
 		if (!getCore()->getCCore()->sip_conf.sdp_200_ack){
 			/* Do not make a local media description when sending an empty INVITE. */
+lInfo() << __func__ << " local is offerer true";
 			d->makeLocalMediaDescription(true, isCapabilityNegotiationEnabled(), false);
 		}
 		d->runStunTestsIfNeeded();
@@ -2626,6 +2638,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
+lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() ? false : true);
 		d->makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), isCapabilityNegotiationEnabled(), false);
 		if (d->natPolicy)
 			d->runStunTestsIfNeeded();
@@ -2766,6 +2779,7 @@ LinphoneStatus MediaSession::resume () {
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
 	d->setState(CallSession::State::Resuming, "Resuming");
+lInfo() << __func__ << " local is offerer true";
 	d->makeLocalMediaDescription(true, false, true);
 	d->localDesc->setDir(SalStreamSendRecv);
 
@@ -2959,6 +2973,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 	if (d->getCurrentParams() == msp)
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
+lInfo() << __func__ << " local is offerer " << d->localIsOfferer;
 		d->localIsOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->broken = false;
 		d->setState(nextState, "Updating call");
@@ -3376,6 +3391,7 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 		case CallSession::State::PushIncomingReceived:
 			d->setParams(msp ? new MediaSessionParams(*msp) : nullptr);
 			// Update the local media description.
+lInfo() << __func__ << " local is offerer " << (d->state == CallSession::State::OutgoingInit ? !getCore()->getCCore()->sip_conf.sdp_200_ack : false);
 			d->makeLocalMediaDescription((d->state == CallSession::State::OutgoingInit ?
 				!getCore()->getCCore()->sip_conf.sdp_200_ack : false), isCapabilityNegotiationEnabled(), false);
 		break;
