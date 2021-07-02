@@ -39,12 +39,13 @@ public:
 	RemoteConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~RemoteConference ();
 
+	virtual bool isIn() const override;
+
 protected:
 	std::shared_ptr<Participant> focus;
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
-
 
 	/* ConferenceListener */
 	void onConferenceCreated (const ConferenceAddress &addr) override;
