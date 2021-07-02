@@ -800,7 +800,8 @@ namespace LinphonePrivate {
 	bool_t is_main_core; \
 	bool_t has_already_started_once; \
 	bool_t send_imdn_if_unregistered; \
-	LinphonePushNotificationConfig *push_config;
+	LinphonePushNotificationConfig *push_config;\
+	bool_t auto_download_incoming_voice_recordings;
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \

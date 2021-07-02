@@ -1216,7 +1216,7 @@ static void transfer_message_4(void) {
 	transfer_message_base(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, -1, FALSE, FALSE);
 }
 
-static void message_with_voice_recording_base(bool_t create_message_from_recorder) {
+static void message_with_voice_recording_base(bool_t create_message_from_recorder, bool_t auto_download_only_voice_recordings) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
@@ -1224,8 +1224,14 @@ static void message_with_voice_recording_base(bool_t create_message_from_recorde
 
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
+
 	// Force auto download
-	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+	if (auto_download_only_voice_recordings) {
+		linphone_core_set_auto_download_voice_recordings_enabled(marie->lc, TRUE);
+	} else {
+		linphone_core_set_auto_download_voice_recordings_enabled(marie->lc, FALSE);
+		linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+	}
 
 	LinphoneRecorderParams *params = linphone_core_create_recorder_params(pauline->lc);
 	linphone_recorder_params_set_file_format(params, LinphoneRecorderFileFormatWav);
@@ -1276,11 +1282,15 @@ static void message_with_voice_recording_base(bool_t create_message_from_recorde
 }
 
 static void message_with_voice_recording(void) {
-	message_with_voice_recording_base(TRUE);
+	message_with_voice_recording_base(TRUE, FALSE);
 }
 
 static void message_with_voice_recording_2(void) {
-	message_with_voice_recording_base(FALSE);
+	message_with_voice_recording_base(FALSE, FALSE);
+}
+
+static void message_with_voice_recording_3(void) {
+	message_with_voice_recording_base(FALSE, TRUE);
 }
 
 static void transfer_message_legacy(void) {
@@ -3715,6 +3725,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message 4", transfer_message_4),
 	TEST_NO_TAG("Message with voice recording", message_with_voice_recording),
 	TEST_NO_TAG("Message with voice recording 2", message_with_voice_recording_2),
+	TEST_NO_TAG("Message with voice recording 3", message_with_voice_recording_3),
 	TEST_NO_TAG("Transfer message legacy", transfer_message_legacy),
 	TEST_NO_TAG("Transfer message with 2 files", transfer_message_2_files),
 	TEST_NO_TAG("Transfer message auto download", transfer_message_auto_download),
