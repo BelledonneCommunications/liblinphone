@@ -472,6 +472,12 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 
 	bool success = true;
 
+	if ((localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) || (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>())) {
+		lInfo() << "Unable to find valid configurations to compare against";
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
@@ -479,6 +485,10 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
 
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		if (localCfg.getProto() != remoteCfg.getProto() && localCfg.hasAvpf()) {
+			lWarning() << "Received a downgraded AVP answer (transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote answer stream configuration at index " << remoteCfgIdx << " for our AVPF offer (transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local offered stream configuration at index " << localCfgIdx << ")";
+			const_cast<SalStreamConfiguration &>(localCfg).proto = remoteCfg.getProto();
+		}
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
 		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local offered stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
@@ -666,9 +676,19 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 
 	bool success = true;
 
+	if ((localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) || (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>())) {
+		lInfo() << "Unable to find valid configurations to compare against";
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
 	const auto & availableEncs = local_cap.getSupportedEncryptions();
 	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, false, one_matching_codec);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		if (localCfg.getProto() != remoteCfg.getProto() && remoteCfg.hasAvpf()) {
+			lWarning() << "Sending a downgraded AVP answer (transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx << ") for the received AVPF offer (transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << ")";
+			const_cast<SalStreamConfiguration &>(remoteCfg).proto = localCfg.getProto();
+		}
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
 		lInfo() << "The transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx;
@@ -819,10 +839,6 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		const SalStreamDescription & rs = remote_answer->streams[i];
 		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
-			if (ls.getProto() != rs.getProto() && ls.hasAvpf()) {
-				ls.setProto(rs.getProto());
-				ms_warning("Received a downgraded AVP answer for our AVPF offer");
-			}
 			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
 			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
@@ -889,10 +905,6 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 
 		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
-			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
-				rs.setProto(ls.getProto());
-				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
-			}
 			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
