@@ -392,6 +392,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
 		if (mCurrentPlaybackCard) mCurrentPlaybackCard = ms_snd_card_ref(mCurrentPlaybackCard);
 
+lInfo() << __func__ << " audio DEBUG DEBUG RTP address " << dest.rtpAddr;
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();

@@ -272,17 +272,17 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 		/*check immmediately that the offer has a c line with the expected family.*/
 		if (with_ipv6_prefered){
 			/* the address in the c line shall be an ipv6 one.*/
-			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getAddress().find(':') != std::string::npos);
+			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') != std::string::npos);
 		}else{
-			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getAddress().find(':') == std::string::npos);
+			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') == std::string::npos);
 		}
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 		check_ice(marie, pauline, LinphoneIceStateHostConnection);
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getAddress(), local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress(), local_addresses));
 		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress(), local_addresses));
 		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getStreamIdx(0).getRtpAddress(), local_addresses)
-				|| is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getAddress(), local_addresses)
+				|| is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getConnectionAddress(), local_addresses)
 		);
 	}
 	end_call(marie, pauline);

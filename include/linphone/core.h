@@ -189,6 +189,21 @@ LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_active_loca
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_core_get_current_call_remote_address(LinphoneCore *core);
 
+/**
+ * Get the support level of the 100rel attribute
+ * @param core #LinphoneCore object. @notnil
+ * @return The 100 rel support level
+ * @ingroup call_control
+ */
+LINPHONE_PUBLIC LinphoneSupportLevel linphone_core_get_100rel_support_level(const LinphoneCore *core);
+
+/**
+ * Define what level of support is provided to the 100rel attribute
+ * @param core #LinphoneCore object. @notnil
+ * @param level support level of 100rel
+ * @ingroup call_control
+ */
+LINPHONE_PUBLIC void linphone_core_set_100rel_support_level(LinphoneCore *core, LinphoneSupportLevel level);
 
 /**
  * @addtogroup initializing
@@ -4384,7 +4399,7 @@ LINPHONE_PUBLIC bool_t linphone_core_capability_negociation_enabled(const Linpho
  * @param support TRUE to support RFC5939; FALSE otherwise.
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC void linphone_core_enable_capability_negociation(LinphoneCore *core, bool_t support);
+LINPHONE_PUBLIC void linphone_core_enable_capability_negociation(LinphoneCore *core, bool_t enable);
 
 /**
  * Init call params using LinphoneCore's current configuration
