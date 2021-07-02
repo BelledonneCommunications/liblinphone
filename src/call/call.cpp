@@ -266,14 +266,20 @@ void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 	}
 	static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
 	RingStream *ringStream = nullptr;
+	auto setRingStreamOutputSndCard = [&]() {
+		ringStream = getCore()->getCCore()->ringstream;
+		if (ringStream) {
+			ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
+		}
+	};
 	switch (getState()) {
-		case CallSession::State::OutgoingRinging:
 		case CallSession::State::Pausing:
 		case CallSession::State::Paused:
-			ringStream = getCore()->getCCore()->ringstream;
-			if (ringStream) {
-				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
-			}
+			static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
+			setRingStreamOutputSndCard();
+			break;
+		case CallSession::State::OutgoingRinging:
+			setRingStreamOutputSndCard();
 			break;
 		case CallSession::State::IncomingReceived:
 			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
