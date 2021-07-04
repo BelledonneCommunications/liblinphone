@@ -285,6 +285,22 @@ LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_servi
 **/
 LINPHONE_PUBLIC void linphone_account_creator_service_set_login_linphone_account_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
 
+/**
+ * Get the login linphone account request.
+ * @param service #LinphoneAccountCreatorService object.
+ * @return The current get validation account request.
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_get_validation_account_cb(const LinphoneAccountCreatorService *service);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorService object.
+ * @param service #LinphoneAccountCreatorService object.
+ * @param cb The get validation account request to be used.
+ * @donotwrap
+**/
+LINPHONE_PUBLIC void linphone_account_creator_service_set_get_validation_account_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
+
 /************************** End Account Creator Requests **************************/
 
 #ifdef __cplusplus
