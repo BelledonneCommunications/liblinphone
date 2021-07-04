@@ -5111,13 +5111,13 @@ static MSSndCard *get_card_from_string_id(const char *devid, unsigned int cap, M
 		}
 		else if (cap & MS_SND_CARD_CAP_PLAYBACK) {
 			sndcard = ms_snd_card_manager_get_default_playback_card(ms_factory_get_snd_card_manager(f));
-		}
-		if (sndcard == NULL) {/*looks like a bug! take the first one !*/
+		}else{/*looks like a bug from capabilities! take the first one !*/
 			const bctbx_list_t *elem = ms_snd_card_manager_get_list(ms_factory_get_snd_card_manager(f));
 			if (elem) sndcard = (MSSndCard*)elem->data;
 		}
 	}
-	if (sndcard == NULL) ms_error("Could not find a suitable soundcard !");
+	if (sndcard == NULL)
+		ms_error("Could not find a suitable soundcard with capabilities : %d", cap);
 	return sndcard;
 }
 
@@ -5184,7 +5184,7 @@ LinphoneStatus linphone_core_set_output_audio_device_by_id(LinphoneCore *lc, con
 }
 
 LinphoneStatus linphone_core_set_input_audio_device_by_id(LinphoneCore *lc, const char * devid) {
-	MSSndCard *card = get_card_from_string_id(devid, MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	MSSndCard *card = get_card_from_string_id(devid, MS_SND_CARD_CAP_CAPTURE, lc->factory);
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setInputAudioDeviceBySndCard(card);
 	return 0;
 }
@@ -5247,11 +5247,15 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	const char *capture;
 	const char *output_dev_id;
 	const char *input_dev_id;
+	//const char *default_input_dev_id;
+	//const char *default_output_dev_id;
 	char *ringer_copy = NULL;
 	char *playback_copy = NULL;
 	char *capture_copy = NULL;
 	char *output_dev_id_copy = NULL;
 	char *input_dev_id_copy = NULL;
+	//char *default_output_dev_id_copy = NULL;
+	//char *default_input_dev_id_copy = NULL;
 
 	ringer = linphone_core_get_ringer_device(lc);
 	if (ringer != NULL) {
@@ -5281,26 +5285,111 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	}
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
+	/*
+	const LinphoneAudioDevice * defaultInput = linphone_core_get_default_input_audio_device(lc);
+	if (!defaultInput) {
+		bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(lc);
+		bctbx_list_t * all_devices = audio_devices;
+		while (all_devices) {
+			LinphoneAudioDevice *device = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
+			if (linphone_audio_device_has_capability(device, LinphoneAudioDeviceCapabilityRecord)) {
+				defaultInput = device;
+				all_devices = NULL;
+			}else
+				all_devices = bctbx_list_next(all_devices);
+		}
+		if (defaultInput) {
+			default_input_dev_id = linphone_audio_device_get_id(defaultInput);
+			if (default_input_dev_id != NULL) {
+				default_input_dev_id_copy = ms_strdup(default_input_dev_id);
+			}
+		}
+		bctbx_list_free_with_data(audio_devices, (void(*)(void *))linphone_audio_device_unref);
+	}else{
+		default_input_dev_id = linphone_audio_device_get_id(defaultInput);
+		if (default_input_dev_id != NULL) {
+			default_input_dev_id_copy = ms_strdup(default_input_dev_id);
+		}
+	}
+	
+
+	const LinphoneAudioDevice * defaultOutput = linphone_core_get_default_output_audio_device(lc);
+	if (!defaultOutput) {
+		bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(lc);
+		bctbx_list_t * all_devices = audio_devices;
+		while (all_devices) {
+			LinphoneAudioDevice *device = (LinphoneAudioDevice *)bctbx_list_get_data(all_devices);
+			if (linphone_audio_device_has_capability(device, LinphoneAudioDeviceCapabilityPlay)) {
+				defaultOutput = device;
+				all_devices = NULL;
+			}else
+				all_devices = bctbx_list_next(all_devices);
+		}
+		if (defaultOutput ) {
+			default_output_dev_id = linphone_audio_device_get_id(defaultOutput);
+			if (default_output_dev_id != NULL) {
+				default_output_dev_id_copy = ms_strdup(default_output_dev_id);
+			}
+		}
+		bctbx_list_free_with_data(audio_devices, (void(*)(void *))linphone_audio_device_unref);
+	}else{
+		default_output_dev_id = linphone_audio_device_get_id(defaultOutput);
+		if (default_output_dev_id != NULL) {
+			default_output_dev_id_copy = ms_strdup(default_output_dev_id);
+		}
+	}
+	*/
 	if (ringer_copy != NULL) {
 		linphone_core_set_ringer_device(lc, ringer_copy);
 		ms_free(ringer_copy);
-	}
+	}/*else{// Get default
+		if (default_output_dev_id_copy) {
+			linphone_core_set_ringer_device(lc, default_output_dev_id_copy);
+		}
+	}*/
 	if (playback_copy != NULL) {
 		linphone_core_set_playback_device(lc, playback_copy);
 		ms_free(playback_copy);
-	}
+	}/*else {// Get default
+		if (default_output_dev_id_copy) {
+			linphone_core_set_playback_device(lc, default_output_dev_id_copy);
+		}
+	}*/
 	if (capture_copy != NULL) {
 		linphone_core_set_capture_device(lc, capture_copy);
 		ms_free(capture_copy);
-	}
+	}/*else {// Get default
+		if (default_input_dev_id_copy) {
+			linphone_core_set_capture_device(lc, default_input_dev_id_copy);
+		}
+	}*/
 	if (output_dev_id_copy != NULL) {
 		linphone_core_set_output_audio_device_by_id(lc, output_dev_id_copy);
 		ms_free(output_dev_id_copy);
-	}
+	}/*else {// Get default
+		if (default_output_dev_id_copy) {
+			linphone_core_set_output_audio_device_by_id(lc, default_output_dev_id_copy);
+		}
+	}*/
 	if (input_dev_id_copy != NULL) {
 		linphone_core_set_input_audio_device_by_id(lc, input_dev_id_copy);
 		ms_free(input_dev_id_copy);
-	}
+	}/*else {// Get default
+		if (default_input_dev_id_copy) {
+			linphone_core_set_input_audio_device_by_id(lc, default_input_dev_id_copy);
+		}
+	}*/
+
+	/*
+	if(default_output_dev_id_copy)
+		ms_free(default_output_dev_id_copy);
+	if(default_input_dev_id_copy)
+		ms_free(default_input_dev_id_copy);
+
+	LinphoneCall *currentCall = linphone_core_get_current_call(lc);
+	if(currentCall)
+		linphone_call_update(currentCall, NULL);
+	*/
 	// Wait to have restored previous sound cards to notify list has been updated
 	// Otherwise app won't be able to change audio device in callback
 	linphone_core_notify_audio_devices_list_updated(lc);

@@ -55,6 +55,13 @@ static void register_device(LinphoneCoreManager* mgr, MSSndCardDesc *card_desc) 
 	int audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, (native_audio_devices_count + 1), int, "%d");
 
+	if (audio_devices_count == 1) {
+		const char * desc = linphone_audio_device_get_id(bctbx_list_get_data(audio_devices));
+		linphone_core_set_playback_device(mgr->lc, desc);
+		linphone_core_set_capture_device(mgr->lc, desc);
+		linphone_core_set_ringer_device(mgr->lc, desc);
+	}
+
 	// Unref cards
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
@@ -96,6 +103,15 @@ static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManage
 
 	return linphone_audio_device_ref(current_dev);
 
+}
+
+
+static void unregister_all_devices(LinphoneCoreManager *mgr) {
+	MSFactory *factory = linphone_core_get_ms_factory(mgr->lc);
+	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
+	while(sndcard_manager->descs)
+		ms_snd_card_manager_unregister_desc(sndcard_manager, bctbx_list_get_data(sndcard_manager->descs));
+	linphone_core_reload_sound_devices(mgr->lc);
 }
 
 static void check_io_devs(LinphoneCoreManager* mgr, const LinphoneAudioDevice *exp_dev, bool_t force_dev_check) {
@@ -154,7 +170,9 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 	// Force input and output device
 	linphone_core_set_output_audio_device(mgr->lc, exp_dev);
 	linphone_core_set_input_audio_device(mgr->lc, exp_dev);
-
+	linphone_core_set_ringer_device(mgr->lc, linphone_audio_device_get_id(exp_dev));
+	LinphoneCall * mgr_call = linphone_core_get_current_call(mgr->lc);
+	
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(mgr->lc, NULL, NULL, 5, 2000);
 
@@ -177,6 +195,8 @@ static void call_with_unreliable_device(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
 
+	unregister_all_devices(marie);
+
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(marie->lc);
 
@@ -189,6 +209,10 @@ static void call_with_unreliable_device(void) {
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
 	lcs = bctbx_list_append(lcs, pauline->lc);
+	unregister_all_devices(pauline);
+
+	// load audio devices and get initial number of cards
+	linphone_core_reload_sound_devices(pauline->lc);
 
 	// This should be the device the core falls back when the current is unregistered
 	register_device(pauline, &dummy3_test_snd_card_desc);
@@ -873,20 +897,25 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 		devChanges += 2;
 
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (initialNoDevChanges + devChanges), int, "%d");
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_output_dev);
 	}
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_output_dev);
 
 	// Pauline is now online - ringback can start
 	linphone_core_set_network_reachable(pauline->lc,TRUE);
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_output_dev);
 
 	// Pauline shall receive the call immediately
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,5000));
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_output_dev);
 
 	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
 	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 	linphone_call_ref(pauline_call);
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_output_dev);
 
 	// Marie should hear ringback as well
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingRinging,1,5000));
@@ -1255,7 +1284,7 @@ static void simple_call_with_audio_device_change_during_call_pause_caller_callee
 static void simple_call_with_audio_devices_reload(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-
+	unregister_all_devices(marie);
 	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(pauline->lc));
@@ -1264,51 +1293,64 @@ static void simple_call_with_audio_devices_reload(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_default_output_audio_device(pauline->lc));
 	BC_ASSERT_TRUE(call(marie, pauline));
 
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(marie->lc));
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_input_audio_device(marie->lc));
-	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(pauline->lc));// Pauline is using files instead of soundcard so all cards should stay at NULL after accepting the call
-	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(pauline->lc));
+	for(int i = 0 ; i < 2 ; ++i){
+		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(marie->lc));// No devices for audio streaming yet
+		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(marie->lc));
+		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(pauline->lc));// Pauline is using files instead of soundcard so all cards should stay at NULL after accepting the call
+		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(pauline->lc));
 	
-	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
-	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_output_audio_device(marie_call));
-	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_input_audio_device(marie_call));
+		LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+		BC_ASSERT_PTR_NULL(linphone_call_get_output_audio_device(marie_call));// No sound card yet
+		BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(marie_call));
 	
-	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
-	BC_ASSERT_PTR_NULL(linphone_call_get_output_audio_device(pauline_call));
-	BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(pauline_call));
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+		BC_ASSERT_PTR_NULL(linphone_call_get_output_audio_device(pauline_call));
+		BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(pauline_call));
 
-	int noDevChanges = marie->stat.number_of_LinphoneCoreAudioDeviceChanged;
-	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
-	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
-	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
-	linphone_core_reload_sound_devices(marie->lc);
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDevicesListUpdated, 1, int, "%d");
+		int noDevChanges = marie->stat.number_of_LinphoneCoreAudioDeviceChanged;
+		int nbDevListUpdates = marie->stat.number_of_LinphoneCoreAudioDevicesListUpdated;
+		//MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
+		//MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
+		//ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
 
-	bctbx_list_t *audio_devices = linphone_core_get_audio_devices(marie->lc);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(audio_devices), 1, int, "%d");
-	LinphoneAudioDevice *audio_device = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
-	BC_ASSERT_PTR_NOT_NULL(audio_device);
-	linphone_audio_device_ref(audio_device);
-	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+		register_device(marie, &dummy_test_snd_card_desc);
 
-	// Core should not be notified of audio device changed
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, noDevChanges, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDevicesListUpdated, nbDevListUpdates+1, int, "%d");
+		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(marie->lc));// New card have been registered but not yet set
+		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(marie->lc));
+		BC_ASSERT_PTR_NULL(linphone_call_get_output_audio_device(marie_call));
+		BC_ASSERT_PTR_NULL(linphone_call_get_input_audio_device(marie_call));
 
-	linphone_core_set_output_audio_device(marie->lc, audio_device);
+		bctbx_list_t *audio_devices = linphone_core_get_audio_devices(marie->lc);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(audio_devices), 1, int, "%d");
+		LinphoneAudioDevice *audio_device = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
+		BC_ASSERT_PTR_NOT_NULL(audio_device);
+		linphone_audio_device_ref(audio_device);
+		bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges+2), int, "%d");
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), audio_device);
-	linphone_core_set_input_audio_device(marie->lc, audio_device);
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges+4), int, "%d");
+		// Core should not be notified of audio device changed
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, noDevChanges, int, "%d");
 
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), audio_device);
+		linphone_core_set_output_audio_device(marie->lc, audio_device);
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges+2), int, "%d");
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), audio_device);
+
+		linphone_core_set_input_audio_device(marie->lc, audio_device);
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (noDevChanges+4), int, "%d");
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), audio_device);
+
+// Now test when devices disconnect while being in call
+		unregister_all_devices(marie);
+		linphone_audio_device_unref(audio_device);
+	}
+
 
 	end_call(marie, pauline);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
-	linphone_audio_device_unref(audio_device);
+	
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -1319,22 +1361,20 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	// Marie is the caller
 	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc", TRUE);
 
+	unregister_all_devices(marie);// Start with no sound cards
 	// load audio devices and get initial number of cards
-	linphone_core_reload_sound_devices(marie->lc);
+	//linphone_core_reload_sound_devices(marie->lc);
 	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
 	int native_audio_devices_count =(int) bctbx_list_size(audio_devices);
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
-	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
 	// Adding 2 devices to Marie' sound card manager:
 	// - dummy_test_snd_card_desc
 	// - dummy2_test_snd_card_desc
-	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
 
 	// This devices are prepended to the list of so that they can be easily accessed later
-	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
-	ms_snd_card_manager_register_desc(sndcard_manager, &dummy2_test_snd_card_desc);
-	linphone_core_reload_sound_devices(marie->lc);
+	register_device(marie, &dummy_test_snd_card_desc);
+	register_device(marie, &dummy2_test_snd_card_desc);
 
 	// Choose Marie's audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
@@ -1402,12 +1442,13 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_PTR_NOT_NULL(current_dev);
 
 	// Set audio device to start with a known situation - do not use default device
-	linphone_core_set_input_audio_device(marie->lc, current_dev);
-	linphone_core_set_output_audio_device(marie->lc, current_dev);
+	linphone_core_set_input_audio_device(marie->lc, current_dev);// This set capture
+	linphone_core_set_output_audio_device(marie->lc, current_dev);//This set Playback
+	linphone_core_set_ringer_device(marie->lc, linphone_audio_device_get_id(current_dev));//This set ringer
 
 	// wait a bit before Marie changes device
 	wait_for_list(lcs,NULL,0,2000);
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_dev);
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_dev);// Incoming call : the output is the ring stream
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), current_dev);
 	current_dev = change_device(during_setup, marie, current_dev, dev0, dev1);
 
