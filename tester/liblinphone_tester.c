@@ -36,6 +36,7 @@ static const char* liblinphone_helper =
 		"\t\t\t--domain <test sip domain>	(deprecated)\n"
 		"\t\t\t--auth-domain <test auth domain>	(deprecated)\n"
 		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names or 'none' for no overriding (default: tester_hosts)> (deprecated)\n"
+		"\t\t\t--max-failed  max number of failed tests until program exit with return code 1. Current default is 2"
 		;
 
 typedef struct _MireData{
@@ -95,6 +96,7 @@ static bctbx_list_t * remove_v6_addr(bctbx_list_t *l){
 static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
 	int ret;
+	int liblinphone_max_failed_tests_threshold = 2;/* Please adjust this threshold as long as the full tester becomes more and more reliable. Also update liblinphone_helper value for documentation*/
 
 #ifdef __linux__
 	/* Hack to tell mediastreamer2 alsa plugin to not detect direct driver interface ('sysdefault' card), because
@@ -138,6 +140,9 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 			liblinphonetester_show_account_manager_logs=TRUE;
 		} else if (strcmp(argv[i],"--no-account-creator")==0){
 			liblinphonetester_no_account_creator=TRUE;
+		} else if (strcmp(argv[i], "--max-failed")==0) {
+			CHECK_ARG("--max-failed", ++i, argc);
+			liblinphone_max_failed_tests_threshold=atoi(argv[i]);
 		} else {
 			int bret = bc_tester_parse_args(argc, argv, i);
 			if (bret>0) {
@@ -150,6 +155,8 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		}
 	}
 
+	bc_tester_set_max_failed_tests_threshold(liblinphone_max_failed_tests_threshold);
+	
 	if (flexisip_tester_dns_server != NULL){
 		/*
 		 * We have to remove ipv6 addresses because flexisip-tester internally uses a dnsmasq configuration that does not listen on ipv6.
@@ -495,7 +502,7 @@ void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, v
 	liblinphone_tester_add_suites();
 	bc_tester_set_max_parallel_suites(10); /* empiricaly defined as sustainable for mac book pro with 4 hyperthreaded cores.*/
 	bc_tester_set_global_timeout(15*60); /* 15 mn max */
-	bc_tester_set_max_failed_tests_threshold(2); /* Please adjust this threshold as long as the full tester becomes more and more reliable.*/
+
 }
 
 int liblinphone_tester_set_log_file(const char *filename) {
