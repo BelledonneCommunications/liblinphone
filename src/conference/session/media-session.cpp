@@ -1328,7 +1328,9 @@ SalMediaProto MediaSessionPrivate::getAudioProto(const bool useCurrentParams) co
 
 void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const {
 	L_Q();
-	stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
+	if (stream.rtp_port == 0)  {
+		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
+	}
 	auto & cfg = stream.cfgs[stream.getActualConfigurationIndex()];
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	/* rtcp-mux must be enabled when bundle mode is proposed.*/
@@ -1673,10 +1675,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 						// Copy previous rtp and rtcp ports if they were already assigned
 						newStream.rtp_port = previousParticipantStream.rtp_port;
 						newStream.rtcp_port = previousParticipantStream.rtcp_port;
+ms_message("%s - DEBUG DEBUG copying already assigned RTP and RTCP ports: RTP %0d RTCP %0d\n", __func__, newStream.getRtpPort(), newStream.getRtcpPort());
 					} else {
 						const auto rtp_port = q->getRandomRtpPort(newStream);
 						newStream.rtp_port = rtp_port;
 						newStream.rtcp_port = newStream.rtp_port + 1;
+ms_message("%s - DEBUG DEBUG assign RTP and RTCP ports: RTP %0d RTCP %0d\n", __func__, newStream.getRtpPort(), newStream.getRtcpPort());
 					}
 
 				} else {
