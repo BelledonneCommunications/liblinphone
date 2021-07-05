@@ -175,26 +175,9 @@ void MS2VideoStream::startZrtp(){
 	}
 }
 
-void MS2VideoStream::activateZrtp(){
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
-		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
-		if (audioStream){
-			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
-			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
-			// Since the zrtp session is now initialized, make sure it is retained for future use.
-			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
-			video_stream_start_zrtp(mStream);
-		}else{
-			lError() << "Error while enabling zrtp on video stream: ZRTP context is NULL";
-		}
-	}
-}
-
 std::string MS2VideoStream::getLabel()const {
 	return L_C_TO_STRING(mStream->label);
 }
-
-
 
 bool MS2VideoStream::prepare(){
 	
@@ -393,7 +376,7 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
-		lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.dir << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
+		lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.getDirection() << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
 
 lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 		if (!mStream->label) {
