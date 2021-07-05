@@ -1561,6 +1561,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
 					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
 					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
+lInfo() << __func__ << " DEBUG DEBUG copying stream: layout " << attrValue << " label " << participantsAttrValue;
 					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(attrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					if (!participantsAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
@@ -1751,6 +1752,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 					if (!remoteContactAddress.isValid() || (remoteContactAddress != dev->getAddress().asAddress())) {
 						const auto & devLabel = dev->getLabel();
 						const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
+lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " dev address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel() << " stream idx " << foundStreamIdx;
 						if (foundStreamIdx == -1) {
 							auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
 							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs " + dev->getLabel());
@@ -1877,14 +1879,6 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & currentConfParams = cppConference->getCurrentParams();
 			const auto confVideoCapabilities = currentConfParams.videoEnabled();
-			const auto & me = cppConference->getMe();
-			const auto & dev = me->getDevices().front();
-			// TODO: DELETE after Thimothee has implemented SDP label attribute
-			if (dev->getLabel().empty()) {
-				char label[10];
-				belle_sip_random_token(label,sizeof(label));
-				dev->setLabel(label);
-			}
 
 			videoDir = (confVideoCapabilities && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
 		} else {
@@ -1904,9 +1898,8 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & me = cppConference->getMe();
-			const auto & dev = me->getDevices().front();
-			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getLabel().c_str());
+			const auto & dev = cppConference->findParticipantDevice(remoteContactAddress);
+			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
 		}
 
 		videoStream.setSupportedEncryptions(encList);
