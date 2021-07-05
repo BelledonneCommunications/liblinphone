@@ -77,13 +77,13 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 	public:
 
 		SalStreamConfiguration();
+		SalStreamConfiguration(SalStreamConfiguration & other);
 		SalStreamConfiguration(const SalStreamConfiguration & other);
 		virtual ~SalStreamConfiguration();
 		SalStreamConfiguration &operator=(const SalStreamConfiguration& other);
 		int equal(const SalStreamConfiguration & other) const;
 		bool operator==(const SalStreamConfiguration & other) const;
 		bool operator!=(const SalStreamConfiguration & other) const;
-		bool enabled() const;
 		void disable();
 
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
@@ -110,7 +110,6 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		const SalMediaProto & getProto() const;
 		const std::string getProtoAsString() const;
 		SalStreamDir getDirection() const;
-		SalCustomSdpAttribute * getCustomSdpAttributes() const;
 		std::string getSdpString() const;
 
 		const int & getMixerToClientExtensionId() const;

@@ -278,6 +278,7 @@ set(SOURCE_FILES_C
 	remote_provisioning_tester.c
 	session_timers_tester.c
 	setup_tester.c
+	shared_core_tester.c
 	stun_tester.c
 	tunnel_tester.c
 	vcard_tester.c

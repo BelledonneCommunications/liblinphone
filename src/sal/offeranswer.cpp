@@ -500,10 +500,10 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
 	const auto & availableEncs = local_offer.getSupportedEncryptions();
-	if (remoteCfg.enabled())
+	if (remoteCfg != Utils::getEmptyConstRefObject<SalStreamConfiguration>()) {
 		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
-	else {
-		lInfo() << "Remote configuration is disabled";
+	} else {
+		lInfo() << "Remote configuration has not been found";
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -930,8 +930,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
 
-		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
-		{
+		if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
 			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
 				rs.setProto(ls.getProto());
 				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
@@ -975,7 +974,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 				actualCfg.proto_other = rs.getChosenConfiguration().proto_other;
 			}
 		}
-		actualCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.getChosenConfiguration().custom_sdp_attributes);
+		stream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
 		stream.addActualConfiguration(actualCfg);
 		result->streams.push_back(stream);
 	}

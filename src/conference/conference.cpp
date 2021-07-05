@@ -181,7 +181,7 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 
 		std::string subject(std::string("Conference layout changed to ") + ((newLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
 
-		return meSession->update(clonedParams, subject);
+		return meSession->update(clonedParams, false, subject);
 	}
 	return true;
 };

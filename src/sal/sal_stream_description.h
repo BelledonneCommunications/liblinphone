@@ -176,6 +176,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::list<PayloadType*> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 		int bandwidth = 0;
 		SalMulticastRole multicast_role = SalMulticastInactive;
+		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 
 	private:
 
