@@ -216,7 +216,9 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		localDesc.rtp_port = 0;
 		localDesc.setBundleOnly(TRUE);
 	}
-	
+
+ms_message("%s - DEBUG DEBUG local desc ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d payload empty %0d\n", __func__, localDesc.rtp_port, localDesc.rtcp_port, mPortConfig.rtpPort, mPortConfig.rtcpPort, localDesc.getPayloads().empty());
+
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
 	if (getMediaSessionPrivate().getOp() && getMediaSessionPrivate().getOp()->getRemoteContactAddress()) {
@@ -782,6 +784,8 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 	
 	configureRtpSession(stream->sessions.rtp_session);
 	setupDtlsParams(stream);
+
+ms_message("%s - DEBUG DEBUG RTP session ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d\n", __func__, rtp_session_get_local_port(stream->sessions.rtp_session), rtp_session_get_local_rtcp_port(stream->sessions.rtp_session), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	
 	if (mPortConfig.rtpPort == -1){
 		// Case where we requested random ports from the system. Now that they are allocated, get them.

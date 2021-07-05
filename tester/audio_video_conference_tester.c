@@ -8168,7 +8168,6 @@ static void simple_conference_with_volumes(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 	check_video_conference(pauline, laure);
-	
 
 	terminate_conference(participants, marie, conf, NULL);
 
@@ -8176,7 +8175,6 @@ static void simple_conference_with_volumes(void) {
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
-
 
 	if (conf) {
 		linphone_conference_unref(conf);
