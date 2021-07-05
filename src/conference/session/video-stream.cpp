@@ -46,13 +46,19 @@ LINPHONE_BEGIN_NAMESPACE
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
 
-	if (params.getLocalStreamDescription().getRtpPort() > 0 && params.getLocalStreamDescription().getRtcpPort() > 0) {
+	const auto & localDesc = params.getLocalStreamDescription();
+
+ms_message("%s - DEBUG DEBUG BEFORE local desc (stream index %0zu) ports: RTP %0d RTCP %0d (larger than 0: RTP %0d RTCP %0d) mPortConfig RTP %0d RTCP %0d bindIp %s\n", __func__, params.streamIndex, localDesc.getRtpPort(), localDesc.getRtcpPort(), (localDesc.getRtpPort() > 0), (localDesc.getRtcpPort() > 0), mPortConfig.rtpPort, mPortConfig.rtcpPort, bindIp.c_str());
+
+	if ((localDesc.getRtpPort() > 0) && (localDesc.getRtcpPort() > 0)) {
+ms_message("%s - DEBUG DEBUG CHANGING local desc (stream index %0zu) ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d bindIp %s\n", __func__, params.streamIndex, localDesc.getRtpPort(), localDesc.getRtcpPort(), mPortConfig.rtpPort, mPortConfig.rtcpPort, bindIp.c_str());
 		// port already set in SDP
-		mPortConfig.rtpPort =  params.getLocalStreamDescription().getRtpPort();
-		mPortConfig.rtcpPort =  params.getLocalStreamDescription().getRtcpPort();
+		mPortConfig.rtpPort =  localDesc.getRtpPort();
+		mPortConfig.rtcpPort =  localDesc.getRtcpPort();
 	}
-		
-	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+ms_message("%s - DEBUG DEBUG AFTER local desc (stream index %0zu) ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d bindIp %s\n", __func__, params.streamIndex, localDesc.getRtpPort(), localDesc.getRtcpPort(), mPortConfig.rtpPort, mPortConfig.rtcpPort, bindIp.c_str());
+
+	mStream = video_stream_new2(getCCore()->factory, L_STRING_TO_C(bindIp), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 
 	initializeSessions(&mStream->ms);
 }
