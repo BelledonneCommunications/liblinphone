@@ -192,11 +192,10 @@ private:
 	void selectOutgoingIpVersion ();
 
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
-	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize);
-	void makeLocalMediaDescription (bool localIsOfferer);
+	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) const;
+	void makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool offerNegotiatedMediaProtocolOnly, const bool forceCryptoKeyGeneration = false);
 	SalStreamDescription makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const bool & multicastEnabled, const int & ttl, const SalCustomSdpAttribute *customSdpAttributes);
 	SalStreamDescription makeConferenceParticipantVideoStream(const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<ParticipantDevice> & dev, PayloadTypeHandler & pth);
-	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration);
 	void setupRtcpFb (std::shared_ptr<SalMediaDescription> & md);
@@ -312,6 +311,8 @@ private:
 
 	AudioDevice * currentOutputAudioDevice = nullptr;
 	AudioDevice * currentInputAudioDevice = nullptr;
+
+	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

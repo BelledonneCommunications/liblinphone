@@ -573,7 +573,6 @@ void LocalConference::addLocalEndpoint () {
 						mixer->setLocalParticipantLabel(device->getLabel());
 					}
 				}
-lInfo() << "DEBUG DEBUG " << __func__ << " assigning label " << dev->getLabel() << " to video stream " << dynamic_cast<MS2VideoControl*>(vci)->getVideoStream() << " of local participant " << dev->getAddress() << " video control interface " << vci;
 #endif // VIDEO_ENABLED
 				VideoControlInterface *vci = getVideoControlInterface();
 				if (vci){
@@ -730,7 +729,7 @@ bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<C
 				MediaSessionParams *currentParams = params->clone();
 				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its media capabilities.";
 				std::string subject("Participant " + participantAddress->asString() + " updated session");
-				const auto updateResult = devSession->update(currentParams, subject);
+				const auto updateResult = devSession->update(currentParams, false, subject);
 				result &= (updateResult == 0);
 				delete currentParams;
 			}
