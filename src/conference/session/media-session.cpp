@@ -1828,7 +1828,7 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
 		SalStreamDir videoDir = SalStreamInactive;
-
+		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
@@ -1836,17 +1836,10 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 			const auto confVideoCapabilities = currentConfParams.videoEnabled();
 
 			videoDir = (confVideoCapabilities && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
+			enableVideoStream = confVideoCapabilities;
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
-		}
-
-		bool enableVideoStream = false;
-		if (conference && isInLocalConference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & currentConfParams = cppConference->getCurrentParams();
-			enableVideoStream = currentConfParams.videoEnabled();
-		} else if (getParams()->videoEnabled()) {
-			enableVideoStream = true;
+			enableVideoStream = getParams()->videoEnabled();
 		}
 
 		auto videoStream = makeLocalStreamDecription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
