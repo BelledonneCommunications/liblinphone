@@ -5512,6 +5512,22 @@ LINPHONE_PUBLIC void linphone_core_set_max_size_for_auto_download_incoming_files
 LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(LinphoneCore *core);
 
 /**
+ * Auto download files attach to a chat message if it's content type matches the one we use for voice recordings.
+ * @param core #LinphoneCore object @notnil
+ * @param auto_download_voice_recordings TRUE to automatically download incoming voice recordings, FALSE to disable it.
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC void linphone_core_set_auto_download_voice_recordings_enabled(LinphoneCore *core, bool_t auto_download_voice_recordings);
+
+/**
+ * Gets if the auto download for incoming voice recordings is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if voice recordings will be automatically downloaded, FALSE otherwise.
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_voice_recordings_enabled(LinphoneCore *core);
+
+/**
  * Returns whether or not sender name is hidden in forward message.
  * @param core The #LinphoneCore @notnil
  * @return whether or not the feature

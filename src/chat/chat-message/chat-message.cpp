@@ -862,23 +862,26 @@ void ChatMessagePrivate::handleAutoDownload() {
 	if ((currentRecvStep & ChatMessagePrivate::Step::AutoFileDownload) == ChatMessagePrivate::Step::AutoFileDownload) {
 		lInfo() << "Auto file download step already done, skipping";
 	} else {
-		for (Content *c : contents) {
-			if (c->isFileTransfer()) {
-				int max_size = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
-				if (max_size >= 0) {
+		int maxSize = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
+		bool_t autoDownloadVoiceRecordings = linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
+		string downloadPath = q->getCore()->getDownloadPath();
+
+		if (downloadPath.empty()) {
+			lWarning() << "Downloading path is empty, won't be able to do auto download";
+		} else {
+			for (Content *c : contents) {
+				if (c->isFileTransfer()) {
 					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-					if (max_size == 0 || ftc->getFileSize() <= (size_t)max_size) {
-						string downloadPath = q->getCore()->getDownloadPath();
-						if (!downloadPath.empty()) {
-							string filepath = downloadPath + ftc->getFileName();
-							lInfo() << "Downloading file to " << filepath;
-							ftc->setFilePath(filepath);
-							setAutoFileTransferDownloadInProgress(true);
-							q->downloadFile(ftc);
-							return;
-						} else {
-							lError() << "Downloading path is empty, aborting auto download !";
-						}
+					ContentType fileContentType = ftc->getFileContentType();
+					
+					if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
+					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))) {
+						string filepath = downloadPath + ftc->getFileName();
+						lInfo() << "Automatically downloading file to " << filepath;
+						ftc->setFilePath(filepath);
+						setAutoFileTransferDownloadInProgress(true);
+						q->downloadFile(ftc);
+						return;
 					}
 				}
 			}
