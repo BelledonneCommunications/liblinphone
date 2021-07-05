@@ -1906,7 +1906,7 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 		if (videoStreamIdx == -1) {
 			md->streams.push_back(videoStream);
 		} else {
-			md->streams.insert(std::next(md->streams.begin(), videoStreamIdx), videoStream);
+			md->streams[videoStreamIdx] = videoStream;
 		}
 		PayloadTypeHandler::clearPayloadList(videoCodecs);
 	}
@@ -1927,7 +1927,7 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 		if (textStreamIdx == -1) {
 			md->streams.push_back(textStream);
 		} else {
-			md->streams.insert(std::next(md->streams.begin(), textStreamIdx), textStream);
+			md->streams[textStreamIdx] = textStream;
 		}
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
