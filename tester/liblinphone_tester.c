@@ -53,7 +53,7 @@ typedef struct _MireData{
  * Returns the list of ip address for the supplied host name using libc's dns resolver.
  * They are returned as a bctx_list_t of char*, to be freed with bctbx_list_free_with_data(list, bctbx_free).
  */
-static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *name){
+bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *name){
 	struct addrinfo *ai,*ai_it;
 	struct addrinfo hints;
 	bctbx_list_t *ret = NULL;
@@ -80,7 +80,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 	return ret;
 }
 
-static bctbx_list_t * remove_v6_addr(bctbx_list_t *l){
+bctbx_list_t * liblinphone_tester_remove_v6_addr(bctbx_list_t *l){
 	bctbx_list_t *it;
 	for (it = l ; it != NULL; ){
 		char *ip = (char*)l->data;
@@ -161,7 +161,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		/*
 		 * We have to remove ipv6 addresses because flexisip-tester internally uses a dnsmasq configuration that does not listen on ipv6.
 		 */
-		flexisip_tester_dns_ip_addresses = remove_v6_addr(liblinphone_tester_resolve_name_to_ip_address(flexisip_tester_dns_server));
+		flexisip_tester_dns_ip_addresses = liblinphone_tester_remove_v6_addr(liblinphone_tester_resolve_name_to_ip_address(flexisip_tester_dns_server));
 		if (flexisip_tester_dns_ip_addresses == NULL){
 			ms_error("Cannot resolve the flexisip-tester's dns server name '%s'.", flexisip_tester_dns_server);
 			return -1;
