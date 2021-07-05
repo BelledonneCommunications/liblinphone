@@ -100,7 +100,6 @@ SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & 
 	haveLimeIk = other.haveLimeIk;
 
 	return *this;
->>>>>>> Delete unused functions
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false, false) {
