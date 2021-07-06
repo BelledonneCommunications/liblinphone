@@ -313,6 +313,7 @@ private:
 	AudioDevice * currentInputAudioDevice = nullptr;
 
 	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
+	void addStreamToMd(std::shared_ptr<SalMediaDescription> & md, int streamIdx, const SalStreamDescription & stream);
 
 	L_DECLARE_PUBLIC(MediaSession);
 };
