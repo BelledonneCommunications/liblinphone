@@ -467,6 +467,7 @@ private:
 
 public:
 	RemoteConferenceEventHandler *handler;
+	// address - admin
 	map<string, bool> participants;
 	map<string, int> participantDevices;
 	string confSubject;
@@ -662,15 +663,20 @@ void first_notify_parsing() {
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "Agenda: This month's goals");
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participantDevices.find(linphone_address_as_string(bobAddr)) != tester->participantDevices.end());
-	BC_ASSERT_TRUE(tester->participantDevices.find(linphone_address_as_string(aliceAddr)) != tester->participantDevices.end());
-	BC_ASSERT_EQUAL(tester->participantDevices.find(linphone_address_as_string(bobAddr))->second, 1, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.find(linphone_address_as_string(aliceAddr))->second, 2, int, "%d");
+	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddrStr) != tester->participantDevices.end());
+	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddrStr) != tester->participantDevices.end());
+	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddrStr)->second, 1, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.find(aliceAddrStr)->second, 2, int, "%d");
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -698,8 +704,15 @@ void first_notify_parsing_wrong_conf() {
 	delete[] notify;
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 0, int, "%d");
-	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
+
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+
+	BC_ASSERT_FALSE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_FALSE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -729,22 +742,30 @@ void participant_added_parsing() {
 
 	delete[] notify;
 
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	snprintf(notify_added, size2, participant_added_notify, confUri);
 	tester->handler->notifyReceived(notify_added);
 
 	delete[] notify_added;
 
+	char *frankAddrStr = linphone_address_as_string(frankAddr);
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 3, int, "%d");
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 3, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(frankAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(frankAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(frankAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(frankAddrStr)->second);
+	bctbx_free(frankAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -775,12 +796,18 @@ void participant_not_added_parsing() {
 
 	delete[] notify;
 
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	snprintf(notify_not_added, size2, participant_not_added_notify, confUri);
 	tester->handler->notifyReceived(notify_not_added);
@@ -788,7 +815,9 @@ void participant_not_added_parsing() {
 	delete[] notify_not_added;
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(frankAddr)) != tester->participants.end());
+	char *frankAddrStr = linphone_address_as_string(frankAddr);
+	BC_ASSERT_FALSE(tester->participants.find(frankAddrStr) != tester->participants.end());
+	bctbx_free(frankAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -818,12 +847,15 @@ void participant_deleted_parsing() {
 
 	delete[] notify;
 
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 
 	snprintf(notify_deleted, size2, participant_deleted_notify, confUri);
 	tester->handler->notifyReceived(notify_deleted);
@@ -832,7 +864,10 @@ void participant_deleted_parsing() {
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 1, int, "%d");
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 1, int, "%d");
-	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
+	BC_ASSERT_FALSE(tester->participants.find(bobAddrStr) != tester->participants.end());
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -861,11 +896,14 @@ void participant_admined_parsing() {
 
 	delete[] notify;
 
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 
 	snprintf(notify_admined, size2, participant_admined_notify, confUri);
 	tester->handler->notifyReceived(notify_admined);
@@ -873,8 +911,11 @@ void participant_admined_parsing() {
 	delete[] notify_admined;
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr)->second);
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -903,11 +944,14 @@ void participant_unadmined_parsing() {
 
 	delete[] notify;
 
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
 
 	snprintf(notify_unadmined, size2, participant_unadmined_notify, confUri);
 	tester->handler->notifyReceived(notify_unadmined);
@@ -915,8 +959,11 @@ void participant_unadmined_parsing() {
 	delete[] notify_unadmined;
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
-	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(aliceAddr))->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(aliceAddrStr)->second);
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -1111,6 +1158,14 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), expectedParticipants, int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), expectedParticipants, int, "%d");
+
+	if (other_participants_initial_stats) {
+		ms_free(other_participants_initial_stats);
+	}
+
+	if (other_participants) {
+		bctbx_list_free(other_participants);
+	}
 }
 
 static void remove_head_participant_list_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr) {
@@ -1218,8 +1273,15 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, initial_conf_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 	BC_ASSERT_EQUAL(participant_mgr->stat.number_of_LinphoneSubscriptionTerminated, initial_participant_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 
-	BC_ASSERT_EQUAL((int)confListener->participants.size(), (participantSize + 1), int, "%d");
-	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), (participantDeviceSize + 1), int, "%d");
+	int increment = 0;
+	if (participantSize == 0) {
+		// Also me is added as participant
+		increment = 2;
+	} else {
+		increment = 1;
+	}
+	BC_ASSERT_EQUAL((int)confListener->participants.size(), (participantSize + increment), int, "%d");
+	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), (participantDeviceSize + increment), int, "%d");
 
 	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
 	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
@@ -1228,6 +1290,14 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 
 	// Admin check
 	BC_ASSERT_TRUE(!confListener->participants.find(participantUri)->second);
+
+	if (other_participants_initial_stats) {
+		ms_free(other_participants_initial_stats);
+	}
+
+	if (other_participants) {
+		bctbx_list_free(other_participants);
+	}
 
 	return participantCall;
 
