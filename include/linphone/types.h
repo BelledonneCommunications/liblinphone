@@ -244,6 +244,15 @@ typedef enum _LinphoneCallDir {
 typedef struct _LinphoneCallStats LinphoneCallStats;
 
 /**
+ * @ingroup call_misc
+ */
+typedef enum _LinphoneSupportLevel {
+	LinphoneSupportLevelNoSupport = 0, /**< No support for the feature */
+	LinphoneSupportLevelOptional = 1, /**< Optional support for the feature */
+	LinphoneSupportLevelMandatory = 2, /**< Mandatory support for the feature */
+} LinphoneSupportLevel;
+
+/**
  * @brief Enum representing the status of a call.
  * @ingroup call_logs
 **/
