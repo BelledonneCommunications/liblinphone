@@ -404,6 +404,14 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_conference_get_input_audio_d
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_conference_get_output_audio_device(const LinphoneConference *conference);
 
+/**
+ * Retrieves the volume of a specific participant
+ * @param conference A #LinphoneConference object @notnil
+ * @param device The Participant @notnil
+ * @return The volume of the participant expressed in dbm0.
+ */
+LINPHONE_PUBLIC int linphone_conference_get_participant_device_volume(LinphoneConference *conference, LinphoneParticipantDevice *device);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
