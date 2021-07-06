@@ -39,44 +39,6 @@ SalStreamConfiguration::~SalStreamConfiguration(){
 	PayloadTypeHandler::clearPayloadList(payloads);
 }
 
-SalStreamConfiguration::SalStreamConfiguration(SalStreamConfiguration & other){
-lInfo() << __func__ << " DEBUG DEBUG stream configuration non const copy contructor copying cfg " << sal_stream_dir_to_string(other.dir);
-	proto = other.proto;
-	proto_other = other.proto_other;
-	rtp_ssrc = other.rtp_ssrc;
-	rtcp_cname = other.rtcp_cname;
-	for (const auto & pt : other.payloads) {
-		payloads.push_back(payload_type_clone(pt));
-	}
-	ptime = other.ptime;
-	maxptime = other.maxptime;
-	dir = other.dir;
-	crypto = other.crypto;
-	crypto_local_tag = other.crypto_local_tag;
-	max_rate = other.max_rate;
-	bundle_only = other.bundle_only;
-	implicit_rtcp_fb = other.implicit_rtcp_fb;
-	pad[0] = other.pad[0];
-	pad[1] = other.pad[1];
-	rtcp_fb = other.rtcp_fb;
-	rtcp_xr = other.rtcp_xr;
-	mid = other.mid;
-	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
-	set_nortpproxy = other.set_nortpproxy;
-	rtcp_mux = other.rtcp_mux;
-	haveZrtpHash = other.haveZrtpHash;
-	haveLimeIk = other.haveLimeIk;
-	memcpy(zrtphash, other.zrtphash, sizeof(zrtphash));
-	dtls_fingerprint = other.dtls_fingerprint;
-	dtls_role = other.dtls_role;
-	ttl = other.ttl;
-	index = other.index;
-	tcapIndex = other.tcapIndex;
-	acapIndexes = other.acapIndexes;
-	delete_media_attributes = other.delete_media_attributes;
-	delete_session_attributes = other.delete_session_attributes;
-}
-
 SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & other){
 lInfo() << __func__ << " DEBUG DEBUG stream configuration const copy contructor copying cfg " << sal_stream_dir_to_string(other.dir);
 	proto = other.proto;

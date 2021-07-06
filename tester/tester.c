@@ -1095,7 +1095,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 				part_updates--;
 				idx++;
 			}
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+counter+bctbx_list_size(new_participants)),5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+counter+((int)bctbx_list_size(new_participants))),5000));
 		}
 	}
 

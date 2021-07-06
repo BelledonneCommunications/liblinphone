@@ -77,7 +77,6 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 	public:
 
 		SalStreamConfiguration();
-		SalStreamConfiguration(SalStreamConfiguration & other);
 		SalStreamConfiguration(const SalStreamConfiguration & other);
 		virtual ~SalStreamConfiguration();
 		SalStreamConfiguration &operator=(const SalStreamConfiguration& other);
