@@ -29,6 +29,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 
 import org.linphone.core.AudioDevice;
 import org.linphone.core.Call;
@@ -309,8 +311,15 @@ public class CoreManager {
     public void onBluetoothHeadsetStateChanged() {
 		GlobalState globalState = mCore.getGlobalState();
 		if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
-			Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices");
-			mCore.reloadSoundDevices();
+			Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices in 500ms");
+			final Handler handler = new Handler(Looper.getMainLooper());
+			handler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					Log.i("[Core Manager] Reloading sound devices");
+					mCore.reloadSoundDevices();
+				}
+			}, 500);			
 		} else {
 			Log.i("[Core Manager] Bluetooth headset state changed but current Core global state is ", globalState, ", skipping...");
 		}
@@ -319,8 +328,15 @@ public class CoreManager {
     public void onHeadsetStateChanged() {
 		GlobalState globalState = mCore.getGlobalState();
 		if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
-			Log.i("[Core Manager] Headset state changed, reload sound devices");
-			mCore.reloadSoundDevices();
+			Log.i("[Core Manager] Headset state changed, reload sound devices in 500ms");
+			final Handler handler = new Handler(Looper.getMainLooper());
+			handler.postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					Log.i("[Core Manager] Reloading sound devices");
+					mCore.reloadSoundDevices();
+				}
+			}, 500);
 		} else {
 			Log.i("[Core Manager] Headset state changed but current Core global state is ", globalState, ", skipping...");
 		}
