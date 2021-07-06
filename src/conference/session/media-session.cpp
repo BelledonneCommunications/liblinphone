@@ -1391,6 +1391,7 @@ SalStreamDescription MediaSessionPrivate::makeConferenceParticipantVideoStream(c
 		cfg.replacePayloads(l);
 		newStream.addActualConfiguration(cfg);
 		fillRtpParameters(newStream);
+		PayloadTypeHandler::clearPayloadList(l);
 	} else {
 		lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
 		cfg.dir = SalStreamInactive;
@@ -1433,6 +1434,19 @@ lInfo() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(
 		stream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 
 	return stream;
+}
+
+void MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMediaDescription> & md, int streamIdx, const SalStreamDescription & stream) {
+	if (streamIdx == -1) {
+		md->streams.push_back(stream);
+	} else {
+		try {
+			const auto & idx = static_cast<decltype(md->streams)::size_type>(streamIdx);
+			md->streams.at(idx) = stream;
+		} catch (std::out_of_range&) {
+			md->streams.push_back(stream);
+		}
+	}
 }
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool offerNegotiatedMediaProtocolOnly, const bool forceCryptoKeyGeneration) {
@@ -1831,18 +1845,8 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 			actualCfg.ptime = linphone_core_get_download_ptime(core);
 
 		const auto audioStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalAudio) : -1;
-		if (audioStreamIdx == -1) {
-lInfo() << __func__ << " DEBUG DEBUG appending audio stream direction " << sal_stream_dir_to_string(audioStream.getDirection()) << " index " << audioStreamIdx << " size " << md->streams.size();
-			md->streams.push_back(audioStream);
-		} else {
-lInfo() << __func__ << " DEBUG DEBUG resulting audio stream direction " << sal_stream_dir_to_string(audioStream.getDirection()) << " index " << audioStreamIdx << " before add size " << md->streams.size();
+		addStreamToMd(md, audioStreamIdx, audioStream);
 
-for (const auto & newStream : md->streams) {
-lInfo() << __func__ << " DEBUG DEBUG Existing stream type " << sal_stream_type_to_string(newStream.getType()) << " direction " << sal_stream_dir_to_string(newStream.getDirection());
-}
-			md->streams[audioStreamIdx] = audioStream;
-lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_stream_dir_to_string(md->streams[static_cast<decltype(md->streams)::size_type>(audioStreamIdx)].getDirection()) << " index " << audioStreamIdx << " after add size " << md->streams.size();
-		}
 		PayloadTypeHandler::clearPayloadList(audioCodecs);
 	}
 
@@ -1893,11 +1897,8 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 		}
 
 		const auto videoStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalVideo) : -1;
-		if (videoStreamIdx == -1) {
-			md->streams.push_back(videoStream);
-		} else {
-			md->streams[videoStreamIdx] = videoStream;
-		}
+		addStreamToMd(md, videoStreamIdx, videoStream);
+
 		PayloadTypeHandler::clearPayloadList(videoCodecs);
 	}
 
@@ -1914,11 +1915,8 @@ lInfo() << __func__ << " DEBUG DEBUG replacing audio stream direction " << sal_s
 		textStream.main = true;
 
 		const auto textStreamIdx = refMd ? refMd->findIdxMainStreamOfType(SalText) : -1;
-		if (textStreamIdx == -1) {
-			md->streams.push_back(textStream);
-		} else {
-			md->streams[textStreamIdx] = textStream;
-		}
+		addStreamToMd(md, textStreamIdx, textStream);
+
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
