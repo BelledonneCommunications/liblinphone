@@ -496,6 +496,14 @@ const std::string SalMediaDescription::printDifferences(int result) {
 		out.append("STREAM_CONFIGURATION_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
 	}
+	if (result & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED){
+		out.append("MIXER_TO_CLIENT_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
+	}
+	if (result & SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED){
+		out.append("CLIENT_TO_MIXER_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED;
+	}
 	if (result){
 		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::printDifferences(), fix it");
 	}

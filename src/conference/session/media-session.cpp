@@ -252,6 +252,19 @@ void MediaSessionPrivate::accepted () {
 				break;
 		}
 
+		if (isInConference()) {
+			const auto stream = rmd->getActiveStreamOfType(SalAudio, 0);
+			const auto streamCfg = stream.getActualConfiguration();
+
+			if (listener) {
+				LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+				if (conference) {
+					auto p = MediaConference::Conference::toCpp(conference)->findParticipantDevice(q->getSharedFromThis());
+					if (p) p->setSsrc(streamCfg.conference_ssrc);
+				}
+			}
+		}
+
 		if (nextState == CallSession::State::Idle)
 			lError() << "BUG: nextState is not set in accepted(), current state is " << Utils::toString(state);
 		else {
@@ -1300,6 +1313,8 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 		cfg.replacePayloads(codecs);
 		cfg.rtcp_cname = getMe()->getAddress().asString();
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[idx], cfg, mid);
+
+		if (type == SalAudio && isInConference()) cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
 
 		if (multicastEnabled) {
 			cfg.ttl = ttl;

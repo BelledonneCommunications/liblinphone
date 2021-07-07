@@ -116,6 +116,8 @@ public:
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) = 0;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
 
+	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) = 0;
+
 	virtual int terminate() = 0;
 	virtual void finalizeCreation() = 0;
 
@@ -229,6 +231,8 @@ public:
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
 
+	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
+
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) override;
@@ -297,6 +301,8 @@ public:
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+
+	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
 
 	virtual void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
