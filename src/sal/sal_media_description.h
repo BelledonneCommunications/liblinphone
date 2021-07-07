@@ -58,6 +58,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription findBestStream(SalStreamType type) const;
 
 		bool isEmpty() const;
+		bool isAcceptable() const;
 
 		void setDir(SalStreamDir stream_dir);
 
