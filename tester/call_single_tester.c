@@ -1605,8 +1605,7 @@ static void call_paused_with_rtp_port_to_zero(void) {
 	ms_message("CONTEXT: Marie sends empty INVITE to pause the call");
 	int marieStreamsRunning = marie->stat.number_of_LinphoneCallStreamsRunning;
 	LinphoneCallParams *params=linphone_core_create_call_params(marie->lc,marie_call);
-	linphone_call_params_set_audio_direction(params,LinphoneMediaDirectionInactive);
-	linphone_call_params_set_video_direction(params,LinphoneMediaDirectionInactive);
+	linphone_call_params_enable_audio(params, FALSE);
 	linphone_call_update(marie_call,params);
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallUpdating,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallPausedByRemote,1));
