@@ -1586,6 +1586,38 @@ static void call_with_no_sdp_ack_without_sdp(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_paused_with_no_sdp(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
+
+	BC_ASSERT_TRUE(call(marie,pauline));
+
+	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	//Invite inactive Audio (Marie pause Pauline)
+	ms_message("CONTEXT: Marie sends INVITE with SDP with all streams inactive");
+	int marieStreamsRunning = marie->stat.number_of_LinphoneCallStreamsRunning;
+	LinphoneCallParams *params=linphone_core_create_call_params(marie->lc,marie_call);
+	linphone_call_params_set_audio_direction(params,LinphoneMediaDirectionInactive);
+	linphone_call_params_set_video_direction(params,LinphoneMediaDirectionInactive);
+	linphone_call_update(marie_call,params);
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallUpdating,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallPausedByRemote,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marieStreamsRunning + 1)));
+
+	linphone_call_params_unref(params);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
+
+	ms_message("=============== Ending call =================");
+	end_call(marie, pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts) {
 	unsigned int c1_starts = 0, c2_starts = 0;
 	int c1_ret = FALSE, c2_ret = FALSE;
@@ -5437,6 +5469,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call without SDP", call_with_no_sdp),
 	TEST_NO_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime),
 	TEST_NO_TAG("Call without SDP and ACK without SDP", call_with_no_sdp_ack_without_sdp),
+	TEST_NO_TAG("Call paused without SDP", call_paused_with_no_sdp),
 	TEST_NO_TAG("Call paused resumed", call_paused_resumed),
 	TEST_NO_TAG("Call paused resumed with sip packets looses", call_paused_resumed_with_sip_packets_losses),
 	TEST_NO_TAG("Call paused by both parties", call_paused_by_both),
