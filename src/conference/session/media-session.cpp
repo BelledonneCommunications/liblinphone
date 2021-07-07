@@ -2872,15 +2872,13 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
 
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
-	if (md) {
-		if (!md->isAcceptable() || d->incompatibleSecurity(md)) {
-			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
-			if (d->listener)
-				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
-			d->op->decline(SalReasonNotAcceptable);
-			return;
-		}
+	if (md && (md->isEmpty() || d->incompatibleSecurity(md))) {
+		LinphoneErrorInfo *ei = linphone_error_info_new();
+		linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
+		if (d->listener)
+			d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+		d->op->decline(SalReasonNotAcceptable);
+		return;
 	}
 
 	CallSession::startIncomingNotification(notifyRinging);
