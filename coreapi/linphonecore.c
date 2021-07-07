@@ -7867,6 +7867,14 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
+bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", 0);
+}
+
+void linphone_core_enable_zero_rtp_port_for_stream_inactive(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", (int)enable);
+}
+
 bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
 }
