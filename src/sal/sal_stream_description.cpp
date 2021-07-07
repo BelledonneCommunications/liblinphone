@@ -780,8 +780,8 @@ bool SalStreamDescription::enabled() const {
 }
 
 bool SalStreamDescription::isAcceptable() const {
-	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
-	return enabled() || ((rtp_port == 0) && (getDirection() == SalStreamInactive));
+	// Accept if enabled or RTP port is set to 0
+	return enabled() || (rtp_port == 0);
 }
 
 void SalStreamDescription::disable(){
