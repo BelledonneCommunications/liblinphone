@@ -1318,10 +1318,10 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	L_Q();
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
+	cfg.dir = dir;
 	md->streams[idx].type = type;
 	if (enabled && !codecs.empty()) {
 		md->streams[idx].name = name;
-		cfg.dir = dir;
 		const auto & core = q->getCore()->getCCore();
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
 		cfg.rtcp_mux = rtcpMux;
@@ -1340,7 +1340,6 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 
 	} else {
 		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
-		cfg.dir = SalStreamInactive;
 		md->streams[idx].rtp_port = 0;
 	}
 	if (customSdpAttributes)
