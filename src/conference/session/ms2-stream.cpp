@@ -214,6 +214,13 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
+	if (getMediaSessionPrivate().getOp() && getMediaSessionPrivate().getOp()->getRemoteContactAddress()) {
+		char *c_address = sal_address_as_string(getMediaSessionPrivate().getOp()->getRemoteContactAddress());
+		Address address(c_address);
+		if (address.hasParam("isfocus")) localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
+		ms_free(c_address);
+	}
+
 	// The negotiated encryption must remain unchanged if:
 	// - internal update
 	// - pausing a call
@@ -545,6 +552,12 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 		}
 		// SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED monitors the number of streams, it is ignored here.
 		changesToHandle &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
+
+		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED){
+			stop();
+			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
+			return false;
+		}
 		
 		if (changesToHandle == 0){
 			// We've handled everything.

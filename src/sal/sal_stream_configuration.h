@@ -113,6 +113,9 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		SalCustomSdpAttribute * getCustomSdpAttributes() const;
 		std::string getSdpString() const;
 
+		const int & getMixerToClientExtensionId() const;
+		const int & getClientToMixerExtensionId() const;
+
 		void replacePayloads(const std::list<PayloadType*> & newPayloads);
 
 		void addToSdpMediaDescription(belle_sdp_media_description_t * media_desc) const;
@@ -145,6 +148,9 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 		std::string mid; /* Media line identifier for RTP bundle mode */
 		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
+		int mixer_to_client_extension_id = 0;
+		int client_to_mixer_extension_id = 0;
+		unsigned int conference_ssrc = 0;
 		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 		bool rtcp_mux = false;
 		uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */

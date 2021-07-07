@@ -640,6 +640,13 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 	actualCfg.rtcp_xr = salMediaDesc->rtcp_xr; // Use session parameters if no stream parameters are defined
 	sdp_parse_media_rtcp_xr_parameters(media_desc, &actualCfg.rtcp_xr);
 
+	/* Get the ssrc used for conference if any */
+	if ((attribute = belle_sdp_media_description_get_attribute(media_desc, "ssrc")) != NULL) {
+		if ((value = belle_sdp_attribute_get_value(attribute)) != NULL) {
+			sscanf(value, "%u", &actualCfg.conference_ssrc);
+		}
+	}
+
 	/* Get the custom attributes, and parse some 'extmap'*/
 	for (custom_attribute_it = belle_sdp_media_description_get_attributes(media_desc); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
@@ -649,10 +656,15 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 
 		if (strcasecmp(attr_name, "extmap") == 0){
 			char *extmap_urn = (char*)bctbx_malloc0(strlen(attr_value) + 1);
-			int rtp_ext_header_id = 0;
-			if (sscanf(attr_value, "%i %s", &rtp_ext_header_id, extmap_urn) > 0
-				&& strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0){
-				actualCfg.mid_rtp_ext_header_id = rtp_ext_header_id;
+			int value = 0;
+			if (sscanf(attr_value, "%i %s", &value, extmap_urn) > 0){
+				if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0){
+					actualCfg.mid_rtp_ext_header_id = value;
+				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:csrc-audio-level") == 0) {
+					actualCfg.mixer_to_client_extension_id = value;
+				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:ssrc-audio-level") == 0) {
+					actualCfg.client_to_mixer_extension_id = value;
+				}
 			}
 			bctbx_free(extmap_urn);
 		}
@@ -1032,6 +1044,24 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 	}
 	addMidAttributesToSdp(actualCfg, media_desc);
+
+	if (actualCfg.mixer_to_client_extension_id != 0) {
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:csrc-audio-level", actualCfg.mixer_to_client_extension_id);
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
+		bctbx_free(value);
+	}
+
+	if (actualCfg.client_to_mixer_extension_id != 0) {
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:ssrc-audio-level vad=off", actualCfg.client_to_mixer_extension_id);
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
+		bctbx_free(value);
+	}
+
+	if (actualCfg.proto != SalProtoUdpTlsRtpSavpf && actualCfg.proto != SalProtoUdpTlsRtpSavp && actualCfg.conference_ssrc) {
+		char* ssrc_attribute = ms_strdup_printf("%u",actualCfg.conference_ssrc);
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
+		ms_free(ssrc_attribute);
+	}
 
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
