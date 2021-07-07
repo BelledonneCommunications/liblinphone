@@ -1586,7 +1586,7 @@ static void call_with_no_sdp_ack_without_sdp(void){
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_paused_with_no_sdp(void) {
+static void call_paused_with_rtp_port_to_zero(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -5494,7 +5494,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call without SDP", call_with_no_sdp),
 	TEST_NO_TAG("Call without SDP to a lime X3DH enabled device", call_with_no_sdp_lime),
 	TEST_NO_TAG("Call without SDP and ACK without SDP", call_with_no_sdp_ack_without_sdp),
-	TEST_NO_TAG("Call paused without SDP", call_paused_with_no_sdp),
+	TEST_NO_TAG("Call paused with RTP port to 0", call_paused_with_rtp_port_to_zero),
 	TEST_NO_TAG("Call paused resumed", call_paused_resumed),
 	TEST_NO_TAG("Call paused resumed with sip packets looses", call_paused_resumed_with_sip_packets_losses),
 	TEST_NO_TAG("Call paused by both parties", call_paused_by_both),
