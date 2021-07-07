@@ -311,6 +311,13 @@ bool SalMediaDescription::isEmpty() const {
 	return true;
 }
 
+bool SalMediaDescription::isAcceptable() const {
+	for(auto & stream : streams){
+		if (!stream.isAcceptable()) return false;
+	}
+	return true;
+}
+
 void SalMediaDescription::setDir(SalStreamDir stream_dir){
 	for(auto & stream : streams){
 		if (!stream.enabled()) continue;

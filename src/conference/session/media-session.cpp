@@ -164,6 +164,10 @@ bool MediaSessionPrivate::tryEnterConference() {
 	return false;
 }
 
+bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> & md) const {
+	return (md && (!md->isAcceptable() || incompatibleSecurity(md)));
+}
+
 void MediaSessionPrivate::accepted () {
 	L_Q();
 	CallSessionPrivate::accepted();
@@ -210,8 +214,9 @@ lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() 
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (md && (md->isEmpty() || incompatibleSecurity(md)))
+	if (md && (!md->isAcceptable() || incompatibleSecurity(md))) {
 		md = nullptr;
+	}
 	if (md) {
 		/* There is a valid SDP in the response, either offer or answer, and we're able to start/update the streams */
 		CallSession::State nextState = CallSession::State::Idle;
@@ -602,7 +607,7 @@ lInfo() << __func__ << " local is offerer " << (rmd == nullptr);
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
 		std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
-		if (md && (md->isEmpty() || incompatibleSecurity(md))) {
+		if (md && (!md->isAcceptable() || incompatibleSecurity(md))) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
@@ -2915,7 +2920,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md) {
-		if (md->isEmpty() || d->incompatibleSecurity(md)) {
+		if (!md->isAcceptable() || d->incompatibleSecurity(md)) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			if (d->listener)
