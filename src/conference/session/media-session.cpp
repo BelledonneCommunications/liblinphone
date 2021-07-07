@@ -865,15 +865,19 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			/*
 			 * This is to avoid to re-propose again some streams that have just been declined.
 			 */
-			if (getParams()->audioEnabled() && !rcp->audioEnabled()) {
+			const auto & audioStream = rmd->findBestStream(SalAudio);
+			// Do not change local call parameters if remote offered an inactive stream with RTP port set to 0
+			if (getParams()->audioEnabled() && ((audioStream.getDirection() != SalStreamInactive) || (audioStream.getRtpPort() != 0)) && !rcp->audioEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling audio in our call params because the remote doesn't want it";
 				getParams()->enableAudio(false);
 			}
-			if (getParams()->videoEnabled() && !rcp->videoEnabled()) {
+			const auto & videoStream = rmd->findBestStream(SalAudio);
+			if (getParams()->videoEnabled() && ((videoStream.getDirection() != SalStreamInactive) || (videoStream.getRtpPort() != 0)) && !rcp->videoEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling video in our call params because the remote doesn't want it";
 				getParams()->enableVideo(false);
 			}
-			if (getParams()->realtimeTextEnabled() && !rcp->realtimeTextEnabled()) {
+			const auto & textStream = rmd->findBestStream(SalText);
+			if (getParams()->realtimeTextEnabled() && ((textStream.getDirection() != SalStreamInactive) || (textStream.getRtpPort() != 0)) && !rcp->realtimeTextEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling RTT in our call params because the remote doesn't want it";
 				getParams()->enableRealtimeText(false);
 			}
