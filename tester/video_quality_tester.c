@@ -559,7 +559,7 @@ static void call_with_retransmissions_on_nack(void) {
 
 	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
-	
+	linphone_core_set_download_bandwidth(marie->lc, 350); /*to make enough room for rapid avpf feedback*/
 	
 	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
 	if (!call_ok) goto end;
@@ -628,7 +628,8 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
 	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_set_download_bandwidth(marie->lc, 350); /*to make enough room for rapid avpf feedback*/
 	
 	
 	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
@@ -675,7 +676,9 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
-	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_static_image_id);
+	
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -697,6 +700,8 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
 	
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_set_download_bandwidth(marie->lc, 350); /*to make enough room for rapid avpf feedback*/
+	
 
 	if (!with_avpf){
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_fb_implicit_rtcp_fb", 0);
