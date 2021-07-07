@@ -811,7 +811,13 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			 * This is to avoid to re-propose again some streams that have just been declined.
 			 */
 			const auto & audioStream = rmd->findBestStream(SalAudio);
-			// Do not change local call parameters if remote offered an inactive stream with RTP port set to 0
+			// Do not change local call parameters if remote answered with an inactive stream with RTP port set to 0
+			// This occurs with clients such as Avaya that put a call on hold by setting streams with inactive direction and RTP port to 0
+			// Scenario:
+			// - client1 sends an INVITE without SDP
+			// - client2 puts its offer down in the 200Ok
+			// - client1 answers with inactive stream abd RTP port set to 0
+			// Without the workaround, a deadlock is created - client1 has inactive streams and client2 has audio/video/text capabilities disabled in its local call parameters because the stream was rejected earlier on. Therefore it would be impossible to resume the streams on both sides.
 			if (getParams()->audioEnabled() && ((audioStream.getDirection() != SalStreamInactive) || (audioStream.getRtpPort() != 0)) && !rcp->audioEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling audio in our call params because the remote doesn't want it";
 				getParams()->enableAudio(false);
