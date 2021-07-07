@@ -83,11 +83,12 @@ if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
 			FILES "${CMAKE_CURRENT_BINARY_DIR}/version.txt"
 			DESTINATION "${CMAKE_INSTALL_DATADIR}/"
 		)
-
-		install(
-			DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docfx_project/_site/"
-			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}/cs"
-		)
+		if(ENABLE_DOC)
+			install(
+				DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/docfx_project/_site/"
+				DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}/cs"
+				)
+		endif()
 
 		message(CHECK_PASS "generation and copy configured")
 	else()

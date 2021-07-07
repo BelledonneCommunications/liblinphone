@@ -55,9 +55,10 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAP
 			DEPENDS ${DOC_INPUT_FILES}
 		)
 		add_custom_target(linphone-doc ALL DEPENDS "${XML_DIR}/index.xml" "${C_HTML_DIR}/index.html")
-
-		install(DIRECTORY "${C_HTML_DIR}"
-			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
+		if(ENABLE_DOC)
+			install(DIRECTORY "${C_HTML_DIR}"
+				DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
+		endif()
 	endif()
 endif()
 
