@@ -214,7 +214,7 @@ lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() 
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (md && (!md->isAcceptable() || incompatibleSecurity(md))) {
+	if (rejectMediaSession(md)) {
 		md = nullptr;
 	}
 	if (md) {
@@ -607,7 +607,7 @@ lInfo() << __func__ << " local is offerer " << (rmd == nullptr);
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
 		std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
-		if (md && (!md->isAcceptable() || incompatibleSecurity(md))) {
+		if (rejectMediaSession(md)) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
