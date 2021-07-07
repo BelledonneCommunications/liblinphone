@@ -1591,14 +1591,18 @@ static void call_paused_with_no_sdp(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
+	linphone_core_enable_zero_rtp_port_for_stream_inactive(marie->lc, TRUE);
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 
 	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
 
+	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+
 	//Invite inactive Audio (Marie pause Pauline)
-	ms_message("CONTEXT: Marie sends INVITE with SDP with all streams inactive");
+	ms_message("CONTEXT: Marie sends empty INVITE to pause the call");
 	int marieStreamsRunning = marie->stat.number_of_LinphoneCallStreamsRunning;
 	LinphoneCallParams *params=linphone_core_create_call_params(marie->lc,marie_call);
 	linphone_call_params_set_audio_direction(params,LinphoneMediaDirectionInactive);
@@ -1611,6 +1615,9 @@ static void call_paused_with_no_sdp(void) {
 	linphone_call_params_unref(params);
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
+
+	check_result_desc_rtp_rtcp_ports(marie_call, 0, 0);
+	check_result_desc_rtp_rtcp_ports(pauline_call, 0, 0);
 
 	ms_message("=============== Ending call =================");
 	end_call(marie, pauline);
