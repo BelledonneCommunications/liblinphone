@@ -229,8 +229,9 @@ lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() 
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::Updating:
 			case CallSession::State::UpdatedByRemote:
+				// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
 				if (!localDesc->hasDir(SalStreamInactive)
-					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive))) {
+					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 					nextState = CallSession::State::PausedByRemote;
 					nextStateMsg = "Call paused by remote";
 				} else {
@@ -1904,8 +1905,12 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	resultDesc = newMd;
 
 	// Encryption may have changed during the offer answer process and not being the default one. Typical example of this scenario is when capability negotiation is enabled and if ZRTP is only enabled on one side and the other side supports it
-	negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
-	lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+	if (newMd->isEmpty()) {
+		lInfo() << "All streams have been rejected, hence negotiated media encryption keeps being " << linphone_media_encryption_to_string(negotiatedEncryption);
+	} else {
+		negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
+		lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+	}
 
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
