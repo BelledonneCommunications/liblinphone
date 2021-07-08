@@ -1006,12 +1006,12 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			FileTransferContent *content = new FileTransferContent();
 			fileTransferModifier.parseFileTransferXmlIntoContent(body, content);
 			string fileUrl = content->getFileUrl();
-			
+
 			if (!fileUrl.empty()) {
 				const char *url = fileUrl.c_str();
 				linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateDelivered, url);
 			}
-			
+
 			delete content;
 			clean_log_collection_upload_context(core);
 		} else {
@@ -2659,8 +2659,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 
 	#ifdef HAVE_FLEXIAPI
-	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendFlexiAPI)
-		== LinphoneAccountCreatorBackendXMLRPC) {
+	if (linphone_config_get_int(lc->config, "account_creator", "backend", LinphoneAccountCreatorBackendXMLRPC) == LinphoneAccountCreatorBackendXMLRPC) {
 	#endif
 		linphone_account_creator_service_set_constructor_cb(service, linphone_account_creator_constructor_linphone_xmlrpc);
 		linphone_account_creator_service_set_destructor_cb(service, NULL);
@@ -7273,7 +7272,10 @@ void _linphone_core_uninit(LinphoneCore *lc)
 		bctbx_list_free(lc->supported_encryptions);
 	}
 	lc->supported_encryptions = NULL;
-
+	
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
+	
 	linphone_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
