@@ -316,7 +316,7 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 		}
 	} else {
 		const auto supportedEncs = getSupportedEncryptionsInPotentialCfgs();
-		unsigned int idx = 1;
+		unsigned int idx = getFreeCfgIdx();
 		for (const auto avpf : {true, false}) {
 			for (const auto & enc : supportedEncs) {
 				const auto & protoEl = SalStreamDescription::encryptionToTcap(protoMap, enc, avpf);
@@ -324,6 +324,7 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 					const auto & protoIdx = protoEl.first;
 					const auto & protoValue = protoEl.second;
 					const auto proto = sal_media_proto_from_string(protoValue.c_str());
+lInfo() << __func__ << " DEBUG DEBUG proto " << protoValue << " idx " << protoIdx << " cfg index " << idx << " encryption " << linphone_media_encryption_to_string(enc);
 					baseCfg.tcapIndex = protoIdx;
 					baseCfg.proto = proto;
 					std::string protoString = (proto == SalProtoOther) ? protoValue : std::string();
@@ -342,8 +343,9 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 					auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
 					cfg.index = idx;
 					cfgList.push_back(cfg);
+lInfo() << __func__ << " DEBUG DEBUG added configuration proto " << protoValue << " idx " << protoIdx << " cfg index " << idx;
+					idx++;
 				}
-				idx++;
 			}
 		}
 	}

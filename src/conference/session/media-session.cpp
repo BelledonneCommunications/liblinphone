@@ -234,7 +234,6 @@ lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() 
 			updateStreams(md, nextState);
 			fixCallParams(rmd, false);
 			setState(nextState, nextStateMsg);
-			LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
@@ -1447,8 +1446,6 @@ lInfo() << __func__ << " local is offerer " << localIsOfferer;
 	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainVideoStreamIndex));
 	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainTextStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
-	getStreamsGroup().fillLocalMediaDescription(ctx);
-
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
