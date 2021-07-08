@@ -6656,6 +6656,14 @@ void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
 	#endif
 }
 
+void linphone_core_set_keep_stream_direction_for_rejected_stream(LinphoneCore *lc, bool_t yesno){
+	lc->keep_stream_direction_for_rejected_stream = yesno;
+}
+
+bool_t linphone_core_get_keep_stream_direction_for_rejected_stream(LinphoneCore *lc) {
+	return lc->keep_stream_direction_for_rejected_stream;
+}
+
 void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno){
 	lc->use_files=yesno;
 	if(yesno){

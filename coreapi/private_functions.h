@@ -77,6 +77,9 @@ LINPHONE_PUBLIC IceSession *linphone_call_get_ice_session(const LinphoneCall *ca
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 
+void linphone_core_set_keep_stream_direction_for_rejected_stream(LinphoneCore *lc, bool_t yesno);
+bool_t linphone_core_get_keep_stream_direction_for_rejected_stream(LinphoneCore *lc);
+
 void _linphone_call_set_conf_ref (LinphoneCall *call, LinphoneConference *ref);
 MSAudioEndpoint *_linphone_call_get_endpoint (const LinphoneCall *call);
 void _linphone_call_set_endpoint (LinphoneCall *call, MSAudioEndpoint *endpoint);
