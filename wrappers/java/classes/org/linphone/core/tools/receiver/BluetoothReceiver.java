@@ -19,7 +19,9 @@
 package org.linphone.core.tools.receiver;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -62,12 +64,21 @@ public class BluetoothReceiver extends BroadcastReceiver {
                     break;
             }
         } else if (action.equals(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED)) {
-            int state = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_DISCONNECTED);
+            int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, BluetoothProfile.STATE_DISCONNECTED);
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_NAME);
             if (state == BluetoothHeadset.STATE_CONNECTED) {
-                Log.i("[Bluetooth] Bluetooth headset connected");
+                if (device != null) {
+                    Log.i("[Bluetooth] Bluetooth headset connected: [", device.getName(), "]");
+                } else {
+                    Log.i("[Bluetooth] Bluetooth headset connected: [unknown device]");
+                }
                 if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
             } else if (state == BluetoothHeadset.STATE_DISCONNECTED) {
-                Log.i("[Bluetooth] Bluetooth headset disconnected");
+                if (device != null) {
+                    Log.i("[Bluetooth] Bluetooth headset disconnected: [", device.getName(), "]");
+                } else {
+                    Log.i("[Bluetooth] Bluetooth headset disconnected: [unknown device]");
+                }
                 if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
             } else if (state == BluetoothHeadset.STATE_CONNECTING) {
                 Log.i("[Bluetooth] Bluetooth headset connecting");
