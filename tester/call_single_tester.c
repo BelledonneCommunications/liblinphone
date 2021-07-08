@@ -1592,6 +1592,7 @@ static void call_paused_with_rtp_port_to_zero(void) {
 
 	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
 	linphone_core_enable_zero_rtp_port_for_stream_inactive(marie->lc, TRUE);
+	linphone_core_set_keep_stream_direction_for_rejected_stream(marie->lc, TRUE);
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 
@@ -1615,8 +1616,21 @@ static void call_paused_with_rtp_port_to_zero(void) {
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
 
+	check_local_desc_stream(marie_call);
+	check_local_desc_stream(pauline_call);
 	check_result_desc_rtp_rtcp_ports(marie_call, 0, 0);
 	check_result_desc_rtp_rtcp_ports(pauline_call, 0, 0);
+
+	const LinphoneCallParams * marie_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_PTR_NOT_NULL(marie_params);
+	if (marie_params) {
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(marie_params));
+	}
+	const LinphoneCallParams * pauline_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_PTR_NOT_NULL(pauline_params);
+	if (pauline_params) {
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(pauline_params));
+	}
 
 	//Invite active Audio (Marie resumes call with Pauline)
 	ms_message("CONTEXT: Marie sends INVITE with SDP to resume the call");
@@ -1625,14 +1639,25 @@ static void call_paused_with_rtp_port_to_zero(void) {
 	int paulineStreamsRunning = pauline->stat.number_of_LinphoneCallStreamsRunning;
 	params=linphone_core_create_call_params(marie->lc,marie_call);
 	linphone_call_params_enable_audio(params,TRUE);
-	linphone_call_params_set_audio_direction(params,LinphoneMediaDirectionSendRecv);
-	linphone_call_params_set_video_direction(params,LinphoneMediaDirectionSendRecv);
 	linphone_call_update(marie_call,params);
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallUpdating,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marieStreamsRunning + 1)));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(paulineStreamsRunning + 1)));
-
 	linphone_call_params_unref(params);
+
+	check_local_desc_stream(marie_call);
+	check_local_desc_stream(pauline_call);
+
+	const LinphoneCallParams * marie_params2 = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_PTR_NOT_NULL(marie_params);
+	if (marie_params) {
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(marie_params2));
+	}
+	const LinphoneCallParams * pauline_params2 = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_PTR_NOT_NULL(pauline_params);
+	if (pauline_params) {
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(pauline_params2));
+	}
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
 
