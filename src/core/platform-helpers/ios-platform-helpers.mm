@@ -167,6 +167,12 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
 
+	string sdpPath = getResourceDirPath("org.linphone.belle-sip", "sdp_grammar");
+	if (!sdpPath.empty())
+		belr::GrammarLoader::get().addPath(sdpPath);
+	else
+		ms_error("IosPlatformHelpers did not find sdp grammar resource directory...");
+	
 	ms_message("IosPlatformHelpers is fully started");
 	mStart = true;
 	[mAppDelegate onStopAsyncEnd:false];
