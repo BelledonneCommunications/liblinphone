@@ -8,18 +8,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
-## [5.0.0] Unreleased
+## [5.0.0] 2021-07-08
 
 ### Added
+- Native support of Windows 10 UWP platform
 - CoreService class for Android can make the device vibrate while incoming call is ringing.
+- Support of Capability Negociation framework - RFC5939 - limited to media encryption choice (None, SRTP, DTLS-SRTP, ZRTP)
+- Automatic handling of push notifications for iOS and Android. 
+  * A new state LinphoneCallPushIncomingReceived is added to the LinphoneCall's state machine.
+  * New LinphonePushNotificationConfig object added to the API.
+- New API to manage SIP accounts: LinphoneAccount and LinphoneAccountParams, replacing LinphoneProxyConfig which is now deprecated.
+  LinphoneProxyConfig remains fully usable for backward compatibility with previous version.
+- New implementation of LinphoneAccountCreator relying on http REST API. Previous implementation based on XML-RPC remains the default one,
+  but will be deprecated in a future release.
+- Added LDAP contact provider API integrated with LinphoneMagicSearch (desktop platforms ONLY)
+- Added asynchronous API to the LinphoneMagicSearch API (for contact searching).
 
 ### Changed
 - Java wrapper now creates a separated managed object for const native pointers and print an error log when trying to use a non-const method on it.
 - Java & C# wrapper now takes a strong reference on listeners, allowing to use inner classes & lambda expressions even without keeping parent object around.
 - Deprecated methods for more than two years have been removed from wrappers (e.g. every setListener() on some objects).
+- Automatic BYEing of orphan dialogs - this task no longer needs to be done by the proxy, conforming to RFC3261.
+- Generation of C# API documentation now with DocFX.
 
 ### Removed
 - Legacy Java wrapper for Android
+
+### Fixed
+- Erroneous ICE ufrag and passwd parameters sent in reINVITE while ICE was refused previously.
+- Swift and C# wrappers corner-case usage issues.
+- See git log for full list of other minor bugfixes.
+
 
 ## [4.5.0] 2021-03-29
 
