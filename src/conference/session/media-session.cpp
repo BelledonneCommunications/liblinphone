@@ -1317,13 +1317,13 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	L_Q();
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
-	cfg.dir = dir;
 	md->streams[idx].type = type;
+	const auto & core = q->getCore()->getCCore();
 	if (enabled && !codecs.empty()) {
 		md->streams[idx].name = name;
-		const auto & core = q->getCore()->getCCore();
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
 		cfg.rtcp_mux = rtcpMux;
+		cfg.dir = dir;
 		md->streams[idx].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 
 		cfg.replacePayloads(codecs);
@@ -1340,6 +1340,7 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	} else {
 		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
 		md->streams[idx].rtp_port = 0;
+		cfg.dir = linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? dir : SalStreamInactive;
 	}
 	if (customSdpAttributes)
 		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
@@ -2153,10 +2154,12 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
+	const bool doNotAddSdpToInvite = q->getCore()->getCCore()->sip_conf.sdp_200_ack && !getParams()->getPrivate()->getInternalCallUpdate();
+	if (doNotAddSdpToInvite) {
 		op->setLocalMediaDescription(nullptr);
+	}
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
+	if (doNotAddSdpToInvite) {
 		// We are NOT offering, set local media description after sending the call so that we are ready to
 		// process the remote offer when it will arrive.
 		op->setLocalMediaDescription(localDesc);
