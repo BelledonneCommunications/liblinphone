@@ -280,7 +280,6 @@ lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() 
 			fixCallParams(rmd, false);
 
 			setState(nextState, nextStateMsg);
-
 			bool capabilityNegotiationReInviteSent = false;
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
@@ -1504,8 +1503,6 @@ lInfo() << __func__ << " local is offerer " << localIsOfferer;
 	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainVideoStreamIndex));
 	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainTextStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
-	getStreamsGroup().fillLocalMediaDescription(ctx);
-
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
