@@ -602,6 +602,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		
 		if (stream.getChosenConfiguration().dtls_role != SalDtlsRoleInvalid){ /* If DTLS is available at both end points */
 			/* Give the peer certificate fingerprint to dtls context */
+lInfo() << __func__ << " DEBUG DEBUG DTLS result stream " << stream.hasDtls() << " remote " <<  params.getRemoteStreamDescription().hasDtls() << " finger print " << params.getRemoteStreamDescription().getChosenConfiguration().dtls_fingerprint << " context " << ms->sessions.dtls_context;
 			ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, L_STRING_TO_C(params.getRemoteStreamDescription().getChosenConfiguration().dtls_fingerprint));
 		}
 	}
@@ -761,6 +762,7 @@ lError() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string
 		
 		/* If DTLS is available at both end points */
 		/* Give the peer certificate fingerprint to dtls context */
+lInfo() << __func__ << " DEBUG DEBUG DTLS result stream " << resultStreamDesc.hasDtls() << " remote " <<  params.getRemoteStreamDescription().hasDtls() << " finger print " << params.getRemoteStreamDescription().getChosenConfiguration().dtls_fingerprint << " context " << mSessions.dtls_context ;
 		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, L_STRING_TO_C(params.getRemoteStreamDescription().getChosenConfiguration().dtls_fingerprint));
 		ms_dtls_srtp_set_role(mSessions.dtls_context, (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
 		ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
@@ -834,6 +836,8 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 	MediaStream * ms = getMediaStream();
 
 	setupSrtp(params);
+
+lInfo() << __func__ << " DEBUG DEBUG result stream has ZRTP " << resultStreamDesc.hasZrtp() << " DTLS " << resultStreamDesc.hasDtls();
 
 	if (resultStreamDesc.hasZrtp()) {
 		if (!mSessions.zrtp_context) {
