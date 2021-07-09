@@ -740,6 +740,7 @@ void MS2Stream::initDtlsParams (MediaStream *ms) {
 }
 
 void MS2Stream::startDtls(const OfferAnswerContext &params){
+lError() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(getType());
 	if (mDtlsStarted) {
 		lWarning() << "DTLS engine on stream session [" << &mSessions << "] is already started";
 		return;

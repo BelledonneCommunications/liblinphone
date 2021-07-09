@@ -204,7 +204,7 @@ const std::pair<std::list<std::list<config_capability<cap_type>>>, bool> Potenti
 		const auto capIdList = bctoolbox::Utils::split(config, capDelim);
 		std::list<config_capability<cap_type>> caps;
 		for (const auto & index : capIdList) {
-			belle_sip_message("configuration is %s index is %s", config.c_str(), index.c_str());
+			lDebug() << "configuration is " << config << " index is " << index;
 			const auto startOptPos = index.find(startOptDelim);
 			const auto endOptPos = index.find(endOptDelim);
 			if (startOptPos != std::string::npos) {
@@ -217,7 +217,7 @@ const std::pair<std::list<std::list<config_capability<cap_type>>>, bool> Potenti
 				return (cap->index == idx);
 			});
 			if (capIt == availableCaps.cend()) {
-				belle_sip_error("Unable to find capability with index %d - skipping it", idx);
+				lError() << "Unable to find capability with index " << idx << " - skipping it";
 				// Configuration is not valid - clear all capabilities
 				caps.clear();
 				success = false;
