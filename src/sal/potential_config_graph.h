@@ -30,6 +30,7 @@
 #include "utils/general-internal.h"
 #include "bctoolbox/utils.hh"
 #include "belle-sip/belle-sip.h"
+#include "logger/logger.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
