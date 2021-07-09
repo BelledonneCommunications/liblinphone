@@ -835,6 +835,8 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 
 	setupSrtp(params);
 
+lInfo() << __func__ << " DEBUG DEBUG result stream has ZRTP " << resultStreamDesc.hasZrtp() << " DTLS " << resultStreamDesc.hasDtls();
+
 	if (resultStreamDesc.hasZrtp()) {
 		if (!mSessions.zrtp_context) {
 			initZrtp();
