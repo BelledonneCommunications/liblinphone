@@ -625,7 +625,7 @@ void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *
 void set_playback_gain_db(AudioStream *st, float gain);
 
 LinphoneMediaDirection media_direction_from_sal_stream_dir(SalStreamDir dir);
-SalStreamDir sal_dir_from_call_params_dir(LinphoneMediaDirection cpdir);
+LINPHONE_PUBLIC SalStreamDir sal_dir_from_call_params_dir(LinphoneMediaDirection cpdir);
 
 /*****************************************************************************
  * LINPHONE CONTENT PRIVATE ACCESSORS                                        *
