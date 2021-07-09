@@ -138,8 +138,9 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER)
 			linphone-cxx-wrapper
 		)
 		add_custom_target(linphone-cpp-html-doc ALL DEPENDS "${CPP_HTML_DIR}/index.html")
-
-		install(DIRECTORY "${CPP_HTML_DIR}"
-			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
+		if(ENABLE_DOC)
+			install(DIRECTORY "${CPP_HTML_DIR}"
+				DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
+		endif()
 	endif()
 endif()
