@@ -164,6 +164,7 @@ int Stream::selectFixedPort (pair<int, int> portRange) {
 }
 
 void Stream::setPortConfig(pair<int, int> portRange) {
+lInfo() << __func__ << " DEBUG DEBUG port range min " << portRange.first << " max " << portRange.second;
 	if ((portRange.first <= 0) && (portRange.second <= 0)) {
 		setRandomPortConfig();
 	} else {

@@ -203,8 +203,14 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	if (localDesc.rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && !localDesc.getPayloads().empty()){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
-		localDesc.rtp_port = mPortConfig.rtpPort;
-		localDesc.rtcp_port = mPortConfig.rtcpPort;
+		if (linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(getCCore()) && (localDesc.getDirection() == SalStreamInactive)) {
+			localDesc.rtp_port = 0;
+			localDesc.rtcp_port = 0;
+		} else {
+lInfo() << __func__ << " DEBUG DEBUG rtp port " << mPortConfig.rtpPort;
+			localDesc.rtp_port = mPortConfig.rtpPort;
+			localDesc.rtcp_port = mPortConfig.rtcpPort;
+		}
 	}
 	if (!isTransportOwner()){
 		/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
@@ -516,6 +522,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 	}
 	
 	info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
+lInfo() << __func__ << " DEBUG DEBUG stream address " << stream.rtp_addr << " media address " << params.resultMediaDescription->addr << " RTP address " << info->rtpAddr;
 	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
 	info->rtpPort = stream.rtp_port;
 	info->rtcpAddr = stream.rtcp_addr.empty() == false ? stream.rtcp_addr : info->rtpAddr;
@@ -578,6 +585,7 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const auto & stream = params.getResultStreamDescription();
 	std::string rtpAddr = (stream.rtp_addr.empty() == false) ? stream.rtp_addr : params.resultMediaDescription->addr;
+lInfo() << __func__ << " DEBUG DEBUG stream address " << stream.rtp_addr << " media address " << params.resultMediaDescription->addr << " RTP address " << rtpAddr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr.c_str());
 	MediaStream *ms = getMediaStream();
 	
