@@ -48,6 +48,7 @@ struct _LinphoneAccountCreatorService {
 	LinphoneAccountCreatorRequestFunc recover_account_request_cb; /**< Request to recover account */
 	LinphoneAccountCreatorRequestFunc update_account_request_cb; /**< Request to update account */
 	LinphoneAccountCreatorRequestFunc login_linphone_account_request_cb; /**< Request to get password & algorithm from confirmation key */
+	LinphoneAccountCreatorRequestFunc get_validation_account_request_cb; /**< Request to get a validation account request */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorService);
@@ -73,6 +74,7 @@ struct _LinphoneAccountCreatorCbs {
 	LinphoneAccountCreatorCbsStatusCb update_account_response_cb; /**< Response of update_account request */
 
 	LinphoneAccountCreatorCbsStatusCb login_linphone_account_response_cb; /** < Response of login_linphone_account request */
+	LinphoneAccountCreatorCbsStatusCb get_validation_account_response_cb; /**< Response of get_validation_account request */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorCbs);
@@ -101,6 +103,10 @@ struct _LinphoneAccountCreator {
 	char *phone_country_code; /**< User phone number country code */
 	/* Email(Alias) */
 	char *email; /**< User email */
+	/* Push parameters for validation account creation*/
+	char * pnProvider;
+	char * pnParam;
+	char * pnPrid;
 	/* Misc */
 	char *language; /**< User language */
 	char *activation_code; /**< Account validation code */
@@ -212,6 +218,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_pas
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_linphone(LinphoneAccountCreator *creator);
+
+/**
+ * Send an XML-RPC request to create a validation account and send the credentials through push notification
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_validation_account_linphone(LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }
