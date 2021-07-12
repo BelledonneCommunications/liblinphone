@@ -29,6 +29,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+static BOOL migrationDone = FALSE;
+
 std::string SysPaths::getDataPath (void *context) {
 	NSString *fullPath;
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
@@ -86,17 +88,23 @@ std::string SysPaths::getConfigPath (void *context) {
 }
 
 std::string SysPaths::getDownloadPath (void *context) {
+	/*
+	 Apple clears Cache when the disk is full. So use "Library/Images/" as the download path.
+	 */
+	NSString *oldFullPath;
 	NSString *fullPath;
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
 		const char* appGroupId = static_cast<const char *>(context);
 		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
 		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
+		oldFullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Images/"];
 	} else {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		NSString *configPath = [paths objectAtIndex:0];
-		fullPath = [configPath stringByAppendingString:@"/"];
+		oldFullPath = [configPath stringByAppendingString:@"/"];
+		fullPath = [oldFullPath stringByReplacingOccurrencesOfString:@"Caches" withString:@"Images"];
 	}
 
 	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
@@ -108,6 +116,17 @@ std::string SysPaths::getDownloadPath (void *context) {
 															 error:&error]) {
 			lError() << "Create download path directory error: " << error.description;
 		}
+	}
+
+	if (!migrationDone) {
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		NSArray *images = [fileManager contentsOfDirectoryAtPath:oldFullPath error:NULL];
+		for (NSString *image in images)
+		{
+			[fileManager moveItemAtPath:[oldFullPath stringByAppendingPathComponent:image] toPath:[fullPath stringByAppendingPathComponent:image] error:nil];
+		}
+		migrationDone = TRUE;
+		lInfo() << "Download path migration done.";
 	}
 
 	return fullPath.UTF8String;
