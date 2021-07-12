@@ -100,6 +100,7 @@ static void simple_audio_call_with_srtp_dtls(void){
 typedef struct params{
 	bool_t with_ice;
 	bool_t with_dtls_srtp;
+	bool_t with_media_relay;
 } params_t;
 
 static void audio_video_call(const params_t *params) {
@@ -110,6 +111,14 @@ static void audio_video_call(const params_t *params) {
 	
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	if (params->with_media_relay) {
+		linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
+		linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
+
+		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
+		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
+	}
 
 	linphone_core_enable_rtp_bundle(marie->lc, TRUE);
 	
@@ -149,7 +158,7 @@ static void audio_video_call(const params_t *params) {
 	linphone_video_activation_policy_unref(vpol);
 	
 	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
-	pauline_call=linphone_core_get_current_call(pauline->lc);
+	pauline_call = linphone_core_get_current_call(pauline->lc);
 	marie_call = linphone_core_get_current_call(marie->lc);
 	
 	check_rtp_bundle(pauline_call, TRUE);
@@ -172,8 +181,10 @@ static void audio_video_call(const params_t *params) {
 		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)) == LinphoneMediaEncryptionDTLS);
 		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marie_call)) == LinphoneMediaEncryptionDTLS);
 	}
-	
-	
+
+	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(pauline_call)), 8.0, float, "%f");
+	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(marie_call)), 8.0, float, "%f");
+
 	end_call(marie,pauline);
 	
 end:
@@ -199,12 +210,19 @@ static void audio_video_call_with_ice_and_dtls_srtp(void) {
 	audio_video_call(&params);
 }
 
+static void audio_video_call_with_forced_media_relay(void) {
+	params_t params = {0};
+	params.with_media_relay = TRUE;
+	audio_video_call(&params);
+}
+
 static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
 	TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
 	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
 	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
-	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp)
+	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp),
+	TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),
 };
 
 test_suite_t call_with_rtp_bundle_test_suite = {"Call with RTP bundle", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
