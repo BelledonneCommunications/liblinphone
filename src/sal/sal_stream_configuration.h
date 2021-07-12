@@ -143,8 +143,8 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		bool bundle_only = false;
 		bool implicit_rtcp_fb = false;
 		bool pad[2]; /* Use me */
-		OrtpRtcpFbConfiguration rtcp_fb;
-		OrtpRtcpXrConfiguration rtcp_xr;
+		OrtpRtcpFbConfiguration rtcp_fb{};
+		OrtpRtcpXrConfiguration rtcp_xr{};
 		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 		std::string mid; /* Media line identifier for RTP bundle mode */
 		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */

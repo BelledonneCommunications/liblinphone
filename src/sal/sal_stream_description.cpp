@@ -1313,10 +1313,10 @@ void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & c
 		if ((keywordcmp("candidate", att_name) == 0)
 				&& (value != NULL)) {
 			SalIceCandidate candidate;
-			char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-			char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-			char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-			char proto[4];
+			char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN] = { 0 };
+			char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN] = { 0 };
+			char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN] = { 0 };
+			char proto[4] = { 0 };
 			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d",
 				foundation, &candidate.componentID, proto, &candidate.priority, addr, &candidate.port,
 				type, raddr, &candidate.rport);
