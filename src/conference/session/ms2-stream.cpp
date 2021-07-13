@@ -740,6 +740,7 @@ void MS2Stream::initDtlsParams (MediaStream *ms) {
 }
 
 void MS2Stream::startDtls(const OfferAnswerContext &params){
+lError() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(getType());
 	if (mDtlsStarted) {
 		lWarning() << "DTLS engine on stream session [" << &mSessions << "] is already started";
 		return;
@@ -833,6 +834,8 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 	MediaStream * ms = getMediaStream();
 
 	setupSrtp(params);
+
+lInfo() << __func__ << " DEBUG DEBUG result stream has ZRTP " << resultStreamDesc.hasZrtp() << " DTLS " << resultStreamDesc.hasDtls();
 
 	if (resultStreamDesc.hasZrtp()) {
 		if (!mSessions.zrtp_context) {
