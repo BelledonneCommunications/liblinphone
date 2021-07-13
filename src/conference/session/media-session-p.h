@@ -87,6 +87,7 @@ public:
 	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys() const;
 
 	unsigned int getAudioStartCount () const;
+	unsigned int getAudioStopCount () const;
 	unsigned int getVideoStartCount () const;
 	unsigned int getTextStartCount () const;
 	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }

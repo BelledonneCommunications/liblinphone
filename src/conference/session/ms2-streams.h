@@ -210,6 +210,7 @@ private:
 	bool mSpeakerMuted = false;
 	bool mRecordActive = false;
 	bool mStartZrtpLater = false;
+	bool mRestartStreamRequired = false;	// Set to true if the stream need to stop on render().
 	static constexpr const int ecStateMaxLen = 1048576; /* 1Mo */
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
 };
