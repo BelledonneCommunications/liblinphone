@@ -349,6 +349,8 @@ char *linphone_content_get_plain_file_path (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile()) {
 		return bctbx_strdup(static_cast<const LinphonePrivate::FileContent *>(c)->getPlainFilePath().c_str());
+	} else if (c->isFileTransfer()) {
+		return bctbx_strdup(static_cast<const LinphonePrivate::FileTransferContent *>(c)->getPlainFilePath().c_str());
 	}
 	return NULL;
 }
@@ -381,6 +383,8 @@ bool_t linphone_content_is_file_encrypted (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile()) {
 		return static_cast<const LinphonePrivate::FileContent *>(c)->isEncrypted();
+	} else if (c->isFileTransfer()) {
+		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->isEncrypted();
 	}
 	return FALSE;
 }
