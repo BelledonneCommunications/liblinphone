@@ -4738,6 +4738,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 
 	// Pauline goes offline
 	int dummy = 0;
+	wait_for_list(coresList, &dummy, 1, 5000); // Ensures 200 OK of the NOTIFY has been ACK'ed
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	wait_for_list(coresList, &dummy, 1, 2000);
 	
