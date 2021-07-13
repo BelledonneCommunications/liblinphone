@@ -664,7 +664,8 @@ void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 void lime_delete_DRSessions(const char *limedb);
 
 void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct);// if defunct : Set fps to 0 and keep it on updates. if false : remove fps protection.
-
+bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *name);
+bctbx_list_t * liblinphone_tester_remove_v6_addr(bctbx_list_t *l);
 
 #ifdef __cplusplus
 };
