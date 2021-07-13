@@ -793,6 +793,11 @@ Call::Call (
 	mParticipant = Participant::create();
 	mParticipant->createSession(getCore(), nullptr, TRUE, this);
 	mParticipant->getSession()->configure(direction, callid);
+	if (linphone_core_find_call_log(getCore()->getCCore(), callid.c_str(), linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "misc", "call_logs_search_limit", 5))) {
+		/* Before create a new call, check if the call log with the same callid is created.
+		   If yes, that means the call is already aborted. */
+		mParticipant->getSession()->getLog()->early_aborted = TRUE;
+	}
 }
 
 Call::~Call () {
