@@ -237,4 +237,14 @@ bool FileTransferContent::isFileTransfer () const {
 	return true;
 }
 
+bool FileTransferContent::isEncrypted () const {
+	L_D();
+	return isFileEncrypted(d->filePath);
+}
+
+const string FileTransferContent::getPlainFilePath() const {
+	L_D();
+	return getPlainFilePathFromEncryptedFile(d->filePath);
+}
+
 LINPHONE_END_NAMESPACE

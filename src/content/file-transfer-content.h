@@ -78,6 +78,9 @@ public:
 	bool isFile () const override;
 	bool isFileTransfer () const override;
 
+	bool isEncrypted () const;
+	const std::string getPlainFilePath () const;
+
 private:
 	L_DECLARE_PRIVATE(FileTransferContent);
 };
