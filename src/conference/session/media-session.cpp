@@ -999,6 +999,11 @@ unsigned int MediaSessionPrivate::getAudioStartCount () const {
 	return s ? (unsigned int)s->getStartCount() : 0;
 }
 
+unsigned int MediaSessionPrivate::getAudioStopCount () const {
+	Stream *s = getStreamsGroup().lookupMainStream(SalAudio);
+	return s ? (unsigned int)s->getStopCount() : 0;
+}
+
 unsigned int MediaSessionPrivate::getVideoStartCount () const {
 	Stream *s = getStreamsGroup().lookupMainStream(SalVideo);
 	return s ? (unsigned int)s->getStartCount() : 0;
