@@ -570,6 +570,7 @@ int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, 
 
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr);
 void check_stream_encryption(LinphoneCall * call);
+int get_stream_stop_count(LinphoneCall * call);
 bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr);
 
 LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted);
