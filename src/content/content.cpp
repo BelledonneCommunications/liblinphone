@@ -27,6 +27,9 @@
 #include "content-type.h"
 #include "header/header.h"
 
+#include "bctoolbox/vfs_encrypted.hh"
+#include "logger/logger.h"
+
 // =============================================================================
 
 using namespace std;
@@ -250,5 +253,87 @@ void Content::setUserData(const Variant &userData) {
 Variant Content::getUserData() const {
 	return getProperty("LinphonePrivate::Content::userData");
 }
+
+bool Content::isFileEncrypted (const string& filePath) const {
+	if (filePath.empty()) {
+		return false;
+	}
+	
+	// open the file using encrypted vfs
+	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.data(), "r");
+	if (fp == NULL) {
+		lError() << "[Content] Can't open file " << filePath << " to decrypt it";
+		return false;
+	}
+
+	auto ret = bctbx_file_is_encrypted(fp);
+	bctbx_file_close(fp);
+
+	return (ret == TRUE);
+}
+
+const string Content::getPlainFilePathFromEncryptedFile(const string& filePath) const {
+	if (filePath.empty()) {
+		return filePath;
+	}
+
+	string plainPath(filePath);
+	plainPath.append(".bctbx_evfs_plain"); // TODO: have a tmp dir to store all plain version so it is easier to clean?
+
+	// open the file using encrypted vfs
+	auto cf = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.data(), "r");
+	// open the plain file using standard vfs
+	if (cf == NULL)   {
+		lError() << "[Content] Can't open file " << filePath << " to decrypt it";
+		return std::string();
+	}
+
+	auto fileSize = bctbx_file_size(cf);
+	if (fileSize < 0) {
+		lError() << "[Content] Can't read size of file "<< filePath;
+		bctbx_file_close(cf);
+		return std::string();
+	}
+
+	auto pf = bctbx_file_open(bctbx_vfs_get_standard(), plainPath.data(), "w");
+	if (pf == NULL)   {
+		lError() << "[Content] Can't create file " << plainPath << " to decrypt "<< filePath;
+		return std::string();
+	}
+	
+	size_t constexpr bufSize = 100*1024; // read by chunks of 100 kB
+	uint8_t *readBuf = new uint8_t[bufSize];
+	ssize_t readSize = 0;
+	while(readSize < fileSize) {
+		auto read = bctbx_file_read(cf, readBuf, bufSize, readSize);
+		if (read < 0) {
+			lError() << "[Content] Can't read file " << filePath << " to decrypt it";
+			bctbx_file_close(cf);
+			bctbx_file_close(pf);
+			std::remove(plainPath.data());
+			delete[] readBuf;
+			return std::string();
+		}
+
+		auto write = bctbx_file_write(pf, readBuf, (size_t)read, readSize);
+		if (write < 0 || write != read) {
+			lError() << "[Content] Can't write file " << plainPath << " - plain version of " << filePath;
+			bctbx_file_close(cf);
+			bctbx_file_close(pf);
+			std::remove(plainPath.data());
+			delete[] readBuf;
+			return std::string();
+		}
+		
+		readSize += read;
+	}
+
+	delete[] readBuf;
+	bctbx_file_close(cf);
+	bctbx_file_close(pf);
+
+	return plainPath;
+}
+
 
 LINPHONE_END_NAMESPACE
