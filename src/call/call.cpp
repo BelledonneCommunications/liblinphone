@@ -69,6 +69,10 @@ unsigned int Call::getAudioStartCount () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioStartCount();
 }
 
+unsigned int Call::getAudioStopCount () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioStopCount();
+}
+
 unsigned int Call::getVideoStartCount () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getVideoStartCount();
 }

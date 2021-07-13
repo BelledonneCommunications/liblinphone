@@ -116,6 +116,10 @@ unsigned int _linphone_call_get_nb_audio_starts (const LinphoneCall *call) {
 	return Call::toCpp(call)->getAudioStartCount();
 }
 
+unsigned int _linphone_call_get_nb_audio_stops (const LinphoneCall *call) {
+	return Call::toCpp(call)->getAudioStopCount();
+}
+
 unsigned int _linphone_call_get_nb_video_starts (const LinphoneCall *call) {
 	return Call::toCpp(call)->getVideoStartCount();
 }
