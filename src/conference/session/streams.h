@@ -140,6 +140,7 @@ public:
 	// Returns whether this stream is the "main" one of its own type, in constrat to secondary streams.
 	bool isMain()const{ return mIsMain;}
 	int getStartCount()const{ return mStartCount; }
+	int getStopCount()const{ return mStopCount; }
 	const PortConfig &getPortConfig()const{ return mPortConfig; }
 	virtual ~Stream() = default;
 	static std::string stateToString(State st){
@@ -179,6 +180,7 @@ private:
 	State mState = Stopped;
 	StreamMixer *mMixer = nullptr;
 	bool mIsMain = false;
+	int mStopCount = 0; /* Count of stop() */
 };
 
 inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){

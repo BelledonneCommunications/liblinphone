@@ -105,6 +105,7 @@ LINPHONE_PUBLIC VideoStream * linphone_core_get_preview_stream(LinphoneCore *cal
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_call_get_dest_proxy(const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_starts (const LinphoneCall *call);
+LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_stops (const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_video_starts (const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call);
 LINPHONE_PUBLIC belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call);

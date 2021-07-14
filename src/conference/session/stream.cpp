@@ -91,6 +91,7 @@ void Stream::sessionConfirmed(const OfferAnswerContext &ctx){
 
 void Stream::stop(){
 	mState = Stopped;
+	++mStopCount;
 }
 
 void Stream::setIceCheckList(IceCheckList *cl){
