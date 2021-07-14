@@ -134,6 +134,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_acc
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator);
 
 /**
+ * Send a request to generate a validation account and send it credentials back through a push notification
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_validation_account(LinphoneAccountCreator *creator);
+
+/**
  * Acquire a reference to the LinphoneAccountCreator.
  * @param creator #LinphoneAccountCreator object. @notnil
  * @return The same #LinphoneAccountCreator object. @notnil
@@ -303,6 +310,45 @@ LINPHONE_PUBLIC LinphoneAccountCreatorEmailStatus linphone_account_creator_set_e
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_email(const LinphoneAccountCreator *creator);
 
+/**
+ * Set the pn provider for push notification reception.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pnProvider The pnProvider to set @maybenil
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_pn_provider(LinphoneAccountCreator *creator, const char *pnProvider);
+
+/**
+ * Get the pn provider for push notification reception.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The pnProvider of the #LinphoneAccountCreator. @maybenil
+**/
+LINPHONE_PUBLIC const char * linphone_account_creator_get_pn_provider(const LinphoneAccountCreator *creator);
+/**
+ * Set the pn param for push notification reception.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pnParam The pnParam to set @maybenil
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_pn_param(LinphoneAccountCreator *creator, const char *pnParam);
+
+/**
+ * Get the pn param for push notification reception.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The pnParam of the #LinphoneAccountCreator. @maybenil
+**/
+LINPHONE_PUBLIC const char * linphone_account_creator_get_pn_param(const LinphoneAccountCreator *creator);
+/**
+ * Set the pn prid for push notification reception.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pnPrid The pnPrid to set @maybenil
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_pn_prid(LinphoneAccountCreator *creator, const char *pnPrid);
+
+/**
+ * Get the pn prid for push notification reception.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The pnPrid of the #LinphoneAccountCreator. @maybenil
+**/
+LINPHONE_PUBLIC const char * linphone_account_creator_get_pn_prid(const LinphoneAccountCreator *creator);
 /**
  * Set the domain.
  * @param creator #LinphoneAccountCreator object @notnil
@@ -561,6 +607,20 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
  * @param cb The login linphone account request to be used.
 **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the get validation account request.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @return The get validation account request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_validation_account(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @param cb The get validation account request to be used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_validation_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /************************** End Account Creator Cbs **************************/
 
