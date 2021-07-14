@@ -605,6 +605,11 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized boolean isActiveNetworkWifiOnlyCompliant() {
+        if (mNetworkManager == null) {
+            Log.w("[Platform Helper] Network Manager is null, assuming network isn't WiFi only compliant");
+            return false;
+        }
+
         NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo();
         if (networkInfo != null) {
             Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
@@ -620,6 +625,11 @@ public class AndroidPlatformHelper {
     public synchronized void updateNetworkReachability() {
         if (mNativePtr == 0) {
             Log.w("[Platform Helper] Native pointer has been reset, stopping there");
+            return;
+        }
+
+        if (mNetworkManager == null) {
+            Log.w("[Platform Helper] Network Manager is null, stopping there");
             return;
         }
 
