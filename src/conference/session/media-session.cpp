@@ -164,6 +164,10 @@ bool MediaSessionPrivate::tryEnterConference() {
 	return false;
 }
 
+bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> & md) const {
+	return (md && (!md->isAcceptable() || incompatibleSecurity(md)));
+}
+
 void MediaSessionPrivate::accepted () {
 	L_Q();
 	CallSessionPrivate::accepted();
@@ -180,6 +184,7 @@ void MediaSessionPrivate::accepted () {
 				if (!localIsOfferer) {
 					// We were waiting for an incoming offer. Now prepare the local media description according to remote offer.
 					initializeParamsAccordingToIncomingCallParams();
+lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() ? localIsOfferer : true);
 					makeLocalMediaDescription(op->getRemoteMediaDescription() ? localIsOfferer : true, q->isCapabilityNegotiationEnabled(), false);
 				}
 				/*
@@ -209,8 +214,9 @@ void MediaSessionPrivate::accepted () {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (md && (md->isEmpty() || incompatibleSecurity(md)))
+	if (rejectMediaSession(md)) {
 		md = nullptr;
+	}
 	if (md) {
 		/* There is a valid SDP in the response, either offer or answer, and we're able to start/update the streams */
 		CallSession::State nextState = CallSession::State::Idle;
@@ -223,8 +229,9 @@ void MediaSessionPrivate::accepted () {
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::Updating:
 			case CallSession::State::UpdatedByRemote:
+				// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
 				if (!localDesc->hasDir(SalStreamInactive)
-					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive))) {
+					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 					nextState = CallSession::State::PausedByRemote;
 					nextStateMsg = "Call paused by remote";
 				} else {
@@ -274,7 +281,6 @@ void MediaSessionPrivate::accepted () {
 			fixCallParams(rmd, false);
 
 			setState(nextState, nextStateMsg);
-
 			bool capabilityNegotiationReInviteSent = false;
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
@@ -591,6 +597,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
 			useNegotiatedMediaProtocol = false;
 		}
+lInfo() << __func__ << " local is offerer " << (rmd == nullptr);
 		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
 	// Fix local parameter after creating new local media description
@@ -600,7 +607,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
 		std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
-		if (md && (md->isEmpty() || incompatibleSecurity(md))) {
+		if (rejectMediaSession(md)) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
@@ -858,15 +865,25 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			/*
 			 * This is to avoid to re-propose again some streams that have just been declined.
 			 */
-			if (getParams()->audioEnabled() && !rcp->audioEnabled()) {
+			const auto & audioStream = rmd->findBestStream(SalAudio);
+			// Do not change local call parameters if remote answered with an inactive stream with RTP port set to 0
+			// This occurs with clients such as Avaya that put a call on hold by setting streams with inactive direction and RTP port to 0
+			// Scenario:
+			// - client1 sends an INVITE without SDP
+			// - client2 puts its offer down in the 200Ok
+			// - client1 answers with inactive stream abd RTP port set to 0
+			// Without the workaround, a deadlock is created - client1 has inactive streams and client2 has audio/video/text capabilities disabled in its local call parameters because the stream was rejected earlier on. Therefore it would be impossible to resume the streams on both sides.
+			if (getParams()->audioEnabled() && ((audioStream.getDirection() != SalStreamInactive) || (audioStream.getRtpPort() != 0)) && !rcp->audioEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling audio in our call params because the remote doesn't want it";
 				getParams()->enableAudio(false);
 			}
-			if (getParams()->videoEnabled() && !rcp->videoEnabled()) {
+			const auto & videoStream = rmd->findBestStream(SalAudio);
+			if (getParams()->videoEnabled() && ((videoStream.getDirection() != SalStreamInactive) || (videoStream.getRtpPort() != 0)) && !rcp->videoEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling video in our call params because the remote doesn't want it";
 				getParams()->enableVideo(false);
 			}
-			if (getParams()->realtimeTextEnabled() && !rcp->realtimeTextEnabled()) {
+			const auto & textStream = rmd->findBestStream(SalText);
+			if (getParams()->realtimeTextEnabled() && ((textStream.getDirection() != SalStreamInactive) || (textStream.getRtpPort() != 0)) && !rcp->realtimeTextEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling RTT in our call params because the remote doesn't want it";
 				getParams()->enableRealtimeText(false);
 			}
@@ -1307,12 +1324,12 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
 	md->streams[idx].type = type;
+	const auto & core = q->getCore()->getCCore();
 	if (enabled && !codecs.empty()) {
 		md->streams[idx].name = name;
-		cfg.dir = dir;
-		const auto & core = q->getCore()->getCCore();
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
 		cfg.rtcp_mux = rtcpMux;
+		cfg.dir = dir;
 		md->streams[idx].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 
 		cfg.replacePayloads(codecs);
@@ -1328,8 +1345,8 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 
 	} else {
 		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
-		cfg.dir = SalStreamInactive;
 		md->streams[idx].rtp_port = 0;
+		cfg.dir = linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? dir : SalStreamInactive;
 	}
 	if (customSdpAttributes)
 		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
@@ -1343,6 +1360,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
+lInfo() << __func__ << " local is offerer " << localIsOfferer;
 	this->localIsOfferer = localIsOfferer;
 	assignStreamsIndexes(localIsOfferer);
 
@@ -1352,6 +1370,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if (!subject.empty()) {
 		md->name = subject;
 	}
+	md->origin_addr = mediaLocalIp;
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 
@@ -1491,8 +1510,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainVideoStreamIndex));
 	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainTextStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
-	getStreamsGroup().fillLocalMediaDescription(ctx);
-
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
@@ -1893,13 +1910,18 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	resultDesc = newMd;
 
 	// Encryption may have changed during the offer answer process and not being the default one. Typical example of this scenario is when capability negotiation is enabled and if ZRTP is only enabled on one side and the other side supports it
-	negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
-	lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+	if (newMd->isEmpty()) {
+		lInfo() << "All streams have been rejected, hence negotiated media encryption keeps being " << linphone_media_encryption_to_string(negotiatedEncryption);
+	} else {
+		negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
+		lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+	}
 
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op->getRemoteMediaDescription();
 	ctx.resultMediaDescription = resultDesc;
+lInfo() << __func__ << " local is offerer " << localIsOfferer;
 	ctx.localIsOfferer = localIsOfferer;
 	getStreamsGroup().render(ctx, targetState);
 
@@ -2031,8 +2053,9 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
-	else
-		op->notifyRinging(false);
+	else {
+		op->notifyRinging(false, linphone_core_get_100rel_support_level(q->getCore()->getCCore()));
+	}
 
 	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
@@ -2100,6 +2123,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	}
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
+lInfo() << __func__ << " local is offerer true";
 	makeLocalMediaDescription(true, false, true);
 	op->update(subject.c_str(), false);
 
@@ -2117,6 +2141,7 @@ int MediaSessionPrivate::restartInvite () {
 	L_Q();
 	stopStreams();
 	getStreamsGroup().clearStreams();
+lInfo() << __func__ << " local is offerer true";
 	makeLocalMediaDescription(true, q->isCapabilityNegotiationEnabled(), false);
 	return CallSessionPrivate::restartInvite();
 }
@@ -2139,10 +2164,12 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
+	const bool doNotAddSdpToInvite = q->getCore()->getCCore()->sip_conf.sdp_200_ack && !getParams()->getPrivate()->getInternalCallUpdate();
+	if (doNotAddSdpToInvite) {
 		op->setLocalMediaDescription(nullptr);
+	}
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
+	if (doNotAddSdpToInvite) {
 		// We are NOT offering, set local media description after sending the call so that we are ready to
 		// process the remote offer when it will arrive.
 		op->setLocalMediaDescription(localDesc);
@@ -2378,6 +2405,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	const bool isOfferer = (op->getRemoteMediaDescription() ? false : true);
 
+lInfo() << __func__ << " local is offerer " << isOfferer;
 	if (msp || (localDesc == nullptr)) makeLocalMediaDescription(isOfferer, q->isCapabilityNegotiationEnabled(), false);
 
 	// If call is going to be accepted, then recreate the local media description if there is no local description or encryption is mandatory.
@@ -2433,6 +2461,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		getParams()->enableVideo(false);
 	}
 	updateRemoteSessionIdAndVer();
+lInfo() << __func__ << " local is offerer " << isRemoteDescNull;
 	makeLocalMediaDescription(isRemoteDescNull, q->isCapabilityNegotiationEnabled(), false);
 
 	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
@@ -2630,10 +2659,11 @@ LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 	/* If parameters are passed, update the media description */
 	if (msp) {
 		d->setParams(new MediaSessionParams(*msp));
+lInfo() << __func__ << " local is offerer false";
 		d->makeLocalMediaDescription(false, isCapabilityNegotiationEnabled(), false);
 		d->op->setSentCustomHeaders(d->getParams()->getPrivate()->getCustomHeaders());
 	}
-	d->op->notifyRinging(true);
+	d->op->notifyRinging(true, linphone_core_get_100rel_support_level(getCore()->getCCore()));
 	d->setState(CallSession::State::IncomingEarlyMedia, "Incoming call early media");
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md)
@@ -2675,6 +2705,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->selectOutgoingIpVersion();
 		if (!getCore()->getCCore()->sip_conf.sdp_200_ack){
 			/* Do not make a local media description when sending an empty INVITE. */
+lInfo() << __func__ << " local is offerer true";
 			d->makeLocalMediaDescription(true, isCapabilityNegotiationEnabled(), false);
 		}
 		d->runStunTestsIfNeeded();
@@ -2688,6 +2719,7 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
+lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() ? false : true);
 		d->makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), isCapabilityNegotiationEnabled(), false);
 		if (d->natPolicy)
 			d->runStunTestsIfNeeded();
@@ -2828,6 +2860,7 @@ LinphoneStatus MediaSession::resume () {
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
 	d->setState(CallSession::State::Resuming, "Resuming");
+lInfo() << __func__ << " local is offerer true";
 	d->makeLocalMediaDescription(true, false, true);
 	d->localDesc->setDir(SalStreamSendRecv);
 
@@ -2905,15 +2938,13 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
 
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
-	if (md) {
-		if (md->isEmpty() || d->incompatibleSecurity(md)) {
-			LinphoneErrorInfo *ei = linphone_error_info_new();
-			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
-			if (d->listener)
-				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
-			d->op->decline(SalReasonNotAcceptable);
-			return;
-		}
+	if (md && (md->isEmpty() || d->incompatibleSecurity(md))) {
+		LinphoneErrorInfo *ei = linphone_error_info_new();
+		linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
+		if (d->listener)
+			d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+		d->op->decline(SalReasonNotAcceptable);
+		return;
 	}
 
 	CallSession::startIncomingNotification(notifyRinging);
@@ -3021,6 +3052,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 	if (d->getCurrentParams() == msp)
 		lWarning() << "MediaSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
+lInfo() << __func__ << " local is offerer " << d->localIsOfferer;
 		d->localIsOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->broken = false;
 		d->setState(nextState, "Updating call");
@@ -3438,6 +3470,7 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 		case CallSession::State::PushIncomingReceived:
 			d->setParams(msp ? new MediaSessionParams(*msp) : nullptr);
 			// Update the local media description.
+lInfo() << __func__ << " local is offerer " << (d->state == CallSession::State::OutgoingInit ? !getCore()->getCCore()->sip_conf.sdp_200_ack : false);
 			d->makeLocalMediaDescription((d->state == CallSession::State::OutgoingInit ?
 				!getCore()->getCCore()->sip_conf.sdp_200_ack : false), isCapabilityNegotiationEnabled(), false);
 		break;

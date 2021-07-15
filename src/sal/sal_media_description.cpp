@@ -50,6 +50,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	bandwidth = other.bandwidth;
 	session_ver = other.session_ver;
 	session_id = other.session_id;
+	origin_addr = other.origin_addr;
 
 	dir = other.dir;
 	streams = other.streams;
@@ -83,8 +84,10 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
 	capabilityNegotiationSupported = !potentialCfgGraph.empty();
 
+lInfo() << __func__ << " DEBUG DEBUG parsing connection " << belle_sdp_session_description_get_connection ( sdp ) ;
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
+lInfo() << __func__ << " DEBUG DEBUG rtp address " << addr;
 	}
 	if ( (sname=belle_sdp_session_description_get_session_name(sdp)) && belle_sdp_session_name_get_value(sname) ){
 		name = belle_sdp_session_name_get_value(sname);
@@ -95,6 +98,8 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	}
 
 	belle_sdp_origin_t *origin = belle_sdp_session_description_get_origin(sdp);
+	origin_addr = belle_sdp_origin_get_address(origin);
+lInfo() << __func__ << " DEBUG DEBUG origin address " << origin_addr;
 	session_id = belle_sdp_origin_get_session_id(origin);
 	session_ver = belle_sdp_origin_get_session_version(origin);
 
@@ -146,13 +151,14 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	// Initialize currentStreamIdx to the size of vector streams as streams build from SDP media descriptions are appended.
 	// Generally, at this point, vector streams should be empty
-
 	if (capabilityNegotiationSupported) {
 		for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
+lInfo() << __func__ << " DEBUG DEBUG acap index " << acap->index << " name " << acap->name << " value " << acap->value;
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
 		}
 
 		for (const auto & tcap : potentialCfgGraph.getGlobalTcap()) {
+lInfo() << __func__ << " DEBUG DEBUG tcap index " << tcap->index << " value " << tcap->value;
 			tcaps[tcap->index] = tcap->value;
 		}
 	}
@@ -302,6 +308,13 @@ const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType typ
 
 bool SalMediaDescription::isEmpty() const {
 	if (getNbActiveStreams() > 0) return false;
+	return true;
+}
+
+bool SalMediaDescription::isAcceptable() const {
+	for(auto & stream : streams){
+		if (!stream.isAcceptable()) return false;
+	}
 	return true;
 }
 
@@ -515,7 +528,11 @@ size_t SalMediaDescription::getNbStreams() const {
 	return streams.size();
 }
 
-const std::string & SalMediaDescription::getAddress() const {
+const std::string & SalMediaDescription::getOriginAddress() const {
+	return origin_addr;
+}
+
+const std::string & SalMediaDescription::getConnectionAddress() const {
 	return addr;
 }
 
@@ -546,7 +563,7 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 									  ,session_ver
 									  ,"IN"
 									  , inet6 ? "IP6" :"IP4"
-									  ,L_STRING_TO_C(addr) );
+									  ,L_STRING_TO_C(origin_addr) );
 	if (escaped_username) {
 		bctbx_free(escaped_username);
 	}
