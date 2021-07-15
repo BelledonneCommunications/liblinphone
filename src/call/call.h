@@ -211,6 +211,7 @@ public:
 	LinphoneProxyConfig *getDestProxy () const;
 	IceSession *getIceSession () const;
 	unsigned int getAudioStartCount () const;
+	unsigned int getAudioStopCount () const;
 	unsigned int getVideoStartCount () const;
 	unsigned int getTextStartCount () const;
 	// don't make new code relying on this method.

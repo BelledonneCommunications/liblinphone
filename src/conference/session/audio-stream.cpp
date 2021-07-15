@@ -223,18 +223,27 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
-	
+
 	if (basicChangesHandled) {
 		if (getState() == Running) {
-			bool muted = mMuted;
-			MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
-			if (muted && !mMuted) {
-				lInfo() << "Early media finished, unmuting audio input...";
-				enableMic(micEnabled());
+			if(mRestartStreamRequired) {
+				stop();
+				mRestartStreamRequired = false;
+			}else{
+				bool muted = mMuted;
+				MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
+				if (muted && !mMuted) {
+					lInfo() << "Early media finished, unmuting audio input...";
+					enableMic(micEnabled());
+				}
+				return;
 			}
+		}else{
+			mRestartStreamRequired = false;
+			return;
 		}
-		return;
 	}
+
 	MS2AudioMixer *audioMixer = getAudioMixer();
 	int usedPt = -1;
 	string onHoldFile = "";
@@ -788,12 +797,23 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 }
 	
 void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
-	audio_stream_set_input_ms_snd_card(mStream, audioDevice->getSoundCard());
+	if(!mStream) return;
+	if(audio_stream_set_input_ms_snd_card(mStream, (audioDevice?audioDevice->getSoundCard():NULL)) < 0 ){
+		if(getState() == Running){// New device couldn't update the stream, request to stop it
+			mRestartStreamRequired = true;
+			lInfo() << "[MS2AudioStream] restart stream required for updating input";
+		}
+	}
 }
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
-	if (!mStream) return;
-	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+	if(!mStream) return;
+	if(audio_stream_set_output_ms_snd_card(mStream, (audioDevice?audioDevice->getSoundCard():NULL)) < 0 ){
+		if(getState() == Running){// New device couldn't update the stream, request to stop it
+			mRestartStreamRequired = true;
+			lInfo() << "[MS2AudioStream] restart stream required for updating output";
+		}
+	}
 }
 
 AudioDevice* MS2AudioStream::getInputDevice() const {
