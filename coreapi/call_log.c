@@ -294,6 +294,10 @@ bool_t linphone_call_log_was_conference(const LinphoneCallLog *cl) {
 	return cl->was_conference;
 }
 
+bool_t linphone_call_log_early_aborted(const LinphoneCallLog *cl) {
+	return cl->early_aborted;
+}
+
 const LinphoneErrorInfo *linphone_call_log_get_error_info(const LinphoneCallLog *cl){
 	return cl->error_info;
 }
@@ -748,11 +752,7 @@ LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
 	return result;
 }
 
-static int find_matching_callid(LinphoneCallLog *clg, const char *cid) {
-	return strcmp(clg->call_id, cid);
-}
-
-LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, const char *call_id) {
+LinphoneCallLog * linphone_core_find_call_log(LinphoneCore *lc, const char *call_id, int limit) {
 	char *buf;
 	uint64_t begin,end;
 	CallLogStorageResult clsres;
@@ -760,15 +760,22 @@ LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, con
 
 	if (!lc) return NULL;
 	if (!lc->logs_db) {
-		bctbx_list_t *local_result = bctbx_list_find_custom(lc->call_logs, (int (*)(const void*, const void*))find_matching_callid, call_id);
-		if (local_result) {
-			return (LinphoneCallLog *)bctbx_list_get_data(local_result);
+		long i;
+		bctbx_list_t *item;
+		for (item =  lc->call_logs, i=0; item != NULL && (limit < 1 || i < limit); item = bctbx_list_next(item), i++) {
+			LinphoneCallLog *call_log = reinterpret_cast<LinphoneCallLog *>(bctbx_list_get_data(item));
+			if ( (strcmp(call_log->call_id ,call_id) == 0))
+				return call_log;
 		}
 		return NULL;
 	}
 
 	/*since we want to append query parameters depending on arguments given, we use malloc instead of sqlite3_mprintf*/
-	buf = sqlite3_mprintf("SELECT * FROM call_history WHERE call_id = '%q' ORDER BY id DESC LIMIT 1", call_id);
+	if (limit > 0)  {
+		buf = sqlite3_mprintf( "WITH temp AS (SELECT * FROM call_history ORDER BY id DESC LIMIT %i) SELECT * FROM temp WHERE call_id = '%q' LIMIT 1",  limit, call_id);
+	} else {
+		buf = sqlite3_mprintf( "SELECT * FROM call_history WHERE call_id = '%q' ORDER BY id DESC LIMIT 1", call_id);
+	}
 
 	clsres.core = lc;
 	clsres.result = NULL;
@@ -783,4 +790,8 @@ LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, con
 	}
 
 	return result;
+}
+
+LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, const char *call_id) {
+	return linphone_core_find_call_log(lc, call_id, -1);
 }

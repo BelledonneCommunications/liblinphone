@@ -168,6 +168,13 @@ LINPHONE_PUBLIC char * linphone_call_log_to_str(const LinphoneCallLog *call_log)
 LINPHONE_PUBLIC bool_t linphone_call_log_was_conference(const LinphoneCallLog *call_log);
 
 /**
+ * Tells whether that call was early aborted
+ * @param call_log #LinphoneCallLog object @notnil
+ * @return TRUE if the call was early aborted, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_call_log_early_aborted(const LinphoneCallLog *call_log);
+
+/**
  * When the call was failed, return an object describing the failure.
  * @param call_log #LinphoneCallLog object @notnil
  * @return #LinphoneErrorInfo about the error encountered by the call associated with this call log or NULL. @maybenil
