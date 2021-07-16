@@ -7437,7 +7437,7 @@ void linphone_core_activate_audio_session (LinphoneCore* lc, bool_t actived) {
 }
 
 void linphone_core_configure_audio_session (LinphoneCore *lc) {
-	if (linphone_core_get_calls_nb(lc) == 0) {
+	if (linphone_core_get_calls_nb(lc) < 2) {
 		L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardConfigureAudioSession();
 	}
 }

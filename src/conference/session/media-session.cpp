@@ -2909,7 +2909,9 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 		if (md->isEmpty() || d->incompatibleSecurity(md)) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
-			if (d->listener)
+			/* When call state is PushIncomingReceived, not notify early failed.
+			   Because the call is already added in core, need to be released. */
+			if (d->state != CallSession::State::PushIncomingReceived &&  d->listener)
 				d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
 			d->op->decline(SalReasonNotAcceptable);
 			return;
