@@ -3021,6 +3021,15 @@ LINPHONE_PUBLIC LinphoneCallLog * linphone_core_get_last_outgoing_call_log(Linph
 LINPHONE_PUBLIC LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *core, const char *call_id);
 
 /**
+ * Get the call log matching the call id, or NULL if can't be found.
+ * @param core #LinphoneCore object @notnil
+ * @param call_id Call id of the call log to find @notnil
+ * @param limit Search limit of the most recent call logs to find @notnil
+ * @return A call log matching the call id if any. @maybenil
+**/
+LINPHONE_PUBLIC LinphoneCallLog * linphone_core_find_call_log(LinphoneCore *lc, const char *call_id, int limit);
+
+/**
  * Erase the call log.
  * @param core #LinphoneCore object @notnil
 **/
