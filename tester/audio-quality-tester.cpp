@@ -156,7 +156,8 @@ static void audio_mono_call_opus(void){
 }
 
 static void audio_call_loss_resilience(const char *codec_name, int clock_rate, int bitrate_override, int jitterBufferMs, bool_t stereo, std::pair<double,double> threshold ) {
-#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
+/*july 2021, test not reliable enought. Jehan*/
+#if 0 || !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	LinphoneCoreManager *marie = nullptr, *pauline = nullptr;
 	char *recordPath = nullptr;
 	char *referenceFile = bc_tester_res("sounds/vrroom.wav");
@@ -266,6 +267,8 @@ end:
 	linphone_core_manager_destroy(pauline);
 	bc_free(recordPath);
 	bc_free(referenceFile);
+#else
+	BC_PASS("audio_call_loss_resilience disabled on this platform")
 #endif
 }
 
