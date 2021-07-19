@@ -312,7 +312,7 @@ PotentialCfgGraph::media_description_config::mapped_type PotentialCfgGraph::proc
 	// a=3 and t=4
 	for(;list!=NULL;list=list->next){
 		std::string cfg = static_cast<const char*>(list->data);
-		belle_sip_message("configuration is %s", cfg.c_str());
+		lDebug() << "configuration is " << cfg;
 		// Valid formats for the configuration string:
 		// - <char>=-<char>:<pipe separated list of configs>
 		// - <char>=-<char><char>:<pipe separated list of configs>
@@ -333,14 +333,14 @@ PotentialCfgGraph::media_description_config::mapped_type PotentialCfgGraph::proc
 
 		// last element is the body of the attribute
 		auto attrBody = bodySplit.back();
-		belle_sip_message("configuration type is %s and body is %s", capType.c_str(), attrBody.c_str());
+		lDebug() << "configuration type is " << capType << " and body is " << attrBody.c_str();
 
 		const char deleteAttrDelim = ':';
 		const auto deleteAttrSplit = bctoolbox::Utils::split(attrBody, deleteAttrDelim);
 
 		// last element is the list of configs
 		auto idxList = deleteAttrSplit.back();
-		belle_sip_message("configuration list is %s", idxList.c_str());
+		lDebug() << "configuration list is " << idxList;
 
 		// Only one attribute and one transport capacity is allowed in the config line - hence if acap or tcap has been parsed and trying to add another one, print an error
 		if (cap == capability_type_t::ATTRIBUTE) {
@@ -425,7 +425,7 @@ unsigned int PotentialCfgGraph::getElementIdx(const std::string & index) const {
 	auto indexEnd = std::sregex_iterator();
 
 	if (indexBegin == indexEnd) {
-		belle_sip_message("Unable to find index in string %s ", index.c_str());
+		lDebug() << "Unable to find index in string " << index;
 	}
 
 	auto noMatches = std::distance(indexBegin, indexEnd);
@@ -456,7 +456,7 @@ const PotentialCfgGraph::media_description_config & PotentialCfgGraph::getCfgFor
 		const auto & cfg = cfgs.at(idx);
 		return cfg;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find configurations for stream " << idx;
+		lDebug() << "Unable to find configurations for stream " << idx;
 		return bctoolbox::Utils::getEmptyConstRefObject<PotentialCfgGraph::media_description_config>();
 	}
 }
@@ -466,7 +466,7 @@ const PotentialCfgGraph::media_description_unparsed_config & PotentialCfgGraph::
 		const auto & cfg = unparsed_cfgs.at(idx);
 		return cfg;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find unparsed configurations for stream " << idx;
+		lDebug() << "Unable to find unparsed configurations for stream " << idx;
 		return bctoolbox::Utils::getEmptyConstRefObject<PotentialCfgGraph::session_description_unparsed_config::mapped_type>();
 	}
 }
@@ -481,7 +481,7 @@ const PotentialCfgGraph::media_description_acap & PotentialCfgGraph::getMediaAca
 		const auto & cap = acap.at(idx);
 		return cap;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find media attribute capabilities for stream " << idx;
+		lDebug() << "Unable to find media attribute capabilities for stream " << idx;
 		return bctoolbox::Utils::getEmptyConstRefObject<PotentialCfgGraph::media_description_acap>();
 	}
 }
@@ -490,7 +490,7 @@ const PotentialCfgGraph::media_description_base_cap & PotentialCfgGraph::getMedi
 		const auto & cap = tcap.at(idx);
 		return cap;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find media transport capabilities for stream " << idx;
+		lDebug() << "Unable to find media transport capabilities for stream " << idx;
 		return bctoolbox::Utils::getEmptyConstRefObject<PotentialCfgGraph::media_description_base_cap>();
 	}
 }
