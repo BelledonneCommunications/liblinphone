@@ -751,21 +751,49 @@ static void transport_change(void){
 }
 
 static void transport_dont_bind(void){
-	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new_with_proxies_check("pauline_tcp_rc", FALSE);
+
 	stats* counters = &pauline->stat;
 	LinphoneTransports *tr = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_tcp_port(tr, LC_SIP_TRANSPORT_DONTBIND);
 	linphone_transports_set_tls_port(tr, LC_SIP_TRANSPORT_DONTBIND);
-
+	linphone_transports_set_udp_port(tr, LC_SIP_TRANSPORT_DISABLED);
+	
 	linphone_core_set_transports(pauline->lc, tr);
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc,pauline->lc,&counters->number_of_LinphoneRegistrationOk,2,15000));
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc,pauline->lc,&counters->number_of_LinphoneRegistrationOk,1));
 	linphone_transports_unref(tr);
+	
 	tr = linphone_core_get_transports_used(pauline->lc);
 	BC_ASSERT_EQUAL(linphone_transports_get_udp_port(tr), 0, int, "%i");
 	BC_ASSERT_EQUAL(linphone_transports_get_tcp_port(tr), LC_SIP_TRANSPORT_DONTBIND, int, "%i");
 	BC_ASSERT_EQUAL(linphone_transports_get_tls_port(tr), LC_SIP_TRANSPORT_DONTBIND, int, "%i");
 	linphone_transports_unref(tr);
+
+	//udp
+	linphone_transports_set_tcp_port(tr, LC_SIP_TRANSPORT_DISABLED);
+	linphone_transports_set_tls_port(tr, LC_SIP_TRANSPORT_DISABLED);
+	linphone_transports_set_udp_port(tr, LC_SIP_TRANSPORT_DONTBIND);
+	linphone_core_set_transports(pauline->lc, tr);
+	
+	LinphoneAccount *account = linphone_core_get_default_account(pauline->lc);
+	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+	linphone_account_params_set_transport(params, LinphoneTransportUdp);
+	linphone_account_set_params(account, params);
+	linphone_account_params_unref(params);
+	
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,pauline->lc,&counters->number_of_LinphoneRegistrationOk,2));
+		
+	tr = linphone_core_get_transports_used(pauline->lc);
+	BC_ASSERT_EQUAL(linphone_transports_get_udp_port(tr), LC_SIP_TRANSPORT_DONTBIND, int, "%i");
+	BC_ASSERT_EQUAL(linphone_transports_get_tcp_port(tr), LC_SIP_TRANSPORT_DISABLED, int, "%i");
+	BC_ASSERT_EQUAL(linphone_transports_get_tls_port(tr), LC_SIP_TRANSPORT_DISABLED, int, "%i");
+	linphone_transports_unref(tr);
+
+	
 	linphone_core_manager_destroy(pauline);
+
 }
 
 #if 0

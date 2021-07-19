@@ -270,6 +270,8 @@ end:
 	bc_free(recordPath);
 	bc_free(referenceFile);
 	bc_free(playFile);
+#else
+	BC_PASS("audio_call_loss_resilience disabled on this platform");
 #endif
 }
 
