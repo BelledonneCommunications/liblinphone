@@ -886,8 +886,15 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		ms_free(addr);
 		return result;
 	} else if (destProxy){
-		const LinphoneAddress *addr = linphone_proxy_config_get_contact(destProxy);
-		if (addr && (linphone_proxy_config_get_op(destProxy) || linphone_proxy_config_get_dependency(destProxy) != nullptr)) {
+		const LinphoneAddress *addr = NULL;
+		if (linphone_proxy_config_get_contact(destProxy)) {
+			addr = linphone_proxy_config_get_contact(destProxy);
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+			addr = linphone_proxy_config_get_identity_address(destProxy);
+		} else {
+			lError() << "Unable to retrieve contact address from proxy confguration for call session " << this << " (local address " << q->getLocalAddress().asString() << " remote address " <<  (q->getRemoteAddress() ? q->getRemoteAddress()->asString() : "Unknown") << ").";
+		}
+		if (addr && (linphone_proxy_config_get_op(destProxy) || (linphone_proxy_config_get_dependency(destProxy) != nullptr) || linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
 			/* If using a proxy, use the contact address as guessed with the REGISTERs */
 			lInfo() << "Contact has been fixed using proxy";
 			result = linphone_address_clone(addr);
