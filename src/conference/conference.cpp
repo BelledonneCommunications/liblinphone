@@ -60,8 +60,8 @@ Conference::~Conference () {
 // -----------------------------------------------------------------------------
 
 bool Conference::tryAddMeDevice() {
-	if (me->getDevices().empty() && confParams->getProxyCfg()) {
-		char * devAddrStr = linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg()));
+	if (confParams->localParticipantEnabled() &&  me->getDevices().empty() && confParams->getProxyCfg()) {
+		char * devAddrStr = linphone_proxy_config_get_contact(confParams->getProxyCfg()) ? linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg())) : NULL;
 		if (devAddrStr) {
 			Address devAddr(devAddrStr);
 			auto meDev = me->addDevice(devAddr);
