@@ -1039,8 +1039,6 @@ CallSession::~CallSession () {
 		linphone_call_log_unref(d->log);
 	if (d->op)
 		d->op->release();
-	if (mErrorCache)
-		linphone_error_info_unref(mErrorCache);
 }
 
 // -----------------------------------------------------------------------------
@@ -1143,16 +1141,9 @@ LinphoneStatus CallSession::decline (LinphoneReason reason) {
 LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 	L_D();
 	if (d->state == CallSession::State::PushIncomingReceived && !d->op) {
-		lInfo() << "CallSession declining";
-		mIsDeclining = true;
-		if (ei) {
-			mErrorCache = linphone_error_info_new();
-			linphone_error_info_set(mErrorCache, "SIP", ei->reason, linphone_reason_to_error_code(ei->reason), nullptr, nullptr);
-			if (ei->reason == LinphoneReasonGone) {
-				lInfo() << "Terminate CallSession [" << this << "] because push incoming call timeout";
-				d->terminate();
-			}
-		}
+		lInfo() << "[pushkit] Terminate CallSession [" << this << "]";
+		d->terminate();
+		d->setState(LinphonePrivate::CallSession::State::Released, "Call released");
 		return 0;
 	}
 	
@@ -1680,14 +1671,6 @@ bool CallSession::isEarlyState (CallSession::State state) {
 		default:
 			return false;
 	}
-}
-
-bool CallSession::isDelinedEarly () {
-	return mIsDeclining;
-}
-
-const LinphoneErrorInfo * CallSession::getErrorInfoCache () const {
-	return mErrorCache;
 }
 
 LINPHONE_END_NAMESPACE
