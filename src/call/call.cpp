@@ -365,8 +365,6 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 			lInfo() << "Unable to add participant because conference is in state " << conf_state;
 			ms_free(conf_state);
 		}
-	} else {
-		lInfo() << "Unable to add participant because call is not attached to conference";
 	}
 }
 
@@ -612,7 +610,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 							conference->addParticipantDevice(getSharedFromThis());
 						}
 					} else {
-						lError() << "Call " << this << " cannot be added to confernece with ID " << confId << " because the contact address has not been retrieved";
+						lError() << "Call " << this << " cannot be added to conference with ID " << confId << " because the contact address has not been retrieved";
 					}
 				}
 			}
