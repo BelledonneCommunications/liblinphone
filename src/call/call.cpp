@@ -590,19 +590,29 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
 				} else if (!confId.empty()) {
-
-					char * contactAddressStr = sal_address_as_string(op->getContactAddress());
-					Address localAddress(contactAddressStr);
-					ms_free(contactAddressStr);
-					if (!localAddress.hasUriParam("conf-id")) {
-						localAddress.setUriParam("conf-id",confId);
+					char * contactAddressStr = NULL;
+					if (op->getContactAddress()) {
+						contactAddressStr = sal_address_as_string(op->getContactAddress());
+					} else if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+						contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(getDestProxy()));
+					} else {
+						lError() << "Unable to retrieve contact address from proxy confguration for call " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
 					}
-					ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
-					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
-					if (conference) {
-						setConference(conference->toC());
-						reenterLocalConference(session);
-						conference->addParticipantDevice(getSharedFromThis());
+					if (contactAddressStr) {
+						Address localAddress(contactAddressStr);
+						ms_free(contactAddressStr);
+						if (!localAddress.hasUriParam("conf-id")) {
+							localAddress.setUriParam("conf-id",confId);
+						}
+						ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
+						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
+						if (conference) {
+							setConference(conference->toC());
+							reenterLocalConference(session);
+							conference->addParticipantDevice(getSharedFromThis());
+						}
+					} else {
+						lError() << "Call " << this << " cannot be added to confernece with ID " << confId << " because the contact address has not been retrieved";
 					}
 				}
 			}
