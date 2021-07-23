@@ -80,6 +80,7 @@ cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENAB
 
 # Hidden non-cache options:
 # * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
+# * DISABLE_SOCI_PACKAGE_SEARCH: skip find_package() for Soci.
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS NO)
