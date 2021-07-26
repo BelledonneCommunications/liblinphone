@@ -889,6 +889,7 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		ms_free(addr);
 		return result;
 	} else if (destProxy){
+lInfo() << "DEBUG DEBUG " << __func__ << " contact " << (linphone_proxy_config_get_contact(destProxy) ? linphone_address_as_string(linphone_proxy_config_get_contact(destProxy)) : "Unknown") << " identity " <<  (linphone_proxy_config_get_identity_address(destProxy) ? linphone_address_as_string(linphone_proxy_config_get_identity_address(destProxy)) : "Unknown");
 		const LinphoneAddress *addr = NULL;
 		if (linphone_proxy_config_get_contact(destProxy)) {
 			addr = linphone_proxy_config_get_contact(destProxy);
@@ -1507,6 +1508,25 @@ const Address& CallSession::getLocalAddress () const {
 LinphoneCallLog * CallSession::getLog () const {
 	L_D();
 	return d->log;
+}
+
+Address CallSession::getContactAddress() const {
+	L_D();
+	const auto op = d->getOp();
+	char * contactAddressStr = NULL;
+	if (op->getContactAddress()) {
+		contactAddressStr = sal_address_as_string(op->getContactAddress());
+	} else if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(d->getDestProxy()));
+	} else {
+		lError() << "Unable to retrieve contact address from proxy confguration for call " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
+	}
+	if (contactAddressStr) {
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		return contactAddress;
+	}
+	return Address();
 }
 
 LinphoneReason CallSession::getReason () const {
