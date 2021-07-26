@@ -122,6 +122,7 @@ public:
 	int getDuration () const;
 	const LinphoneErrorInfo * getErrorInfo () const;
 	const Address &getLocalAddress () const;
+	Address getContactAddress() const;
 	LinphoneCallLog *getLog () const;
 	virtual const CallSessionParams *getParams () const;
 	LinphoneReason getReason () const;
