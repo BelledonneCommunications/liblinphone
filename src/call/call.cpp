@@ -381,6 +381,7 @@ void Call::terminateConference() {
 }
 
 void Call::exitFromConference (const shared_ptr<CallSession> &session) {
+lInfo() << __func__ << " DEBUG DEBUG exiting from conference ";
 	auto cConference = getConference();
 	if (cConference) {
 		if (attachedToLocalConference(session)) {
@@ -432,13 +433,17 @@ bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &sessio
 bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session) const {
 	const auto & cConference = getConference();
 	if (cConference) {
-		const auto conference = MediaConference::Conference::toCpp(cConference);
-		const ConferenceId localConferenceId = ConferenceId(session->getLocalAddress(), session->getLocalAddress());
-		const auto & participant = conference->findParticipant(session);
+		const auto & conference = MediaConference::Conference::toCpp(cConference);
+
+		auto contactAddress = session->getContactAddress();
+		const ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
+
+		const auto & device = conference->findParticipantDevice(session);
 		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
 		StreamsGroup & sg = ms->getStreamsGroup();
 		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
-		return (participant && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
+lInfo() << __func__ << " DEBUG DEBUG device " <<  device << " local address " << contactAddress.asString() << " expected conference ID " << localConferenceId << " actual conference ID " << conference->getConferenceId() << " attached to mixer " << attachedToMixer << " return " << (device && (localConferenceId == conference->getConferenceId()) && attachedToMixer) << " conf ID match " << (localConferenceId == conference->getConferenceId());
+		return (device && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
 
 	return false;
@@ -588,17 +593,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
 				} else if (!confId.empty()) {
-					char * contactAddressStr = NULL;
-					if (op->getContactAddress()) {
-						contactAddressStr = sal_address_as_string(op->getContactAddress());
-					} else if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
-						contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(getDestProxy()));
-					} else {
-						lError() << "Unable to retrieve contact address from proxy confguration for call " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
-					}
-					if (contactAddressStr) {
-						Address localAddress(contactAddressStr);
-						ms_free(contactAddressStr);
+					auto localAddress = session->getContactAddress();
+					if (localAddress.isValid()) {
 						if (!localAddress.hasUriParam("conf-id")) {
 							localAddress.setUriParam("conf-id",confId);
 						}
