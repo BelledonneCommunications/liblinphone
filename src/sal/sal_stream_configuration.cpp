@@ -40,7 +40,6 @@ SalStreamConfiguration::~SalStreamConfiguration(){
 }
 
 SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & other){
-lInfo() << __func__ << " DEBUG DEBUG stream configuration const copy contructor copying cfg " << sal_stream_dir_to_string(other.dir);
 	proto = other.proto;
 	proto_other = other.proto_other;
 	rtp_ssrc = other.rtp_ssrc;
@@ -81,7 +80,6 @@ lInfo() << __func__ << " DEBUG DEBUG stream configuration const copy contructor 
 }
 
 SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfiguration & other){
-lInfo() << __func__ << " DEBUG DEBUG  stream configuration operator= copying cfg " << sal_stream_dir_to_string(other.dir);
 	proto = other.proto;
 	proto_other = other.proto_other;
 	rtp_ssrc = other.rtp_ssrc;
