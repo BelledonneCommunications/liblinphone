@@ -65,11 +65,8 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	acaps = other.acaps;
 	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
-lInfo() << __func__ << " DEBUG DEBUG copy constructor stream description copying cfg " << sal_stream_dir_to_string(cfg.second.dir) << " index " << cfg.first;
 		const auto result = cfgs.insert(cfg);
 		if (!result.second) cfgs[cfg.first] = cfg.second;
-lInfo() << __func__ << " DEBUG DEBUG copy constructor stream description copying cfg " << sal_stream_dir_to_string(cfg.second.dir) << " index " << cfg.first;
-lInfo() << __func__ << " DEBUG DEBUG copy constructor stream description copying cfg " << sal_stream_dir_to_string(cfgs[cfg.first].dir) << " index " << cfg.first << " result " << result.second;
 	}
 	for (const auto & cfg : other.unparsed_cfgs) {
 		const auto result = unparsed_cfgs.insert(cfg);
