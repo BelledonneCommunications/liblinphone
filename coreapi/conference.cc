@@ -957,7 +957,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 					err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->updateFromConference(currentParams);
 				}
 				delete currentParams;
-			} else {
+			} else if ((sessionState != CallSession::State::End) && (sessionState != CallSession::State::Released)) {
 				/* Kick the session out of the conference by moving to the Paused state. */
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 						L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams()))->setInConference(false);
@@ -974,7 +974,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 			}
 		}
 
-		if (getCurrentParams().videoEnabled()) {
+		if ((getParticipantCount() > 0) && getCurrentParams().videoEnabled()) {
 			lInfo() << "Re-INVITing participants because participant device " << session->getRemoteContactAddress()->asString() << " left conference " << getConferenceAddress();
 			updateAllParticipantSessionsExcept(session);
 		}
