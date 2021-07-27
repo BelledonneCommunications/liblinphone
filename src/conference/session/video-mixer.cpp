@@ -29,9 +29,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2VideoControl(session.getCore()){
 	MSVideoConferenceParams params = {0};
-	if (linphone_config_get_bool(session.getCore().getCCore()->config, "misc", "all_to_all", 0)) {
+// FIXME: Define default value
+//	if (linphone_config_get_bool(session.getCore().getCCore()->config, "misc", "all_to_all", 0)) {
 		params.all_to_all = 1;
-	}
+//	}
 	params.codec_mime_type = "VP8";
 	params.min_switch_interval = 3000;
 	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
