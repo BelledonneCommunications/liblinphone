@@ -715,7 +715,8 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
 	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
 	if (local_cap.isMain() && (!participantsAttrValue.empty() || !layoutAttrValue.empty())) {
-		resultCfg.dir=OfferAnswerEngine::computeConferenceStreamDir(localCfg.getDirection());
+		//resultCfg.dir=OfferAnswerEngine::computeConferenceStreamDir(localCfg.getDirection());
+		resultCfg.dir=localCfg.getDirection();
 	} else {
 		resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
 	}
@@ -912,7 +913,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 					bool one_matching_codec){
 
 	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation(), local_capabilities->tcapLinesMerged());
-	size_t i;
+	size_t i = 0;
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
@@ -920,13 +921,27 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
-	for(i=0;i<remote_offer->streams.size();++i){
+	for(auto & rs : remote_offer->streams){
 
-		if (i >= local_capabilities->streams.size()) {
-			local_capabilities->streams.resize((i + 1));
+		const char * conferenceDeviceAttrName = "label";
+		const char * layoutAttrName = "content";
+		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(rs.custom_sdp_attributes, conferenceDeviceAttrName));
+		const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(rs.custom_sdp_attributes, layoutAttrName));
+
+		SalStreamDescription ls;
+		if (rs.isMain()) {
+lInfo() << __func__ << " remote stream is main ";
+			ls = local_capabilities->findMainStreamOfType(rs.getType());
+		} else if (!participantsAttrValue.empty()) {
+lInfo() << __func__ << " remote stream has participant label ";
+			ls = local_capabilities->findStreamWithSdpAttribute(conferenceDeviceAttrName, participantsAttrValue);
+		} else if (!participantsAttrValue.empty()) {
+lInfo() << __func__ << " remote stream has layout label ";
+			ls = local_capabilities->findStreamWithSdpAttribute(layoutAttrName, layoutAttrValue);
+		} else {
+lInfo() << __func__ << " remote stream has no label and is not main ";
+			ls = local_capabilities->streams[i];
 		}
-		const SalStreamDescription & ls = local_capabilities->streams[i];
-		SalStreamDescription & rs = remote_offer->streams[i];
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
 
@@ -977,6 +992,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		stream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
 		stream.addActualConfiguration(actualCfg);
 		result->streams.push_back(stream);
+		i++;
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
