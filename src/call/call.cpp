@@ -595,9 +595,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				} else if (!confId.empty()) {
 					auto localAddress = session->getContactAddress();
 					if (localAddress.isValid()) {
-						if (!localAddress.hasUriParam("conf-id")) {
-							localAddress.setUriParam("conf-id",confId);
-						}
 						ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
 						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
 						if (conference) {
