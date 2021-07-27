@@ -737,16 +737,23 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 		else
 			newSubject = "Media change";
 	}
-	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
-		/* Give a chance to update the contact address if connectivity has changed */
-		char * contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
+	char * contactAddressStr = NULL;
+	if (destProxy) {
+		if (linphone_proxy_config_get_op(destProxy)) {
+			/* Give a chance to update the contact address if connectivity has changed */
+			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
 
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(destProxy));
+		}
+	} else {
+		op->setContactAddress(nullptr);
+	}
+
+	if (contactAddressStr) {
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
-		linphone_proxy_config_get_op(destProxy)->setContactAddress(contactAddress.getInternalAddress());
-
 		q->updateContactAddress(contactAddress);
-
 		op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
@@ -823,11 +830,8 @@ void CallSessionPrivate::setContactOp () {
 		ms_free(contactAddressStr);
 		// Do not try to set contact address if it is not valid
 		if (contactAddress.isValid()) {
+			q->updateContactAddress (contactAddress);
 			if (isInConference()) {
-				const string confId = getConferenceId();
-				if (confId.empty() == false) {
-					contactAddress.setUriParam("conf-id", confId);
-				}
 				std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
 				if (conference) {
 
@@ -835,7 +839,6 @@ void CallSessionPrivate::setContactOp () {
 					conference->setConferenceAddress(contactAddress);
 				}
 			}
-			q->updateContactAddress (contactAddress);
 			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
 			op->setContactAddress(contactAddress.getInternalAddress());
 		} else {
@@ -1539,6 +1542,7 @@ Address CallSession::getContactAddress() const {
 	}
 	if (contactAddressStr) {
 		Address contactAddress(contactAddressStr);
+		updateContactAddress(contactAddress);
 		ms_free(contactAddressStr);
 		return contactAddress;
 	}
@@ -1677,7 +1681,7 @@ const CallSessionParams * CallSession::getParams () const {
 	return d->params;
 }
 
-void CallSession::updateContactAddress (Address & contactAddress) {
+void CallSession::updateContactAddress (Address & contactAddress) const {
 	L_D();
 
 	if (d->isInConference()) {
@@ -1701,6 +1705,7 @@ void CallSession::updateContactAddress (Address & contactAddress) {
 			contactAddress.removeParam("isfocus");
 		}
 	}
+lInfo() << __func__ << " DEBUG DEBUG contact address " << contactAddress.asString();
 }
 
 // -----------------------------------------------------------------------------
