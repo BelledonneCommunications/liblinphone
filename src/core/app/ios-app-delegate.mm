@@ -254,12 +254,13 @@
 	}
 }
 
-- (void)didRegisterForRemotePush:(NSData *)token {
+
+- (void)didRegisterForRemotePushWithStringifiedToken:(const char *)tokenStr {
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
 	if (!core) return;
 	
-	if (token) {
-		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, [self stringFromToken:token forType:@"remote"].UTF8String);
+	if (tokenStr) {
+		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, tokenStr);
 	} else {
 		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, nullptr);
 	}
@@ -268,14 +269,21 @@
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
 		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
 
-		if (token) {
-			linphone_push_notification_config_set_remote_token(push_cfg, [self stringFromToken:token forType:@"remote"].UTF8String);
+		if (tokenStr) {
+			linphone_push_notification_config_set_remote_token(push_cfg, tokenStr);
 		} else {
 			linphone_push_notification_config_set_remote_token(push_cfg, nullptr);
 		}
 	}
 
 	linphone_core_update_account_push_params(core->getCCore());
+}
+- (void)didRegisterForRemotePush:(NSData *)token {
+	if (token) {
+		[self didRegisterForRemotePushWithStringifiedToken: [self stringFromToken:token forType:@"remote"].UTF8String];
+	} else {
+		[self didRegisterForRemotePushWithStringifiedToken: nullptr];
+	}
 }
 
 //  PushKit Functions

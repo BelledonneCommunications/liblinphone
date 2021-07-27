@@ -2745,6 +2745,10 @@ void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_t
 	getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
 }
 
+void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneCore *lc, const char *device_token_str) {
+	getPlatformHelpers(lc)->didRegisterForRemotePushWithStringifiedToken(device_token_str);
+}
+
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "misc", "auto_iterate", enable);
 	core->auto_iterate_enabled = enable;

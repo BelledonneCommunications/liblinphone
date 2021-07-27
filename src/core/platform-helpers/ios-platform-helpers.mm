@@ -101,6 +101,7 @@ public:
 	void onNetworkChanged(bool reachable, bool force);
 
 	void didRegisterForRemotePush(void *token) override;
+	void didRegisterForRemotePushWithStringifiedToken(const char *token) override;
 	void enableAutoIterate (bool autoIterateEnabled) override;
 
 private:
@@ -185,6 +186,10 @@ void IosPlatformHelpers::stop () {
 
 void IosPlatformHelpers::didRegisterForRemotePush(void *token) {
 	[mAppDelegate didRegisterForRemotePush:(NSData *)token];
+}
+
+void IosPlatformHelpers::didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) {
+	[mAppDelegate didRegisterForRemotePushWithStringifiedToken:tokenStr];
 }
 
 void IosPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {

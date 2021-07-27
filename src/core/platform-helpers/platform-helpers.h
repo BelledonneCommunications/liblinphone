@@ -91,6 +91,7 @@ public:
 	virtual void stop (void) = 0;
 
 	virtual void didRegisterForRemotePush(void *token) = 0;
+	virtual void didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) = 0;
 	virtual void enableAutoIterate (bool autoIterateEnabled) = 0;
 
 protected:
@@ -152,6 +153,7 @@ public:
 	void stop (void) override {};
 
 	void didRegisterForRemotePush(void *token) override {};
+	void didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) override {};
 	void enableAutoIterate (bool autoIterateEnabled) override {};
 
 protected:
