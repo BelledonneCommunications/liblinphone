@@ -279,6 +279,14 @@ void linphone_conference_set_subject(LinphoneConference *conference, const char 
 	MediaConference::Conference::toCpp(conference)->setSubject(L_C_TO_STRING(subject));
 }
 
+const char *linphone_conference_get_username (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getUsername().c_str();
+}
+
+void linphone_conference_set_username(LinphoneConference *conference, const char *subject) {
+	MediaConference::Conference::toCpp(conference)->setUsername(L_C_TO_STRING(subject));
+}
+
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference){
 	return MediaConference::Conference::toCpp(conference)->getAudioStream();
 }
