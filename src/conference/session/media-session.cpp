@@ -140,8 +140,8 @@ bool MediaSessionPrivate::tryEnterConference() {
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 		const auto & confId = getConferenceId();
-		if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
-			contactAddress.setUriParam("conf-id",confId);
+		if (!confId.empty() && isInConference() && !contactAddress.hasParam("isfocus")) {
+			q->updateContactAddress (contactAddress);
 			ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
 			shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(localConferenceId, false);
 			// If the call conference ID is not an empty string but no conference is linked to the call means that it was added to the conference after the INVITE session was started but before its completition
@@ -1375,6 +1375,8 @@ SalStreamDescription MediaSessionPrivate::makeConferenceParticipantVideoStream(c
 		newStream.rtcp_port = newStream.rtp_port + 1;
 		newStream.name = "Video " + dev->getAddress().asString();
 
+lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress() << " label " << dev->getLabel() << " video direction " << sal_stream_dir_to_string(MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection()));
+
 		switch (dev->getVideoDirection()) {
 			case LinphoneMediaDirectionSendOnly:
 			case LinphoneMediaDirectionRecvOnly:
@@ -1770,6 +1772,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 				for (const auto & dev : me->getDevices()) {
 	lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << dev->getAddress().asAddress().asString() << " label " << dev->getLabel();
 					const auto & devLabel = dev->getLabel();
+lInfo() << __func__ << " DEBUG DEBUG conference address " << dev->getAddress().asString() << " label " << dev->getLabel();
 					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
 					if (foundStreamIdx == -1) {
 						auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
@@ -1886,6 +1889,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & dev = cppConference->findParticipantDevice(remoteContactAddress);
+lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress().asString() << " label " << dev->getLabel();
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
 		}
 
@@ -2532,7 +2536,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 
-		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE) && contactAddress.hasUriParam("conf-id")) {
+		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE) && contactAddress.hasParam("isfocus")) {
 			lWarning() << "Unable to pause media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") because it is part of a conference. Please use the dedicated conference API to execute the desired actions";
 			return -1;
 		}
