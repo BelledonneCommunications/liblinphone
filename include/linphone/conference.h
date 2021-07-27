@@ -308,6 +308,20 @@ LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConfer
 LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *conference, const char *subject);
 
 /**
+ * Get the conference username
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference subject. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_get_username(const LinphoneConference *conference);
+
+/**
+ * Set the conference username
+ * @param conference The #LinphoneConference object. @notnil
+ * @param username conference subject @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_username(LinphoneConference *conference, const char *username);
+
+/**
  * Get number of participants without me
  * @param conference The #LinphoneConference object. @notnil
  * @return the number of participants excluding me in a #LinphoneConference

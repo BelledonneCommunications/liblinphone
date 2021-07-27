@@ -164,6 +164,10 @@ const string &Conference::getSubject () const {
 	return confParams->getSubject();
 }
 
+const string &Conference::getUsername () const {
+	return mUsername;
+}
+
 void Conference::join (const IdentityAddress &participantAddress) {}
 
 void Conference::join () {}
@@ -209,6 +213,10 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 
 void Conference::setSubject (const string &subject) {
 	confParams->setSubject(subject);
+}
+
+void Conference::setUsername (const string &username) {
+	mUsername = username;
 }
 
 // -----------------------------------------------------------------------------
