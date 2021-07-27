@@ -108,6 +108,9 @@ public:
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
 
+	const std::string &getUsername () const;
+	void setUsername (const std::string &username);
+
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
 
@@ -167,6 +170,8 @@ protected:
 	// lastNotify belongs to the conference and not the the event handler.
 	// The event handler can access it using the getter
 	unsigned int lastNotify = 0;
+
+	std::string mUsername = "";
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
 
