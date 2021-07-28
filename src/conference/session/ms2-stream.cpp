@@ -212,8 +212,6 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		localDesc.setBundleOnly(TRUE);
 	}
 
-ms_message("%s - DEBUG DEBUG local desc ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d payload empty %0d\n", __func__, localDesc.rtp_port, localDesc.rtcp_port, mPortConfig.rtpPort, mPortConfig.rtcpPort, localDesc.getPayloads().empty());
-
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
 	if (getMediaSessionPrivate().getOp() && getMediaSessionPrivate().getOp()->getRemoteContactAddress()) {
