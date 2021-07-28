@@ -5623,8 +5623,8 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_add
 
 /**
  * Enable or disable push notifications on Android & iOS.
- * If enabled, it will try to get the push token add configure each proxy config with push_notification_allowed
- * set to true with push parameters.
+ * If enabled, it will try to get the push token add configure each account with push_notification_allowed
+ * set to true with push parameters. IOS: will also instanciate a PushRegistry, so make sure that your app does not instanciate one too or there will be a conflict.
  * @param core The #LinphoneCore @notnil
  * @param enable TRUE to enable push notifications, FALSE to disable
  * @ingroup misc
@@ -5632,7 +5632,7 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_add
 LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable);
 
 /**
- * Gets whether push notifications are enabled or not (Android & iOS only).
+ * Gets whether push notifications are enabled or not (Android & iOS only). If not, the app will have to handle all the push-related settings for each accounts
  * @param core The #LinphoneCore @notnil
  * @return TRUE if push notifications are enabled, FALSE otherwise
  * @ingroup misc

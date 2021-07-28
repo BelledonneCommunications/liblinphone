@@ -2797,11 +2797,12 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	bool_t push_notification_default = FALSE;
 	bool_t auto_iterate_default = FALSE;
 	bool_t vibration_incoming_call_default = FALSE;
+	
 #if __ANDROID__ || TARGET_OS_IPHONE
-	push_notification_default = TRUE;
 	auto_iterate_default = TRUE;
 #endif
 #if __ANDROID__
+	push_notification_default = TRUE;
 	vibration_incoming_call_default = TRUE;
 #endif
 	lc->push_notification_enabled = !!linphone_config_get_int(lc->config, "net", "push_notification", push_notification_default);
