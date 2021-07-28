@@ -113,6 +113,7 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	rtp_port=belle_sdp_media_get_media_port ( media );
+ms_message("%s DEBUG DEBUG parsing RTP media port %0d\n", __func__, rtp_port);
 
 	mtype = belle_sdp_media_get_media_type ( media );
 	// Make mtype lowercase to emulate case insensitive comparison
