@@ -1375,6 +1375,7 @@ SalStreamDescription MediaSessionPrivate::makeConferenceParticipantVideoStream(c
 		newStream.rtcp_port = newStream.rtp_port + 1;
 		newStream.name = "Video " + dev->getAddress().asString();
 
+lInfo() << __func__ << " DEBUG DEBUG participant stream -> choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress() << " label " << dev->getLabel() << " video direction " << sal_stream_dir_to_string(MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection()));
 
 		switch (dev->getVideoDirection()) {
@@ -1456,8 +1457,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const auto & core = q->getCore()->getCCore();
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
-lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((localIsOfferer) ? "old md" : "remote md");
 	const std::shared_ptr<SalMediaDescription> & refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
+lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((localIsOfferer) ? "old md" : "remote md") << " has " << (refMd ? refMd->streams.size() : 0) << " streams";
 
 	this->localIsOfferer = localIsOfferer;
 
@@ -1568,7 +1569,7 @@ lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((local
 				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
 					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
 					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
-lInfo() << __func__ << " DEBUG DEBUG copying stream: layout " << attrValue << " label " << participantsAttrValue;
+lInfo() << __func__ << " DEBUG DEBUG copying stream: layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
 					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(attrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					if (!participantsAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
@@ -1681,14 +1682,17 @@ lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev
 						newStream.disable();
 						newStream.rtp_port = 0;
 						newStream.rtcp_port = 0;
+lInfo() << __func__ << " DEBUG DEBUG stream inactive: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (previousParticipantStream.rtp_port != 0)) {
 						// Copy previous rtp and rtcp ports if they were already assigned
 						newStream.rtp_port = previousParticipantStream.rtp_port;
 						newStream.rtcp_port = previousParticipantStream.rtcp_port;
+lInfo() << __func__ << " DEBUG DEBUG copying previous ports: RTP port " << previousParticipantStream.rtp_port << " RTCP port " << previousParticipantStream.rtcp_port << " current RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 					} else {
 						const auto rtp_port = q->getRandomRtpPort(newStream);
 						newStream.rtp_port = rtp_port;
 						newStream.rtcp_port = newStream.rtp_port + 1;
+lInfo() << __func__ << " DEBUG DEBUG choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 					}
 
 				} else {
@@ -1727,7 +1731,7 @@ lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev
 					}
 				}
 			}
-lInfo() << __func__ << " DEBUG DEBUG copying stream type " << sal_stream_type_to_string(newStream.getType()) << " direction " << sal_stream_dir_to_string(newStream.getDirection()) << " at index " << streamIdx;
+lInfo() << __func__ << " DEBUG DEBUG copying stream type " << sal_stream_type_to_string(newStream.getType()) << " direction " << sal_stream_dir_to_string(newStream.getDirection()) << "RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port << " at index " << streamIdx;
 
 			md->streams.push_back(newStream);
 			streamIdx++;
@@ -3431,8 +3435,14 @@ int MediaSession::getRandomRtpPort (const SalStreamDescription & stream) const {
 	if (portRange.second < portRange.first) {
 		lError() << "Invalid port range provided for stream type " << Utils::toString(stream.type) << ": min=" << portRange.first << " max=" << portRange.second;
 		return 0;
+	} else if (portRange.second == portRange.first) {
+		lWarning() << "Port range provided for stream type " << Utils::toString(stream.type) << " has minimum and maximum value set to " << portRange.first << ". It will not be possible to have multiple streams of the same type in the SDP";
 	}
-	const int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
+	const int rtp_port = (portRange.second == portRange.first) ? portRange.first : ((rand() % abs(portRange.second - portRange.first)) + portRange.first);
+	if ((rtp_port > portRange.second) && (rtp_port < portRange.first)) {
+		lWarning() << "The chosen port " << rtp_port << " is not within the desired range (min=" << portRange.first << ", max=" << portRange.second << ")";
+	}
+
 	return rtp_port;
 }
 
