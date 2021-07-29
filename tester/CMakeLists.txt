@@ -59,6 +59,7 @@ endif()
 
 set(SOUND_FILES
 	sounds/ahbahouaismaisbon.wav
+	sounds/continuous_48000_stereo.wav
 	sounds/hello44100.wav
 	sounds/hello8000.mkv
 	sounds/hello8000_mkv_ref.wav
