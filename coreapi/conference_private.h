@@ -296,6 +296,7 @@ public:
 	virtual int stopRecording() override {
 		return 0;
 	}
+	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
