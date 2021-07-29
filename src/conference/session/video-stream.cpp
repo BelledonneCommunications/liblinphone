@@ -272,6 +272,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
+lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this << " label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer << " native window ID " << mNativeWindowId;
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
 	} else if (videoMixer && label && getMediaSession().getParticipantWindowId(label)) {
@@ -499,11 +500,13 @@ bool MS2VideoControl::cameraEnabled() const{
 void MS2VideoControl::setNativeWindowId(void *w){
 	VideoStream *vs = getVideoStream();
 	mNativeWindowId = w;
+lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this <<  " native window ID " << mNativeWindowId;
 	if (vs) video_stream_set_native_window_id(vs, w);
 }
 
 void * MS2VideoControl::getNativeWindowId() const{
 	VideoStream *vs = getVideoStream();
+lError() << __func__ << " DEBUG DEBUG retrieving window ID for stream " << this <<  " native window ID " << mNativeWindowId;
 	if (mNativeWindowId){
 		return mNativeWindowId;
 	}

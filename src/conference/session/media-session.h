@@ -114,6 +114,7 @@ public:
 	void setAuthenticationTokenVerified (bool value);
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
+	void setNativeVideoWindowId (void *id, const std::string label);
 	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);

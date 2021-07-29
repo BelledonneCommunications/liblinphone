@@ -316,6 +316,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					if (!name.empty())
 						device->setName(name);
 
+					if (conf->getMainSession())
+						device->setSession(conf->getMainSession());
+
 					if (!isFullState) {
 						conf->notifyParticipantDeviceAdded(
 							creationTime,
@@ -368,7 +371,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						} else if (mediaType.compare("video") == 0) {
 							device->setVideoDirection(mediaDirection);
 							const std::string label = media.getLabel().get();
-							if (!label.emtpy()) {
+							if (!label.empty()) {
 								device->setLabel(label);
 							}
 						} else if (mediaType.compare("text") == 0) {

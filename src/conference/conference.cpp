@@ -117,6 +117,10 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 
 }
 
+const std::shared_ptr<CallSession> Conference::getMainSession() const {
+	return me->getSession();
+}
+
 bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	list<IdentityAddress> sortedAddresses(addresses);
 	sortedAddresses.sort();
