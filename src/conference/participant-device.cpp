@@ -210,8 +210,11 @@ lInfo() << "DEBUG participant " << getAddress().asString() << " video dir " << g
 
 void ParticipantDevice::setWindowId(void * newWindowId) {
 #ifdef VIDEO_ENABLED
-lInfo() << __func__ << " DEBUG participant " << getAddress().asString() << " window ID " << newWindowId << " label " << mLabel;
+lInfo() << __func__ << " DEBUG DEBUG participant " << getAddress().asString() << " window ID " << newWindowId << " label " << mLabel << " session " << mSession;
 	mWindowId = newWindowId;
+	if (!mLabel.empty() && mSession) {
+		static_pointer_cast<MediaSession>(mSession)->setNativeVideoWindowId(mWindowId, mLabel);
+	}
 #endif
 }
 
@@ -220,7 +223,10 @@ void * ParticipantDevice::getWindowId() const {
 }
 
 MSVideoSize ParticipantDevice::getReceivedVideoSize() const {
-	return static_pointer_cast<MediaSession>(mSession)->getReceivedVideoSize(mLabel);
+	if (mSession) {
+		return static_pointer_cast<MediaSession>(mSession)->getReceivedVideoSize(mLabel);
+	}
+	return { 0 };
 }
 
 bctbx_list_t *ParticipantDevice::getCallbacksList () const {
