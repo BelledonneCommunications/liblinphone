@@ -100,7 +100,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		removeFromBundle();
 		return ; /*No bundle to handle */
 	}
-		
+lInfo() << __func__ << " DEBUG DEBUG index of bundle owner " << index << " current stream index " << params.streamIndex;
 	mBundleOwner = dynamic_cast<MS2Stream*>(getGroup().getStream((size_t)index));
 	if (!mBundleOwner){
 		lError() << "Could not locate the stream owning the bundle's transport.";
@@ -127,7 +127,7 @@ RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription & sd){
 		mRtpBundle = rtp_bundle_new();
 		const auto & mid = sd.getChosenConfiguration().getMid();
 		const auto & mid_rtp_ext_header_id = sd.getChosenConfiguration().getMidRtpExtHeaderId();
-		lInfo() << "Stream " << *this << " with mid '" << mid << "'is the owner of rtp bundle " << mRtpBundle;
+		lInfo() << "Stream " << *this << " with mid '" << mid << "' is the owner of rtp bundle " << mRtpBundle;
 		rtp_bundle_add_session(mRtpBundle, L_STRING_TO_C(mid), mSessions.rtp_session);
 		rtp_bundle_set_mid_extension_id(mRtpBundle, mid_rtp_ext_header_id);
 		mOwnsBundle = true;
