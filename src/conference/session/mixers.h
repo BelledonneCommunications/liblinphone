@@ -51,6 +51,7 @@ public:
 class MixerSession : protected AudioMixerListener{
 public:
 	MixerSession(Core &core);
+	MixerSession(Core &core, bool toAll);
 	~MixerSession();
 	/**
 	 * Request a StreamsGroup to be joined to the MixerSession.
@@ -193,6 +194,7 @@ private:
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 public:
 	MS2VideoMixer(MixerSession & session);
+	MS2VideoMixer(MixerSession & session, bool toAll);
 	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
@@ -200,6 +202,7 @@ public:
 	void setLocalParticipantLabel(const std::string & label);
 	std::string setLocalParticipantLabel() const;
 	~MS2VideoMixer();
+	bool conferenceAllToAllEnabled() const;
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
 	virtual VideoStream *getVideoStream()const override;

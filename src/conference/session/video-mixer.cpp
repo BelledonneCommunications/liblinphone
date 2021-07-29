@@ -29,9 +29,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2VideoControl(session.getCore()){
 	MSVideoConferenceParams params = {0};
-	if (linphone_config_get_bool(session.getCore().getCCore()->config, "misc", "all_to_all", 0)) {
-		params.all_to_all = 1;
-	}
+	params.codec_mime_type = "VP8";
+	params.min_switch_interval = 3000;
+	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
+}
+
+MS2VideoMixer::MS2VideoMixer(MixerSession & session, bool toAll) : StreamMixer(session), MS2VideoControl(session.getCore()){
+	// todo migration
+	MSVideoConferenceParams params = {0};
+	params.all_to_all = toAll ? 1:0;
 	params.codec_mime_type = "VP8";
 	params.min_switch_interval = 3000;
 	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
@@ -137,7 +143,8 @@ void MS2VideoMixer::addLocalParticipant(){
 	if (!st->label) {
 		lError() << "Video Mixer Conference[all to all]: Can not add video endpoint with empty label";
 	}
-	if (linphone_config_get_bool(mSession.getCCore()->config, "misc", "all_to_all", 0)) {
+	if (ms_video_conference_is_all_to_all(mConference)) {
+		// todo try to remove
 		video_stream_enable_router(st, true);
 	}
 	mLocalParticipantStream = st;
@@ -189,6 +196,10 @@ void MS2VideoMixer::setLocalParticipantLabel(const std::string & label) {
 
 std::string MS2VideoMixer::setLocalParticipantLabel() const {
 	return mLocalParticipantLabel;
+}
+
+bool MS2VideoMixer::conferenceAllToAllEnabled() const {
+	return ms_video_conference_is_all_to_all(mConference);
 }
 
 LINPHONE_END_NAMESPACE
