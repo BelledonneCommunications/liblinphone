@@ -286,6 +286,7 @@ public:
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;

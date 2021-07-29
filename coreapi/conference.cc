@@ -229,7 +229,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 }
 
 bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
+	auto p = findParticipant(call->getActiveSession());
 	if (p) {
 		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 		if (remoteContact) {
@@ -239,9 +239,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				call->setConference(toC());
 				device->setSession(call->getActiveSession());
-
-				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceAdded(creationTime, false, p, device);
 
 				lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device " << remoteContact->asString() << " to conference " << getConferenceAddress();
 				return true;
@@ -744,10 +741,18 @@ bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call
 
 	if (success) {
 		auto device = findParticipantDevice (call->getActiveSession());
-		// TODO: DELETE when labels will be implemented
-		char label[10];
-		belle_sip_random_token(label,sizeof(label));
-		device->setLabel(label);
+		const auto & p = findParticipant(call->getActiveSession());
+
+		if (device && p) {
+			// TODO: DELETE when labels will be implemented
+			char label[10];
+			belle_sip_random_token(label,sizeof(label));
+			device->setLabel(label);
+
+			time_t creationTime = time(nullptr);
+			notifyParticipantDeviceAdded(creationTime, false, p, device);
+		}
+
 	}
 
 	return success;
@@ -1465,6 +1470,24 @@ int RemoteConference::getParticipantDeviceVolume(const std::shared_ptr<LinphoneP
 	}
 
 	return AUDIOSTREAMVOLUMES_NOT_FOUND;
+}
+
+bool RemoteConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
+
+	bool success = Conference::addParticipantDevice(call);
+
+	if (success) {
+		auto device = findParticipantDevice (call->getActiveSession());
+		const auto & p = findParticipant(call->getActiveSession());
+
+		if (device && p) {
+			time_t creationTime = time(nullptr);
+			notifyParticipantDeviceAdded(creationTime, false, p, device);
+		}
+
+	}
+
+	return success;
 }
 
 bool RemoteConference::addParticipant (const IdentityAddress &participantAddress) {
