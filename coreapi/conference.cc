@@ -1435,6 +1435,10 @@ void RemoteConference::finalizeCreation() {
 	}
 }
 
+const std::shared_ptr<CallSession> RemoteConference::getMainSession() const {
+	return m_focusCall->getActiveSession();
+}
+
 void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
 	// Call callbacks before calling listeners because listeners may change state
 	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());

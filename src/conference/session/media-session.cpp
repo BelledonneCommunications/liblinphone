@@ -3699,8 +3699,7 @@ const MediaSessionParams * MediaSession::getMediaParams () const {
 }
 
 RtpTransport * MediaSession::getMetaRtcpTransport (int streamIndex) const {
-	L_D();
-	MS2Stream *s = dynamic_cast<MS2Stream*>(d->getStreamsGroup().getStream(streamIndex));
+	MS2Stream *s = dynamic_cast<MS2Stream*>(getStreamsGroup().getStream(streamIndex));
 	if (!s){
 		lError() << "MediaSession::getMetaRtcpTransport(): no stream with index " << streamIndex;
 		return nullptr;
@@ -3709,8 +3708,7 @@ RtpTransport * MediaSession::getMetaRtcpTransport (int streamIndex) const {
 }
 
 RtpTransport * MediaSession::getMetaRtpTransport (int streamIndex) const {
-	L_D();
-	MS2Stream *s = dynamic_cast<MS2Stream*>(d->getStreamsGroup().getStream(streamIndex));
+	MS2Stream *s = dynamic_cast<MS2Stream*>(getStreamsGroup().getStream(streamIndex));
 	if (!s){
 		lError() << "MediaSession::getMetaRtcpTransport(): no stream with index " << streamIndex;
 		return nullptr;
@@ -3719,8 +3717,7 @@ RtpTransport * MediaSession::getMetaRtpTransport (int streamIndex) const {
 }
 
 float MediaSession::getMicrophoneVolumeGain () const {
-	L_D();
-	AudioControlInterface *iface = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	AudioControlInterface *iface = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (iface){
 		return iface->getMicGain();
 	} else {
@@ -3730,8 +3727,7 @@ float MediaSession::getMicrophoneVolumeGain () const {
 }
 
 void MediaSession::setMicrophoneVolumeGain (float value) {
-	L_D();
-	AudioControlInterface *iface = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	AudioControlInterface *iface = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (iface)
 		iface->setMicGain(value);
 	else
@@ -3739,8 +3735,7 @@ void MediaSession::setMicrophoneVolumeGain (float value) {
 }
 
 float MediaSession::getSpeakerVolumeGain () const {
-	L_D();
-	AudioControlInterface *iface = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	AudioControlInterface *iface = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (iface)
 		return iface->getSpeakerGain();
 	else {
@@ -3750,8 +3745,7 @@ float MediaSession::getSpeakerVolumeGain () const {
 }
 
 void MediaSession::setSpeakerVolumeGain (float value) {
-	L_D();
-	AudioControlInterface *iface = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	AudioControlInterface *iface = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (iface)
 		iface->setSpeakerGain(value);
 	else
@@ -3759,8 +3753,7 @@ void MediaSession::setSpeakerVolumeGain (float value) {
 }
 
 void * MediaSession::getNativeVideoWindowId () const {
-	L_D();
-	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
 		return iface->getNativeWindowId();
 	}
@@ -3768,10 +3761,28 @@ void * MediaSession::getNativeVideoWindowId () const {
 }
 
 void MediaSession::setNativeVideoWindowId (void *id) {
-	L_D();
-	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
 		iface->setNativeWindowId(id);
+	}
+}
+
+void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
+	lError() << __func__ << " DEBUG DEBUG Entering";
+	auto s = getStreamsGroup().lookupStream(label);
+	lError() << __func__ << " DEBUG DEBUG found stream " << s;
+	if (s) {
+		VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
+	lError() << __func__ << " DEBUG DEBUG found stream " << s << " casted " << iface;
+		if (iface == nullptr){
+			lError() << "stream " << s << " with label " << " label " << " cannot be casted to VideoControlInterface";
+			return;
+		}
+	lError() << __func__ << " DEBUG DEBUG found stream " << s << " casted " << iface << " setting window id " << id;
+		if (iface) {
+			iface->setNativeWindowId(id);
+		}
+	lError() << __func__ << " DEBUG DEBUG DONE!! - found stream " << s << " casted " << iface << " setting window id " << id;
 	}
 }
 
@@ -4050,6 +4061,5 @@ void * MediaSession::getParticipantWindowId(const std::string label) {
 
 	return nullptr;
 }
-
 
 LINPHONE_END_NAMESPACE
