@@ -396,6 +396,14 @@ bool_t linphone_conference_params_is_one_participant_conference_enabled(const Li
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
 
+void linphone_conference_params_set_all_to_all_enabled(LinphoneConferenceParams *params, bool_t enable){
+	ConferenceParams::toCpp(params)->enableAllToAll(!!enable);
+}
+
+bool_t linphone_conference_params_is_all_to_all_enabled(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->allToAllEnabled();
+}
+
 void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout){
 	ConferenceParams::toCpp(params)->setLayout((ConferenceParams::Layout)layout);
 }

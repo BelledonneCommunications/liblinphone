@@ -473,7 +473,7 @@ LocalConference::LocalConference (
 #endif // HAVE_ADVANCED_IM
 
 	setState(ConferenceInterface::State::Instantiated);
-	mMixerSession.reset(new MixerSession(*core.get()));
+	mMixerSession.reset(new MixerSession(*core.get(), params->allToAllEnabled()));
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu

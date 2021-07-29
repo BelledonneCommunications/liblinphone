@@ -8098,12 +8098,11 @@ static void simple_conference_with_volumes(void) {
 	linphone_call_params_unref(pauline_call_params);
 	linphone_call_params_unref(marie_call_params);
 
-	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", TRUE);
-
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_set_layout(conf_params, LinphoneConferenceLayoutGrid);
 	linphone_conference_params_set_local_participant_enabled(conf_params, FALSE);
 	linphone_conference_params_set_video_enabled(conf_params, TRUE);
+	linphone_conference_params_set_all_to_all_enabled(conf_params, TRUE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 
