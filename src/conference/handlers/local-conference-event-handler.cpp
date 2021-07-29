@@ -167,6 +167,9 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	MediaType video = MediaType("2");
 	video.setDisplayText("video");
 	video.setType("video");
+	if (!device->getLabel().empty()) {
+		video.setLabel(device->getLabel());
+	}
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
 	endpoint.getMedia().push_back(video);
 
