@@ -390,7 +390,8 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 			lError() << "Video Stream Conference[all to all]: Can not add video endpoint with empty label";
 			return;
 		}
-		if (linphone_config_get_bool(getCCore()->config, "misc", "all_to_all", 0)) {
+
+		if (videoMixer->conferenceAllToAllEnabled()) {
 			video_stream_enable_router(mStream, true);
 		}
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);

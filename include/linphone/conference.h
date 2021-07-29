@@ -168,6 +168,20 @@ LINPHONE_PUBLIC void linphone_conference_params_set_one_participant_conference_e
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params);
 
 /**
+ * Enable conference with all to all filter.
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param enable TRUE if conference uses all to all filter, FALSE otherwise
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_all_to_all_enabled(LinphoneConferenceParams *params, bool_t enable);
+
+/**
+ * Returns whether conference use all to all filter
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return TRUE if the conference uses all to all filter, FALSE otherwise
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_all_to_all_enabled(LinphoneConferenceParams *params, bool_t enable);
+
+/**
  * Enable conference with one participant.
  * @param params A #LinphoneConferenceParams @notnil
  * @param layout #LinphoneConferenceLayout to use for the conference
