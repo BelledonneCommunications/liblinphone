@@ -1599,7 +1599,7 @@ lInfo() << __func__ << " DEBUG DEBUG copying stream: layout " << attrValue << " 
 								name = "os";
 								break;
 						}
-						addStreamToBundle(md, newStream, cfg, name + " " + participantsAttrValue);
+						addStreamToBundle(md, newStream, cfg, name + (participantsAttrValue.empty() ? "layout" : participantsAttrValue));
 					}
 					if (conference && isInLocalConference) {
 						// Local conference
@@ -1762,7 +1762,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteCon
 lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel() << " stream idx " << foundStreamIdx;
 						if (foundStreamIdx == -1) {
 							auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
-							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs " + dev->getLabel());
+							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
 							md->streams.push_back(newStream);
 lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel() << " index " << (md->streams.size() - 1);
 						}
@@ -1779,7 +1779,7 @@ lInfo() << __func__ << " DEBUG DEBUG conference address " << dev->getAddress().a
 					if (foundStreamIdx == -1) {
 lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for me conference device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel();
 						auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
-						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs " + dev->getLabel());
+						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
 
 						md->streams.push_back(newStream);
 					}
@@ -1815,7 +1815,8 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 						cfg.dir = SalStreamInactive;
 					}
 
-					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs " + me->getAddress().asString());
+	lInfo() << "DEBUG DEBUG " << __func__ << " add layout stream remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << me->getAddress().asString();
+					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vslayout");
 
 				} else {
 					lInfo() << "Don't put video stream for device in conference with address " << me->getAddress().asString() << " on local offer for CallSession [" << q << "]";
