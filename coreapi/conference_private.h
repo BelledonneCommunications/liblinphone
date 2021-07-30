@@ -124,6 +124,9 @@ public:
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
 
+	virtual void setNativeWindowId (void *id);
+	virtual void setNativePreviewWindowId (void *id);
+
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice *getInputAudioDevice() const;
