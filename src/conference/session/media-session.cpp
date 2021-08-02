@@ -1752,8 +1752,10 @@ lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress()
 									cfg.payloads = l;
 									switch (s.getDirection()) {
 										case SalStreamSendOnly:
-										case SalStreamSendRecv:
 											cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+											break;
+										case SalStreamSendRecv:
+											cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
 											break;
 										case SalStreamRecvOnly:
 											cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
