@@ -70,6 +70,7 @@ LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call);
 
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
+LINPHONE_PUBLIC MediaStream *linphone_call_get_video_stream (LinphoneCall *call, MediaStreamDir dir);
 LINPHONE_PUBLIC VideoStream * linphone_core_get_preview_stream(LinphoneCore *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h

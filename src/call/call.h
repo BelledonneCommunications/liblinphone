@@ -215,7 +215,8 @@ public:
 	unsigned int getTextStartCount () const;
 	// don't make new code relying on this method.
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
-	bool compareVideoColor (MSMireControl &cl);
+	MediaStream *getVideoStream (MediaStreamDir dir) const;
+	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir);
 	SalCallOp *getOp () const;
 	bool getSpeakerMuted () const;
 	void setSpeakerMuted (bool muted);
