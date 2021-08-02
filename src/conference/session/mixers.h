@@ -194,8 +194,8 @@ private:
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 public:
 	MS2VideoMixer(MixerSession & session);
-	MS2VideoMixer(MixerSession & session, bool toAll);
-	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted);
+	MS2VideoMixer(MixerSession & session, bool enableActiveSpeaker);
+	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
@@ -212,7 +212,8 @@ private:
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
-	MSVideoConference *mConference = nullptr;
+	MSVideoConference *mConferenceAllToAll = nullptr;
+	MSVideoConference *mConferenceActiveSpeaker = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
 	std::string mLocalParticipantLabel;

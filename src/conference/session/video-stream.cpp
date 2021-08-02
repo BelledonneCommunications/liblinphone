@@ -202,6 +202,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	MS2VideoMixer * videoMixer = getVideoMixer();
 	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
+	const char * content = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "content");
 
 	/* Shutdown preview */
 	MSFilter *source = nullptr;
@@ -383,19 +384,21 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
-		lInfo() << " DEBUG DEBUG stream " << mStream << " direction " << vstream.getDirection() << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
+		lInfo() << __func__ << " DEBUG DEBUG stream " << mStream << " direction " << vstream.getDirection() << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
 
-lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
-		if (!mStream->label) {
-			lError() << "Video Stream Conference[all to all]: Can not add video endpoint with empty label";
+lInfo() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
+
+		if (!mStream->label && !content) {
+			lInfo() << __func__ << " DEBUG DEBUG Video Stream Conference[all to all]: Can not add video endpoint with empty label";
+			lError() << "Video Stream Conference: Can not add video endpoint with empty label and no content";
 			return;
 		}
 
-		if (videoMixer->conferenceAllToAllEnabled()) {
+		if (mStream->label && videoMixer->conferenceAllToAllEnabled()) {
 			video_stream_enable_router(mStream, true);
 		}
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.getDirection() == SalStreamRecvOnly));
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, (mStream->label == NULL));
 	}
 }
 
