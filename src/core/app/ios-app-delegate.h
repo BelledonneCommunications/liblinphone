@@ -49,6 +49,7 @@
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
 - (void)onStopAsyncEnd: (BOOL)stop;
 - (void)didRegisterForRemotePush:(NSData *)token;
+- (void)didRegisterForRemotePushWithStringifiedToken:(const char *)tokenStr;
 - (void)registerForPush;
 
 @end

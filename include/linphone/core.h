@@ -5623,8 +5623,8 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_add
 
 /**
  * Enable or disable push notifications on Android & iOS.
- * If enabled, it will try to get the push token add configure each proxy config with push_notification_allowed
- * set to true with push parameters.
+ * If enabled, it will try to get the push token add configure each account with push_notification_allowed
+ * set to true with push parameters. IOS: will also instanciate a PushRegistry, so make sure that your app does not instanciate one too or there will be a conflict.
  * @param core The #LinphoneCore @notnil
  * @param enable TRUE to enable push notifications, FALSE to disable
  * @ingroup misc
@@ -5632,7 +5632,7 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_add
 LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable);
 
 /**
- * Gets whether push notifications are enabled or not (Android & iOS only).
+ * Gets whether push notifications are enabled or not (Android & iOS only). If not, the app will have to handle all the push-related settings for each accounts
  * @param core The #LinphoneCore @notnil
  * @return TRUE if push notifications are enabled, FALSE otherwise
  * @ingroup misc
@@ -5654,6 +5654,14 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore
 * @ingroup misc
 */
 LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *core, void *device_token);
+
+/**
+* Sets device_token when application didRegisterForRemoteNotificationsWithDeviceToken (IOS only).
+* @param core The #LinphoneCore @notnil
+* @param device_token_str, string extracted from the Data objectf received in didRegisterForRemoteNotificationsWithDeviceToken ios function. Append ":remote" after data formating.. @maybenil
+* @ingroup misc
+*/
+LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneCore *core, const char *device_token_str);
 
 /**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
