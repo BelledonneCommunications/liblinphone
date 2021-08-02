@@ -28,29 +28,53 @@
 LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2VideoControl(session.getCore()){
-	MSVideoConferenceParams params = {0};
-	params.codec_mime_type = "VP8";
-	params.min_switch_interval = 3000;
-	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
+	MSVideoConferenceParams paramsAlltoAll = {0};
+	paramsAlltoAll.codec_mime_type = "VP8";
+	paramsAlltoAll.all_to_all = 1;
+	paramsAlltoAll.min_switch_interval = 3000;
+	mConferenceAllToAll = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
+
+	MSVideoConferenceParams paramsActiveSpeaker = {0};
+	paramsActiveSpeaker.codec_mime_type = "VP8";
+	paramsActiveSpeaker.all_to_all = 0;
+	paramsActiveSpeaker.min_switch_interval = 3000;
+	mConferenceActiveSpeaker = ms_video_conference_new(mSession.getCCore()->factory, &paramsActiveSpeaker);
 }
 
-MS2VideoMixer::MS2VideoMixer(MixerSession & session, bool toAll) : StreamMixer(session), MS2VideoControl(session.getCore()){
-	// todo migration
-	MSVideoConferenceParams params = {0};
-	params.all_to_all = toAll ? 1:0;
-	params.codec_mime_type = "VP8";
-	params.min_switch_interval = 3000;
-	mConference = ms_video_conference_new(mSession.getCCore()->factory, &params);
+MS2VideoMixer::MS2VideoMixer(MixerSession & session, bool enableActiveSpeaker) : StreamMixer(session), MS2VideoControl(session.getCore()){
+	MSVideoConferenceParams paramsAlltoAll = {0};
+	paramsAlltoAll.codec_mime_type = "VP8";
+	paramsAlltoAll.all_to_all = 1;
+	paramsAlltoAll.min_switch_interval = 3000;
+	mConferenceAllToAll = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
+
+	if (enableActiveSpeaker) {
+		MSVideoConferenceParams paramsActiveSpeaker = {0};
+		paramsActiveSpeaker.codec_mime_type = "VP8";
+		paramsActiveSpeaker.all_to_all = 0;
+		paramsActiveSpeaker.min_switch_interval = 3000;
+		mConferenceActiveSpeaker = ms_video_conference_new(mSession.getCCore()->factory, &paramsActiveSpeaker);
+	}
 }
 
-void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted){
+void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker){
 	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
-	ms_video_conference_add_member(mConference, endpoint);
+	if (activeSpeaker) {
+		ms_video_conference_add_member(mConferenceActiveSpeaker, endpoint);
+	} else {
+		ms_video_conference_add_member(mConferenceAllToAll, endpoint);
+	}
 }
 
 void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
 	ms_video_endpoint_set_user_data(endpoint, nullptr);
-	ms_video_conference_remove_member(mConference, endpoint);
+	// Try to remove endpoint from both MSConference
+	if (ms_video_conference_member_found(mConferenceActiveSpeaker, endpoint)) {
+		ms_video_conference_remove_member(mConferenceActiveSpeaker, endpoint);
+	}
+	if (ms_video_conference_member_found(mConferenceAllToAll, endpoint)) {
+		ms_video_conference_remove_member(mConferenceAllToAll, endpoint);
+	}
 }
 
 void MS2VideoMixer::setFocus(StreamsGroup *sg){
@@ -59,7 +83,7 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	if (sg == nullptr){
 		ep = mLocalEndpoint;
 	}else{
-		const bctbx_list_t *elem = ms_video_conference_get_members(mConference);
+		const bctbx_list_t *elem = ms_video_conference_get_members(mConferenceAllToAll);
 		for (; elem != nullptr; elem = elem->next){
 			MSVideoEndpoint *ep_it = (MSVideoEndpoint *)elem->data;
 			if (ms_video_endpoint_get_user_data(ep_it) == sg){
@@ -69,11 +93,11 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 		}
 	}
 	if (ep){
-		ms_video_conference_set_focus(mConference, ep);
+		ms_video_conference_set_focus(mConferenceAllToAll, ep);
 	}else{
-		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConference);
+		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceAllToAll);
 		if (video_placeholder_ep) {
-			ms_video_conference_set_focus(mConference, video_placeholder_ep);
+			ms_video_conference_set_focus(mConferenceAllToAll, video_placeholder_ep);
 		} else {
 			lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
 		}
@@ -143,20 +167,23 @@ void MS2VideoMixer::addLocalParticipant(){
 	if (!st->label) {
 		lError() << "Video Mixer Conference[all to all]: Can not add video endpoint with empty label";
 	}
-	if (ms_video_conference_is_all_to_all(mConference)) {
+	if (ms_video_conference_is_all_to_all(mConferenceAllToAll)) {
 		// todo try to remove
 		video_stream_enable_router(st, true);
 	}
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding video local endpoint");
-	ms_video_conference_add_member(mConference, mLocalEndpoint);
+	ms_video_conference_add_member(mConferenceAllToAll, mLocalEndpoint);
 }
 
 void MS2VideoMixer::removeLocalParticipant(){
 	if (mLocalEndpoint){
 		ms_message("Conference: removing video local endpoint");
-		ms_video_conference_remove_member(mConference, mLocalEndpoint);
+		ms_video_conference_remove_member(mConferenceAllToAll, mLocalEndpoint);
+		if (mConferenceActiveSpeaker) {
+			ms_video_conference_remove_member(mConferenceActiveSpeaker, mLocalEndpoint);
+		}
 		ms_video_endpoint_release_from_stream(mLocalEndpoint);
 		mLocalEndpoint = nullptr;
 		video_stream_stop(mLocalParticipantStream);
@@ -187,7 +214,8 @@ void MS2VideoMixer::onSnapshotTaken(const std::string &filepath){
 
 MS2VideoMixer::~MS2VideoMixer(){
 	removeLocalParticipant();
-	ms_video_conference_destroy(mConference);
+	ms_video_conference_destroy(mConferenceAllToAll);
+	ms_video_conference_destroy(mConferenceActiveSpeaker);
 }
 
 void MS2VideoMixer::setLocalParticipantLabel(const std::string & label) {
@@ -199,7 +227,7 @@ std::string MS2VideoMixer::setLocalParticipantLabel() const {
 }
 
 bool MS2VideoMixer::conferenceAllToAllEnabled() const {
-	return ms_video_conference_is_all_to_all(mConference);
+	return ms_video_conference_is_all_to_all(mConferenceAllToAll);
 }
 
 LINPHONE_END_NAMESPACE
