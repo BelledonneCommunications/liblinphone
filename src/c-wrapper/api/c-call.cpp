@@ -64,6 +64,10 @@ MediaStream *linphone_call_get_stream (LinphoneCall *call, LinphoneStreamType ty
 	return Call::toCpp(call)->getMediaStream(type);
 }
 
+MediaStream *linphone_call_get_video_stream (LinphoneCall *call, MediaStreamDir dir) {
+	return Call::toCpp(call)->getVideoStream(dir);
+}
+
 LinphonePrivate::SalCallOp * linphone_call_get_op (const LinphoneCall *call) {
 	return Call::toCpp(call)->getOp();
 }
