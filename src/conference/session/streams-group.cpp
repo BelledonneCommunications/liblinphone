@@ -335,13 +335,16 @@ Stream * StreamsGroup::lookupStream(const std::string & label) const {
 }
 
 
-bool StreamsGroup::compareVideoColor(MSMireControl &cl) {
+bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) {
 	for (auto &stream : mStreams){
 		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
 		if(stream->getType() == SalVideo) {
-			VideoStream *vs = (VideoStream *) s->getMediaStream();
-			if (vs && vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
-				return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
+			MediaStream *ms = s->getMediaStream();
+			if (ms && media_stream_get_direction(ms) == dir) {
+				VideoStream *vs = (VideoStream *)ms;
+				if (vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
+					return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
+				}
 			}
 		}
 	}
@@ -352,6 +355,19 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
 		if (stream->isMain() && stream->getType() == type){
 			return stream.get();
+		}
+	}
+	return nullptr;
+}
+
+Stream * StreamsGroup::lookupVideoStream ( MediaStreamDir dir) {
+	for (auto &stream : mStreams){
+		if (stream->getType() == SalVideo){
+			Stream *s = stream.get();
+			MS2Stream *iface = dynamic_cast<MS2Stream*>(s);
+			if (media_stream_get_direction(iface->getMediaStream()) == dir) {
+				return stream.get();
+			}
 		}
 	}
 	return nullptr;

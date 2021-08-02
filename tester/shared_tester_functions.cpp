@@ -383,9 +383,9 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2) 
 	BC_ASSERT_PTR_NOT_NULL(call1);
 	BC_ASSERT_PTR_NOT_NULL(call2);
 	if (call1 && call2) {
-		VideoStream *vstream1s = (VideoStream *)linphone_call_get_stream(call1, LinphoneStreamTypeVideo);
+		VideoStream *vstream1s = (VideoStream *)linphone_call_get_video_stream(call1, MediaStreamSendRecv);
 		BC_ASSERT_PTR_NOT_NULL(vstream1s);
-		VideoStream *vstream2s = (VideoStream *)linphone_call_get_stream(call2, LinphoneStreamTypeVideo);
+		VideoStream *vstream2s = (VideoStream *)linphone_call_get_video_stream(call2, MediaStreamSendRecv);
 		BC_ASSERT_PTR_NOT_NULL(vstream2s);
 		BC_ASSERT_TRUE(vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID);
 		BC_ASSERT_TRUE(vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID);
@@ -400,8 +400,8 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2) 
 		}
 
 		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
-
-		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2));
-		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1));
+		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
+		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));
+		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv));
 	}
 }

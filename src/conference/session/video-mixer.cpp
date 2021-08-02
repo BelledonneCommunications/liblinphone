@@ -71,9 +71,12 @@ void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
 	// Try to remove endpoint from both MSConference
 	if (ms_video_conference_member_found(mConferenceActiveSpeaker, endpoint)) {
 		ms_video_conference_remove_member(mConferenceActiveSpeaker, endpoint);
-	}
-	if (ms_video_conference_member_found(mConferenceAllToAll, endpoint)) {
+		lInfo() << "[one to all] remove member";
+	} else if (ms_video_conference_member_found(mConferenceAllToAll, endpoint)) {
 		ms_video_conference_remove_member(mConferenceAllToAll, endpoint);
+		lInfo() << "[all to all] remove member";
+	} else {
+		lError() << "[mix to all] remove unknow ";
 	}
 }
 

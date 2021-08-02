@@ -34,6 +34,7 @@
 #include "mediastreamer2/msogl.h"
 
 #include "linphone/core.h"
+#include "mediastreamer2/msitc.h"
 
 using namespace::std;
 
@@ -332,6 +333,7 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 		reusedPreview = true;
 	} else {
 		bool ok = true;
+		VideoStream *createdStream = nullptr;
 		MSMediaStreamIO io = MS_MEDIA_STREAM_IO_INITIALIZER;
 		if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "video", "rtp_io", FALSE)) {
 			io.input.type = io.output.type = MSResourceRtp;
@@ -346,10 +348,37 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
+			if (videoMixer == nullptr && dir == MediaStreamSendOnly) {
+				MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendRecv);
+				if (!s){
+					lInfo() << "[mix to all] not find sendrecv stream for participant";
+				} else {
+					createdStream = (VideoStream *)s->getMediaStream();
+					lInfo() << "[mix to all] find sendrecv stream for participant";
+				}
+			}
+			if (createdStream) {
+				io.input.type = MSResourceItc;
+				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, createdStream->itcsink);
+			} else {
+				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
-			AudioStream *as = getPeerAudioStream();
-			if (as) audio_stream_link_video(as, mStream);
+			
+				if (videoMixer == nullptr && dir == MediaStreamSendRecv) {
+					link_video_stream_with_itc_sink(mStream);
+					MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendOnly);
+					if (!s){
+						lInfo() << "[mix to all] not find sendonly stream for participant";
+					} else {
+						lInfo() << "[mix to all] find sendonly stream for participant";
+						createdStream = (VideoStream *)s->getMediaStream();
+						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,createdStream->source);
+					}
+				}
+
+				AudioStream *as = getPeerAudioStream();
+				if (as) audio_stream_link_video(as, mStream);
+				}
 		}
 	}
 	mStartCount++;
@@ -394,7 +423,7 @@ lInfo() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "U
 			return;
 		}
 
-		if (mStream->label && videoMixer->conferenceAllToAllEnabled()) {
+		if (mStream->label) {
 			video_stream_enable_router(mStream, true);
 		}
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);

@@ -374,7 +374,8 @@ public:
 	 */
 	Stream * lookupMainStream(SalStreamType type);
 	Stream * lookupStream(const std::string & label) const;
-	bool compareVideoColor(MSMireControl &cl);
+	Stream * lookupVideoStream (MediaStreamDir dir);
+	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir);
 
 	/*
 	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.
@@ -386,6 +387,18 @@ public:
 			_interface *iface = dynamic_cast<_interface*>(s);
 			if (iface == nullptr){
 				lError() << "lookupMainStreamInterface(): stream " << s << " cannot be casted to " << typeid(_interface).name();
+			}
+			return iface;
+		}
+		return nullptr;
+	}
+	template <typename _interface>
+	_interface * lookupVideoStreamInterface(MediaStreamDir dir){
+		Stream *s = lookupVideoStream(dir);
+		if (s){
+			_interface *iface = dynamic_cast<_interface*>(s);
+			if (iface == nullptr){
+				lError() << "lookupVideoStreamInterface(): stream " << s << " cannot be casted to " << typeid(_interface).name();
 			}
 			return iface;
 		}
