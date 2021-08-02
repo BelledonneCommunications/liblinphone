@@ -297,7 +297,7 @@ SalStreamDir OfferAnswerEngine::computeDirOutgoing(SalStreamDir local, SalStream
 	if (local==SalStreamSendRecv){
 		if (answered==SalStreamRecvOnly){
 			res=SalStreamSendOnly;
-		}else if (answered==SalStreamSendOnly){
+		} else if (answered==SalStreamSendOnly){
 			res=SalStreamRecvOnly;
 		}
 	}
@@ -734,6 +734,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
 	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
 	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
+lInfo() << __func__ << " DEBUG DEBUG - is main " << local_cap.isMain() << " layout " << layoutAttrValue << " label " << participantsAttrValue << " local dir " << sal_stream_dir_to_string(localCfg.getDirection()) << " remote dir " << sal_stream_dir_to_string(remoteCfg.getDirection()) << " result dir call " << sal_stream_dir_to_string(OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection()));
 	if (local_cap.isMain() && (!participantsAttrValue.empty() || !layoutAttrValue.empty())) {
 		//resultCfg.dir=OfferAnswerEngine::computeConferenceStreamDir(localCfg.getDirection());
 		resultCfg.dir=localCfg.getDirection();
