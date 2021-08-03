@@ -141,9 +141,9 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 		if (conf->isIn()){
 			lInfo() << "There is a conference, video window " << id << "is assigned to the conference.";
 			if (!preview){
-				conf->setNativeWindowId(id);
+				conf->getVideoControlInterface()->setNativeWindowId(id);
 			}else{
-				conf->setNativePreviewWindowId(id);
+				conf->getVideoControlInterface()->setNativePreviewWindowId(id);
 			}
 			return;
 		}
