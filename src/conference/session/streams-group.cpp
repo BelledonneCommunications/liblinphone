@@ -579,7 +579,8 @@ void StreamsGroup::unjoinMixerSession(){
 MSVideoSize StreamsGroup::getReceivedVideoSize(const std::string & label) const {
 #ifdef VIDEO_ENABLED
 	Stream * s= lookupStream(label);
-	if (s->getType() == SalVideo) {
+ms_message("%s DEBUG DEBUG VIDEO stream %p\n", __func__, s);
+	if (s && s->getType() == SalVideo) {
 		return video_stream_get_received_video_size((VideoStream *)s);
 	}
 #endif
