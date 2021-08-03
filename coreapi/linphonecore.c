@@ -2745,6 +2745,10 @@ void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_t
 	getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
 }
 
+void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneCore *lc, const char *device_token_str) {
+	getPlatformHelpers(lc)->didRegisterForRemotePushWithStringifiedToken(device_token_str);
+}
+
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "misc", "auto_iterate", enable);
 	core->auto_iterate_enabled = enable;
@@ -2793,11 +2797,12 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	bool_t push_notification_default = FALSE;
 	bool_t auto_iterate_default = FALSE;
 	bool_t vibration_incoming_call_default = FALSE;
+	
 #if __ANDROID__ || TARGET_OS_IPHONE
-	push_notification_default = TRUE;
 	auto_iterate_default = TRUE;
 #endif
 #if __ANDROID__
+	push_notification_default = TRUE;
 	vibration_incoming_call_default = TRUE;
 #endif
 	lc->push_notification_enabled = !!linphone_config_get_int(lc->config, "net", "push_notification", push_notification_default);
