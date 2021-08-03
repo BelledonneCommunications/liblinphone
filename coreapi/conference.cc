@@ -77,20 +77,6 @@ Conference::Conference(
 Conference::~Conference() {
 }
 
-void Conference::setNativeWindowId (void *id) {
-	auto vci = getVideoControlInterface();
-	if (vci) {
-		vci->setNativeWindowId(id);
-	}
-}
-
-void Conference::setNativePreviewWindowId (void *id) {
-	auto vci = getVideoControlInterface();
-	if (vci) {
-		vci->setNativePreviewWindowId(id);
-	}
-}
-
 void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
 	if (audioDevice) {
 		const auto & currentInputDevice = getInputAudioDevice();
@@ -457,7 +443,7 @@ LocalConference::LocalConference (
 #endif // HAVE_ADVANCED_IM
 
 	setState(ConferenceInterface::State::Instantiated);
-	mMixerSession.reset(new MixerSession(*core.get()));
+	mMixerSession.reset(new MixerSession(*core.get(), params->allToAllEnabled()));
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
@@ -540,26 +526,27 @@ void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 
 void LocalConference::addLocalEndpoint () {
 	if (confParams->localParticipantEnabled()) {
-		auto audioMixer = mMixerSession->getMixerByType(SalAudio);
-		if (audioMixer) {
-			audioMixer->enableLocalParticipant(true);
-		}
+		StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
+		if (mixer) mixer->enableLocalParticipant(true);
 
 		if (confParams->videoEnabled()){
-			auto videoMixer = mMixerSession->getMixerByType(SalVideo);
-			if (videoMixer) {
-				videoMixer->enableLocalParticipant(true);
+			mixer = mMixerSession->getMixerByType(SalVideo);
+			if (mixer){
+				mixer->enableLocalParticipant(true);
 #ifdef VIDEO_ENABLED
 				for (auto & device : me->getDevices()) {
-					auto mixer = dynamic_cast<MS2VideoMixer*>(videoMixer);
 					if (mixer) {
+						auto mixer = dynamic_cast<MS2VideoMixer*>(mMixerSession->getMixerByType(SalVideo));
 						mixer->setLocalParticipantLabel(device->getLabel());
 					}
 				}
 #endif // VIDEO_ENABLED
+				VideoControlInterface *vci = getVideoControlInterface();
+				if (vci){
+					vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
+					vci->setNativeWindowId(getCore()->getCCore()->video_window_id);
+				}
 			}
-			setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
-			setNativeWindowId(getCore()->getCCore()->video_window_id);
 		}
 
 		if (!isIn()) {
