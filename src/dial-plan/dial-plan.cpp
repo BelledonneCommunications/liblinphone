@@ -247,7 +247,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Thailand", "TH", "66", 9, "001"),
 	DialPlan::create("Togo", "TG", "228", 8, "00"),
 	DialPlan::create("Tokelau", "TK", "690", 4, "00"),
-	DialPlan::create("Tonga", "TO", "676", 5, "00"),
+	DialPlan::create("Tonga", "TO", "676", 7, "00"),
 	DialPlan::create("Trinidad and Tobago", "TT", "1", 10, "011"),
 	DialPlan::create("Tunisia", "TN", "216", 8, "00"),
 	DialPlan::create("Turkey", "TR", "90", 10, "00"),
