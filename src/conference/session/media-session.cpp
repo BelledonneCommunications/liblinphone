@@ -3797,14 +3797,14 @@ lInfo() << __func__ << " DEBUG DEBUG C++ conference " << cppConference << " me p
 	}
 lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " me label " << meLabel;
 	Stream * s = NULL;
-	if (conference && meLabel.compare(label) == 0) {
-	s = getStreamsGroup().lookupVideoStream(MS_ANDROID_VIDEO_READ_ID);
-	} else {
-	s = getStreamsGroup().lookupStream(SalVideo, label);
+	std::string searchedLabel;
+	if (conference && meLabel.compare(label) != 0) {
+		searchedLabel = label;
 	}
+	s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
 //*************************** END WORKAROUND for active speaker
 //	auto s = getStreamsGroup().lookupStream(SalVideo, label);
-	lError() << __func__ << " DEBUG DEBUG found stream " << s << " stream with no label " << getStreamsGroup().lookupStream(SalVideo, std::string()) << " stream with label " << label << " is " <<  getStreamsGroup().lookupStream(SalVideo, label);
+	lError() << __func__ << " DEBUG DEBUG found stream " << s << " searched label " << searchedLabel << " stream with no label " << getStreamsGroup().lookupStream(SalVideo, std::string()) << " stream with label " << label << " is " <<  getStreamsGroup().lookupStream(SalVideo, label);
 	if (s) {
 		VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
 	lError() << __func__ << " DEBUG DEBUG found stream " << s << " label " << s->getLabel() << " casted " << iface;
