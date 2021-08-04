@@ -8100,6 +8100,8 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 	linphone_call_params_unref(pauline_call_params);
 	linphone_call_params_unref(marie_call_params);
 
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", TRUE);
+
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	if (mix) {
 		linphone_conference_params_set_layout(conf_params, LinphoneConferenceLayoutActiveSpeaker);

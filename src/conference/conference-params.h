@@ -75,9 +75,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		void enableOneParticipantConference (bool enable) { m_allowOneParticipantConference = enable; }
 		bool oneParticipantConferenceEnabled() const { return m_allowOneParticipantConference; }
 
-		void enableAllToAll (bool enable) {m_enableAllToAll = enable; }
-		bool allToAllEnabled() const {return m_enableAllToAll; }
-
 		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
 		const ConferenceAddress & getConferenceAddress() const { return m_conferenceAddress; };
 
@@ -99,7 +96,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool m_enableChat = false;
 		bool m_localParticipantEnabled = true;
 		bool m_allowOneParticipantConference = false;
-		bool m_enableAllToAll = false;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
 		Layout m_layout = Layout::Grid;
 		Address m_factoryAddress = Address();
