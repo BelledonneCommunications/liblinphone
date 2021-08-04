@@ -3780,14 +3780,36 @@ void MediaSession::setNativeVideoWindowId (void *id) {
 }
 
 void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
-	lError() << __func__ << " DEBUG DEBUG Entering";
-	auto s = getStreamsGroup().lookupStream(label);
-	lError() << __func__ << " DEBUG DEBUG found stream " << s;
+	lError() << __func__ << " DEBUG DEBUG Entering label " << label;
+//*************************** START WORKAROUND for active speaker stream - HUGE DIY
+	L_D()
+	auto conference = d->listener->getCallSessionConference(getSharedFromThis());
+	std::string meLabel;
+	if (conference) {
+		auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		// Do not preserve conference after removing the participant
+		auto meParticipant = cppConference->getMe();
+		auto meDevice = meParticipant->getDevices();
+lInfo() << __func__ << " DEBUG DEBUG C++ conference " << cppConference << " me participant " << meParticipant << " has " << meDevice.size() << " device(s)";
+		if (!meDevice.empty()) {
+			meLabel = meDevice.front()->getLabel();
+		}
+	}
+lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " me label " << meLabel;
+	Stream * s = NULL;
+	if (conference && meLabel.compare(label) == 0) {
+	s = getStreamsGroup().lookupVideoStream(MS_ANDROID_VIDEO_READ_ID);
+	} else {
+	s = getStreamsGroup().lookupStream(SalVideo, label);
+	}
+//*************************** END WORKAROUND for active speaker
+//	auto s = getStreamsGroup().lookupStream(SalVideo, label);
+	lError() << __func__ << " DEBUG DEBUG found stream " << s << " stream with no label " << getStreamsGroup().lookupStream(SalVideo, std::string()) << " stream with label " << label << " is " <<  getStreamsGroup().lookupStream(SalVideo, label);
 	if (s) {
 		VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
-	lError() << __func__ << " DEBUG DEBUG found stream " << s << " casted " << iface;
+	lError() << __func__ << " DEBUG DEBUG found stream " << s << " label " << s->getLabel() << " casted " << iface;
 		if (iface == nullptr){
-			lError() << "stream " << s << " with label " << " label " << " cannot be casted to VideoControlInterface";
+			lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
 			return;
 		}
 	lError() << __func__ << " DEBUG DEBUG found stream " << s << " casted " << iface << " setting window id " << id;
@@ -3799,8 +3821,10 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 }
 
 void MediaSession::setNativePreviewWindowId(void *id){
-	L_D();
-	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+//	L_D();
+//	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	auto s = getStreamsGroup().lookupVideoStream(MS_ANDROID_VIDEO_READ_ID);
+	VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
 	if (iface) {
 		iface->setNativePreviewWindowId(id);
 	}

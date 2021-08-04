@@ -324,10 +324,11 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 	mAuthTokenVerified = value;
 }
 
-Stream * StreamsGroup::lookupStream(const std::string & label) const {
+Stream * StreamsGroup::lookupStream(const SalStreamType type, const std::string & label) const {
 	for (auto &s : mStreams){
 		const auto streamLabel = s->getLabel();
-		if (!streamLabel.empty() && (label.compare(streamLabel) == 0)) {
+lInfo() << __func__ << " DEBUG DEBUG stream " << s.get() << " type " << sal_stream_type_to_string(s->getType()) << " label " << streamLabel << " searched label " << label << " comparison " << label.compare(streamLabel);
+		if ((s->getType() == type) && (label.compare(streamLabel) == 0)) {
 			return s.get();
 		}
 	}
@@ -365,7 +366,23 @@ Stream * StreamsGroup::lookupVideoStream ( MediaStreamDir dir) {
 		if (stream->getType() == SalVideo){
 			Stream *s = stream.get();
 			MS2Stream *iface = dynamic_cast<MS2Stream*>(s);
+lInfo() << __func__ << " DEBUG  DEBUG s " << s << " direction " << iface->getMediaStream();
 			if (media_stream_get_direction(iface->getMediaStream()) == dir) {
+				return stream.get();
+			}
+		}
+	}
+	return nullptr;
+}
+
+Stream * StreamsGroup::lookupVideoStream ( MSFilterId id) {
+	for (auto &stream : mStreams){
+		if (stream->getType() == SalVideo){
+			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+			MediaStream *ms = s->getMediaStream();
+			VideoStream *vs = (VideoStream *)ms;
+lInfo() << __func__ << " DEBUG  DEBUG s " << s << " source id " << ((vs && vs->source) ? ms_filter_get_id(vs->source) : -1) << " searched id " << id;
+			if (vs && vs->source && ms_filter_get_id(vs->source)== id){
 				return stream.get();
 			}
 		}
@@ -578,9 +595,9 @@ void StreamsGroup::unjoinMixerSession(){
 
 MSVideoSize StreamsGroup::getReceivedVideoSize(const std::string & label) const {
 #ifdef VIDEO_ENABLED
-	Stream * s= lookupStream(label);
+	Stream * s= lookupStream(SalVideo, label);
 ms_message("%s DEBUG DEBUG VIDEO stream %p\n", __func__, s);
-	if (s && s->getType() == SalVideo) {
+	if (s) {
 		return video_stream_get_received_video_size((VideoStream *)s);
 	}
 #endif

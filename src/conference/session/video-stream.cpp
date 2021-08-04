@@ -183,6 +183,8 @@ void MS2VideoStream::startZrtp(){
 }
 
 std::string MS2VideoStream::getLabel()const {
+ms_message("%s DEBUG DEBUG VIDEO ptr %p\n", __func__, mStream->label);
+ms_message("%s DEBUG DEBUG VIDEO value %s\n", __func__, ((mStream->label) ? mStream->label : "Unknown"));
 	return L_C_TO_STRING(mStream->label);
 }
 
@@ -274,7 +276,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
-lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this << " label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer << " native window ID " << mNativeWindowId;
+lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this << " label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer << " native window ID " << mNativeWindowId << " core window ID " << getCCore()->video_window_id;
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
 	} else if (videoMixer && label && getMediaSession().getParticipantWindowId(label)) {
@@ -357,6 +359,7 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 					lInfo() << "[mix to all] find sendrecv stream for participant";
 				}
 			}
+
 			if (createdStream) {
 				io.input.type = MSResourceItc;
 				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, createdStream->itcsink);
@@ -378,7 +381,7 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 
 				AudioStream *as = getPeerAudioStream();
 				if (as) audio_stream_link_video(as, mStream);
-				}
+			}
 		}
 	}
 	mStartCount++;
@@ -533,13 +536,13 @@ bool MS2VideoControl::cameraEnabled() const{
 void MS2VideoControl::setNativeWindowId(void *w){
 	VideoStream *vs = getVideoStream();
 	mNativeWindowId = w;
-lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this <<  " native window ID " << mNativeWindowId;
+lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this << " video stream " << vs << " native window ID " << mNativeWindowId;
 	if (vs) video_stream_set_native_window_id(vs, w);
 }
 
 void * MS2VideoControl::getNativeWindowId() const{
 	VideoStream *vs = getVideoStream();
-lError() << __func__ << " DEBUG DEBUG retrieving window ID for stream " << this <<  " native window ID " << mNativeWindowId;
+lError() << __func__ << " DEBUG DEBUG retrieving window ID for stream " << this  << " video stream " << vs <<  " native window ID " << mNativeWindowId;
 	if (mNativeWindowId){
 		return mNativeWindowId;
 	}
