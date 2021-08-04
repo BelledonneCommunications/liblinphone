@@ -373,8 +373,9 @@ public:
 	 * Lookup the main stream for a given stream type.
 	 */
 	Stream * lookupMainStream(SalStreamType type);
-	Stream * lookupStream(const std::string & label) const;
+	Stream * lookupStream(const SalStreamType type, const std::string & label) const;
 	Stream * lookupVideoStream (MediaStreamDir dir);
+	Stream * lookupVideoStream ( MSFilterId id);
 	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir);
 
 	/*
