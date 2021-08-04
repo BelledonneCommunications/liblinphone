@@ -356,6 +356,39 @@ static void call_invite_180rel_prack_with_180_retransmition(void) {
 	linphone_core_manager_destroy(mgr);
 }
 
+static void call_invite_180rel_prack_with_auth(void) {
+	char *scen;
+	FILE * sipp_out;
+	LinphoneCall *call = NULL;
+	LinphoneCoreManager *mgr = mgr_init();
+	
+	scen = bc_tester_res("sipp/call_prack_with_auth.xml");
+	int local_port;
+	sipp_out = sip_start_recv(scen, &local_port);
+	
+	if (sipp_out) {
+		LinphoneAddress *dest = linphone_address_new("sip:sipp@127.0.0.1");
+		linphone_address_set_port(dest, local_port);
+		LinphoneAuthInfo *auth = linphone_auth_info_new("marie", NULL," secret", NULL, "sip.exemple.org",NULL);
+		linphone_core_add_auth_info(mgr->lc, auth);
+		linphone_auth_info_unref(auth);
+		
+		call = linphone_core_invite_address(mgr->lc, dest);
+		linphone_address_unref(dest);
+		BC_ASSERT_PTR_NOT_NULL(call);
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingInit, 1));
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 1));
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallOutgoingRinging, 1));
+		/*assert that the call  get connected */
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallConnected, 1));
+		linphone_call_terminate(call);
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallReleased, 1));
+		pclose(sipp_out);
+	}
+	linphone_core_manager_destroy(mgr);
+}
+
 
 static test_t tests[] = {
 	TEST_NO_TAG("SIP UPDATE within incoming reinvite without sdp", sip_update_within_icoming_reinvite_with_no_sdp),
@@ -364,7 +397,8 @@ static test_t tests[] = {
 	TEST_NO_TAG("Call with multiple audio mline in sdp", call_with_multiple_audio_mline_in_sdp),
 	TEST_NO_TAG("Call with multiple video mline in sdp", call_with_multiple_video_mline_in_sdp),
 	TEST_NO_TAG("Call invite 200ok without contact header", call_invite_200ok_without_contact_header),
-	TEST_NO_TAG("Call invite 180rel PRACK with 180 retransmition", call_invite_180rel_prack_with_180_retransmition)
+	TEST_NO_TAG("Call invite 180rel PRACK with 180 retransmition", call_invite_180rel_prack_with_180_retransmition),
+	TEST_NO_TAG("Call invite 180rel PRACK with auth", call_invite_180rel_prack_with_auth)
 };
 #endif
 
