@@ -1215,8 +1215,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 				if (conference && isInLocalConference) {
 					const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 					const auto & currentConfParams = cppConference->getCurrentParams();
-					const auto confVideoCapabilities = currentConfParams.videoEnabled();
-					if (confVideoCapabilities) {
+					if (currentConfParams.videoEnabled()) {
 						if (getParams()->videoEnabled()) {
 							streamDir = SalStreamSendRecv;
 						} else {
@@ -1543,6 +1542,15 @@ lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((local
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+	bool isConferenceLayoutActiveSpeaker = false;
+	bool isVideoConferenceEnabled = false;
+	if (conference) {
+		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		const auto & currentConfParams = cppConference->getCurrentParams();
+		const auto & confLayout = currentConfParams.getLayout();
+		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+		isVideoConferenceEnabled = currentConfParams.videoEnabled();
+	}
 
 	// TODO: DELETE when labels will be implemented
 	const char * conferenceDeviceAttrName = "label";
@@ -1576,9 +1584,7 @@ lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((local
 	bool addVideoStream = false;
 	if (localIsOfferer) {
 		if (conference && isInLocalConference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & currentConfParams = cppConference->getCurrentParams();
-			addVideoStream = currentConfParams.videoEnabled();
+			addVideoStream = isVideoConferenceEnabled;
 		} else if (getParams()->videoEnabled()) {
 			addVideoStream = true;
 		}
@@ -1592,12 +1598,8 @@ lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((local
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
 		if (conference && isInLocalConference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & currentConfParams = cppConference->getCurrentParams();
-			const auto confVideoCapabilities = currentConfParams.videoEnabled();
-
-			videoDir = (confVideoCapabilities && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
-			enableVideoStream = confVideoCapabilities;
+			videoDir = (isVideoConferenceEnabled && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
+			enableVideoStream = isVideoConferenceEnabled;
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 			enableVideoStream = getParams()->videoEnabled();
@@ -1699,8 +1701,6 @@ lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress()
 						if (conference && isInLocalConference) {
 							// Local conference
 							const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-							const auto & currentConfParams = cppConference->getCurrentParams();
-							const auto confVideoCapabilities = currentConfParams.videoEnabled();
 
 							const auto & dev = participantsAttrValue.empty() ? nullptr : cppConference->findParticipantDeviceByLabel(participantsAttrValue);
 	lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
@@ -1711,7 +1711,7 @@ lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress()
 									isMe = (meDev->getLabel().compare(participantsAttrValue) == 0);
 								}
 							}
-							if (confVideoCapabilities && (dev || isMe || !layoutAttrValue.empty())) {
+							if (isVideoConferenceEnabled && (dev || isMe || !layoutAttrValue.empty())) {
 
 								l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 								if (!l.empty()){
@@ -1724,10 +1724,7 @@ lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress()
 											cfg.dir = s.getDirection();
 										}
 									} else {
-										const auto & currentConfParams = cppConference->getCurrentParams();
-										const auto & confLayout = currentConfParams.getLayout();
-
-										if (confLayout == ConferenceParams::Layout::ActiveSpeaker) {
+										if (isConferenceLayoutActiveSpeaker) {
 											cfg.dir = SalStreamSendRecv;
 										} else {
 											cfg.dir = SalStreamInactive;
@@ -1844,11 +1841,9 @@ lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress()
 	if (conference && isInLocalConference) {
 		// Add additional video streams if required
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto & currentConfParams = cppConference->getCurrentParams();
-		const auto confVideoCapabilities = currentConfParams.videoEnabled();
 		const auto & me = cppConference->getMe();
 
-		if (confVideoCapabilities) {
+		if (isVideoConferenceEnabled) {
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
 lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel();
@@ -1885,7 +1880,6 @@ lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for me conference
 			}
 
 			const auto & foundStreamIdx = (md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic") == -1) ? md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker") : md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic");
-			const auto & confLayout = currentConfParams.getLayout();
 
 lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " << foundStreamIdx;
 
@@ -1895,7 +1889,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 
 				newStream.main = false;
 				newStream.type = SalVideo;
-				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((confLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
+				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((isConferenceLayoutActiveSpeaker) ? "speaker" : "mosaic"));
 
 				cfg.proto = getParams()->getMediaProto();
 
@@ -1907,7 +1901,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 
 					cfg.payloads = l;
 					newStream.name = "Video " + me->getAddress().asString();
-					if (confLayout == ConferenceParams::Layout::ActiveSpeaker) {
+					if (isConferenceLayoutActiveSpeaker) {
 						cfg.dir = SalStreamSendRecv;
 					} else {
 						cfg.dir = SalStreamInactive;
@@ -1950,7 +1944,7 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 
 	const auto audioStreamIndex = md->findIdxMainStreamOfType(SalAudio);
 	if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
-	const auto videoStreamIndex = md->findIdxMainStreamOfType(SalVideo);
+	const auto videoStreamIndex = isConferenceLayoutActiveSpeaker ? md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker") : md->findIdxMainStreamOfType(SalVideo);
 	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex));
 	const auto textStreamIndex = md->findIdxMainStreamOfType(SalText);
 	if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex));
@@ -2771,8 +2765,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			if (conference && isInLocalConference) {
 				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 				const auto & currentConfParams = cppConference->getCurrentParams();
-				const auto confVideoCapabilities = currentConfParams.videoEnabled();
-				if (confVideoCapabilities) {
+				if (currentConfParams.videoEnabled()) {
 					if (getParams()->videoEnabled()) {
 						streamDir = SalStreamSendRecv;
 					} else {
