@@ -34,16 +34,6 @@ MixerSession::MixerSession(Core &core) : mCore(core){
 #endif
 }
 
-MixerSession::MixerSession(Core &core, bool toAll) : mCore(core){
-	// todo migrate
-	auto audioMixer = new MS2AudioMixer(*this);
-	audioMixer->addListener(this);
-	mMixers[SalAudio].reset(audioMixer);
-#ifdef VIDEO_ENABLED
-	mMixers[SalVideo].reset(new MS2VideoMixer(*this, toAll));
-#endif
-}
-
 MixerSession::~MixerSession(){
 }
 

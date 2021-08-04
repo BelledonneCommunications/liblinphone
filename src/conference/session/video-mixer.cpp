@@ -41,22 +41,6 @@ MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2
 	mConferenceActiveSpeaker = ms_video_conference_new(mSession.getCCore()->factory, &paramsActiveSpeaker);
 }
 
-MS2VideoMixer::MS2VideoMixer(MixerSession & session, bool enableActiveSpeaker) : StreamMixer(session), MS2VideoControl(session.getCore()){
-	MSVideoConferenceParams paramsAlltoAll = {0};
-	paramsAlltoAll.codec_mime_type = "VP8";
-	paramsAlltoAll.all_to_all = 1;
-	paramsAlltoAll.min_switch_interval = 3000;
-	mConferenceAllToAll = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
-
-	if (enableActiveSpeaker) {
-		MSVideoConferenceParams paramsActiveSpeaker = {0};
-		paramsActiveSpeaker.codec_mime_type = "VP8";
-		paramsActiveSpeaker.all_to_all = 0;
-		paramsActiveSpeaker.min_switch_interval = 3000;
-		mConferenceActiveSpeaker = ms_video_conference_new(mSession.getCCore()->factory, &paramsActiveSpeaker);
-	}
-}
-
 void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker){
 	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
 	if (activeSpeaker) {
@@ -167,13 +151,12 @@ void MS2VideoMixer::addLocalParticipant(){
 		video_stream_set_label(st, L_STRING_TO_C(mLocalParticipantLabel));
 	}
 
-	if (!st->label) {
+	// todo localparticipant not supported
+	/*if (!st->label) {
 		lError() << "Video Mixer Conference[all to all]: Can not add video endpoint with empty label";
 	}
-	if (ms_video_conference_is_all_to_all(mConferenceAllToAll)) {
-		// todo try to remove
-		video_stream_enable_router(st, true);
-	}
+	video_stream_enable_router(st, true);*/
+
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding video local endpoint");
@@ -227,10 +210,6 @@ void MS2VideoMixer::setLocalParticipantLabel(const std::string & label) {
 
 std::string MS2VideoMixer::setLocalParticipantLabel() const {
 	return mLocalParticipantLabel;
-}
-
-bool MS2VideoMixer::conferenceAllToAllEnabled() const {
-	return ms_video_conference_is_all_to_all(mConferenceAllToAll);
 }
 
 LINPHONE_END_NAMESPACE
