@@ -203,9 +203,11 @@ void MS2VideoStream::finishPrepare(){
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+	const auto & isInLocalConference = getMediaSessionPrivate().isInConference();
 	MS2VideoMixer * videoMixer = getVideoMixer();
-	const char * label = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "label");
-	const char * content = sal_custom_sdp_attribute_find(ctx.getLocalStreamDescription().custom_sdp_attributes, "content");
+	const auto & sdpAttributes = isInLocalConference ? ctx.getLocalStreamDescription().custom_sdp_attributes : ctx.getRemoteStreamDescription().custom_sdp_attributes;
+	const char * label = sal_custom_sdp_attribute_find(sdpAttributes, "label");
+	const char * content = sal_custom_sdp_attribute_find(sdpAttributes, "content");
 
 	/* Shutdown preview */
 	MSFilter *source = nullptr;
