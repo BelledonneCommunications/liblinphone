@@ -53,24 +53,18 @@ void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool 
 void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
 	ms_video_endpoint_set_user_data(endpoint, nullptr);
 	// Try to remove endpoint from both MSConference
-	if (ms_video_conference_member_found(mConferenceActiveSpeaker, endpoint)) {
-		ms_video_conference_remove_member(mConferenceActiveSpeaker, endpoint);
-		lInfo() << "[one to all] remove member from active speaker MS2 conference";
-	} else if (ms_video_conference_member_found(mConferenceAllToAll, endpoint)) {
-		ms_video_conference_remove_member(mConferenceAllToAll, endpoint);
-		lInfo() << "[all to all] remove member from all to all MS2 conference";
-	} else {
-		lError() << "[mix to all] remove unknow ";
-	}
+	ms_video_conference_remove_member(mConferenceActiveSpeaker, endpoint);
+	ms_video_conference_remove_member(mConferenceAllToAll, endpoint);
 }
 
 void MS2VideoMixer::setFocus(StreamsGroup *sg){
+	// used by mConferenceActiveSpeaker
 	MSVideoEndpoint *ep = nullptr;
 	
 	if (sg == nullptr){
 		ep = mLocalEndpoint;
 	}else{
-		const bctbx_list_t *elem = ms_video_conference_get_members(mConferenceAllToAll);
+		const bctbx_list_t *elem = ms_video_conference_get_members(mConferenceActiveSpeaker);
 		for (; elem != nullptr; elem = elem->next){
 			MSVideoEndpoint *ep_it = (MSVideoEndpoint *)elem->data;
 			if (ms_video_endpoint_get_user_data(ep_it) == sg){
@@ -80,11 +74,11 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 		}
 	}
 	if (ep){
-		ms_video_conference_set_focus(mConferenceAllToAll, ep);
+		ms_video_conference_set_focus(mConferenceActiveSpeaker, ep);
 	}else{
-		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceAllToAll);
+		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceActiveSpeaker);
 		if (video_placeholder_ep) {
-			ms_video_conference_set_focus(mConferenceAllToAll, video_placeholder_ep);
+			ms_video_conference_set_focus(mConferenceActiveSpeaker, video_placeholder_ep);
 		} else {
 			lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
 		}
@@ -160,16 +154,15 @@ void MS2VideoMixer::addLocalParticipant(){
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding video local endpoint");
-	ms_video_conference_add_member(mConferenceAllToAll, mLocalEndpoint);
+	ms_video_conference_add_member(mConferenceActiveSpeaker, mLocalEndpoint);
 }
 
 void MS2VideoMixer::removeLocalParticipant(){
 	if (mLocalEndpoint){
 		ms_message("Conference: removing video local endpoint");
-		ms_video_conference_remove_member(mConferenceAllToAll, mLocalEndpoint);
-		if (mConferenceActiveSpeaker) {
-			ms_video_conference_remove_member(mConferenceActiveSpeaker, mLocalEndpoint);
-		}
+		//todo
+		//ms_video_conference_remove_member(mConferenceAllToAll, mLocalEndpoint);
+		ms_video_conference_remove_member(mConferenceActiveSpeaker, mLocalEndpoint);
 		ms_video_endpoint_release_from_stream(mLocalEndpoint);
 		mLocalEndpoint = nullptr;
 		video_stream_stop(mLocalParticipantStream);
