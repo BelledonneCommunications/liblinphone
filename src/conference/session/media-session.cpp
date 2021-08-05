@@ -2082,7 +2082,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	if (isInLocalConference) {
 		char * contactAddressStr = NULL;
 		const auto account = linphone_core_lookup_known_account(q->getCore()->getCCore(), L_GET_C_BACK_PTR(&(q->getLocalAddress())));
-		if (op) {
+		if (op && op->getContactAddress()) {
 			contactAddressStr = sal_address_as_string(op->getContactAddress());
 		} else if (account && Account::toCpp(account)->getOp()) {
 			contactAddressStr = sal_address_as_string(Account::toCpp(account)->getOp()->getContactAddress());
@@ -2874,13 +2874,15 @@ lInfo() << __func__ << " local is offerer true";
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
 		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
-	} else {
+	} else if (d->op && d->op->getContactAddress()) {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
 	}
-	Address contactAddress(contactAddressStr);
-	ms_free(contactAddressStr);
-	updateContactAddress(contactAddress);
-	d->op->setContactAddress(contactAddress.getInternalAddress());
+	if (contactAddressStr) {
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		updateContactAddress(contactAddress);
+		d->op->setContactAddress(contactAddress.getInternalAddress());
+	}
 
 	if (d->op->update(subject.c_str(), false) != 0)
 		return -1;
