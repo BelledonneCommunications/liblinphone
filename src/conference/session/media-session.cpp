@@ -164,8 +164,11 @@ bool MediaSessionPrivate::tryEnterConference() {
 	return false;
 }
 
-bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> & md) const {
-	return (md && (!md->isAcceptable() || incompatibleSecurity(md)));
+bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> & remoteMd, const std::shared_ptr<SalMediaDescription> & finalMd) const {
+	if (remoteMd && remoteMd->isEmpty()) {
+		return false;
+	}
+	return (finalMd && (finalMd->isEmpty() || incompatibleSecurity(finalMd)));
 }
 
 void MediaSessionPrivate::accepted () {
@@ -214,7 +217,7 @@ lInfo() << __func__ << " local is offerer " << (op->getRemoteMediaDescription() 
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (rejectMediaSession(md)) {
+	if (rejectMediaSession(rmd, md)) {
 		md = nullptr;
 	}
 	if (md) {
@@ -607,7 +610,7 @@ lInfo() << __func__ << " local is offerer " << (rmd == nullptr);
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
 		std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
-		if (rejectMediaSession(md)) {
+		if (rejectMediaSession(rmd, md)) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);

@@ -1618,14 +1618,8 @@ static void call_paused_with_rtp_port_to_zero(void) {
 
 	check_local_desc_stream(marie_call);
 	check_local_desc_stream(pauline_call);
-	check_result_desc_rtp_rtcp_ports(marie_call, 0, 0);
 	check_result_desc_rtp_rtcp_ports(pauline_call, 0, 0);
 
-	const LinphoneCallParams * marie_params = linphone_call_get_current_params(marie_call);
-	BC_ASSERT_PTR_NOT_NULL(marie_params);
-	if (marie_params) {
-		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(marie_params));
-	}
 	const LinphoneCallParams * pauline_params = linphone_call_get_current_params(pauline_call);
 	BC_ASSERT_PTR_NOT_NULL(pauline_params);
 	if (pauline_params) {
@@ -1649,13 +1643,13 @@ static void call_paused_with_rtp_port_to_zero(void) {
 	check_local_desc_stream(pauline_call);
 
 	const LinphoneCallParams * marie_params2 = linphone_call_get_current_params(marie_call);
-	BC_ASSERT_PTR_NOT_NULL(marie_params);
-	if (marie_params) {
+	BC_ASSERT_PTR_NOT_NULL(marie_params2);
+	if (marie_params2) {
 		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(marie_params2));
 	}
 	const LinphoneCallParams * pauline_params2 = linphone_call_get_current_params(pauline_call);
-	BC_ASSERT_PTR_NOT_NULL(pauline_params);
-	if (pauline_params) {
+	BC_ASSERT_PTR_NOT_NULL(pauline_params2);
+	if (pauline_params2) {
 		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(pauline_params2));
 	}
 
