@@ -52,16 +52,18 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
 		const SalStreamDescription & findStream(SalMediaProto proto, SalStreamType type) const;
+		int findIdxStream(SalMediaProto proto, SalStreamType type) const;
 		unsigned int nbStreamsOfType(SalStreamType type) const;
 		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
 		const SalStreamDescription & getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
 		const SalStreamDescription findSecureStreamOfType(SalStreamType type) const;
 		const SalStreamDescription findBestStream(SalStreamType type) const;
-		const SalStreamDescription & findMainStreamOfType(SalStreamType type) const;
+		int findIdxBestStream(SalStreamType type) const;
+		const SalStreamDescription & findStreamWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const;
 		const SalStreamDescription & findStreamWithSdpAttribute(const std::string name, const std::string value) const;
 		const SalStreamDescription findFirstStreamOfType(SalStreamType type) const;
 		const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
-		int findIdxMainStreamOfType(SalStreamType type) const;
+		int findIdxStreamWithSdpAttribute(const SalStreamType, const std::string name, const std::string value) const;
 		int findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const;
 
 		bool isEmpty() const;
@@ -142,8 +144,9 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		SalStreamDescription::tcap_map_t tcaps;
 
 		mutable bool capabilityNegotiationSupported = false; /* Set to true if the stream allows capability negotiation */
-		std::vector<SalStreamDescription>::const_iterator findMainStreamItOfType(SalStreamType type) const;
 		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const std::string name, const std::string value) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamIt(SalMediaProto proto, SalStreamType type) const;
 
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
