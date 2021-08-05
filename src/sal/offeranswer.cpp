@@ -459,7 +459,6 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 
 		const auto & resultCfg = resultCfgPair.first;
 		result.addActualConfiguration(resultCfg);
-		result.main=local_offer.main;
 
 		const auto success = resultCfgPair.second;
 		if (success) {
@@ -662,7 +661,6 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 
 	const auto & resultCfg = resultCfgPair.first;
 	result.addActualConfiguration(resultCfg);
-	result.main=local_cap.main;
 
 	const auto success = resultCfgPair.second;
 	if (success) {
@@ -734,13 +732,8 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
 	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
 	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
-lInfo() << __func__ << " DEBUG DEBUG - is main " << local_cap.isMain() << " layout " << layoutAttrValue << " label " << participantsAttrValue << " local dir " << sal_stream_dir_to_string(localCfg.getDirection()) << " remote dir " << sal_stream_dir_to_string(remoteCfg.getDirection()) << " result dir call " << sal_stream_dir_to_string(OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection()));
-	if (local_cap.isMain() && (!participantsAttrValue.empty() || !layoutAttrValue.empty())) {
-		//resultCfg.dir=OfferAnswerEngine::computeConferenceStreamDir(localCfg.getDirection());
-		resultCfg.dir=localCfg.getDirection();
-	} else {
-		resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
-	}
+lInfo() << __func__ << " DEBUG DEBUG - layout " << layoutAttrValue << " label " << participantsAttrValue << " local dir " << sal_stream_dir_to_string(localCfg.getDirection()) << " remote dir " << sal_stream_dir_to_string(remoteCfg.getDirection()) << " result dir call " << sal_stream_dir_to_string(OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection()));
+	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
 
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
@@ -843,6 +836,8 @@ bool OfferAnswerEngine::areProtoInStreamCompatibles(const SalStreamDescription &
 
 	for (const auto & otherCfg : otherStream.getAllCfgs()) {
 		for (const auto & localCfg : localStream.getAllCfgs()) {
+
+lInfo() << __func__ << " DEBUG DEBUG local transport protocol " << sal_media_proto_to_string(localCfg.second.getProto()) << " remote transport protocol " << sal_media_proto_to_string(otherCfg.second.proto);
 			const auto compatible = OfferAnswerEngine::areProtoCompatibles(localCfg.second.getProto(), otherCfg.second.getProto());
 			if (compatible) {
 				return true;
@@ -940,6 +935,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
+lInfo() << __func__ << " DEBUG DEBUG local cap num streams " << local_capabilities->streams.size() << " remote num streams " << remote_offer->streams.size();
 	for(auto & rs : remote_offer->streams){
 
 		const char * conferenceDeviceAttrName = "label";
@@ -947,22 +943,12 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(rs.custom_sdp_attributes, conferenceDeviceAttrName));
 		const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(rs.custom_sdp_attributes, layoutAttrName));
 
-		SalStreamDescription ls;
-		if (rs.isMain()) {
-lInfo() << __func__ << " remote stream is main ";
-			ls = local_capabilities->findMainStreamOfType(rs.getType());
-		} else if (!participantsAttrValue.empty()) {
-lInfo() << __func__ << " remote stream has participant label ";
-			ls = local_capabilities->findStreamWithSdpAttribute(conferenceDeviceAttrName, participantsAttrValue);
-		} else if (!participantsAttrValue.empty()) {
-lInfo() << __func__ << " remote stream has layout label ";
-			ls = local_capabilities->findStreamWithSdpAttribute(layoutAttrName, layoutAttrValue);
-		} else {
-lInfo() << __func__ << " remote stream has no label and is not main ";
-			ls = local_capabilities->streams[i];
-		}
+		SalStreamDescription ls = local_capabilities->streams[i];
+lInfo() << __func__ << " DEBUG DEBUG remote stream has no label and no content - stream addr at idx " << i << ": " << &(local_capabilities->streams[i]) << " type " << sal_stream_type_to_string(ls.getType()) << " remote type " <<   sal_stream_type_to_string(rs.getType()) << " best stream idx " << local_capabilities->findIdxBestStream(rs.getType());
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
+
+lInfo() << __func__ << " DEBUG DEBUG stream at idx " << i << ": type " << sal_stream_type_to_string(ls.getType()) << " remote type " <<   sal_stream_type_to_string(rs.getType());
 
 		if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
 			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
