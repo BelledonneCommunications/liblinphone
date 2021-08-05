@@ -73,6 +73,10 @@ option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
 
+# Hidden non-cache options:
+# * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
+# * DISABLE_SOCI_PACKAGE_SEARCH: skip find_package() for Soci.
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS NO)
 
