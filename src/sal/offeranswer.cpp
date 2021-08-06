@@ -473,7 +473,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	bool success = true;
 
 	if ((localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) || (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>())) {
-		lInfo() << "Unable to find valid configurations to compare against";
+		lInfo() << "[Initiate Outgoing Configuration] Unable to find valid configurations to compare against - local configuration found: " << (localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) << " remote configuration found: " << (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>());
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -681,7 +681,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	bool success = true;
 
 	if ((localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) || (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>())) {
-		lInfo() << "Unable to find valid configurations to compare against";
+		lInfo() << "[Initiate Incoming Configuration] Unable to find valid configurations to compare against - local configuration found: " << (localCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>()) << " remote configuration found: " << (remoteCfg == Utils::getEmptyConstRefObject<SalStreamConfiguration>());
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}

@@ -600,8 +600,35 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
 			useNegotiatedMediaProtocol = false;
 		}
-lInfo() << __func__ << " local is offerer " << (rmd == nullptr);
-		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, useNegotiatedMediaProtocol);
+
+		// Reenable all streams if we are the offerer
+		// This occurs with clients such as Avaya and FreeSwitch that put a call on hold by setting streams with inactive direction and RTP port to 0
+		// Scenario:
+		// - client1 sends an INVITE without SDP
+		// - client2 puts its offer down in the 200Ok
+		// - client1 answers with inactive stream and RTP port set to 0
+		// Without the workaround, a deadlock is created - client1 has inactive streams and client2 has audio/video/text capabilities disabled in its local call parameters because the stream was rejected earlier on. Therefore it would be impossible to resume the streams if we are asked to make an offer.
+		const bool makeOffer = (rmd == nullptr);
+		if (makeOffer || ((state == CallSession::State::PausedByRemote) && (prevState == CallSession::State::UpdatedByRemote))) {
+			for (const auto & stream : localDesc->streams) {
+				switch (stream.getType()) {
+					case SalAudio:
+						getParams()->enableAudio(true);
+						break;
+					case SalVideo:
+						getParams()->enableVideo(true);
+						break;
+					case SalText:
+						getParams()->enableRealtimeText(true);
+						break;
+					case SalOther:
+						break;
+				}
+			}
+		}
+
+lInfo() << __func__ << " local is offerer " << (rmd == nullptr) << " previous state " << Utils::toString(prevState);
+		makeLocalMediaDescription(makeOffer, enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
 	// Fix local parameter after creating new local media description
 	fixCallParams(rmd, true);
@@ -869,14 +896,7 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			 * This is to avoid to re-propose again some streams that have just been declined.
 			 */
 			const auto & audioStream = rmd->findBestStream(SalAudio);
-			// Do not change local call parameters if remote answered with an inactive stream with RTP port set to 0
-			// This occurs with clients such as Avaya that put a call on hold by setting streams with inactive direction and RTP port to 0
-			// Scenario:
-			// - client1 sends an INVITE without SDP
-			// - client2 puts its offer down in the 200Ok
-			// - client1 answers with inactive stream abd RTP port set to 0
-			// Without the workaround, a deadlock is created - client1 has inactive streams and client2 has audio/video/text capabilities disabled in its local call parameters because the stream was rejected earlier on. Therefore it would be impossible to resume the streams on both sides.
-			if (getParams()->audioEnabled() && ((audioStream.getDirection() != SalStreamInactive) || (audioStream.getRtpPort() != 0)) && !rcp->audioEnabled()) {
+			if (getParams()->audioEnabled() && !rcp->audioEnabled()) {
 				lInfo() << "CallSession [" << q << "]: disabling audio in our call params because the remote doesn't want it";
 				getParams()->enableAudio(false);
 			}
@@ -1328,6 +1348,7 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	cfg.proto = proto;
 	md->streams[idx].type = type;
 	const auto & core = q->getCore()->getCCore();
+lInfo() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(type) << " enabled " << enabled << " keep stream dir " <<  (linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? "true" : "false");
 	if (enabled && !codecs.empty()) {
 		md->streams[idx].name = name;
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
