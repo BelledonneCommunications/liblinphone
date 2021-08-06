@@ -171,6 +171,7 @@ protected:
 	int mStartCount = 0; /* The number of time of the underlying stream has been started (or restarted). To be maintained by implementations. */
 private:
 	void setMain();
+	void resetMain();
 	void setPortConfig(std::pair<int, int> portRange);
 	int selectFixedPort(std::pair<int, int> portRange);
 	int selectRandomPort(std::pair<int, int> portRange);
@@ -326,7 +327,7 @@ public:
 	 * There can be only one main stream per type (audio, video, text...).
 	 * This attribute is useful to know whether certains tasks must be done on these streams.
 	 */
-	void setStreamMain(size_t index);
+	void setStreamMain(size_t index, const bool force = false);
 
 	/**
 	 * Once the streams are created, update the local media description to fill mainly
