@@ -104,6 +104,18 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		LinphoneProxyConfig * m_proxyCfg = nullptr;
 };
 
+inline std::ostream & operator << (std::ostream & str, ConferenceParams::Layout layout){
+	switch (layout) {
+		case ConferenceParams::Layout::Grid:
+			str << "Grid";
+			break;
+		case ConferenceParams::Layout::ActiveSpeaker:
+			str << "ActiveSpeaker";
+			break;
+	}
+	return str;
+}
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CONFERENCE_PARAMS_H_

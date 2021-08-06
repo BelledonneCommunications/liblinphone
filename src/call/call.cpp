@@ -547,8 +547,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 						if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
+							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+							auto confParams = ConferenceParams::create(getCore()->getCCore());
+							confParams->setLayout((rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
 							// It is expected that the core of the remote conference is the participant one
-							shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+							shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 							setConference(remoteConf->toC());
 
 							// Record conf-id to be used later when terminating the remote conference
@@ -591,7 +594,10 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					// Create remote conference if no conference with the expected ID is found in the database
 					if (conference == nullptr) {
 						// It is expected that the core of the remote conference is the participant one
-						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+						std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+						auto confParams = ConferenceParams::create(getCore()->getCCore());
+						confParams->setLayout((rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
+						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
 
 						// Record conf-id to be used later when terminating the remote conference

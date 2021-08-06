@@ -538,15 +538,20 @@ void StreamsGroup::addPostRenderHook(const std::function<void()> &l){
 	mPostRenderHooks.push_back(l);
 }
 
-void StreamsGroup::setStreamMain(size_t index){
+void StreamsGroup::setStreamMain(size_t index, const bool force){
 	Stream *s = getStream(index);
 	if (s){
 		SalStreamType type = s->getType();
 		// Make sure there is not already a "main" stream; which would be a programmer fault.
 		Stream *other = lookupMainStream(type);
+lInfo() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(type) << " stream at index " << index << " ptr " << s << " main stream " << other;
 		if (other != nullptr && other != s){
-			lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
-			return;
+			if (force) {
+				other->resetMain();
+			} else {
+				lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
+				return;
+			}
 		}
 		s->setMain();
 	}

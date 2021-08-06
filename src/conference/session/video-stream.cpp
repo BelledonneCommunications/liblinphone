@@ -418,7 +418,7 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
-		lInfo() << __func__ << " DEBUG DEBUG stream " << mStream << " direction " << vstream.getDirection() << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label);
+		lInfo() << __func__ << " DEBUG DEBUG stream " << mStream << " direction " << vstream.getDirection() << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label) << " content " << L_C_TO_STRING(content);
 
 lInfo() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 
