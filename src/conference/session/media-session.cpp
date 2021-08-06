@@ -1556,9 +1556,11 @@ lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((local
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto & confLayout = currentConfParams.getLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " is active speaker " << isConferenceLayoutActiveSpeaker << " layout " << confLayout << " active speaker " << ConferenceParams::Layout::ActiveSpeaker << " grid " << ConferenceParams::Layout::Grid;
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
 	}
 	const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
+lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " is active speaker " << isConferenceLayoutActiveSpeaker;
 
 	// TODO: DELETE when labels will be implemented
 	const char * conferenceDeviceAttrName = "label";
@@ -1615,7 +1617,6 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM ";
 		}
 
 lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM dir " << sal_stream_dir_to_string(videoDir); 
-
 		auto videoStream = makeLocalStreamDecription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		if (conference && isInLocalConference) {
@@ -1624,6 +1625,20 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM dir " << sal_stream_dir_t
 lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress().asString() << " label " << dev->getLabel();
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, layoutAttrName, "main");
+		} else if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			if (op && op->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
+				Address remoteContactAddress(remoteContactAddressStr);
+				ms_free(remoteContactAddressStr);
+
+				// Check if the request was sent by the focus
+				if (remoteContactAddress.hasParam("isfocus")) {
+					const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(oldVideoStream.custom_sdp_attributes, layoutAttrName));
+					if (!layoutAttrValue.empty()) {
+						videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, layoutAttrName, layoutAttrValue.c_str());
+					}
+				}
+			}
 		}
 
 		videoStream.setSupportedEncryptions(encList);
@@ -1682,7 +1697,7 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
 lInfo() << __func__ << " DEBUG DEBUG copying stream: layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
 					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(attrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-					if (!participantsAttrValue.empty()) {
+					if (conference && isInLocalConference && !participantsAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
 					}
 					if (!layoutAttrValue.empty()) {
@@ -1952,7 +1967,8 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 	const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
 	if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
 	const auto videoStreamIndex = conference ? md->findIdxStreamWithSdpAttribute(layoutAttrName, mainStreamAttrValue) : md->findIdxBestStream(SalVideo);
-	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex));
+lInfo() << __func__ << " DEBUG DEBUG main video stream " << videoStreamIndex << " content attribute " << layoutAttrName << " attribute value " << mainStreamAttrValue;
+	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex), true);
 	const auto textStreamIndex = md->findIdxBestStream(SalText);
 	if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
@@ -3829,10 +3845,15 @@ lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " me label " 
 }
 
 void MediaSession::setNativePreviewWindowId(void *id){
-//	L_D();
-//	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	auto s = getStreamsGroup().lookupVideoStream(MS_ANDROID_VIDEO_READ_ID);
-	VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
+	L_D();
+	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+	const auto & s = getStreamsGroup().lookupMainStream(SalVideo);
+lInfo() << __func__ << " DEBUG DEBUG NATIVE PREVIEW lookup main stream stream " << s << " type " << sal_stream_type_to_string(s->getType()) << " label " << s->getLabel();
+	VideoControlInterface * iface1 = dynamic_cast<VideoControlInterface*>(s);
+	auto s1 = getStreamsGroup().lookupVideoStream(MS_ANDROID_VIDEO_READ_ID);
+lInfo() << __func__ << " DEBUG DEBUG NATIVE PREVIEW lookup by output connection stream " << s1 << " type " << sal_stream_type_to_string(s1->getType()) << " label " << s1->getLabel();
+	VideoControlInterface * iface2 = dynamic_cast<VideoControlInterface*>(s1);
+lInfo() << __func__ << " DEBUG DEBUG NATIVE PREVIEW main stream interface " << iface << " main stream using lookup " << s << " interface " << iface1 << " stream using connection " << s1 << " interface " << iface2;
 	if (iface) {
 		iface->setNativePreviewWindowId(id);
 	}
