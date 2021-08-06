@@ -1617,7 +1617,6 @@ static void call_paused_with_rtp_port_to_zero(void) {
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
 
 	check_local_desc_stream(marie_call);
-	check_local_desc_stream(pauline_call);
 	check_result_desc_rtp_rtcp_ports(pauline_call, 0, 0);
 
 	const LinphoneCallParams * pauline_params = linphone_call_get_current_params(pauline_call);
