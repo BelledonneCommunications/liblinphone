@@ -2374,6 +2374,58 @@ static void call_paused_resumed_with_sip_packets_losses(void) {
 	call_paused_resumed_base(FALSE,TRUE,FALSE);
 }
 
+static void call_paused_resumed_no_register(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	LinphoneCall* call_marie = NULL;
+	RtpSession *rtp_session;
+	const rtp_stats_t * stats;
+	bool_t call_ok;
+
+	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
+
+	if (!call_ok) goto end;
+
+	call_marie = linphone_core_get_current_call(marie->lc);
+	linphone_call_pause(call_marie);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausing,1));
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausedByRemote,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPaused,1));
+
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, 1, int, "%d");
+
+	LinphoneProxyConfig *proxyConfig = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_edit(proxyConfig);
+	linphone_proxy_config_enable_register(proxyConfig, FALSE);
+	linphone_proxy_config_done(proxyConfig);
+	BC_ASSERT_TRUE (wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphoneRegistrationCleared,1));
+
+	linphone_call_resume(call_marie);
+
+	int streams_running = 2;
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,streams_running))) goto end;
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,streams_running))) goto end;
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopTone, 1, int, "%d");
+
+	/*same here: wait a while for a bit of a traffic, we need to receive a RTCP packet*/
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 5000);
+
+	/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+	rtp_session = linphone_call_get_stream(call_marie, LinphoneStreamTypeAudio)->sessions.rtp_session;
+	if (BC_ASSERT_PTR_NOT_NULL(rtp_session)) {
+		stats = rtp_session_get_stats(rtp_session);
+		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
+	}
+
+	end_call(pauline, marie);
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+}
+
 static void call_paused_by_both(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -5515,6 +5567,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call paused with RTP port to 0", call_paused_with_rtp_port_to_zero),
 	TEST_NO_TAG("Call paused resumed", call_paused_resumed),
 	TEST_NO_TAG("Call paused resumed with sip packets looses", call_paused_resumed_with_sip_packets_losses),
+	TEST_NO_TAG("Call paused resumed without register", call_paused_resumed_no_register),
 	TEST_NO_TAG("Call paused by both parties", call_paused_by_both),
 	TEST_NO_TAG("Call paused resumed with loss", call_paused_resumed_with_loss),
 	TEST_NO_TAG("Call paused resumed from callee", call_paused_resumed_from_callee),
