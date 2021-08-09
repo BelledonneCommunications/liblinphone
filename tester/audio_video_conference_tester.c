@@ -1235,6 +1235,8 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
 
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", TRUE);
+
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall* marie_call_laure;
@@ -3814,12 +3816,14 @@ end:
 	}
 }
 
-static void conference_created_by_merging_video_calls_base(bool_t enable_video, const LinphoneConferenceLayout layout) {
+static void conference_created_by_merging_video_calls_base(bool_t new_conference_mode, bool_t enable_video, const LinphoneConferenceLayout layout) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
+
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", new_conference_mode);
 
 	LinphoneConference * conf = NULL;
 	LinphoneConferenceParams * conf_params = NULL;
@@ -4001,18 +4005,21 @@ end:
 
 }
 
+static void legacy_video_conference_created_by_merging_video_calls(void) {
+	conference_created_by_merging_video_calls_base(FALSE, TRUE, LinphoneConferenceLayoutGrid);
+}
+
 static void video_conference_created_by_merging_video_calls_with_active_speaker_layout(void) {
-	conference_created_by_merging_video_calls_base(TRUE, LinphoneConferenceLayoutActiveSpeaker);
+	conference_created_by_merging_video_calls_base(TRUE, TRUE, LinphoneConferenceLayoutActiveSpeaker);
 }
 
 static void video_conference_created_by_merging_video_calls_with_grid_layout(void) {
-	conference_created_by_merging_video_calls_base(TRUE, LinphoneConferenceLayoutGrid);
+	conference_created_by_merging_video_calls_base(TRUE, TRUE, LinphoneConferenceLayoutGrid);
 }
 
 static void audio_conference_created_by_merging_video_calls(void) {
-	conference_created_by_merging_video_calls_base(FALSE, LinphoneConferenceLayoutGrid);
+	conference_created_by_merging_video_calls_base(TRUE, FALSE, LinphoneConferenceLayoutGrid);
 }
-
 
 static void simple_participant_leaves_conference_base(bool_t remote_participant_leaves) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -8827,11 +8834,11 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 	}
 }
 
-static void conference_broadcast_created_by_merging_video_calls(void) {
+static void video_conference_created_by_merging_video_calls_with_grid_layout_and_local_participant_disabled(void) {
 	conference_mix_created_by_merging_video_calls_base(FALSE);
 }
 
-static void conference_active_speaker_created_by_merging_video_calls(void) {
+static void video_conference_created_by_merging_video_calls_with_active_speaker_layout_and_local_participant_disabled(void) {
 	conference_mix_created_by_merging_video_calls_base(TRUE);
 }
 
@@ -8854,7 +8861,6 @@ test_t audio_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating conference", simple_4_participants_conference_ended_by_terminating_conference),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating all calls", simple_4_participants_conference_ended_by_terminating_calls),
 //	TEST_NO_TAG("Simple conference with multi device", simple_conference_with_multi_device),
-	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Simple conference established from scratch, but attendees do not answer", simple_conference_from_scratch_no_answer),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
@@ -8884,6 +8890,7 @@ test_t audio_conference_basic_tests[] = {
 };
 
 test_t audio_conference_advanced_tests[] = {
+	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Participants exit conference after pausing", participants_exit_conference_after_pausing),
 	TEST_NO_TAG("Add participant after conference started", add_participant_after_conference_started),
 	TEST_NO_TAG("Add paused calls to conference", add_paused_calls_to_conference),
@@ -8923,12 +8930,11 @@ test_t audio_conference_advanced_tests[] = {
 test_t video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
-	TEST_NO_TAG("Video conference by merging video calls", video_conference_created_by_merging_video_calls),
-	TEST_NO_TAG("Video conference by merging video calls with active speaker layout", video_conference_created_by_merging_video_calls_with_active_speaker_layout),
+	TEST_NO_TAG("Legacy video conference by merging video calls", legacy_video_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout", video_conference_created_by_merging_video_calls_with_grid_layout),
-	TEST_NO_TAG("Video conference active speaker by merging video calls with grid layout", conference_active_speaker_created_by_merging_video_calls)
-	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
-	TEST_NO_TAG("Video conference broadcast by merging video calls with grid layout", conference_broadcast_created_by_merging_video_calls),
+	TEST_NO_TAG("Video conference by merging video calls with grid layout and local participant disabled", video_conference_created_by_merging_video_calls_with_grid_layout_and_local_participant_disabled),
+	TEST_NO_TAG("Video conference by merging video calls with active speaker layout", video_conference_created_by_merging_video_calls_with_active_speaker_layout),
+	TEST_NO_TAG("Video conference by merging video calls with active speaker layout and local participant disabled", video_conference_created_by_merging_video_calls_with_active_speaker_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Try to update call parameter during conference", try_to_update_call_params_during_conference),
 //	TEST_NO_TAG("Update conference parameter during conference", update_conf_params_during_conference),
 //	TEST_NO_TAG("Toggle video settings during conference without automatically accept video policy", toggle_video_settings_during_conference_without_automatically_accept_video_policy),
