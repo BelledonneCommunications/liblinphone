@@ -129,6 +129,9 @@ static void remote_provisioning_file(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void remote_provisioning_authenticated_flow(void) {
+
+}
 
 test_t remote_provisioning_tests[] = {
 	TEST_NO_TAG("Remote provisioning skipped", remote_provisioning_skipped),
@@ -139,7 +142,8 @@ test_t remote_provisioning_tests[] = {
 	TEST_NO_TAG("Remote provisioning transient successful", remote_provisioning_transient),
 	TEST_NO_TAG("Remote provisioning default values", remote_provisioning_default_values),
 	TEST_NO_TAG("Remote provisioning from file", remote_provisioning_file),
-	TEST_NO_TAG("Remote provisioning invalid URI", remote_provisioning_invalid_uri)
+	TEST_NO_TAG("Remote provisioning invalid URI", remote_provisioning_invalid_uri),
+	TEST_NO_TAG("Remote provisioning authenticated flow", remote_provisioning_authenticated_flow)
 };
 
 test_suite_t remote_provisioning_test_suite = {"RemoteProvisioning", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
