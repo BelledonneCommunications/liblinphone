@@ -691,6 +691,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		}
 		lInfo() << "Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
 	} else {
+		lError() << __func__ << " Unable to find a suitable configuration for stream of type " << sal_stream_type_to_string(result.type);
 		result.disable();
 	}
 
@@ -733,12 +734,14 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
 	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
+
+lInfo() << __func__ << " DEBUG DEBUG -  payloads " << resultCfg.payloads.empty() << " only telephone event " << OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) << " remote enabled " << remote_offer.enabled();
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
 		if (resultCfg.hasSrtp() == true) {
-			lInfo() << __func__ << "SAVP not supported for multicast address for remote stream [" << &remote_offer << "]";
+			lInfo() << "SAVP not supported for multicast address for remote stream [" << &remote_offer << "]";
 			success = false;
 			return std::make_pair(resultCfg, success);
 		}
@@ -773,7 +776,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	if (resultCfg.hasSrtp() == true) {
 		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
 		if (srtpFound == availableEncs.cend()) {
-			ms_message("Found matching payloads but SRTP is not supported");
+			lInfo() << "Found matching payloads but SRTP is not supported";
 			success = false;
 			return std::make_pair(resultCfg, success);
 		} else {
@@ -791,6 +794,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	}
 
 	if (!OfferAnswerEngine::fillZrtpAttributes(local_cap, localCfgIdx, remote_offer, remoteCfgIdx, resultCfg)) {
+lInfo() << __func__ << " DEBUG DEBUG - ZRTP error";
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
