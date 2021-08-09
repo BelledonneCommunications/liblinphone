@@ -355,6 +355,13 @@
 		incomingCall = linphone_call_new_incoming_with_callid(lc, [callId UTF8String]);
 		linphone_call_start_basic_incoming_notification(incomingCall);
 		linphone_call_start_push_incoming_notification(incomingCall);
+		LinphoneCallLog *calllog = linphone_core_find_call_log(lc,[callId UTF8String], linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
+		if (calllog) {
+			/* After display a new callkit call, check if the call log with the same callid is created.
+			   If yes, that means the call is already aborted. */
+			linphone_call_terminate(incomingCall);
+			linphone_call_log_unref(calllog);
+		}
 	}
 
     ms_message("Notification [%p] processed", userInfo);

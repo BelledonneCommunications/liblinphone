@@ -143,17 +143,17 @@ public:
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();
-	bool isDelinedEarly ();
-	const LinphoneErrorInfo * getErrorInfoCache () const;
+	//bool isDelinedEarly ();
+	//const LinphoneErrorInfo * getErrorInfoCache () const;
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState () const;
 
 private:
-	bool mIsDeclining = false;
+	//bool mIsDeclining = false;
 	bool mIsAccepting = false;
-	LinphoneErrorInfo *mErrorCache = nullptr;
+	//LinphoneErrorInfo *mErrorCache = nullptr;
 	L_DECLARE_PRIVATE(CallSession);
 	L_DISABLE_COPY(CallSession);
 };
