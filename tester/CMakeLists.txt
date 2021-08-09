@@ -276,7 +276,6 @@ set(SOURCE_FILES_C
 	quality_reporting_tester.c
 	recorder_tester.c
 	register_tester.c
-	remote_provisioning_tester.c
 	session_timers_tester.c
 	setup_tester.c
 	shared_core_tester.c
@@ -307,6 +306,7 @@ set(SOURCE_FILES_CXX
 	srtp_capability_negotiation_tester.cpp
 	zrtp_capability_negotiation_tester.cpp
 	dtls_srtp_capability_negotiation_tester.cpp
+	remote-provisioning-tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
@@ -500,7 +500,7 @@ if(NOT ANDROID)
 		)
 		if(APPLE)
 			configure_file("${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/Info.plist")
-		endif()	
+		endif()
 
 		add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
 		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")

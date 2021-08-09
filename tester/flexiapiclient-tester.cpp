@@ -225,7 +225,7 @@ test_t flexiapiclient_tests[] = {
 	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
 	TEST_NO_TAG("Accounts", flexiapiAccounts),
 	TEST_NO_TAG("Change Email", flexiapiChangeEmail),
-	TEST_NO_TAG("Change Password", flexiapiChangePassword),
+	TEST_NO_TAG("Change Password", flexiapiChangePassword)
 };
 
 test_suite_t flexiapiclient_suite = {
