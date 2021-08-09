@@ -727,12 +727,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
-	const char * conferenceDeviceAttrName = "label";
-	const char * layoutAttrName = "content";
-	const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, conferenceDeviceAttrName));
-	const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(local_cap.custom_sdp_attributes, layoutAttrName));
-	// If stream is not flagged as main and either the layout or the participant device attribute is not empty
-lInfo() << __func__ << " DEBUG DEBUG - layout " << layoutAttrValue << " label " << participantsAttrValue << " local dir " << sal_stream_dir_to_string(localCfg.getDirection()) << " remote dir " << sal_stream_dir_to_string(remoteCfg.getDirection()) << " result dir call " << sal_stream_dir_to_string(OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection()));
 	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
 
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
@@ -937,11 +931,6 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
 lInfo() << __func__ << " DEBUG DEBUG local cap num streams " << local_capabilities->streams.size() << " remote num streams " << remote_offer->streams.size();
 	for(auto & rs : remote_offer->streams){
-
-		const char * conferenceDeviceAttrName = "label";
-		const char * layoutAttrName = "content";
-		const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(rs.custom_sdp_attributes, conferenceDeviceAttrName));
-		const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(rs.custom_sdp_attributes, layoutAttrName));
 
 		SalStreamDescription ls = local_capabilities->streams[i];
 lInfo() << __func__ << " DEBUG DEBUG remote stream has no label and no content - stream addr at idx " << i << ": " << &(local_capabilities->streams[i]) << " type " << sal_stream_type_to_string(ls.getType()) << " remote type " <<   sal_stream_type_to_string(rs.getType()) << " best stream idx " << local_capabilities->findIdxBestStream(rs.getType());
