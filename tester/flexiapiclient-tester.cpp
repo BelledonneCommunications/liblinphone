@@ -220,12 +220,78 @@ static void flexiapiChangePassword() {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void flexiapiRemoteProvisioningFlow(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
+
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+
+	int code = 0;
+	int fetched = 0;
+	string resolvedDomain;
+
+	// Create a test account
+	char* token = sal_get_random_token(6);
+	string username = string("test_").append(token);
+	ms_free(token);
+	bool activated = false; // Required to get a confirmation key
+	string confirmationKey;
+	int id;
+
+	flexiAPIClient
+		->adminAccountCreate(username, "1234", "MD5", activated)
+		->then([&code, &fetched, &confirmationKey, &id](FlexiAPIClient::Response response) {
+			code = response.code;
+			fetched = 1;
+			confirmationKey = response.json()["confirmation_key"].asString();
+			id = response.json()["id"].asInt();
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+
+	// Reset the global state to be able to re-provision the account
+	linphone_core_set_state(marie->lc, LinphoneGlobalConfiguring, "Reset the provisioning state");
+	//linphone_core_stop(marie->lc);
+	//linphone_core_start(marie->lc);
+
+	// Provision it
+	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
+	remoteProvisioningURI.append("/").append(confirmationKey);
+	linphone_remote_provisioning_download_and_apply(marie->lc, remoteProvisioningURI.c_str());
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful, 2, 3000));
+
+	linphone_core_set_state(marie->lc, LinphoneGlobalConfiguring, "Reset the provisioning state");
+	//linphone_core_stop(marie->lc);
+	//linphone_core_start(marie->lc);
+
+	// Re-provision it, without the confirmationKey
+	string remoteProvisioningURIAuthenticated = linphone_core_get_provisioning_uri(marie->lc);
+	remoteProvisioningURIAuthenticated.append("/me");
+	linphone_remote_provisioning_download_and_apply(marie->lc, remoteProvisioningURIAuthenticated.c_str());
+	BC_ASSERT_TRUE(wait_for_until(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful, 3, 3000));
+
+	// Clean up
+	flexiAPIClient
+		->adminAccountDelete(id)
+		->then([&code, &fetched](FlexiAPIClient::Response response) {
+			code = response.code;
+			fetched = 1;
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+}
+
 test_t flexiapiclient_tests[] = {
 	TEST_NO_TAG("Ping", flexiapiPing),
 	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
 	TEST_NO_TAG("Accounts", flexiapiAccounts),
 	TEST_NO_TAG("Change Email", flexiapiChangeEmail),
 	TEST_NO_TAG("Change Password", flexiapiChangePassword),
+	TEST_NO_TAG("Remote Provisioning Flow", flexiapiRemoteProvisioningFlow)
 };
 
 test_suite_t flexiapiclient_suite = {
