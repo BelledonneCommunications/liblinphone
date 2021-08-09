@@ -1695,8 +1695,9 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
 					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
 					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
-lInfo() << __func__ << " DEBUG DEBUG copying stream: layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
-					const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(attrName, attrValue) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+					const auto & previousParticipantStreamIdx = oldMd ? oldMd->findIdxStreamWithSdpAttribute(attrName, attrValue) : -1;
+lInfo() << __func__ << " DEBUG DEBUG copying stream: idx " << streamIdx << " (previous stream idx " << previousParticipantStreamIdx << " old md stream number " << oldMd->streams.size() << ") layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
+					const auto & previousParticipantStream = (oldMd) ? oldMd->getStreamIdx(static_cast<unsigned int>(streamIdx)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					if (conference && isInLocalConference && !participantsAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
 					}
