@@ -377,20 +377,22 @@ bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphonePar
 	return FALSE;
 }
 
-void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2) {
+void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, bool_t mix) {
 	LinphoneCall *call1=linphone_core_get_current_call(lc1->lc);
 	LinphoneCall *call2=linphone_core_get_current_call(lc2->lc);
 	BC_ASSERT_PTR_NOT_NULL(call1);
 	BC_ASSERT_PTR_NOT_NULL(call2);
 	if (call1 && call2) {
-		VideoStream *vstream1s = (VideoStream *)linphone_call_get_video_stream(call1, MediaStreamSendRecv);
+		VideoStream *vstream1s = (VideoStream *)linphone_call_get_stream(call1, LinphoneStreamTypeVideo);
+		//VideoStream *vstream1s = (VideoStream *)linphone_call_get_video_stream(call1, MediaStreamSendOnly);
 		BC_ASSERT_PTR_NOT_NULL(vstream1s);
-		VideoStream *vstream2s = (VideoStream *)linphone_call_get_video_stream(call2, MediaStreamSendRecv);
+		VideoStream *vstream2s = (VideoStream *)linphone_call_get_stream(call2, LinphoneStreamTypeVideo);
+		//VideoStream *vstream2s = (VideoStream *)linphone_call_get_video_stream(call2, MediaStreamSendOnly);
 		BC_ASSERT_PTR_NOT_NULL(vstream2s);
 		BC_ASSERT_TRUE(vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID);
 		BC_ASSERT_TRUE(vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID);
 		MSMireControl c1 = {{0,5,10,15,20,25}};
-		MSMireControl c2 = {{100,105,110,115,120,125}};
+		MSMireControl c2 = {{100,120,140,160,180,200}};
 
 		if (vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID) {
 			ms_filter_call_method(vstream1s->source, MS_MIRE_SET_COLOR, &c1);
@@ -402,6 +404,8 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2) 
 		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
 		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
 		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));
-		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv));
+		if (mix) {
+			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv));
+		}
 	}
 }

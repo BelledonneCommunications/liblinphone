@@ -352,13 +352,11 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			if (videoMixer == nullptr && dir == MediaStreamSendOnly) {
+			if (videoMixer == nullptr && dir == MediaStreamSendOnly && !isMain()) {
 				MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendRecv);
-				if (!s){
-					lInfo() << "[mix to all] not find sendrecv stream for participant";
-				} else {
+				if (s){
 					createdStream = (VideoStream *)s->getMediaStream();
-					lInfo() << "[mix to all] find sendrecv stream for participant";
+					lInfo() << "[mix to all] find sendrecv stream for participant, used for itc.";
 				}
 			}
 
@@ -368,14 +366,12 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
-			
-				if (videoMixer == nullptr && dir == MediaStreamSendRecv) {
+
+				if (videoMixer == nullptr && dir == MediaStreamSendRecv && isMain()) {
 					link_video_stream_with_itc_sink(mStream);
 					MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendOnly);
-					if (!s){
-						lInfo() << "[mix to all] not find sendonly stream for participant";
-					} else {
-						lInfo() << "[mix to all] find sendonly stream for participant";
+					if (s){
+						lInfo() << "[mix to all] find sendonly stream for participant, used for itc.";
 						createdStream = (VideoStream *)s->getMediaStream();
 						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,createdStream->source);
 					}
