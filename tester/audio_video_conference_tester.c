@@ -8100,7 +8100,6 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 	linphone_call_params_unref(pauline_call_params);
 	linphone_call_params_unref(marie_call_params);
 
-	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", TRUE);
 
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	if (mix) {
@@ -8173,7 +8172,7 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 	}
 
 	wait_for_list(lcs ,NULL, 0, 3000);
-	check_video_conference(pauline, laure);
+	check_video_conference(pauline, laure, mix);
 	terminate_conference(participants, marie, conf, NULL);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
