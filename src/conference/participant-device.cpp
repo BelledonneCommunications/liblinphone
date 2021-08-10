@@ -182,7 +182,7 @@ bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction)
 bool ParticipantDevice::updateMedia() {
 	bool mediaChanged = false;
 	if (mSession) {
-		const auto currentParams = dynamic_cast<MediaSessionParams*>(mSession->getCurrentParams());
+		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getRemoteParams());
 
 		if (currentParams) {
 			const auto & audioEnabled = currentParams->audioEnabled();
@@ -192,7 +192,7 @@ bool ParticipantDevice::updateMedia() {
 			const auto & videoEnabled = currentParams->videoEnabled();
 			const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
 			mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
-lInfo() << "DEBUG participant " << getAddress().asString() << " video dir " << getVideoDirection();
+lInfo() << __func__ << " DEBUG DEBUG participant device " << getAddress().asString() << " video dir " << getVideoDirection();
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
