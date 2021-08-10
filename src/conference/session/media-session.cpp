@@ -1729,27 +1729,27 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 							}
 							addStreamToBundle(md, newStream, cfg, name + (participantsAttrValue.empty() ? "layout" : participantsAttrValue));
 						}
-						if (conference && isInLocalConference) {
-							// Local conference
-							const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 
-							shared_ptr<ParticipantDevice> dev = nullptr;
-							if (!participantsAttrValue.empty()) {
-								dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
-								const auto & me = cppConference->getMe();
-								for (const auto & meDev : me->getDevices()) {
-									if (meDev->getLabel().compare(participantsAttrValue) == 0) {
-										dev = meDev;
+						l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+						if (!l.empty()){
+							cfg.payloads = l;
+
+							if (conference && isInLocalConference) {
+								// Local conference
+								const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+
+								shared_ptr<ParticipantDevice> dev = nullptr;
+								if (!participantsAttrValue.empty()) {
+									dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
+									const auto & me = cppConference->getMe();
+									for (const auto & meDev : me->getDevices()) {
+										if (meDev->getLabel().compare(participantsAttrValue) == 0) {
+											dev = meDev;
+										}
 									}
 								}
-							}
-	lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
-							if (isVideoConferenceEnabled && (dev || !layoutAttrValue.empty())) {
-
-								l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-								if (!l.empty()){
-									cfg.payloads = l;
-
+lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
+								if (isVideoConferenceEnabled && (dev || !layoutAttrValue.empty())) {
 									if (!layoutAttrValue.empty() && participantsAttrValue.empty()) {
 										if (isConferenceLayoutActiveSpeaker) {
 											cfg.dir = SalStreamSendRecv;
@@ -1773,46 +1773,36 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 									}
 
 								} else {
-									lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
+									// disable non main streams if the participant is not in the conference
 									cfg.dir = SalStreamInactive;
-									PayloadTypeHandler::clearPayloadList(l);
+									newStream.disable();
 								}
+							} else if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
+								// If the call is in a remote conference
+								switch (s.getDirection()) {
+									case SalStreamSendOnly:
+										cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+										break;
+									case SalStreamSendRecv:
+										cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
+										break;
+									case SalStreamRecvOnly:
+										cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
+										break;
+									case SalStreamInactive:
+										cfg.dir = SalStreamInactive;
+										break;
+									}
 							} else {
-								// disable non main streams if the participant is not in the conference
+								// If it is not in a conference, then disable non main streams
 								cfg.dir = SalStreamInactive;
 								newStream.disable();
 							}
 						} else {
-							// If the call is in a remote conference
-							if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
-								l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-								if (!l.empty()){
-									cfg.payloads = l;
-									switch (s.getDirection()) {
-										case SalStreamSendOnly:
-											cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
-											break;
-										case SalStreamSendRecv:
-											cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
-											break;
-										case SalStreamRecvOnly:
-											cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
-											break;
-										case SalStreamInactive:
-											cfg.dir = SalStreamInactive;
-											break;
-									}
-								} else {
-									lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
-									cfg.dir = SalStreamInactive;
-									newStream.disable();
-									PayloadTypeHandler::clearPayloadList(l);
-								}
-							} else {
-								// If it is not in a remote conference conference, then disable non main streams
-								cfg.dir = SalStreamInactive;
-								newStream.disable();
-							}
+							lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
+							cfg.dir = SalStreamInactive;
+							newStream.disable();
+							PayloadTypeHandler::clearPayloadList(l);
 						}
 
 						if (cfg.dir == SalStreamInactive) {
