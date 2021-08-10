@@ -1235,8 +1235,6 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
 
-	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", TRUE);
-
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall* marie_call_laure;
@@ -1290,10 +1288,9 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	BC_ASSERT_PTR_NOT_NULL(conf);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 
 	add_calls_to_local_conference(lcs, marie, NULL, participants, TRUE);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 
 	bctbx_list_t* all_manangers_in_conf=bctbx_list_copy(participants);
@@ -3801,14 +3798,14 @@ end:
 	}
 }
 
-static void conference_created_by_merging_video_calls_base(bool_t new_conference_mode, bool_t enable_video, const LinphoneConferenceLayout layout) {
+static void conference_created_by_merging_video_calls_base(bool_t event_package_enabled, bool_t enable_video, const LinphoneConferenceLayout layout) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE);
 
-	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "all_to_all", new_conference_mode);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "conference_event_log_enabled", event_package_enabled );
 
 	LinphoneConference * conf = NULL;
 	LinphoneConferenceParams * conf_params = NULL;

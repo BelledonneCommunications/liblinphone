@@ -1388,7 +1388,7 @@ SalStreamDescription MediaSessionPrivate::makeConferenceParticipantVideoStream(c
 lInfo() << __func__ << " DEBUG DEBUG participant stream -> choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress() << " label " << dev->getLabel() << " video direction " << sal_stream_dir_to_string(MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection()));
 
-		switch (dev->getVideoDirection()) {
+/*		switch (dev->getVideoDirection()) {
 			case LinphoneMediaDirectionSendOnly:
 			case LinphoneMediaDirectionRecvOnly:
 			case LinphoneMediaDirectionInactive:
@@ -1401,6 +1401,8 @@ lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress() << " 
 				cfg.dir = SalStreamInactive;
 				break;
 		}
+*/
+		cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
 		cfg.replacePayloads(l);
 		newStream.addActualConfiguration(cfg);
 		fillRtpParameters(newStream);
@@ -1417,7 +1419,7 @@ lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress() << " 
 	return newStream;
 }
 
-SalStreamDescription MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes) {
+SalStreamDescription MediaSessionPrivate::makeLocalStreamDescription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes) {
 	L_Q();
 	SalStreamDescription stream;
 	SalStreamConfiguration cfg;
@@ -1572,7 +1574,7 @@ lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " is active s
 lInfo() << __func__ << " DEBUG DEBUG MAIN AUDIO STREAM "; 
 		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList));
 
-		auto audioStream = makeLocalStreamDecription(md, getParams()->audioEnabled(), "Audio", SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
+		auto audioStream = makeLocalStreamDescription(md, getParams()->audioEnabled(), "Audio", SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
 
 		auto & actualCfg = audioStream.cfgs[audioStream.getActualConfigurationIndex()];
 
@@ -1609,15 +1611,15 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM ";
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
 		if (conference && isInLocalConference) {
-			videoDir = (isVideoConferenceEnabled && (getParams()->videoEnabled())) ? SalStreamRecvOnly : SalStreamInactive;
+lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM dir " << sal_stream_dir_to_string(videoDir) << " video conferencing " << isVideoConferenceEnabled << " video enabled " << (getParams()->videoEnabled()); 
+			videoDir = (isVideoConferenceEnabled) ? SalStreamRecvOnly : SalStreamInactive;
 			enableVideoStream = isVideoConferenceEnabled;
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 			enableVideoStream = getParams()->videoEnabled();
 		}
 
-lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM dir " << sal_stream_dir_to_string(videoDir); 
-		auto videoStream = makeLocalStreamDecription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+		auto videoStream = makeLocalStreamDescription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
@@ -1661,7 +1663,7 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
-		auto textStream = makeLocalStreamDecription(md, getParams()->realtimeTextEnabled(), "Text", SalText, proto, SalStreamSendRecv, textCodecs, "ts", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText));
+		auto textStream = makeLocalStreamDescription(md, getParams()->realtimeTextEnabled(), "Text", SalText, proto, SalStreamSendRecv, textCodecs, "ts", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText));
 
 		textStream.setSupportedEncryptions(encList);
 
@@ -1727,32 +1729,42 @@ lInfo() << __func__ << " DEBUG DEBUG copying stream: idx " << streamIdx << " (pr
 						// Local conference
 						const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 
-						const auto & dev = participantsAttrValue.empty() ? nullptr : cppConference->findParticipantDeviceByLabel(participantsAttrValue);
-lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
-						const auto & me = cppConference->getMe();
-						bool isMe = false;
-						for (const auto & meDev : me->getDevices()) {
-							if (isMe == false) {
-								isMe = (meDev->getLabel().compare(participantsAttrValue) == 0);
+						shared_ptr<ParticipantDevice> dev = nullptr;
+						if (!participantsAttrValue.empty()) {
+							dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
+							const auto & me = cppConference->getMe();
+							for (const auto & meDev : me->getDevices()) {
+								if (meDev->getLabel().compare(participantsAttrValue) == 0) {
+									dev = meDev;
+								}
 							}
 						}
-						if (isVideoConferenceEnabled && (dev || isMe || !layoutAttrValue.empty())) {
+lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
+						if (isVideoConferenceEnabled && (dev || !layoutAttrValue.empty())) {
 
 							l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 							if (!l.empty()){
 								cfg.payloads = l;
 
-								if (layoutAttrValue.empty()) {
-									if (!getParams()->videoEnabled() && isMe) {
-										cfg.dir = SalStreamInactive;
-									} else {
-										cfg.dir = s.getDirection();
-									}
-								} else {
+								if (!layoutAttrValue.empty() && participantsAttrValue.empty()) {
 									if (isConferenceLayoutActiveSpeaker) {
 										cfg.dir = SalStreamSendRecv;
 									} else {
 										cfg.dir = SalStreamInactive;
+									}
+								} else {
+									switch (dev->getVideoDirection()) {
+										case LinphoneMediaDirectionSendOnly:
+										case LinphoneMediaDirectionRecvOnly:
+										case LinphoneMediaDirectionInactive:
+											cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
+											break;
+										case LinphoneMediaDirectionSendRecv:
+											cfg.dir = SalStreamSendOnly;
+											break;
+										case LinphoneMediaDirectionInvalid:
+											cfg.dir = SalStreamInactive;
+											break;
 									}
 								}
 
