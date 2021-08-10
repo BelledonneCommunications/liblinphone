@@ -1328,14 +1328,16 @@ SalMediaProto MediaSessionPrivate::getAudioProto(const bool useCurrentParams) co
 
 void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const {
 	L_Q();
-	if (stream.rtp_port == 0)  {
-		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
-	}
+
 	auto & cfg = stream.cfgs[stream.getActualConfigurationIndex()];
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	/* rtcp-mux must be enabled when bundle mode is proposed.*/
 	cfg.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled();
 	cfg.rtcp_cname = getMe()->getAddress().asString();
+
+	if ((stream.rtp_port == 0) && (cfg.dir != SalStreamInactive))  {
+		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
+	}
 
 	if ((stream.type == SalAudio) && (getParams()->audioMulticastEnabled())) {
 		cfg.ttl = linphone_core_get_audio_multicast_ttl(q->getCore()->getCCore());
