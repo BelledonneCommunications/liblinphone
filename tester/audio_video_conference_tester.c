@@ -1311,8 +1311,6 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	//wait a bit for the conference audio processing to run, despite we do not test it for the moment
 	wait_for_list(lcs,NULL,0,5000);
 
-	set_video_in_conference(lcs, marie, participants, TRUE);
-
 	bctbx_list_t* lcs2=bctbx_list_copy(lcs);
 	remove_participant_from_local_conference(lcs2, marie, pauline);
 
