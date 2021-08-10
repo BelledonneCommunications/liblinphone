@@ -2468,8 +2468,8 @@ void simple_call_with_capability_negotiations_with_different_encryption_after_re
 
 			wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
 
-			BC_ASSERT_EQUAL(caller->stat.number_of_rtcp_received, 0, int, "%d");
-			BC_ASSERT_EQUAL(callee->stat.number_of_rtcp_received, 0, int, "%d");
+			BC_ASSERT_LOWER(caller->stat.number_of_rtcp_received, 5, int, "%d");
+			BC_ASSERT_LOWER(callee->stat.number_of_rtcp_received, 5, int, "%d");
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),0,int,"%i");
 			LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
