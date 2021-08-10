@@ -1174,9 +1174,10 @@ int Core::getUnreadChatMessageCount () const {
 int Core::getUnreadChatMessageCount (const IdentityAddress &localAddress) const {
 	L_D();
 	int count = 0;
+	auto addressToCompare = localAddress.asAddress();
 	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
-		if (chatRoom->getLocalAddress() == localAddress)
+		if (addressToCompare.weakEqual(chatRoom->getLocalAddress().asAddress()))
 			count += chatRoom->getUnreadChatMessageCount();
 	}
 	return count;
