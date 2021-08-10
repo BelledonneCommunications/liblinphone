@@ -203,11 +203,11 @@ bool Core::areSoundResourcesLocked () const {
 				case CallSession::State::Referred:
 				case CallSession::State::IncomingEarlyMedia:
 				case CallSession::State::Updating:
-					lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources becaue it is state " << call->getState();
+					lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources because it is state " << call->getState();
 					return true;
 				case CallSession::State::StreamsRunning:
 					if (call->mediaInProgress()) {
-						lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources becaue it is state " << call->getState() << " and media is in progress";
+						lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources because it is state " << call->getState() << " and media is in progress";
 						return true;
 					}
 				break;
