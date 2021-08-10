@@ -821,6 +821,35 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 
 		tryAddMeDevice();
 
+		// Add participant to the conference participant list
+		switch(state){
+			case LinphoneCallOutgoingInit:
+			case LinphoneCallOutgoingProgress:
+			case LinphoneCallOutgoingRinging:
+			case LinphoneCallIncomingReceived:
+			case LinphoneCallPausing:
+			case LinphoneCallPaused:
+			case LinphoneCallResuming:
+			case LinphoneCallStreamsRunning:
+				Conference::addParticipant(call);
+				if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
+					L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
+				mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
+
+				/*
+				 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
+				 * resources (mic and camera), which is done during the joinStreamsGroup() step.
+				 */
+				enter();
+
+			break;
+			default:
+				lError() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is in state " << Utils::toString(call->getState()) << ", hence it cannot be added to the conference right now";
+				return false;
+			break;
+		}
+
+		// Update call
 		switch(state){
 			case LinphoneCallOutgoingInit:
 			case LinphoneCallOutgoingProgress:
@@ -831,7 +860,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
-				Conference::addParticipant(call);
 			break;
 			case LinphoneCallPaused:
 			{
@@ -849,8 +877,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 						call->getParams())->enableVideo(false);
 				}
 				// Conference resumes call that previously paused in order to add the participant
-				Conference::addParticipant(call);
-
 				call->resume();
 			}
 			break;
@@ -864,16 +890,13 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				if (!getCurrentParams().videoEnabled()) {
 					linphone_call_params_enable_video(params, FALSE);
 				}
-
-				Conference::addParticipant(call);
-
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
 				// Add local endpoint if the call was not previously in the conference
 			}
 			break;
 			default:
-				lError() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is in state " << Utils::toString(call->getState()) << ", it cannot be added to the conference";
+				lError() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is in state " << Utils::toString(call->getState()) << ", hence the call cannot be updated following it becoming part of the conference";
 				return false;
 			break;
 		}
@@ -885,15 +908,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			}
 			updateAllParticipantSessionsExcept(newParticipantSession);
 		}
-		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
-			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
-		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
-		Conference::addParticipant(call);
-		/*
-		 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
-		 * resources (mic and camera), which is done during the joinStreamsGroup() step.
-		 */
-		enter();
 
 		// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
 		if (startingConference) {
