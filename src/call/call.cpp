@@ -449,11 +449,13 @@ bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session
 		const ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
 
 		const auto & device = conference->findParticipantDevice(session);
+		const auto & participant = conference->findParticipant(session);
 		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
 		StreamsGroup & sg = ms->getStreamsGroup();
 		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
-lInfo() << __func__ << " DEBUG DEBUG device " <<  device << " local address " << contactAddress.asString() << " expected conference ID " << localConferenceId << " actual conference ID " << conference->getConferenceId() << " attached to mixer " << attachedToMixer << " return " << (device && (localConferenceId == conference->getConferenceId()) && attachedToMixer) << " conf ID match " << (localConferenceId == conference->getConferenceId());
-		return (device && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
+lInfo() << __func__ << " DEBUG DEBUG device " <<  device << " participant " << participant << " local address " << contactAddress.asString() << " expected conference ID " << localConferenceId << " actual conference ID " << conference->getConferenceId() << " attached to mixer " << attachedToMixer << " return " << (device && (localConferenceId == conference->getConferenceId()) && attachedToMixer) << " conf ID match " << (localConferenceId == conference->getConferenceId());
+		// It should be enough to search for a device in a conference. Nonetheless, if the conference invites an address to a conference and then the resulting call is declined by the remote party, it will never reach the StreamsRunning state therefore no device is added to the participant
+		return ((device || participant) && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
 
 	return false;
