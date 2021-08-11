@@ -112,8 +112,6 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	rtp_port=belle_sdp_media_get_media_port ( media );
-ms_message("%s DEBUG DEBUG parsing RTP media port %0d\n", __func__, rtp_port);
-
 	mtype = belle_sdp_media_get_media_type ( media );
 	// Make mtype lowercase to emulate case insensitive comparison
 	std::transform(mtype.begin(), mtype.end(), mtype.begin(), ::tolower);
@@ -695,10 +693,8 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	acaps = other.acaps;
 	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
-lInfo() << __func__ << " DEBUG DEBUG operator= stream description copying cfg " << sal_stream_dir_to_string(cfg.second.dir) << " index " << cfg.first;
 		const auto result = cfgs.insert(cfg);
 		if (!result.second) cfgs[cfg.first] = cfg.second;
-lInfo() << __func__ << " DEBUG DEBUG operator= stream description check cfg " << sal_stream_dir_to_string(cfgs[cfg.first].dir) << " index " << cfg.first << " result " << result.second;
 	}
 	for (const auto & cfg : other.unparsed_cfgs) {
 		const auto result = unparsed_cfgs.insert(cfg);

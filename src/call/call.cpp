@@ -403,7 +403,6 @@ void Call::terminateConference() {
 }
 
 void Call::exitFromConference (const shared_ptr<CallSession> &session) {
-lInfo() << __func__ << " DEBUG DEBUG exiting from conference ";
 	auto cConference = getConference();
 	if (cConference) {
 		if (attachedToLocalConference(session)) {
@@ -465,7 +464,6 @@ bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session
 		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
 		StreamsGroup & sg = ms->getStreamsGroup();
 		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
-lInfo() << __func__ << " DEBUG DEBUG device " <<  device << " participant " << participant << " local address " << contactAddress.asString() << " expected conference ID " << localConferenceId << " actual conference ID " << conference->getConferenceId() << " attached to mixer " << attachedToMixer << " return " << (device && (localConferenceId == conference->getConferenceId()) && attachedToMixer) << " conf ID match " << (localConferenceId == conference->getConferenceId());
 		// It should be enough to search for a device in a conference. Nonetheless, if the conference invites an address to a conference and then the resulting call is declined by the remote party, it will never reach the StreamsRunning state therefore no device is added to the participant
 		return ((device || participant) && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
@@ -527,7 +525,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-
 			const auto op = session->getPrivate()->getOp();
 			if (attachedToLocalConference(session)) {
 				// The remote participant requested to change subject

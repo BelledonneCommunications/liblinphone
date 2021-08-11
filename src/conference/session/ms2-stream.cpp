@@ -100,7 +100,6 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		removeFromBundle();
 		return ; /*No bundle to handle */
 	}
-lInfo() << __func__ << " DEBUG DEBUG index of bundle owner " << index << " current stream index " << params.streamIndex;
 	mBundleOwner = dynamic_cast<MS2Stream*>(getGroup().getStream((size_t)index));
 	if (!mBundleOwner){
 		lError() << "Could not locate the stream owning the bundle's transport.";
@@ -784,8 +783,6 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 	configureRtpSession(stream->sessions.rtp_session);
 	setupDtlsParams(stream);
 
-ms_message("%s - DEBUG DEBUG RTP session ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d\n", __func__, rtp_session_get_local_port(stream->sessions.rtp_session), rtp_session_get_local_rtcp_port(stream->sessions.rtp_session), mPortConfig.rtpPort, mPortConfig.rtcpPort);
-	
 	if (mPortConfig.rtpPort == -1){
 		// Case where we requested random ports from the system. Now that they are allocated, get them.
 		mPortConfig.rtpPort = rtp_session_get_local_port(stream->sessions.rtp_session);

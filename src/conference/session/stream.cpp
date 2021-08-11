@@ -200,8 +200,6 @@ pair<int, int> Stream::getPortRange(LinphoneCore * core, const SalStreamType typ
 		break;
 	}
 
-lInfo() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(type) << " choosing random ports - port range: min " << minPort << " max " << maxPort;
-
 	return make_pair(minPort, maxPort);
 }
 

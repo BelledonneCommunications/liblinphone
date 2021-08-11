@@ -230,7 +230,6 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
 	for (const auto &participant : participants) {
-		lInfo() << "DEBUG Searching participant with address " << searchedAddr.asString() << " current participant " << participant->getAddress();
 		if (participant->getAddress() == searchedAddr) {
 			return participant;
 		}
@@ -243,7 +242,6 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const CallSession> &session) const {
 
 	for (const auto &participant : participants) {
-		lInfo() << "DEBUG Searching participant with session " << session << " current participant " << participant->getAddress() << " session " << participant->getSession();
 		if (participant->getSession() == session)
 			return participant;
 	}
@@ -284,7 +282,6 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-		lInfo() << "DEBUG Searching participant device with session " << session << " current participant " << participant->getAddress() << " current device " << device->getAddress() << " session " << participant->getSession();
 			if (device->getSession() == session)
 				return device;
 		}
