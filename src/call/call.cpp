@@ -125,7 +125,7 @@ int Call::getMediaStreamsNb (LinphoneStreamType type) const {
 			nType = SalText;
 		break;
 		default:
-		break;
+			return nb;
 	}
 	for (auto &stream : sg.getStreams()){
 		if (stream->getType() == nType && stream->getState() == Stream::Running){
