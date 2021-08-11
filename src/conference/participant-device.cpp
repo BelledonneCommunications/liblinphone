@@ -135,6 +135,7 @@ void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities)
 
 void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
 	mSession = session;
+	// Estimate media capabilities based on call session
 	updateMedia();
 }
 
@@ -186,12 +187,14 @@ bool ParticipantDevice::updateMedia() {
 
 		if (currentParams) {
 			const auto & audioEnabled = currentParams->audioEnabled();
-			const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
-			mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
+			//const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
+			//mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
+			mediaChanged |= setAudioDirection((audioEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 
 			const auto & videoEnabled = currentParams->videoEnabled();
-			const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
-			mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
+			//const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
+			//mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
+			mediaChanged |= setVideoDirection((videoEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
