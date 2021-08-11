@@ -1557,6 +1557,223 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 	}
 }
 
+void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & refMd, PayloadTypeHandler & pth) {
+	L_Q();
+
+	// TODO: DELETE when labels will be implemented
+	const char * conferenceDeviceAttrName = "label";
+	const char * layoutAttrName = "content";
+
+	if (refMd) {
+
+		// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
+		std::list<OrtpPayloadType*> emptyList;
+		emptyList.clear();
+		std::list<OrtpPayloadType*> l;
+
+		// Copy participant video streams from previous local description
+		decltype(refMd->streams)::size_type streamIdx = 0;
+
+		const SalAddress * remoteContactSalAddress = getOp() ? getOp()->getRemoteContactAddress() : NULL;
+		char * remoteContactAddressStr = remoteContactSalAddress ? sal_address_as_string(remoteContactSalAddress) : NULL;
+		const Address remoteContactAddress(L_C_TO_STRING(remoteContactAddressStr));
+		ms_free(remoteContactAddressStr);
+
+		bool isInLocalConference = getParams()->getPrivate()->getInConference();
+		LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+
+		for (const auto & s : refMd->streams) {
+			SalStreamDescription newStream;
+			newStream.type = s.type;
+			newStream.name = s.name;
+			newStream.disable();
+			SalStreamConfiguration cfg;
+			cfg.proto = s.getProto();
+			cfg.dir = SalStreamInactive;
+
+			const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, layoutAttrName));
+			const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, conferenceDeviceAttrName));
+
+			// If in a conference, either local or remote
+			if (((conference && isInLocalConference) || remoteContactAddress.hasParam("isfocus")) && ((layoutAttrValue.empty() && !participantsAttrValue.empty()) || (!layoutAttrValue.empty() && (layoutAttrValue.compare("main") != 0)))) {
+				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
+					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
+					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
+					const auto & previousParticipantStreamIdx = oldMd ? oldMd->findIdxStreamWithSdpAttribute(attrName, attrValue) : -1;
+lInfo() << __func__ << " DEBUG DEBUG copying stream: idx " << streamIdx << " (previous stream idx " << previousParticipantStreamIdx << " old md stream number " << oldMd->streams.size() << ") layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
+					const auto & previousParticipantStream = (oldMd) ? oldMd->getStreamIdx(static_cast<unsigned int>(streamIdx)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+					if (conference && isInLocalConference && !participantsAttrValue.empty()) {
+						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
+					}
+					if (!layoutAttrValue.empty()) {
+						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, layoutAttrValue.c_str());
+					}
+
+					if (getParams()->rtpBundleEnabled()) {
+						std::string name;
+						switch (s.type) {
+							case SalAudio:
+								name = "as";
+								break;
+							case SalVideo:
+								name = "vs";
+								break;
+							case SalText:
+								name = "ts";
+								break;
+							case SalOther:
+								name = "os";
+								break;
+						}
+						addStreamToBundle(md, newStream, cfg, name + (participantsAttrValue.empty() ? "layout" : participantsAttrValue));
+					}
+
+					l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+					if (!l.empty()){
+						cfg.payloads = l;
+
+						if (conference && isInLocalConference) {
+							// Local conference
+							const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+
+							shared_ptr<ParticipantDevice> dev = nullptr;
+							if (!participantsAttrValue.empty()) {
+								dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
+								const auto & me = cppConference->getMe();
+								for (const auto & meDev : me->getDevices()) {
+									if (meDev->getLabel().compare(participantsAttrValue) == 0) {
+										dev = meDev;
+									}
+								}
+							}
+lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
+							const auto & currentConfParams = cppConference->getCurrentParams();
+							bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
+
+							if (isVideoConferenceEnabled && (dev || !layoutAttrValue.empty())) {
+								if (!layoutAttrValue.empty() && participantsAttrValue.empty()) {
+
+									const auto & confLayout = currentConfParams.getLayout();
+									bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+									if (isConferenceLayoutActiveSpeaker) {
+										cfg.dir = SalStreamSendRecv;
+									} else {
+										cfg.dir = SalStreamInactive;
+									}
+								} else {
+									switch (dev->getVideoDirection()) {
+										case LinphoneMediaDirectionSendOnly:
+										case LinphoneMediaDirectionRecvOnly:
+										case LinphoneMediaDirectionInactive:
+											cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
+											break;
+										case LinphoneMediaDirectionSendRecv:
+											cfg.dir = SalStreamSendOnly;
+											break;
+										case LinphoneMediaDirectionInvalid:
+											cfg.dir = SalStreamInactive;
+											break;
+									}
+								}
+
+							} else {
+								// disable non main streams if the participant is not in the conference
+								cfg.dir = SalStreamInactive;
+								newStream.disable();
+							}
+						} else if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
+							// If the call is in a remote conference
+							switch (s.getDirection()) {
+								case SalStreamSendOnly:
+									cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+									break;
+								case SalStreamSendRecv:
+									cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
+									break;
+								case SalStreamRecvOnly:
+									cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
+									break;
+								case SalStreamInactive:
+									cfg.dir = SalStreamInactive;
+									break;
+								}
+						} else {
+							// If it is not in a conference, then disable non main streams
+							cfg.dir = SalStreamInactive;
+							newStream.disable();
+						}
+					} else {
+						lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
+						cfg.dir = SalStreamInactive;
+						newStream.disable();
+						PayloadTypeHandler::clearPayloadList(l);
+					}
+
+					if (cfg.dir == SalStreamInactive) {
+						newStream.disable();
+						newStream.rtp_port = 0;
+						newStream.rtcp_port = 0;
+lInfo() << __func__ << " DEBUG DEBUG stream inactive: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
+					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (previousParticipantStream.rtp_port != 0)) {
+						// Copy previous rtp and rtcp ports if they were already assigned
+						newStream.rtp_port = previousParticipantStream.rtp_port;
+						newStream.rtcp_port = previousParticipantStream.rtcp_port;
+lInfo() << __func__ << " DEBUG DEBUG copying previous ports: RTP port " << previousParticipantStream.rtp_port << " RTCP port " << previousParticipantStream.rtcp_port << " current RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
+					} else {
+						const auto rtp_port = q->getRandomRtpPort(newStream);
+						newStream.rtp_port = rtp_port;
+						newStream.rtcp_port = newStream.rtp_port + 1;
+lInfo() << __func__ << " DEBUG DEBUG choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
+					}
+
+				} else {
+					if (oldMd && (streamIdx < oldMd->streams.size())) {
+						newStream = oldMd->streams[streamIdx];
+						l = pth.makeCodecsList(s.type, 0, -1, oldMd->streams[streamIdx].already_assigned_payloads);
+					} else {
+						l = pth.makeCodecsList(s.type, 0, -1, emptyList);
+					}
+					if (!l.empty()){
+						cfg.payloads = l;
+					} else {
+						lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream on local offer for CallSession [" << q << "] because no payload is found";
+						cfg.dir = SalStreamInactive;
+						newStream.disable();
+						PayloadTypeHandler::clearPayloadList(l);
+					}
+
+					if ((streamIdx < oldMd->streams.size()) && ((cfg.dir == SalStreamInactive) || (oldMd->streams[streamIdx].rtp_port != 0))) {
+						// Copy previous rtp and rtcp ports if they were already assigned
+						newStream.rtp_port = oldMd->streams[streamIdx].rtp_port;
+						newStream.rtcp_port = oldMd->streams[streamIdx].rtcp_port;
+					} else {
+						if (cfg.dir == SalStreamInactive) {
+							newStream.disable();
+							newStream.rtp_port = 0;
+							newStream.rtcp_port = 0;
+						} else {
+							const auto rtp_port = q->getRandomRtpPort(newStream);
+							newStream.rtp_port = rtp_port;
+							newStream.rtcp_port = newStream.rtp_port + 1;
+						}
+					}
+				}
+	lInfo() << __func__ << " DEBUG DEBUG copying stream type " << sal_stream_type_to_string(newStream.getType()) << " direction " << sal_stream_dir_to_string(newStream.getDirection()) << "RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port << " at index " << streamIdx;
+
+				newStream.addActualConfiguration(cfg);
+				fillRtpParameters(newStream);
+				md->streams.push_back(newStream);
+			} else if (streamIdx >= md->streams.size()) {
+				newStream.addActualConfiguration(cfg);
+				fillRtpParameters(newStream);
+				md->streams.push_back(newStream);
+			}
+
+			streamIdx++;
+		}
+	}
+}
+
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool offerNegotiatedMediaProtocolOnly, const bool forceCryptoKeyGeneration) {
 	L_Q();
 	const auto & core = q->getCore()->getCCore();
@@ -1768,201 +1985,8 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-	const SalAddress * remoteContactSalAddress = getOp() ? getOp()->getRemoteContactAddress() : NULL;
-	char * remoteContactAddressStr = remoteContactSalAddress ? sal_address_as_string(remoteContactSalAddress) : NULL;
-	const Address remoteContactAddress(L_C_TO_STRING(remoteContactAddressStr));
-	ms_free(remoteContactAddressStr);
 
-	std::list<OrtpPayloadType*> l;
-
-	if (refMd) {
-		// Copy participant video streams from previous local description
-		decltype(refMd->streams)::size_type streamIdx = 0;
-
-		for (const auto & s : refMd->streams) {
-			SalStreamDescription newStream;
-			newStream.type = s.type;
-			newStream.name = s.name;
-			newStream.disable();
-			SalStreamConfiguration cfg;
-			cfg.proto = s.getProto();
-			cfg.dir = SalStreamInactive;
-
-			const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, layoutAttrName));
-			const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, conferenceDeviceAttrName));
-
-			// If in a conference, either local or remote
-			if (((conference && isInLocalConference) || remoteContactAddress.hasParam("isfocus")) && ((layoutAttrValue.empty() && !participantsAttrValue.empty()) || (!layoutAttrValue.empty() && (layoutAttrValue.compare("main") != 0)))) {
-				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
-					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
-					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
-					const auto & previousParticipantStreamIdx = oldMd ? oldMd->findIdxStreamWithSdpAttribute(attrName, attrValue) : -1;
-lInfo() << __func__ << " DEBUG DEBUG copying stream: idx " << streamIdx << " (previous stream idx " << previousParticipantStreamIdx << " old md stream number " << oldMd->streams.size() << ") layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
-					const auto & previousParticipantStream = (oldMd) ? oldMd->getStreamIdx(static_cast<unsigned int>(streamIdx)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-					if (conference && isInLocalConference && !participantsAttrValue.empty()) {
-						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
-					}
-					if (!layoutAttrValue.empty()) {
-						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, layoutAttrValue.c_str());
-					}
-
-					if (getParams()->rtpBundleEnabled()) {
-						std::string name;
-						switch (s.type) {
-							case SalAudio:
-								name = "as";
-								break;
-							case SalVideo:
-								name = "vs";
-								break;
-							case SalText:
-								name = "ts";
-								break;
-							case SalOther:
-								name = "os";
-								break;
-						}
-						addStreamToBundle(md, newStream, cfg, name + (participantsAttrValue.empty() ? "layout" : participantsAttrValue));
-					}
-
-					l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
-					if (!l.empty()){
-						cfg.payloads = l;
-
-						if (conference && isInLocalConference) {
-							// Local conference
-							const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-
-							shared_ptr<ParticipantDevice> dev = nullptr;
-							if (!participantsAttrValue.empty()) {
-								dev = cppConference->findParticipantDeviceByLabel(participantsAttrValue);
-								const auto & me = cppConference->getMe();
-								for (const auto & meDev : me->getDevices()) {
-									if (meDev->getLabel().compare(participantsAttrValue) == 0) {
-										dev = meDev;
-									}
-								}
-							}
-lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
-							if (isVideoConferenceEnabled && (dev || !layoutAttrValue.empty())) {
-								if (!layoutAttrValue.empty() && participantsAttrValue.empty()) {
-									if (isConferenceLayoutActiveSpeaker) {
-										cfg.dir = SalStreamSendRecv;
-									} else {
-										cfg.dir = SalStreamInactive;
-									}
-								} else {
-									switch (dev->getVideoDirection()) {
-										case LinphoneMediaDirectionSendOnly:
-										case LinphoneMediaDirectionRecvOnly:
-										case LinphoneMediaDirectionInactive:
-											cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
-											break;
-										case LinphoneMediaDirectionSendRecv:
-											cfg.dir = SalStreamSendOnly;
-											break;
-										case LinphoneMediaDirectionInvalid:
-											cfg.dir = SalStreamInactive;
-											break;
-									}
-								}
-
-							} else {
-								// disable non main streams if the participant is not in the conference
-								cfg.dir = SalStreamInactive;
-								newStream.disable();
-							}
-						} else if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
-							// If the call is in a remote conference
-							switch (s.getDirection()) {
-								case SalStreamSendOnly:
-									cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
-									break;
-								case SalStreamSendRecv:
-									cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
-									break;
-								case SalStreamRecvOnly:
-									cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
-									break;
-								case SalStreamInactive:
-									cfg.dir = SalStreamInactive;
-									break;
-								}
-						} else {
-							// If it is not in a conference, then disable non main streams
-							cfg.dir = SalStreamInactive;
-							newStream.disable();
-						}
-					} else {
-						lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
-						cfg.dir = SalStreamInactive;
-						newStream.disable();
-						PayloadTypeHandler::clearPayloadList(l);
-					}
-
-					if (cfg.dir == SalStreamInactive) {
-						newStream.disable();
-						newStream.rtp_port = 0;
-						newStream.rtcp_port = 0;
-lInfo() << __func__ << " DEBUG DEBUG stream inactive: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
-					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (previousParticipantStream.rtp_port != 0)) {
-						// Copy previous rtp and rtcp ports if they were already assigned
-						newStream.rtp_port = previousParticipantStream.rtp_port;
-						newStream.rtcp_port = previousParticipantStream.rtcp_port;
-lInfo() << __func__ << " DEBUG DEBUG copying previous ports: RTP port " << previousParticipantStream.rtp_port << " RTCP port " << previousParticipantStream.rtcp_port << " current RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
-					} else {
-						const auto rtp_port = q->getRandomRtpPort(newStream);
-						newStream.rtp_port = rtp_port;
-						newStream.rtcp_port = newStream.rtp_port + 1;
-lInfo() << __func__ << " DEBUG DEBUG choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
-					}
-
-				} else {
-					if (oldMd && (streamIdx < oldMd->streams.size())) {
-						newStream = oldMd->streams[streamIdx];
-						l = pth.makeCodecsList(s.type, 0, -1, oldMd->streams[streamIdx].already_assigned_payloads);
-					} else {
-						l = pth.makeCodecsList(s.type, 0, -1, emptyList);
-					}
-					if (!l.empty()){
-						cfg.payloads = l;
-					} else {
-						lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream on local offer for CallSession [" << q << "] because no payload is found";
-						cfg.dir = SalStreamInactive;
-						newStream.disable();
-						PayloadTypeHandler::clearPayloadList(l);
-					}
-
-					if ((streamIdx < oldMd->streams.size()) && ((cfg.dir == SalStreamInactive) || (oldMd->streams[streamIdx].rtp_port != 0))) {
-						// Copy previous rtp and rtcp ports if they were already assigned
-						newStream.rtp_port = oldMd->streams[streamIdx].rtp_port;
-						newStream.rtcp_port = oldMd->streams[streamIdx].rtcp_port;
-					} else {
-						if (cfg.dir == SalStreamInactive) {
-							newStream.disable();
-							newStream.rtp_port = 0;
-							newStream.rtcp_port = 0;
-						} else {
-							const auto rtp_port = q->getRandomRtpPort(newStream);
-							newStream.rtp_port = rtp_port;
-							newStream.rtcp_port = newStream.rtp_port + 1;
-						}
-					}
-				}
-	lInfo() << __func__ << " DEBUG DEBUG copying stream type " << sal_stream_type_to_string(newStream.getType()) << " direction " << sal_stream_dir_to_string(newStream.getDirection()) << "RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port << " at index " << streamIdx;
-
-				newStream.addActualConfiguration(cfg);
-				fillRtpParameters(newStream);
-				md->streams.push_back(newStream);
-			} else if (streamIdx >= md->streams.size()) {
-				newStream.addActualConfiguration(cfg);
-				fillRtpParameters(newStream);
-				md->streams.push_back(newStream);
-			}
-
-			streamIdx++;
-		}
-	}
+	copyOldStreams(md, oldMd, refMd, pth);
 
 	addNewConferenceParticipantVideostreams(md, oldMd, pth);
 
