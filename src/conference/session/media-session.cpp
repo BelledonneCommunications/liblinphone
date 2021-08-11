@@ -1381,9 +1381,6 @@ SalStreamDescription MediaSessionPrivate::makeConferenceParticipantVideoStream(c
 		newStream.rtp_port = rtp_port;
 		newStream.rtcp_port = newStream.rtp_port + 1;
 		newStream.name = "Video " + dev->getAddress().asString();
-
-lInfo() << __func__ << " DEBUG DEBUG participant stream -> choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
-lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress() << " label " << dev->getLabel() << " video direction " << sal_stream_dir_to_string(MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection()));
 		cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
 		cfg.replacePayloads(l);
 		newStream.addActualConfiguration(cfg);
@@ -1408,7 +1405,6 @@ SalStreamDescription MediaSessionPrivate::makeLocalStreamDescription(std::shared
 	stream.type = type;
 	if (enabled && !codecs.empty()) {
 		stream.name = name;
-lInfo() << __func__ << " DEBUG DEBUG stream type " << sal_stream_type_to_string(type) << " direction " << sal_stream_dir_to_string(dir);
 		cfg.dir = dir;
 		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 
@@ -1463,7 +1459,6 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 	if (conference && isInLocalConference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
-lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " layout " << currentConfParams.getLayout() << " active speaker " << ConferenceParams::Layout::ActiveSpeaker << " grid " << ConferenceParams::Layout::Grid;
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
 
 		// Add additional video streams if required
@@ -1472,18 +1467,14 @@ lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " layout " <<
 
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
-lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel();
-lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " dev address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel();
 					// The main stream is the one belonging to the device whose address matches the remote contact address
 					if (!remoteContactAddress.isValid() || (remoteContactAddress != dev->getAddress().asAddress())) {
 						const auto & devLabel = dev->getLabel();
 						const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
-lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel() << " stream idx " << foundStreamIdx;
 						if (foundStreamIdx == -1) {
 							auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
 							if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
 							md->streams.push_back(newStream);
-lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel() << " index " << (md->streams.size() - 1);
 						}
 					}
 				}
@@ -1491,12 +1482,9 @@ lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for device addres
 
 			if (cppConference->isIn()) {
 				for (const auto & dev : me->getDevices()) {
-	lInfo() << "DEBUG DEBUG " << __func__ << " remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << dev->getAddress().asAddress().asString() << " label " << dev->getLabel();
 					const auto & devLabel = dev->getLabel();
-lInfo() << __func__ << " DEBUG DEBUG conference address " << dev->getAddress().asString() << " label " << dev->getLabel();
 					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(conferenceDeviceAttrName, devLabel);
 					if (foundStreamIdx == -1) {
-lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for me conference device address " << dev->getAddress().asAddress().asString() << " this session " << this << " device session " << dev->getSession() << " label " << dev->getLabel();
 						auto newStream = makeConferenceParticipantVideoStream(oldMd, md, dev, pth);
 						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
 
@@ -1506,8 +1494,6 @@ lInfo() << "DEBUG DEBUG " << __func__ << " ADDING video stream for me conference
 			}
 
 			const auto & foundStreamIdx = (md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic") == -1) ? md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker") : md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic");
-
-lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " << foundStreamIdx;
 
 			const auto & confLayout = currentConfParams.getLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
@@ -1534,7 +1520,6 @@ lInfo() << "DEBUG DEBUG " << __func__ << " Video stream for layout at index " <<
 						cfg.dir = SalStreamInactive;
 					}
 
-	lInfo() << "DEBUG DEBUG " << __func__ << " add layout stream remote contact address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid() << " me dev address " << me->getAddress().asString();
 					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vslayout");
 
 				} else {
@@ -1592,10 +1577,6 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 			// If in a conference, either local or remote
 			if (((conference && isInLocalConference) || remoteContactAddress.hasParam("isfocus")) && ((layoutAttrValue.empty() && !participantsAttrValue.empty()) || (!layoutAttrValue.empty() && (layoutAttrValue.compare("main") != 0)))) {
 				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
-					const std::string &attrName = (!participantsAttrValue.empty()) ? conferenceDeviceAttrName : layoutAttrName;
-					const std::string &attrValue = (!participantsAttrValue.empty()) ? participantsAttrValue : layoutAttrValue;
-					const auto & previousParticipantStreamIdx = oldMd ? oldMd->findIdxStreamWithSdpAttribute(attrName, attrValue) : -1;
-lInfo() << __func__ << " DEBUG DEBUG copying stream: idx " << streamIdx << " (previous stream idx " << previousParticipantStreamIdx << " old md stream number " << oldMd->streams.size() << ") layout " << attrValue << " label " << participantsAttrValue << " Remote contact address" << remoteContactAddress.asString();
 					const auto & previousParticipantStream = (oldMd) ? oldMd->getStreamIdx(static_cast<unsigned int>(streamIdx)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					if (conference && isInLocalConference && !participantsAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
@@ -1641,7 +1622,6 @@ lInfo() << __func__ << " DEBUG DEBUG copying stream: idx " << streamIdx << " (pr
 									}
 								}
 							}
-lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev ? dev->getLabel() : "<unknown>") << " expected label " << participantsAttrValue << " address " << (dev ? dev->getAddress().asString() : "<uknown>") << " conference participant number " << cppConference->getParticipantCount();
 							const auto & currentConfParams = cppConference->getCurrentParams();
 							bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
 
@@ -1708,17 +1688,14 @@ lInfo() << __func__ << " DEBUG DEBUG copying stream: participant label " << (dev
 						newStream.disable();
 						newStream.rtp_port = 0;
 						newStream.rtcp_port = 0;
-lInfo() << __func__ << " DEBUG DEBUG stream inactive: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 					} else if ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (previousParticipantStream.rtp_port != 0)) {
 						// Copy previous rtp and rtcp ports if they were already assigned
 						newStream.rtp_port = previousParticipantStream.rtp_port;
 						newStream.rtcp_port = previousParticipantStream.rtcp_port;
-lInfo() << __func__ << " DEBUG DEBUG copying previous ports: RTP port " << previousParticipantStream.rtp_port << " RTCP port " << previousParticipantStream.rtcp_port << " current RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 					} else {
 						const auto rtp_port = q->getRandomRtpPort(newStream);
 						newStream.rtp_port = rtp_port;
 						newStream.rtcp_port = newStream.rtp_port + 1;
-lInfo() << __func__ << " DEBUG DEBUG choosing random ports: RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port ;
 					}
 
 				} else {
@@ -1753,7 +1730,6 @@ lInfo() << __func__ << " DEBUG DEBUG choosing random ports: RTP port " << newStr
 						}
 					}
 				}
-	lInfo() << __func__ << " DEBUG DEBUG copying stream type " << sal_stream_type_to_string(newStream.getType()) << " direction " << sal_stream_dir_to_string(newStream.getDirection()) << "RTP port " << newStream.rtp_port << " RTCP port " << newStream.rtcp_port << " at index " << streamIdx;
 
 				newStream.addActualConfiguration(cfg);
 				fillRtpParameters(newStream);
@@ -1775,7 +1751,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	const std::shared_ptr<SalMediaDescription> & refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
-lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((localIsOfferer) ? "old md" : "remote md") << " has " << (refMd ? refMd->streams.size() : 0) << " streams";
 
 	this->localIsOfferer = localIsOfferer;
 
@@ -1863,11 +1838,9 @@ lInfo() << __func__ << " DEBUG DEBUG reference media description is " << ((local
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto & confLayout = currentConfParams.getLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
-lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " is active speaker " << isConferenceLayoutActiveSpeaker << " layout " << confLayout << " active speaker " << ConferenceParams::Layout::ActiveSpeaker << " grid " << ConferenceParams::Layout::Grid;
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
 	}
 	const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
-lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " is active speaker " << isConferenceLayoutActiveSpeaker;
 
 	// TODO: DELETE when labels will be implemented
 	const char * conferenceDeviceAttrName = "label";
@@ -1876,7 +1849,6 @@ lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " is active s
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
 	if ((localIsOfferer && getParams()->audioEnabled()) || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
-lInfo() << __func__ << " DEBUG DEBUG MAIN AUDIO STREAM "; 
 		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList));
 
 		auto audioStream = makeLocalStreamDescription(md, getParams()->audioEnabled(), "Audio", SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
@@ -1907,10 +1879,7 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN AUDIO STREAM ";
 		}
 	}
 
-if (refMd) lInfo() << __func__ << " DEBUG DEBUG BEFORE  MAIN VIDEO STREAM video conferencing " << isVideoConferenceEnabled << " video enabled " << (getParams()->videoEnabled()) << " stream with main found " << (refMd->findStreamWithSdpAttribute(SalVideo, layoutAttrName, "main") != Utils::getEmptyConstRefObject<SalStreamDescription>()) << " idx " << refMd->findIdxStreamWithSdpAttribute(SalVideo, layoutAttrName, "main") << " best video stream found " << (refMd->findBestStream(SalVideo) != Utils::getEmptyConstRefObject<SalStreamDescription>()) << " idx " << refMd->findIdxBestStream(SalVideo); 
-
 	if ((localIsOfferer && addVideoStream) || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
-lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM "; 
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
@@ -1924,14 +1893,11 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM ";
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
 			enableVideoStream = getParams()->videoEnabled();
 		}
-lInfo() << __func__ << " DEBUG DEBUG MAIN VIDEO STREAM dir " << sal_stream_dir_to_string(videoDir) << " video conferencing " << isVideoConferenceEnabled << " video enabled " << (getParams()->videoEnabled()) ; 
-
 		auto videoStream = makeLocalStreamDescription(md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & dev = cppConference->findParticipantDevice(remoteContactAddress);
-lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress().asString() << " label " << dev->getLabel();
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
 			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, layoutAttrName, "main");
 		} else if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
@@ -1965,7 +1931,6 @@ lInfo() << __func__ << " DEBUG DEBUG video stream address " << dev->getAddress()
 
 	const SalStreamDescription &oldTextStream = refMd ? refMd->findBestStream(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	if ((localIsOfferer && getParams()->realtimeTextEnabled()) || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
-lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM "; 
 		auto textCodecs = pth.makeCodecsList(SalText, 0, -1, ((oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldTextStream.already_assigned_payloads : emptyList));
 
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
@@ -2003,7 +1968,6 @@ lInfo() << __func__ << " DEBUG DEBUG MAIN TEXT STREAM ";
 	const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
 	if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
 	const auto videoStreamIndex = conference ? md->findIdxStreamWithSdpAttribute(layoutAttrName, mainStreamAttrValue) : md->findIdxBestStream(SalVideo);
-lInfo() << __func__ << " DEBUG DEBUG main video stream " << videoStreamIndex << " content attribute " << layoutAttrName << " attribute value " << mainStreamAttrValue;
 	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex), true);
 	const auto textStreamIndex = md->findIdxBestStream(SalText);
 	if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex));
@@ -3838,7 +3802,6 @@ void MediaSession::setNativeVideoWindowId (void *id) {
 }
 
 void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
-	lError() << __func__ << " DEBUG DEBUG Entering label " << label;
 //*************************** START WORKAROUND for active speaker stream - HUGE DIY
 	L_D()
 	auto conference = d->listener->getCallSessionConference(getSharedFromThis());
@@ -3848,12 +3811,10 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 		// Do not preserve conference after removing the participant
 		auto meParticipant = cppConference->getMe();
 		auto meDevice = meParticipant->getDevices();
-lInfo() << __func__ << " DEBUG DEBUG C++ conference " << cppConference << " me participant " << meParticipant << " has " << meDevice.size() << " device(s)";
 		if (!meDevice.empty()) {
 			meLabel = meDevice.front()->getLabel();
 		}
 	}
-lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " me label " << meLabel;
 	Stream * s = NULL;
 	std::string searchedLabel;
 	if (conference && meLabel.compare(label) != 0) {
@@ -3862,32 +3823,21 @@ lInfo() << __func__ << " DEBUG DEBUG conference " << conference << " me label " 
 	s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
 //*************************** END WORKAROUND for active speaker
 //	auto s = getStreamsGroup().lookupStream(SalVideo, label);
-	lError() << __func__ << " DEBUG DEBUG found stream " << s << " searched label " << searchedLabel << " stream with no label " << getStreamsGroup().lookupStream(SalVideo, std::string()) << " stream with label " << label << " is " <<  getStreamsGroup().lookupStream(SalVideo, label);
 	if (s) {
 		VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
-	lError() << __func__ << " DEBUG DEBUG found stream " << s << " label " << s->getLabel() << " casted " << iface;
 		if (iface == nullptr){
 			lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
 			return;
 		}
-	lError() << __func__ << " DEBUG DEBUG found stream " << s << " casted " << iface << " setting window id " << id;
 		if (iface) {
 			iface->setNativeWindowId(id);
 		}
-	lError() << __func__ << " DEBUG DEBUG DONE!! - found stream " << s << " casted " << iface << " setting window id " << id;
 	}
 }
 
 void MediaSession::setNativePreviewWindowId(void *id){
 	L_D();
 	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	const auto & s = getStreamsGroup().lookupMainStream(SalVideo);
-lInfo() << __func__ << " DEBUG DEBUG NATIVE PREVIEW lookup main stream stream " << s << " type " << sal_stream_type_to_string(s->getType()) << " label " << s->getLabel();
-	VideoControlInterface * iface1 = dynamic_cast<VideoControlInterface*>(s);
-	auto s1 = getStreamsGroup().lookupVideoStream(MS_ANDROID_VIDEO_READ_ID);
-lInfo() << __func__ << " DEBUG DEBUG NATIVE PREVIEW lookup by output connection stream " << s1 << " type " << sal_stream_type_to_string(s1->getType()) << " label " << s1->getLabel();
-	VideoControlInterface * iface2 = dynamic_cast<VideoControlInterface*>(s1);
-lInfo() << __func__ << " DEBUG DEBUG NATIVE PREVIEW main stream interface " << iface << " main stream using lookup " << s << " interface " << iface1 << " stream using connection " << s1 << " interface " << iface2;
 	if (iface) {
 		iface->setNativePreviewWindowId(id);
 	}

@@ -6395,7 +6395,6 @@ void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 }
 
 void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
-ms_message("%s DEBUG DEBUG window ID %p\n", __func__, id);
 #ifdef __ANDROID__
 	getPlatformHelpers(lc)->setVideoWindow(id);
 #else

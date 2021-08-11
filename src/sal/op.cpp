@@ -293,7 +293,6 @@ int SalOp::sendRequestWithContact (belle_sip_request_t *request, bool addContact
 		belle_sip_provider_add_authorization(mRoot->mProvider, request, nullptr, nullptr, nullptr, L_STRING_TO_C(mRealm));
 	}
 
-lInfo() << "DEBUG DEBUG " << __func__ << " next hop is " << (void*)nextHopUri << " mDialog " << (void*)mDialog;
 	int result = belle_sip_client_transaction_send_request_to(clientTransaction, nextHopUri);
 
 	// Update call id if not set yet for this op
