@@ -8654,7 +8654,7 @@ static void simple_conference_with_volumes (void) {
 	destroy_mgr_in_conference(laure);
 }
 
-static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
+static void conference_mix_created_by_merging_video_calls_base (LinphoneConferenceLayout layout) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -8725,11 +8725,7 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 
 
 	conf_params = linphone_core_create_conference_params(marie->lc);
-	if (mix) {
-		linphone_conference_params_set_layout(conf_params, LinphoneConferenceLayoutActiveSpeaker);
-	} else {
-		linphone_conference_params_set_layout(conf_params, LinphoneConferenceLayoutGrid);
-	}
+	linphone_conference_params_set_layout(conf_params, layout);
 	linphone_conference_params_set_local_participant_enabled(conf_params, FALSE);
 	linphone_conference_params_set_video_enabled(conf_params, TRUE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -8795,7 +8791,7 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 	}
 
 	wait_for_list(lcs ,NULL, 0, 3000);
-	check_video_conference(pauline, laure, mix);
+	check_video_conference(pauline, laure, layout);
 	terminate_conference(participants, marie, conf, NULL);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -8815,12 +8811,16 @@ static void conference_mix_created_by_merging_video_calls_base (bool_t mix) {
 	}
 }
 
+static void video_conference_created_by_merging_video_calls_with_none_layout_and_local_participant_disabled(void) {
+	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutNone);
+}
+
 static void video_conference_created_by_merging_video_calls_with_grid_layout_and_local_participant_disabled(void) {
-	conference_mix_created_by_merging_video_calls_base(FALSE);
+	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutGrid);
 }
 
 static void video_conference_created_by_merging_video_calls_with_active_speaker_layout_and_local_participant_disabled(void) {
-	conference_mix_created_by_merging_video_calls_base(TRUE);
+	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutActiveSpeaker);
 }
 
 test_t audio_video_conference_tests[] = {
@@ -8846,6 +8846,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Legacy video conference by merging video calls", legacy_video_conference_created_by_merging_video_calls),
+	TEST_NO_TAG("Video conference by merging video calls with none layout and local participant disabled", video_conference_created_by_merging_video_calls_with_none_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout", video_conference_created_by_merging_video_calls_with_grid_layout),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout and local participant disabled", video_conference_created_by_merging_video_calls_with_grid_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging video calls with active speaker layout", video_conference_created_by_merging_video_calls_with_active_speaker_layout),
