@@ -109,6 +109,32 @@ MediaStream *Call::getMediaStream (LinphoneStreamType type) const {
 	return s->getMediaStream();
 }
 
+int Call::getMediaStreamsNb (LinphoneStreamType type) const {
+	int nb = 0;
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	SalStreamType nType;
+	switch(type){
+		case LinphoneStreamTypeAudio:
+			nType = SalAudio;
+		break;
+		case LinphoneStreamTypeVideo:
+			nType = SalVideo;
+		break;
+		case LinphoneStreamTypeText:
+			nType = SalText;
+		break;
+		default:
+		break;
+	}
+	for (auto &stream : sg.getStreams()){
+		if (stream->getType() == nType && stream->getState() == Stream::Running){
+			nb ++;
+		}
+	}
+	return nb;
+}
+
 MediaStream *Call::getVideoStream (MediaStreamDir dir) const {
 	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
 	StreamsGroup & sg = ms->getStreamsGroup();

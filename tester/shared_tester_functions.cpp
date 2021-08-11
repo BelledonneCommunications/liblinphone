@@ -377,7 +377,7 @@ bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphonePar
 	return FALSE;
 }
 
-void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, bool_t mix) {
+void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout) {
 	LinphoneCall *call1=linphone_core_get_current_call(lc1->lc);
 	LinphoneCall *call2=linphone_core_get_current_call(lc2->lc);
 	BC_ASSERT_PTR_NOT_NULL(call1);
@@ -402,9 +402,15 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 		}
 
 		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
-		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
-		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));
-		if (mix) {
+		
+		int nb = layout == LinphoneConferenceLayoutActiveSpeaker ? 3 : (layout == LinphoneConferenceLayoutGrid ? 2:1);
+		BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		if (layout != LinphoneConferenceLayoutNone) {
+			BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
+			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));
+		}
+		if (layout != LinphoneConferenceLayoutGrid) {
 			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv));
 		}
 	}
