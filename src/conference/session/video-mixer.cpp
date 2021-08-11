@@ -145,16 +145,16 @@ void MS2VideoMixer::addLocalParticipant(){
 		video_stream_set_label(st, L_STRING_TO_C(mLocalParticipantLabel));
 	}
 
-	// todo localparticipant not supported
-	/*if (!st->label) {
-		lError() << "Video Mixer Conference[all to all]: Can not add video endpoint with empty label";
+	// todo localparticipant not supported, need the info of layout
+	if (!st->label) {
+		lError() << "[mix to all]: Can not add video endpoint with empty label";
+	} else {
+		lInfo() << "[mix to all]:  add video endpoint with empty label" << st->label;
+		video_stream_enable_router(st, true);
+		mLocalParticipantStream = st;
+		mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
+		ms_video_conference_add_member(mConferenceAllToAll, mLocalEndpoint);
 	}
-	video_stream_enable_router(st, true);*/
-
-	mLocalParticipantStream = st;
-	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
-	ms_message("Conference: adding video local endpoint");
-	ms_video_conference_add_member(mConferenceOnetoAll, mLocalEndpoint);
 }
 
 void MS2VideoMixer::removeLocalParticipant(){
