@@ -210,7 +210,7 @@ private:
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
 	MSVideoConference *mConferenceAllToAll = nullptr;
-	MSVideoConference *mConferenceOnetoALl = nullptr;
+	MSVideoConference *mConferenceOnetoAll = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
 	std::string mLocalParticipantLabel;
