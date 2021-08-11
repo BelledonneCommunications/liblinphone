@@ -185,7 +185,6 @@ bool ParticipantDevice::updateMedia() {
 		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getRemoteParams());
 
 		if (currentParams) {
-lInfo() << __func__ << " BEFORE CHANGES DEBUG DEBUG participant device " << getAddress().asString() << " audio dir " << getAudioDirection() << " video dir " << getVideoDirection() << " text dir " << getTextDirection();
 			const auto & audioEnabled = currentParams->audioEnabled();
 			const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
 			mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
@@ -196,7 +195,6 @@ lInfo() << __func__ << " BEFORE CHANGES DEBUG DEBUG participant device " << getA
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-lInfo() << __func__ << " AFTER CHANGES DEBUG DEBUG participant device " << getAddress().asString() << " audio dir " << getAudioDirection() << " video dir " << getVideoDirection() << " text dir " << getTextDirection();
 		} else {
 			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
 		}
@@ -211,7 +209,6 @@ lInfo() << __func__ << " AFTER CHANGES DEBUG DEBUG participant device " << getAd
 
 void ParticipantDevice::setWindowId(void * newWindowId) {
 #ifdef VIDEO_ENABLED
-lInfo() << __func__ << " DEBUG DEBUG participant " << getAddress().asString() << " window ID " << newWindowId << " label " << mLabel << " session " << mSession;
 	mWindowId = newWindowId;
 	if (!mLabel.empty() && mSession) {
 		static_pointer_cast<MediaSession>(mSession)->setNativeVideoWindowId(mWindowId, mLabel);
