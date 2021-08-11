@@ -93,7 +93,9 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 	string subject = conf->getSubject();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
-	confDescr.setSubject(subject);
+	if (!subject.empty()) {
+		confDescr.setSubject(subject);
+	}
 	const auto & confParams = conf->getCurrentParams();
 	const auto & audioEnabled = confParams.audioEnabled();
 	const LinphoneMediaDirection audioDirection = audioEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
