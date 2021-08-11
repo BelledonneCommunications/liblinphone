@@ -535,7 +535,6 @@ void LocalConference::addLocalEndpoint () {
 		if (confParams->videoEnabled()){
 			mixer = mMixerSession->getMixerByType(SalVideo);
 			if (mixer){
-				mixer->enableLocalParticipant(true);
 #ifdef VIDEO_ENABLED
 				for (auto & device : me->getDevices()) {
 					if (mixer) {
@@ -544,6 +543,8 @@ void LocalConference::addLocalEndpoint () {
 					}
 				}
 #endif // VIDEO_ENABLED
+				mixer->enableLocalParticipant(true);
+
 				VideoControlInterface *vci = getVideoControlInterface();
 				if (vci){
 					vci->setNativePreviewWindowId(getCore()->getCCore()->preview_window_id);
