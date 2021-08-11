@@ -3398,7 +3398,9 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, conf, new_participants, FALSE);
+	// Temporary wirkaround to avoid having multiple invites on the same dialog at the same time
+	add_calls_to_local_conference(lcs, marie, conf, new_participants, TRUE);
+	//add_calls_to_local_conference(lcs, marie, conf, new_participants, FALSE);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
