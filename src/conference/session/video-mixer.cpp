@@ -38,13 +38,13 @@ MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2
 	paramsOnetoAll.codec_mime_type = "VP8";
 	paramsOnetoAll.all_to_all = 0;
 	paramsOnetoAll.min_switch_interval = 3000;
-	mConferenceOnetoALl = ms_video_conference_new(mSession.getCCore()->factory, &paramsOnetoAll);
+	mConferenceOnetoAll = ms_video_conference_new(mSession.getCCore()->factory, &paramsOnetoAll);
 }
 
 void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker){
 	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
 	if (activeSpeaker) {
-		ms_video_conference_add_member(mConferenceOnetoALl, endpoint);
+		ms_video_conference_add_member(mConferenceOnetoAll, endpoint);
 	} else {
 		ms_video_conference_add_member(mConferenceAllToAll, endpoint);
 	}
@@ -53,18 +53,18 @@ void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool 
 void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
 	ms_video_endpoint_set_user_data(endpoint, nullptr);
 	// Try to remove endpoint from both MSConference
-	ms_video_conference_remove_member(mConferenceOnetoALl, endpoint);
+	ms_video_conference_remove_member(mConferenceOnetoAll, endpoint);
 	ms_video_conference_remove_member(mConferenceAllToAll, endpoint);
 }
 
 void MS2VideoMixer::setFocus(StreamsGroup *sg){
-	// used by mConferenceOnetoALl
+	// used by mConferenceOnetoAll
 	MSVideoEndpoint *ep = nullptr;
 	
 	if (sg == nullptr){
 		ep = mLocalEndpoint;
 	}else{
-		const bctbx_list_t *elem = ms_video_conference_get_members(mConferenceOnetoALl);
+		const bctbx_list_t *elem = ms_video_conference_get_members(mConferenceOnetoAll);
 		for (; elem != nullptr; elem = elem->next){
 			MSVideoEndpoint *ep_it = (MSVideoEndpoint *)elem->data;
 			if (ms_video_endpoint_get_user_data(ep_it) == sg){
@@ -74,11 +74,11 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 		}
 	}
 	if (ep){
-		ms_video_conference_set_focus(mConferenceOnetoALl, ep);
+		ms_video_conference_set_focus(mConferenceOnetoAll, ep);
 	}else{
-		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceOnetoALl);
+		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceOnetoAll);
 		if (video_placeholder_ep) {
-			ms_video_conference_set_focus(mConferenceOnetoALl, video_placeholder_ep);
+			ms_video_conference_set_focus(mConferenceOnetoAll, video_placeholder_ep);
 		} else {
 			lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
 		}
@@ -154,7 +154,7 @@ void MS2VideoMixer::addLocalParticipant(){
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding video local endpoint");
-	ms_video_conference_add_member(mConferenceOnetoALl, mLocalEndpoint);
+	ms_video_conference_add_member(mConferenceOnetoAll, mLocalEndpoint);
 }
 
 void MS2VideoMixer::removeLocalParticipant(){
@@ -162,7 +162,7 @@ void MS2VideoMixer::removeLocalParticipant(){
 		ms_message("Conference: removing video local endpoint");
 		//todo
 		//ms_video_conference_remove_member(mConferenceAllToAll, mLocalEndpoint);
-		ms_video_conference_remove_member(mConferenceOnetoALl, mLocalEndpoint);
+		ms_video_conference_remove_member(mConferenceOnetoAll, mLocalEndpoint);
 		ms_video_endpoint_release_from_stream(mLocalEndpoint);
 		mLocalEndpoint = nullptr;
 		video_stream_stop(mLocalParticipantStream);
@@ -194,7 +194,7 @@ void MS2VideoMixer::onSnapshotTaken(const std::string &filepath){
 MS2VideoMixer::~MS2VideoMixer(){
 	removeLocalParticipant();
 	ms_video_conference_destroy(mConferenceAllToAll);
-	ms_video_conference_destroy(mConferenceOnetoALl);
+	ms_video_conference_destroy(mConferenceOnetoAll);
 }
 
 void MS2VideoMixer::setLocalParticipantLabel(const std::string & label) {
