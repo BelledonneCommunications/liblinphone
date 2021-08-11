@@ -339,6 +339,11 @@ void MediaSessionParams::setAudioBandwidthLimit (int value) {
 	d->audioBandwidthLimit = value;
 }
 
+void MediaSessionParams::setAudioDirection (SalStreamDir direction) {
+	L_D();
+	d->audioDirection = MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction);
+}
+
 void MediaSessionParams::setAudioDirection (LinphoneMediaDirection direction) {
 	L_D();
 	d->audioDirection = direction;
@@ -391,6 +396,11 @@ LinphonePayloadType * MediaSessionParams::getUsedVideoPayloadType () const {
 LinphoneMediaDirection MediaSessionParams::getVideoDirection () const {
 	L_D();
 	return d->videoDirection;
+}
+
+void MediaSessionParams::setVideoDirection (SalStreamDir direction) {
+	L_D();
+	d->videoDirection = MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction);
 }
 
 void MediaSessionParams::setVideoDirection (LinphoneMediaDirection direction) {

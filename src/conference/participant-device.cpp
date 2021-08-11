@@ -185,6 +185,7 @@ bool ParticipantDevice::updateMedia() {
 		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getRemoteParams());
 
 		if (currentParams) {
+lInfo() << __func__ << " BEFORE CHANGES DEBUG DEBUG participant device " << getAddress().asString() << " audio dir " << getAudioDirection() << " video dir " << getVideoDirection() << " text dir " << getTextDirection();
 			const auto & audioEnabled = currentParams->audioEnabled();
 			const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
 			mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
@@ -192,17 +193,17 @@ bool ParticipantDevice::updateMedia() {
 			const auto & videoEnabled = currentParams->videoEnabled();
 			const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
 			mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
-lInfo() << __func__ << " DEBUG DEBUG participant device " << getAddress().asString() << " video dir " << getVideoDirection();
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+lInfo() << __func__ << " AFTER CHANGES DEBUG DEBUG participant device " << getAddress().asString() << " audio dir " << getAudioDirection() << " video dir " << getVideoDirection() << " text dir " << getTextDirection();
 		} else {
 			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
 		}
 	} else {
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Video);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
+			mediaChanged |= setAudioDirection(LinphoneMediaDirectionInactive);
+			mediaChanged |= setVideoDirection(LinphoneMediaDirectionInactive);
+			mediaChanged |= setTextDirection(LinphoneMediaDirectionInactive);
 	}
 
 	return mediaChanged;
