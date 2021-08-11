@@ -890,7 +890,6 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		ms_free(addr);
 		return result;
 	} else if (destProxy){
-lInfo() << "DEBUG DEBUG " << __func__ << " contact " << (linphone_proxy_config_get_contact(destProxy) ? linphone_address_as_string(linphone_proxy_config_get_contact(destProxy)) : "Unknown") << " identity " <<  (linphone_proxy_config_get_identity_address(destProxy) ? linphone_address_as_string(linphone_proxy_config_get_identity_address(destProxy)) : "Unknown");
 		const LinphoneAddress *addr = NULL;
 		if (linphone_proxy_config_get_contact(destProxy)) {
 			addr = linphone_proxy_config_get_contact(destProxy);
@@ -1683,7 +1682,6 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 			contactAddress.removeParam("isfocus");
 		}
 	}
-lInfo() << __func__ << " DEBUG DEBUG contact address " << contactAddress.asString();
 }
 
 // -----------------------------------------------------------------------------
