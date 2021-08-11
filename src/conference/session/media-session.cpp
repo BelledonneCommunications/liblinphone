@@ -1213,7 +1213,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 		}
 		/* Reflect the stream directions in the call params */
 		if (sd.getType() == SalAudio) {
-			getCurrentParams()->setAudioDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd.getDirection()));
+			getCurrentParams()->setAudioDirection(sd.getDirection());
 		} else if (sd.getType() == SalVideo) {
 			SalStreamDir streamDir = SalStreamInactive;
 			LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
@@ -1236,7 +1236,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 			} else {
 				streamDir = sd.getDirection();
 			}
-			getCurrentParams()->setVideoDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(streamDir));
+			getCurrentParams()->setVideoDirection(streamDir);
 		}
 	}
 }
@@ -2804,7 +2804,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 		}
 		const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
 		if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
-			getCurrentParams()->setAudioDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(audioStream.getDirection()));
+			getCurrentParams()->setAudioDirection(audioStream.getDirection());
 			if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
 				const std::string & rtpAddr = (audioStream.getRtpAddress().empty() == false) ? audioStream.getRtpAddress() : md->addr;
 				getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr.c_str()));
@@ -2842,7 +2842,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			} else {
 				streamDir = videoStream.getDirection();
 			}
-			getCurrentParams()->setVideoDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(streamDir));
+			getCurrentParams()->setVideoDirection(streamDir);
 
 			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
 				const std::string & rtpAddr = (videoStream.getRtpAddress().empty() == false) ? videoStream.getRtpAddress() : md->addr;
@@ -3947,6 +3947,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
 			if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 				params->enableAudio(audioStream.enabled());
+				params->setAudioDirection(audioStream.getDirection());
 				params->setMediaEncryption(audioStream.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, audioStream.custom_sdp_attributes);
 			}else params->enableAudio(false);
@@ -3954,6 +3955,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			const SalStreamDescription &videoStream = md->findBestStream(SalVideo);
 			if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 				params->enableVideo(videoStream.enabled());
+				params->setVideoDirection(videoStream.getDirection());
 				params->setMediaEncryption(videoStream.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, videoStream.custom_sdp_attributes);
 			}else params->enableVideo(false);
