@@ -734,8 +734,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
 	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
-
-lInfo() << __func__ << " DEBUG DEBUG -  payloads " << resultCfg.payloads.empty() << " only telephone event " << OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) << " remote enabled " << remote_offer.enabled();
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -794,7 +792,6 @@ lInfo() << __func__ << " DEBUG DEBUG -  payloads " << resultCfg.payloads.empty()
 	}
 
 	if (!OfferAnswerEngine::fillZrtpAttributes(local_cap, localCfgIdx, remote_offer, remoteCfgIdx, resultCfg)) {
-lInfo() << __func__ << " DEBUG DEBUG - ZRTP error";
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
@@ -834,8 +831,6 @@ bool OfferAnswerEngine::areProtoInStreamCompatibles(const SalStreamDescription &
 
 	for (const auto & otherCfg : otherStream.getAllCfgs()) {
 		for (const auto & localCfg : localStream.getAllCfgs()) {
-
-lInfo() << __func__ << " DEBUG DEBUG local transport protocol " << sal_media_proto_to_string(localCfg.second.getProto()) << " remote transport protocol " << sal_media_proto_to_string(otherCfg.second.proto);
 			const auto compatible = OfferAnswerEngine::areProtoCompatibles(localCfg.second.getProto(), otherCfg.second.getProto());
 			if (compatible) {
 				return true;
@@ -933,15 +928,11 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
-lInfo() << __func__ << " DEBUG DEBUG local cap num streams " << local_capabilities->streams.size() << " remote num streams " << remote_offer->streams.size();
 	for(auto & rs : remote_offer->streams){
 
 		SalStreamDescription ls = local_capabilities->streams[i];
-lInfo() << __func__ << " DEBUG DEBUG remote stream has no label and no content - stream addr at idx " << i << ": " << &(local_capabilities->streams[i]) << " type " << sal_stream_type_to_string(ls.getType()) << " remote type " <<   sal_stream_type_to_string(rs.getType()) << " best stream idx " << local_capabilities->findIdxBestStream(rs.getType());
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
-
-lInfo() << __func__ << " DEBUG DEBUG stream at idx " << i << ": type " << sal_stream_type_to_string(ls.getType()) << " remote type " <<   sal_stream_type_to_string(rs.getType());
 
 		if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
 			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
