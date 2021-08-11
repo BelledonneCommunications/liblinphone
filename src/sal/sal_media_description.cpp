@@ -207,8 +207,6 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		streams.push_back(stream);
 		currentStreamIdx++;
 	}
-
-lInfo() << __func__ << " DEBUG DEBUG received session description has " << streams.size() << " streams";
 }
 
 bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {

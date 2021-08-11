@@ -49,15 +49,11 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 
 	const auto & localDesc = params.getLocalStreamDescription();
 
-ms_message("%s - DEBUG DEBUG BEFORE local desc (stream index %0zu) ports: RTP %0d RTCP %0d (larger than 0: RTP %0d RTCP %0d) mPortConfig RTP %0d RTCP %0d bindIp %s\n", __func__, params.streamIndex, localDesc.getRtpPort(), localDesc.getRtcpPort(), (localDesc.getRtpPort() > 0), (localDesc.getRtcpPort() > 0), mPortConfig.rtpPort, mPortConfig.rtcpPort, bindIp.c_str());
-
 	if ((localDesc.getRtpPort() > 0) && (localDesc.getRtcpPort() > 0)) {
-ms_message("%s - DEBUG DEBUG CHANGING local desc (stream index %0zu) ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d bindIp %s\n", __func__, params.streamIndex, localDesc.getRtpPort(), localDesc.getRtcpPort(), mPortConfig.rtpPort, mPortConfig.rtcpPort, bindIp.c_str());
 		// port already set in SDP
 		mPortConfig.rtpPort =  localDesc.getRtpPort();
 		mPortConfig.rtcpPort =  localDesc.getRtcpPort();
 	}
-ms_message("%s - DEBUG DEBUG AFTER local desc (stream index %0zu) ports: RTP %0d RTCP %0d mPortConfig RTP %0d RTCP %0d bindIp %s\n", __func__, params.streamIndex, localDesc.getRtpPort(), localDesc.getRtcpPort(), mPortConfig.rtpPort, mPortConfig.rtcpPort, bindIp.c_str());
 
 	mStream = video_stream_new2(getCCore()->factory, L_STRING_TO_C(bindIp), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 
@@ -183,8 +179,6 @@ void MS2VideoStream::startZrtp(){
 }
 
 std::string MS2VideoStream::getLabel()const {
-ms_message("%s DEBUG DEBUG VIDEO ptr %p\n", __func__, mStream->label);
-ms_message("%s DEBUG DEBUG VIDEO value %s\n", __func__, ((mStream->label) ? mStream->label : "Unknown"));
 	return L_C_TO_STRING(mStream->label);
 }
 
@@ -276,14 +270,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
 		video_stream_set_sent_video_size(mStream, vsize);
 	}
-lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
-lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this << " label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer << " native window ID " << mNativeWindowId << " core window ID " << getCCore()->video_window_id;
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
 	} else if (videoMixer && label && getMediaSession().getParticipantWindowId(label)) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
-lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer << " native window ID " << mNativeWindowId;
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
 	}
@@ -414,12 +405,7 @@ lError() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
-		lInfo() << __func__ << " DEBUG DEBUG stream " << mStream << " direction " << vstream.getDirection() << " SendRecv " << SalStreamSendRecv << " SendOnly " << SalStreamSendOnly << " RecvOnly " << SalStreamRecvOnly << " label " << (mStream->label ? mStream->label : "Unknown") << " SDP label " << L_C_TO_STRING(label) << " content " << L_C_TO_STRING(content);
-
-lInfo() << __func__ << " DEBUG DEBUG label " << (label ? std::string(label) : "Unknown") << " window ID " << (label ? getMediaSession().getParticipantWindowId(label) : NULL) << " video mixer " << videoMixer;
-
 		if (!mStream->label && !content) {
-			lInfo() << __func__ << " DEBUG DEBUG Video Stream Conference[all to all]: Can not add video endpoint with empty label";
 			lError() << "Video Stream Conference: Can not add video endpoint with empty label and no content";
 			return;
 		}
@@ -534,13 +520,11 @@ bool MS2VideoControl::cameraEnabled() const{
 void MS2VideoControl::setNativeWindowId(void *w){
 	VideoStream *vs = getVideoStream();
 	mNativeWindowId = w;
-lError() << __func__ << " DEBUG DEBUG setting window ID for stream " << this << " video stream " << vs << " native window ID " << mNativeWindowId;
 	if (vs) video_stream_set_native_window_id(vs, w);
 }
 
 void * MS2VideoControl::getNativeWindowId() const{
 	VideoStream *vs = getVideoStream();
-lError() << __func__ << " DEBUG DEBUG retrieving window ID for stream " << this  << " video stream " << vs <<  " native window ID " << mNativeWindowId;
 	if (mNativeWindowId){
 		return mNativeWindowId;
 	}
