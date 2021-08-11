@@ -1180,6 +1180,9 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 			}
 
 			counter++;
+
+			// Wait a little bit - slow down test
+			wait_for_list(lcs ,NULL, 0, 2000);
 		}
 	} else {
 		bctbx_list_t *calls = NULL;
