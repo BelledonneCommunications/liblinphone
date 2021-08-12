@@ -3963,14 +3963,10 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	terminate_conference(participants, marie, NULL, NULL);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 1, unsigned int, "%u");
-	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
-	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	end_call(laure, marie);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
+	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
 end:
 
@@ -3994,6 +3990,10 @@ static void legacy_video_conference_created_by_merging_video_calls(void) {
 
 static void video_conference_created_by_merging_video_calls_with_active_speaker_layout(void) {
 	conference_created_by_merging_video_calls_base(TRUE, TRUE, LinphoneConferenceLayoutActiveSpeaker);
+}
+
+static void video_conference_created_by_merging_video_calls_with_none_layout(void) {
+	conference_created_by_merging_video_calls_base(TRUE, TRUE, LinphoneConferenceLayoutNone);
 }
 
 static void video_conference_created_by_merging_video_calls_with_grid_layout(void) {
@@ -8849,6 +8849,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Legacy video conference by merging video calls", legacy_video_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Video conference by merging video calls with none layout and local participant disabled", video_conference_created_by_merging_video_calls_with_none_layout_and_local_participant_disabled),
+	TEST_NO_TAG("Video conference by merging video calls with none layout", video_conference_created_by_merging_video_calls_with_none_layout),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout", video_conference_created_by_merging_video_calls_with_grid_layout),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout and local participant disabled", video_conference_created_by_merging_video_calls_with_grid_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging video calls with active speaker layout", video_conference_created_by_merging_video_calls_with_active_speaker_layout),
