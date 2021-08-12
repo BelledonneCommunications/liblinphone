@@ -834,10 +834,12 @@ void Account::update () {
 }
 
 string Account::getComputedPushNotificationParameters () {
-	if (!mCore
-		|| !mCore->push_notification_enabled
-		|| !mParams->isPushNotificationAvailable()
-	) {
+	if (!mCore|| !mCore->push_notification_enabled) {
+		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because core push notification are not enabled";
+		return string("");
+	}
+	if (!mParams->isPushNotificationAvailable()) {
+		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because account params do not have available push notifications";
 		return string("");
 	}
 
@@ -857,7 +859,10 @@ string Account::getComputedPushNotificationParameters () {
 			provider = tester_env ? "apns.dev" : "apns";
 	#endif
 	}
-	if (provider.empty()) return NULL;
+	if (provider.empty()) {
+		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because pn-provider has not been set";
+		return string("");
+	}
 
 	bool basicPushAllowed = mParams->mPushNotificationAllowed;
 	bool remotePushAllowed = mParams->mRemotePushNotificationAllowed;
