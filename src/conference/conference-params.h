@@ -46,6 +46,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		 * Conference layout
 		 */
 		enum class Layout{
+			None = LinphoneConferenceLayoutNone, /**< None - participant who speaks is prominently displayed in the center of the screen */
 			ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
 			Grid = LinphoneConferenceLayoutGrid, /**< Grid - each participant is given an equal sized image size */
 		};
@@ -111,6 +112,9 @@ inline std::ostream & operator << (std::ostream & str, ConferenceParams::Layout 
 			break;
 		case ConferenceParams::Layout::ActiveSpeaker:
 			str << "ActiveSpeaker";
+			break;
+		case ConferenceParams::Layout::None:
+			str << "None";
 			break;
 	}
 	return str;
