@@ -76,11 +76,15 @@ public:
 	void setFocus(StreamsGroup *sg);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
+	
+	void setConferenceLayout(ConferenceParams::Layout layout){mLayout=layout;};
+	ConferenceParams::Layout getConferenceLayout() {return mLayout;};
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 private:
 	Core & mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
+	ConferenceParams::Layout mLayout;
 };
 
 inline std::ostream & operator<<(std::ostream &str, const MixerSession & session){
@@ -212,6 +216,7 @@ private:
 	MSVideoConference *mConferenceAllToAll = nullptr;
 	MSVideoConference *mConferenceOnetoAll = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
+	MSVideoEndpoint *mMainLocalEndpoint = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
 	std::string mLocalParticipantLabel;
 	RtpProfile *mLocalDummyProfile = nullptr;
