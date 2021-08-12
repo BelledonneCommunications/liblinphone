@@ -819,10 +819,6 @@ bool Call::isOpConfigured () const {
 	return getActiveSession()->isOpConfigured();
 }
 
-bool Call::isDeclinedEarly () const {
-	return getActiveSession()->isDelinedEarly();
-}
-
 // =============================================================================
 
 LinphoneStatus Call::accept (const MediaSessionParams *msp) {
@@ -839,10 +835,6 @@ LinphoneStatus Call::acceptUpdate (const MediaSessionParams *msp) {
 
 void Call::cancelDtmfs () {
 	static_pointer_cast<MediaSession>(getActiveSession())->cancelDtmfs();
-}
-
-LinphoneStatus Call::decline () {
-	return getActiveSession()->decline(getActiveSession()->getErrorInfoCache());
 }
 
 LinphoneStatus Call::decline (LinphoneReason reason) {

@@ -861,76 +861,71 @@ string Account::getComputedPushNotificationParameters () {
 
 	bool basicPushAllowed = mParams->mPushNotificationAllowed;
 	bool remotePushAllowed = mParams->mRemotePushNotificationAllowed;
-	string voipToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mParams->mPushNotificationConfig));
-	string remoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mParams->mPushNotificationConfig));
-	string param = L_C_TO_STRING(linphone_push_notification_config_get_param(mParams->mPushNotificationConfig));
-	if (param.empty()) {
-		string param_format = "%s.%s.%s";
-		string team_id = linphone_push_notification_config_get_team_id(mParams->mPushNotificationConfig);
-		string bundle_identifer = linphone_push_notification_config_get_bundle_identifier(mParams->mPushNotificationConfig);
-		char services[100];
-		memset(services, 0, sizeof(services));
+	const char *voipToken = linphone_push_notification_config_get_voip_token(mParams->mPushNotificationConfig);
+	const char *remoteToken = linphone_push_notification_config_get_remote_token(mParams->mPushNotificationConfig);
+	char *param = ms_strdup(linphone_push_notification_config_get_param(mParams->mPushNotificationConfig));
+	if (!param) {
+		char *services = NULL;
+		const char *team_id = linphone_push_notification_config_get_team_id(mParams->mPushNotificationConfig);
+		const char * bundle_identifer = linphone_push_notification_config_get_bundle_identifier(mParams->mPushNotificationConfig);
+
 		if (basicPushAllowed) {
-			strcat(services, "voip");
+			services = appendString("voip", services);
 			if (remotePushAllowed) {
-				strcat(services, "&");
+				services = appendString("&", services);
 			}
 		}
 		if (remotePushAllowed) {
-			strcat(services, "remote");
+			services = appendString("remote", services);
 		}
-		char pn_param[200];
-		memset(pn_param, 0, sizeof(pn_param));
-		snprintf(pn_param, sizeof(pn_param), param_format.c_str(), team_id.c_str(), bundle_identifer.c_str(), services);
-		param = pn_param;
+
+		param = ms_strcat_printf(param, "%s.%s.%s", team_id, bundle_identifer, services);
+		ms_free(services);
 	}
 
-	string prid = L_C_TO_STRING(linphone_push_notification_config_get_prid(mParams->mPushNotificationConfig));
-	
+	char *prid = ms_strdup(linphone_push_notification_config_get_prid(mParams->mPushNotificationConfig));
 	string oldVoipToken;
 	string oldRemoteToken;
 	if (mOldParams) {
 		oldVoipToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mOldParams->mPushNotificationConfig));
 		oldRemoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mOldParams->mPushNotificationConfig));
 	}
-	if (prid.empty() || oldVoipToken != voipToken || oldRemoteToken != remoteToken) {
-		char pn_prid[300];
-		memset(pn_prid, 0, sizeof(pn_prid));
+	if (!prid || oldVoipToken != L_C_TO_STRING(voipToken) || oldRemoteToken != L_C_TO_STRING(remoteToken)) {
 		if (basicPushAllowed) {
-			strcat(pn_prid, voipToken.c_str());
-			if (remotePushAllowed && !remoteToken.empty()) {
-				strcat(pn_prid, "&");
+			prid = appendString(voipToken, prid);
+			if (remotePushAllowed && remoteToken) {
+				prid = appendString("&", prid);
 			}
 		}
 		if (remotePushAllowed) {
-			strcat(pn_prid, remoteToken.c_str());
+			prid = appendString(remoteToken, prid);
 		}
-		prid = pn_prid;
 	}
 
 	string format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
 	if (use_legacy_params) {
 		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
 	}
-	char computedPushParams[512];
-	memset(computedPushParams, 0, sizeof(computedPushParams));
-	snprintf(computedPushParams, sizeof(computedPushParams), format.c_str(), provider.c_str(), param.c_str(), prid.c_str());
+	char *computedPushParams = NULL;
+	computedPushParams = ms_strcat_printf(computedPushParams, format.c_str(), provider.c_str(), param, prid);
+	ms_free(param);
+	ms_free(prid);
 
 	if (remotePushAllowed) {
-		string remoteFormat = ";pn-msg-str=%s;pn-call-str=%s;pn-groupchat-str=%s;pn-call-snd=%s;pn-msg-snd=%s";
-		string msg_str = L_C_TO_STRING(linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig));
-		string call_str = L_C_TO_STRING(linphone_push_notification_config_get_call_str(mParams->mPushNotificationConfig));
-		string groupchat_str = L_C_TO_STRING(linphone_push_notification_config_get_group_chat_str(mParams->mPushNotificationConfig));
-		string call_snd = L_C_TO_STRING(linphone_push_notification_config_get_call_snd(mParams->mPushNotificationConfig));
-		string msg_snd = L_C_TO_STRING(linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig));
+		const char *msg_str = linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig);
+		const char *call_str = linphone_push_notification_config_get_call_str(mParams->mPushNotificationConfig);
+		const char *groupchat_str = linphone_push_notification_config_get_group_chat_str(mParams->mPushNotificationConfig);
+		const char *call_snd = linphone_push_notification_config_get_call_snd(mParams->mPushNotificationConfig);
+		const char *msg_snd = linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig);
 
-		char remoteSpecificParams[512];
-		memset(remoteSpecificParams, 0, sizeof(remoteSpecificParams));
-		snprintf(remoteSpecificParams, sizeof(remoteSpecificParams), remoteFormat.c_str(), msg_str.c_str(), call_str.c_str(), groupchat_str.c_str(), call_snd.c_str(), msg_snd.c_str());
-		strcat(computedPushParams, remoteSpecificParams);
+		computedPushParams = ms_strcat_printf(computedPushParams, ";pn-msg-str=%s;pn-call-str=%s;pn-groupchat-str=%s;pn-call-snd=%s;pn-msg-snd=%s", msg_str, call_str, groupchat_str, call_snd, msg_snd);
 	}
 
-	return string(computedPushParams);
+	ostringstream result;
+	result << computedPushParams;
+	ms_free(computedPushParams);
+	lInfo() << "Push notifications parameters on account [" << this->toC() << "] successfully computed : " << result.str();
+	return result.str();
 }
 
 void Account::updatePushNotificationParameters () {

@@ -57,6 +57,7 @@ struct _LinphoneCallLog{
 	LinphoneErrorInfo *error_info;
 	bool_t video_enabled;
 	bool_t was_conference; /**<That call was a call with a conference server */
+	bool_t early_aborted;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallLog);
