@@ -2797,7 +2797,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	bool_t push_notification_default = FALSE;
 	bool_t auto_iterate_default = FALSE;
 	bool_t vibration_incoming_call_default = FALSE;
-	
+
 #if __ANDROID__ || TARGET_OS_IPHONE
 	auto_iterate_default = TRUE;
 #endif
@@ -5303,7 +5303,7 @@ void linphone_core_reload_sound_devices(LinphoneCore* lc) {
 	build_sound_devices_table(lc);
 
 // Set selection
-	
+
 	linphone_core_set_ringer_device(lc, ringer_copy);
 	if (ringer_copy != NULL)
 		ms_free(ringer_copy);
@@ -7280,10 +7280,10 @@ void _linphone_core_uninit(LinphoneCore *lc)
 		bctbx_list_free(lc->supported_encryptions);
 	}
 	lc->supported_encryptions = NULL;
-	
+
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
-	
+
 	linphone_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
