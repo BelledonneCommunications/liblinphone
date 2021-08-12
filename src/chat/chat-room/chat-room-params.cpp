@@ -118,7 +118,7 @@ shared_ptr<ChatRoomParams> ChatRoomParams::fromCapabilities(ChatRoom::Capabiliti
 		params->setEncrypted(false);
 		params->setChatRoomEncryptionBackend(ChatRoomEncryptionBackend::None);
 	}
-	params->setGroup(~capabilities & ChatRoom::Capabilities::OneToOne);
+	if (capabilities & ChatRoom::Capabilities::OneToOne) params->setGroup(false);
 	return params;
 }
 
