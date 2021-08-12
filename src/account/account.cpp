@@ -834,10 +834,12 @@ void Account::update () {
 }
 
 string Account::getComputedPushNotificationParameters () {
-	if (!mCore
-		|| !mCore->push_notification_enabled
-		|| !mParams->isPushNotificationAvailable()
-	) {
+	if (!mCore|| !mCore->push_notification_enabled) {
+		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because core push notification are not enabled";
+		return string("");
+	}
+	if (!mParams->isPushNotificationAvailable()) {
+		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because account params do not have available push notifications";
 		return string("");
 	}
 
@@ -857,7 +859,10 @@ string Account::getComputedPushNotificationParameters () {
 			provider = tester_env ? "apns.dev" : "apns";
 	#endif
 	}
-	if (provider.empty()) return NULL;
+	if (provider.empty()) {
+		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because pn-provider has not been set";
+		return string("");
+	}
 
 	bool basicPushAllowed = mParams->mPushNotificationAllowed;
 	bool remotePushAllowed = mParams->mRemotePushNotificationAllowed;
@@ -920,12 +925,20 @@ string Account::getComputedPushNotificationParameters () {
 
 		computedPushParams = ms_strcat_printf(computedPushParams, ";pn-msg-str=%s;pn-call-str=%s;pn-groupchat-str=%s;pn-call-snd=%s;pn-msg-snd=%s", msg_str, call_str, groupchat_str, call_snd, msg_snd);
 	}
+<<<<<<< HEAD
 
 	ostringstream result;
 	result << computedPushParams;
 	ms_free(computedPushParams);
 	lInfo() << "Push notifications parameters on account [" << this->toC() << "] successfully computed : " << result.str();
 	return result.str();
+=======
+	
+	
+	string resultPushParams(computedPushParams);
+	lInfo() << "Push notifications parameters on account [" << this->toC() << "] successfully computed : " << resultPushParams;
+	return resultPushParams;
+>>>>>>> e13bb2223... Add extra traces in getComputedPushNotificationParameters
 }
 
 void Account::updatePushNotificationParameters () {
