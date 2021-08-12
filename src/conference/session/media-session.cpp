@@ -1497,32 +1497,25 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 				}
 			}
 
-			const auto & foundStreamIdx = (md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic") == -1) ? md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker") : md->findIdxStreamWithSdpAttribute(layoutAttrName, "mosaic");
+			const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker");
 
 			const auto & confLayout = currentConfParams.getLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
 
-			if (foundStreamIdx == -1) {
+			if ((foundStreamIdx == -1) && isConferenceLayoutActiveSpeaker) {
 				SalStreamDescription newStream;
 				SalStreamConfiguration cfg;
 
 				newStream.type = SalVideo;
-				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, ((isConferenceLayoutActiveSpeaker) ? "speaker" : "mosaic"));
+				newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, "speaker");
 
 				cfg.proto = getParams()->getMediaProto();
 
-				const auto & previousParticipantStream = oldMd ? 
-					((oldMd->findStreamWithSdpAttribute(layoutAttrName, "mosaic") == Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldMd->findStreamWithSdpAttribute(layoutAttrName, "speaker") : oldMd->findStreamWithSdpAttribute(layoutAttrName, "mosaic"))
-					: Utils::getEmptyConstRefObject<SalStreamDescription>();
-				std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+				std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, emptyList);
 				if (!l.empty()){
 					cfg.replacePayloads(l);
 					newStream.name = "Video " + me->getAddress().asString();
-					if (isConferenceLayoutActiveSpeaker) {
-						cfg.dir = SalStreamSendRecv;
-					} else {
-						cfg.dir = SalStreamInactive;
-					}
+					cfg.dir = SalStreamSendRecv;
 
 					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vslayout");
 
