@@ -621,7 +621,6 @@ static void _linphone_config_uninit(LpConfig *lpconfig){
 	if (lpconfig->tmpfilename) ortp_free(lpconfig->tmpfilename);
 	if (lpconfig->factory_filename) bctbx_free(lpconfig->factory_filename);
 	if (lpconfig->sections) bctbx_list_free_with_data(lpconfig->sections, (bctbx_list_free_func)lp_section_destroy);
-	lpconfig->sections = NULL;
 }
 
 LpConfig *linphone_config_ref(LpConfig *lpconfig){
