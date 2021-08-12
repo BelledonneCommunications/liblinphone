@@ -116,9 +116,6 @@ inline std::ostream & operator << (std::ostream & str, ConferenceParams::Layout 
 		case ConferenceParams::Layout::ActiveSpeaker:
 			str << "ActiveSpeaker";
 			break;
-		case ConferenceParams::Layout::None:
-			str << "None";
-			break;
 	}
 	return str;
 }
