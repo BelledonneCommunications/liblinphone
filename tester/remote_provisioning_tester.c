@@ -129,7 +129,6 @@ static void remote_provisioning_file(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-
 test_t remote_provisioning_tests[] = {
 	TEST_NO_TAG("Remote provisioning skipped", remote_provisioning_skipped),
 	TEST_NO_TAG("Remote provisioning successful behind http", remote_provisioning_http),
