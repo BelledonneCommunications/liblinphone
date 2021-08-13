@@ -202,7 +202,7 @@ public:
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
 	void setLocalParticipantLabel(const std::string & label);
-	std::string setLocalParticipantLabel() const;
+	std::string getLocalParticipantLabel() const;
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
