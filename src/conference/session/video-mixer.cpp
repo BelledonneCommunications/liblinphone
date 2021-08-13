@@ -265,7 +265,7 @@ void MS2VideoMixer::setLocalParticipantLabel(const std::string & label) {
 	mLocalParticipantLabel = label;
 }
 
-std::string MS2VideoMixer::setLocalParticipantLabel() const {
+std::string MS2VideoMixer::getLocalParticipantLabel() const {
 	return mLocalParticipantLabel;
 }
 
