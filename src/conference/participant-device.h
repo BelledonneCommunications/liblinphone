@@ -65,7 +65,7 @@ public:
 
 	inline const IdentityAddress &getAddress () const { return mGruu; }
 	inline const std::string &getLabel () const { return mLabel; }
-	inline void setLabel (const std::string &label) { mLabel = label; lInfo() << __func__ << " DEBUG participant " << getAddress().asString() << " window ID " << mWindowId << " label " << mLabel; }
+	inline void setLabel (const std::string &label) { mLabel = label; };
 	inline const std::string &getName () const { return mName; }
 	inline void setName (const std::string &name) { mName = name; }
 	Participant *getParticipant () const { return mParticipant; }

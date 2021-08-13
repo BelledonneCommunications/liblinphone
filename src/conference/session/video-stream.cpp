@@ -413,7 +413,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		if (mStream->label) {
 			video_stream_enable_router(mStream, true);
 		}
-		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
+		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0));
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, (mStream->label == NULL));
 	}
 }
