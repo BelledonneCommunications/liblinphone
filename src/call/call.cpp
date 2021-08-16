@@ -574,7 +574,15 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
 							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 							auto confParams = ConferenceParams::create(getCore()->getCCore());
-							confParams->setLayout((rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
+							ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
+							if (rmd->findIdxStreamWithSdpAttribute("content", "main") == -1) {
+								confLayout = ConferenceParams::Layout::None;
+							} else if (rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) {
+								confLayout = ConferenceParams::Layout::Grid;
+							} else {
+								confLayout = ConferenceParams::Layout::ActiveSpeaker;
+							}
+							confParams->setLayout(confLayout);
 							// It is expected that the core of the remote conference is the participant one
 							shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 							setConference(remoteConf->toC());
