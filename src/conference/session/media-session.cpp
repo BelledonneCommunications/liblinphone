@@ -1460,9 +1460,11 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
+		const auto & confLayout = currentConfParams.getLayout();
+		bool isConferenceLayoutNone = (confLayout == ConferenceParams::Layout::None);
 
 		// Add additional video streams if required
-		if (isVideoConferenceEnabled) {
+		if (isVideoConferenceEnabled && !isConferenceLayoutNone) {
 			const auto & me = cppConference->getMe();
 
 			for (const auto & p : cppConference->getParticipants()) {
@@ -1495,7 +1497,6 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 
 			const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(layoutAttrName, "speaker");
 
-			const auto & confLayout = currentConfParams.getLayout();
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
 
 			if ((foundStreamIdx == -1) && isConferenceLayoutActiveSpeaker) {
@@ -1825,12 +1826,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
 	bool isConferenceLayoutActiveSpeaker = false;
+	bool isConferenceLayoutNone = false;
 	bool isVideoConferenceEnabled = false;
 	if (conference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto & confLayout = currentConfParams.getLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+		isConferenceLayoutNone = (confLayout == ConferenceParams::Layout::None);
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
 	}
 	const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
@@ -1880,7 +1883,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
 		if (conference && isInLocalConference) {
-			videoDir = (isVideoConferenceEnabled) ? SalStreamRecvOnly : SalStreamInactive;
+			videoDir = (isVideoConferenceEnabled) ? ((isConferenceLayoutNone) ? getParams()->getPrivate()->getSalVideoDirection() : SalStreamRecvOnly) : SalStreamInactive;
 			enableVideoStream = isVideoConferenceEnabled;
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
@@ -1891,8 +1894,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & dev = cppConference->findParticipantDevice(remoteContactAddress);
-			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
-			videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, layoutAttrName, "main");
+			if (!isConferenceLayoutNone) {
+				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
+				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, layoutAttrName, "main");
+			}
 		} else if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 			if (op && op->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
