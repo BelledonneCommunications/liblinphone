@@ -405,15 +405,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
-		if (!mStream->label && !content) {
-			lError() << "Video Stream Conference: Can not add video endpoint with empty label and no content";
-			return;
-		}
-
 		if (mStream->label) {
 			video_stream_enable_router(mStream, true);
 		}
-		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0));
+		const bool_t isRemote = (!mStream->label && !content) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
+		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, (mStream->label == NULL));
 	}
 }
