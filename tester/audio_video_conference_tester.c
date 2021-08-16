@@ -2245,11 +2245,9 @@ static void video_conference_by_merging_calls(void){
 		wait_for_list(lcs ,NULL, 0, 2000);
 
 		terminate_conference(new_participants, marie, NULL, NULL);
-
 	}
-	
-	
-end:	
+
+end:
 	if (conf) linphone_conference_unref(conf);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
