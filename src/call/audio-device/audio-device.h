@@ -44,7 +44,8 @@ public:
 
     enum Capabilities {
         Record = LinphoneAudioDeviceCapabilityRecord,
-        Play = LinphoneAudioDeviceCapabilityPlay
+        Play = LinphoneAudioDeviceCapabilityPlay,
+        All = Record | Play
     };
 
     AudioDevice(MSSndCard *soundCard);
