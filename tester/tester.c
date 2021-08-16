@@ -898,6 +898,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		const unsigned int local_conf_participants = linphone_conference_get_participant_count(conference);
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
 		const bool_t video_enabled = !!linphone_conference_params_is_video_enabled(conf_params);
+		const LinphoneConferenceLayout layout = linphone_conference_params_get_layout(conf_params);
 		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
 		const int nb_audio_streams = 1;
 		// if layout is LinphoneConferenceLayoutActiveSpeaker, the stream speaker is added on top of one video stream for each participant
@@ -919,7 +920,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			LinphoneCall * conf_to_part_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
 			BC_ASSERT_PTR_NOT_NULL(conf_to_part_call);
 
-			if (video_enabled && conf_to_part_call) {
+			if (video_enabled && conf_to_part_call && (layout != LinphoneConferenceLayoutNone)) {
 				const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
 				const LinphoneConferenceLayout conf_layout = linphone_conference_params_get_layout(conf_params);
 				// One stream per participant
