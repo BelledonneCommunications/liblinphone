@@ -216,6 +216,7 @@ private:
 	MSVideoConference *mConferenceAllToAll = nullptr;
 	MSVideoConference *mConferenceOnetoAll = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
+	VideoStream *mLocalParticipantItcStream = nullptr; // TODO WORKAROUND - Stores the pointer to a stream created for active speaker layout so that it can be stopped when removing the local participant
 	MSVideoEndpoint *mMainLocalEndpoint = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
 	std::string mLocalParticipantLabel;
