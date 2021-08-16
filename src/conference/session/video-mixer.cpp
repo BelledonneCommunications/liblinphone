@@ -159,7 +159,7 @@ void MS2VideoMixer::addLocalParticipant(){
 			if (!mainSt->label) {
 				lError() << "[all to all]: Can not add video endpoint with empty label";
 			} else {
-				lInfo() << "[all to all]:  add video endpoint with label" << mainSt->label;
+				lInfo() << "[all to all]:  add video endpoint with label " << mainSt->label;
 				video_stream_enable_router(mainSt, true);
 				mLocalParticipantStream = mainSt;
 				mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
@@ -172,8 +172,9 @@ void MS2VideoMixer::addLocalParticipant(){
 			mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
 			ms_video_conference_add_member(mConferenceOnetoAll, mMainLocalEndpoint);
 
-
 			st = video_stream_new(core->factory, 65000, 65001, FALSE);
+			// Stores the pointer to the newly created video stream to stop it upon local participant removal
+			mLocalParticipantItcStream = st;
 			memset(&io2, 0, sizeof(io2));
 			io2.input.type = MSResourceItc;
 			io2.output.type = MSResourceDefault;
@@ -229,6 +230,10 @@ void MS2VideoMixer::removeLocalParticipant(){
 			mLocalEndpoint = nullptr;
 		}
 
+		if (mLocalParticipantItcStream) {
+			video_stream_stop(mLocalParticipantItcStream);
+			mLocalParticipantItcStream = nullptr;
+		}
 		video_stream_stop(mLocalParticipantStream);
 		mLocalParticipantStream = nullptr;
 		rtp_profile_destroy(mLocalDummyProfile);
