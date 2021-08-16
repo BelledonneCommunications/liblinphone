@@ -3942,18 +3942,22 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	BC_ASSERT_PTR_NOT_NULL(marie_conference_address);
 
 	int no_parts = (int)bctbx_list_size(participants);
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
-		BC_ASSERT_PTR_NOT_NULL(conference);
-		if (conference) {
-			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
-			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
+	if (event_package_enabled) {
+		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+			LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
+			BC_ASSERT_PTR_NOT_NULL(conference);
+			if (conference) {
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+				BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 
-			const LinphoneConferenceParams * current_remote_conf_params = linphone_conference_get_current_params(conference);
-			BC_ASSERT_PTR_NOT_NULL(current_remote_conf_params);
-			BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(current_remote_conf_params) == enable_video);
+				const LinphoneConferenceParams * current_remote_conf_params = linphone_conference_get_current_params(conference);
+				BC_ASSERT_PTR_NOT_NULL(current_remote_conf_params);
+				BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(current_remote_conf_params) == enable_video);
+			}
 		}
+	} else {
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),no_parts, int, "%d");
 	}
 
 	wait_for_list(lcs ,NULL, 0, 2000);
@@ -8846,8 +8850,8 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Legacy video conference by merging video calls", legacy_video_conference_created_by_merging_video_calls),
-	TEST_NO_TAG("Video conference by merging video calls with none layout and local participant disabled", video_conference_created_by_merging_video_calls_with_none_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging video calls with none layout", video_conference_created_by_merging_video_calls_with_none_layout),
+	TEST_NO_TAG("Video conference by merging video calls with none layout and local participant disabled", video_conference_created_by_merging_video_calls_with_none_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout", video_conference_created_by_merging_video_calls_with_grid_layout),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout and local participant disabled", video_conference_created_by_merging_video_calls_with_grid_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging video calls with active speaker layout", video_conference_created_by_merging_video_calls_with_active_speaker_layout),
