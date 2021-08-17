@@ -20,6 +20,7 @@
  */
 
 #include "account-params.h"
+#include "push-notification/push-notification-config.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
 #include "linphone/nat_policy.h"
@@ -58,6 +59,7 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	mQualityReportingInterval = lc ? linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_interval", 0) : 0;
 	mContactParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_parameters", "") : "";
 	mContactUriParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", "") : "";
+	
 	mAvpfMode = lc ? static_cast<LinphoneAVPFMode>(linphone_config_get_default_int(lc->config, "proxy", "avpf", LinphoneAVPFDefault)) : LinphoneAVPFDefault;
 	mAvpfRrInterval = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	mPublishExpires = lc ? linphone_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
@@ -92,9 +94,9 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	setConferenceFactoryUri(conferenceFactoryUri);
 
 	if (lc && lc->push_config) {
-		mPushNotificationConfig = linphone_push_notification_config_clone(lc->push_config);
+		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	} else {
-		mPushNotificationConfig = linphone_push_notification_config_new();
+		mPushNotificationConfig = new PushNotificationConfig(string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
 	}
 }
 
@@ -122,16 +124,28 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mQualityReportingEnabled = !!linphone_config_get_int(config, key, "quality_reporting_enabled", mQualityReportingEnabled);
 	mQualityReportingCollector = linphone_config_get_string(config, key, "quality_reporting_collector", mQualityReportingCollector.c_str());
 	mQualityReportingInterval = linphone_config_get_int(config, key, "quality_reporting_interval", mQualityReportingInterval);
-
 	mContactParameters = linphone_config_get_string(config, key, "contact_parameters", mContactParameters.c_str());
 	mContactUriParameters = linphone_config_get_string(config, key, "contact_uri_parameters", mContactUriParameters.c_str());
-	// Use an Address to avoid rewriting a whole new parser to get the push parameters from scratch
-	Address lAddr(string("sip:dummy;" + mContactUriParameters));
+	string pushParameters = linphone_config_get_string(config, key, "push_parameters", "");
 	
-	linphone_push_notification_config_set_provider(mPushNotificationConfig, lAddr.getUriParamValue("pn-provider").c_str());
-	linphone_push_notification_config_set_prid(mPushNotificationConfig, lAddr.getUriParamValue("pn-prid").c_str());
-	linphone_push_notification_config_set_param(mPushNotificationConfig, lAddr.getUriParamValue("pn-param").c_str());
-	
+	bool corePushEnabled = linphone_core_is_push_notification_enabled(lc);
+	if (corePushEnabled && !pushParameters.empty()) {
+		// If pushParameters have been saved previously, then we have all the necessary push informations available and we should not need to save
+		// the push informations from the core (voip token, remote token, team ID, bundle identifier)
+		if (mPushNotificationConfig) mPushNotificationConfig->unref();
+		mPushNotificationConfig = new PushNotificationConfig(pushParameters);
+	} else {
+		PushNotificationConfig* oldConfig = mPushNotificationConfig;
+		mPushNotificationConfig = new PushNotificationConfig(mContactUriParameters);
+		if (oldConfig) {
+			// Saving the push infos that may have been set before the account was created
+			mPushNotificationConfig->setVoipToken(oldConfig->getVoipToken());
+			mPushNotificationConfig->setRemoteToken(oldConfig->getRemoteToken());
+			mPushNotificationConfig->setTeamId(oldConfig->getTeamId());
+			mPushNotificationConfig->setBundleIdentifer(oldConfig->getBundleIdentifer());
+			oldConfig->unref();
+		}
+	}
 	mExpires = linphone_config_get_int(config, key, "reg_expires", mExpires);
 	mRegisterEnabled = !!linphone_config_get_int(config, key, "reg_sendregister", mRegisterEnabled);
 	mPublishEnabled = !!linphone_config_get_int(config, key, "publish", mPublishEnabled);
@@ -204,7 +218,8 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mAvpfMode = other.mAvpfMode;
 
 	setNatPolicy(other.mNatPolicy);
-	setPushNotificationConfig(other.mPushNotificationConfig);
+	
+	mPushNotificationConfig = other.mPushNotificationConfig->clone();
 }
 
 AccountParams::~AccountParams () {
@@ -213,7 +228,7 @@ AccountParams::~AccountParams () {
 	if (mRoutes) bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
 	if (mRoutesString)  bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
 	if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
-	if (mPushNotificationConfig) linphone_push_notification_config_unref(mPushNotificationConfig);
+	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 }
 
 AccountParams* AccountParams::clone () const {
@@ -444,10 +459,11 @@ void AccountParams::setNatPolicy (LinphoneNatPolicy *natPolicy) {
 	mNatPolicy = natPolicy;
 }
 
-void AccountParams::setPushNotificationConfig (LinphonePushNotificationConfig *pushNotificationConfig) {
-	if (mPushNotificationConfig != nullptr) linphone_push_notification_config_unref(mPushNotificationConfig);
-
-	mPushNotificationConfig = linphone_push_notification_config_clone(pushNotificationConfig);
+void AccountParams::setPushNotificationConfig (PushNotificationConfig *pushNotificationConfig) {
+	if (mPushNotificationConfig) mPushNotificationConfig->unref();
+	
+	mPushNotificationConfig = pushNotificationConfig;
+	mPushNotificationConfig->ref();
 }
 
 // -----------------------------------------------------------------------------
@@ -503,11 +519,11 @@ bool AccountParams::getUseInternationalPrefixForCallsAndChats () const {
 }
 
 bool AccountParams::isPushNotificationAvailable () const {
-	string prid = L_C_TO_STRING(linphone_push_notification_config_get_prid(mPushNotificationConfig));
-	string param = L_C_TO_STRING(linphone_push_notification_config_get_param(mPushNotificationConfig));
-	string basicToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mPushNotificationConfig));
-	string remoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mPushNotificationConfig));
-	string bundle = L_C_TO_STRING(linphone_push_notification_config_get_bundle_identifier(mPushNotificationConfig));
+	string prid = mPushNotificationConfig->getPrid();
+	string param = mPushNotificationConfig->getParam();
+	string basicToken = mPushNotificationConfig->getVoipToken();
+	string remoteToken = mPushNotificationConfig->getRemoteToken();
+	string bundle = mPushNotificationConfig->getBundleIdentifer();
 	// Accounts can support multiple types of push. Push notification is ready when all supported push's tokens to set
 
 	bool paramAvailable = !param.empty() || !bundle.empty();
@@ -596,7 +612,7 @@ LinphoneNatPolicy* AccountParams::getNatPolicy () const {
 	return mNatPolicy;
 }
 
-LinphonePushNotificationConfig *AccountParams::getPushNotificationConfig () const {
+PushNotificationConfig* AccountParams::getPushNotificationConfig () const {
 	return mPushNotificationConfig;
 }
 
@@ -707,6 +723,13 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	if (!mQualityReportingCollector.empty()){
 		linphone_config_set_string(config, key, "quality_reporting_collector", mQualityReportingCollector.c_str());
 	}
+	
+	string pushParams;
+	if (mPushNotificationAllowed || mRemotePushNotificationAllowed) {
+		bool isLegacyPush = !!linphone_config_get_int(config, "net", "use_legacy_push_notification_params", FALSE);
+		pushParams = mPushNotificationConfig->asString(mRemotePushNotificationAllowed, isLegacyPush);
+	}
+	linphone_config_set_string(config, key, "push_parameters", pushParams.c_str());
 	linphone_config_set_int(config, key, "quality_reporting_enabled", mQualityReportingEnabled);
 	linphone_config_set_int(config, key, "quality_reporting_interval", mQualityReportingInterval);
 	linphone_config_set_int(config, key, "reg_expires", mExpires);
