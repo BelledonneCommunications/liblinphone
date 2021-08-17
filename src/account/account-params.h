@@ -28,6 +28,7 @@
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
+class PushNotificationConfig;
 
 class AccountParams : public bellesip::HybridObject<LinphoneAccountParams, AccountParams> {
 	friend class Account;
@@ -68,7 +69,7 @@ public:
 	void setPrivacy (LinphonePrivacyMask privacy);
 	void setAvpfMode (LinphoneAVPFMode avpfMode);
 	void setNatPolicy (LinphoneNatPolicy *natPolicy);
-	void setPushNotificationConfig (LinphonePushNotificationConfig *pushNotificationConfig);
+	void setPushNotificationConfig (PushNotificationConfig *pushNotificationConfig);
 	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
 	LinphoneStatus setRoutes (const bctbx_list_t *routes);
 	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
@@ -107,7 +108,7 @@ public:
 	LinphoneAddress* getIdentityAddress () const;
 	LinphoneAVPFMode getAvpfMode () const;
 	LinphoneNatPolicy* getNatPolicy () const;
-	LinphonePushNotificationConfig *getPushNotificationConfig () const;
+	PushNotificationConfig* getPushNotificationConfig () const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -163,7 +164,7 @@ private:
 
 	LinphoneNatPolicy *mNatPolicy = nullptr;
 
-	LinphonePushNotificationConfig *mPushNotificationConfig = nullptr;
+	PushNotificationConfig *mPushNotificationConfig;
 };
 
 LINPHONE_END_NAMESPACE
