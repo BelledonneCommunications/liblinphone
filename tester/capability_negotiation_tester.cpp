@@ -2447,6 +2447,7 @@ void simple_call_with_capability_negotiations_with_different_encryption_after_re
 		stats caller_stat = caller->stat;
 		stats callee_stat = callee->stat;
 
+		// Update call params before resuming call
 		LinphoneCallParams * callerParams = linphone_core_create_call_params(caller->lc, callerCall);
 		encryption_list = bctbx_list_append(NULL, LINPHONE_INT_TO_PTR(encryptionAfterResume));
 		linphone_call_params_set_supported_encryptions(callerParams,encryption_list);
@@ -2493,7 +2494,7 @@ void simple_call_with_capability_negotiations_with_different_encryption_after_re
 		} else {
 			encryption = optionalEncryption;
 			// Resume fails because requested encryption is not supported
-			BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallPausedByRemote,callee_stat.number_of_LinphoneCallPausedByRemote+1));
+			BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallPaused,callee_stat.number_of_LinphoneCallPaused+1));
 
 			wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
 
