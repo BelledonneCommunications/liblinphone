@@ -548,7 +548,7 @@ bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const
 OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
-LINPHONE_PUBLIC void linphone_core_update_account_push_params(LinphoneCore *core);
+LINPHONE_PUBLIC LinphonePushNotificationConfig* linphone_core_get_push_notification_config(LinphoneCore *core);
 
 LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc);
 const MSCryptoSuite * linphone_core_get_all_supported_srtp_crypto_suites(LinphoneCore *lc);
