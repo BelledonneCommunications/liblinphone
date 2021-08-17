@@ -1743,6 +1743,10 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.vfu_with_info = !!linphone_config_get_int(lc->config,"sip","vfu_with_info",1);
 	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 63000));
 	lc->sal->setSupportedTags(linphone_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
+	LinphoneSupportLevel level_100rel = linphone_core_get_100rel_support_level(lc);
+	if (level_100rel != LinphoneSupportLevelNoSupport) {
+		linphone_core_add_supported_tag(lc, "100rel");
+	}
 	lc->sip_conf.save_auth_info = !!linphone_config_get_int(lc->config, "sip", "save_auth_info", 1);
 	lc->sal->setUnreliableConnectionTimeout(linphone_config_get_int(lc->config, "sip", "unreliable_connection_timeout", 120));
 
@@ -6671,6 +6675,14 @@ void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
 	#endif
 }
 
+void linphone_core_set_keep_stream_direction_for_rejected_stream(LinphoneCore *lc, bool_t yesno){
+	lc->keep_stream_direction_for_rejected_stream = yesno;
+}
+
+bool_t linphone_core_get_keep_stream_direction_for_rejected_stream(LinphoneCore *lc) {
+	return lc->keep_stream_direction_for_rejected_stream;
+}
+
 void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno){
 	lc->use_files=yesno;
 	if(yesno){
@@ -7871,6 +7883,14 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
+bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", 0);
+}
+
+void linphone_core_enable_zero_rtp_port_for_stream_inactive(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", (int)enable);
+}
+
 bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
 }
@@ -7885,6 +7905,19 @@ bool_t linphone_core_capability_negociation_enabled(const LinphoneCore *lc) {
 
 void linphone_core_enable_capability_negociation(LinphoneCore *lc, bool_t enable) {
 	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)enable);
+}
+
+LinphoneSupportLevel linphone_core_get_100rel_support_level(const LinphoneCore *lc) {
+	return (LinphoneSupportLevel)linphone_config_get_int(lc->config, "sip", "100rel_support_level", LinphoneSupportLevelNoSupport);
+}
+
+void linphone_core_set_100rel_support_level(LinphoneCore *lc, LinphoneSupportLevel level) {
+	linphone_config_set_int(lc->config, "sip", "100rel_support_level", (int)level);
+	if (level == LinphoneSupportLevelNoSupport) {
+		linphone_core_remove_supported_tag(lc, "100rel");
+	} else {
+		linphone_core_add_supported_tag(lc, "100rel");
+	}
 }
 
 bool_t linphone_core_tcap_lines_merging_enabled(const LinphoneCore *lc) {

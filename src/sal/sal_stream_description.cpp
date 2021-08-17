@@ -99,8 +99,10 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 
 	media=belle_sdp_media_description_get_media ( media_desc );
 
+lInfo() << __func__ << " DEBUG DEBUG parsing connection " << belle_sdp_media_description_get_connection ( media_desc );
 	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		rtp_addr = L_C_TO_STRING(belle_sdp_connection_get_address ( cnx ));
+lInfo() << __func__ << " DEBUG DEBUG rtp address " << rtp_addr;
 	}
 
 	rtp_port=belle_sdp_media_get_media_port ( media );
@@ -152,10 +154,12 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	if (salMediaDesc->supportCapabilityNegotiation()) {
 
 		for (const auto & acap : attrs.acaps) {
+lInfo() << __func__ << " DEBUG DEBUG acap index " << acap->index << " name " << acap->name << " value " << acap->value;
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
 		}
 
 		for (const auto & tcap : attrs.tcaps) {
+lInfo() << __func__ << " DEBUG DEBUG tcap index " << tcap->index << " value " << tcap->value;
 			tcaps[tcap->index] = tcap->value;
 		}
 
@@ -286,6 +290,7 @@ void SalStreamDescription::createPotentialConfigurationAtIdx(const unsigned int 
 		auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
 
 		cfg.index = idx;
+lInfo() << __func__ << " DEBUG DEBUG Adding configuration at index " << cfg.index << " with media proto " << sal_media_proto_to_string(cfg.getProto());
 		insertOrMergeConfiguration(idx, cfg);
 	}
 }
@@ -311,7 +316,7 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 		}
 	} else {
 		const auto supportedEncs = getSupportedEncryptionsInPotentialCfgs();
-		unsigned int idx = 1;
+		unsigned int idx = getFreeCfgIdx();
 		for (const auto avpf : {true, false}) {
 			for (const auto & enc : supportedEncs) {
 				const auto & protoEl = SalStreamDescription::encryptionToTcap(protoMap, enc, avpf);
@@ -319,6 +324,7 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 					const auto & protoIdx = protoEl.first;
 					const auto & protoValue = protoEl.second;
 					const auto proto = sal_media_proto_from_string(protoValue.c_str());
+lInfo() << __func__ << " DEBUG DEBUG proto " << protoValue << " idx " << protoIdx << " cfg index " << idx << " encryption " << linphone_media_encryption_to_string(enc);
 					baseCfg.tcapIndex = protoIdx;
 					baseCfg.proto = proto;
 					std::string protoString = (proto == SalProtoOther) ? protoValue : std::string();
@@ -337,13 +343,15 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 					auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
 					cfg.index = idx;
 					cfgList.push_back(cfg);
+lInfo() << __func__ << " DEBUG DEBUG added configuration proto " << protoValue << " idx " << protoIdx << " cfg index " << idx;
+					idx++;
 				}
-				idx++;
 			}
 		}
 	}
 
 	for (auto & cfg : cfgList) {
+lInfo() << __func__ << " DEBUG DEBUG Adding configuration at index " << cfg.index << " with media proto " << sal_media_proto_to_string(cfg.getProto());
 		insertOrMergeConfiguration(cfg.index, cfg);
 	}
 
@@ -783,6 +791,11 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 bool SalStreamDescription::enabled() const {
 	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
 	return rtp_port > 0 || isBundleOnly();
+}
+
+bool SalStreamDescription::isAcceptable() const {
+	// Accept if enabled or RTP port is set to 0
+	return enabled() || (rtp_port == 0);
 }
 
 void SalStreamDescription::disable(){
@@ -1548,7 +1561,7 @@ const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(con
 		const auto & cfg = cfgs.at(index);
 		return cfg;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find configuration at index " << index << " in the available configuration map";
+		lDebug() << "Unable to find configuration at index " << index << " in the available configuration map";
 		return Utils::getEmptyConstRefObject<SalStreamConfiguration>();
 	}
 }
@@ -1596,7 +1609,7 @@ const std::string & SalStreamDescription::getTcap(const unsigned int & idx) cons
 	try {
 		return tcaps.at(idx);
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find transport capability at index " << idx;
+		lDebug() << "Unable to find transport capability at index " << idx;
 		return Utils::getEmptyConstRefObject<std::string>();
 	}
 }
@@ -1609,7 +1622,7 @@ const SalStreamDescription::acap_t & SalStreamDescription::getAcap(const unsigne
 	try {
 		return acaps.at(idx);
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find attribute capability at index " << idx;
+		lDebug() << "Unable to find attribute capability at index " << idx;
 		return Utils::getEmptyConstRefObject<SalStreamDescription::acap_t>();
 	}
 }
