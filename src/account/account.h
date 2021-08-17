@@ -105,7 +105,6 @@ public:
 	void unpublish ();
 	void unregister ();
 	void update ();
-	void updatePushNotificationParameters ();
 	void writeToConfigFile (int index);
 	const LinphoneAuthInfo* findAuthInfo () const;
 	LinphoneEvent *createPublish (const char *event, int expires);
@@ -135,11 +134,9 @@ private:
 	void applyParamsChanges ();
 	void resolveDependencies ();
 	void updateDependentAccount(LinphoneRegistrationState state, const std::string &message);
-	std::string getComputedPushNotificationParameters ();
 	LinphoneAccountAddressComparisonResult isServerConfigChanged (std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams);
 	LinphoneAddress *guessContactForRegister ();
 
-	void onPushNotificationAllowedChanged (bool callDone);
 	void onInternationalPrefixChanged ();
 	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
 	void onNatPolicyChanged (LinphoneNatPolicy *policy);
