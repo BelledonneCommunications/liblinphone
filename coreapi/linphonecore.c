@@ -34,7 +34,6 @@
 #include "lime.h"
 #include "conference_private.h"
 #include "logger/logger.h"
-
 #include "sqlite3_bctbx_vfs.h"
 
 #include "../src/chat/modifier/file-transfer-chat-message-modifier.h"
@@ -2705,14 +2704,6 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
-void linphone_core_update_account_push_params(LinphoneCore *core) {
-	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
-	for (; accounts != NULL; accounts = accounts->next) {
-		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		Account::toCpp(account)->updatePushNotificationParameters();
-	}
-}
-
 bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
 	for (; accounts != NULL; accounts = accounts->next) {
@@ -2722,25 +2713,38 @@ bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 	return TRUE;
 }
 
+LinphonePushNotificationConfig* linphone_core_get_push_notification_config(LinphoneCore *core) {
+	return core->push_config;
+}
+
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
 	linphone_push_notification_config_set_param(core->push_config, param);
 	linphone_push_notification_config_set_prid(core->push_config, prid);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		LinphoneAccountParams *newParams = linphone_account_params_clone(linphone_account_get_params(account));
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(newParams);
 		linphone_push_notification_config_set_param(push_cfg, param);
 		linphone_push_notification_config_set_prid(push_cfg, prid);
-		Account::toCpp(account)->updatePushNotificationParameters();
+		linphone_account_set_params(account, newParams);
+		linphone_account_params_unref(newParams);
 	}
 	ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
 }
 
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
-	linphone_config_set_int(core->config, "net", "push_notification", enable);
-	core->push_notification_enabled = enable;
-
-	linphone_core_update_account_push_params(core);
+	if (core->push_notification_enabled != enable) {
+		linphone_config_set_int(core->config, "net", "push_notification", enable);
+		core->push_notification_enabled = enable;
+		bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+		for (; accounts != NULL; accounts = accounts->next) {
+			Account *account = Account::toCpp((LinphoneAccount *)accounts->data);
+			if (account->getAccountParams()->isPushNotificationAvailable()) {
+				account->setNeedToRegister(true);
+			}
+		}
+	}
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
