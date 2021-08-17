@@ -839,12 +839,8 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		}
 
 		if (p_event_log_enabled) {
-			if (conf_event_log_enabled) {
-				// Number of subscription errors should not change as they the participant should received a notification
-				BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionError,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionError, int, "%0d");
-			} else {
-				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionError,(participant_initial_stats[idx].number_of_LinphoneSubscriptionError + 1),3000));
-			}
+			// Number of subscription errors should not change as they the participant should received a notification
+			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionError,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionError, int, "%0d");
 		}
 
 		// Number of subscription terminated should not change as they the participant should received a notification
@@ -877,12 +873,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionError,conf_initial_stats.number_of_LinphoneSubscriptionError, int, "%0d");
-
-	if (conf_event_log_enabled) {
-		BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, conf_initial_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
-	} else {
-		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(conf_initial_stats.number_of_LinphoneSubscriptionTerminated + no_new_participants),3000));
-	}
+	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, conf_initial_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 
 	ms_free(notifyExpected);
 
