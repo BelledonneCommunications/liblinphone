@@ -2418,6 +2418,13 @@ static void call_paused_resumed_no_register(void) {
 		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
 	}
 
+
+	proxyConfig = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_edit(proxyConfig);
+	linphone_proxy_config_enable_register(proxyConfig, TRUE);
+	linphone_proxy_config_done(proxyConfig);
+	BC_ASSERT_TRUE (wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphoneRegistrationOk,2));
+
 	end_call(pauline, marie);
 end:
 	linphone_core_manager_destroy(marie);
