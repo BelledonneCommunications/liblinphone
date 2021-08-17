@@ -56,6 +56,7 @@ public:
 	void replaceOp (SalCallOp *newOp) override;
 	int resumeAfterFailedTransfer ();
 	void resumed ();
+	bool rejectMediaSession(const std::shared_ptr<SalMediaDescription> & remoteMd, const std::shared_ptr<SalMediaDescription> & finalMd) const;
 	void startPendingRefer ();
 	void telephoneEventReceived (int event);
 	void terminated () override;

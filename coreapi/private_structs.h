@@ -751,6 +751,7 @@ namespace LinphonePrivate {
 	LinphoneNatPolicy *nat_policy; \
 	LinphoneImNotifPolicy *im_notif_policy; \
 	bool_t use_files; \
+	bool_t keep_stream_direction_for_rejected_stream; \
 	bool_t apply_nat_settings; \
 	bool_t initial_subscribes_sent; \
 	bool_t bl_refresh; \
