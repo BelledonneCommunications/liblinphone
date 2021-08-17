@@ -437,8 +437,8 @@ LocalConference::LocalConference (
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
 
-#ifdef HAVE_ADVANCED_IM
 	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+#ifdef HAVE_ADVANCED_IM
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
@@ -472,6 +472,10 @@ LocalConference::LocalConference (
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
 
+	if (!eventLogEnabled) {
+		setConferenceId(ConferenceId(contactAddress, contactAddress));
+	}
+
 }
 
 LocalConference::~LocalConference() {
@@ -493,7 +497,7 @@ void LocalConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::
 
 void LocalConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
-		const ConferenceAddress & conferenceAddress = getConferenceAddress ();
+		const ConferenceAddress & conferenceAddress = getConferenceAddress();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 #ifdef HAVE_ADVANCED_IM
 		if (eventHandler) {
