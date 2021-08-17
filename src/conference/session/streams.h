@@ -45,6 +45,7 @@ class MixerSession;
  */
 class Stream : public MediaDescriptionRenderer{
 	friend class StreamsGroup;
+	friend class MS2Stream;
 public:
 	enum State{
 		Stopped = 0,

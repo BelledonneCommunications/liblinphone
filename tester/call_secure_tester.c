@@ -161,6 +161,7 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption(void
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80");
 
 	LinphoneCall *call = linphone_core_invite_address(marie->lc,pauline->identity);
+	BC_ASSERT_PTR_NOT_NULL(call);
 	linphone_call_ref(call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingInit, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1));
@@ -173,7 +174,7 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption(void
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 	call = linphone_core_invite_address(pauline->lc,marie->identity);
-	linphone_call_ref(call);
+	BC_ASSERT_PTR_NOT_NULL(call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived,1));
@@ -182,12 +183,9 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption(void
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected,1));
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallError, 1, 6000));
-	BC_ASSERT_EQUAL(linphone_call_get_reason(call), LinphoneReasonNone, int, "%d");
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased,1));
-	linphone_call_unref(call);
+	// No streams are accepted, hence the call goes to PausedByRemote state
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 6000));
+	end_call(marie, pauline);
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -204,6 +202,7 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_2(vo
 	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
 
 	LinphoneCall *call = linphone_core_invite_address(marie->lc,pauline->identity);
+	BC_ASSERT_PTR_NOT_NULL(call);
 	linphone_call_ref(call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingInit, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1));
@@ -216,7 +215,7 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_2(vo
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 	call = linphone_core_invite_address(pauline->lc,marie->identity);
-	linphone_call_ref(call);
+	BC_ASSERT_PTR_NOT_NULL(call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived,1));
@@ -225,12 +224,9 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_2(vo
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected,1));
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallError, 1, 6000));
-	BC_ASSERT_EQUAL(linphone_call_get_reason(call), LinphoneReasonNone, int, "%d");
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased,1));
-	linphone_call_unref(call);
+	// No streams are accepted, hence the call goes to PausedByRemote state
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 6000));
+	end_call(marie, pauline);
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -249,7 +245,7 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3(vo
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
 
 	LinphoneCall *call = linphone_core_invite_address(marie->lc,pauline->identity);
-	linphone_call_ref(call);
+	BC_ASSERT_PTR_NOT_NULL(call);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingInit, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1));
@@ -259,18 +255,15 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3(vo
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected,1));
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallError, 1, 6000));
-	BC_ASSERT_EQUAL(linphone_call_get_reason(call), LinphoneReasonNone, int, "%d");
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased,1));
-	linphone_call_unref(call);
+	// No streams are accepted, hence the call goes to PausedByRemote state
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 1, 6000));
+	end_call(marie, pauline);
 
 	// Marie answers with an inactive audio stream hence the call aborts
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 	call = linphone_core_invite_address(pauline->lc,marie->identity);
-	linphone_call_ref(call);
+	BC_ASSERT_PTR_NOT_NULL(call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived,1));
@@ -279,12 +272,9 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3(vo
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected,1));
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallError, 1, 6000));
-	BC_ASSERT_EQUAL(linphone_call_get_reason(call), LinphoneReasonNone, int, "%d");
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased,1));
-	linphone_call_unref(call);
+	// No streams are accepted, hence the call goes to PausedByRemote state
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 6000));
+	end_call(pauline, marie);
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
