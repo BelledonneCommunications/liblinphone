@@ -26,8 +26,8 @@
 #include "shared_tester_functions.h"
 #include "mediastreamer2/msanalysedisplay.h"
 #include "mediastreamer2/msmire.h"
-
-#ifdef VIDEO_ENABLED
+//#define VIDEO_ENABLED
+//#ifdef VIDEO_ENABLED
 std::string g_display_filter = "";// Global variable to test unit in order to select the display filter to use : "" use the default
 
 static std::string generateRandomFilename(const std::string& name){
@@ -2422,6 +2422,12 @@ static void video_call_with_mire_and_analyse(void) {
 	linphone_core_manager_destroy(caller);
 }
 
+
+static void call_with_mkv_file_player(void) {
+	record_call(generateRandomFilename("recording_").c_str(), TRUE, "VP8");
+
+}
+
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
@@ -2493,6 +2499,7 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
 	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
 	TEST_NO_TAG("Video call with mire and analyse", video_call_with_mire_and_analyse),
+	TEST_NO_TAG("Call with mkv file player", call_with_mkv_file_player),
 };
 
 int init_msogl_call_suite(){
@@ -2511,4 +2518,4 @@ test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_test
 								sizeof(call_video_tests) / sizeof(call_video_tests[0]), call_video_tests};
 test_suite_t call_video_msogl_test_suite = {"Video Call MSOGL", init_msogl_call_suite, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(call_video_tests) / sizeof(call_video_tests[0]), call_video_tests};
-#endif // ifdef VIDEO_ENABLED
+//#endif // ifdef VIDEO_ENABLED

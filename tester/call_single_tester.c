@@ -3626,6 +3626,7 @@ static void call_state_changed_callback_to_start_record(LinphoneCore *lc, Linpho
 }
 
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec) {
+	bool_t stream_file = TRUE;// a mettre en parametre
 	LinphoneCoreManager *marie = NULL;
 	LinphoneCoreManager *pauline = NULL;
 	LinphoneCallParams *marieParams = NULL;
@@ -3635,9 +3636,15 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 	char *filepath;
 	int dummy=0, i;
 	bool_t call_succeeded = FALSE;
+	char *videoMkv;
+	LinphonePlayer *player;
+	
+	if(stream_file)
+		videoMkv = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
 
 	marie = linphone_core_manager_new("marie_h264_rc");
 	pauline = linphone_core_manager_new("pauline_h264_rc");
+	
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
@@ -3656,7 +3663,11 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 	paulineParams = linphone_core_create_call_params(pauline->lc, NULL);
 
 #ifdef VIDEO_ENABLED
-	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	//if(!stream_file)
+		//linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(pauline->lc, NULL);
+		linphone_core_set_video_device(marie->lc,liblinphone_tester_mire_id);
+		//linphone_core_set_play_file(pauline->lc,videoMkv);
 	if(enableVideo) {
 		if(linphone_core_find_payload_type(marie->lc, video_codec, -1, -1)
 				&& linphone_core_find_payload_type(pauline->lc, video_codec, -1, -1)) {
@@ -3668,6 +3679,8 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 			ms_warning("call_recording(): the H264 payload has not been found. Only sound will be recorded");
 		}
 	}
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_use_preview_window(pauline->lc, TRUE);
 #endif
 	bool_t early_record = FALSE ; /*preliminary work to have a test starting video record in state Connected*/
 	if (early_record) {
@@ -3676,10 +3689,9 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		linphone_core_add_callbacks(marie->lc, cbs);
 		belle_sip_object_unref(cbs);
 	}
-
 	formats = linphone_core_get_supported_file_formats(marie->lc);
-
-	for(i=0, format = formats[0]; format != NULL; i++, format = formats[i]) {
+// juste mkv
+	for(i=1, format = formats[1]; format != NULL; i++, format = formats[i]) {
 		char* totalname = ms_strdup_printf("%s.%s", filename, format);
 		filepath = bc_tester_file(totalname);
 		ms_free(totalname);
@@ -3688,16 +3700,31 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 		BC_ASSERT_TRUE(call_succeeded = call_with_params(marie, pauline, marieParams, paulineParams));
 		BC_ASSERT_PTR_NOT_NULL(callInst = linphone_core_get_current_call(marie->lc));
 		if ((call_succeeded == TRUE) && (callInst != NULL)) {
-			if (!early_record) {
-				ms_message("call_recording(): start recording into %s", filepath);
-				linphone_call_start_recording(callInst);
+			//wait_for_until(marie->lc,pauline->lc,&dummy,1,500);
+			if( stream_file){				
+				player=linphone_call_get_player(linphone_core_get_current_call(pauline->lc));
+				if(BC_ASSERT_PTR_NOT_NULL(player)){
+					int res = linphone_player_open(player,videoMkv);
+					BC_ASSERT_EQUAL(res, 0, int, "%d");
+					BC_ASSERT_EQUAL(linphone_player_start(player),0,int,"%d");
+				}
 			}
-			wait_for_until(marie->lc,pauline->lc,&dummy,1,5000);
-			linphone_call_stop_recording(callInst);
+			if (!early_record) {
+				//ms_message("call_recording(): start recording into %s", filepath);
+				//linphone_call_start_recording(callInst);
+			}
+			wait_for_until(marie->lc,pauline->lc,&dummy,1,7000);
+			//linphone_call_stop_recording(callInst);
+			
 			end_call(marie, pauline);
+			if(stream_file) {
+				if(!linphone_player_get_is_video_available(player))
+					dummy = 0;
+				linphone_player_close(player);
+				}
 			BC_ASSERT_EQUAL(ortp_file_exist(filepath), 0, int, "%d");
 		}
-		remove(filepath);
+		//remove(filepath);
 		ms_free(filepath);
 	}
 	linphone_call_params_unref(paulineParams);

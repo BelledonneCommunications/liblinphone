@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -239,6 +239,22 @@ static void call_player_close(LinphonePlayer *player){
 
 }
 
+static bool_t call_player_is_video_available(LinphonePlayer *player) {
+	return ms_media_player_get_is_video_available((MSMediaPlayer *)player->impl);
+}
+
+static int call_player_get_duration(LinphonePlayer *player) {
+	return ms_media_player_get_duration((MSMediaPlayer *)player->impl);
+}
+
+static int call_player_get_current_position(LinphonePlayer *player) {
+	return ms_media_player_get_current_position((MSMediaPlayer *)player->impl);
+}
+
+static void call_player_set_window_id(LinphonePlayer *player, void* window_id) {
+	ms_media_player_set_window_id((MSMediaPlayer *)player->impl, window_id);
+}
+
 static void on_call_destroy(void *obj, belle_sip_object_t *call_being_destroyed){
 	linphone_player_unref(reinterpret_cast<LinphonePlayer *>(obj));
 }
@@ -251,6 +267,10 @@ LinphonePlayer *linphone_call_build_player(LinphoneCall *call){
 	obj->seek=call_player_seek;
 	obj->pause=call_player_pause;
 	obj->get_state=call_player_get_state;
+	obj->is_video_available = call_player_is_video_available;
+	obj->get_duration = call_player_get_duration;
+	obj->get_position = call_player_get_current_position;
+	obj->set_window_id = call_player_set_window_id;
 	obj->impl=call;
 	belle_sip_object_weak_ref(call,on_call_destroy,obj);
 	return obj;
