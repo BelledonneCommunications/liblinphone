@@ -18,150 +18,145 @@
 */
 
 #include "push-notification-config.h"
+#include "address/address.h"
 
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
 PushNotificationConfig::PushNotificationConfig() {
-	mProvider = "";
+	mPushParams[PushConfigProviderKey] = "";
+	mPushParams[PushConfigParamKey] = "";
+	mPushParams[PushConfigPridKey] = "";
+	mPushParams[PushConfigTimeoutKey] = "0";
+	mPushParams[PushConfigSilentKey] = "1";
+	mPushParams[PushConfigMsgStrKey] = "IM_MSG";
+	mPushParams[PushConfigCallStrKey] = "IC_MSG";
+	mPushParams[PushConfigGroupChatStrKey] = "GC_MSG";
+	mPushParams[PushConfigCallSoundKey] = "notes_of_the_optimistic.caf";
+	mPushParams[PushConfigMsgSoundKey] = "msg.caf";
+	
 	mTeamId = "ABCD1234";
-	mMsgStr = "IM_MSG";
-	mCallStr = "IC_MSG";
-	mGroupChatStr = "GC_MSG";
-	mPrid = "";
 	mBundleIdentifer = "";
-	mServices = "";
-	mCallSnd = "notes_of_the_optimistic.caf";
-	mMsgSnd = "msg.caf";
-	mExtensions = "pn-timeout=0;pn-silent=1";
 	mVoipToken = "";
 	mRemoteToken = "";
-	mParam = "";
+}
+
+PushNotificationConfig::PushNotificationConfig(string const &serializedConfig) : PushNotificationConfig() {
+	Address pushParamsWrapper("sip:dummy;" + serializedConfig);
+	for (auto &param : mPushParams) {
+		string paramValue = pushParamsWrapper.getUriParamValue(param.first);
+		if (paramValue.empty()) {
+			// Check for legacy parameters
+			if (param.first == PushConfigPridKey) paramValue = pushParamsWrapper.getUriParamValue("pn-tok");
+			if (param.first == PushConfigParamKey) paramValue = pushParamsWrapper.getUriParamValue("app-id");
+			if (param.first == PushConfigProviderKey) paramValue = pushParamsWrapper.getUriParamValue("pn-type");
+		}
+		if (!paramValue.empty())
+			param.second = paramValue;
+	}
 }
 
 PushNotificationConfig::PushNotificationConfig(const PushNotificationConfig &other) : HybridObject(other) {
-	mProvider = other.mProvider;
+	mPushParams = other.mPushParams;
 	mTeamId = other.mTeamId;
-	mMsgStr = other.mMsgStr;
-	mCallStr = other.mCallStr;
-	mGroupChatStr = other.mGroupChatStr;
-	mPrid = other.mPrid;
 	mBundleIdentifer = other.mBundleIdentifer;
-	mServices = other.mServices;
-	mCallSnd = other.mCallSnd;
-	mMsgSnd = other.mMsgSnd;
-	mExtensions = other.mExtensions;
 	mVoipToken = other.mVoipToken;
 	mRemoteToken = other.mRemoteToken;
-	mParam = other.mParam;
 }
 
 PushNotificationConfig* PushNotificationConfig::clone () const {
 	return new PushNotificationConfig(*this);
 }
 
+PushNotificationConfig& PushNotificationConfig::operator=(const PushNotificationConfig& other)
+ {
+	 if (this != &other) {
+		 mPushParams = other.mPushParams;
+		 mTeamId = other.mTeamId;
+		 mBundleIdentifer = other.mBundleIdentifer;
+		 mVoipToken = other.mVoipToken;
+		 mRemoteToken = other.mRemoteToken;
+	 }
+	 return *this;
+ }
+
 bool PushNotificationConfig::isEqual(const PushNotificationConfig& other) const {
-	return mProvider == other.mProvider &&
+	return 	mPushParams == other.mPushParams &&
 	mTeamId == other.mTeamId &&
-	mMsgStr == other.mMsgStr &&
-	mCallStr == other.mCallStr &&
-	mGroupChatStr == other.mGroupChatStr &&
-	mPrid == other.mPrid &&
 	mBundleIdentifer == other.mBundleIdentifer &&
-	mServices == other.mServices &&
-	mCallSnd == other.mCallSnd &&
-	mMsgSnd == other.mMsgSnd &&
-	mExtensions == other.mExtensions &&
 	mVoipToken == other.mVoipToken &&
-	mRemoteToken == other.mRemoteToken &&
-	mParam == other.mParam;
+	mRemoteToken == other.mRemoteToken;
 }
 
 const string &PushNotificationConfig::getProvider() const {
-	return mProvider;
+	return mPushParams.at(PushConfigProviderKey);
 }
-
 void PushNotificationConfig::setProvider(const string &provider) {
-	mProvider = provider;
-}
-
-const string &PushNotificationConfig::getTeamId() const {
-	return mTeamId;
-}
-
-void PushNotificationConfig::setTeamId(const string &teamId) {
-	mTeamId = teamId;
+	mPushParams[PushConfigProviderKey] = provider;
 }
 
 const string &PushNotificationConfig::getMsgStr() const {
-	return mMsgStr;
+	return mPushParams.at(PushConfigMsgStrKey);
 }
-
 void PushNotificationConfig::setMsgStr(const string &msgStr) {
-	mMsgStr = msgStr;
+	mPushParams[PushConfigMsgStrKey] = msgStr;
 }
 
 const string &PushNotificationConfig::getCallStr() const {
-	return mCallStr;
+	return mPushParams.at(PushConfigCallStrKey);
 }
-
 void PushNotificationConfig::setCallStr(const string &callStr) {
-	mCallStr = callStr;
+	mPushParams[PushConfigCallStrKey] = callStr;
 }
 
 const string &PushNotificationConfig::getGroupChatStr() const {
-	return mGroupChatStr;
+	return mPushParams.at(PushConfigGroupChatStrKey);
 }
-
 void PushNotificationConfig::setGroupChatStr(const string &groupChatStr) {
-	mGroupChatStr = groupChatStr;
+	mPushParams[PushConfigGroupChatStrKey] = groupChatStr;
 }
 
 const string &PushNotificationConfig::getPrid() const {
-	return mPrid;
+	return mPushParams.at(PushConfigPridKey);
+}
+void PushNotificationConfig::setPrid(const string &prid) {
+	mPushParams[PushConfigPridKey] = prid;
 }
 
-void PushNotificationConfig::setPrid(const string &prid) {
-	mPrid = prid;
+const string &PushNotificationConfig::getCallSnd() const {
+	return mPushParams.at(PushConfigCallSoundKey);
 }
+void PushNotificationConfig::setCallSnd(const string &callSnd) {
+	mPushParams[PushConfigCallSoundKey] = callSnd;
+}
+
+const string &PushNotificationConfig::getMsgSnd() const {
+	return mPushParams.at(PushConfigMsgSoundKey);
+}
+void PushNotificationConfig::setMsgSnd(const string &msgSnd) {
+	mPushParams[PushConfigMsgSoundKey] = msgSnd;
+}
+
+const string &PushNotificationConfig::getParam() const {
+	return mPushParams.at(PushConfigParamKey);
+}
+void PushNotificationConfig::setParam(const string &param) {
+	mPushParams[PushConfigParamKey] = param;
+}
+
+
 
 const string &PushNotificationConfig::getBundleIdentifer() const {
 	return mBundleIdentifer;
 }
-
 void PushNotificationConfig::setBundleIdentifer(const string &bundleIdentifer) {
 	mBundleIdentifer = bundleIdentifer;
-}
-
-const string &PushNotificationConfig::getServices() const {
-	return mServices;
-}
-
-void PushNotificationConfig::setServices(const string &services) {
-	mServices = services;
-}
-
-const string &PushNotificationConfig::getCallSnd() const {
-	return mCallSnd;
-}
-
-void PushNotificationConfig::setCallSnd(const string &callSnd) {
-	mCallSnd = callSnd;
-}
-
-const string &PushNotificationConfig::getMsgSnd() const {
-	return mMsgSnd;
-}
-
-void PushNotificationConfig::setMsgSnd(const string &msgSnd) {
-	mMsgSnd = msgSnd;
 }
 
 const string &PushNotificationConfig::getVoipToken() const {
 	return mVoipToken;
 }
-
 void PushNotificationConfig::setVoipToken(const string &voipToken) {
 	mVoipToken = voipToken;
 }
@@ -169,18 +164,89 @@ void PushNotificationConfig::setVoipToken(const string &voipToken) {
 const string &PushNotificationConfig::getRemoteToken() const {
 	return mRemoteToken;
 }
-
 void PushNotificationConfig::setRemoteToken(const string &remoteToken) {
 	mRemoteToken = remoteToken;
 }
 
-const string &PushNotificationConfig::getParam() const {
-	return mParam;
+const string &PushNotificationConfig::getTeamId() const {
+	return mTeamId;
+}
+void PushNotificationConfig::setTeamId(const string &teamId) {
+	mTeamId = teamId;
 }
 
-void PushNotificationConfig::setParam(const string &param) {
-	mParam = param;
+void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remotePushAllowed) {
+	
+	if (mPushParams[PushConfigProviderKey].empty()) {
+#ifdef __ANDROID__
+		mPushParams[PushConfigProviderKey] = "fcm";
+#elif TARGET_OS_IPHONE
+		mPushParams[PushConfigProviderKey] = "apns";
+#endif
+	}
+	
+	if (mPushParams[PushConfigParamKey].empty()) {
+		string services;
+		if (voipPushAllowed) {
+			services += "voip";
+			if (remotePushAllowed)
+				services += "&";
+		}
+		if (remotePushAllowed)
+			services += "remote";
+
+		mPushParams[PushConfigParamKey] = mTeamId + "." + mBundleIdentifer + "." + services;
+	}
+
+	if (mPushParams[PushConfigPridKey].empty()) {
+		string newPrid;
+		if (voipPushAllowed) {
+			newPrid += mVoipToken;
+			if (remotePushAllowed)
+				newPrid += "&";
+		}
+		if (remotePushAllowed)
+			newPrid += mRemoteToken;
+		mPushParams[PushConfigPridKey] = newPrid;
+	}
 }
 
+map<string, string> const& PushNotificationConfig::getPushParamsMap() {
+	return mPushParams;
+}
+
+string PushNotificationConfig::asString(bool withRemoteSpecificParams, bool isLegacy) const {
+	string serializedConfig;
+	auto convertParamNameToLegacyIfNeeded = [&](string const& paramName) -> string {
+		if (isLegacy) {
+			if (paramName == PushConfigPridKey) return string("pn-tok");
+			if (paramName == PushConfigParamKey) return string("app-id");
+			if (paramName == PushConfigProviderKey) return string("pn-type");
+		}
+		
+		return paramName;
+	};
+	
+	auto appendParam = [&](string const& paramName) {
+		if (!mPushParams.at(paramName).empty())
+			serializedConfig += convertParamNameToLegacyIfNeeded(paramName) + "=" + mPushParams.at(paramName) + ";";
+	};
+	
+	appendParam(PushConfigPridKey);
+	appendParam(PushConfigProviderKey);
+	appendParam(PushConfigParamKey);
+	appendParam(PushConfigSilentKey);
+	appendParam(PushConfigTimeoutKey);
+	
+	if (withRemoteSpecificParams) {
+		appendParam(PushConfigMsgStrKey);
+		appendParam(PushConfigCallStrKey);
+		appendParam(PushConfigGroupChatStrKey);
+		appendParam(PushConfigCallSoundKey);
+		appendParam(PushConfigMsgSoundKey);
+	}
+	
+	return serializedConfig;
+}
 
 LINPHONE_END_NAMESPACE
