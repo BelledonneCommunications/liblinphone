@@ -64,6 +64,7 @@ public:
 	//Convenience constructors
 	ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend);
 	ChatRoomParams(std::string subject, bool encrypted, bool group, ChatRoomBackend backend);
+	ChatRoomParams(std::string subject, bool encrypted, bool group, bool ephemerable, ChatRoomBackend backend);
 
 	ChatRoomParams *clone() const override { return new ChatRoomParams(*this); }
 
@@ -76,6 +77,7 @@ public:
 	bool isGroup() const;
 	bool isRealTimeText() const;
 	const std::string& getSubject() const;
+	bool isChatRoomWideEphemeralMessagesEnabled() const;
 
 	void setChatRoomBackend(ChatRoomBackend backend);
 	void setChatRoomEncryptionBackend(ChatRoomEncryptionBackend backend);
@@ -83,6 +85,7 @@ public:
 	void setGroup(bool group);
 	void setRealTimeText(bool rtt);
 	void setSubject(std::string subject);
+	void setChatRoomWideEphemeralMessagesEnabled(bool ephemerable);
 
 protected:
 	~ChatRoomParams() = default;
@@ -94,6 +97,7 @@ private:
 	bool mGroup = false; //one to one
 	bool mRtt = false; //Real Time Text
 	std::string mSubject;
+	bool mChatRoomWideEphemeralSettingsEnabled; // If set to true, this chat room's admin can enable ephemeral messages for all participants
 };
 
 LINPHONE_END_NAMESPACE

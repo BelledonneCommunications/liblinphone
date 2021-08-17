@@ -74,6 +74,10 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo (Address ses
 		csp.addCustomHeader("One-To-One-Chat-Room", "true");
 	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
 		csp.addCustomHeader("End-To-End-Encrypted", "true");
+	if (capabilities & ClientGroupChatRoom::Capabilities::Ephemeral) {
+		csp.addCustomHeader("Ephemerable", "true");
+		csp.addCustomHeader("Ephemeral-Life-Time", to_string(ephemeralLifetime));
+	}
 
 	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
@@ -362,6 +366,8 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	bool hasBeenLeft
 ) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, params, make_shared<RemoteConference>(core, me->getAddress(), nullptr, ConferenceParams::create(core->getCCore()))) {
 	L_D();
+
+	d->isEphemeral = params->isChatRoomWideEphemeralMessagesEnabled(); 
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler = std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
@@ -1108,6 +1114,16 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 
 void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	L_D();
+
+	if (d->params->isChatRoomWideEphemeralMessagesEnabled()) {
+		if (d->isEphemeral) {
+			lError() << "Chat room is ephemeral messages is already enabled and only admin can impose ephemeral messages to all participants";
+		} else {
+			lError() << "Chat room wide ephemeral messages enabled but local chat room ephemeral mode isn't enabled!";
+		}
+		return;
+	}
+
 	d->isEphemeral = ephem;
 	const string active = ephem ? "enabled" : "disabled";
 	lDebug() << "Ephemeral message is " << active << " in chat room [" << getConferenceId() << "]";
@@ -1132,13 +1148,34 @@ bool ClientGroupChatRoom::ephemeralEnabled() const {
 
 void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 	L_D();
+
 	if (lifetime == d->ephemeralLifetime) {
 		if (updateDb)
 			lWarning() << "Ephemeral lifetime will not be changed! Trying to set the same ephemaral lifetime as before : " << lifetime;
 		return;
 	}
-	d->ephemeralLifetime = lifetime;
+	
+	if (getState() == ConferenceInterface::State::Instantiated) {
+		d->ephemeralLifetime = lifetime;
+		return;
+	}
 
+	if (d->params->isChatRoomWideEphemeralMessagesEnabled()) {
+		if (!getMe()->isAdmin()) {
+			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime because I am not admin";
+			return;
+		}
+
+		if (getState() == ConferenceInterface::State::Created) {
+			// TODO sent INVITE with updated Ephemeral-Life-Time header value
+		} else {
+			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
+		}
+
+		return;
+	}
+
+	d->ephemeralLifetime = lifetime;
 	if (updateDb) {
 		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(getConferenceId(), lifetime);
