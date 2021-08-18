@@ -987,6 +987,7 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 			call_paused[counter - 1] = FALSE;
 			if (conf_call) {
 				bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
+				LinphoneCall *current_call = linphone_core_get_current_call(conf_mgr->lc);
 				call_paused[counter - 1] = is_call_paused;
 				if (conference) {
 					linphone_conference_add_participant(conference,conf_call);
@@ -995,7 +996,10 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 					linphone_core_add_to_conference(conf_mgr->lc,conf_call);
 					conference_used = linphone_core_get_conference(conf_mgr->lc);
 				}
-
+				if (current_call && current_call != conf_call && ((conference && linphone_conference_is_in(conference)) || (!conference && linphone_core_is_in_conference(conf_mgr->lc)))) {
+					ms_message("There is a another running call that needed to be pause in order to enter the participant to the conference.");
+					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,conf_initial_stats.number_of_LinphoneCallPaused+1,10000));
+				}
 				if (is_call_paused) {
 					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
 				} else {
