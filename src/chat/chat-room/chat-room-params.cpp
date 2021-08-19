@@ -33,6 +33,7 @@ ChatRoomParams::ChatRoomParams() {
 	mRtt = false;
 	mSubject = "";
 	mChatRoomWideEphemeralSettingsEnabled = false;
+	ephemeralLifetime = 86400;
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
@@ -42,7 +43,10 @@ ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatR
 	: ChatRoomParams(subject, encrypted, group, false, backend) {}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, bool ephemerable, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mChatRoomWideEphemeralSettingsEnabled(ephemerable) {
+	: ChatRoomParams(subject, encrypted, group, ephemerable, 86400, backend) {}
+
+ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, bool ephemerable, long lifetime, ChatRoomBackend backend)
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mChatRoomWideEphemeralSettingsEnabled(ephemerable), ephemeralLifetime(lifetime) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}
@@ -72,6 +76,8 @@ const string& ChatRoomParams::getSubject() const { return mSubject; }
 
 bool ChatRoomParams::isChatRoomWideEphemeralMessagesEnabled() const { return mChatRoomWideEphemeralSettingsEnabled; }
 
+bool ChatRoomParams::getEphemeralLifetime() const { return ephemeralLifetime; }
+
 void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 
 void ChatRoomParams::setChatRoomEncryptionBackend(ChatRoomParams::ChatRoomEncryptionBackend backend) { mChatRoomEncryptionBackend = backend; }
@@ -96,6 +102,8 @@ void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
 void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
 
 void ChatRoomParams::setChatRoomWideEphemeralMessagesEnabled(bool ephemerable) { mChatRoomWideEphemeralSettingsEnabled = ephemerable; }
+
+void ChatRoomParams::setEphemeralLifetime(long lifetime) { ephemeralLifetime = lifetime; }
 
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
 	return ChatRoomParams::create();
