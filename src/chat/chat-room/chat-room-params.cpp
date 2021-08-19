@@ -76,7 +76,7 @@ const string& ChatRoomParams::getSubject() const { return mSubject; }
 
 bool ChatRoomParams::isChatRoomWideEphemeralMessagesEnabled() const { return mChatRoomWideEphemeralSettingsEnabled; }
 
-bool ChatRoomParams::getEphemeralLifetime() const { return ephemeralLifetime; }
+long ChatRoomParams::getEphemeralLifetime() const { return ephemeralLifetime; }
 
 void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 

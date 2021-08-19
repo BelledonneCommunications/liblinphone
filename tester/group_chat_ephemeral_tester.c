@@ -713,7 +713,18 @@ static void ephemeral_chat_test (bool_t encrypted, bool_t remained, bool_t expir
 
 	if(!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 86400, int, "%i");
+
+	const LinphoneChatRoomParams * marieParams = linphone_chat_room_get_current_params(marieCr);
+	BC_ASSERT_TRUE(linphone_chat_room_params_force_ephemeral_enabled(marieParams));
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_ephemeral_lifetime(marieParams), 86400, int, "%i");
+
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(paulineCr));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 86400, int, "%i");
+
+	const LinphoneChatRoomParams * paulineParams = linphone_chat_room_get_current_params(paulineCr);
+	BC_ASSERT_TRUE(linphone_chat_room_params_force_ephemeral_enabled(paulineParams));
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_ephemeral_lifetime(paulineParams), 86400, int, "%i");
 
 	LinphoneChatMessage *message[10];
 	if (remained) {
@@ -727,6 +738,15 @@ static void ephemeral_chat_test (bool_t encrypted, bool_t remained, bool_t expir
 
 	LinphoneChatMessage *messagef[10];
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
+
+	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 1, int, "%i");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 1, int, "%i");
+
+	marieParams = linphone_chat_room_get_current_params(marieCr);
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_ephemeral_lifetime(marieParams), 1, int, "%i");
+
+	paulineParams = linphone_chat_room_get_current_params(paulineCr);
+	BC_ASSERT_EQUAL(linphone_chat_room_params_get_ephemeral_lifetime(paulineParams), 1, int, "%i");
 
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
 
