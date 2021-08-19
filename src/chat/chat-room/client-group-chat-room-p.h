@@ -82,7 +82,6 @@ private:
 	BackgroundTask bgTask { "Subscribe/notify of full state conference" };
 
 	bool isEphemeral = false;
-	long ephemeralLifetime = 86400;  //24 hours = 86400s
 
 	// 1-1 exhume related
 	bool localExhumePending = false;
