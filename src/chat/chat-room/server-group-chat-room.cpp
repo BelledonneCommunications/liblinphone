@@ -848,7 +848,7 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 		if (capabilities & ClientGroupChatRoom::Capabilities::Ephemeral) {
 			csp.addCustomHeader("Ephemerable", "true");
 			// TODO: Store ephemeral lifetime value ?
-			//csp.addCustomHeader("Ephemeral-Life-Time", to_string(ephemeralLifetime));
+			//csp.addCustomHeader("Ephemeral-Life-Time", to_string(params->getEphemeralLifetime()));
 		}
 		//csp.addCustomContactParameter("isfocus");
 		//csp.addCustomContactParameter("text");
