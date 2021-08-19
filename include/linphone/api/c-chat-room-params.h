@@ -90,6 +90,24 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_params_group_enabled(const LinphoneCha
 LINPHONE_PUBLIC bool_t linphone_chat_room_params_force_ephemeral_enabled(const LinphoneChatRoomParams *params);
 
 /**
+ * Set lifetime (in seconds) for all new ephemral messages in the chat room.
+ * After the message is read, it will be deleted after "time" seconds.
+ * @see linphone_chat_room_params_ephemeral_enabled()
+ * @param params The #LinphoneChatRoomParams object. @notnil
+ * @param time The ephemral lifetime, default 24h, 86400s
+ */
+LINPHONE_PUBLIC void linphone_chat_room_params_set_ephemeral_lifetime (LinphoneChatRoomParams *params, long time);
+
+/**
+ * Get lifetime (in seconds) for all new ephemeral messages in the chat room.
+ * After the message is read, it will be deleted after "time" seconds.
+ * @see linphone_chat_room_params_ephemeral_enabled()
+ * @param params The #LinphoneChatRoomParams object. @notnil
+ * @return the ephemeral lifetime (in secoonds)
+ */
+LINPHONE_PUBLIC long linphone_chat_room_params_get_ephemeral_lifetime (const LinphoneChatRoomParams *params);
+
+/**
  * Get the encryption status of the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
  * @return TRUE if encryption is enabled, FALSE otherwise
