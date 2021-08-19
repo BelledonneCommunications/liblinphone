@@ -1217,11 +1217,8 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
 	string ephemerable = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemerable"));
 	if (ephemerable == "true") {
-		d->capabilities |= ServerGroupChatRoom::Capabilities::Encrypted;
-	}
-
-	if (endToEndEncrypted == "true")
 		d->capabilities |= ServerGroupChatRoom::Capabilities::Ephemeral;
+	}
 
 	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
 	// TODO: Store ephemeral lifetime value ?
