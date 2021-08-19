@@ -53,16 +53,16 @@ public:
 	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus (LinphoneMediaDirection direction);
 	LocalConferenceEventHandler (Conference *conference, ConferenceListener* listener = nullptr);
 
-	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
+	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false, bool ephemerable = false);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
-	std::string getNotifyForId (int notifyId, bool oneToOne = false);
+	std::string getNotifyForId (int notifyId, bool oneToOne = false, bool ephemerable = false);
 
 //protected:
 	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
 	void notifyAllExcept (const std::string &notify, const std::shared_ptr<Participant> &exceptParticipant);
 	void notifyAll (const std::string &notify);
-	std::string createNotifyFullState (bool oneToOne = false);
+	std::string createNotifyFullState (bool oneToOne = false, bool ephemerable = false);
 	std::string createNotifyMultipart (int notifyId);
 	std::string createNotifyParticipantAdded (const Address & pAddress);
 	std::string createNotifyParticipantAdminStatusChanged (const Address & pAddress, bool isAdmin);
