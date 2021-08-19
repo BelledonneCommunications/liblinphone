@@ -84,6 +84,7 @@ public:
 
 	CallSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
 	void setListener(CallSessionListener *listener);
+	void setStateToEnded();
 	~CallSession ();
 
 	// This virtual is a dirty hack until CallSession/MediaSession are refactored.

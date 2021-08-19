@@ -1048,6 +1048,10 @@ void CallSession::setListener(CallSessionListener *listener){
 	d->listener = listener;
 }
 
+void CallSession::setStateToEnded() {
+	L_D();
+	d->setState(CallSession::State::End, "Call ended");
+}
 
 void CallSession::acceptDefault(){
 	accept();
