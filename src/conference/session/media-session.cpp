@@ -1957,21 +1957,26 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
 			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
-			char *peerDeviceId = nullptr;
 			auto encryptionEngine = q->getCore()->getEncryptionEngine();
 			if (encryptionEngine && authTokenVerified) {
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
-				peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
-				Stream *stream = mainAudioStreamIndex != -1 ? getStreamsGroup().getStream(mainAudioStreamIndex) : nullptr;
-				if (stream){
-					MS2Stream *ms2s = dynamic_cast<MS2Stream*>(stream);
-					if (ms2s){
-						encryptionEngine->authenticationVerified(ms2s->getZrtpContext(), op->getRemoteMediaDescription(), peerDeviceId);
-					}else{
-						lError() << "Could not dynamic_cast to MS2Stream in propagateEncryptionChanged().";
+				if (remoteAddress){
+					char *peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+					Stream *stream = mainAudioStreamIndex != -1 ? getStreamsGroup().getStream(mainAudioStreamIndex) : nullptr;
+					if (stream){
+						MS2Stream *ms2s = dynamic_cast<MS2Stream*>(stream);
+						if (ms2s){
+							encryptionEngine->authenticationVerified(ms2s->getZrtpContext(), op->getRemoteMediaDescription(), peerDeviceId);
+						}else{
+							lError() << "Could not dynamic_cast to MS2Stream in propagateEncryptionChanged().";
+						}
 					}
+					ms_free(peerDeviceId);
+				}else {
+					/* This typically happens if the ZRTP session starts during early-media when receiving a 183 response.
+					 * Indeed the Contact header is not mandatory in 183 (and liblinphone does not set it). */
+					lError() << "EncryptionEngine cannot be notified of verified status because remote contact address is unknown.";
 				}
-				ms_free(peerDeviceId);
 			}
 		} else {
 			/* Otherwise it must be DTLS as SDES doesn't go through this function */
