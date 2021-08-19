@@ -325,6 +325,10 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	for (const auto &addr : Conference::parseResourceLists(content))
 		getConference()->participants.push_back(Participant::create(getConference().get(),addr));
 
+	if (params->isChatRoomWideEphemeralMessagesEnabled()) {
+		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
+	}
+
 	setConferenceId(conferenceId);
 
 	//if preserve_backward_compatibility, force creation of secure room in all cases
@@ -367,7 +371,11 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 ) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, params, make_shared<RemoteConference>(core, me->getAddress(), nullptr, ConferenceParams::create(core->getCCore()))) {
 	L_D();
 
-	d->isEphemeral = params->isChatRoomWideEphemeralMessagesEnabled(); 
+	d->isEphemeral = params->isChatRoomWideEphemeralMessagesEnabled();
+
+	if (params->isChatRoomWideEphemeralMessagesEnabled()) {
+		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
+	}
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler = std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
