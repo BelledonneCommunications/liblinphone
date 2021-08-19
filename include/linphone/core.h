@@ -5787,6 +5787,34 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
 
+/**
+ * Define whether ephemeral messages for all chat room participants should be enabled by default or not.
+ * @param core the linphone core
+ * @param enable TRUE ephemeral messages for all chat room participants is enabled; FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_core_enable_chat_room_wide_ephemeral_settings(LinphoneCore *core, bool_t enable);
+
+/**
+ * Check if ephemeral messages for all chat room participants should be enabled by default or not
+ * @core core the linphone core
+ * @return TRUE if ephemeral messages for all chat room participants is enabled; FALSE otherwise.
+ **/
+LINPHONE_PUBLIC bool_t linphone_core_chat_room_wide_ephemeral_settings_enabled(const LinphoneCore *core);
+
+/**
+ * Set ephemeral lifetime in seconds
+ * @param core the linphone core
+ * @param value lifetime of ephemeral messages in seconds
+ */
+LINPHONE_PUBLIC void linphone_core_set_ephemeral_lifetime(LinphoneCore *lc, long value);
+
+/**
+ * Check if ephemeral messages for all chat room participants should be enabled by default or not
+ * @core core the linphone core
+ * @return TRUE lifetime of ephemeral messages in seconds
+ **/
+LINPHONE_PUBLIC long linphone_core_get_ephemeral_lifetime(const LinphoneCore *lc);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

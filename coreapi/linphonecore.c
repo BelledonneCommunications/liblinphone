@@ -8040,6 +8040,22 @@ void linphone_core_enable_sdp_200_ack(LinphoneCore *lc, bool_t enable) {
 	linphone_config_set_int(lc->config,"sip","sdp_200_ack",lc->sip_conf.sdp_200_ack=enable);
 }
 
+bool_t linphone_core_chat_room_wide_ephemeral_settings_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "misc", "chat_room_wide_ephemeral", 1);
+}
+
+void linphone_core_enable_chat_room_wide_ephemeral_settings(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "misc", "chat_room_wide_ephemeral", (int)enable);
+}
+
+long linphone_core_get_ephemeral_lifetime(const LinphoneCore *lc) {
+	return (long)!!linphone_config_get_int(lc->config, "misc", "ephemeral_lifetime", 86400);
+}
+
+void linphone_core_set_ephemeral_lifetime(LinphoneCore *lc, long value) {
+	linphone_config_set_int64(lc->config, "misc", "ephemeral_lifetime", (int64_t)value);
+}
+
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 	return lc->sip_conf.sdp_200_ack!=0;
 }

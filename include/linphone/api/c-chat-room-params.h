@@ -38,6 +38,7 @@
  * @return LinphoneChatRoomParams
 **/
 LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_chat_room_params_new(void);
+LinphoneChatRoomParams *linphone_chat_room_params_new_and_init(LinphoneCore *core);
 
 LinphoneChatRoomParams *linphone_chat_room_params_clone(const LinphoneChatRoomParams *params);
 
