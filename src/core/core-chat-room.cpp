@@ -171,6 +171,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	L_Q();
 
 	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ephemerable, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	params->setEphemeralLifetime(ephemeralLifeTime);
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
 										    q->getSharedFromThis(),
 										    conferenceId.getPeerAddress(),
@@ -182,7 +183,6 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 										    ));
 
 	clientGroupChatRoom->setState(ConferenceInterface::State::Instantiated);
-	if (ephemerable) clientGroupChatRoom->setEphemeralLifetime(ephemeralLifeTime, false);
 	noCreatedClientGroupChatRooms[clientGroupChatRoom.get()] = clientGroupChatRoom;
 	return clientGroupChatRoom;
 #else
