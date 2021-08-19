@@ -60,6 +60,10 @@ bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *par
 	return ChatRoomParams::toCpp(params)->isGroup();
 }
 
+bool_t linphone_chat_room_params_force_ephemeral_enabled(const LinphoneChatRoomParams *params) {
+	return ChatRoomParams::toCpp(params)->isChatRoomWideEphemeralMessagesEnabled();
+}
+
 bool_t linphone_chat_room_params_encryption_enabled(const LinphoneChatRoomParams *params) {
 	return ChatRoomParams::toCpp(params)->isEncrypted();
 }
@@ -78,6 +82,10 @@ void linphone_chat_room_params_set_encryption_backend(LinphoneChatRoomParams *pa
 
 void linphone_chat_room_params_enable_group(LinphoneChatRoomParams *params, bool_t group) {
 	ChatRoomParams::toCpp(params)->setGroup(!!group);
+}
+
+void linphone_chat_room_params_enable_force_ephemeral(LinphoneChatRoomParams *params, bool_t ephemeral) {
+	ChatRoomParams::toCpp(params)->setChatRoomWideEphemeralMessagesEnabled(!!ephemeral);
 }
 
 void linphone_chat_room_params_enable_encryption(LinphoneChatRoomParams *params, bool_t encrypted) {
