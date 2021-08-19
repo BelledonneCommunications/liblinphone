@@ -453,11 +453,12 @@ LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, Linph
 	return check_has_chat_room_client_side(lcs, lcm, initialStats, confAddr, subject, participantNumber, isAdmin);
 }
 
-LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted) {
+LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted, bool_t ephemeral) {
 	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lcm->lc);
 
 	linphone_chat_room_params_enable_encryption(params, encrypted);
+	linphone_chat_room_params_enable_force_ephemeral(params, ephemeral);
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
@@ -537,8 +538,8 @@ LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreMa
 	return chatRoom;
 }
 
-LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted) {
-	return create_chat_room_client_side_with_expected_number_of_participants(lcs, lcm, initialStats, participantsAddresses, initialSubject, (int) bctbx_list_size(participantsAddresses), encrypted);
+LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted, bool_t ephemeral) {
+	return create_chat_room_client_side_with_expected_number_of_participants(lcs, lcm, initialStats, participantsAddresses, initialSubject, (int) bctbx_list_size(participantsAddresses), encrypted, ephemeral);
 }
 
 static void group_chat_room_params (void) {
@@ -710,7 +711,7 @@ static void group_chat_room_creation_server (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -888,7 +889,7 @@ static void group_chat_room_add_participant (void) {
 
 	// Pauline creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *paulineCr = create_chat_room_client_side(coresList, pauline, &initialPaulineStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *paulineCr = create_chat_room_client_side(coresList, pauline, &initialPaulineStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(paulineCr));
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -1061,7 +1062,7 @@ static void group_chat_room_message (bool_t encrypt, bool_t sal_error) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -1191,7 +1192,7 @@ static void group_chat_room_invite_multi_register_account (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1237,7 +1238,7 @@ static void group_chat_room_add_admin (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1289,7 +1290,7 @@ static void group_chat_room_add_admin_lately_notified (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1351,7 +1352,7 @@ static void group_chat_room_add_admin_non_admin (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1402,7 +1403,7 @@ static void group_chat_room_remove_admin (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1467,7 +1468,7 @@ static void group_chat_room_admin_creator_leaves_the_room (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1524,7 +1525,7 @@ static void group_chat_room_change_subject (void) {
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	const char *newSubject = "New subject";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1579,7 +1580,7 @@ static void group_chat_room_change_subject_non_admin (void) {
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	const char *newSubject = "New subject";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1630,7 +1631,7 @@ static void group_chat_room_remove_participant_base (bool_t restart) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
@@ -1725,7 +1726,7 @@ static void group_chat_room_send_message_with_participant_removed (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1791,7 +1792,7 @@ static void group_chat_room_leave (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1837,7 +1838,7 @@ static void group_chat_room_delete_twice (void) {
 
     // Marie creates a new group chat room
     const char *initialSubject = "Colleagues";
-    LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+    LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
     const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1902,7 +1903,7 @@ static void group_chat_room_come_back_after_disconnection (void) {
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	const char *newSubject = "New subject";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1975,7 +1976,7 @@ static void group_chat_room_create_room_with_disconnected_friends_base (bool_t i
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -2057,7 +2058,7 @@ static void group_chat_room_reinvited_after_removed_base (bool_t offline_when_re
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -2235,7 +2236,7 @@ static void group_chat_room_reinvited_after_removed_with_several_devices (void) 
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	LinphoneChatRoom *marie2Cr = NULL;
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marie1Cr);
@@ -2319,7 +2320,7 @@ static void group_chat_room_notify_after_disconnection (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 
 	participantsAddresses = NULL;
@@ -2445,7 +2446,7 @@ static void group_chat_room_notify_after_core_restart (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 
 	participantsAddresses = NULL;
@@ -2542,7 +2543,7 @@ static void group_chat_room_send_refer_to_all_devices (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -2634,7 +2635,7 @@ static void group_chat_room_add_device (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -2736,7 +2737,7 @@ static void multiple_is_composing_notification(void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -2955,7 +2956,7 @@ static void group_chat_room_creation_successful_if_at_least_one_invited_particip
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, 1, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, 1, FALSE, FALSE);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -3359,7 +3360,7 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -3434,7 +3435,7 @@ static void group_chat_room_send_multipart_custom_content_types(void) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -3520,7 +3521,7 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 	const LinphoneAddress *tmpConfAddr = linphone_chat_room_get_conference_address(marieCr);
@@ -3556,7 +3557,7 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
 	participantsAddresses = bctbx_list_append(NULL, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	// Marie sends a new message
 	textMessage = "Hey again";
@@ -3615,7 +3616,7 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
@@ -3864,7 +3865,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_2
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
@@ -3891,7 +3892,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_2
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	// Check that the chat room has been correctly recreated on Marie's side
 	marieCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats, confAddr, initialSubject, 1, FALSE);
@@ -3949,7 +3950,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device (void) {
 
 	// Marie1 creates a new one-to-one chat room with Pauline
 	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marie1Cr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marie1Cr));
@@ -4037,7 +4038,7 @@ static void group_chat_room_new_unique_one_to_one_chat_room_after_both_participa
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 	LinphoneAddress *firstConfAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
@@ -4056,7 +4057,7 @@ static void group_chat_room_new_unique_one_to_one_chat_room_after_both_participa
 	initialPaulineStats = pauline->stat;
 	participantsAddresses = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 	LinphoneAddress *secondConfAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
@@ -4107,7 +4108,7 @@ static void imdn_for_group_chat_room (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
@@ -4223,7 +4224,7 @@ static void imdn_updated_for_group_chat_room_with_one_participant_offline (void)
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
@@ -4351,7 +4352,7 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
@@ -4449,7 +4450,7 @@ static void imdn_sent_from_db_state (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = (LinphoneAddress *)linphone_chat_room_get_conference_address(marieCr);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
@@ -4552,7 +4553,7 @@ static void find_one_to_one_chat_room (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
@@ -4580,7 +4581,7 @@ static void find_one_to_one_chat_room (void) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieOneToOneCr);
 	LinphoneChatRoom *paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, FALSE);
@@ -4639,7 +4640,7 @@ static void exhume_one_to_one_chat_room_1(void) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE, FALSE);
 	
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
@@ -4731,7 +4732,7 @@ static void exhume_one_to_one_chat_room_2(void) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE, FALSE);
 	
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
@@ -4752,7 +4753,7 @@ static void exhume_one_to_one_chat_room_2(void) {
 		participantsAddresses = NULL;
 		initialMarieStats = marie->stat;
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE, FALSE);
 		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000);
 		if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 
@@ -4846,7 +4847,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
@@ -4911,7 +4912,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 		participantsAddresses = NULL;
 		initialMarieStats = marie->stat;
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000);
 		if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 		
@@ -5062,7 +5063,7 @@ static void exhume_one_to_one_chat_room_4(void) {
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
-	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE, FALSE);
 	
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 	confAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
@@ -5172,7 +5173,7 @@ static void group_chat_room_new_device_after_creation (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marie1Cr)) goto end;
 	participantsAddresses = NULL;
 	confAddr = linphone_chat_room_get_conference_address(marie1Cr);
@@ -5239,7 +5240,7 @@ static void group_chat_room_list_subscription (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr1 = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr1 = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr1)) goto end;
 	confAddr1 = linphone_chat_room_get_conference_address(marieCr1);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr1)) goto end;
@@ -5257,7 +5258,7 @@ static void group_chat_room_list_subscription (void) {
 	participantsAddresses = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
-	marieCr2 = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr2 = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr2)) goto end;
 	confAddr2 = linphone_chat_room_get_conference_address(marieCr2);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr2)) goto end;
@@ -5275,7 +5276,7 @@ static void group_chat_room_list_subscription (void) {
 	participantsAddresses = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
-	marieCr3 = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr3 = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr3)) goto end;
 	confAddr3 = linphone_chat_room_get_conference_address(marieCr3);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr3)) goto end;
@@ -5433,7 +5434,7 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	participantsAddresses = NULL;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
@@ -5556,7 +5557,7 @@ static void group_chat_room_subscription_denied (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
@@ -5634,7 +5635,7 @@ static void search_friend_chat_room_participants(void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
@@ -5721,7 +5722,7 @@ static void group_chat_room_participant_devices_name (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
@@ -6207,7 +6208,7 @@ static void add_device_one_to_one_chat_room_other_left (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto clean;
 
 	confAddr = (LinphoneAddress *)linphone_chat_room_get_conference_address(marieCr);
@@ -6281,7 +6282,7 @@ static void group_chat_loss_of_client_context(void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
@@ -6368,7 +6369,7 @@ static void participant_removed_then_added (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marie1Cr)) goto end;
 	participantsAddresses = NULL;
 	confAddr = linphone_chat_room_get_conference_address(marie1Cr);
@@ -6453,7 +6454,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 
 	// Marie1 creates a new one-to-one chat room with Pauline
 	const char *initialSubject = "Pauline";
-	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marie1Cr)) goto end;
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marie1Cr) & LinphoneChatRoomCapabilitiesOneToOne);
 
@@ -6607,7 +6608,7 @@ static void subscribe_test_after_set_chat_database_path(void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
@@ -6706,7 +6707,7 @@ static void core_stop_start_with_chat_room_ref (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE);
+	marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(marie1Cr)) goto end;
 	participantsAddresses = NULL;
 	confAddr = linphone_chat_room_get_conference_address(marie1Cr);
@@ -6786,7 +6787,7 @@ static void group_chat_room_device_unregistered (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	participantsAddresses = NULL;
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -6899,7 +6900,7 @@ static void group_chat_room_admin_creator_leaves_and_is_reinvited (void) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -6977,7 +6978,7 @@ static void group_chat_forward_file_transfer_message_url (const char *file_trans
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, FALSE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
