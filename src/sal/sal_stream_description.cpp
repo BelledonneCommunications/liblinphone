@@ -311,7 +311,7 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 		}
 	} else {
 		const auto supportedEncs = getSupportedEncryptionsInPotentialCfgs();
-		unsigned int idx = 1;
+		unsigned int idx = getFreeCfgIdx();
 		for (const auto avpf : {true, false}) {
 			for (const auto & enc : supportedEncs) {
 				const auto & protoEl = SalStreamDescription::encryptionToTcap(protoMap, enc, avpf);
@@ -337,8 +337,8 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 					auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
 					cfg.index = idx;
 					cfgList.push_back(cfg);
+					idx++;
 				}
-				idx++;
 			}
 		}
 	}
@@ -783,6 +783,11 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 bool SalStreamDescription::enabled() const {
 	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
 	return rtp_port > 0 || isBundleOnly();
+}
+
+bool SalStreamDescription::isAcceptable() const {
+	// Accept if enabled or RTP port is set to 0
+	return enabled() || (rtp_port == 0);
 }
 
 void SalStreamDescription::disable(){
@@ -1548,7 +1553,7 @@ const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(con
 		const auto & cfg = cfgs.at(index);
 		return cfg;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find configuration at index " << index << " in the available configuration map";
+		lDebug() << "Unable to find configuration at index " << index << " in the available configuration map";
 		return Utils::getEmptyConstRefObject<SalStreamConfiguration>();
 	}
 }
@@ -1596,7 +1601,7 @@ const std::string & SalStreamDescription::getTcap(const unsigned int & idx) cons
 	try {
 		return tcaps.at(idx);
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find transport capability at index " << idx;
+		lDebug() << "Unable to find transport capability at index " << idx;
 		return Utils::getEmptyConstRefObject<std::string>();
 	}
 }
@@ -1609,7 +1614,7 @@ const SalStreamDescription::acap_t & SalStreamDescription::getAcap(const unsigne
 	try {
 		return acaps.at(idx);
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find attribute capability at index " << idx;
+		lDebug() << "Unable to find attribute capability at index " << idx;
 		return Utils::getEmptyConstRefObject<SalStreamDescription::acap_t>();
 	}
 }
