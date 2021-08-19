@@ -101,7 +101,7 @@ private:
 	bool mRtt = false; //Real Time Text
 	std::string mSubject;
 	bool mChatRoomWideEphemeralSettingsEnabled = false; // If set to true, this chat room's admin can enable ephemeral messages for all participants
-	long ephemeralLifetime = 86400;  //24 hours = 86400s
+	long mEphemeralLifetime = 86400;  //24 hours = 86400s
 };
 
 LINPHONE_END_NAMESPACE
