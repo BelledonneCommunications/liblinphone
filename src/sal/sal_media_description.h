@@ -58,6 +58,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription findBestStream(SalStreamType type) const;
 
 		bool isEmpty() const;
+		bool isAcceptable() const;
 
 		void setDir(SalStreamDir stream_dir);
 
@@ -85,7 +86,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		static const std::string printDifferences(int result);
 
 		size_t getNbStreams() const;
-		const std::string & getAddress() const;
+		const std::string & getOriginAddress() const;
+		const std::string & getConnectionAddress() const;
 		const SalStreamDescription & getStreamIdx(unsigned int idx) const;
 
 		void addTcap(const unsigned int & idx, const std::string & value);
@@ -110,6 +112,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		std::string addr;
 		std::string username;
 		int bandwidth = 0;
+		std::string origin_addr;
 		unsigned int session_ver = 0;
 		unsigned int session_id = 0;
 		SalStreamDir dir = SalStreamSendRecv;
