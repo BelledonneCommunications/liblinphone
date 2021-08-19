@@ -79,7 +79,7 @@ public:
 	bool isRealTimeText() const;
 	const std::string& getSubject() const;
 	bool isChatRoomWideEphemeralMessagesEnabled() const;
-	bool getEphemeralLifetime() const;
+	long getEphemeralLifetime() const;
 
 	void setChatRoomBackend(ChatRoomBackend backend);
 	void setChatRoomEncryptionBackend(ChatRoomEncryptionBackend backend);
