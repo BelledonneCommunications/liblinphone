@@ -325,6 +325,7 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	for (const auto &addr : Conference::parseResourceLists(content))
 		getConference()->participants.push_back(Participant::create(getConference().get(),addr));
 
+	d->isEphemeral = params->isChatRoomWideEphemeralMessagesEnabled();
 	if (params->isChatRoomWideEphemeralMessagesEnabled()) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
 	}
@@ -372,7 +373,6 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	L_D();
 
 	d->isEphemeral = params->isChatRoomWideEphemeralMessagesEnabled();
-
 	if (params->isChatRoomWideEphemeralMessagesEnabled()) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
 	}
