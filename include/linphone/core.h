@@ -195,7 +195,7 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_core_get_current_call_remote_ad
  * @return The 100 rel support level
  * @ingroup call_control
  */
-LINPHONE_PUBLIC LinphoneSupportLevel linphone_core_get_100rel_support_level(const LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneSupportLevel linphone_core_get_tag_100rel_support_level(const LinphoneCore *core);
 
 /**
  * Define what level of support is provided to the 100rel attribute
@@ -203,7 +203,7 @@ LINPHONE_PUBLIC LinphoneSupportLevel linphone_core_get_100rel_support_level(cons
  * @param level support level of 100rel
  * @ingroup call_control
  */
-LINPHONE_PUBLIC void linphone_core_set_100rel_support_level(LinphoneCore *core, LinphoneSupportLevel level);
+LINPHONE_PUBLIC void linphone_core_set_tag_100rel_support_level(LinphoneCore *core, LinphoneSupportLevel level);
 
 /**
  * @addtogroup initializing
