@@ -5788,18 +5788,18 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
 
 /**
- * Define whether ephemeral messages for all chat room participants should be enabled by default or not.
+ * Sets the default ephemeral message mode
  * @param core the linphone core
- * @param enable TRUE ephemeral messages for all chat room participants is enabled; FALSE otherwise.
+ * @param mode default ephemeral message mode #LinphoneChatRoomEphemeralMode
  */
-LINPHONE_PUBLIC void linphone_core_enable_chat_room_wide_ephemeral_settings(LinphoneCore *core, bool_t enable);
+LINPHONE_PUBLIC void linphone_core_chat_room_set_ephemeral_mode(LinphoneCore *core, LinphoneChatRoomEphemeralMode mode);
 
 /**
- * Check if ephemeral messages for all chat room participants should be enabled by default or not
+ * Gets the default ephemeral message mode
  * @core core the linphone core
- * @return TRUE if ephemeral messages for all chat room participants is enabled; FALSE otherwise.
+ * @return the default ephemeral message mode #LinphoneChatRoomEphemeralMode
  **/
-LINPHONE_PUBLIC bool_t linphone_core_chat_room_wide_ephemeral_settings_enabled(const LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_core_chat_room_get_ephemeral_mode(const LinphoneCore *core);
 
 /**
  * Set ephemeral lifetime in seconds
@@ -5809,9 +5809,9 @@ LINPHONE_PUBLIC bool_t linphone_core_chat_room_wide_ephemeral_settings_enabled(c
 LINPHONE_PUBLIC void linphone_core_set_ephemeral_lifetime(LinphoneCore *lc, long value);
 
 /**
- * Check if ephemeral messages for all chat room participants should be enabled by default or not
+ * Gets the default lifetime of ephemeral messages in seconds
  * @core core the linphone core
- * @return TRUE lifetime of ephemeral messages in seconds
+ * @return lifetime of ephemeral messages in seconds
  **/
 LINPHONE_PUBLIC long linphone_core_get_ephemeral_lifetime(const LinphoneCore *lc);
 

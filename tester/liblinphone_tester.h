@@ -573,9 +573,9 @@ void check_stream_encryption(LinphoneCall * call);
 int get_stream_stop_count(LinphoneCall * call);
 bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr);
 
-LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted, bool_t ephemeral);
+LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted, LinphoneChatRoomEphemeralMode mode);
 LinphoneChatRoom * create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params);
-LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted, bool_t ephemeral);
+LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted, LinphoneChatRoomEphemeralMode mode);
 LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin);
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server);
 void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
