@@ -406,7 +406,7 @@ void CallSessionPrivate::replaceOp (SalCallOp *newOp) {
 	switch (state) {
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:
-			op->notifyRinging((state == CallSession::State::IncomingEarlyMedia) ? true : false, linphone_core_get_100rel_support_level(q->getCore()->getCCore()));
+			op->notifyRinging((state == CallSession::State::IncomingEarlyMedia) ? true : false, linphone_core_get_tag_100rel_support_level(q->getCore()->getCCore()));
 			break;
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning:
@@ -626,7 +626,7 @@ void CallSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
 	if (notifyRinging)
-		op->notifyRinging(false, linphone_core_get_100rel_support_level(q->getCore()->getCCore()));
+		op->notifyRinging(false, linphone_core_get_tag_100rel_support_level(q->getCore()->getCCore()));
 	acceptOrTerminateReplacedSessionInIncomingNotification();
 }
 
