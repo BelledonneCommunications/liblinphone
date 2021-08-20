@@ -164,13 +164,13 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const ConferenceId &conferenceId,
 	const Content &content,
 	bool encrypted,
-	bool ephemerable,
+	AbstractChatRoom::EphemeralMode ephemerableMode,
 	long ephemeralLifeTime
 ) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ephemerable, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ephemerableMode, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 	params->setEphemeralLifetime(ephemeralLifeTime);
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
 										    q->getSharedFromThis(),
@@ -197,7 +197,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom(const string
 
 	IdentityAddress defaultLocalAddress = getDefaultLocalAddress(nullptr, true);
 	IdentityAddress conferenceFactoryUri(Core::getConferenceFactoryUri(q->getSharedFromThis(), defaultLocalAddress));
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, !fallback, encrypted, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, !fallback, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 
 	return createClientGroupChatRoom(subject, conferenceFactoryUri, ConferenceId(IdentityAddress(), defaultLocalAddress), Content(), ChatRoomParams::toCapabilities(params), params, fallback);
 }

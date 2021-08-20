@@ -48,7 +48,6 @@ class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, pub
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(AbstractChatRoom);
 
-
 	/*enum class is used to create namespaces for Enums
 	  doing this prevents the compiler to confuse members from different Enums with same name.
 		i.e. "None" for the "State" Enum and "None" from the Capabilities Enum */
@@ -70,6 +69,13 @@ public:
 		Encrypted = LinphoneChatRoomSecurityLevelEncrypted,
 		Safe
 	};
+
+	enum class EphemeralMode{
+		DeviceManaged = LinphoneChatRoomEphemeralModeDeviceManaged,
+		AdminManaged = LinphoneChatRoomEphemeralModeAdminManaged
+	};
+
+	typedef enum EphemeralMode ChatRoomEphemeralMode;
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
@@ -136,6 +142,8 @@ public:
 	virtual bool ephemeralEnabled () const = 0;
 	virtual void setEphemeralLifetime (long lifetime, bool updateDb) = 0;
 	virtual long getEphemeralLifetime () const = 0;
+	virtual void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) = 0;
+	virtual AbstractChatRoom::EphemeralMode getEphemeralMode() const = 0;
 	virtual bool ephemeralSupportedByAllParticipants () const = 0;
 
 	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
@@ -159,6 +167,8 @@ private:
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e);
 
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::SecurityLevel e);
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::EphemeralMode e);
 
 LINPHONE_END_NAMESPACE
 

@@ -52,6 +52,8 @@ static bool isConferenceType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantUnsetAdmin:
 		case LinphoneEventLogTypeConferenceSubjectChanged:
 		case LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged:
+		case LinphoneEventLogTypeConferenceEphemeralMessageManagedByAdmin:
+		case LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants:
 		case LinphoneEventLogTypeConferenceEphemeralMessageEnabled:
 		case LinphoneEventLogTypeConferenceEphemeralMessageDisabled:
 			return true;

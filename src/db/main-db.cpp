@@ -197,6 +197,8 @@ namespace {
 			EventLog::Type::ConferenceSubjectChanged,
 			EventLog::Type::ConferenceSecurityEvent,
 			EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
+			EventLog::Type::ConferenceEphemeralMessageManagedByAdmin,
+			EventLog::Type::ConferenceEphemeralMessageManagedByParticipants,
 			EventLog::Type::ConferenceEphemeralMessageEnabled,
 			EventLog::Type::ConferenceEphemeralMessageDisabled
 		>::get();
@@ -211,7 +213,9 @@ namespace {
 			EventLog::Type::ConferenceSecurityEvent,
 			EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
 			EventLog::Type::ConferenceEphemeralMessageEnabled,
-			EventLog::Type::ConferenceEphemeralMessageDisabled
+			EventLog::Type::ConferenceEphemeralMessageDisabled,
+			EventLog::Type::ConferenceEphemeralMessageManagedByAdmin,
+			EventLog::Type::ConferenceEphemeralMessageManagedByParticipants
 		>::get();
 	#endif // ifdef _WIN32
 
@@ -711,6 +715,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 			break;
 
 		case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
+		case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
+		case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 		case EventLog::Type::ConferenceEphemeralMessageEnabled:
 		case EventLog::Type::ConferenceEphemeralMessageDisabled:
 			eventLog = selectConferenceEphemeralMessageEvent(conferenceId, type, row);
@@ -2378,6 +2384,8 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 				eventId = d->insertConferenceEphemeralMessageEvent(eventLog);
 				break;
 		}
@@ -2434,6 +2442,8 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 				return false;
 		}
 

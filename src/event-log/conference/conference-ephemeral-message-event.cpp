@@ -48,6 +48,8 @@ long ephemeralLifetime
 	L_D();
 	L_ASSERT(
 			 type == Type::ConferenceEphemeralMessageLifetimeChanged ||
+			 type == Type::ConferenceEphemeralMessageManagedByAdmin ||
+			 type == Type::ConferenceEphemeralMessageManagedByParticipants ||
 			 type == Type::ConferenceEphemeralMessageEnabled ||
 			 type == Type::ConferenceEphemeralMessageDisabled
 			 );

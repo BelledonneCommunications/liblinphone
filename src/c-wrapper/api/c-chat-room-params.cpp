@@ -66,8 +66,8 @@ bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *par
 	return ChatRoomParams::toCpp(params)->isGroup();
 }
 
-bool_t linphone_chat_room_params_force_ephemeral_enabled(const LinphoneChatRoomParams *params) {
-	return ChatRoomParams::toCpp(params)->isChatRoomWideEphemeralMessagesEnabled();
+LinphoneChatRoomEphemeralMode linphone_chat_room_params_get_ephemeral_mode(const LinphoneChatRoomParams *params) {
+	return static_cast<LinphoneChatRoomEphemeralMode>(ChatRoomParams::toCpp(params)->getEphemeralMode());
 }
 
 long linphone_chat_room_params_get_ephemeral_lifetime(const LinphoneChatRoomParams *params) {
@@ -94,8 +94,8 @@ void linphone_chat_room_params_enable_group(LinphoneChatRoomParams *params, bool
 	ChatRoomParams::toCpp(params)->setGroup(!!group);
 }
 
-void linphone_chat_room_params_enable_force_ephemeral(LinphoneChatRoomParams *params, bool_t ephemeral) {
-	ChatRoomParams::toCpp(params)->setChatRoomWideEphemeralMessagesEnabled(!!ephemeral);
+void linphone_chat_room_params_set_ephemeral_mode(LinphoneChatRoomParams *params, LinphoneChatRoomEphemeralMode mode) {
+	ChatRoomParams::toCpp(params)->setEphemeralMode(static_cast<AbstractChatRoom::EphemeralMode>(mode));
 }
 
 void linphone_chat_room_params_set_ephemeral_lifetime(LinphoneChatRoomParams *params, long lifetime) {
