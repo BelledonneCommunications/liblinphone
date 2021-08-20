@@ -575,9 +575,8 @@ LinphoneAddress *Account::guessContactForRegister () {
 						bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 						const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
 						const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
-						newContactUriParams = newContactUriParams + ";" + key;
 						if (value) {
-							newContactUriParams = newContactUriParams  + "=" + value;
+							newContactUriParams = newContactUriParams + key + "=" + value + ";";
 						}
 					}
 					bctbx_iterator_cchar_delete(it);
