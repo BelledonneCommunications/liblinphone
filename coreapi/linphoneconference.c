@@ -244,12 +244,13 @@ int linphone_conference_stop_recording (LinphoneConference *conference) {
 }
 
 bool_t linphone_conference_check_class (LinphoneConference *conference, LinphoneConferenceClass _class) {
+	const auto & cpp_conference = *LinphonePrivate::MediaConference::Conference::toCpp(conference);
 	switch(_class) {
 		case LinphoneConferenceClassLocal:
-		return typeid(MediaConference::Conference::toCpp(conference)).hash_code() ==
-			   typeid(LinphonePrivate::MediaConference::LocalConference).hash_code();
+			return typeid(cpp_conference).hash_code() ==
+				   typeid(LinphonePrivate::MediaConference::LocalConference).hash_code();
 		case LinphoneConferenceClassRemote:
-			return typeid(MediaConference::Conference::toCpp(conference)).hash_code() ==
+			return typeid(cpp_conference).hash_code() ==
 				   typeid(LinphonePrivate::MediaConference::RemoteConference).hash_code();
 		default:
 			return FALSE;
