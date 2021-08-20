@@ -72,5 +72,14 @@ typedef enum _LinphoneChatRoomEncryptionBackend{
 	LinphoneChatRoomEncryptionBackendLime = 1 << 0 /**< Lime x3dh encryption. */
 } LinphoneChatRoomEncryptionBackend;
 
+/**
+ * #LinphoneChatRoomEphemeralMode is used to the ephemeral message mode used by a chat room.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatRoomEphemeralMode{
+	LinphoneChatRoomEphemeralModeDeviceManaged = 0, /**< Each device manages its own ephemeral settings. */
+	LinphoneChatRoomEphemeralModeAdminManaged = 1   /**< Ephemeral settings are chatroom wide and only admins can change them. */
+} LinphoneChatRoomEphemeralMode;
+
 
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_

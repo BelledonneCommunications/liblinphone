@@ -190,7 +190,7 @@ static void call_received(SalCallOp *h) {
 					ConferenceId(ConferenceAddress(Address(h->getRemoteContact())), ConferenceAddress(Address(h->getTo()))),
 					h->getRemoteBody(),
 					endToEndEncrypted == "true",
-					ephemerable == "true",
+					(ephemerable == "true") ? AbstractChatRoom::EphemeralMode::AdminManaged : AbstractChatRoom::EphemeralMode::DeviceManaged,
 					parsedEphemeralLifeTime
 				);
 			}

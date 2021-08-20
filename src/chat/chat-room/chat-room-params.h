@@ -64,8 +64,8 @@ public:
 	//Convenience constructors
 	ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend);
 	ChatRoomParams(std::string subject, bool encrypted, bool group, ChatRoomBackend backend);
-	ChatRoomParams(std::string subject, bool encrypted, bool group, bool ephemerable, ChatRoomBackend backend);
-	ChatRoomParams(std::string subject, bool encrypted, bool group, bool ephemerable, long lifetime, ChatRoomBackend backend);
+	ChatRoomParams(std::string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, ChatRoomBackend backend);
+	ChatRoomParams(std::string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, long lifetime, ChatRoomBackend backend);
 
 	ChatRoomParams *clone() const override { return new ChatRoomParams(*this); }
 
@@ -78,8 +78,8 @@ public:
 	bool isGroup() const;
 	bool isRealTimeText() const;
 	const std::string& getSubject() const;
-	bool isChatRoomWideEphemeralMessagesEnabled() const;
 	long getEphemeralLifetime() const;
+	AbstractChatRoom::EphemeralMode getEphemeralMode() const;
 
 	void setChatRoomBackend(ChatRoomBackend backend);
 	void setChatRoomEncryptionBackend(ChatRoomEncryptionBackend backend);
@@ -87,7 +87,7 @@ public:
 	void setGroup(bool group);
 	void setRealTimeText(bool rtt);
 	void setSubject(std::string subject);
-	void setChatRoomWideEphemeralMessagesEnabled(bool ephemerable);
+	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode);
 	void setEphemeralLifetime(long lifetime);
 
 protected:
@@ -100,7 +100,7 @@ private:
 	bool mGroup = false; //one to one
 	bool mRtt = false; //Real Time Text
 	std::string mSubject;
-	bool mChatRoomWideEphemeralSettingsEnabled = false; // If set to true, this chat room's admin can enable ephemeral messages for all participants
+	AbstractChatRoom::EphemeralMode mEphemeralMode = AbstractChatRoom::EphemeralMode::DeviceManaged;
 	long mEphemeralLifetime = 86400;  //24 hours = 86400s
 };
 

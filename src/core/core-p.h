@@ -106,7 +106,7 @@ public:
 									 const ConferenceId &conferenceId,
 									 const Content &content,
 									 bool encrypted,
-									 bool ephemerable,
+									 AbstractChatRoom::EphemeralMode ephemerableMode,
 									 long ephemeralLifeTime);
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom(const std::string &subject, bool fallback, bool encrypted);
 
