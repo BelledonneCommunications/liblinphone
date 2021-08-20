@@ -84,11 +84,11 @@ LINPHONE_PUBLIC LinphoneChatRoomEncryptionBackend linphone_chat_room_params_get_
 LINPHONE_PUBLIC bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *params);
 
 /**
- * Get the ephemeral message status of the chat room associated with the given parameters.
+ * Get the ephemeral message mode of the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
- * @return TRUE if ephemeral message is enabled, FALSE otherwise
+ * @return the ephemeral message mode #LinphoneChatRoomEphemeralMode
 **/
-LINPHONE_PUBLIC bool_t linphone_chat_room_params_force_ephemeral_enabled(const LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_chat_room_params_get_ephemeral_mode(const LinphoneChatRoomParams *params);
 
 /**
  * Set lifetime (in seconds) for all new ephemral messages in the chat room.
@@ -146,9 +146,9 @@ LINPHONE_PUBLIC void linphone_chat_room_params_enable_group(LinphoneChatRoomPara
 /**
  * Enables or disables forcing of ephemeral messages for the chat room associated with the given parameters.
  * @param params The #LinphoneChatRoomParams object. @notnil
- * @param encrypted. TRUE to force ephemeral messages, FALSE to disable.
+ * @param mode Ephemeral message mode #LinphoneChatRoomEphemeralMode.
 **/
-LINPHONE_PUBLIC void linphone_chat_room_params_enable_force_ephemeral(LinphoneChatRoomParams *params, bool_t encrypted);
+LINPHONE_PUBLIC void linphone_chat_room_params_set_ephemeral_mode(LinphoneChatRoomParams *params, LinphoneChatRoomEphemeralMode mode);
 
 /**
  * Enables or disables encryption for the chat room associated with the given parameters.
