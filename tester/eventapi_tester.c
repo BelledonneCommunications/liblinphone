@@ -335,21 +335,21 @@ static void subscribe_loosing_dialog_2(void) {
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	lcs = bctbx_list_remove(lcs, marie->lc);
 	linphone_event_unref(lev);
-	linphone_core_manager_destroy(marie);
-	marie = linphone_core_manager_new( "pauline_tcp_rc");
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_uninit(marie);
+	marie = linphone_core_manager_new("marie_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
 	
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,2000));
 	//now try a terminate the dialog
-	BC_ASSERT_PTR_NOT_NULL(pauline->lev);
 	if (pauline->lev) {
 		linphone_event_terminate(pauline->lev);
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
+		/*let expire the incoming subscribe received by pauline */
+		BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,3000));
+	} else {
+		BC_FAIL("Unexpect null event for pauline");
 	}
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
-	/*let expire the incoming subscribe received by pauline */
-	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,3000));
-
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
