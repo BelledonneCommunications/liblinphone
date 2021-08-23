@@ -576,6 +576,7 @@ static void group_chat_room_server_admin_managed_messages (void) {
 		Address paulineAddr(pauline.getIdentity().asAddress());
 		bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
 
+		stats chloe_stat=focus.getStats();
 		stats marie_stat=marie.getStats();
 		stats pauline_stat=pauline.getStats();
 
@@ -606,14 +607,16 @@ static void group_chat_room_server_admin_managed_messages (void) {
 			return true;
 		}));
 
+		chloe_stat=focus.getStats();
 		marie_stat=marie.getStats();
 		pauline_stat=pauline.getStats();
 
 		linphone_chat_room_set_ephemeral_lifetime(marieCr, 2);
-		BC_ASSERT_TRUE(wait_for_list(coresList,&marie.getStats().number_of_LinphoneCallUpdating,marie_stat.number_of_LinphoneCallUpdating+1,5000));
+		//BC_ASSERT_TRUE(wait_for_list(coresList,&marie.getStats().number_of_LinphoneCallUpdating,marie_stat.number_of_LinphoneCallUpdating+1,5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList,&focus.getStats().number_of_LinphoneCallUpdatedByRemote,chloe_stat.number_of_LinphoneCallUpdatedByRemote+1,5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getStats().number_of_LinphoneCallUpdatedByRemote,pauline_stat.number_of_LinphoneCallUpdatedByRemote+1,5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList,&marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat.number_of_LinphoneCallStreamsRunning+1,5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat.number_of_LinphoneCallStreamsRunning+1,5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList,&focus.getStats().number_of_LinphoneCallConnected, chloe_stat.number_of_LinphoneCallConnected+1,5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getStats().number_of_LinphoneCallConnected, pauline_stat.number_of_LinphoneCallConnected+1,5000));
 
 		constexpr int noMsg = 10;
 		LinphoneChatMessage *message[noMsg];
@@ -623,10 +626,14 @@ static void group_chat_room_server_admin_managed_messages (void) {
 			message[i] = _send_message_ephemeral(marieCr, text.c_str(), TRUE);
 		}
 
+		bctbx_list_t *marieHistory = linphone_chat_room_get_history(marieCr, 0);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), noMsg, int, "%i");
+		set_ephemeral_cbs(marieHistory);
+
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived, pauline_stat.number_of_LinphoneMessageReceived + noMsg,11000));
 
 		// Check that the message has been delivered to Pauline
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDeliveredToUser, marie_stat.number_of_LinphoneMessageDeliveredToUser + noMsg, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneMessageDeliveredToUser, chloe_stat.number_of_LinphoneMessageDeliveredToUser + noMsg, 10000));
 
 		for (int i=0; i<noMsg; i++) {
 			const auto msg = message[i];
@@ -639,23 +646,38 @@ static void group_chat_room_server_admin_managed_messages (void) {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == noMsg;
 		}));
 
+		bctbx_list_t *paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), noMsg, int, "%i");
+		set_ephemeral_cbs(paulineHistory);
+
 		// Pauline marks the message as read, check that the state is now displayed on Marie's side
 		linphone_chat_room_mark_as_read(paulineCr);
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDisplayed, marie_stat.number_of_LinphoneMessageDisplayed + noMsg, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageDisplayed, pauline_stat.number_of_LinphoneMessageDisplayed + noMsg, 10000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, marie_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, chloe_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, pauline_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
+
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageEphemeralTimerStarted, marie_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneMessageEphemeralTimerStarted, chloe_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageEphemeralTimerStarted, pauline_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg, 10000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomEphemeralDeleted, marie_stat.number_of_LinphoneChatRoomEphemeralDeleted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralDeleted, pauline_stat.number_of_LinphoneChatRoomEphemeralDeleted + noMsg, 10000));
+
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageEphemeralDeleted, marie_stat.number_of_LinphoneMessageEphemeralDeleted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageEphemeralDeleted, pauline_stat.number_of_LinphoneMessageEphemeralDeleted + noMsg, 10000));
 
 		for (int i=0; i<noMsg; i++) {
 			linphone_chat_message_unref(message[i]);
 		}
+
+		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), 0, int, "%i");
+		marieHistory = linphone_chat_room_get_history(marieCr, 0);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), 0, int, "%i");
 
 		for (auto chatRoom :focus.getCore().getChatRooms()) {
 			for (auto participant: chatRoom->getParticipants()) {
@@ -678,7 +700,7 @@ static void group_chat_room_server_admin_managed_messages (void) {
 		CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
 			return false;
 		});
-		
+
 		//to avoid creation attempt of a new chatroom
 		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
 		linphone_proxy_config_edit(config);

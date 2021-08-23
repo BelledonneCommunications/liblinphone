@@ -471,6 +471,7 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, Linphon
 void tester_file_transfer_send_2(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer);
 LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const char *message, bool_t ephemeral);
 LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
+void set_ephemeral_cbs (bctbx_list_t *history);
 void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer);
 void _send_file(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, bool_t use_buffer);
 void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2, bool_t use_buffer);

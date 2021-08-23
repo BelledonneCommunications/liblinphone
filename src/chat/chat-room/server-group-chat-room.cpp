@@ -419,6 +419,33 @@ void ServerGroupChatRoomPrivate::handleSubjectChange(SalCallOp *op){
 	}
 }
 
+void ServerGroupChatRoomPrivate::handleEphemeralSettingsChange(const shared_ptr<CallSession> &session){
+	const auto op = session->getPrivate()->getOp();
+	string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
+	if ((capabilities & ServerGroupChatRoom::Capabilities::Ephemeral) && !ephemeralLifeTime.empty()) {
+		setEphemeralLifetime(std::stol(ephemeralLifeTime, nullptr), session);
+	}
+}
+
+void ServerGroupChatRoomPrivate::setEphemeralLifetime(long time, const shared_ptr<CallSession> &session){
+
+	L_Q();
+	lInfo() << q << ": New ephemeral time: " << time;
+	params->setEphemeralLifetime(time);
+
+	for (const auto participant : q->getConference()->participants) {
+		shared_ptr<CallSession> pSession = participant->getSession();
+		if (participant->getSession() != pSession) {
+			auto csp = session->getParams()->clone();
+
+			csp->removeCustomHeader("Ephemeral-Life-Time");
+			csp->addCustomHeader("Ephemeral-Life-Time", to_string(time));
+
+			session->update(csp);
+		}
+	}
+}
+
 /*
  * This function setups registration subscriptions if not already there.
  * If no registration subscription is started (because they were all running already), it returns false.
@@ -1176,6 +1203,7 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 			if (participant && participant->isAdmin()) {
 				/* The only thing that a participant can change with re-INVITE is the subject. */
 				handleSubjectChange(session->getPrivate()->getOp());
+				handleEphemeralSettingsChange(session);
 			}
 		}
 		break;
@@ -1226,7 +1254,8 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 
 	if (ephemerable == "true") {
 		string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
-		d->params->setEphemeralLifetime(std::stol(ephemeralLifeTime, nullptr));
+		long time = std::stol(ephemeralLifeTime, nullptr);
+		d->params->setEphemeralLifetime(time);
 	}
 
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
