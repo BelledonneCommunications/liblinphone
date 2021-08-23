@@ -432,11 +432,8 @@ void ServerGroupChatRoomPrivate::setEphemeralLifetime(long time, const shared_pt
 	for (const auto & participant : q->getConference()->participants) {
 		shared_ptr<CallSession> pSession = participant->getSession();
 		if (pSession != session) {
-			auto csp = session->getParams()->clone();
-			csp->removeCustomHeader("Ephemeral-Life-Time");
-			csp->addCustomHeader("Ephemeral-Life-Time", to_string(time));
-
-			session->update(csp, q->getConference()->getSubject());
+// TODO: notify participants of change in lifetime 
+//			notifyEphemerallifetimeChanged();
 		}
 	}
 }
