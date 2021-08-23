@@ -34,7 +34,7 @@
 
 static const int x3dhServer_creationTimeout = 15000;
 
-static void set_ephemeral_cbs (bctbx_list_t *history) {
+void set_ephemeral_cbs (bctbx_list_t *history) {
 	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
 		const LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
 		if (linphone_chat_message_is_ephemeral(msg)) {
