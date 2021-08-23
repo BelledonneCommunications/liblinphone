@@ -195,10 +195,6 @@ bool ChatRoomParams::isValid() const {
 		lError() << "FlexisipChat backend must be used when ephemeral messages are enabled";
 		return false;
 	}
-	if ((mEphemeralMode == AbstractChatRoom::EphemeralMode::AdminManaged) && !mEncrypted) {
-		lError() << "Encryption must be used when ephemeral messages are enabled";
-		return false;
-	}
 	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
 		lError() << "Real time text chat room isn't compatible with FlexisipChat backend";
 		return false;
