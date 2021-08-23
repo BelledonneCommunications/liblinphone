@@ -76,6 +76,7 @@ typedef enum _LinphoneAudioDeviceType {
 typedef enum _LinphoneAudioDeviceCapabilities {
 	LinphoneAudioDeviceCapabilityRecord = 1 << 0, /** Can record audio */
 	LinphoneAudioDeviceCapabilityPlay = 1 << 1, /** Can play audio */
+	LinphoneAudioDeviceCapabilityAll = 3, /** Can play and record audio */
 } LinphoneAudioDeviceCapabilities;
 
 // =============================================================================
