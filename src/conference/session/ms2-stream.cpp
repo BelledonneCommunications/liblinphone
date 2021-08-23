@@ -203,8 +203,13 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	if (localDesc.rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && !localDesc.getPayloads().empty()){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
-		localDesc.rtp_port = mPortConfig.rtpPort;
-		localDesc.rtcp_port = mPortConfig.rtcpPort;
+		if (linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(getCCore()) && (localDesc.getDirection() == SalStreamInactive)) {
+			localDesc.rtp_port = 0;
+			localDesc.rtcp_port = 0;
+		} else {
+			localDesc.rtp_port = mPortConfig.rtpPort;
+			localDesc.rtcp_port = mPortConfig.rtcpPort;
+		}
 	}
 	if (!isTransportOwner()){
 		/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */

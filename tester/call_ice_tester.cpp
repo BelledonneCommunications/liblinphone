@@ -272,17 +272,17 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 		/*check immmediately that the offer has a c line with the expected family.*/
 		if (with_ipv6_prefered){
 			/* the address in the c line shall be an ipv6 one.*/
-			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getAddress().find(':') != std::string::npos);
+			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') != std::string::npos);
 		}else{
-			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getAddress().find(':') == std::string::npos);
+			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') == std::string::npos);
 		}
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 		check_ice(marie, pauline, LinphoneIceStateHostConnection);
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getAddress(), local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress(), local_addresses));
 		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress(), local_addresses));
 		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getStreamIdx(0).getRtpAddress(), local_addresses)
-				|| is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getAddress(), local_addresses)
+				|| is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getConnectionAddress(), local_addresses)
 		);
 	}
 	end_call(marie, pauline);
@@ -517,7 +517,7 @@ static void call_with_early_media_ice_and_no_sdp_in_200(void){
 	early_media_without_sdp_in_200_base(FALSE, TRUE);
 }
 
-static void call_paused_resumed_with_ice (bool_t caller_ice) {
+static void call_paused_resumed_with_ice (LinphoneMediaEncryption encryption, bool_t caller_ice, bool_t callee_ice, bool_t enable_rtcp_mux) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall* call_pauline = NULL;
@@ -528,7 +528,34 @@ static void call_paused_resumed_with_ice (bool_t caller_ice) {
 	if (caller_ice) {
 		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
 	}
-	linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+	if (callee_ice) {
+		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+	}
+
+	if (linphone_core_media_encryption_supported(marie->lc,encryption)) {
+		linphone_core_set_media_encryption(marie->lc,encryption);
+		if (encryption==LinphoneMediaEncryptionDTLS) { /* for DTLS we must access certificates or at least have a directory to store them */
+			char *path = bc_tester_file("certificates-marie");
+			linphone_core_set_user_certificates_path(marie->lc, path);
+			bc_free(path);
+			belle_sip_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+		}
+	}
+
+	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
+		linphone_core_set_media_encryption(pauline->lc,encryption);
+		if (encryption==LinphoneMediaEncryptionDTLS) { /* for DTLS we must access certificates or at least have a directory to store them */
+			char *path = bc_tester_file("certificates-pauline");
+			linphone_core_set_user_certificates_path(pauline->lc, path);
+			bc_free(path);
+			belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+		}
+	}
+
+	if (enable_rtcp_mux) {
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+	}
 
 	BC_ASSERT_TRUE((call_ok=call(marie, pauline)));
 
@@ -549,7 +576,7 @@ static void call_paused_resumed_with_ice (bool_t caller_ice) {
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 3000);
 
 	linphone_call_pause(call_pauline);
-	if (caller_ice) {
+	if (caller_ice && callee_ice) {
 		BC_ASSERT_TRUE(check_ice_sdp(call_pauline));
 	} else {
 		BC_ASSERT_FALSE(check_ice_sdp(call_pauline));
@@ -578,12 +605,44 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_paused_resumed_with_caller_ice() {
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionNone, TRUE, FALSE, FALSE);
+}
+
 static void call_paused_resumed_with_callee_ice() {
-	call_paused_resumed_with_ice(FALSE);
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE);
 }
 
 static void call_paused_resumed_with_both_ice() {
-	call_paused_resumed_with_ice(TRUE);
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionNone, TRUE, TRUE, FALSE);
+}
+
+static void call_paused_resumed_with_caller_ice_and_rtcp_mux() {
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionNone, TRUE, FALSE, TRUE);
+}
+
+static void call_paused_resumed_with_callee_ice_and_rtcp_mux() {
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionNone, FALSE, TRUE, TRUE);
+}
+
+static void call_paused_resumed_with_both_ice_and_rtcp_mux() {
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionNone, TRUE, TRUE, TRUE);
+}
+
+static void dtls_srtp_call_paused_resumed_with_caller_ice_and_rtcp_mux() {
+	#if 0
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionDTLS, TRUE, FALSE, TRUE);
+	#else
+		BC_PASS("Test disabled until https://bugs.linphone.org/view.php?id=9288 is fixed");
+	#endif
+}
+
+static void dtls_srtp_call_paused_resumed_with_callee_ice_and_rtcp_mux() {
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionDTLS, FALSE, TRUE, TRUE);
+}
+
+static void dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux() {
+	call_paused_resumed_with_ice(LinphoneMediaEncryptionDTLS, TRUE, TRUE, TRUE);
 }
 
 static test_t call_with_ice_tests[] = {
@@ -618,8 +677,15 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line", call_with_ice_ufrag_and_password_set_in_sdp_m_line, "ICE"),
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 2", call_with_ice_ufrag_and_password_set_in_sdp_m_line_2, "ICE"),
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 3", call_with_ice_ufrag_and_password_set_in_sdp_m_line_3, "ICE"),
-	TEST_NO_TAG("Call with ICE pause and resume with callee ice", call_paused_resumed_with_callee_ice),
-	TEST_NO_TAG("Call with ICE pause and resume with both ice", call_paused_resumed_with_both_ice)
+	TEST_ONE_TAG("Call with ICE pause and resume with caller ice", call_paused_resumed_with_caller_ice, "ICE"),
+	TEST_ONE_TAG("Call with ICE pause and resume with callee ice", call_paused_resumed_with_callee_ice, "ICE"),
+	TEST_ONE_TAG("Call with ICE pause and resume with both ice", call_paused_resumed_with_both_ice, "ICE"),
+	TEST_ONE_TAG("Call with ICE pause and resume with caller ice and rtcp mux", call_paused_resumed_with_caller_ice_and_rtcp_mux, "ICE"),
+	TEST_ONE_TAG("Call with ICE pause and resume with callee ice and rtcp mux", call_paused_resumed_with_callee_ice_and_rtcp_mux, "ICE"),
+	TEST_ONE_TAG("Call with ICE pause and resume with both ice and rtcp mux", call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE"),
+	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with caller ice and rtcp mux", dtls_srtp_call_paused_resumed_with_caller_ice_and_rtcp_mux, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with callee ice and rtcp mux", dtls_srtp_call_paused_resumed_with_callee_ice_and_rtcp_mux, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with both ice and rtcp mux", dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE", "DTLS")
 };
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
