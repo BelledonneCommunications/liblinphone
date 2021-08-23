@@ -1220,11 +1220,11 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	}
 
 	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
-	// TODO: Store ephemeral lifetime value ?
-	/*if (ephemerable == "true") {
+
+	if (ephemerable == "true") {
 		string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
-		d->setEphemeralLifeTime(stol(ephemeralLifeTime, nullptr));
-	}*/
+		d->params->setEphemeralLifetime(std::stol(ephemeralLifeTime, nullptr));
+	}
 
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
