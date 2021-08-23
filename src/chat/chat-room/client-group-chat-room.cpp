@@ -1136,6 +1136,11 @@ void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode,
 		return;
 	}
 
+	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Ephemeral)) {
+		lWarning() << "Ephemeral message mode cannot be changed if chatroom has capabiltiy Ephemeral disabled";
+		return;
+	}
+
 	d->params->setEphemeralMode(mode);
 
 	const auto & lifetime = d->params->getEphemeralLifetime();
@@ -1143,10 +1148,8 @@ void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode,
 	if (getState() == ConferenceInterface::State::Created) {
 		shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 		auto csp = session->getParams()->clone();
-		csp->removeCustomHeader("Ephemerable");
 		csp->removeCustomHeader("Ephemeral-Life-Time");
 		if (mode == AbstractChatRoom::EphemeralMode::AdminManaged) {
-			csp->addCustomHeader("Ephemerable", (ephemeralEnabled()) ? "true" : "false");
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 		}
 		session->update(csp, getSubject());
@@ -1193,7 +1196,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 			auto csp = session->getParams()->clone();
 			csp->removeCustomHeader("Ephemeral-Life-Time");
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
-			session->update(csp);
+			session->update(csp, getSubject());
 		} else {
 			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
 		}
@@ -1251,7 +1254,7 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 				csp->removeCustomHeader("Ephemeral-Life-Time");
 				csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 
-				session->update(csp);
+				session->update(csp, getSubject());
 			}
 		} else {
 			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
