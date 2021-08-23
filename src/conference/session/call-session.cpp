@@ -722,6 +722,7 @@ LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextSta
 LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 	string newSubject(subject);
+
 	if (newSubject.empty()) {
 		if (isInConference())
 			newSubject = "Conference";
@@ -1428,6 +1429,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 	L_D();
 	CallSession::State nextState;
 	CallSession::State initialState = d->state;
+lInfo() << " DEBUG DEBUG Updating is allowed " << d->isUpdateAllowed(nextState);
 	if (!d->isUpdateAllowed(nextState))
 		return -1;
 	if (d->currentParams == csp)
