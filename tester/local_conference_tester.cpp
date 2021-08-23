@@ -611,13 +611,6 @@ static void group_chat_room_server_admin_managed_messages (void) {
 		marie_stat=marie.getStats();
 		pauline_stat=pauline.getStats();
 
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 2);
-		//BC_ASSERT_TRUE(wait_for_list(coresList,&marie.getStats().number_of_LinphoneCallUpdating,marie_stat.number_of_LinphoneCallUpdating+1,5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList,&focus.getStats().number_of_LinphoneCallUpdatedByRemote,chloe_stat.number_of_LinphoneCallUpdatedByRemote+1,5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getStats().number_of_LinphoneCallUpdatedByRemote,pauline_stat.number_of_LinphoneCallUpdatedByRemote+1,5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList,&focus.getStats().number_of_LinphoneCallConnected, chloe_stat.number_of_LinphoneCallConnected+1,5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getStats().number_of_LinphoneCallConnected, pauline_stat.number_of_LinphoneCallConnected+1,5000));
-
 		constexpr int noMsg = 10;
 		LinphoneChatMessage *message[noMsg];
 		// Marie sends messages
@@ -633,8 +626,6 @@ static void group_chat_room_server_admin_managed_messages (void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived, pauline_stat.number_of_LinphoneMessageReceived + noMsg,11000));
 
 		// Check that the message has been delivered to Pauline
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneMessageDeliveredToUser, chloe_stat.number_of_LinphoneMessageDeliveredToUser + noMsg, 10000));
-
 		for (int i=0; i<noMsg; i++) {
 			const auto msg = message[i];
 			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([msg] {
@@ -652,14 +643,12 @@ static void group_chat_room_server_admin_managed_messages (void) {
 
 		// Pauline marks the message as read, check that the state is now displayed on Marie's side
 		linphone_chat_room_mark_as_read(paulineCr);
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageDisplayed, pauline_stat.number_of_LinphoneMessageDisplayed + noMsg, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDisplayed, marie_stat.number_of_LinphoneMessageDisplayed + noMsg, 10000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, marie_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, chloe_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, pauline_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageEphemeralTimerStarted, marie_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg, 10000));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneMessageEphemeralTimerStarted, chloe_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageEphemeralTimerStarted, pauline_stat.number_of_LinphoneMessageEphemeralTimerStarted + noMsg, 10000));
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomEphemeralDeleted, marie_stat.number_of_LinphoneChatRoomEphemeralDeleted + noMsg, 10000));
