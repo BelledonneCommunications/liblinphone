@@ -2547,7 +2547,7 @@ shared_ptr<EventLog> MainDb::getEvent (const unique_ptr<MainDb> &mainDb, const l
 		*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent),
 			soci::into(row), soci::use(storageId);
 
-		ConferenceId conferenceId(IdentityAddress(row.get<string>(16)), IdentityAddress(row.get<string>(17)));
+		ConferenceId conferenceId(ConferenceAddress(row.get<string>(16)), ConferenceAddress(row.get<string>(17)));
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom)
 			return shared_ptr<EventLog>();

@@ -328,6 +328,9 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	d->isEphemeral = (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged);
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
+		if (params->getEphemeralLifetime() > 0) {
+			d->isEphemeral = true;
+		}
 	}
 
 	setConferenceId(conferenceId);
@@ -1146,7 +1149,7 @@ void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode,
 			csp->addCustomHeader("Ephemerable", (ephemeralEnabled()) ? "true" : "false");
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 		}
-		session->update(csp);
+		session->update(csp, getSubject());
 	} else {
 		lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
 	}
@@ -1188,9 +1191,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 		if (getState() == ConferenceInterface::State::Created) {
 			shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 			auto csp = session->getParams()->clone();
-			csp->removeCustomHeader("Ephemerable");
 			csp->removeCustomHeader("Ephemeral-Life-Time");
-			csp->addCustomHeader("Ephemerable", (ephemeralEnabled()) ? "true" : "false");
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 			session->update(csp);
 		} else {
