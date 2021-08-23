@@ -975,7 +975,7 @@ static void process_response_from_post_file_log_collection(void *data, const bel
 			char *first_part_header;
 			belle_sip_user_body_handler_t *first_part_bh;
 
-			linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateInProgress, NULL);
+			linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateInProgress, "In progress");
 
 			/* Temporary storage for the Content-disposition header value */
 			first_part_header = belle_sip_strdup_printf("form-data; name=\"File\"; filename=\"%s\"", linphone_content_get_name(core->log_collection_upload_information));
@@ -1163,6 +1163,8 @@ void linphone_core_upload_log_collection(LinphoneCore *core) {
 			msg = "Log collection upload server not set";
 		} else if (liblinphone_log_collection_state == LinphoneLogCollectionDisabled) {
 			msg = "Log collection is disabled";
+		} else {
+			msg = "Unknown error";
 		}
 		linphone_core_notify_log_collection_upload_state_changed(core, LinphoneCoreLogCollectionUploadStateNotDelivered, msg);
 	}
