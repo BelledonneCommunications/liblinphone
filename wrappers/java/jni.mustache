@@ -244,6 +244,9 @@ public:
 		ms_factory_class = (jclass)env->NewGlobalRef(env->FindClass("org/linphone/mediastream/Factory"));
 		ms_factory_class_constructor = env->GetMethodID(ms_factory_class, "<init>", "(J)V");
 
+		throwable_class = (jclass)env->NewGlobalRef(env->FindClass("java/lang/Throwable"));
+		throwable_to_string = env->GetMethodID(throwable_class, "toString", "()Ljava/lang/String;");
+
 		{{#objects}}
 		{{cPrefix}}_class = (jclass)env->NewGlobalRef(env->FindClass("{{jniPath}}{{classImplName}}"));
 		{{cPrefix}}_class_constructor = env->GetMethodID({{cPrefix}}_class, "<init>", "(JZ)V");
@@ -257,11 +260,12 @@ public:
 
 	~LinphoneJavaBindings() {
 		JNIEnv *env = ms_get_jni_env();
-                if (!env) {
-                        bctbx_error("cannot attach VM");
-                }
+		if (!env) {
+			bctbx_error("cannot attach VM");
+		}
 
 		env->DeleteGlobalRef(ms_factory_class);
+		env->DeleteGlobalRef(throwable_class);
 
 		{{#objects}}
 		env->DeleteGlobalRef({{cPrefix}}_class);
@@ -274,6 +278,9 @@ public:
 
 	jclass ms_factory_class;
 	jmethodID ms_factory_class_constructor;
+
+	jclass throwable_class;
+	jmethodID throwable_to_string;
 
 	{{#objects}}
 	jclass {{cPrefix}}_class;
@@ -356,12 +363,18 @@ JNIEXPORT jboolean JNICALL Java_{{jniPrefix}}{{classImplName}}_unref(JNIEnv* env
 {{/objects}}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static inline void handle_possible_java_exception(JNIEnv *env, jobject listener)
+static inline void handle_possible_java_exception(JNIEnv *env, jobject listener, const char *listener_name)
 {
 	if (env->ExceptionCheck()) {
 		env->ExceptionDescribe();
+		jthrowable exception = env->ExceptionOccurred();
 		env->ExceptionClear();
-		bctbx_error("Listener %p raised an exception", listener);
+
+		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+		jstring toString = (jstring) env->CallObjectMethod(exception, ljb->throwable_to_string);
+		const char * toStringChar = GetStringUTFChars(env, toString);
+		bctbx_error("Listener %s [%p] raised an exception: %s", listener_name, listener, toStringChar);
+		ReleaseStringUTFChars(env, toString, toStringChar);
 	}
 }
 
@@ -458,7 +471,7 @@ static {{return}} {{callbackName}}({{params}}) {
 	}
 	{{/jstrings}}
 
-	handle_possible_java_exception(env, jlistener);
+	//handle_possible_java_exception(env, jlistener, "{{callbackName}}");
 	{{#hasReturn}}
 	return c_upcall_result;
 	{{/hasReturn}}
