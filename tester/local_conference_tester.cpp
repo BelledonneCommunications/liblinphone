@@ -569,7 +569,11 @@ static void group_chat_room_server_admin_managed_messages (void) {
 		
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
-		
+
+		// Enable IMDN
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
+
 		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		coresList = bctbx_list_append(coresList, pauline.getLc());
@@ -640,6 +644,8 @@ static void group_chat_room_server_admin_managed_messages (void) {
 		bctbx_list_t *paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), noMsg, int, "%i");
 		set_ephemeral_cbs(paulineHistory);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDeliveredToUser, marie_stat.number_of_LinphoneMessageDeliveredToUser + noMsg, 10000));
 
 		// Pauline marks the message as read, check that the state is now displayed on Marie's side
 		linphone_chat_room_mark_as_read(paulineCr);

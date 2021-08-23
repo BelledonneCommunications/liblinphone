@@ -1184,6 +1184,11 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 		return;
 	}
 
+	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(getCore()->getCCore());
+	if (!linphone_im_notif_policy_get_send_imdn_displayed(policy) && ephem) {
+		lWarning() << "Ephemeral messages may not work correctly because IMDN messages are disabled";
+	}
+
 	const auto & lifetime = d->params->getEphemeralLifetime();
 	if (d->params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
 		if (!getMe()->isAdmin()) {
