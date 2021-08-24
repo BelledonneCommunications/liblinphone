@@ -453,21 +453,12 @@ LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, Linph
 	return check_has_chat_room_client_side(lcs, lcm, initialStats, confAddr, subject, participantNumber, isAdmin);
 }
 
-LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted, LinphoneChatRoomEphemeralMode mode) {
-	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
-	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lcm->lc);
+void check_create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, LinphoneChatRoom *chatRoom, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize) {
 
-	linphone_chat_room_params_enable_encryption(params, encrypted);
-	linphone_chat_room_params_set_ephemeral_mode(params, mode);
-	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
-	linphone_chat_room_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
-	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
-	linphone_chat_room_params_unref(params);
-
-	if (!chatRoom) return NULL;
-
+	const LinphoneChatRoomParams * params = linphone_chat_room_get_current_params(chatRoom);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateInstantiated, initialStats->number_of_LinphoneConferenceStateInstantiated + 1, 100));
-	if (encrypted) {
+	BC_ASSERT_PTR_NOT_NULL(params);
+	if (linphone_chat_room_params_encryption_enabled(params)) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(chatRoom), LinphoneChatRoomSecurityLevelEncrypted, LinphoneChatRoomSecurityLevel, "%i");
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesEncrypted);
 	}
@@ -485,7 +476,8 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreated, initialStats->number_of_LinphoneConferenceStateCreated + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom),
-			(expectedParticipantSize >= 0) ? expectedParticipantSize : participantsAddressesSize, int, "%d");
+			(expectedParticipantSize >= 0) ? expectedParticipantSize : ((int)bctbx_list_size(participantsAddresses)), int, "%d");
+
 		if (participant)
 			BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
 	}
@@ -499,9 +491,34 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	participantsAddresses = NULL;
+}
+
+LinphoneChatRoom * create_chat_room_client_side_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params) {
+	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
+
+	check_create_chat_room_client_side(lcs, lcm, chatRoom, initialStats, participantsAddresses, initialSubject, (int) bctbx_list_size(participantsAddresses));
 
 	return chatRoom;
 }
+
+LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted, LinphoneChatRoomEphemeralMode mode) {
+	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lcm->lc);
+
+	linphone_chat_room_params_enable_encryption(params, encrypted);
+	linphone_chat_room_params_set_ephemeral_mode(params, mode);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+	linphone_chat_room_params_enable_group(params, participantsAddressesSize > 1 ? TRUE : FALSE);
+	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
+	linphone_chat_room_params_unref(params);
+
+	if (!chatRoom) return NULL;
+
+	check_create_chat_room_client_side(lcs, lcm, chatRoom, initialStats, participantsAddresses, initialSubject, expectedParticipantSize);
+
+	return chatRoom;
+}
+
 
 LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params) {
 	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
@@ -510,31 +527,8 @@ LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreMa
 
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
 
-	if (!chatRoom) return NULL;
+	check_create_chat_room_client_side(lcs, lcm, chatRoom, initialStats, participantsAddresses, initialSubject, participantsAddressesSize);
 
-	if (linphone_chat_room_params_encryption_enabled(params))
-		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesEncrypted);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateInstantiated, initialStats->number_of_LinphoneConferenceStateInstantiated + 1, 100));
-
-	if (linphone_chat_room_params_get_backend(params) == LinphoneChatRoomBackendFlexisipChat) {
-		// Check that the chat room is correctly created on Marie's side and that the participants are added
-		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom), participantsAddressesSize, int, "%d");
-		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreationPending, initialStats->number_of_LinphoneConferenceStateCreationPending + 1, 10000));
-		LinphoneParticipant *participant = linphone_chat_room_get_me(chatRoom);
-		BC_ASSERT_PTR_NOT_NULL(participant);
-		if (participantsAddressesSize == 0) {
-			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreationFailed, initialStats->number_of_LinphoneConferenceStateCreationFailed + 1, 10000));
-			if (participant)
-				BC_ASSERT_FALSE(linphone_participant_is_admin(participant));
-		} else {
-			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreated, initialStats->number_of_LinphoneConferenceStateCreated + 1, 10000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, 5000));
-			if (participant)
-				BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
-		}
-		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), initialSubject);
-	}
 	return chatRoom;
 }
 

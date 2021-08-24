@@ -528,9 +528,9 @@ string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool 
 	stringstream notify;
 	Xsd::XmlSchema::NamespaceInfomap map;
 	map[""].name = "urn:ietf:params:xml:ns:conference-info";
-	map["customns"].name = "urn:ietf:params:xml:ns:conference-info-custom";
+//	map["customns"].name = "urn:ietf:params:xml:ns:conference-info-custom";
 	serializeConferenceInfo(notify, confInfo, map);
-	notify << std::string("<customns:subject>Colleagues</customns:subject>");
+//	notify << std::string("<customns:subject>Colleagues</customns:subject>");
 	return notify.str();
 }
 
