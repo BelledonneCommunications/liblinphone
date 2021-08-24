@@ -200,7 +200,8 @@ namespace {
 			EventLog::Type::ConferenceEphemeralMessageManagedByAdmin,
 			EventLog::Type::ConferenceEphemeralMessageManagedByParticipants,
 			EventLog::Type::ConferenceEphemeralMessageEnabled,
-			EventLog::Type::ConferenceEphemeralMessageDisabled
+			EventLog::Type::ConferenceEphemeralMessageDisabled,
+			EventLog::Type::ConferenceEphemeralLifetimeChanged
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
@@ -714,6 +715,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
 
+		case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 		case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 		case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
 		case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
@@ -2381,6 +2383,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				eventId = d->insertConferenceSubjectEvent(eventLog);
 				break;
 
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
@@ -2439,6 +2442,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceAvailableMediaChanged:
 			case EventLog::Type::ConferenceSubjectChanged:
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
