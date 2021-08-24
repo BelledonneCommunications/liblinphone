@@ -30,6 +30,8 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 bool_t check_ice_sdp (LinphoneCall *call);
 bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype);
 void check_media_stream(LinphoneCall *call, bool_t is_null);
+void check_local_desc_stream (LinphoneCall *call);
+void check_result_desc_rtp_rtcp_ports (LinphoneCall *call, int rtp_port, int rtcp_port);
 
 #ifdef __cplusplus
 }
