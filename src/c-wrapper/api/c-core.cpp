@@ -54,11 +54,13 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 )
 
 static void _linphone_core_constructor (LinphoneCore *lc) {
+	bctbx_message("Creating LinphoneCore [%p]", lc);
 	lc->state = LinphoneGlobalOff;
 	new(&lc->cache) LinphoneCore::Cache();
 }
 
 static void _linphone_core_destructor (LinphoneCore *lc) {
+	bctbx_message("Destroying LinphoneCore [%p]", lc);
 	lc->cache.~Cache();
 	_linphone_core_uninit(lc);
 }
