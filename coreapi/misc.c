@@ -206,7 +206,7 @@ int linphone_core_get_edge_ptime(LinphoneCore *lc){
 void linphone_core_resolve_stun_server(LinphoneCore *lc) {
 	auto proxies = linphone_core_get_proxy_config_list(lc);
 	for (auto item = proxies; item; item = bctbx_list_next(item)) {
-		auto proxy = reinterpret_cast<LinphoneProxyConfig *>(bctbx_list_get_data(item));
+		auto proxy = static_cast<LinphoneProxyConfig *>(bctbx_list_get_data(item));
 		auto policy = linphone_proxy_config_get_nat_policy(proxy);
 		if (policy)
 			linphone_nat_policy_resolve_stun_server(policy);

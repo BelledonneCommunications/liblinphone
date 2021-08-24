@@ -647,7 +647,7 @@ void linphone_core_remove_dependent_account(LinphoneCore *lc, LinphoneAccount *a
 	bctbx_list_t *it = lc->sip_conf.accounts;
 
 	for (;it;it = it->next) {
-		LinphoneAccount *tmp = reinterpret_cast<LinphoneAccount *>(it->data);
+		LinphoneAccount *tmp = static_cast<LinphoneAccount *>(it->data);
 		if (tmp != account && linphone_account_get_dependency(tmp) == account) {
 		 	ms_message("Updating dependent account [%p] caused by removal of 'master' account idkey[%s]"
 			 	, tmp
@@ -723,7 +723,7 @@ LinphoneProxyConfig *linphone_core_get_proxy_config_by_idkey(LinphoneCore *lc, c
 	if (idkey == NULL || lc == NULL) return NULL;
 	bctbx_list_t *list = lc->sip_conf.proxies;
 	for (;list!=NULL;list=list->next) {
-		LinphoneProxyConfig *tmp = reinterpret_cast<LinphoneProxyConfig *>(list->data);
+		LinphoneProxyConfig *tmp = static_cast<LinphoneProxyConfig *>(list->data);
 		if (tmp) {
 			const char *proxy_idkey = linphone_proxy_config_get_idkey(tmp);
 			if (proxy_idkey && strcmp(idkey, proxy_idkey) == 0) return tmp;
@@ -752,7 +752,7 @@ void linphone_core_set_default_proxy_config(LinphoneCore *lc, LinphoneProxyConfi
 
 void linphone_core_set_default_proxy_index(LinphoneCore *lc, int index){
 	if (index<0) linphone_core_set_default_proxy_config(lc,NULL);
-	else linphone_core_set_default_proxy_config(lc,reinterpret_cast<LinphoneProxyConfig *>(bctbx_list_nth_data(lc->sip_conf.proxies,index)));
+	else linphone_core_set_default_proxy_config(lc,static_cast<LinphoneProxyConfig *>(bctbx_list_nth_data(lc->sip_conf.proxies,index)));
 }
 
 int linphone_core_get_default_proxy(LinphoneCore *lc, LinphoneProxyConfig **config){
@@ -863,14 +863,14 @@ const bctbx_list_t *linphone_core_get_account_list(const LinphoneCore *lc){
 
 void linphone_core_set_default_account_index(LinphoneCore *lc, int index){
 	if (index<0) linphone_core_set_default_account(lc,NULL);
-	else linphone_core_set_default_account(lc,reinterpret_cast<LinphoneAccount *>(bctbx_list_nth_data(lc->sip_conf.accounts,index)));
+	else linphone_core_set_default_account(lc,static_cast<LinphoneAccount *>(bctbx_list_nth_data(lc->sip_conf.accounts,index)));
 }
 
 LinphoneAccount *linphone_core_get_account_by_idkey(LinphoneCore *lc, const char *idkey) {
 	if (idkey == NULL || lc == NULL) return NULL;
 	bctbx_list_t *list = lc->sip_conf.accounts;
 	for (;list!=NULL;list=list->next) {
-		LinphoneAccount *tmp = reinterpret_cast<LinphoneAccount *>(list->data);
+		LinphoneAccount *tmp = static_cast<LinphoneAccount *>(list->data);
 		if (tmp) {
 			const char *account_idkey = linphone_account_params_get_idkey(linphone_account_get_params(tmp));
 			if (account_idkey && strcmp(idkey, account_idkey) == 0) return tmp;

@@ -2967,6 +2967,7 @@ end:
 }
 
 
+
 static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc, bool_t plays_nothing) {
 	LinphoneCoreManager* marie = linphone_core_manager_new(marie_rc);
 	LinphoneCoreManager* pauline = linphone_core_manager_new(pauline_rc);

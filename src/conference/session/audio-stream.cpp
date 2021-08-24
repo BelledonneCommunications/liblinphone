@@ -550,7 +550,7 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 		if (enabled && gains) {
 			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
 			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {
-				MSEqualizerGain *g = reinterpret_cast<MSEqualizerGain *>(bctbx_list_get_data(it));
+				MSEqualizerGain *g = static_cast<MSEqualizerGain *>(bctbx_list_get_data(it));
 				lInfo() << "Read microphone equalizer gains: " << g->frequency << "(~" << g->width << ") --> " << g->gain;
 				ms_filter_call_method(f, MS_EQUALIZER_SET_GAIN, g);
 			}
@@ -566,7 +566,7 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 		if (enabled && gains) {
 			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
 			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {
-				MSEqualizerGain *g = reinterpret_cast<MSEqualizerGain *>(bctbx_list_get_data(it));
+				MSEqualizerGain *g = static_cast<MSEqualizerGain *>(bctbx_list_get_data(it));
 				lInfo() << "Read speaker equalizer gains: " << g->frequency << "(~" << g->width << ") --> " << g->gain;
 				ms_filter_call_method(f, MS_EQUALIZER_SET_GAIN, g);
 			}

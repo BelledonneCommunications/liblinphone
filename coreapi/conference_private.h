@@ -150,8 +150,8 @@ public:
 	virtual void join (const IdentityAddress &participantAddress) override;
 
 	bctbx_list_t *getCallbacksList () const;
-	LinphoneConferenceCbs *getCurrentCbs () const;
-	void setCurrentCbs (LinphoneConferenceCbs *cbs);
+	LinphoneConferenceCbs *getCurrentCallbacks () const;
+	void setCurrentCallbacks (LinphoneConferenceCbs *cbs);
 	void addCallbacks (LinphoneConferenceCbs *cbs);
 	void removeCallbacks (LinphoneConferenceCbs *cbs);
 

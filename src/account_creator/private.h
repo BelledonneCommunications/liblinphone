@@ -26,15 +26,15 @@
 #include "linphone/account_creator.h"
 
 #define NOTIFY_IF_EXIST_ACCOUNT_CREATOR(functionName, ...) \
-	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_account_creator_get_callbacks_list(creator)); \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy_with_data(linphone_account_creator_get_callbacks_list(creator), (bctbx_list_copy_func)belle_sip_object_ref); \
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		linphone_account_creator_set_current_callbacks(creator, reinterpret_cast<LinphoneAccountCreatorCbs *>(bctbx_list_get_data(it))); \
+		linphone_account_creator_set_current_callbacks(creator, static_cast<LinphoneAccountCreatorCbs *>(bctbx_list_get_data(it))); \
 		LinphoneAccountCreatorCbsStatusCb cb = linphone_account_creator_cbs_get_ ## functionName (linphone_account_creator_get_current_callbacks(creator)); \
 		if (cb) \
 			cb(__VA_ARGS__); \
 	} \
 	linphone_account_creator_set_current_callbacks(creator, nullptr); \
-	bctbx_list_free(callbacksCopy);
+	bctbx_list_free_with_data(callbacksCopy, (bctbx_list_free_func) belle_sip_object_unref);
 
 struct _LinphoneAccountCreatorService {
 	belle_sip_object_t base;

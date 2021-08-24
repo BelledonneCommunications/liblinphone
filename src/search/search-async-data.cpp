@@ -33,7 +33,7 @@ SearchAsyncData::CbData::~CbData(){
 void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data ){
 	SearchAsyncData::CbData * cbData = (SearchAsyncData::CbData*)data;
 	for (const bctbx_list_t *f = friends ; f != nullptr ; f = bctbx_list_next(f)) {
-		LinphoneAddress *addr = reinterpret_cast<LinphoneAddress*>(f->data);
+		LinphoneAddress *addr = static_cast<LinphoneAddress*>(f->data);
 		if (addr) {
 			if (cbData->mFilter.empty() && cbData->mWithDomain.empty()) {
 				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr));

@@ -392,14 +392,6 @@ void linphone_conference_set_ID(LinphoneConference *conference, const char *conf
 	MediaConference::Conference::toCpp(conference)->setID(conferenceID);
 }
 
-#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-for (bctbx_list_t *it = MediaConference::Conference::toCpp(conference)->getCallbacksList(); it; it = bctbx_list_next(it)) { \
-	MediaConference::Conference::toCpp(conference)->setCurrentCbs(reinterpret_cast<LinphoneConferenceCbs *>(bctbx_list_get_data(it))); \
-	LinphoneConferenceCbs ## cbName ## Cb cb = linphone_conference_cbs_get_ ## functionName (MediaConference::Conference::toCpp(conference)->getCurrentCbs()); \
-	if (cb) \
-		cb(__VA_ARGS__); \
-}
-
 void linphone_conference_notify_audio_device_changed(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
 	LinphoneCore * core = MediaConference::Conference::toCpp(conference)->getCore()->getCCore();
 	linphone_core_notify_audio_device_changed(core, audio_device);
