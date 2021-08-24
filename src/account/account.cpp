@@ -39,17 +39,21 @@ Account::Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params) {
 	mCore = lc;
 	mParams = params;
 	applyParamsChanges();
+	bctbx_message("LinphoneAccount[%p] created with params", toC());
 }
 
 Account::Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config)
 	: Account(lc, params) {
 	mConfig = config;
+	bctbx_message("LinphoneAccount[%p] created with proxy config", toC());
 }
 
 Account::Account (const Account &other) : HybridObject(other) {
+	bctbx_message("LinphoneAccount[%p] created from copy constructor", toC());
 }
 
 Account::~Account () {
+	bctbx_message("LinphoneAccount[%p] destroyed", toC());
 	if (mSentHeaders) sal_custom_header_free(mSentHeaders);
 	if (mPendingContactAddress) linphone_address_unref(mPendingContactAddress);
 	setDependency(nullptr);
@@ -313,7 +317,7 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 	bctbx_list_t *it = mCore->sip_conf.accounts;
 
 	for (;it;it = it->next) {
-		LinphoneAccount *tmp = reinterpret_cast<LinphoneAccount *>(it->data);
+		LinphoneAccount *tmp = static_cast<LinphoneAccount *>(it->data);
 		auto params = Account::toCpp(tmp)->mParams;
 		lInfo() << "updateDependentAccount(): " << this << " is registered, checking for [" << tmp
 			<< "] ->dependency=" << linphone_account_get_dependency(tmp);

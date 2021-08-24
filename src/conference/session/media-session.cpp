@@ -85,7 +85,7 @@ const std::string & MediaSessionPrivate::getDtlsFingerprint()const{
 }
 
 void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm, const char *nonce, const char **username, const char **password, const char **ha1) {
-	MediaSessionPrivate *msp = reinterpret_cast<MediaSessionPrivate *>(userData);
+	MediaSessionPrivate *msp = static_cast<MediaSessionPrivate *>(userData);
 	msp->stunAuthRequestedCb(realm, nonce, username, password, ha1);
 }
 
@@ -727,7 +727,7 @@ void MediaSessionPrivate::extRendererCb (void *userData, const MSPicture *local,
 
 
 int MediaSessionPrivate::sendDtmf (void *data, unsigned int revents) {
-	MediaSession *session = reinterpret_cast<MediaSession *>(data);
+	MediaSession *session = static_cast<MediaSession *>(data);
 	return session->getPrivate()->sendDtmf();
 }
 
@@ -2558,7 +2558,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, std::shared_ptr<Partic
 	d->listener = listener;
 
 	if (params) {
-		d->setParams(new MediaSessionParams(*(reinterpret_cast<const MediaSessionParams *>(params))));
+		d->setParams(new MediaSessionParams(*(static_cast<const MediaSessionParams *>(params))));
 	} else {
 		d->setParams(new MediaSessionParams());
 	}
