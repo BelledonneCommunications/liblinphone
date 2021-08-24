@@ -156,18 +156,21 @@ const bctbx_list_t *linphone_account_get_callbacks_list(const LinphoneAccount *a
 }
 
 #define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-	bctbx_list_t *callbacksCopy = bctbx_list_copy(Account::toCpp(account)->getCallbacksList()); \
-	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		Account::toCpp(account)->setCurrentCallbacks(reinterpret_cast<LinphoneAccountCbs *>(bctbx_list_get_data(it))); \
-		LinphoneAccountCbs ## cbName ## Cb cb = linphone_account_cbs_get_ ## functionName (Account::toCpp(account)->getCurrentCallbacks()); \
-		if (cb) \
-			cb(__VA_ARGS__); \
-	} \
-	Account::toCpp(account)->setCurrentCallbacks(nullptr); \
-	bctbx_list_free(callbacksCopy);
+	do{ \
+		bctbx_list_t *callbacksCopy = bctbx_list_copy_with_data(Account::toCpp(account)->getCallbacksList(), (bctbx_list_copy_func)belle_sip_object_ref); \
+		for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+			LinphoneAccountCbs *cbs = static_cast<LinphoneAccountCbs *>(bctbx_list_get_data(it)); \
+			Account::toCpp(account)->setCurrentCallbacks(cbs); \
+			LinphoneAccountCbs ## cbName ## Cb cb = linphone_account_cbs_get_ ## functionName (cbs); \
+			if (cb) \
+				cb(__VA_ARGS__); \
+		} \
+		Account::toCpp(account)->setCurrentCallbacks(nullptr); \
+		bctbx_list_free_with_data(callbacksCopy, (bctbx_list_free_func)belle_sip_object_unref);\
+	}while(0)
 
 void _linphone_account_notify_registration_state_changed(LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
-	NOTIFY_IF_EXIST(RegistrationStateChanged, registration_state_changed, account, state, message)
+	NOTIFY_IF_EXIST(RegistrationStateChanged, registration_state_changed, account, state, message);
 }
 
 bool_t linphone_account_is_phone_number(LinphoneAccount *account, const char *username) {
