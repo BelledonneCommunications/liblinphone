@@ -521,7 +521,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
 			stream.ice_candidates.clear();
 			for (int j = 0; j < (int)bctbx_list_size(cl->local_candidates); j++) {
-				IceCandidate *iceCandidate = reinterpret_cast<IceCandidate *>(bctbx_list_nth_data(cl->local_candidates, j));
+				IceCandidate *iceCandidate = static_cast<IceCandidate *>(bctbx_list_nth_data(cl->local_candidates, j));
 				std::string defaultAddr = std::string();
 				int defaultPort = 0;
 				if (iceCandidate->componentID == 1) {
