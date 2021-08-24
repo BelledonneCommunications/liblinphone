@@ -277,7 +277,6 @@ set(SOURCE_FILES_C
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
-	local_conference_tester.cpp
 	shared_core_tester.c
 	video_tester.c
 )
@@ -288,6 +287,7 @@ if(ENABLE_ADVANCED_IM)
 		group_chat_tester.c
 		group_chat_secure_tester.c
 		external_domain_tester.c
+		local_conference_tester.cpp
 	)
 
 	if(ENABLE_LIME_X3DH)

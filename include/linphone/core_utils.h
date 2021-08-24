@@ -61,7 +61,7 @@ typedef void (*LinphoneEcCalibrationAudioUninit)(void *data);
  * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler automatically.
  * @deprecated 16/10/2017 Use #linphone_core_start_echo_canceller_calibration() instead. To set the callbacks create or get an already instantiated
  * #LinphoneCoreCbs and call #linphone_core_cbs_set_ec_calibration_result(), #linphone_core_cbs_set_ec_calibration_audio_init() and
- * #linphone_core_cbs_set_ec_callibration_audio_uninit(). Deprecated since 2017-10-16.
+ * #linphone_core_start_echo_calibration(). Deprecated since 2017-10-16.
  * @ingroup misc
  * @donotwrap
 **/

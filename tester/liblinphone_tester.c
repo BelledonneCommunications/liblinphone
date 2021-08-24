@@ -480,7 +480,6 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&utils_test_suite);
 	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);
 	bc_tester_add_suite(&shared_core_test_suite);
-	bc_tester_add_suite(&external_domain_test_suite);
 	bc_tester_add_suite(&potential_configuration_graph_test_suite);
 }
 
