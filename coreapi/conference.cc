@@ -435,11 +435,11 @@ bctbx_list_t *Conference::getCallbacksList () const {
 	return mCallbacks;
 }
 
-LinphoneConferenceCbs *Conference::getCurrentCbs () const{
+LinphoneConferenceCbs *Conference::getCurrentCallbacks () const{
 	return mCurrentCbs;
 }
 
-void Conference::setCurrentCbs (LinphoneConferenceCbs *cbs) {
+void Conference::setCurrentCallbacks (LinphoneConferenceCbs *cbs) {
 	mCurrentCbs = cbs;
 }
 

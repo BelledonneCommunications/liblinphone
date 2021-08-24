@@ -595,7 +595,7 @@ void _linphone_event_notify_notify_response(LinphoneEvent *lev) {
 
 	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_event_get_callbacks_list(lev));
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
-		linphone_event_set_current_callbacks(lev, reinterpret_cast<LinphoneEventCbs *>(bctbx_list_get_data(it)));
+		linphone_event_set_current_callbacks(lev, static_cast<LinphoneEventCbs *>(bctbx_list_get_data(it)));
 		LinphoneEventCbsNotifyResponseCb callback = linphone_event_cbs_get_notify_response(linphone_event_get_current_callbacks(lev));
 		if (callback) {
 			callback(lev);
