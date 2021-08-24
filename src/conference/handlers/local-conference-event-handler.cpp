@@ -528,7 +528,9 @@ string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool 
 	stringstream notify;
 	Xsd::XmlSchema::NamespaceInfomap map;
 	map[""].name = "urn:ietf:params:xml:ns:conference-info";
+	map["customns"].name = "urn:ietf:params:xml:ns:conference-info-custom";
 	serializeConferenceInfo(notify, confInfo, map);
+	notify << std::string("<customns:subject>Colleagues</customns:subject>");
 	return notify.str();
 }
 
@@ -537,6 +539,21 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	confDescr.setSubject(subject);
+	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+	return createNotify(confInfo);
+}
+
+string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & lifetime) {
+	string entity = conf->getConferenceAddress().asString();
+	ConferenceType confInfo = ConferenceType(entity);
+	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
+	std::string keywordList;
+	keywordList += "ephemeral";
+	if (!keywordList.empty()) {
+		KeywordsType keywords(sizeof(char), keywordList.c_str());
+		confDescr.setKeywords(keywords);
+	}
 	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
 
 	return createNotify(confInfo);
@@ -730,7 +747,7 @@ void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<C
 void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifySubjectChanged());
+		notifyAll(createNotifySubjectChanged(event->getSubject()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}
@@ -772,6 +789,15 @@ void LocalConferenceEventHandler::onParticipantDeviceMediaChanged (const std::sh
 		notifyAll(createNotifyParticipantDeviceMediaChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
+	}
+}
+
+void LocalConferenceEventHandler::onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyEphemeralLifetime(event->getEphemeralLifetime()));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of device " << device->getAddress() << " having changed ephemeral lifetime to " << event->getEphemeralLifetime();
 	}
 }
 

@@ -424,17 +424,17 @@ void ServerGroupChatRoomPrivate::handleEphemeralSettingsChange(const shared_ptr<
 	}
 }
 
-void ServerGroupChatRoomPrivate::setEphemeralLifetime(long time, const shared_ptr<CallSession> &session){
+void ServerGroupChatRoomPrivate::setEphemeralLifetime(long lifetime, const shared_ptr<CallSession> &session){
 	L_Q();
-	lInfo() << q << ": New ephemeral time: " << time;
-	params->setEphemeralLifetime(time);
+	lInfo() << q << ": New ephemeral time: " << lifetime;
+	params->setEphemeralLifetime(lifetime);
 
-	for (const auto & participant : q->getConference()->participants) {
-		shared_ptr<CallSession> pSession = participant->getSession();
-		if (pSession != session) {
-// TODO: notify participants of change in lifetime 
-//			notifyEphemerallifetimeChanged();
-		}
+	const auto device = q->getConference()->findParticipantDevice(session);
+	if (device) {
+		time_t creationTime = time(nullptr);
+		q->getConference()->notifyEphemeralChanged(creationTime, false, lifetime, device);
+	} else {
+		lWarning() << "Unable to find device among those of the participants that changed ephemeral message lifetime to " << lifetime;
 	}
 }
 

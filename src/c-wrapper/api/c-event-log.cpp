@@ -56,6 +56,7 @@ static bool isConferenceType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants:
 		case LinphoneEventLogTypeConferenceEphemeralMessageEnabled:
 		case LinphoneEventLogTypeConferenceEphemeralMessageDisabled:
+		case LinphoneEventLogTypeConferenceEphemeralLifetimeChanged:
 			return true;
 
 		default:
