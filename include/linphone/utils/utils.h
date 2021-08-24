@@ -28,7 +28,7 @@
 #include <vector>
 #include <map>
 
-#include "bctoolbox/utils.hh"
+#include <bctoolbox/utils.hh>
 
 #include "linphone/utils/enum-generator.h"
 #include "address/address.h"

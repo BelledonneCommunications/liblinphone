@@ -277,7 +277,6 @@ set(SOURCE_FILES_C
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
-	local_conference_tester.cpp
 	shared_core_tester.c
 	video_tester.c
 )
@@ -288,6 +287,7 @@ if(ENABLE_ADVANCED_IM)
 		group_chat_tester.c
 		group_chat_secure_tester.c
 		external_domain_tester.c
+		local_conference_tester.cpp
 	)
 
 	if(ENABLE_LIME_X3DH)
@@ -408,7 +408,6 @@ bc_apply_compile_flags(SOURCE_FILES_OBJC STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 if(ENABLE_ADVANCED_IM)
 	bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 	bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_CXX STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
-	bc_apply_compile_flags(GROUP_CHAT_BENCHMARK_SOURCE_C STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
 endif()
 
 add_definitions("-DLINPHONE_TESTER")
@@ -522,7 +521,7 @@ if(NOT ANDROID)
 		endif()
 
 		if(ENABLE_ADVANCED_IM)
-			add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C})
+			add_executable(groupchat_benchmark ${GROUP_CHAT_BENCHMARK_HEADERS} ${GROUP_CHAT_BENCHMARK_SOURCE_C} ${GROUP_CHAT_BENCHMARK_SOURCE_CXX})
 			set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 			set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
 			set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
