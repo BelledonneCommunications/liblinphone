@@ -591,11 +591,13 @@ public class {{className}} : LinphoneObject
 		delegateManagers.append(manager)
 		{{c_name}}(cPtr, manager.cPtr)
 		belle_sip_object_unref(UnsafeMutableRawPointer(manager.cPtr))
+		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
 		{{/addListener}}
 		{{#removeListener}}
 		if let index = delegateManagers.firstIndex(where: { $0.delegate === delegate as AnyObject}) {
 			{{c_name}}(cPtr, delegateManagers[index].cPtr)
 			delegateManagers.remove(at: index)
+			belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
 		}
 		{{/removeListener}}
 	}
