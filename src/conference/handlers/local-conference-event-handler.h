@@ -131,6 +131,12 @@ public:
 	* @param[in] device participant device that changed its media capabilities
 	*/
 	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	/*
+	* This fonction is called each time a participant device changes the ephemeral settings
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed the ephemeral settings
+	*/
+	virtual void onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	 * This fonction is called each time the conference transitions to a new state
@@ -147,6 +153,7 @@ private:
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
 	std::string createNotifySubjectChanged (const std::string &subject);
+	std::string createNotifyEphemeralLifetime (const long & lifetime);
 	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
 	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
 

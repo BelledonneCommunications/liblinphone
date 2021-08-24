@@ -927,8 +927,13 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 
 void ClientGroupChatRoom::onConferenceKeywordsChanged (const vector<string> &keywords) {
 	L_D();
+for (const auto & k : keywords) {
+lInfo() << __func__ << " DEBUG DEBUG keyword " << k;
+}
 	if (find(keywords.cbegin(), keywords.cend(), "one-to-one") != keywords.cend())
 		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
+	if (find(keywords.cbegin(), keywords.cend(), "ephemeral") != keywords.cend())
+		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
 }
 
 void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
