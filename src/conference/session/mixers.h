@@ -30,6 +30,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class StreamMixer;
+class MS2VideoStream;
 
 /**
  * Generic listener for audio mixers.
@@ -195,6 +196,7 @@ private:
  * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the mixer class.
  */
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
+	friend MS2VideoStream;
 public:
 	MS2VideoMixer(MixerSession & session);
 	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker);
