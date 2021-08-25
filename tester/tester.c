@@ -762,6 +762,9 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			no_participants_without_event_log++;
 		}
 
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
+		BC_ASSERT_TRUE(linphone_call_get_state(conf_call) == LinphoneCallStreamsRunning);
+
 		// Notify
 		int idx2 = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
