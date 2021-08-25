@@ -23,6 +23,7 @@
 
 #include "core/core-p.h"
 #include "logger/logger.h"
+#include "private.h"
 
 // =============================================================================
 
@@ -88,14 +89,14 @@ const std::string& Recorder::getFile () const {
 
 LinphoneStatus Recorder::start () {
 	ortp_gettimeofday(&mStartTime, nullptr);
-
+	getPlatformHelpers(getCore()->getCCore())->onRecordingStarted();
 	return ms_media_recorder_start(mRecorder) ? 0 : -1;
 }
 
 LinphoneStatus Recorder::pause () {
 	ms_media_recorder_pause(mRecorder);
 	ortp_gettimeofday(&mEndTime, nullptr);
-
+	getPlatformHelpers(getCore()->getCCore())->onRecordingPaused();
 	return 0;
 }
 

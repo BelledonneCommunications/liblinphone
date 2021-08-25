@@ -73,6 +73,9 @@ public:
 
 	void enableAutoIterate (bool autoIterateEnabled) override;
 
+	void onRecordingStarted () const override;
+	void onRecordingPaused () const override;
+
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
 	string getDownloadPath() override;
@@ -117,6 +120,8 @@ private:
 	jmethodID mStopAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mStartAutoIterateId = nullptr;
 	jmethodID mStopAutoIterateId = nullptr;
+	jmethodID mSetAudioManagerCommunicationMode = nullptr;
+	jmethodID mSetAudioManagerNormalMode = nullptr;
 
 	bool mNetworkReachable = false;
 };
@@ -167,6 +172,8 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
 	mStartAutoIterateId = getMethodId(env, klass, "startAutoIterate", "()V");
 	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
+	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
+	mSetAudioManagerNormalMode = getMethodId(env, klass, "setAudioManagerInNormalMode", "()V");
 
 	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
 }
@@ -483,6 +490,24 @@ void AndroidPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
 			} else {
 				env->CallVoidMethod(mJavaCoreManager, mStopAutoIterateId);
 			}
+		}
+	}
+}
+
+void AndroidPlatformHelpers::onRecordingStarted() const {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mSetAudioManagerCommunicationMode);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::onRecordingPaused() const {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mSetAudioManagerNormalMode);
 		}
 	}
 }
