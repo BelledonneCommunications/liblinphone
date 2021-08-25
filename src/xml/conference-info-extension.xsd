@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="linphone:xml:ns:conference-info-extension"
+	xmlns:tns="linphone:xml:ns:conference-info-extension"
+	xmlns="linphone:xml:ns:conference-info-extension"
+	elementFormDefault="qualified"
+	attributeFormDefault="unqualified">
+	<!--
+		conference info extension
+	-->
+	<xs:element name="conference-info-extension" type="tns:conference-type-extension"/>
+		<xs:complexType name="conference-type-extension">
+			<xs:sequence>
+				<xs:element name="ephemeral" type="tns:ephemeral-type"/>
+			</xs:sequence>
+			<xs:anyAttribute namespace="##other" processContents="lax"/>
+		</xs:complexType>
+
+		<xs:complexType name="ephemeral-type">
+			<xs:sequence>
+				<xs:element name="lifetime" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+
+</xs:schema>
