@@ -218,8 +218,8 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
         int result = AudioManagerCompat.requestAudioFocus(mAudioManager, mCallRequest);
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            Log.i("[Audio Helper] Call audio focus request granted, setting AudioManager in MODE_IN_COMMUNICATION");
-            mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+            Log.i("[Audio Helper] Call audio focus request granted");
+            setAudioManagerInCommunicationMode();
         } else if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
             Log.w("[Audio Helper] Call audio focus request failed");
         } else if (result == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
@@ -230,9 +230,9 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     public void releaseCallAudioFocus() {
         if (mCallRequest != null) {
             AudioManagerCompat.abandonAudioFocusRequest(mAudioManager, mCallRequest);
-            Log.i("[Audio Helper] Call audio focus request abandonned, restoring AudioManager mode to MODE_NORMAL");
+            Log.i("[Audio Helper] Call audio focus request abandonned");
             mCallRequest = null;
-            mAudioManager.setMode(AudioManager.MODE_NORMAL);
+            setAudioManagerInNormalMode();
         } else {
             Log.i("[Audio Helper] Call audio focus request was already abandonned");
         }
@@ -258,6 +258,16 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 break;
         }
     }
+
+	public void setAudioManagerInCommunicationMode() {
+		Log.i("[Audio Helper] Setting audio manager in communication mode");
+		mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+	}
+
+	public void setAudioManagerInNormalMode() {
+		Log.i("[Audio Helper] Setting audio manager in normal mode");
+		mAudioManager.setMode(AudioManager.MODE_NORMAL);
+	}
 
     private void routeAudioToEarpiece() {
         // Let's restore the default output device before the echo calibration or test

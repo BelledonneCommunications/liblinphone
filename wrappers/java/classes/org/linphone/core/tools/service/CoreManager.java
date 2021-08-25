@@ -343,13 +343,15 @@ public class CoreManager {
         if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
             Log.i("[Core Manager] Bluetooth headset state changed, waiting for 500ms before reloading sound devices");
             final Handler handler = new Handler(Looper.getMainLooper());
-			handler.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					Log.i("[Core Manager] Reloading sound devices");
-					mCore.reloadSoundDevices();
-				}
-			}, 500);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i("[Core Manager] Reloading sound devices");
+                    if (mCore != null) {
+                        mCore.reloadSoundDevices();
+                    }
+                }
+            }, 500);
         } else {
             Log.w("[Core Manager] Bluetooth headset state changed but current global state is ", globalState.name(), ", skipping...");
         }
@@ -360,13 +362,15 @@ public class CoreManager {
         if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
             Log.i("[Core Manager] Headset state changed, waiting for 500ms before reloading sound devices");
             final Handler handler = new Handler(Looper.getMainLooper());
-			handler.postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					Log.i("[Core Manager] Reloading sound devices");
-					mCore.reloadSoundDevices();
-				}
-			}, 500);
+            handler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i("[Core Manager] Reloading sound devices");
+                    if (mCore != null) {
+                        mCore.reloadSoundDevices();
+                    }
+                }
+            }, 500);
         } else {
             Log.w("[Core Manager] Headset state changed but current global state is ", globalState.name(), ", skipping...");
         }
@@ -390,8 +394,18 @@ public class CoreManager {
         int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
-        updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
+        if (mCore != null) {
+            updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
+        }
     }
+
+	public void setAudioManagerInCommunicationMode() {
+		if (mAudioHelper != null) mAudioHelper.setAudioManagerInCommunicationMode();
+	}
+
+	public void setAudioManagerInNormalMode() {
+		if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
+	}
 
     private Class getServiceClass() {
         // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one

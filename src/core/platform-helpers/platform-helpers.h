@@ -94,6 +94,9 @@ public:
 	virtual void didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) = 0;
 	virtual void enableAutoIterate (bool autoIterateEnabled) = 0;
 
+	virtual void onRecordingStarted () const = 0;
+	virtual void onRecordingPaused () const = 0;
+
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
 
@@ -155,6 +158,9 @@ public:
 	void didRegisterForRemotePush(void *token) override {};
 	void didRegisterForRemotePushWithStringifiedToken(const char *tokenStr) override {};
 	void enableAutoIterate (bool autoIterateEnabled) override {};
+
+	void onRecordingStarted () const override {};
+	void onRecordingPaused () const override {};
 
 protected:
 	bool checkIpAddressChanged();
