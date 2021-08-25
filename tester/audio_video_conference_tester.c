@@ -2446,7 +2446,7 @@ static void participants_exit_conference_after_pausing(void) {
 #else
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), 0, int, "%d");
 #endif // HAVE_ADVANCED_IM
-	BC_ASSERT_TRUE(linphone_conference_is_in(pauline_conference));
+	BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
 
 #ifdef HAVE_ADVANCED_IM
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(laure_conference),no_parts, int, "%d");
@@ -3740,7 +3740,7 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 
 	conf_params = linphone_conference_get_current_params(l_conference);
-	BC_ASSERT_FALSE(linphone_conference_params_is_local_participant_enabled(conf_params));
+	BC_ASSERT_TRUE(linphone_conference_params_is_local_participant_enabled(conf_params));
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
@@ -5956,7 +5956,7 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 
 	conf_params = linphone_conference_get_current_params(marie_conference);
-	BC_ASSERT_FALSE(linphone_conference_params_is_local_participant_enabled(conf_params));
+	BC_ASSERT_TRUE(linphone_conference_params_is_local_participant_enabled(conf_params));
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
