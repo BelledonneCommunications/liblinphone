@@ -151,7 +151,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(Ljava/lang/Object;Lorg/linphone/core/Core;)V");
 	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
-	jobject javaCore = ::LinphonePrivate::getCore(env, lc, FALSE);
+	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE);
 	mJavaCoreManager = env->NewObject(klass, ctor, (jobject)systemContext, (jobject)javaCore);
 	if (!mJavaCoreManager) {
 		lError() << "[Android Platform Helper] Could not instanciate CoreManager object.";
