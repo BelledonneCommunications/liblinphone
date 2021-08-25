@@ -343,8 +343,10 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
+lInfo() << __func__ << " DEBUG DEBUG video mixer " << videoMixer << " direction recvsend " << (dir == MediaStreamSendRecv) << " direction sendonly " << (dir == MediaStreamSendOnly) << " is main " << isMain();
 			if (videoMixer == nullptr && dir == MediaStreamSendOnly && !isMain()) {
 				MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendRecv);
+lInfo() << __func__ << " DEBUG DEBUG try auto link video mixer " << videoMixer << " direction recvsend " << (dir == MediaStreamSendRecv) << " direction sendonly " << (dir == MediaStreamSendOnly) << " is main " << isMain() << " created stream " << createdStream;
 				if (s){
 					createdStream = (VideoStream *)s->getMediaStream();
 					lInfo() << "[mix to all] find sendrecv stream for participant, used for itc.";
@@ -361,6 +363,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				if (videoMixer == nullptr && dir == MediaStreamSendRecv && isMain()) {
 					link_video_stream_with_itc_sink(mStream);
 					MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendOnly);
+lInfo() << __func__ << " DEBUG DEBUG manually link video mixer " << videoMixer << " direction recvsend " << (dir == MediaStreamSendRecv) << " direction sendonly " << (dir == MediaStreamSendOnly) << " is main " << isMain() << " created stream " << createdStream;
 					if (s){
 						lInfo() << "[mix to all] find sendonly stream for participant, used for itc.";
 						createdStream = (VideoStream *)s->getMediaStream();
@@ -408,7 +411,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		if (mStream->label) {
 			video_stream_enable_router(mStream, true);
 		}
-		const bool_t isRemote = (!mStream->label && !content) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
+		const bool_t isRemote = ((!mStream->label && !content) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, (mStream->label == NULL));
 	}
