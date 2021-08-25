@@ -39,17 +39,21 @@ Account::Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params) {
 	mCore = lc;
 	mParams = params;
 	applyParamsChanges();
+	bctbx_message("LinphoneAccount[%p] created with params", toC());
 }
 
 Account::Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config)
 	: Account(lc, params) {
 	mConfig = config;
+	bctbx_message("LinphoneAccount[%p] created with proxy config", toC());
 }
 
 Account::Account (const Account &other) : HybridObject(other) {
+	bctbx_message("LinphoneAccount[%p] created from copy constructor", toC());
 }
 
 Account::~Account () {
+	bctbx_message("LinphoneAccount[%p] destroyed", toC());
 	if (mSentHeaders) sal_custom_header_free(mSentHeaders);
 	if (mPendingContactAddress) linphone_address_unref(mPendingContactAddress);
 	setDependency(nullptr);
