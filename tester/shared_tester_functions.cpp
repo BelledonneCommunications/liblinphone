@@ -271,7 +271,6 @@ void check_media_stream(LinphoneCall *call, bool_t is_null) {
 	}
 }
 
-<<<<<<< HEAD
 void check_result_desc_rtp_rtcp_ports (LinphoneCall *call, int rtp_port, int rtcp_port) {
 	SalMediaDescription *desc = _linphone_call_get_result_desc(call);
 	for (auto & stream : desc->streams) {
