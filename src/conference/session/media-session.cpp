@@ -1423,6 +1423,7 @@ SalStreamDescription MediaSessionPrivate::makeLocalStreamDescription(std::shared
 		fillRtpParameters(stream);
 	} else {
 		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
+		const auto & core = q->getCore()->getCCore();
 		cfg.dir = linphone_core_get_keep_stream_direction_for_rejected_stream(core) ? dir : SalStreamInactive;
 		stream.rtp_port = 0;
 		stream.addActualConfiguration(cfg);
