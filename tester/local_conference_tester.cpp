@@ -637,7 +637,7 @@ static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted
 			}));
 		}
 
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr, noMsg] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == noMsg;
 		}));
 
@@ -812,7 +812,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 			}));
 		}
 
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr, noMsg] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == noMsg;
 		}));
 
@@ -964,7 +964,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 			}));
 		}
 
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr, noMsg] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == noMsg;
 		}));
 
@@ -1112,7 +1112,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 			}));
 		}
 
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr, noMsg] {
+		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
 			return linphone_chat_room_get_unread_messages_count(paulineCr) == noMsg;
 		}));
 
