@@ -38,10 +38,11 @@ ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backe
 	: ChatRoomParams("", encrypted, group, backend) {}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject) {
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mRtt(false), mSubject(subject) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
-	}
+	}else
+		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::None;
 }
 
 ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other) {
