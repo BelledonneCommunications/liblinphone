@@ -63,15 +63,18 @@ ParticipantDeviceIdentity::~ParticipantDeviceIdentity(){
 // -----------------------------------------------------------------------------
 
 #define CALL_CHAT_ROOM_CBS(cr, cbName, functionName, ...) \
-	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_chat_room_get_callbacks_list(cr)); \
-	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		linphone_chat_room_set_current_callbacks(cr, reinterpret_cast<LinphoneChatRoomCbs *>(bctbx_list_get_data(it))); \
-		LinphoneChatRoomCbs ## cbName ## Cb cb = linphone_chat_room_cbs_get_ ## functionName (linphone_chat_room_get_current_callbacks(cr)); \
-		if (cb) \
-			cb(__VA_ARGS__); \
-	} \
-	linphone_chat_room_set_current_callbacks(cr, nullptr); \
-	bctbx_list_free(callbacksCopy);
+	do{\
+		bctbx_list_t *callbacksCopy = bctbx_list_copy_with_data(linphone_chat_room_get_callbacks_list(cr), (bctbx_list_copy_func) belle_sip_object_ref); \
+		for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+			LinphoneChatRoomCbs *cbs = static_cast<LinphoneChatRoomCbs *>(bctbx_list_get_data(it));\
+			linphone_chat_room_set_current_callbacks(cr, cbs); \
+			LinphoneChatRoomCbs ## cbName ## Cb cb = linphone_chat_room_cbs_get_ ## functionName (cbs); \
+			if (cb) \
+				cb(__VA_ARGS__); \
+		} \
+		linphone_chat_room_set_current_callbacks(cr, nullptr); \
+		bctbx_list_free_with_data(callbacksCopy, (bctbx_list_free_func) belle_sip_object_unref);\
+	}while(0)
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const IdentityAddress &addr) {
 	L_Q();

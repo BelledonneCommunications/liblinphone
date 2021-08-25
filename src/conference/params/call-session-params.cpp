@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "c-wrapper/internal/c-tools.h"
+#include "c-wrapper/c-wrapper.h"
 #include "call-session-params-p.h"
 #include "call-session-params.h"
 #include "core/core-p.h"
