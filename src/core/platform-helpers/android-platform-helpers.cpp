@@ -144,7 +144,7 @@ jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const 
 
 // -----------------------------------------------------------------------------
 
-extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref);
+extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref, bool_t is_const);
 
 void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
 	JNIEnv *env = ms_get_jni_env();
@@ -156,7 +156,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(Ljava/lang/Object;Lorg/linphone/core/Core;)V");
 	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
-	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE);
+	jobject javaCore = ::LinphonePrivate::getCore(env, lc, TRUE, FALSE);
 	mJavaCoreManager = env->NewObject(klass, ctor, (jobject)systemContext, (jobject)javaCore);
 	if (!mJavaCoreManager) {
 		lError() << "[Android Platform Helper] Could not instanciate CoreManager object.";
