@@ -896,8 +896,7 @@ LINPHONE_END_NAMESPACE
 #define L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(C_LIST, C_TYPE) \
 	LinphonePrivate::Wrapper::getResolvedCppListFromCList<Linphone ## C_TYPE>(C_LIST)
 
-// Convertions integer to pointer and viceversa
-#define LINPHONE_INT_TO_PTR(x)  ((void*)(intptr_t)(x))
-#define LINPHONE_PTR_TO_INT(x)  ((int)(intptr_t)(x))
+
+
 
 #endif // ifndef _L_C_TOOLS_H_
