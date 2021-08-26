@@ -46,6 +46,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 using namespace Xsd::ConferenceInfo;
+using namespace Xsd::ConferenceInfoExtension;
 
 // =============================================================================
 
@@ -513,6 +514,14 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 
 // -----------------------------------------------------------------------------
 
+string LocalConferenceEventHandler::createConferenceInfoExtensionNotify (ConferenceTypeExtension confInfo) {
+	stringstream notify;
+	Xsd::XmlSchema::NamespaceInfomap map;
+	map[""].name = "linphone:xml:ns:conference-info-extension";
+	serializeConferenceInfoExtension(notify, confInfo, map);
+	return notify.str();
+}
+
 string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool isFullState) {
 	confInfo.setVersion(conf->getLastNotify());
 	confInfo.setState(isFullState ? StateType::full : StateType::partial);
@@ -543,18 +552,43 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 }
 
 string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & lifetime) {
-	string entity = conf->getConferenceAddress().asString();
-	ConferenceType confInfo = ConferenceType(entity);
-	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
-	std::string keywordList;
-	keywordList += "ephemeral";
-	if (!keywordList.empty()) {
-		KeywordsType keywords(sizeof(char), keywordList.c_str());
-		confDescr.setKeywords(keywords);
-	}
-	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+	list<Content> contents;
 
-	return createNotify(confInfo);
+	string entity = conf->getConferenceAddress().asString();
+	if (lifetime != 0) {
+		ConferenceType confInfo = ConferenceType(entity);
+		ConferenceDescriptionType confDescr = ConferenceDescriptionType();
+		std::string keywordList;
+		keywordList += "ephemeral";
+		if (!keywordList.empty()) {
+			KeywordsType keywords(sizeof(char), keywordList.c_str());
+			confDescr.setKeywords(keywords);
+		}
+		confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+		contents.emplace_back(Content());
+		contents.back().setContentType(ContentType::ConferenceInfo);
+		contents.back().setBodyFromUtf8(createNotify(confInfo));
+	}
+
+	ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
+	EphemeralType ephemeralType = EphemeralType();
+	ephemeralType.setLifetime(std::to_string(lifetime));
+	confInfoExtension.setEphemeral(ephemeralType);
+
+	contents.emplace_back(Content());
+	contents.back().setContentType(ContentType::ConferenceInfoExtension);
+	contents.back().setBodyFromUtf8(createConferenceInfoExtensionNotify(confInfoExtension));
+
+	if (contents.empty())
+		return Utils::getEmptyConstRefObject<string>();
+
+	list<Content *> contentPtrs;
+	for (auto &content : contents)
+		contentPtrs.push_back(&content);
+	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
+	return multipart;
+
 }
 
 string LocalConferenceEventHandler::createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {

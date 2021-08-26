@@ -6,20 +6,27 @@
 	elementFormDefault="qualified"
 	attributeFormDefault="unqualified">
 	<!--
+	This imports the xml:language definition
+	-->
+	<xs:import namespace="http://www.w3.org/XML/1998/namespace"
+	schemaLocation="http://www.w3.org/2001/03/xml.xsd"/>
+	<!--
 		conference info extension
 	-->
 	<xs:element name="conference-info-extension" type="tns:conference-type-extension"/>
 		<xs:complexType name="conference-type-extension">
 			<xs:sequence>
-				<xs:element name="ephemeral" type="tns:ephemeral-type"/>
+				<xs:element name="ephemeral" type="tns:ephemeral-type" minOccurs="0"/>
 			</xs:sequence>
+			<xs:attribute name="entity" type="xs:anyURI" use="required"/>
 			<xs:anyAttribute namespace="##other" processContents="lax"/>
 		</xs:complexType>
 
 		<xs:complexType name="ephemeral-type">
 			<xs:sequence>
-				<xs:element name="lifetime" type="xs:string"/>
+				<xs:element name="lifetime" type="xs:string" minOccurs="0"/>
 			</xs:sequence>
+			<xs:anyAttribute namespace="##other" processContents="lax"/>
 		</xs:complexType>
 
 </xs:schema>
