@@ -49,7 +49,7 @@ void linphone_recorder_params_set_audio_device(LinphoneRecorderParams *params, c
 	RecorderParams::toCpp(params)->setAudioDevice(device ? AudioDevice::toCpp(device)->getSharedFromThis() : nullptr);
 }
 
-const LinphoneAudioDevice *linphone_recorder_params_get_audio_device(LinphoneRecorderParams *params) {
+const LinphoneAudioDevice *linphone_recorder_params_get_audio_device(const LinphoneRecorderParams *params) {
 	return RecorderParams::toCpp(params)->getAudioDevice() ? RecorderParams::toCpp(params)->getAudioDevice()->toC() : nullptr;
 }
 
@@ -57,7 +57,7 @@ void linphone_recorder_params_set_webcam_name(LinphoneRecorderParams *params, co
 	RecorderParams::toCpp(params)->setWebcamName(L_C_TO_STRING(webcam_name));
 }
 
-const char *linphone_recorder_params_get_webcam_name(LinphoneRecorderParams *params) {
+const char *linphone_recorder_params_get_webcam_name(const LinphoneRecorderParams *params) {
 	return L_STRING_TO_C(RecorderParams::toCpp(params)->getWebcamName());
 }
 
@@ -65,7 +65,7 @@ void linphone_recorder_params_set_video_codec(LinphoneRecorderParams *params, co
 	RecorderParams::toCpp(params)->setVideoCodec(L_C_TO_STRING(video_codec));
 }
 
-const char *linphone_recorder_params_get_video_codec(LinphoneRecorderParams *params) {
+const char *linphone_recorder_params_get_video_codec(const LinphoneRecorderParams *params) {
 	return L_STRING_TO_C(RecorderParams::toCpp(params)->getVideoCodec());
 }
 
@@ -73,7 +73,7 @@ void linphone_recorder_params_set_file_format(LinphoneRecorderParams *params, Li
 	RecorderParams::toCpp(params)->setFileFormat(format);
 }
 
-LinphoneRecorderFileFormat linphone_recorder_params_get_file_format(LinphoneRecorderParams *params) {
+LinphoneRecorderFileFormat linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params) {
 	return RecorderParams::toCpp(params)->getFileFormat();
 }
 
@@ -81,6 +81,6 @@ void linphone_recorder_params_set_window_id(LinphoneRecorderParams *params, void
 	RecorderParams::toCpp(params)->setWindowId(window_id);
 }
 
-void *linphone_recorder_params_get_window_id(LinphoneRecorderParams *params) {
+void *linphone_recorder_params_get_window_id(const LinphoneRecorderParams *params) {
 	return RecorderParams::toCpp(params)->getWindowId();
 }
