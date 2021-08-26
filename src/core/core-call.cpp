@@ -68,7 +68,7 @@ bool CorePrivate::inviteReplacesABrokenCall (SalCallOp *op) {
 	CallSession *replacedSession = nullptr;
 	SalCallOp *replacedOp = op->getReplaces();
 	if (replacedOp)
-		replacedSession = reinterpret_cast<CallSession *>(replacedOp->getUserPointer());
+		replacedSession = static_cast<CallSession *>(replacedOp->getUserPointer());
 	for (const auto &call : calls) {
 		shared_ptr<CallSession> session = call->getActiveSession();
 		if (session

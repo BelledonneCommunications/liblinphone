@@ -1281,11 +1281,11 @@ bctbx_list_t *Call::getCallbacksList () const {
 	return mCallbacks;
 }
 
-LinphoneCallCbs *Call::getCurrentCbs () const{
+LinphoneCallCbs *Call::getCurrentCallbacks () const{
 	return mCurrentCbs;
 }
 
-void Call::setCurrentCbs (LinphoneCallCbs *cbs) {
+void Call::setCurrentCallbacks (LinphoneCallCbs *cbs) {
 	mCurrentCbs = cbs;
 }
 

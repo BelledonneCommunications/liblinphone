@@ -271,8 +271,8 @@ public:
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
 	bctbx_list_t *getCallbacksList () const;
-	LinphoneCallCbs *getCurrentCbs () const;
-	void setCurrentCbs (LinphoneCallCbs *cbs);
+	LinphoneCallCbs *getCurrentCallbacks () const;
+	void setCurrentCallbacks (LinphoneCallCbs *cbs);
 	void addCallbacks (LinphoneCallCbs *cbs);
 	void removeCallbacks (LinphoneCallCbs *cbs);
 	

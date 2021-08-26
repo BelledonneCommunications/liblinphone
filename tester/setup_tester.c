@@ -264,8 +264,8 @@ static void core_sip_transport_test(void) {
 	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
 	linphone_core_get_sip_transports(lc,&tr);
-	BC_ASSERT_EQUAL(tr.udp_port,5060, int, "%d"); /*default config*/
-	BC_ASSERT_EQUAL(tr.tcp_port,5060, int, "%d"); /*default config*/
+	BC_ASSERT_EQUAL(tr.udp_port,-2, int, "%d"); /*default config in empty_rc*/
+	BC_ASSERT_EQUAL(tr.tcp_port,-2, int, "%d"); /*default config in empty_rc*/
 
 	tr.udp_port=LC_SIP_TRANSPORT_RANDOM;
 	tr.tcp_port=LC_SIP_TRANSPORT_RANDOM;
@@ -274,8 +274,8 @@ static void core_sip_transport_test(void) {
 	linphone_core_set_sip_transports(lc,&tr);
 	linphone_core_get_sip_transports(lc,&tr);
 
-	BC_ASSERT_NOT_EQUAL(tr.udp_port,5060,int,"%d"); /*default config*/
-	BC_ASSERT_NOT_EQUAL(tr.tcp_port,5060,int,"%d"); /*default config*/
+	BC_ASSERT_NOT_EQUAL(tr.udp_port,-2,int,"%d");
+	BC_ASSERT_NOT_EQUAL(tr.tcp_port,-2,int,"%d");
 
 	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc),"sip","sip_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
 	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc),"sip","sip_tcp_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");

@@ -21,7 +21,7 @@
 #include "tester_utils.h"
 #include "capability_negotiation_tester.h"
 #include "linphone/core.h"
-#include "c-wrapper/internal/c-tools.h"
+#include "c-wrapper/c-wrapper.h"
 
 static void call_with_srtp_default_encryption(void) {
 	call_with_default_encryption(LinphoneMediaEncryptionSRTP);
