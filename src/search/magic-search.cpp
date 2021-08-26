@@ -319,7 +319,7 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 
 	// For all call log or when we reach the search limit
 	for (const bctbx_list_t *f = callLog ; f != nullptr ; f = bctbx_list_next(f)) {
-		LinphoneCallLog *log = reinterpret_cast<LinphoneCallLog*>(f->data);
+		LinphoneCallLog *log = static_cast<LinphoneCallLog*>(f->data);
 		const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallDir::LinphoneCallIncoming) ?
 		linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
 		if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
@@ -458,10 +458,10 @@ void MagicSearch::beginNewSearchAsync (const string &filter, const string &withD
 	asyncData->clear();
 	list<SearchResult> friendsList;
 	for (const bctbx_list_t *fl = friend_lists ; fl != nullptr ; fl = bctbx_list_next(fl)) {
-		LinphoneFriendList *fList = reinterpret_cast<LinphoneFriendList*>(fl->data);
+		LinphoneFriendList *fList = static_cast<LinphoneFriendList*>(fl->data);
 		// For all friends or when we reach the search limit
 		for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-			list<SearchResult> fResults = searchInFriend(reinterpret_cast<LinphoneFriend*>(f->data), filter, withDomain);
+			list<SearchResult> fResults = searchInFriend(static_cast<LinphoneFriend*>(f->data), filter, withDomain);
 			addResultsToResultsList(fResults, friendsList);
 		}
 	}
@@ -528,10 +528,10 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 	const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
 
 	for (const bctbx_list_t *fl = friend_lists ; fl != nullptr ; fl = bctbx_list_next(fl)) {
-		LinphoneFriendList *fList = reinterpret_cast<LinphoneFriendList*>(fl->data);
+		LinphoneFriendList *fList = static_cast<LinphoneFriendList*>(fl->data);
 		// For all friends or when we reach the search limit
 		for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-			list<SearchResult> fResults = searchInFriend(reinterpret_cast<LinphoneFriend*>(f->data), filter, withDomain);
+			list<SearchResult> fResults = searchInFriend(static_cast<LinphoneFriend*>(f->data), filter, withDomain);
 			addResultsToResultsList(fResults, *resultList);
 		}
 	}
