@@ -30,6 +30,7 @@
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "conference/conference-id.h"
+#include "xml/conference-info-extension.h"
 #include "xml/conference-info.h"
 #include <memory>
 
@@ -152,6 +153,7 @@ protected:
 private:
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
+	std::string createConferenceInfoExtensionNotify (Xsd::ConferenceInfoExtension::ConferenceTypeExtension confInfo);
 	std::string createNotifySubjectChanged (const std::string &subject);
 	std::string createNotifyEphemeralLifetime (const long & lifetime);
 	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
