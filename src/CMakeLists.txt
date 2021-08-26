@@ -290,6 +290,7 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/remote-conference-event-handler.h
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h
+		xml/conference-info-extension.h
 		xml/imdn.h
 		xml/is-composing.h
 		xml/linphone-imdn.h
@@ -518,6 +519,7 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/remote-conference-event-handler.cpp
 		conference/handlers/remote-conference-list-event-handler.cpp
 		xml/conference-info.cpp
+		xml/conference-info-extension.cpp
 		xml/imdn.cpp
 		xml/is-composing.cpp
 		xml/linphone-imdn.cpp

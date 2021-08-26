@@ -40,6 +40,7 @@ public:
 // -----------------------------------------------------------------------------
 
 const ContentType ContentType::ConferenceInfo("application/conference-info+xml");
+const ContentType ContentType::ConferenceInfoExtension("application/conference-info+xml+extension");
 const ContentType ContentType::Cpim("message/cpim");
 const ContentType ContentType::Encrypted("multipart/encrypted");
 const ContentType ContentType::ExternalBody("message/external-body");
@@ -222,7 +223,8 @@ bool ContentType::isFile (const ContentType &contentType) {
 		contentType != Rlmi &&
 		contentType != Sdp &&
 		contentType != Cpim &&
-		contentType != ConferenceInfo;
+		contentType != ConferenceInfo &&
+		contentType != ConferenceInfoExtension;
 }
 
 string ContentType::getMediaType () const {
