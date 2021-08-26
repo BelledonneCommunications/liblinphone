@@ -1000,7 +1000,7 @@ void send_first_notify() {
 
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
 	localConf->setConferenceAddress(ConferenceAddress(addr));
-	string notify = localHandler->createNotifyFullState();
+	string notify = localHandler->createNotifyFullState(NULL);
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	tester->handler->notifyReceived(notify);
@@ -1768,11 +1768,13 @@ void one_to_one_keyword () {
 	bctbx_free(bobAddrStr);
 	linphone_address_unref(cBobAddr);
 
-	CallSessionParams params;
+	// Create basic chat room with OneToOne capability to ensure that one to one is added to notify
+	pauline->lc->cppPtr->getOrCreateBasicChatRoom (addr);
+
 	localConf->addParticipant(bobAddr);
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
 	localConf->setConferenceAddress(ConferenceAddress(addr));
-	string notify = localHandler->createNotifyFullState(true);
+	string notify = localHandler->createNotifyFullState(NULL);
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 	tester->handler->notifyReceived(notify);
