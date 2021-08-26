@@ -2429,6 +2429,9 @@ static void on_eof(LinphonePlayer *player){
 	marie->stat.number_of_player_eof++;
 }
 
+/*
+ * TODO: make the same test with opus + H264.
+ */
 static void call_with_video_mkv_file_player(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -2449,13 +2452,13 @@ static void call_with_video_mkv_file_player(void) {
 		goto end;
 	}
 
-	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id); /* so that if player doesn't work there will be very little RTP packets. */
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 
 	linphone_core_enable_video_display(marie->lc, TRUE);
-	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
 
-	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 
 	pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
@@ -2463,6 +2466,7 @@ static void call_with_video_mkv_file_player(void) {
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 	linphone_core_set_video_activation_policy(marie->lc, pol);
 	linphone_core_set_video_activation_policy(pauline->lc, pol);
+	linphone_video_activation_policy_unref(pol);
 	
 	/*caller uses files instead of soundcard in order to avoid mixing soundcard input with file played using call's player*/
 	linphone_core_set_use_files(marie->lc,TRUE);
@@ -2484,15 +2488,26 @@ static void call_with_video_mkv_file_player(void) {
 		
 		BC_ASSERT_EQUAL(res, 0, int, "%d");
 		BC_ASSERT_EQUAL(linphone_player_start(player),0,int,"%d");
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_player_eof,1,12000));
+		
+		liblinphone_tester_set_next_video_frame_decoded_cb(linphone_core_get_current_call(pauline->lc));
+
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,1));
+		/*wait for some seconds so that we can have an fps measurement */
+		wait_for_until(pauline->lc,marie->lc,NULL,0, 2000);
+		BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))), 15.0f, float, "%f");
+		
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_player_eof,1,25000));
 		linphone_player_close(player);
-		/*wait for one second more so that last RTP packets can arrive*/
-		wait_for_until(pauline->lc,marie->lc,NULL,0,1000);
+		
 		video_stats = linphone_call_get_video_stats(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_PTR_NOT_NULL(video_stats);
 		if (video_stats){
-			BC_ASSERT_GREATER((unsigned long)linphone_call_stats_get_rtp_stats(video_stats)->packet_recv, 500UL, unsigned long, "%lu");
+			/* Make a few verification on the amount of RTP packets received to check that streaming from file appeared to work. */
+			BC_ASSERT_GREATER((unsigned long)linphone_call_stats_get_rtp_stats(video_stats)->packet_recv, 2200UL, unsigned long, "%lu");
+			BC_ASSERT_LOWER((unsigned long)linphone_call_stats_get_rtp_stats(video_stats)->outoftime, 20UL, unsigned long, "%lu");
+			BC_ASSERT_LOWER((unsigned long)linphone_call_stats_get_rtp_stats(video_stats)->discarded, 20UL, unsigned long, "%lu");
 		}
+		linphone_call_stats_unref(video_stats);
 	}
 	end_call(marie, pauline);
 	goto end;
