@@ -285,7 +285,7 @@ namespace LinphonePrivate
 
           // ephemeral
           //
-          if (n.name () == "ephemeral" && n.namespace_ () == "linphone:xml:ns:conference-info-extension")
+          if (n.name () == "ephemeral" && n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
           {
             ::std::unique_ptr< EphemeralType > r (
               EphemeralTraits::create (i, f, this));
@@ -315,7 +315,7 @@ namespace LinphonePrivate
           // any_attribute
           //
           if ((!n.namespace_ ().empty () &&
-               n.namespace_ () != "linphone:xml:ns:conference-info-extension" &&
+               n.namespace_ () != "linphone:xml:ns:conference-info-linphone-extension" &&
                n.namespace_ () != ::xsd::cxx::xml::bits::xmlns_namespace< char > () &&
                n.namespace_ () != ::xsd::cxx::xml::bits::xsi_namespace< char > ()))
           {
@@ -413,7 +413,7 @@ namespace LinphonePrivate
 
           // lifetime
           //
-          if (n.name () == "lifetime" && n.namespace_ () == "linphone:xml:ns:conference-info-extension")
+          if (n.name () == "lifetime" && n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
           {
             ::std::unique_ptr< LifetimeType > r (
               LifetimeTraits::create (i, f, this));
@@ -437,7 +437,7 @@ namespace LinphonePrivate
           // any_attribute
           //
           if ((!n.namespace_ ().empty () &&
-               n.namespace_ () != "linphone:xml:ns:conference-info-extension" &&
+               n.namespace_ () != "linphone:xml:ns:conference-info-linphone-extension" &&
                n.namespace_ () != ::xsd::cxx::xml::bits::xmlns_namespace< char > () &&
                n.namespace_ () != ::xsd::cxx::xml::bits::xsi_namespace< char > ()))
           {
@@ -745,7 +745,7 @@ namespace LinphonePrivate
           ::xsd::cxx::xml::dom::name< char > (e));
 
         if (n.name () == "conference-info-extension" &&
-            n.namespace_ () == "linphone:xml:ns:conference-info-extension")
+            n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
         {
           ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoExtension::ConferenceTypeExtension > r (
             ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::ConferenceInfoExtension::ConferenceTypeExtension, char >::create (
@@ -757,7 +757,7 @@ namespace LinphonePrivate
           n.name (),
           n.namespace_ (),
           "conference-info-extension",
-          "linphone:xml:ns:conference-info-extension");
+          "linphone:xml:ns:conference-info-linphone-extension");
       }
 
       ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoExtension::ConferenceTypeExtension >
@@ -783,7 +783,7 @@ namespace LinphonePrivate
                            0);
 
         if (n.name () == "conference-info-extension" &&
-            n.namespace_ () == "linphone:xml:ns:conference-info-extension")
+            n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
         {
           ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoExtension::ConferenceTypeExtension > r (
             ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::ConferenceInfoExtension::ConferenceTypeExtension, char >::create (
@@ -795,7 +795,7 @@ namespace LinphonePrivate
           n.name (),
           n.namespace_ (),
           "conference-info-extension",
-          "linphone:xml:ns:conference-info-extension");
+          "linphone:xml:ns:conference-info-linphone-extension");
       }
     }
   }
@@ -939,7 +939,7 @@ namespace LinphonePrivate
           ::xsd::cxx::xml::dom::name< char > (e));
 
         if (n.name () == "conference-info-extension" &&
-            n.namespace_ () == "linphone:xml:ns:conference-info-extension")
+            n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
         {
           e << s;
         }
@@ -949,7 +949,7 @@ namespace LinphonePrivate
             n.name (),
             n.namespace_ (),
             "conference-info-extension",
-            "linphone:xml:ns:conference-info-extension");
+            "linphone:xml:ns:conference-info-linphone-extension");
         }
       }
 
@@ -961,7 +961,7 @@ namespace LinphonePrivate
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::xsd::cxx::xml::dom::serialize< char > (
             "conference-info-extension",
-            "linphone:xml:ns:conference-info-extension",
+            "linphone:xml:ns:conference-info-linphone-extension",
             m, f));
 
         ::LinphonePrivate::Xsd::ConferenceInfoExtension::serializeConferenceInfoExtension (*d, s, f);
@@ -997,7 +997,7 @@ namespace LinphonePrivate
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "ephemeral",
-              "linphone:xml:ns:conference-info-extension",
+              "linphone:xml:ns:conference-info-linphone-extension",
               e));
 
           s << *i.getEphemeral ();
@@ -1044,7 +1044,7 @@ namespace LinphonePrivate
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
               "lifetime",
-              "linphone:xml:ns:conference-info-extension",
+              "linphone:xml:ns:conference-info-linphone-extension",
               e));
 
           s << *i.getLifetime ();
