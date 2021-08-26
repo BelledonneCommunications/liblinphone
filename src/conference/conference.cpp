@@ -440,7 +440,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 shared_ptr<ConferenceEphemeralEvent> Conference::notifyEphemeralChanged (time_t creationTime,  const bool isFullState, long lifetime, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceEphemeralEvent> event = make_shared<ConferenceEphemeralEvent>(
-		EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
+		EventLog::Type::ConferenceEphemeralLifetimeChanged,
 		creationTime,
 		conferenceId,
 		lifetime

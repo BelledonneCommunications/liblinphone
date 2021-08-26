@@ -1,21 +1,27 @@
 /*
-* Copyright (c) 2010-2021 Belledonne Communications SARL.
-*
-* This file is part of Liblinphone.
-*
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ *
+ * This file is part of Liblinphone.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+//
+// Furthermore, Code Synthesis Tools CC makes a special exception for
+// the Free/Libre and Open Source Software (FLOSS) which is described
+// in the accompanying FLOSSE file.
+//
 
 // Begin prologue.
 //
@@ -49,16 +55,16 @@ namespace LinphonePrivate
       // ConferenceTypeExtension
       // 
 
-      const ConferenceTypeExtension::EphemeralType& ConferenceTypeExtension::
+      const ConferenceTypeExtension::EphemeralOptional& ConferenceTypeExtension::
       getEphemeral () const
       {
-        return this->ephemeral_.get ();
+        return this->ephemeral_;
       }
 
-      ConferenceTypeExtension::EphemeralType& ConferenceTypeExtension::
+      ConferenceTypeExtension::EphemeralOptional& ConferenceTypeExtension::
       getEphemeral ()
       {
-        return this->ephemeral_.get ();
+        return this->ephemeral_;
       }
 
       void ConferenceTypeExtension::
@@ -68,15 +74,45 @@ namespace LinphonePrivate
       }
 
       void ConferenceTypeExtension::
+      setEphemeral (const EphemeralOptional& x)
+      {
+        this->ephemeral_ = x;
+      }
+
+      void ConferenceTypeExtension::
       setEphemeral (::std::unique_ptr< EphemeralType > x)
       {
         this->ephemeral_.set (std::move (x));
       }
 
-      ::std::unique_ptr< ConferenceTypeExtension::EphemeralType > ConferenceTypeExtension::
-      setDetachEphemeral ()
+      const ConferenceTypeExtension::EntityType& ConferenceTypeExtension::
+      getEntity () const
       {
-        return this->ephemeral_.detach ();
+        return this->entity_.get ();
+      }
+
+      ConferenceTypeExtension::EntityType& ConferenceTypeExtension::
+      getEntity ()
+      {
+        return this->entity_.get ();
+      }
+
+      void ConferenceTypeExtension::
+      setEntity (const EntityType& x)
+      {
+        this->entity_.set (x);
+      }
+
+      void ConferenceTypeExtension::
+      setEntity (::std::unique_ptr< EntityType > x)
+      {
+        this->entity_.set (std::move (x));
+      }
+
+      ::std::unique_ptr< ConferenceTypeExtension::EntityType > ConferenceTypeExtension::
+      setDetachEntity ()
+      {
+        return this->entity_.detach ();
       }
 
       const ConferenceTypeExtension::AnyAttributeSet& ConferenceTypeExtension::
@@ -113,16 +149,16 @@ namespace LinphonePrivate
       // EphemeralType
       // 
 
-      const EphemeralType::LifetimeType& EphemeralType::
+      const EphemeralType::LifetimeOptional& EphemeralType::
       getLifetime () const
       {
-        return this->lifetime_.get ();
+        return this->lifetime_;
       }
 
-      EphemeralType::LifetimeType& EphemeralType::
+      EphemeralType::LifetimeOptional& EphemeralType::
       getLifetime ()
       {
-        return this->lifetime_.get ();
+        return this->lifetime_;
       }
 
       void EphemeralType::
@@ -132,15 +168,45 @@ namespace LinphonePrivate
       }
 
       void EphemeralType::
+      setLifetime (const LifetimeOptional& x)
+      {
+        this->lifetime_ = x;
+      }
+
+      void EphemeralType::
       setLifetime (::std::unique_ptr< LifetimeType > x)
       {
         this->lifetime_.set (std::move (x));
       }
 
-      ::std::unique_ptr< EphemeralType::LifetimeType > EphemeralType::
-      setDetachLifetime ()
+      const EphemeralType::AnyAttributeSet& EphemeralType::
+      getAnyAttribute () const
       {
-        return this->lifetime_.detach ();
+        return this->any_attribute_;
+      }
+
+      EphemeralType::AnyAttributeSet& EphemeralType::
+      getAnyAttribute ()
+      {
+        return this->any_attribute_;
+      }
+
+      void EphemeralType::
+      setAnyAttribute (const AnyAttributeSet& s)
+      {
+        this->any_attribute_ = s;
+      }
+
+      const ::xercesc::DOMDocument& EphemeralType::
+      getDomDocument () const
+      {
+        return *this->dom_document_;
+      }
+
+      ::xercesc::DOMDocument& EphemeralType::
+      getDomDocument ()
+      {
+        return *this->dom_document_;
       }
     }
   }
@@ -169,19 +235,11 @@ namespace LinphonePrivate
       //
 
       ConferenceTypeExtension::
-      ConferenceTypeExtension (const EphemeralType& ephemeral)
+      ConferenceTypeExtension (const EntityType& entity)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (),
         dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
-        ephemeral_ (ephemeral, this),
-        any_attribute_ (this->getDomDocument ())
-      {
-      }
-
-      ConferenceTypeExtension::
-      ConferenceTypeExtension (::std::unique_ptr< EphemeralType > ephemeral)
-      : ::LinphonePrivate::Xsd::XmlSchema::Type (),
-        dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
-        ephemeral_ (std::move (ephemeral), this),
+        ephemeral_ (this),
+        entity_ (entity, this),
         any_attribute_ (this->getDomDocument ())
       {
       }
@@ -193,6 +251,7 @@ namespace LinphonePrivate
       : ::LinphonePrivate::Xsd::XmlSchema::Type (x, f, c),
         dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
         ephemeral_ (x.ephemeral_, f, this),
+        entity_ (x.entity_, f, this),
         any_attribute_ (x.any_attribute_, this->getDomDocument ())
       {
       }
@@ -204,6 +263,7 @@ namespace LinphonePrivate
       : ::LinphonePrivate::Xsd::XmlSchema::Type (e, f | ::LinphonePrivate::Xsd::XmlSchema::Flags::base, c),
         dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
         ephemeral_ (this),
+        entity_ (this),
         any_attribute_ (this->getDomDocument ())
       {
         if ((f & ::LinphonePrivate::Xsd::XmlSchema::Flags::base) == 0)
@@ -230,7 +290,7 @@ namespace LinphonePrivate
             ::std::unique_ptr< EphemeralType > r (
               EphemeralTraits::create (i, f, this));
 
-            if (!ephemeral_.present ())
+            if (!this->ephemeral_)
             {
               this->ephemeral_.set (::std::move (r));
               continue;
@@ -240,11 +300,132 @@ namespace LinphonePrivate
           break;
         }
 
-        if (!ephemeral_.present ())
+        while (p.more_attributes ())
         {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "ephemeral",
-            "linphone:xml:ns:conference-info-extension");
+          const ::xercesc::DOMAttr& i (p.next_attribute ());
+          const ::xsd::cxx::xml::qualified_name< char > n (
+            ::xsd::cxx::xml::dom::name< char > (i));
+
+          if (n.name () == "entity" && n.namespace_ ().empty ())
+          {
+            this->entity_.set (EntityTraits::create (i, f, this));
+            continue;
+          }
+
+          // any_attribute
+          //
+          if ((!n.namespace_ ().empty () &&
+               n.namespace_ () != "linphone:xml:ns:conference-info-extension" &&
+               n.namespace_ () != ::xsd::cxx::xml::bits::xmlns_namespace< char > () &&
+               n.namespace_ () != ::xsd::cxx::xml::bits::xsi_namespace< char > ()))
+          {
+            ::xercesc::DOMAttr* r (
+              static_cast< ::xercesc::DOMAttr* > (
+                this->getDomDocument ().importNode (
+                  const_cast< ::xercesc::DOMAttr* > (&i), true)));
+            this->any_attribute_ .insert (r);
+            continue;
+          }
+        }
+
+        if (!entity_.present ())
+        {
+          throw ::xsd::cxx::tree::expected_attribute< char > (
+            "entity",
+            "");
+        }
+      }
+
+      ConferenceTypeExtension* ConferenceTypeExtension::
+      _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f,
+              ::LinphonePrivate::Xsd::XmlSchema::Container* c) const
+      {
+        return new class ConferenceTypeExtension (*this, f, c);
+      }
+
+      ConferenceTypeExtension& ConferenceTypeExtension::
+      operator= (const ConferenceTypeExtension& x)
+      {
+        if (this != &x)
+        {
+          static_cast< ::LinphonePrivate::Xsd::XmlSchema::Type& > (*this) = x;
+          this->ephemeral_ = x.ephemeral_;
+          this->entity_ = x.entity_;
+          this->any_attribute_ = x.any_attribute_;
+        }
+
+        return *this;
+      }
+
+      ConferenceTypeExtension::
+      ~ConferenceTypeExtension ()
+      {
+      }
+
+      // EphemeralType
+      //
+
+      EphemeralType::
+      EphemeralType ()
+      : ::LinphonePrivate::Xsd::XmlSchema::Type (),
+        dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
+        lifetime_ (this),
+        any_attribute_ (this->getDomDocument ())
+      {
+      }
+
+      EphemeralType::
+      EphemeralType (const EphemeralType& x,
+                     ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                     ::LinphonePrivate::Xsd::XmlSchema::Container* c)
+      : ::LinphonePrivate::Xsd::XmlSchema::Type (x, f, c),
+        dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
+        lifetime_ (x.lifetime_, f, this),
+        any_attribute_ (x.any_attribute_, this->getDomDocument ())
+      {
+      }
+
+      EphemeralType::
+      EphemeralType (const ::xercesc::DOMElement& e,
+                     ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                     ::LinphonePrivate::Xsd::XmlSchema::Container* c)
+      : ::LinphonePrivate::Xsd::XmlSchema::Type (e, f | ::LinphonePrivate::Xsd::XmlSchema::Flags::base, c),
+        dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
+        lifetime_ (this),
+        any_attribute_ (this->getDomDocument ())
+      {
+        if ((f & ::LinphonePrivate::Xsd::XmlSchema::Flags::base) == 0)
+        {
+          ::xsd::cxx::xml::dom::parser< char > p (e, true, false, true);
+          this->parse (p, f);
+        }
+      }
+
+      void EphemeralType::
+      parse (::xsd::cxx::xml::dom::parser< char >& p,
+             ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+      {
+        for (; p.more_content (); p.next_content (false))
+        {
+          const ::xercesc::DOMElement& i (p.cur_element ());
+          const ::xsd::cxx::xml::qualified_name< char > n (
+            ::xsd::cxx::xml::dom::name< char > (i));
+
+          // lifetime
+          //
+          if (n.name () == "lifetime" && n.namespace_ () == "linphone:xml:ns:conference-info-extension")
+          {
+            ::std::unique_ptr< LifetimeType > r (
+              LifetimeTraits::create (i, f, this));
+
+            if (!this->lifetime_)
+            {
+              this->lifetime_.set (::std::move (r));
+              continue;
+            }
+          }
+
+          break;
         }
 
         while (p.more_attributes ())
@@ -270,99 +451,6 @@ namespace LinphonePrivate
         }
       }
 
-      ConferenceTypeExtension* ConferenceTypeExtension::
-      _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f,
-              ::LinphonePrivate::Xsd::XmlSchema::Container* c) const
-      {
-        return new class ConferenceTypeExtension (*this, f, c);
-      }
-
-      ConferenceTypeExtension& ConferenceTypeExtension::
-      operator= (const ConferenceTypeExtension& x)
-      {
-        if (this != &x)
-        {
-          static_cast< ::LinphonePrivate::Xsd::XmlSchema::Type& > (*this) = x;
-          this->ephemeral_ = x.ephemeral_;
-          this->any_attribute_ = x.any_attribute_;
-        }
-
-        return *this;
-      }
-
-      ConferenceTypeExtension::
-      ~ConferenceTypeExtension ()
-      {
-      }
-
-      // EphemeralType
-      //
-
-      EphemeralType::
-      EphemeralType (const LifetimeType& lifetime)
-      : ::LinphonePrivate::Xsd::XmlSchema::Type (),
-        lifetime_ (lifetime, this)
-      {
-      }
-
-      EphemeralType::
-      EphemeralType (const EphemeralType& x,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c)
-      : ::LinphonePrivate::Xsd::XmlSchema::Type (x, f, c),
-        lifetime_ (x.lifetime_, f, this)
-      {
-      }
-
-      EphemeralType::
-      EphemeralType (const ::xercesc::DOMElement& e,
-                     ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                     ::LinphonePrivate::Xsd::XmlSchema::Container* c)
-      : ::LinphonePrivate::Xsd::XmlSchema::Type (e, f | ::LinphonePrivate::Xsd::XmlSchema::Flags::base, c),
-        lifetime_ (this)
-      {
-        if ((f & ::LinphonePrivate::Xsd::XmlSchema::Flags::base) == 0)
-        {
-          ::xsd::cxx::xml::dom::parser< char > p (e, true, false, false);
-          this->parse (p, f);
-        }
-      }
-
-      void EphemeralType::
-      parse (::xsd::cxx::xml::dom::parser< char >& p,
-             ::LinphonePrivate::Xsd::XmlSchema::Flags f)
-      {
-        for (; p.more_content (); p.next_content (false))
-        {
-          const ::xercesc::DOMElement& i (p.cur_element ());
-          const ::xsd::cxx::xml::qualified_name< char > n (
-            ::xsd::cxx::xml::dom::name< char > (i));
-
-          // lifetime
-          //
-          if (n.name () == "lifetime" && n.namespace_ () == "linphone:xml:ns:conference-info-extension")
-          {
-            ::std::unique_ptr< LifetimeType > r (
-              LifetimeTraits::create (i, f, this));
-
-            if (!lifetime_.present ())
-            {
-              this->lifetime_.set (::std::move (r));
-              continue;
-            }
-          }
-
-          break;
-        }
-
-        if (!lifetime_.present ())
-        {
-          throw ::xsd::cxx::tree::expected_element< char > (
-            "lifetime",
-            "linphone:xml:ns:conference-info-extension");
-        }
-      }
-
       EphemeralType* EphemeralType::
       _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f,
               ::LinphonePrivate::Xsd::XmlSchema::Container* c) const
@@ -377,6 +465,7 @@ namespace LinphonePrivate
         {
           static_cast< ::LinphonePrivate::Xsd::XmlSchema::Type& > (*this) = x;
           this->lifetime_ = x.lifetime_;
+          this->any_attribute_ = x.any_attribute_;
         }
 
         return *this;
@@ -410,14 +499,23 @@ namespace LinphonePrivate
       ::std::ostream&
       operator<< (::std::ostream& o, const ConferenceTypeExtension& i)
       {
-        o << ::std::endl << "ephemeral: " << i.getEphemeral ();
+        if (i.getEphemeral ())
+        {
+          o << ::std::endl << "ephemeral: " << *i.getEphemeral ();
+        }
+
+        o << ::std::endl << "entity: " << i.getEntity ();
         return o;
       }
 
       ::std::ostream&
       operator<< (::std::ostream& o, const EphemeralType& i)
       {
-        o << ::std::endl << "lifetime: " << i.getLifetime ();
+        if (i.getLifetime ())
+        {
+          o << ::std::endl << "lifetime: " << *i.getLifetime ();
+        }
+
         return o;
       }
     }
@@ -894,6 +992,7 @@ namespace LinphonePrivate
 
         // ephemeral
         //
+        if (i.getEphemeral ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
@@ -901,7 +1000,18 @@ namespace LinphonePrivate
               "linphone:xml:ns:conference-info-extension",
               e));
 
-          s << i.getEphemeral ();
+          s << *i.getEphemeral ();
+        }
+
+        // entity
+        //
+        {
+          ::xercesc::DOMAttr& a (
+            ::xsd::cxx::xml::dom::create_attribute (
+              "entity",
+              e));
+
+          a << i.getEntity ();
         }
       }
 
@@ -910,8 +1020,26 @@ namespace LinphonePrivate
       {
         e << static_cast< const ::LinphonePrivate::Xsd::XmlSchema::Type& > (i);
 
+        // any_attribute
+        //
+        for (EphemeralType::AnyAttributeConstIterator
+             b (i.getAnyAttribute ().begin ()), n (i.getAnyAttribute ().end ());
+             b != n; ++b)
+        {
+          ::xercesc::DOMAttr* a (
+            static_cast< ::xercesc::DOMAttr* > (
+              e.getOwnerDocument ()->importNode (
+                const_cast< ::xercesc::DOMAttr* > (&(*b)), true)));
+
+          if (a->getLocalName () == 0)
+            e.setAttributeNode (a);
+          else
+            e.setAttributeNodeNS (a);
+        }
+
         // lifetime
         //
+        if (i.getLifetime ())
         {
           ::xercesc::DOMElement& s (
             ::xsd::cxx::xml::dom::create_element (
@@ -919,7 +1047,7 @@ namespace LinphonePrivate
               "linphone:xml:ns:conference-info-extension",
               e));
 
-          s << i.getLifetime ();
+          s << *i.getLifetime ();
         }
       }
     }
