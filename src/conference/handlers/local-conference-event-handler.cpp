@@ -72,10 +72,14 @@ void LocalConferenceEventHandler::notifyAll (const string &notify) {
 }
 
 string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
-	const string acceptHeader = L_C_TO_STRING(linphone_event_get_custom_header(lev, "Accept"));
-	const vector<string> acceptedContents = acceptHeader.empty() ? vector<string>() : bctoolbox::Utils::split(acceptHeader, ",");
-	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") == acceptedContents.end());
-	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") == acceptedContents.end());
+	const auto message = (belle_sip_message_t*)lev->op->getRecvCustomHeaders();
+	vector<string> acceptedContents = vector<string>();
+	for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
+		acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+lInfo() << __func__ << " DEBUG DEBUG accept header " << L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader));
+	}
+	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") != acceptedContents.end());
+	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
 
 	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
 	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
@@ -161,26 +165,29 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		conferenceInfoExtensionNotify = createConferenceInfoExtensionNotify(confInfoExtension);
 	}
 
-
-	if (acceptHeader.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
+	if (acceptedContents.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
 		return conferenceInfoNotify;
 	} else if (!acceptConferenceInfo && acceptConferenceInfoLinphoneExtension && (!conferenceInfoExtensionNotify.empty())) {
 		return conferenceInfoExtensionNotify;
 	} else if (acceptConferenceInfo && acceptConferenceInfoLinphoneExtension) {
 		list<Content> contents;
-		contents.emplace_back(Content());
-		contents.back().setContentType(ContentType::ConferenceInfo);
-		contents.back().setBodyFromUtf8(conferenceInfoNotify);
+		char token[17];
+		Content contentConferenceInfo = Content();
+		contentConferenceInfo.setContentType(ContentType::ConferenceInfo);
+		belle_sip_random_token(token, sizeof(token));
+		contentConferenceInfo.addHeader("Content-Id", token);
+		contentConferenceInfo.addHeader("Content-Length", Utils::toString(conferenceInfoNotify.size()));
+		contentConferenceInfo.setBodyFromUtf8(conferenceInfoNotify);
+		contents.push_back(move(contentConferenceInfo));
 
 		if (!conferenceInfoExtensionNotify.empty()) {
-			ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
-			EphemeralType ephemeralType = EphemeralType();
-			ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
-			confInfoExtension.setEphemeral(ephemeralType);
-
-			contents.emplace_back(Content());
-			contents.back().setContentType(ContentType::ConferenceInfoExtension);
-			contents.back().setBodyFromUtf8(conferenceInfoExtensionNotify);
+			Content contentConferenceInfoExtension = Content();
+			belle_sip_random_token(token, sizeof(token));
+			contentConferenceInfoExtension.addHeader("Content-Id", token);
+			contentConferenceInfoExtension.addHeader("Content-Length", Utils::toString(conferenceInfoExtensionNotify.size()));
+			contentConferenceInfoExtension.setContentType(ContentType::ConferenceInfoExtension);
+			contentConferenceInfoExtension.setBodyFromUtf8(conferenceInfoExtensionNotify);
+			contents.push_back(move(contentConferenceInfoExtension));
 		}
 
 		if (contents.empty())
