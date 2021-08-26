@@ -23,6 +23,7 @@
 #include "linphone/types.h"
 
 #include "xml/conference-info.h"
+#include "xml/conference-info-extension.h"
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
 #include "remote-conference-event-handler-base.h"
@@ -31,6 +32,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Content;
 class ConferenceId;
 class Conference;
 class ConferenceListener;
@@ -46,8 +48,8 @@ public:
 	~RemoteConferenceEventHandler ();
 
 	void subscribe (const ConferenceId &conferenceId);
-	void notifyReceived (const std::string &xmlBody);
-	void multipartNotifyReceived (const std::string &xmlBody);
+	void notifyReceived (const Content &content);
+	void multipartNotifyReceived (const Content &content);
 	void unsubscribe () override;
 
 	void invalidateSubscription () override;
@@ -56,7 +58,8 @@ public:
 	unsigned int getLastNotify () const;
 
 protected:
-	void simpleNotifyReceived (const std::string &xmlBody);
+	void conferenceInfoNotifyReceived (const std::string &xmlBody);
+	void conferenceInfoExtensionNotifyReceived (const std::string &xmlBody);
 	void subscribe () override;
 
 	// CoreListener
