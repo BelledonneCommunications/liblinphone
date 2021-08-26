@@ -352,7 +352,7 @@ void RemoteConferenceEventHandler::subscribe () {
 	lev->op->setFrom(localAddress);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
-//	linphone_event_add_custom_header(lev, "Accept", "application/conference-info+xml, application/conference-info-linphone-extension+xml");
+	linphone_event_add_custom_header(lev, "Accept", "application/conference-info+xml, application/conference-info-linphone-extension+xml");
 	linphone_address_unref(lAddr);
 	linphone_address_unref(peerAddr);
 	linphone_event_set_internal(lev, TRUE);
