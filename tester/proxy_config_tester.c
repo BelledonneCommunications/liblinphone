@@ -202,7 +202,7 @@ static void sip_uri_normalization(void) {
 }
 
 static void load_dynamic_proxy_config(void) {
-	LinphoneCoreManager *lauriane = linphone_core_manager_new(NULL);
+	LinphoneCoreManager *lauriane = linphone_core_manager_new("empty_rc");
 	LinphoneProxyConfig *proxy;
 	LinphoneAddress *read, *expected;
 	LinphoneNatPolicy *nat_policy;
