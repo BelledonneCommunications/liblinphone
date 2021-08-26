@@ -56,7 +56,7 @@ LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference
 // -----------------------------------------------------------------------------
 
 void LocalConferenceEventHandler::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
-	notifyParticipantDevice(notify, device);
+	notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
 }
 
 void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
@@ -76,7 +76,6 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 	vector<string> acceptedContents = vector<string>();
 	for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
 		acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
-lInfo() << __func__ << " DEBUG DEBUG accept header " << L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader));
 	}
 	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") != acceptedContents.end());
 	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
@@ -172,6 +171,7 @@ lInfo() << __func__ << " DEBUG DEBUG accept header " << L_C_TO_STRING(belle_sip_
 	} else if (acceptConferenceInfo && acceptConferenceInfoLinphoneExtension) {
 		list<Content> contents;
 		char token[17];
+
 		Content contentConferenceInfo = Content();
 		contentConferenceInfo.setContentType(ContentType::ConferenceInfo);
 		belle_sip_random_token(token, sizeof(token));
@@ -185,6 +185,7 @@ lInfo() << __func__ << " DEBUG DEBUG accept header " << L_C_TO_STRING(belle_sip_
 			belle_sip_random_token(token, sizeof(token));
 			contentConferenceInfoExtension.addHeader("Content-Id", token);
 			contentConferenceInfoExtension.addHeader("Content-Length", Utils::toString(conferenceInfoExtensionNotify.size()));
+
 			contentConferenceInfoExtension.setContentType(ContentType::ConferenceInfoExtension);
 			contentConferenceInfoExtension.setBodyFromUtf8(conferenceInfoExtensionNotify);
 			contents.push_back(move(contentConferenceInfoExtension));
