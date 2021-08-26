@@ -41,6 +41,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 using namespace Xsd::ConferenceInfo;
+using namespace Xsd::ConferenceInfoLinphoneExtension;
 
 // -----------------------------------------------------------------------------
 
@@ -64,13 +65,13 @@ RemoteConferenceEventHandler::~RemoteConferenceEventHandler () {
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) {
+void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &xmlBody) {
 	istringstream data(xmlBody);
 	unique_ptr<ConferenceType> confInfo;
 	try {
 		confInfo = parseConferenceInfo(data, Xsd::XmlSchema::Flags::dont_validate);
 	} catch (const exception &) {
-		lError() << "Error while parsing conference notify for: " << getConferenceId();
+		lError() << "Error while parsing conference-info notify for: " << getConferenceId();
 		return;
 	}
 
@@ -313,6 +314,30 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 	}
 }
 
+void RemoteConferenceEventHandler::conferenceInfoExtensionNotifyReceived (const string &xmlBody) {
+	istringstream data(xmlBody);
+	unique_ptr<ConferenceTypeExtension> confInfo;
+	try {
+		confInfo = parseConferenceInfoLinphoneExtension(data, Xsd::XmlSchema::Flags::dont_validate);
+	} catch (const exception &) {
+		lError() << "Error while parsing conference-info-extension notify for: " << getConferenceId();
+		return;
+	}
+
+	IdentityAddress entityAddress(confInfo->getEntity().c_str());
+	if (entityAddress != getConferenceId().getPeerAddress())
+		return;
+
+	auto ephemeralSettings = confInfo->getEphemeral();
+	auto ephemeralLifetime = ephemeralSettings.getLifetime();
+
+	const auto & core = conf->getCore();
+	auto & chatRoom = core->findChatroom(getConference());
+	if (chatRoom) {
+		chatRoom->getCurrentParams()->setEphemeralLifetime(ephemeralLifetime);
+	}
+}
+
 LinphoneMediaDirection RemoteConferenceEventHandler::mediaStatusToMediaDirection (MediaStatusType status) {
 	switch (status) {
 		case MediaStatusType::inactive:
@@ -413,25 +438,20 @@ void RemoteConferenceEventHandler::unsubscribe () {
 	subscriptionWanted = false;
 }
 
-void RemoteConferenceEventHandler::notifyReceived (const string &xmlBody) {
-
-	lInfo() << "NOTIFY received for conference: " << getConferenceId();
-
-	simpleNotifyReceived(xmlBody);
+void RemoteConferenceEventHandler::notifyReceived (const Content &content) {
+	lInfo() << "NOTIFY received for conference: " << getConferenceId() << " - Content type " << content.getContentType().getType() << " subtype " << content.getContentType().getSubType();
+	const ContentType &contentType = content.getContentType();
+	if (contentType == ContentType::ConferenceInfo) {
+		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
+ 	} else if (contentType == ContentType::ConferenceInfoLinphoneExtension) {
+		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
 }
 
-void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBody) {
-
+void RemoteConferenceEventHandler::multipartNotifyReceived (const Content &content) {
 	lInfo() << "multipart NOTIFY received for conference: " << getConferenceId();
-
-	Content multipart;
-	multipart.setBodyFromUtf8(xmlBody);
-	ContentType contentType(ContentType::Multipart);
-	contentType.addParameter("boundary", MultipartBoundary);
-	multipart.setContentType(contentType);
-
-	for (const auto &content : ContentManager::multipartToContentList(multipart))
-		simpleNotifyReceived(content.getBodyAsUtf8String());
+	for (const auto &content : ContentManager::multipartToContentList(content)) {
+		notifyReceived(content);
+	}
 }
 
 const ConferenceId &RemoteConferenceEventHandler::getConferenceId() const {
