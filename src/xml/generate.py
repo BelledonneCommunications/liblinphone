@@ -96,7 +96,7 @@ def generate(name):
 		"--serializer-regex", "%([^-]+)-?([^-]*)-?([^-]*)%serialize\\u$1\\u$2\\u$3%",
 		"--namespace-map", "http://www.w3.org/2001/XMLSchema=LinphonePrivate::Xsd::XmlSchema",
 		"--namespace-map", "urn:ietf:params:xml:ns:conference-info=LinphonePrivate::Xsd::ConferenceInfo",
-		"--namespace-map", "linphone:xml:ns:conference-info-extension=LinphonePrivate::Xsd::ConferenceInfoExtension",
+		"--namespace-map", "linphone:xml:ns:conference-info-linphone-extension=LinphonePrivate::Xsd::ConferenceInfoExtension",
 		"--namespace-map", "urn:ietf:params:xml:ns:imdn=LinphonePrivate::Xsd::Imdn",
 		"--namespace-map", "urn:ietf:params:xml:ns:im-iscomposing=LinphonePrivate::Xsd::IsComposing",
 		"--namespace-map", "http://www.linphone.org/xsds/imdn.xsd=LinphonePrivate::Xsd::LinphoneImdn",
