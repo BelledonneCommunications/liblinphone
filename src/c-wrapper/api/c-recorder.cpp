@@ -50,7 +50,7 @@ void linphone_recorder_close(LinphoneRecorder *recorder) {
 	Recorder::toCpp(recorder)->close();
 }
 
-const char* linphone_recorder_get_file(LinphoneRecorder *recorder) {
+const char* linphone_recorder_get_file(const LinphoneRecorder *recorder) {
 	return L_STRING_TO_C(Recorder::toCpp(recorder)->getFile());
 }
 
@@ -62,11 +62,11 @@ LinphoneStatus linphone_recorder_pause(LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->pause();
 }
 
-LinphoneRecorderState linphone_recorder_get_state(LinphoneRecorder *recorder) {
+LinphoneRecorderState linphone_recorder_get_state(const LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getState();
 }
 
-int linphone_recorder_get_duration(LinphoneRecorder *recorder) {
+int linphone_recorder_get_duration(const LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getDuration();
 }
 
@@ -82,7 +82,7 @@ void linphone_recorder_set_params(LinphoneRecorder *recorder, LinphoneRecorderPa
 	Recorder::toCpp(recorder)->setParams(RecorderParams::toCpp(params)->getSharedFromThis());
 }
 
-const LinphoneRecorderParams *linphone_recorder_get_params(LinphoneRecorder *recorder) {
+const LinphoneRecorderParams *linphone_recorder_get_params(const LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getParams()->toC();
 }
 
@@ -90,7 +90,7 @@ void linphone_recorder_set_user_data(LinphoneRecorder *recorder, void *user_data
 	Recorder::toCpp(recorder)->setUserData(user_data);
 }
 
-void *linphone_recorder_get_user_data(LinphoneRecorder *recorder) {
+void *linphone_recorder_get_user_data(const LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getUserData();
 }
 

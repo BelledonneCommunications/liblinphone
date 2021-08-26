@@ -72,7 +72,7 @@ LINPHONE_PUBLIC void linphone_recorder_close(LinphoneRecorder *recorder);
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the file used for the recording if any. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_recorder_get_file(LinphoneRecorder *recorder);
+LINPHONE_PUBLIC const char* linphone_recorder_get_file(const LinphoneRecorder *recorder);
 
 /**
  * Start the recording into the opened file.
@@ -91,14 +91,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_recorder_pause(LinphoneRecorder *recorde
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the current #LinphoneRecorderState.
  */
-LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(LinphoneRecorder *recorder);
+LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(const LinphoneRecorder *recorder);
 
 /**
  * Gets the duration of the recording.
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the duration of the recording, in milliseconds.
  */
-LINPHONE_PUBLIC int linphone_recorder_get_duration(LinphoneRecorder *recorder);
+LINPHONE_PUBLIC int linphone_recorder_get_duration(const LinphoneRecorder *recorder);
 
 /**
  * Create a content from the recording, for example to send it in a chat message.
@@ -120,7 +120,7 @@ LINPHONE_PUBLIC void linphone_recorder_set_params(LinphoneRecorder *recorder, Li
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return The #LinphoneRecorderParams object. @notnil
  */
-LINPHONE_PUBLIC const LinphoneRecorderParams *linphone_recorder_get_params(LinphoneRecorder *recorder);
+LINPHONE_PUBLIC const LinphoneRecorderParams *linphone_recorder_get_params(const LinphoneRecorder *recorder);
 
 /**
  * Set the user data.
@@ -134,7 +134,7 @@ LINPHONE_PUBLIC void linphone_recorder_set_user_data(LinphoneRecorder *recorder,
  * @param recorder The #LinphoneRecorder object. @notnil
  * @return the user data to retrieve. @maybenil
  */
-LINPHONE_PUBLIC void *linphone_recorder_get_user_data(LinphoneRecorder *recorder);
+LINPHONE_PUBLIC void *linphone_recorder_get_user_data(const LinphoneRecorder *recorder);
 
 /**
  * @}

@@ -69,7 +69,7 @@ LINPHONE_PUBLIC void linphone_recorder_params_set_audio_device(LinphoneRecorderP
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the #LinphoneAudioDevice object. @maybenil
  */
-LINPHONE_PUBLIC const LinphoneAudioDevice *linphone_recorder_params_get_audio_device(LinphoneRecorderParams *params);
+LINPHONE_PUBLIC const LinphoneAudioDevice *linphone_recorder_params_get_audio_device(const LinphoneRecorderParams *params);
 
 /**
  * Set the webcam name.
@@ -83,7 +83,7 @@ LINPHONE_PUBLIC void linphone_recorder_params_set_webcam_name(LinphoneRecorderPa
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the webcam name. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_recorder_params_get_webcam_name(LinphoneRecorderParams *params);
+LINPHONE_PUBLIC const char *linphone_recorder_params_get_webcam_name(const LinphoneRecorderParams *params);
 
 /**
  * Set the video codec.
@@ -97,7 +97,7 @@ LINPHONE_PUBLIC void linphone_recorder_params_set_video_codec(LinphoneRecorderPa
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the video codec. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_recorder_params_get_video_codec(LinphoneRecorderParams *params);
+LINPHONE_PUBLIC const char *linphone_recorder_params_get_video_codec(const LinphoneRecorderParams *params);
 
 /**
  * Set the #LinphoneRecorderFileFormat.
@@ -111,7 +111,7 @@ LINPHONE_PUBLIC void linphone_recorder_params_set_file_format(LinphoneRecorderPa
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the #LinphoneRecorderFileFormat.
  */
-LINPHONE_PUBLIC LinphoneRecorderFileFormat linphone_recorder_params_get_file_format(LinphoneRecorderParams *params);
+LINPHONE_PUBLIC LinphoneRecorderFileFormat linphone_recorder_params_get_file_format(const LinphoneRecorderParams *params);
 
 /**
  * Set the window id.
@@ -125,7 +125,7 @@ LINPHONE_PUBLIC void linphone_recorder_params_set_window_id(LinphoneRecorderPara
  * @param params The #LinphoneRecorderParams object. @notnil
  * @return the window id. @maybenil
  */
-LINPHONE_PUBLIC void *linphone_recorder_params_get_window_id(LinphoneRecorderParams *params);
+LINPHONE_PUBLIC void *linphone_recorder_params_get_window_id(const LinphoneRecorderParams *params);
 
 /**
  * @}
