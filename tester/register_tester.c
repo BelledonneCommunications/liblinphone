@@ -37,7 +37,7 @@ static void authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_in
 }
 
 static LinphoneCoreManager* create_lcm_with_auth(unsigned int with_auth) {
-	LinphoneCoreManager* lcm = linphone_core_manager_new(NULL);
+	LinphoneCoreManager* lcm = linphone_core_manager_new("empty_rc");
 
 	if (with_auth) {
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
@@ -430,7 +430,7 @@ static void authenticated_register_with_no_initial_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 
 	linphone_core_cbs_set_authentication_requested(cbs, authentication_requested);
 	linphone_core_add_callbacks(lcm->lc, cbs);
@@ -452,7 +452,7 @@ static void authenticated_register_with_late_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 	transport = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_udp_port(transport, 5070);
 	linphone_transports_set_tcp_port(transport, 5070);
@@ -475,7 +475,7 @@ static void authenticated_register_with_provided_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 
 	counters = get_stats(lcm->lc);
 	cfg = linphone_core_create_proxy_config(lcm->lc);
@@ -505,7 +505,7 @@ static void authenticated_register_with_provided_credentials(void){
 }
 
 static void authenticated_register_with_provided_credentials_and_username_with_space(void) {
-	LinphoneCoreManager *lcm = linphone_core_manager_new(NULL);
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
 	stats *counters = get_stats(lcm->lc);
 	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(lcm->lc);
 	const char *username = "test username";
@@ -545,7 +545,7 @@ static void authenticated_register_with_wrong_late_credentials(void){
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 	transport = linphone_factory_create_transports(linphone_factory_get());
 	linphone_transports_set_udp_port(transport, 5070);
 	linphone_transports_set_tcp_port(transport, 5070);
@@ -606,7 +606,7 @@ static void authenticated_register_with_wrong_credentials_with_params_base(const
 	}
 	}
 static void authenticated_register_with_wrong_credentials_with_params(const char* user_agent) {
-	LinphoneCoreManager *lcm = linphone_core_manager_new(NULL);
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
 	authenticated_register_with_wrong_credentials_with_params_base(user_agent,lcm);
 	linphone_core_manager_destroy(lcm);
 }
@@ -614,7 +614,7 @@ static void authenticated_register_with_wrong_credentials(void) {
 	authenticated_register_with_wrong_credentials_with_params(NULL);
 }
 static void authenticated_register_with_wrong_credentials_2(void) {
-	LinphoneCoreManager *lcm = linphone_core_manager_new(NULL);
+	LinphoneCoreManager *lcm = linphone_core_manager_new("empty_rc");
 	stats* counters = get_stats(lcm->lc);
 	int current_in_progress;
 	LinphoneProxyConfig* proxy;
@@ -1279,7 +1279,7 @@ static void tls_auth_info_client_cert_cb(void) {
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		stats* counters;
 
-		lcm = linphone_core_manager_new(NULL);
+		lcm = linphone_core_manager_new("empty_rc");
 
 		linphone_core_cbs_set_authentication_requested(cbs, authentication_requested_2);
 		linphone_core_add_callbacks(lcm->lc, cbs);
@@ -1314,7 +1314,7 @@ static void tls_auth_info_client_cert_cb_2(void) {
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		stats* counters;
 
-		lcm = linphone_core_manager_new(NULL);
+		lcm = linphone_core_manager_new("empty_rc");
 
 		linphone_core_cbs_set_authentication_requested(cbs, authentication_requested_3);
 		linphone_core_add_callbacks(lcm->lc, cbs);
@@ -1383,7 +1383,7 @@ static void update_contact_private_ip_address(void) {
 
 	sprintf(route,"sip:%s",test_route);
 
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 
 	/* Remove gruu for this test */
 	linphone_core_remove_supported_tag(lcm->lc, "gruu");
@@ -1417,7 +1417,7 @@ static void update_contact_private_ip_address(void) {
 	linphone_core_manager_destroy(lcm);
 
 	/* We have to recreate the core manager */
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 
 	linphone_core_remove_supported_tag(lcm->lc, "gruu");
 	linphone_core_enable_ipv6(lcm->lc, FALSE);
