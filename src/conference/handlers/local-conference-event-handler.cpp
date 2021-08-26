@@ -152,17 +152,27 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 
 	const auto conferenceInfoNotify = createNotify(confInfo, true);
 
+	string conferenceInfoExtensionNotify = std::string();
+	if (ephemerable && chatRoom) {
+		ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
+		EphemeralType ephemeralType = EphemeralType();
+		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
+		confInfoExtension.setEphemeral(ephemeralType);
+		conferenceInfoExtensionNotify = createConferenceInfoExtensionNotify(confInfoExtension);
+	}
+
+
 	if (acceptHeader.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
 		return conferenceInfoNotify;
-	} else {
+	} else if (!acceptConferenceInfo && acceptConferenceInfoLinphoneExtension && (!conferenceInfoExtensionNotify.empty())) {
+		return conferenceInfoExtensionNotify;
+	} else if (acceptConferenceInfo && acceptConferenceInfoLinphoneExtension) {
 		list<Content> contents;
-		if (acceptConferenceInfo) {
-			contents.emplace_back(Content());
-			contents.back().setContentType(ContentType::ConferenceInfo);
-			contents.back().setBodyFromUtf8(conferenceInfoNotify);
-		}
+		contents.emplace_back(Content());
+		contents.back().setContentType(ContentType::ConferenceInfo);
+		contents.back().setBodyFromUtf8(conferenceInfoNotify);
 
-		if (acceptConferenceInfoLinphoneExtension && ephemerable && chatRoom) {
+		if (!conferenceInfoExtensionNotify.empty()) {
 			ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
 			EphemeralType ephemeralType = EphemeralType();
 			ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
@@ -170,7 +180,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 
 			contents.emplace_back(Content());
 			contents.back().setContentType(ContentType::ConferenceInfoExtension);
-			contents.back().setBodyFromUtf8(createConferenceInfoExtensionNotify(confInfoExtension));
+			contents.back().setBodyFromUtf8(conferenceInfoExtensionNotify);
 		}
 
 		if (contents.empty())
@@ -179,7 +189,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		list<Content *> contentPtrs;
 		for (auto &content : contents)
 			contentPtrs.push_back(&content);
-		string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
+		string multipart = ContentManager::contentListToMultipart(contentPtrs, MultipartBoundary).getBodyAsUtf8String();
 		return multipart;
 	}
 
