@@ -82,7 +82,7 @@ const bctbx_list_t *linphone_magic_search_get_callbacks_list(const LinphoneMagic
 #define NOTIFY_IF_EXIST(cbName, functionName, ...) \
 	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_magic_search_get_callbacks_list(magic_search)); \
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		linphone_magic_search_set_current_callbacks(magic_search, reinterpret_cast<LinphoneMagicSearchCbs *>(bctbx_list_get_data(it))); \
+		linphone_magic_search_set_current_callbacks(magic_search, static_cast<LinphoneMagicSearchCbs *>(bctbx_list_get_data(it))); \
 		LinphoneMagicSearchCbs ## cbName ## Cb cb = linphone_magic_search_cbs_get_ ## functionName (linphone_magic_search_get_current_callbacks(magic_search)); \
 		if (cb) \
 			cb(__VA_ARGS__); \
