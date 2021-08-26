@@ -21,7 +21,7 @@
 
 #include "account/account.h"
 #include "account/account-params.h"
-#include "c-wrapper/internal/c-tools.h"
+#include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-account-cbs.h"
@@ -155,19 +155,8 @@ const bctbx_list_t *linphone_account_get_callbacks_list(const LinphoneAccount *a
 	return Account::toCpp(account)->getCallbacksList();
 }
 
-#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-	bctbx_list_t *callbacksCopy = bctbx_list_copy(Account::toCpp(account)->getCallbacksList()); \
-	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		Account::toCpp(account)->setCurrentCallbacks(reinterpret_cast<LinphoneAccountCbs *>(bctbx_list_get_data(it))); \
-		LinphoneAccountCbs ## cbName ## Cb cb = linphone_account_cbs_get_ ## functionName (Account::toCpp(account)->getCurrentCallbacks()); \
-		if (cb) \
-			cb(__VA_ARGS__); \
-	} \
-	Account::toCpp(account)->setCurrentCallbacks(nullptr); \
-	bctbx_list_free(callbacksCopy);
-
 void _linphone_account_notify_registration_state_changed(LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
-	NOTIFY_IF_EXIST(RegistrationStateChanged, registration_state_changed, account, state, message)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Account, Account::toCpp(account), linphone_account_cbs_get_registration_state_changed, state, message);
 }
 
 bool_t linphone_account_is_phone_number(LinphoneAccount *account, const char *username) {

@@ -128,7 +128,7 @@ int Stream::selectRandomPort (pair<int, int> portRange) {
 		 * get odd RTP port numbers.*/
 		
 		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
-			LinphoneCall *lcall = reinterpret_cast<LinphoneCall *>(bctbx_list_get_data(elem));
+			LinphoneCall *lcall = static_cast<LinphoneCall *>(bctbx_list_get_data(elem));
 			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
 			if (session->getPrivate()->getStreamsGroup().isPortUsed(triedPort)) {
 				alreadyUsed = true;
@@ -149,7 +149,7 @@ int Stream::selectFixedPort (pair<int, int> portRange) {
 	for (int triedPort = portRange.first; triedPort < (portRange.first + 100); triedPort += 2) {
 		bool alreadyUsed = false;
 		for (const bctbx_list_t *elem = linphone_core_get_calls(getCCore()); elem != nullptr; elem = bctbx_list_next(elem)) {
-			LinphoneCall *lcall = reinterpret_cast<LinphoneCall *>(bctbx_list_get_data(elem));
+			LinphoneCall *lcall = static_cast<LinphoneCall *>(bctbx_list_get_data(elem));
 			shared_ptr<MediaSession> session = static_pointer_cast<MediaSession>(LinphonePrivate::Call::toCpp(lcall)->getActiveSession());
 			if (session->getPrivate()->getStreamsGroup().isPortUsed(triedPort)) {
 				alreadyUsed = true;

@@ -205,24 +205,24 @@ unordered_map<string, belle_sip_source_t *>::iterator IsComposing::stopRemoteRef
 	belle_sip_source_t *timer = it->second;
 	if (core && core->sal) {
 		core->sal->cancelTimer(timer);
-		delete reinterpret_cast<IsRemoteComposingData *>(belle_sip_source_get_user_data(timer));
+		delete static_cast<IsRemoteComposingData *>(belle_sip_source_get_user_data(timer));
 	}
 	belle_sip_object_unref(timer);
 	return remoteRefreshTimers.erase(it);
 }
 
 int IsComposing::idleTimerExpired (void *data, unsigned int revents) {
-	IsComposing *d = reinterpret_cast<IsComposing *>(data);
+	IsComposing *d = static_cast<IsComposing *>(data);
 	return d->idleTimerExpired();
 }
 
 int IsComposing::refreshTimerExpired (void *data, unsigned int revents) {
-	IsComposing *d = reinterpret_cast<IsComposing *>(data);
+	IsComposing *d = static_cast<IsComposing *>(data);
 	return d->refreshTimerExpired();
 }
 
 int IsComposing::remoteRefreshTimerExpired (void *data, unsigned int revents) {
-	IsRemoteComposingData *d = reinterpret_cast<IsRemoteComposingData *>(data);
+	IsRemoteComposingData *d = static_cast<IsRemoteComposingData *>(data);
 	int result = d->isComposingHandler->remoteRefreshTimerExpired(d->uri);
 	return result;
 }
