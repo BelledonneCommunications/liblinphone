@@ -40,7 +40,7 @@ public:
 // -----------------------------------------------------------------------------
 
 const ContentType ContentType::ConferenceInfo("application/conference-info+xml");
-const ContentType ContentType::ConferenceInfoExtension("application/conference-info+xml+extension");
+const ContentType ContentType::ConferenceInfoExtension("application/conference-info-linphone-extension+xml");
 const ContentType ContentType::Cpim("message/cpim");
 const ContentType ContentType::Encrypted("multipart/encrypted");
 const ContentType ContentType::ExternalBody("message/external-body");

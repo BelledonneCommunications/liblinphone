@@ -534,7 +534,7 @@ void LocalConference::finalizeCreation() {
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
-		eventHandler->subscribeReceived(event, false);
+		eventHandler->subscribeReceived(event);
 	}
 #endif // HAVE_ADVANCED_IM
 }
