@@ -46,7 +46,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 using namespace Xsd::ConferenceInfo;
-using namespace Xsd::ConferenceInfoExtension;
+using namespace Xsd::ConferenceInfoLinphoneExtension;
 
 // =============================================================================
 
@@ -161,7 +161,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		EphemeralType ephemeralType = EphemeralType();
 		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
 		confInfoExtension.setEphemeral(ephemeralType);
-		conferenceInfoExtensionNotify = createConferenceInfoExtensionNotify(confInfoExtension);
+		conferenceInfoExtensionNotify = createConferenceInfoLinphoneExtensionNotify(confInfoExtension);
 	}
 
 	if (acceptedContents.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
@@ -181,14 +181,14 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		contents.push_back(move(contentConferenceInfo));
 
 		if (!conferenceInfoExtensionNotify.empty()) {
-			Content contentConferenceInfoExtension = Content();
+			Content contentConferenceInfoLinphoneExtension = Content();
 			belle_sip_random_token(token, sizeof(token));
-			contentConferenceInfoExtension.addHeader("Content-Id", token);
-			contentConferenceInfoExtension.addHeader("Content-Length", Utils::toString(conferenceInfoExtensionNotify.size()));
+			contentConferenceInfoLinphoneExtension.addHeader("Content-Id", token);
+			contentConferenceInfoLinphoneExtension.addHeader("Content-Length", Utils::toString(conferenceInfoExtensionNotify.size()));
 
-			contentConferenceInfoExtension.setContentType(ContentType::ConferenceInfoExtension);
-			contentConferenceInfoExtension.setBodyFromUtf8(conferenceInfoExtensionNotify);
-			contents.push_back(move(contentConferenceInfoExtension));
+			contentConferenceInfoLinphoneExtension.setContentType(ContentType::ConferenceInfoLinphoneExtension);
+			contentConferenceInfoLinphoneExtension.setBodyFromUtf8(conferenceInfoExtensionNotify);
+			contents.push_back(move(contentConferenceInfoLinphoneExtension));
 		}
 
 		if (contents.empty())
@@ -577,11 +577,11 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 
 // -----------------------------------------------------------------------------
 
-string LocalConferenceEventHandler::createConferenceInfoExtensionNotify (ConferenceTypeExtension confInfo) {
+string LocalConferenceEventHandler::createConferenceInfoLinphoneExtensionNotify (ConferenceTypeExtension confInfo) {
 	stringstream notify;
 	Xsd::XmlSchema::NamespaceInfomap map;
 	map[""].name = "linphone:xml:ns:conference-info-extension";
-	serializeConferenceInfoExtension(notify, confInfo, map);
+	serializeConferenceInfoLinphoneExtension(notify, confInfo, map);
 	return notify.str();
 }
 
@@ -640,8 +640,8 @@ string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & 
 	confInfoExtension.setEphemeral(ephemeralType);
 
 	contents.emplace_back(Content());
-	contents.back().setContentType(ContentType::ConferenceInfoExtension);
-	contents.back().setBodyFromUtf8(createConferenceInfoExtensionNotify(confInfoExtension));
+	contents.back().setContentType(ContentType::ConferenceInfoLinphoneExtension);
+	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoExtension));
 
 	if (contents.empty())
 		return Utils::getEmptyConstRefObject<string>();

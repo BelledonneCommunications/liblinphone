@@ -99,14 +99,14 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	return createSessionTo(sessionTo);
 }
 
-void ClientGroupChatRoomPrivate::notifyReceived (const string &body) {
+void ClientGroupChatRoomPrivate::notifyReceived (const Content &content) {
 	L_Q();
-	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->notifyReceived(body);
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->notifyReceived(content);
 }
 
-void ClientGroupChatRoomPrivate::multipartNotifyReceived (const string &body) {
+void ClientGroupChatRoomPrivate::multipartNotifyReceived (const Content &content) {
 	L_Q();
-	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->multipartNotifyReceived(body);
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->multipartNotifyReceived(content);
 }
 
 // -----------------------------------------------------------------------------
@@ -132,6 +132,10 @@ void ClientGroupChatRoomPrivate::addOneToOneCapability () {
 unsigned int ClientGroupChatRoomPrivate::getLastNotifyId () const {
 	L_Q();
 	return q->getConference()->getLastNotify();
+}
+
+void ClientGroupChatRoomPrivate::enableEphemeral (bool ephem) {
+	isEphemeral = ephem;
 }
 
 // -----------------------------------------------------------------------------
@@ -1213,7 +1217,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 
 	}
 
-	d->isEphemeral = ephem;
+	d->enableEphemeral(ephem);
 	const string active = ephem ? "enabled" : "disabled";
 	lDebug() << "Ephemeral message is " << active << " in chat room [" << getConferenceId() << "]";
 

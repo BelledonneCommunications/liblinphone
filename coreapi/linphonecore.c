@@ -2526,30 +2526,16 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
 			if (linphone_content_is_multipart(body)) {
-				// TODO : migrate to c++ 'Content'.
-				int i = 0;
-				LinphoneContent *part = nullptr;
-				while ((part = linphone_content_get_part(body, i))) {
-					i++;
-					L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(part));
-					linphone_content_unref(part);
-				}
+				L_GET_PRIVATE(cgcr)->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			} else {
-				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(body));
+				L_GET_PRIVATE(cgcr)->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			}
 		} else if (audioVideoConference) {
 			shared_ptr<MediaConference::RemoteConference> conference = static_pointer_cast<MediaConference::RemoteConference>(audioVideoConference);
 			if (linphone_content_is_multipart(body)) {
-				// TODO : migrate to c++ 'Content'.
-				int i = 0;
-				LinphoneContent *part = nullptr;
-				while ((part = linphone_content_get_part(body, i))) {
-					i++;
-					conference->notifyReceived(linphone_content_get_utf8_text(part));
-					linphone_content_unref(part);
-				}
+				conference->multipartNotifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			} else {
-				conference->notifyReceived(linphone_content_get_utf8_text(body));
+				conference->notifyReceived(*L_GET_CPP_PTR_FROM_C_OBJECT(body));
 			}
 		}
 #else
