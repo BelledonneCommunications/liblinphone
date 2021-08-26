@@ -283,7 +283,7 @@ LinphoneVideoDefinition*  Factory::createVideoDefinitionFromName(const char *nam
 	unsigned int width = 0;
 	unsigned int height = 0;
 	LinphoneVideoDefinition *vdef = findSupportedVideoDefinitionByName(name);
-	if (vdef != NULL) return vdef;
+	if (vdef != NULL) return linphone_video_definition_clone(vdef);
 	if (sscanf(name, "%ux%u", &width, &height) == 2) {
 		return linphone_video_definition_new(width, height, NULL);
 	}

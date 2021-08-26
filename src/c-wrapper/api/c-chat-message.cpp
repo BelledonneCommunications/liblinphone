@@ -130,46 +130,49 @@ const bctbx_list_t *linphone_chat_message_get_callbacks_list(const LinphoneChatM
 }
 
 #define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_chat_message_get_callbacks_list(msg)); \
-	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
-		linphone_chat_message_set_current_callbacks(msg, reinterpret_cast<LinphoneChatMessageCbs *>(bctbx_list_get_data(it))); \
-		LinphoneChatMessageCbs ## cbName ## Cb cb = linphone_chat_message_cbs_get_ ## functionName (linphone_chat_message_get_current_callbacks(msg)); \
-		if (cb) \
-			cb(__VA_ARGS__); \
-	} \
-	linphone_chat_message_set_current_callbacks(msg, nullptr); \
-	bctbx_list_free(callbacksCopy);
+	do{\
+		bctbx_list_t *callbacksCopy = bctbx_list_copy_with_data(linphone_chat_message_get_callbacks_list(msg), (bctbx_list_copy_func)belle_sip_object_ref); \
+		for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
+			LinphoneChatMessageCbs *cbs = static_cast<LinphoneChatMessageCbs *>(bctbx_list_get_data(it));\
+			linphone_chat_message_set_current_callbacks(msg, cbs); \
+			LinphoneChatMessageCbs ## cbName ## Cb cb = linphone_chat_message_cbs_get_ ## functionName (cbs); \
+			if (cb) \
+				cb(__VA_ARGS__); \
+		} \
+		linphone_chat_message_set_current_callbacks(msg, nullptr); \
+		bctbx_list_free_with_data(callbacksCopy, (bctbx_list_free_func)belle_sip_object_unref);\
+	}while(0)
 
 void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
-	NOTIFY_IF_EXIST(MsgStateChanged, msg_state_changed, msg, state)
+	NOTIFY_IF_EXIST(MsgStateChanged, msg_state_changed, msg, state);
 }
 
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage* msg, const LinphoneParticipantImdnState *state) {
-	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state)
+	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state);
 }
 
 void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer) {
-	NOTIFY_IF_EXIST(FileTransferRecv, file_transfer_recv, msg, content, buffer)
+	NOTIFY_IF_EXIST(FileTransferRecv, file_transfer_recv, msg, content, buffer);
 }
 
 void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size) {
-	NOTIFY_IF_EXIST(FileTransferSend, file_transfer_send, msg, content, offset, size)
+	NOTIFY_IF_EXIST(FileTransferSend, file_transfer_send, msg, content, offset, size);
 }
 
 void _linphone_chat_message_notify_file_transfer_send_chunk(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer) {
-	NOTIFY_IF_EXIST(FileTransferSendChunk, file_transfer_send_chunk, msg, content, offset, size, buffer)
+	NOTIFY_IF_EXIST(FileTransferSendChunk, file_transfer_send_chunk, msg, content, offset, size, buffer);
 }
 
 void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
-	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total)
+	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total);
 }
 
 void _linphone_chat_message_notify_ephemeral_message_timer_started(LinphoneChatMessage* msg) {
-	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, msg)
+	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, msg);
 }
 
 void _linphone_chat_message_notify_ephemeral_message_deleted(LinphoneChatMessage* msg) {
-	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, msg)
+	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, msg);
 }
 
 // =============================================================================

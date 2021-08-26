@@ -80,67 +80,60 @@ bool_t linphone_call_get_all_muted (const LinphoneCall *call) {
 	return Call::toCpp(call)->getAllMuted();
 }
 
-#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-for (bctbx_list_t *it = Call::toCpp(call)->getCallbacksList(); it; it = bctbx_list_next(it)) { \
-	Call::toCpp(call)->setCurrentCbs(reinterpret_cast<LinphoneCallCbs *>(bctbx_list_get_data(it))); \
-	LinphoneCallCbs ## cbName ## Cb cb = linphone_call_cbs_get_ ## functionName (Call::toCpp(call)->getCurrentCbs()); \
-	if (cb) \
-		cb(__VA_ARGS__); \
-}
 
 void linphone_call_notify_state_changed (LinphoneCall *call, LinphoneCallState cstate, const char *message) {
-	NOTIFY_IF_EXIST(StateChanged, state_changed, call, cstate, message)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_state_changed, cstate, message);
 	linphone_core_notify_call_state_changed(linphone_call_get_core(call), call, cstate, message);
 }
 
 void linphone_call_notify_dtmf_received (LinphoneCall *call, int dtmf) {
-	NOTIFY_IF_EXIST(DtmfReceived, dtmf_received, call, dtmf)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_dtmf_received, dtmf);
 	linphone_core_notify_dtmf_received(linphone_call_get_core(call), call, dtmf);
 }
 
 void linphone_call_notify_encryption_changed (LinphoneCall *call, bool_t on, const char *authentication_token) {
-	NOTIFY_IF_EXIST(EncryptionChanged, encryption_changed, call, on, authentication_token)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_encryption_changed, on, authentication_token);
 	linphone_core_notify_call_encryption_changed(linphone_call_get_core(call), call, on, authentication_token);
 }
 
 void linphone_call_notify_transfer_state_changed (LinphoneCall *call, LinphoneCallState cstate) {
-	NOTIFY_IF_EXIST(TransferStateChanged, transfer_state_changed, call, cstate)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_transfer_state_changed, cstate);
 	linphone_core_notify_transfer_state_changed(linphone_call_get_core(call), call, cstate);
 }
 
 void linphone_call_notify_stats_updated (LinphoneCall *call, const LinphoneCallStats *stats) {
-	NOTIFY_IF_EXIST(StatsUpdated, stats_updated, call, stats)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_stats_updated, stats);
 	linphone_core_notify_call_stats_updated(linphone_call_get_core(call), call, stats);
 }
 
 void linphone_call_notify_info_message_received (LinphoneCall *call, const LinphoneInfoMessage *msg) {
-	NOTIFY_IF_EXIST(InfoMessageReceived, info_message_received, call, msg)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_info_message_received, msg);
 	linphone_core_notify_info_received(linphone_call_get_core(call), call, msg);
 }
 
 void linphone_call_notify_ack_processing (LinphoneCall *call, LinphoneHeaders *msg, bool_t is_received) {
-	NOTIFY_IF_EXIST(AckProcessing, ack_processing, call, msg, is_received)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_ack_processing, msg, is_received);
 }
 
 void linphone_call_notify_tmmbr_received (LinphoneCall *call, int stream_index, int tmmbr) {
-	NOTIFY_IF_EXIST(TmmbrReceived, tmmbr_received, call, stream_index, tmmbr)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_tmmbr_received, stream_index, tmmbr);
 }
 
 void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path) {
-	NOTIFY_IF_EXIST(SnapshotTaken, snapshot_taken, call, file_path)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_snapshot_taken, file_path);
 }
 
 void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call) {
-	NOTIFY_IF_EXIST(NextVideoFrameDecoded, next_video_frame_decoded, call)
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Call, Call::toCpp(call), linphone_call_cbs_get_next_video_frame_decoded);
 }
 
 void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name) {
-	NOTIFY_IF_EXIST(CameraNotWorking, camera_not_working, call, camera_name);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_camera_not_working, camera_name);
 }
 
 void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_audio_device_changed, audioDevice);
 	linphone_core_notify_audio_device_changed(linphone_call_get_core(call), audioDevice);
-	NOTIFY_IF_EXIST(AudioDeviceChanged, audio_device_changed, call, audioDevice);
 }
 
 // =============================================================================
@@ -558,7 +551,7 @@ void linphone_call_remove_callbacks (LinphoneCall *call, LinphoneCallCbs *cbs) {
 }
 
 LinphoneCallCbs *linphone_call_get_current_callbacks (const LinphoneCall *call) {
-	return Call::toCpp(call)->getCurrentCbs();
+	return Call::toCpp(call)->getCurrentCallbacks();
 }
 
 const bctbx_list_t *linphone_call_get_callbacks_list(const LinphoneCall *call) {
