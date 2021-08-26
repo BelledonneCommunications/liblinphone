@@ -71,7 +71,19 @@ void LocalConferenceEventHandler::notifyAll (const string &notify) {
 		notifyParticipant(notify, participant);
 }
 
-string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne, bool ephemerable) {
+string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
+	const string acceptHeader = L_C_TO_STRING(linphone_event_get_custom_header(lev, "Accept"));
+	const vector<string> acceptedContents = acceptHeader.empty() ? vector<string>() : bctoolbox::Utils::split(acceptHeader, ",");
+	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") == acceptedContents.end());
+	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") == acceptedContents.end());
+
+	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	// Enquire whether this conference belongs to a server group chat room
+	shared_ptr<Core> core = conf->getCore();
+	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+	const bool oneToOne = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne) : false;
+	const bool ephemerable = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Ephemeral) : false;
 	string entity = conf->getConferenceAddress().asString();
 	string subject = conf->getSubject();
 	ConferenceType confInfo = ConferenceType(entity);
@@ -138,7 +150,40 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne, bool e
 		confInfo.getUsers()->getUser().push_back(user);
 	}
 
-	return createNotify(confInfo, true);
+	const auto conferenceInfoNotify = createNotify(confInfo, true);
+
+	if (acceptHeader.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
+		return conferenceInfoNotify;
+	} else {
+		list<Content> contents;
+		if (acceptConferenceInfo) {
+			contents.emplace_back(Content());
+			contents.back().setContentType(ContentType::ConferenceInfo);
+			contents.back().setBodyFromUtf8(conferenceInfoNotify);
+		}
+
+		if (acceptConferenceInfoLinphoneExtension && ephemerable && chatRoom) {
+			ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
+			EphemeralType ephemeralType = EphemeralType();
+			ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
+			confInfoExtension.setEphemeral(ephemeralType);
+
+			contents.emplace_back(Content());
+			contents.back().setContentType(ContentType::ConferenceInfoExtension);
+			contents.back().setBodyFromUtf8(createConferenceInfoExtensionNotify(confInfoExtension));
+		}
+
+		if (contents.empty())
+			return Utils::getEmptyConstRefObject<string>();
+
+		list<Content *> contentPtrs;
+		for (auto &content : contents)
+			contentPtrs.push_back(&content);
+		string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
+		return multipart;
+	}
+
+	return Utils::getEmptyConstRefObject<string>();
 }
 
 void LocalConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, ConferenceDescriptionType & confDescr) {
@@ -667,7 +712,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool oneToOne, bool ephemerable) {
+void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 	char *addrStr = linphone_address_as_string(lAddr);
 	Address participantAddress(addrStr);
@@ -700,7 +745,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 		device->setConferenceSubscribeEvent(lev);
 		if (evLastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
-			notifyFullState(createNotifyFullState(oneToOne, ephemerable), device);
+			notifyFullState(createNotifyFullState(lev), device);
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
@@ -735,10 +780,10 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 	}
 }
 
-string LocalConferenceEventHandler::getNotifyForId (int notifyId, bool oneToOne, bool ephemerable) {
+string LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent *lev) {
 	unsigned int lastNotify = conf->getLastNotify();
 	if (notifyId == 0)
-		return createNotifyFullState(oneToOne, ephemerable);
+		return createNotifyFullState(lev);
 	else if (notifyId < static_cast<int>(lastNotify))
 		return createNotifyMultipart(notifyId);
 
