@@ -38,8 +38,8 @@ public:
 	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
 	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
 	std::shared_ptr<CallSession> createSession ();
-	void notifyReceived (const std::string &body);
-	void multipartNotifyReceived (const std::string &body);
+	void notifyReceived (const Content &content);
+	void multipartNotifyReceived (const Content &content);
 
 	void confirmJoining (SalCallOp *op);
 	void setCallSessionListener (CallSessionListener *listener);
@@ -47,6 +47,8 @@ public:
 
 	void addOneToOneCapability ();
 	unsigned int getLastNotifyId () const;
+
+	void enableEphemeral (bool ephem);
 
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
