@@ -590,6 +590,10 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
+	BC_ASSERT_PTR_NULL(linphone_push_notification_config_get_prid(linphone_proxy_config_get_push_notification_config(marie_cfg)));
+	BC_ASSERT_PTR_NULL(linphone_push_notification_config_get_param(linphone_proxy_config_get_push_notification_config(marie_cfg)));
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", NULL));
+	
 #if __ANDROID__ || TARGET_OS_IPHONE
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
@@ -600,6 +604,7 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 #endif
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
 	if (multi_config) {
+		BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
 #if __ANDROID__ || TARGET_OS_IPHONE
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
@@ -631,13 +636,13 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 
 	// Second: configure push informations
 	linphone_core_update_push_notification_information(marie->lc, "test-app-id", "test-push-token");
+	BC_ASSERT_PTR_NOT_NULL(linphone_push_notification_config_get_prid(linphone_proxy_config_get_push_notification_config(marie_cfg)));
+	BC_ASSERT_PTR_NOT_NULL(linphone_push_notification_config_get_param(linphone_proxy_config_get_push_notification_config(marie_cfg)));
 	// Push auto set fot android and ios. Otherwise nothing should happen, push aren't allowed on proxy config
 #if __ANDROID__ || TARGET_OS_IPHONE
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
-	BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 #else
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
-	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 #endif
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
@@ -655,45 +660,49 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	linphone_proxy_config_edit(marie_cfg);
 	linphone_proxy_config_set_push_notification_allowed(marie_cfg, TRUE);
 	linphone_proxy_config_done(marie_cfg);
-	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
-	const char *uriParams = linphone_proxy_config_get_contact_uri_parameters(marie_cfg);
-	BC_ASSERT_PTR_NOT_NULL(uriParams);
-	if (uriParams) {
-#ifdef __ANDROID__
-		const char *expected = "pn-provider=fcm;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#elif TARGET_OS_IPHONE
-		const char *expected = "pn-provider=apns.dev;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#else
-		const char *expected = "pn-provider=liblinphone_tester;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#endif
-		if (use_legacy_format) {
-#ifdef __ANDROID__
-			expected = "pn-type=firebase;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#elif TARGET_OS_IPHONE
-			expected = "pn-type=apns.dev;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#else
-			expected = "pn-type=liblinphone_tester;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#endif
-		}
-		BC_ASSERT_STRING_EQUAL(uriParams, expected);
-	}
+	
 
 	if (both_push) {
+		BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		linphone_proxy_config_edit(marie_cfg_2);
 		linphone_proxy_config_set_push_notification_allowed(marie_cfg_2, TRUE);
 		linphone_proxy_config_done(marie_cfg_2);
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
-		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
 		proxy_config_count++;
 	}
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+1, 10000));
-	if (multi_config && !both_push) {
+	
+	const char * savedPushParameters = linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", NULL);
+	BC_ASSERT_PTR_NOT_NULL(savedPushParameters);
+	
+#ifdef __ANDROID__
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=fcm;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=apns.dev;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=liblinphone_tester;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+	
+	if (use_legacy_format) {
+#ifdef __ANDROID__
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=firebase;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=apns.dev;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=liblinphone_tester;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+	}
+			
+	BC_ASSERT_STRING_EQUAL(savedPushParameters, expectedSavedPushParameters);
+	if (both_push) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
+	} else if (multi_config) {
 #if __ANDROID__ || TARGET_OS_IPHONE
-		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+		BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #else
-		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+		BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #endif
 	}
@@ -709,21 +718,21 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 		proxy_config_count++;
 	}
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
-	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+2, 10000));
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", NULL));
 	if (multi_config) {
 		if (!both_push) {
 #if __ANDROID__ || TARGET_OS_IPHONE
-			BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+			BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 			BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #else
-			BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+			BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 			BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #endif
 		} else {
-			BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+			BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 			BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 		}
 	}
@@ -818,45 +827,44 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 	// Third: configure push informations
 	linphone_core_update_push_notification_information(marie->lc, "test-app-id", "test-push-token");
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
-	const char *uriParams = linphone_proxy_config_get_contact_uri_parameters(marie_cfg);
-	BC_ASSERT_PTR_NOT_NULL(uriParams);
-	if (uriParams) {
-#ifdef __ANDROID__
-		const char *expected = "pn-provider=fcm;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#elif TARGET_OS_IPHONE
-		const char *expected = "pn-provider=apns.dev;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#else
-		const char *expected = "pn-provider=liblinphone_tester;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#endif
-		if (use_legacy_format) {
-#ifdef __ANDROID__
-			expected = "pn-type=firebase;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#elif TARGET_OS_IPHONE
-			expected = "pn-type=apns.dev;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#else
-			expected = "pn-type=liblinphone_tester;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#endif
-		}
-		BC_ASSERT_STRING_EQUAL(uriParams, expected);
-		BC_ASSERT_STRING_EQUAL(uriParams, expected);
-	}
-
-	if (both_push) {
-		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
-		proxy_config_count++;
-	}
-
+	if (both_push) proxy_config_count++;
+	
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+1, 10000));
-	if (multi_config && !both_push) {
+		
+	const char * savedPushParameters = linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", NULL);
+	BC_ASSERT_PTR_NOT_NULL(savedPushParameters);
+	
+#ifdef __ANDROID__
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=fcm;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=apns.dev;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=liblinphone_tester;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+	
+	if (use_legacy_format) {
+#ifdef __ANDROID__
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=firebase;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=apns.dev;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=liblinphone_tester;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+	}
+			
+	BC_ASSERT_STRING_EQUAL(savedPushParameters, expectedSavedPushParameters);
+	if (both_push) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
+	} else if (multi_config) {
 #if __ANDROID__ || TARGET_OS_IPHONE
-		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+		BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #else
-		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+		BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #endif
 	}
-
+	
 	// Fourth: disable push notification on core
 	linphone_core_set_push_notification_enabled(marie->lc, FALSE);
 	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
@@ -979,39 +987,41 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 	// Third: configure push informations
 	linphone_core_update_push_notification_information(marie->lc, "test-app-id", "test-push-token");
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
-	const char *uriParams = linphone_proxy_config_get_contact_uri_parameters(marie_cfg);
-	BC_ASSERT_PTR_NOT_NULL(uriParams);
-	if (uriParams) {
-#ifdef __ANDROID__
-		const char *expected = "pn-provider=fcm;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#elif TARGET_OS_IPHONE
-		const char *expected = "pn-provider=apns.dev;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#else
-		const char *expected = "pn-provider=liblinphone_tester;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
-#endif
-		if (use_legacy_format) {
-#ifdef __ANDROID__
-			expected = "pn-type=firebase;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#elif TARGET_OS_IPHONE
-			expected = "pn-type=apns.dev;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#else
-			expected = "pn-type=liblinphone_tester;app-id=test-app-id;pn-tok=test-push-token;pn-timeout=0;pn-silent=1";
-#endif
-		}
-		BC_ASSERT_STRING_EQUAL(uriParams, expected);
-	}
-	if (both_push) {
-		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
-		proxy_config_count++;
-	}
+	
+	if (both_push) proxy_config_count++;
 
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+1, 10000));
-	if (multi_config && !both_push) {
+
+	const char * savedPushParameters = linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", NULL);
+	BC_ASSERT_PTR_NOT_NULL(savedPushParameters);
+
+#ifdef __ANDROID__
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=fcm;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=apns.dev;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+	char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=liblinphone_tester;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+
+	if (use_legacy_format) {
+#ifdef __ANDROID__
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=firebase;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=apns.dev;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+		expectedSavedPushParameters = "pn-tok=test-push-token;pn-type=liblinphone_tester;app-id=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+	}
+		
+	BC_ASSERT_STRING_EQUAL(savedPushParameters, expectedSavedPushParameters);
+	if (both_push) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
+	} else if (multi_config) {
 #if __ANDROID__ || TARGET_OS_IPHONE
-		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+		BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #else
-		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
+		BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_1", "push_parameters", NULL));
 		BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 #endif
 	}
