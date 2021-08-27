@@ -572,7 +572,7 @@ void CallSessionPrivate::acceptOrTerminateReplacedSessionInIncomingNotification 
 	CallSession *replacedSession = nullptr;
 	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
 		if (op->getReplaces())
-			replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
+			replacedSession = static_cast<CallSession *>(op->getReplaces()->getUserPointer());
 		if (replacedSession) {
 			switch (replacedSession->getState()){
 				/* If the replaced call is already accepted, then accept automatic replacement. */
@@ -612,7 +612,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 	/* Check if this call is supposed to replace an already running one */
 	SalOp *replaced = op->getReplaces();
 	if (replaced) {
-		CallSession *session = reinterpret_cast<CallSession *>(replaced->getUserPointer());
+		CallSession *session = static_cast<CallSession *>(replaced->getUserPointer());
 		if (session) {
 			lInfo() << "CallSession " << q << " replaces CallSession " << session << ". This last one is going to be terminated automatically";
 			session->terminate();
@@ -1612,7 +1612,7 @@ shared_ptr<CallSession> CallSession::getReplacedCallSession () const {
 	SalOp *replacedOp = d->op->getReplaces();
 	if (!replacedOp)
 		return nullptr;
-	return reinterpret_cast<CallSession *>(replacedOp->getUserPointer())->getSharedFromThis();
+	return static_cast<CallSession *>(replacedOp->getUserPointer())->getSharedFromThis();
 }
 
 CallSessionParams * CallSession::getCurrentParams () const {

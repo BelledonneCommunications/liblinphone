@@ -474,7 +474,7 @@ string LocalConferenceEventHandler::createNotifySubjectChanged () {
 
 void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 	LinphoneEventCbs *cbs = linphone_event_get_callbacks(ev);
-	LocalConferenceEventHandler *handler = reinterpret_cast<LocalConferenceEventHandler *>(
+	LocalConferenceEventHandler *handler = static_cast<LocalConferenceEventHandler *>(
 		linphone_event_cbs_get_user_data(cbs)
 	);
 	linphone_event_cbs_set_user_data(cbs, nullptr);

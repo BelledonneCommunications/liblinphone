@@ -1430,7 +1430,7 @@ static void tls_client_auth_try_register(const char *identity, LinphoneCoreAuthe
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	LinphoneProxyConfig *cfg;
 
-	lcm = linphone_core_manager_new(NULL);
+	lcm = linphone_core_manager_new("empty_rc");
 
 	linphone_core_cbs_set_authentication_requested(cbs, cb);
 	linphone_core_add_callbacks(lcm->lc, cbs);
@@ -2076,7 +2076,7 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 
 	// 1. Register Gandalf.
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	LinphoneCoreManager *gandalf = linphone_core_manager_new(NULL);
+	LinphoneCoreManager *gandalf = linphone_core_manager_new("empty_rc");
 
 	// Do not use Authentication module.
 	linphone_core_set_user_agent(gandalf->lc, "JweAuth Linphone", NULL);
