@@ -724,6 +724,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 
+		setup_mgr_for_conference(marie.getCMgr());
+		setup_mgr_for_conference(pauline.getCMgr());
+
 		// Enable IMDN
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
@@ -763,7 +766,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(paulineCr));
 
 		pauline_stat=pauline.getStats();
-		linphone_chat_room_set_ephemeral_lifetime(marieCr, 1);
+		linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getCMgr()->stat.number_of_NotifyReceived,pauline_stat.number_of_NotifyReceived + 1,5000));
 
@@ -887,6 +890,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 		
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
+
+		setup_mgr_for_conference(marie.getCMgr());
+		setup_mgr_for_conference(pauline.getCMgr());
 
 		// Enable IMDN
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
