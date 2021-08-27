@@ -21,16 +21,30 @@
 
 #include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
-
+#include <map>
 using namespace std;
 LINPHONE_BEGIN_NAMESPACE
+
+static string const PushConfigProviderKey = "pn-provider";
+static string const PushConfigPridKey = "pn-prid";
+static string const PushConfigParamKey = "pn-param";
+static string const PushConfigMsgStrKey = "pn-msg-str";
+static string const PushConfigCallStrKey = "pn-call-str";
+static string const PushConfigGroupChatStrKey = "pn-groupchat-str";
+static string const PushConfigTimeoutKey = "pn-timeout";
+static string const PushConfigSilentKey = "pn-silent";
+static string const PushConfigCallSoundKey = "pn-call-snd";
+static string const PushConfigMsgSoundKey = "pn-msg-snd";
 
 class PushNotificationConfig: public bellesip::HybridObject<LinphonePushNotificationConfig, PushNotificationConfig> {
   public:
 	PushNotificationConfig();
+	// Reconstruct a PushNotificationConfig from a string obtain by calling PushNotificationconfig::asString()
+	PushNotificationConfig(std::string const &serializedConfig);
 	PushNotificationConfig(const PushNotificationConfig &other);
 
 	PushNotificationConfig* clone () const override;
+	PushNotificationConfig& operator=(const PushNotificationConfig& other);
 
 	bool isEqual (const PushNotificationConfig& other) const;
 	
@@ -48,8 +62,6 @@ class PushNotificationConfig: public bellesip::HybridObject<LinphonePushNotifica
 	void setPrid (const string &prid);
 	const string &getBundleIdentifer () const;
 	void setBundleIdentifer (const string &bundleIdentifer);
-	const string &getServices () const;
-	void setServices (const string &services);
 	const string &getCallSnd () const;
 	void setCallSnd (const string &callSnd);
 	const string &getMsgSnd () const;
@@ -63,22 +75,22 @@ class PushNotificationConfig: public bellesip::HybridObject<LinphonePushNotifica
 	const string &getParam () const;
 	void setParam (const string &param);
 	
-
+	void generatePushParams(bool voipPushAllowed, bool remotePushAllowed);
+	map<string, string> const& getPushParamsMap();
+	
+	/* Write the mPushParams map in the form : "param1=param1value;param2=param2value;"                         *
+	 * MsgStr, CallStr, GroupChatStr, CallSnd and MsgSnd will only be saved if withRemoteSpecificParams == true *
+	 * /!\ TeamId, BundleId, VoipToken and RemoteToken will not be saved /!\                                    */
+	string asString(bool withRemoteSpecificParams=true, bool isLegacy=false) const;
+	
   private:
-	string mProvider;
 	string mTeamId;
-	string mMsgStr;
-	string mCallStr;
-	string mGroupChatStr;
-	string mPrid;
 	string mBundleIdentifer;
-	string mServices;
-	string mCallSnd;
-	string mMsgSnd;
-	string mExtensions;
 	string mVoipToken;
 	string mRemoteToken;
-	string mParam;
+	
+	map<string, string> mPushParams;
+	
 };
 
 LINPHONE_END_NAMESPACE
