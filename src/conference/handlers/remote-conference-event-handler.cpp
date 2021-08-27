@@ -314,7 +314,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	}
 }
 
-void RemoteConferenceEventHandler::conferenceInfoExtensionNotifyReceived (const string &xmlBody) {
+void RemoteConferenceEventHandler::conferenceInfoLinphoneExtensionNotifyReceived (const string &xmlBody) {
 	istringstream data(xmlBody);
 	unique_ptr<ConferenceTypeLinphoneExtension> confInfo;
 	try {
@@ -333,10 +333,14 @@ void RemoteConferenceEventHandler::conferenceInfoExtensionNotifyReceived (const 
 
 	const auto & core = conf->getCore();
 	auto chatRoom = core->findChatRoom(getConferenceId());
-	if (chatRoom) {
+	std::shared_ptr<LinphonePrivate::ClientGroupChatRoom> cgcr = nullptr;
+	if (chatRoom && (chatRoom->getConference().get() == conf)) {
+		cgcr = dynamic_pointer_cast<LinphonePrivate::ClientGroupChatRoom>(chatRoom);
+	}
+	if (cgcr) {
 		const auto lifetime = std::stol(ephemeralLifetime);
-		chatRoom->getCurrentParams()->setEphemeralLifetime(lifetime);
-		chatRoom->getPrivate()->enableEphemeral((lifetime != 0));
+		cgcr->getCurrentParams()->setEphemeralLifetime(lifetime);
+		cgcr->getPrivate()->enableEphemeral((lifetime != 0));
 	}
 }
 
@@ -446,7 +450,7 @@ void RemoteConferenceEventHandler::notifyReceived (const Content &content) {
 	if (contentType == ContentType::ConferenceInfo) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
  	} else if (contentType == ContentType::ConferenceInfoLinphoneExtension) {
-		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
+		conferenceInfoLinphoneExtensionNotifyReceived(content.getBodyAsUtf8String());
 	}
 }
 

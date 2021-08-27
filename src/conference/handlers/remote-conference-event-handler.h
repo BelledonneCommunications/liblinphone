@@ -27,6 +27,7 @@
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
 #include "remote-conference-event-handler-base.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
 
 // =============================================================================
 
@@ -59,7 +60,7 @@ public:
 
 protected:
 	void conferenceInfoNotifyReceived (const std::string &xmlBody);
-	void conferenceInfoExtensionNotifyReceived (const std::string &xmlBody);
+	void conferenceInfoLinphoneExtensionNotifyReceived (const std::string &xmlBody);
 	void subscribe () override;
 
 	// CoreListener
