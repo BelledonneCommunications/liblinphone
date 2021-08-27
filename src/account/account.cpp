@@ -24,6 +24,7 @@
 #include <bctoolbox/defs.h>
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-account-params.h"
+#include "push-notification/push-notification-config.h"
 #include "linphone/core.h"
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
@@ -204,11 +205,6 @@ std::shared_ptr<const AccountParams> Account::getAccountParams () const {
 }
 
 void Account::applyParamsChanges () {
-	if (mOldParams == nullptr
-		|| mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed
-		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed
-		|| !linphone_push_notification_config_is_equal(mOldParams->mPushNotificationConfig, mParams->mPushNotificationConfig))
-		onPushNotificationAllowedChanged(false);
 
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
 		onInternationalPrefixChanged();
@@ -223,7 +219,10 @@ void Account::applyParamsChanges () {
 		|| mOldParams->mRegisterEnabled != mParams->mRegisterEnabled
 		|| mOldParams->mExpires != mParams->mExpires
 		|| mOldParams->mContactParameters != mParams->mContactParameters
-		|| mOldParams->mContactUriParameters != mParams->mContactUriParameters) {
+		|| mOldParams->mContactUriParameters != mParams->mContactUriParameters
+		|| mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed
+		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed
+		|| !(mOldParams->mPushNotificationConfig->isEqual(*mParams->mPushNotificationConfig)) ) {
 		mRegisterChanged = true;
 	}
 }
@@ -521,8 +520,97 @@ LinphoneAddress *Account::guessContactForRegister () {
 			// We want to add a list of contacts params to the linphone address
 			linphone_address_set_params(result, mParams->mContactParameters.c_str());
 		}
-		if (!mParams->mContactUriParameters.empty())
-			linphone_address_set_uri_params(result, mParams->mContactUriParameters.c_str());
+		
+		bool successfullyPreparedPushParameters = false;
+		auto newParams = mParams->clone()->toSharedPtr();
+		bool_t use_legacy_params = !!linphone_config_get_int(mCore->config, "net", "use_legacy_push_notification_params", FALSE);
+		auto convertParamNameToLegacyIfNeeded = [&](string const& paramName) -> string {
+			if (use_legacy_params) {
+				if (paramName == PushConfigPridKey) return string("pn-tok");
+				if (paramName == PushConfigParamKey) return string("app-id");
+				if (paramName == PushConfigProviderKey) return string("pn-type");
+			}
+			
+			return paramName;
+		};
+		
+		if (mCore && mCore->push_notification_enabled) {
+			if (!newParams->isPushNotificationAvailable()) {
+				lError() << "Couldn't compute automatic push notifications parameters on account [" << this->toC() << "] because account params do not have available push notifications";
+			} else if (newParams->mPushNotificationAllowed || newParams->mRemotePushNotificationAllowed){
+				if (newParams->mPushNotificationConfig->getProvider().empty()) {
+					bool tester_env = !!linphone_config_get_int(mCore->config, "tester", "test_env", FALSE);
+					if (tester_env) newParams->mPushNotificationConfig->setProvider("liblinphone_tester");
+				#ifdef __ANDROID__
+					if (use_legacy_params) newParams->mPushNotificationConfig->setProvider("firebase");
+				#elif TARGET_OS_IPHONE
+					if (tester_env) newParams->mPushNotificationConfig->setProvider("apns.dev");
+				#endif
+				}
+				newParams->mPushNotificationConfig->generatePushParams(newParams->mPushNotificationAllowed, newParams->mRemotePushNotificationAllowed);
+				successfullyPreparedPushParameters = true;
+			}
+		}
+		
+		if (!newParams->mContactUriParameters.empty()) {
+			if (successfullyPreparedPushParameters) {
+				// build an Address to make use of useful param management functions
+				Address contactParamsWrapper(string("sip:dummy;" + newParams->mContactUriParameters));
+				bool didRemoveParams = false;
+				for (auto pushParam : newParams->mPushNotificationConfig->getPushParamsMap()) {
+					string paramName = convertParamNameToLegacyIfNeeded(pushParam.first);
+					if (!contactParamsWrapper.getUriParamValue(paramName).empty()) {
+						contactParamsWrapper.removeUriParam(paramName);
+						didRemoveParams = true;
+						lError() << "Removing '" << paramName << "' from account [" << this << "] contact uri parameters because it will be generated automatically since core has push notification enabled";
+					}
+				}
+				
+				if (didRemoveParams) {
+					string newContactUriParams;
+					bctbx_map_t* uriParamMap = contactParamsWrapper.getUriParams();
+					bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+					bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);
+					for (;!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+						bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+						const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+						const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+						newContactUriParams = newContactUriParams + ";" + key;
+						if (value) {
+							newContactUriParams = newContactUriParams  + "=" + value;
+						}
+					}
+					bctbx_iterator_cchar_delete(it);
+					bctbx_iterator_cchar_delete(uriParamMapEnd);
+					bctbx_mmap_cchar_delete_with_data(uriParamMap, bctbx_free);
+					
+					lWarning() << "Account [" << this << "] contact uri parameters changed from '" << newParams->mContactUriParameters<< "' to '" << newContactUriParams << "'";
+					newParams->mContactUriParameters = newContactUriParams;
+				}
+				
+			}
+			linphone_address_set_uri_params(result, newParams->mContactUriParameters.c_str());
+		}
+		
+		if (successfullyPreparedPushParameters) {
+			linphone_address_set_uri_param(result, convertParamNameToLegacyIfNeeded(PushConfigPridKey).c_str(), newParams->getPushNotificationConfig()->getPrid().c_str());
+			linphone_address_set_uri_param(result, convertParamNameToLegacyIfNeeded(PushConfigProviderKey).c_str(), newParams->getPushNotificationConfig()->getProvider().c_str());
+			linphone_address_set_uri_param(result, convertParamNameToLegacyIfNeeded(PushConfigParamKey).c_str(), newParams->getPushNotificationConfig()->getParam().c_str());
+			
+			auto &pushParams = newParams->getPushNotificationConfig()->getPushParamsMap();
+			linphone_address_set_uri_param(result, PushConfigSilentKey.c_str(), pushParams.at(PushConfigSilentKey).c_str());
+			linphone_address_set_uri_param(result, PushConfigTimeoutKey.c_str(), pushParams.at(PushConfigTimeoutKey).c_str());
+			
+			if (mParams->mRemotePushNotificationAllowed) {
+				linphone_address_set_uri_param(result, PushConfigMsgStrKey.c_str(), newParams->getPushNotificationConfig()->getMsgStr().c_str());
+				linphone_address_set_uri_param(result, PushConfigCallStrKey.c_str(), newParams->getPushNotificationConfig()->getCallStr().c_str());
+				linphone_address_set_uri_param(result, PushConfigGroupChatStrKey.c_str(), newParams->getPushNotificationConfig()->getGroupChatStr().c_str());
+				linphone_address_set_uri_param(result, PushConfigCallSoundKey.c_str(), newParams->getPushNotificationConfig()->getCallSnd().c_str());
+				linphone_address_set_uri_param(result, PushConfigMsgSoundKey.c_str(), newParams->getPushNotificationConfig()->getMsgSnd().c_str());
+			}
+			lInfo() << "Added push notification informations '" << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed) << "' added to account [" << this << "]";
+			setAccountParams(newParams);
+		}
 	}
 	linphone_address_unref(proxy);
 	return result;
@@ -837,110 +925,6 @@ void Account::update () {
 	}
 }
 
-string Account::getComputedPushNotificationParameters () {
-	if (!mCore|| !mCore->push_notification_enabled) {
-		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because core push notification are not enabled";
-		return string("");
-	}
-	if (!mParams->isPushNotificationAvailable()) {
-		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because account params do not have available push notifications";
-		return string("");
-	}
-
-	string provider = L_C_TO_STRING(linphone_push_notification_config_get_provider(mParams->mPushNotificationConfig));
-	bool_t use_legacy_params = !!linphone_config_get_int(mCore->config, "net", "use_legacy_push_notification_params", FALSE);
-	if (provider.empty()) {
-		// Can this be improved ?
-		bool tester_env = !!linphone_config_get_int(mCore->config, "tester", "test_env", FALSE);
-		if (tester_env) provider = "liblinphone_tester";
-		// End of improvement zone
-	#ifdef __ANDROID__
-			if (use_legacy_params)
-				provider = "firebase";
-			else
-				provider = "fcm";
-	#elif TARGET_OS_IPHONE
-			provider = tester_env ? "apns.dev" : "apns";
-	#endif
-	}
-	if (provider.empty()) {
-		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because pn-provider has not been set";
-		return string("");
-	}
-
-	bool basicPushAllowed = mParams->mPushNotificationAllowed;
-	bool remotePushAllowed = mParams->mRemotePushNotificationAllowed;
-	const char *voipToken = linphone_push_notification_config_get_voip_token(mParams->mPushNotificationConfig);
-	const char *remoteToken = linphone_push_notification_config_get_remote_token(mParams->mPushNotificationConfig);
-	char *param = ms_strdup(linphone_push_notification_config_get_param(mParams->mPushNotificationConfig));
-	if (!param) {
-		char *services = NULL;
-		const char *team_id = linphone_push_notification_config_get_team_id(mParams->mPushNotificationConfig);
-		const char * bundle_identifer = linphone_push_notification_config_get_bundle_identifier(mParams->mPushNotificationConfig);
-
-		if (basicPushAllowed) {
-			services = appendString("voip", services);
-			if (remotePushAllowed) {
-				services = appendString("&", services);
-			}
-		}
-		if (remotePushAllowed) {
-			services = appendString("remote", services);
-		}
-
-		param = ms_strcat_printf(param, "%s.%s.%s", team_id, bundle_identifer, services);
-		ms_free(services);
-	}
-
-	char *prid = ms_strdup(linphone_push_notification_config_get_prid(mParams->mPushNotificationConfig));
-	string oldVoipToken;
-	string oldRemoteToken;
-	if (mOldParams) {
-		oldVoipToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mOldParams->mPushNotificationConfig));
-		oldRemoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mOldParams->mPushNotificationConfig));
-	}
-	if (!prid || oldVoipToken != L_C_TO_STRING(voipToken) || oldRemoteToken != L_C_TO_STRING(remoteToken)) {
-		if (basicPushAllowed) {
-			prid = appendString(voipToken, prid);
-			if (remotePushAllowed && remoteToken) {
-				prid = appendString("&", prid);
-			}
-		}
-		if (remotePushAllowed) {
-			prid = appendString(remoteToken, prid);
-		}
-	}
-
-	string format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
-	if (use_legacy_params) {
-		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
-	}
-	char *computedPushParams = NULL;
-	computedPushParams = ms_strcat_printf(computedPushParams, format.c_str(), provider.c_str(), param, prid);
-	ms_free(param);
-	ms_free(prid);
-
-	if (remotePushAllowed) {
-		const char *msg_str = linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig);
-		const char *call_str = linphone_push_notification_config_get_call_str(mParams->mPushNotificationConfig);
-		const char *groupchat_str = linphone_push_notification_config_get_group_chat_str(mParams->mPushNotificationConfig);
-		const char *call_snd = linphone_push_notification_config_get_call_snd(mParams->mPushNotificationConfig);
-		const char *msg_snd = linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig);
-
-		computedPushParams = ms_strcat_printf(computedPushParams, ";pn-msg-str=%s;pn-call-str=%s;pn-groupchat-str=%s;pn-call-snd=%s;pn-msg-snd=%s", msg_str, call_str, groupchat_str, call_snd, msg_snd);
-	}
-
-	ostringstream result;
-	result << computedPushParams;
-	ms_free(computedPushParams);
-	lInfo() << "Push notifications parameters on account [" << this->toC() << "] successfully computed : " << result.str();
-	return result.str();
-}
-
-void Account::updatePushNotificationParameters () {
-	onPushNotificationAllowedChanged(true);
-}
-
 void Account::apply (LinphoneCore *lc) {
 	mOldParams = nullptr; // remove old params to make sure we will register since we only call apply when adding accounts to core
 	mCore = lc;
@@ -1105,40 +1089,6 @@ LinphoneAccountCbs* Account::getCurrentCallbacks () const {
 
 const bctbx_list_t* Account::getCallbacksList () const {
 	return mCallbacksList;
-}
-
-// -----------------------------------------------------------------------------
-
-void Account::onPushNotificationAllowedChanged (bool callDone) {
-	string computedPushParams = getComputedPushNotificationParameters();
-	string contactUriParams = mParams->mContactUriParameters;
-
-	// Do not alter contact uri params for account without push notification allowed
-	if (!computedPushParams.empty() && mCore && mCore->push_notification_enabled && (mParams->mPushNotificationAllowed || mParams->mRemotePushNotificationAllowed)) {
-		if (contactUriParams.empty() || contactUriParams != computedPushParams) {
-			mParams->setContactUriParameters(computedPushParams);
-
-			// If callDone is false then this is called from setAccountParams and there is no need to call done()
-			if (callDone) {
-				mNeedToRegister = true;
-				done();
-			}
-
-			lInfo() << "Push notification information [" << computedPushParams << "] added to account [" << this->toC() << "]";
-		}
-	} else {
-		if (!contactUriParams.empty()) {
-			mParams->setContactUriParameters("");
-
-			// If callDone is false then this is called from setAccountParams and there is no need to call done()
-			if (callDone) {
-				mNeedToRegister = true;
-				done();
-			}
-
-			lInfo() << "Push notification information removed from account [" << this->toC() << "]";
-		}
-	}
 }
 
 void Account::onInternationalPrefixChanged () {
