@@ -208,8 +208,12 @@ namespace Utils {
 			LINPHONE_PUBLIC inline int getMajor()const {return mMajor;};
 			LINPHONE_PUBLIC inline int getMinor()const {return mMinor;};
 			LINPHONE_PUBLIC inline int getPatch()const {return mPatch;};
+			LINPHONE_PUBLIC inline const std::string& getPreRelease() const { return mPreRelease; };
+			LINPHONE_PUBLIC inline const std::string& getBuildMetaData() const { return mBuildMetaData; };
 		private:
-			int mMajor = 0, mMinor = 0, mPatch = 0;
+			int mMajor = 0, mMinor = 0, mPatch = 0; 
+			std::string mPreRelease;
+			std::string mBuildMetaData;
 	};
 	
 	/**
