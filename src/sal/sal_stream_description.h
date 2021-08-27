@@ -85,6 +85,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool operator!=(const SalStreamDescription & other) const;
 		belle_sdp_media_description_t * toSdpMediaDescription(const SalMediaDescription * salMediaDesc, belle_sdp_session_description_t *session_desc) const;
 		bool enabled() const;
+		bool isAcceptable() const;
 		void disable();
 
 		// This function returns the index of the chosen configuration for this stream. It should be called only if capability negotiation functionality described in rfc5939 is supported.
