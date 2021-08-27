@@ -40,9 +40,9 @@ extern "C" {
 typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state, void *user_data);
 
 /**
- * A function to converte a #LinphoneConferenceState into a string
+ * A function to convert a #LinphoneConferenceState into a string
  */
-const char *linphone_conference_state_to_string(LinphoneConferenceState state);
+char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
 /**
  * Get the state of a conference
@@ -102,7 +102,7 @@ public:
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 
-	bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
 
 	virtual int removeParticipantDevice(const std::shared_ptr<LinphonePrivate::CallSession> & session);
 	int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call);
@@ -204,6 +204,8 @@ public:
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
+
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
@@ -250,6 +252,7 @@ public:
 
 private:
 
+	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> & session);
 	void chooseAnotherAdminIfNoneInConference();
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
@@ -275,6 +278,7 @@ public:
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;
@@ -292,6 +296,7 @@ public:
 	virtual int stopRecording() override {
 		return 0;
 	}
+	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;

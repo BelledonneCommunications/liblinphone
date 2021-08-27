@@ -23,6 +23,8 @@
 #include "time.h"
 
 #include "linphone/api/c-types.h"
+#include "linphone/api/c-participant-device-cbs.h"
+#include "linphone/wrapper_utils.h"
 
 // =============================================================================
 
@@ -92,28 +94,28 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 
 /**
  * Get the timestamp the device joined a conference.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return time of joining a conference as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the audio direction of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the audio direction of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_audio_direction(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the video direction of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the video direction of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_video_direction(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the text direction of the device.
- * @param participant A #LinphoneParticipantDevice object @notnil
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the text direction of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_text_direction(const LinphoneParticipantDevice *participant_device);
@@ -124,6 +126,49 @@ LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_text_dire
  * @return the SSRC of the device
  */
 LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Set window ID for a device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @param window_id the window ID of the device @maybenil
+ */
+LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void * window_id);
+
+/**
+ * Get window ID.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return the window ID of the device @maybenil
+ */
+LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get received video size.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return The received video size @notnil @tobefreed
+ */
+LINPHONE_PUBLIC LinphoneVideoSize *linphone_participant_device_get_received_video_size(const LinphoneParticipantDevice *participant_device);
+	
+/**
+ * Add a listener in order to be notified of #LinphoneParticipantDevice events. Once an event is received, registred #LinphoneParticipantDeviceCbs are
+ * invoked sequencially.
+ * @param participant_device #LinphoneParticipantDevice object. @notnil
+ * @param cbs A #LinphoneParticipantDeviceCbs object holding the callbacks you need. A reference is taken by the #LinphoneParticipantDevice until you invoke linphone_participant_device_remove_callbacks(). @notnil
+ */
+LINPHONE_PUBLIC void linphone_participant_device_add_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Remove a listener from a #LinphoneParticipantDevice
+ * @param participant_device #LinphoneParticipantDevice object. @notnil
+ * @param cbs #LinphoneParticipantDeviceCbs object to remove. @notnil
+ */
+LINPHONE_PUBLIC void linphone_participant_device_remove_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Gets the current LinphoneParticipantDeviceCbs.
+ * @param participant_device #LinphoneParticipantDevice object. @notnil
+ * @return The LinphoneParticipantDeviceCbs that has called the last callback. @notnil
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbs *linphone_participant_device_get_current_callbacks(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}

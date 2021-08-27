@@ -31,6 +31,7 @@
 #include "nat/ice-service.h"
 #include "linphone/core.h"
 #include "mixers.h"
+#include "mediastreamer2/msanalysedisplay.h"
 
 #include <iomanip>
 
@@ -323,6 +324,33 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 	mAuthTokenVerified = value;
 }
 
+Stream * StreamsGroup::lookupStream(const SalStreamType type, const std::string & label) const {
+	for (auto &s : mStreams){
+		const auto streamLabel = s->getLabel();
+		if ((s->getType() == type) && (label.compare(streamLabel) == 0)) {
+			return s.get();
+		}
+	}
+	return nullptr;
+}
+
+
+bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) {
+	for (auto &stream : mStreams){
+		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+		if(stream->getType() == SalVideo) {
+			MediaStream *ms = s->getMediaStream();
+			if (ms && media_stream_get_direction(ms) == dir) {
+				VideoStream *vs = (VideoStream *)ms;
+				if (vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
+					return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
+				}
+			}
+		}
+	}
+	return false;
+}
+
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
 		if (stream->isMain() && stream->getType() == type){
@@ -332,6 +360,32 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	return nullptr;
 }
 
+Stream * StreamsGroup::lookupVideoStream ( MediaStreamDir dir) {
+	for (auto &stream : mStreams){
+		if (stream->getType() == SalVideo){
+			Stream *s = stream.get();
+			MS2Stream *iface = dynamic_cast<MS2Stream*>(s);
+			if (media_stream_get_direction(iface->getMediaStream()) == dir) {
+				return stream.get();
+			}
+		}
+	}
+	return nullptr;
+}
+
+Stream * StreamsGroup::lookupVideoStream ( MSFilterId id) {
+	for (auto &stream : mStreams){
+		if (stream->getType() == SalVideo){
+			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+			MediaStream *ms = s->getMediaStream();
+			VideoStream *vs = (VideoStream *)ms;
+			if (vs && vs->source && ms_filter_get_id(vs->source)== id){
+				return stream.get();
+			}
+		}
+	}
+	return nullptr;
+}
 
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
@@ -481,15 +535,19 @@ void StreamsGroup::addPostRenderHook(const std::function<void()> &l){
 	mPostRenderHooks.push_back(l);
 }
 
-void StreamsGroup::setStreamMain(size_t index){
+void StreamsGroup::setStreamMain(size_t index, const bool force){
 	Stream *s = getStream(index);
 	if (s){
 		SalStreamType type = s->getType();
 		// Make sure there is not already a "main" stream; which would be a programmer fault.
 		Stream *other = lookupMainStream(type);
 		if (other != nullptr && other != s){
-			lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
-			return;
+			if (force) {
+				other->resetMain();
+			} else {
+				lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
+				return;
+			}
 		}
 		s->setMain();
 	}
@@ -536,6 +594,14 @@ void StreamsGroup::unjoinMixerSession(){
 	mMixerSession = nullptr;
 }
 
+MSVideoSize StreamsGroup::getReceivedVideoSize(const std::string & label) const {
+#ifdef VIDEO_ENABLED
+	Stream * s= lookupStream(SalVideo, label);
+	if (s) {
+		return video_stream_get_received_video_size((VideoStream *)s);
+	}
+#endif
+	return MS_VIDEO_SIZE_UNKNOWN;
+}
 
 LINPHONE_END_NAMESPACE
-

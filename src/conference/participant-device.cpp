@@ -19,7 +19,9 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
+#include "conference/session/media-session.h"
 #include "conference/params/media-session-params.h"
+#include "conference/params/media-session-params-p.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
@@ -133,6 +135,7 @@ void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities)
 
 void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
 	mSession = session;
+	// Estimate media capabilities based on call session
 	updateMedia();
 }
 
@@ -180,16 +183,18 @@ bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction)
 bool ParticipantDevice::updateMedia() {
 	bool mediaChanged = false;
 	if (mSession) {
-		const auto currentParams = dynamic_cast<MediaSessionParams*>(mSession->getCurrentParams());
+		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getRemoteParams());
 
 		if (currentParams) {
 			const auto & audioEnabled = currentParams->audioEnabled();
-			const auto & audioDir = currentParams->getAudioDirection();
-			mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
+			//const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
+			//mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
+			mediaChanged |= setAudioDirection((audioEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 
 			const auto & videoEnabled = currentParams->videoEnabled();
-			const auto & videoDir = currentParams->getVideoDirection();
-			mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
+			//const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
+			//mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
+			mediaChanged |= setVideoDirection((videoEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
 			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
@@ -197,12 +202,53 @@ bool ParticipantDevice::updateMedia() {
 			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
 		}
 	} else {
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Video);
-			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
+			mediaChanged |= setAudioDirection(LinphoneMediaDirectionInactive);
+			mediaChanged |= setVideoDirection(LinphoneMediaDirectionInactive);
+			mediaChanged |= setTextDirection(LinphoneMediaDirectionInactive);
 	}
 
 	return mediaChanged;
+}
+
+void ParticipantDevice::setWindowId(void * newWindowId) {
+#ifdef VIDEO_ENABLED
+	mWindowId = newWindowId;
+	if (!mLabel.empty() && mSession) {
+		static_pointer_cast<MediaSession>(mSession)->setNativeVideoWindowId(mWindowId, mLabel);
+	}
+#endif
+}
+
+void * ParticipantDevice::getWindowId() const {
+	return mWindowId;
+}
+
+MSVideoSize ParticipantDevice::getReceivedVideoSize() const {
+	if (mSession) {
+		return static_pointer_cast<MediaSession>(mSession)->getReceivedVideoSize(mLabel);
+	}
+	return { 0 };
+}
+
+bctbx_list_t *ParticipantDevice::getCallbacksList () const {
+	return mCallbacks;
+}
+
+LinphoneParticipantDeviceCbs *ParticipantDevice::getCurrentCbs () const{
+	return mCurrentCbs;
+}
+
+void ParticipantDevice::setCurrentCbs (LinphoneParticipantDeviceCbs *cbs) {
+	mCurrentCbs = cbs;
+}
+
+void ParticipantDevice::addCallbacks (LinphoneParticipantDeviceCbs *cbs) {
+	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
+}
+
+void ParticipantDevice::removeCallbacks (LinphoneParticipantDeviceCbs *cbs) {
+	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
+	belle_sip_object_unref(cbs);
 }
 
 LINPHONE_END_NAMESPACE

@@ -156,6 +156,7 @@ BELLE_SIP_TYPE_ID(LinphoneMagicSearchCbs),
 BELLE_SIP_TYPE_ID(LinphoneNatPolicy),
 BELLE_SIP_TYPE_ID(LinphoneParticipant),
 BELLE_SIP_TYPE_ID(LinphoneParticipantDevice),
+BELLE_SIP_TYPE_ID(LinphoneParticipantDeviceCbs),
 BELLE_SIP_TYPE_ID(LinphonePayloadType),
 BELLE_SIP_TYPE_ID(LinphonePlayer),
 BELLE_SIP_TYPE_ID(LinphonePlayerCbs),
@@ -178,7 +179,8 @@ BELLE_SIP_TYPE_ID(LinphoneVideoActivationPolicy),
 BELLE_SIP_TYPE_ID(LinphoneVideoDefinition),
 BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequest),
 BELLE_SIP_TYPE_ID(LinphoneXmlRpcRequestCbs),
-BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession)
+BELLE_SIP_TYPE_ID(LinphoneXmlRpcSession),
+BELLE_SIP_TYPE_ID(LinphoneVideoSize)
 BELLE_SIP_DECLARE_TYPES_END
 
 #undef L_REGISTER_ID

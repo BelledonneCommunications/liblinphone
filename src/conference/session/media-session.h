@@ -114,6 +114,7 @@ public:
 	void setAuthenticationTokenVerified (bool value);
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
+	void setNativeVideoWindowId (void *id, const std::string label);
 	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
@@ -122,12 +123,18 @@ public:
 	bool setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
-	
+	std::shared_ptr<ParticipantDevice> getParticipantDevice(const std::string label);
+
+	MSVideoSize getReceivedVideoSize(const std::string &label) const;
+	void * getParticipantWindowId(const std::string label);
+
 	StreamsGroup & getStreamsGroup()const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);
+
+	int getRandomRtpPort (const SalStreamDescription & stream) const;
 };
 
 LINPHONE_END_NAMESPACE

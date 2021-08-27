@@ -168,7 +168,11 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 	// When a stream is inactive, refpt->mime_type might be null
 	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
-		ret = ms_offer_answer_context_match_payload(ctx, Utils::listToBctbxList(local_payloads), refpt, Utils::listToBctbxList(remote_payloads), reading_response);
+		bctbx_list_t* remote_payload_list = Utils::listToBctbxList(remote_payloads);
+		bctbx_list_t* local_payload_list = Utils::listToBctbxList(local_payloads);
+		ret = ms_offer_answer_context_match_payload(ctx, local_payload_list, refpt, remote_payload_list, reading_response);
+		bctbx_list_free(local_payload_list);
+		bctbx_list_free(remote_payload_list);
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
@@ -293,7 +297,7 @@ SalStreamDir OfferAnswerEngine::computeDirOutgoing(SalStreamDir local, SalStream
 	if (local==SalStreamSendRecv){
 		if (answered==SalStreamRecvOnly){
 			res=SalStreamSendOnly;
-		}else if (answered==SalStreamSendOnly){
+		} else if (answered==SalStreamSendOnly){
 			res=SalStreamRecvOnly;
 		}
 	}
@@ -324,6 +328,25 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 		else
 			res=SalStreamInactive;
 	}else res=SalStreamInactive;
+	return res;
+}
+
+SalStreamDir OfferAnswerEngine::computeConferenceStreamDir(SalStreamDir dir){
+	SalStreamDir res=SalStreamSendRecv;
+	switch (dir) {
+		case SalStreamSendRecv:
+			res=SalStreamSendRecv;
+			break;
+		case SalStreamSendOnly:
+			res=SalStreamRecvOnly;
+			break;
+		case SalStreamRecvOnly:
+			res=SalStreamSendOnly;
+			break;
+		case SalStreamInactive:
+			res=SalStreamInactive;
+			break;
+	}
 	return res;
 }
 
@@ -426,7 +449,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 			if (success) {
 				lInfo() << "Found match between answerer's configuration and offerer configuration at index " << localCfgIdx;
 			} else {
-				lInfo() << "No match found between answerer's configuration and any of offerers available configurations";
+				lWarning() << "No match found between answerer's configuration and any of offerers available configurations";
 			}
 
 		} else {
@@ -482,7 +505,13 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
 	const auto & availableEncs = local_offer.getSupportedEncryptions();
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
+	if (remoteCfg != Utils::getEmptyConstRefObject<SalStreamConfiguration>()) {
+		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
+	} else {
+		lInfo() << "Remote configuration has not been found";
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
 
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		if (localCfg.getProto() != remoteCfg.getProto() && localCfg.hasAvpf()) {
@@ -662,6 +691,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		}
 		lInfo() << "Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
 	} else {
+		lError() << __func__ << " Unable to find a suitable configuration for stream of type " << sal_stream_type_to_string(result.type);
 		result.disable();
 	}
 
@@ -709,7 +739,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	}
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
 		if (resultCfg.hasSrtp() == true) {
-			lInfo() << __func__ << "SAVP not supported for multicast address for remote stream [" << &remote_offer << "]";
+			lInfo() << "SAVP not supported for multicast address for remote stream [" << &remote_offer << "]";
 			success = false;
 			return std::make_pair(resultCfg, success);
 		}
@@ -744,7 +774,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	if (resultCfg.hasSrtp() == true) {
 		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
 		if (srtpFound == availableEncs.cend()) {
-			ms_message("Found matching payloads but SRTP is not supported");
+			lInfo() << "Found matching payloads but SRTP is not supported";
 			success = false;
 			return std::make_pair(resultCfg, success);
 		} else {
@@ -890,7 +920,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 					bool one_matching_codec){
 
 	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation(), local_capabilities->tcapLinesMerged());
-	size_t i;
+	size_t i = 0;
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
@@ -898,18 +928,17 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
-	for(i=0;i<remote_offer->streams.size();++i){
+	for(auto & rs : remote_offer->streams){
 
-		if (i >= local_capabilities->streams.size()) {
-			local_capabilities->streams.resize((i + 1));
-		}
-		const SalStreamDescription & ls = local_capabilities->streams[i];
-		SalStreamDescription & rs = remote_offer->streams[i];
+		SalStreamDescription & ls = local_capabilities->streams[i];
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
 
-		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
-		{
+		if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
+			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
+				rs.setProto(ls.getProto());
+				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
+			}
 			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
@@ -949,9 +978,10 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 				actualCfg.proto_other = rs.getChosenConfiguration().proto_other;
 			}
 		}
-		actualCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.getChosenConfiguration().custom_sdp_attributes);
+		stream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
 		stream.addActualConfiguration(actualCfg);
 		result->streams.push_back(stream);
+		i++;
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
