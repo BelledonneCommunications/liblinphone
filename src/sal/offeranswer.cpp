@@ -449,7 +449,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 			if (success) {
 				lInfo() << "Found match between answerer's configuration and offerer configuration at index " << localCfgIdx;
 			} else {
-				lInfo() << "No match found between answerer's configuration and any of offerers available configurations";
+				lWarning() << "No match found between answerer's configuration and any of offerers available configurations";
 			}
 
 		} else {
@@ -930,7 +930,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
 	for(auto & rs : remote_offer->streams){
 
-		SalStreamDescription ls = local_capabilities->streams[i];
+		SalStreamDescription & ls = local_capabilities->streams[i];
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
 
