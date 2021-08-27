@@ -83,6 +83,12 @@ static void version_comparisons(void){
 	BC_ASSERT_TRUE(Version("1.2") == Version(1, 2));
 	BC_ASSERT_TRUE(Version("1.2.4") == Version(1, 2, 4));
 	BC_ASSERT_TRUE(Version(1, 1) < Version(1, 4));
+	BC_ASSERT_TRUE(Version("1.0.0-alpha") < Version("1.0.0-alpha.1"));
+	BC_ASSERT_TRUE(Version("1.0.0-alpha.12") < Version("1.0.0-alpha.13"));
+	BC_ASSERT_TRUE(Version("1.0.0-alpha.17+aaaaaaa") < Version("1.0.0-alpha.17+baaaaaa"));
+	BC_ASSERT_TRUE(Version("1.0.0-alpha.34") < Version("1.0.0-beta"));
+	BC_ASSERT_TRUE(Version("1.0.0-beta.26") < Version("1.0.0"));
+	BC_ASSERT_TRUE(Version("1.0.0") < Version("1.0.1-pre.1"));
 }
 
 static void parse_capabilities(void){

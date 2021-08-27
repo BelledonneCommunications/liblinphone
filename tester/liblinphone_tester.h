@@ -387,6 +387,7 @@ typedef struct _stats {
 	int number_of_LinphoneCoreLastCallEnded;
 	int number_of_LinphoneCoreAudioDeviceChanged;
 	int number_of_LinphoneCoreAudioDevicesListUpdated;
+	int number_of_LinphoneCoreVersionUpdateCheck;
 }stats;
 
 typedef struct _LinphoneCoreManager {

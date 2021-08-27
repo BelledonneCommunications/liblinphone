@@ -85,6 +85,33 @@ static void linphone_version_test(void){
 
 }
 
+void version_update_check_cb(LinphoneCore *core, LinphoneVersionUpdateCheckResult result, const char *version, const char *url) {
+	BC_ASSERT_STRING_EQUAL(version, "5.1.0-beta-12+af6t1i8");
+	BC_ASSERT_STRING_EQUAL(url, "https://example.org/update.html");
+	BC_ASSERT_EQUAL(result, LinphoneVersionUpdateCheckNewVersionAvailable, int, "%d");
+
+	stats *stat = get_stats(core);
+	stat->number_of_LinphoneCoreVersionUpdateCheck++;
+}
+
+static void linphone_version_update_test(void) {
+	LinphoneCoreManager *lcm = linphone_core_manager_new(NULL);
+	stats *stat = get_stats(lcm->lc);
+
+	LinphoneConfig *config = linphone_core_get_config(lcm->lc);
+	linphone_config_set_string(config, "misc", "version_check_url_root", "http://provisioning.example.org:10080/");
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_version_update_check_result_received(cbs, version_update_check_cb);
+	linphone_core_add_callbacks(lcm->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	linphone_core_check_for_update(lcm->lc, "5.1.0-alpha-34+fe2adf7");
+	BC_ASSERT_TRUE(wait_for(lcm->lc,NULL,&stat->number_of_LinphoneCoreVersionUpdateCheck,1));
+
+	linphone_core_manager_destroy(lcm);
+}
+
 static void core_init_test(void) {
 	LinphoneCore* lc;
 	FILE *in;
@@ -2275,6 +2302,7 @@ end:
 
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),
+	TEST_NO_TAG("Version update check", linphone_version_update_test),
 	TEST_NO_TAG("Linphone Address", linphone_address_test),
 	TEST_NO_TAG("Linphone proxy config address equal (internal api)", linphone_proxy_config_address_equal_test),
 	TEST_NO_TAG("Linphone proxy config server address change (internal api)", linphone_proxy_config_is_server_config_changed_test),
