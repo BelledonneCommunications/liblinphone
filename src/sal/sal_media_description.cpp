@@ -336,20 +336,21 @@ const SalStreamDescription & SalMediaDescription::getActiveStreamOfType(SalStrea
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-const SalStreamDescription SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
-	auto stream = findStream(SalProtoRtpSavpf, type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpSavp, type);
-	return stream;
+const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
+	auto idx = findIdxStream(SalProtoRtpSavpf, type);
+	if (idx == -1) idx = findIdxStream(SalProtoRtpSavp, type);
+	if (idx != -1) {
+		return getStreamIdx(idx);
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType type) const {
-	auto stream = findStream(SalProtoUdpTlsRtpSavpf, type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoUdpTlsRtpSavp, type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpSavpf, type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpSavp, type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpAvpf, type);
-	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) stream = findStream(SalProtoRtpAvp, type);
-	return stream;
+const SalStreamDescription &SalMediaDescription::findBestStream(SalStreamType type) const {
+	const auto idx = findIdxBestStream(type);
+	if (idx != -1) {
+		return getStreamIdx(idx);
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
 int SalMediaDescription::findIdxBestStream(SalStreamType type) const {
