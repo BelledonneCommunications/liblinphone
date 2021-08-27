@@ -72,10 +72,12 @@ void LocalConferenceEventHandler::notifyAll (const string &notify) {
 }
 
 string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
-	const auto message = (belle_sip_message_t*)lev->op->getRecvCustomHeaders();
 	vector<string> acceptedContents = vector<string>();
-	for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
-		acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+	if (lev) {
+		const auto message = (belle_sip_message_t*)lev->op->getRecvCustomHeaders();
+		for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
+			acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+		}
 	}
 	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") != acceptedContents.end());
 	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
