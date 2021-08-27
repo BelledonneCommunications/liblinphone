@@ -18,6 +18,7 @@
  */
 
 #include "account/account-params.h"
+#include "push-notification/push-notification-config.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-address.h"
@@ -293,11 +294,11 @@ bool_t linphone_account_params_is_push_notification_available(const LinphoneAcco
 }
 
 void linphone_account_params_set_push_notification_config(LinphoneAccountParams *params, LinphonePushNotificationConfig *config) {
-	AccountParams::toCpp(params)->setPushNotificationConfig(config);
+	AccountParams::toCpp(params)->setPushNotificationConfig(PushNotificationConfig::toCpp(config));
 }
 
 LinphonePushNotificationConfig *linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params) {
-	return AccountParams::toCpp(params)->getPushNotificationConfig();
+	return AccountParams::toCpp(params)->getPushNotificationConfig()->toC();
 }
 
 void linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable) {
