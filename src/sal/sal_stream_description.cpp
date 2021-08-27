@@ -87,6 +87,8 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+
+	cfgIndex = other.cfgIndex;
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
@@ -717,6 +719,8 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+
+	cfgIndex = other.cfgIndex;
 
 	return *this;
 }

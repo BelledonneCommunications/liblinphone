@@ -353,6 +353,7 @@ bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) {
 
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
+lInfo() << __func__ << " DEBUG DEBUG is main " << stream->isMain() << " type " << sal_stream_type_to_string(stream->getType());
 		if (stream->isMain() && stream->getType() == type){
 			return stream.get();
 		}
