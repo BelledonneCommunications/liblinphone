@@ -42,6 +42,7 @@ SalStreamDescription::SalStreamDescription(){
 	cfgIndex = SalStreamDescription::actualConfigurationIndex;
 	cfgs.clear();
 	already_assigned_payloads.clear();
+	custom_sdp_attributes = NULL;
 
 	ice_candidates.clear();
 	ice_remote_candidates.clear();
@@ -49,6 +50,7 @@ SalStreamDescription::SalStreamDescription(){
 
 SalStreamDescription::~SalStreamDescription(){
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
@@ -62,10 +64,12 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	acaps = other.acaps;
 	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
-		cfgs.insert(cfg);
+		const auto result = cfgs.insert(cfg);
+		if (!result.second) cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto & cfg : other.unparsed_cfgs) {
-		unparsed_cfgs.insert(cfg);
+		const auto result = unparsed_cfgs.insert(cfg);
+		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto & pt : other.already_assigned_payloads) {
 		already_assigned_payloads.push_back(payload_type_clone(pt));
@@ -79,6 +83,10 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	ice_pwd = other.ice_pwd;
 	ice_mismatch = other.ice_mismatch;
 
+	supportedEncryption = other.supportedEncryption;
+
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
@@ -104,7 +112,6 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	rtp_port=belle_sdp_media_get_media_port ( media );
-
 	mtype = belle_sdp_media_get_media_type ( media );
 	// Make mtype lowercase to emulate case insensitive comparison
 	std::transform(mtype.begin(), mtype.end(), mtype.begin(), ::tolower);
@@ -516,7 +523,6 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 	media=belle_sdp_media_description_get_media ( media_desc );
 
 	SalStreamConfiguration actualCfg;
-	actualCfg.custom_sdp_attributes = NULL;
 
 	/*copy dtls attributes from session descriptiun, might be overwritten stream by stream*/
 	/*DTLS attributes can be defined at session level.*/
@@ -652,7 +658,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
 		const char *attr_name = belle_sdp_attribute_get_name(attr);
 		const char *attr_value = belle_sdp_attribute_get_value(attr);
-		actualCfg.custom_sdp_attributes = sal_custom_sdp_attribute_append(actualCfg.custom_sdp_attributes, attr_name, attr_value);
+		custom_sdp_attributes = sal_custom_sdp_attribute_append(custom_sdp_attributes, attr_name, attr_value);
 
 		if (strcasecmp(attr_name, "extmap") == 0){
 			char *extmap_urn = (char*)bctbx_malloc0(strlen(attr_value) + 1);
@@ -687,10 +693,12 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	acaps = other.acaps;
 	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
-		cfgs.insert(cfg);
+		const auto result = cfgs.insert(cfg);
+		if (!result.second) cfgs[cfg.first] = cfg.second;
 	}
 	for (const auto & cfg : other.unparsed_cfgs) {
-		unparsed_cfgs.insert(cfg);
+		const auto result = unparsed_cfgs.insert(cfg);
+		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto & pt : other.already_assigned_payloads) {
@@ -704,6 +712,11 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	ice_ufrag = other.ice_ufrag;
 	ice_pwd = other.ice_pwd;
 	ice_mismatch = other.ice_mismatch;
+
+	supportedEncryption = other.supportedEncryption;
+
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
 
 	return *this;
 }
@@ -908,7 +921,7 @@ const int & SalStreamDescription::getMaxRate() const {
 }
 
 SalCustomSdpAttribute * SalStreamDescription::getCustomSdpAttributes() const {
-	return getChosenConfiguration().getCustomSdpAttributes();
+	return custom_sdp_attributes;
 }
 
 void SalStreamDescription::setPtime(const int & ptime, const int & maxptime) {
@@ -1119,8 +1132,8 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		}
 	}
 
-	if (actualCfg.custom_sdp_attributes) {
-		belle_sdp_session_description_t *custom_desc = (belle_sdp_session_description_t *)actualCfg.custom_sdp_attributes;
+	if (custom_sdp_attributes) {
+		belle_sdp_session_description_t *custom_desc = (belle_sdp_session_description_t *)custom_sdp_attributes;
 		belle_sip_list_t *l = belle_sdp_session_description_get_attributes(custom_desc);
 		belle_sip_list_t *elem;
 		for (elem = l; elem != NULL; elem = elem->next) {

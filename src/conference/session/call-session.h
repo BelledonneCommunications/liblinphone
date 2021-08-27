@@ -121,6 +121,7 @@ public:
 	int getDuration () const;
 	const LinphoneErrorInfo * getErrorInfo () const;
 	const Address &getLocalAddress () const;
+	Address getContactAddress() const;
 	LinphoneCallLog *getLog () const;
 	virtual const CallSessionParams *getParams () const;
 	LinphoneReason getReason () const;
@@ -139,7 +140,7 @@ public:
 	std::shared_ptr<CallSession> getTransferTarget () const;
 	const char *getToHeader (const std::string &name) const;
 
-	void updateContactAddress (Address & contactAddress);
+	void updateContactAddress (Address & contactAddress) const;
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();

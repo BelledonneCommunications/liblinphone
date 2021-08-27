@@ -47,6 +47,10 @@ Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGro
 	fillMulticastMediaAddresses();
 }
 
+void Stream::resetMain(){
+	mIsMain = false;
+}
+
 void Stream::setMain(){
 	mIsMain = true;
 }

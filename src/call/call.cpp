@@ -109,6 +109,48 @@ MediaStream *Call::getMediaStream (LinphoneStreamType type) const {
 	return s->getMediaStream();
 }
 
+int Call::getMediaStreamsNb (LinphoneStreamType type) const {
+	int nb = 0;
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	SalStreamType nType;
+	switch(type){
+		case LinphoneStreamTypeAudio:
+			nType = SalAudio;
+		break;
+		case LinphoneStreamTypeVideo:
+			nType = SalVideo;
+		break;
+		case LinphoneStreamTypeText:
+			nType = SalText;
+		break;
+		default:
+			return nb;
+	}
+	for (auto &stream : sg.getStreams()){
+		if (stream->getType() == nType && stream->getState() == Stream::Running){
+			nb ++;
+		}
+	}
+	return nb;
+}
+
+MediaStream *Call::getVideoStream (MediaStreamDir dir) const {
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	MS2Stream *s = sg.lookupVideoStreamInterface<MS2Stream>(dir);
+	if (!s){
+		return nullptr;
+	}
+	return s->getMediaStream();
+}
+
+bool Call::compareVideoColor (MSMireControl &cl, MediaStreamDir dir) {
+	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
+	StreamsGroup & sg = ms->getStreamsGroup();
+	return sg.compareVideoColor(cl, dir);
+}
+
 SalCallOp * Call::getOp () const {
 	return getActiveSession()->getPrivate()->getOp();
 }
@@ -355,10 +397,10 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 		if (conference->getState() == ConferenceInterface::State::Created) {
 			conference->enter();
 		} else {
-			lInfo() << "Unable to add participant because conference is in state " << linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+			char * conf_state = linphone_conference_state_to_string (linphone_conference_get_state (getConference()));
+			lInfo() << "Unable to add participant because conference is in state " << conf_state;
+			ms_free(conf_state);
 		}
-	} else {
-		lInfo() << "Unable to add participant because call is not attached to conference";
 	}
 }
 
@@ -426,9 +468,18 @@ bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &sessio
 bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session) const {
 	const auto & cConference = getConference();
 	if (cConference) {
-		const auto conference = MediaConference::Conference::toCpp(cConference);
-		const ConferenceId localConferenceId = ConferenceId(session->getLocalAddress(), session->getLocalAddress());
-		return (localConferenceId == conference->getConferenceId());
+		const auto & conference = MediaConference::Conference::toCpp(cConference);
+
+		auto contactAddress = session->getContactAddress();
+		const ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
+
+		const auto & device = conference->findParticipantDevice(session);
+		const auto & participant = conference->findParticipant(session);
+		auto ms = static_pointer_cast<MediaSession>(session)->getPrivate();
+		StreamsGroup & sg = ms->getStreamsGroup();
+		const bool attachedToMixer = (sg.getMixerSession() != nullptr);
+		// It should be enough to search for a device in a conference. Nonetheless, if the conference invites an address to a conference and then the resulting call is declined by the remote party, it will never reach the StreamsRunning state therefore no device is added to the participant
+		return ((device || participant) && (localConferenceId == conference->getConferenceId()) && attachedToMixer);
 	}
 
 	return false;
@@ -500,7 +551,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-
 			const auto op = session->getPrivate()->getOp();
 			if (attachedToLocalConference(session)) {
 				// The remote participant requested to change subject
@@ -522,8 +572,19 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 						if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
+							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+							auto confParams = ConferenceParams::create(getCore()->getCCore());
+							ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
+							if (rmd->findIdxStreamWithSdpAttribute("content", "main") == -1) {
+								confLayout = ConferenceParams::Layout::None;
+							} else if (rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) {
+								confLayout = ConferenceParams::Layout::Grid;
+							} else {
+								confLayout = ConferenceParams::Layout::ActiveSpeaker;
+							}
+							confParams->setLayout(confLayout);
 							// It is expected that the core of the remote conference is the participant one
-							shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+							shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 							setConference(remoteConf->toC());
 
 							// Record conf-id to be used later when terminating the remote conference
@@ -544,6 +605,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			// Try to add device to local conference
 			if (attachedToLocalConference(session)) {
 				auto conference = MediaConference::Conference::toCpp(getConference());
+				// If the participant is already in the conference
 				if(!conference->addParticipantDevice(getSharedFromThis())) {
 					conference->participantDeviceMediaChanged(session);
 				}
@@ -565,7 +627,10 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					// Create remote conference if no conference with the expected ID is found in the database
 					if (conference == nullptr) {
 						// It is expected that the core of the remote conference is the participant one
-						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+						std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+						auto confParams = ConferenceParams::create(getCore()->getCCore());
+						confParams->setLayout((rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
+						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
 
 						// Record conf-id to be used later when terminating the remote conference
@@ -577,19 +642,17 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
 				} else if (!confId.empty()) {
-
-					char * contactAddressStr = sal_address_as_string(op->getContactAddress());
-					Address localAddress(contactAddressStr);
-					ms_free(contactAddressStr);
-					if (!localAddress.hasUriParam("conf-id")) {
-						localAddress.setUriParam("conf-id",confId);
-					}
-					ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
-					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
-					if (conference) {
-						setConference(conference->toC());
-						reenterLocalConference(session);
-						conference->addParticipantDevice(getSharedFromThis());
+					auto localAddress = session->getContactAddress();
+					if (localAddress.isValid()) {
+						ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
+						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
+						if (conference) {
+							setConference(conference->toC());
+							reenterLocalConference(session);
+							conference->addParticipantDevice(getSharedFromThis());
+						}
+					} else {
+						lError() << "Call " << this << " cannot be added to conference with ID " << confId << " because the contact address has not been retrieved";
 					}
 				}
 			}
@@ -737,7 +800,7 @@ bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
 	return mPlayingRingbackTone;
 }
 
-LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSession> &session) {
+LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSession> &session) const {
 	return getConference();
 }
 
