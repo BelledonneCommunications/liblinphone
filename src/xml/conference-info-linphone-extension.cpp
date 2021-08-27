@@ -44,7 +44,7 @@
 
 #include <xsd/cxx/pre.hxx>
 
-#include "conference-info-extension.h"
+#include "conference-info-linphone-extension.h"
 
 namespace LinphonePrivate
 {
@@ -52,94 +52,94 @@ namespace LinphonePrivate
   {
     namespace ConferenceInfoLinphoneExtension
     {
-      // ConferenceTypeExtension
+      // ConferenceTypeLinphoneExtension
       // 
 
-      const ConferenceTypeExtension::EphemeralOptional& ConferenceTypeExtension::
+      const ConferenceTypeLinphoneExtension::EphemeralOptional& ConferenceTypeLinphoneExtension::
       getEphemeral () const
       {
         return this->ephemeral_;
       }
 
-      ConferenceTypeExtension::EphemeralOptional& ConferenceTypeExtension::
+      ConferenceTypeLinphoneExtension::EphemeralOptional& ConferenceTypeLinphoneExtension::
       getEphemeral ()
       {
         return this->ephemeral_;
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       setEphemeral (const EphemeralType& x)
       {
         this->ephemeral_.set (x);
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       setEphemeral (const EphemeralOptional& x)
       {
         this->ephemeral_ = x;
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       setEphemeral (::std::unique_ptr< EphemeralType > x)
       {
         this->ephemeral_.set (std::move (x));
       }
 
-      const ConferenceTypeExtension::EntityType& ConferenceTypeExtension::
+      const ConferenceTypeLinphoneExtension::EntityType& ConferenceTypeLinphoneExtension::
       getEntity () const
       {
         return this->entity_.get ();
       }
 
-      ConferenceTypeExtension::EntityType& ConferenceTypeExtension::
+      ConferenceTypeLinphoneExtension::EntityType& ConferenceTypeLinphoneExtension::
       getEntity ()
       {
         return this->entity_.get ();
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       setEntity (const EntityType& x)
       {
         this->entity_.set (x);
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       setEntity (::std::unique_ptr< EntityType > x)
       {
         this->entity_.set (std::move (x));
       }
 
-      ::std::unique_ptr< ConferenceTypeExtension::EntityType > ConferenceTypeExtension::
+      ::std::unique_ptr< ConferenceTypeLinphoneExtension::EntityType > ConferenceTypeLinphoneExtension::
       setDetachEntity ()
       {
         return this->entity_.detach ();
       }
 
-      const ConferenceTypeExtension::AnyAttributeSet& ConferenceTypeExtension::
+      const ConferenceTypeLinphoneExtension::AnyAttributeSet& ConferenceTypeLinphoneExtension::
       getAnyAttribute () const
       {
         return this->any_attribute_;
       }
 
-      ConferenceTypeExtension::AnyAttributeSet& ConferenceTypeExtension::
+      ConferenceTypeLinphoneExtension::AnyAttributeSet& ConferenceTypeLinphoneExtension::
       getAnyAttribute ()
       {
         return this->any_attribute_;
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       setAnyAttribute (const AnyAttributeSet& s)
       {
         this->any_attribute_ = s;
       }
 
-      const ::xercesc::DOMDocument& ConferenceTypeExtension::
+      const ::xercesc::DOMDocument& ConferenceTypeLinphoneExtension::
       getDomDocument () const
       {
         return *this->dom_document_;
       }
 
-      ::xercesc::DOMDocument& ConferenceTypeExtension::
+      ::xercesc::DOMDocument& ConferenceTypeLinphoneExtension::
       getDomDocument ()
       {
         return *this->dom_document_;
@@ -231,11 +231,11 @@ namespace LinphonePrivate
   {
     namespace ConferenceInfoLinphoneExtension
     {
-      // ConferenceTypeExtension
+      // ConferenceTypeLinphoneExtension
       //
 
-      ConferenceTypeExtension::
-      ConferenceTypeExtension (const EntityType& entity)
+      ConferenceTypeLinphoneExtension::
+      ConferenceTypeLinphoneExtension (const EntityType& entity)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (),
         dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
         ephemeral_ (this),
@@ -244,10 +244,10 @@ namespace LinphonePrivate
       {
       }
 
-      ConferenceTypeExtension::
-      ConferenceTypeExtension (const ConferenceTypeExtension& x,
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                               ::LinphonePrivate::Xsd::XmlSchema::Container* c)
+      ConferenceTypeLinphoneExtension::
+      ConferenceTypeLinphoneExtension (const ConferenceTypeLinphoneExtension& x,
+                                       ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                       ::LinphonePrivate::Xsd::XmlSchema::Container* c)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (x, f, c),
         dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
         ephemeral_ (x.ephemeral_, f, this),
@@ -256,10 +256,10 @@ namespace LinphonePrivate
       {
       }
 
-      ConferenceTypeExtension::
-      ConferenceTypeExtension (const ::xercesc::DOMElement& e,
-                               ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                               ::LinphonePrivate::Xsd::XmlSchema::Container* c)
+      ConferenceTypeLinphoneExtension::
+      ConferenceTypeLinphoneExtension (const ::xercesc::DOMElement& e,
+                                       ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                       ::LinphonePrivate::Xsd::XmlSchema::Container* c)
       : ::LinphonePrivate::Xsd::XmlSchema::Type (e, f | ::LinphonePrivate::Xsd::XmlSchema::Flags::base, c),
         dom_document_ (::xsd::cxx::xml::dom::create_document< char > ()),
         ephemeral_ (this),
@@ -273,7 +273,7 @@ namespace LinphonePrivate
         }
       }
 
-      void ConferenceTypeExtension::
+      void ConferenceTypeLinphoneExtension::
       parse (::xsd::cxx::xml::dom::parser< char >& p,
              ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
@@ -336,15 +336,15 @@ namespace LinphonePrivate
         }
       }
 
-      ConferenceTypeExtension* ConferenceTypeExtension::
+      ConferenceTypeLinphoneExtension* ConferenceTypeLinphoneExtension::
       _clone (::LinphonePrivate::Xsd::XmlSchema::Flags f,
               ::LinphonePrivate::Xsd::XmlSchema::Container* c) const
       {
-        return new class ConferenceTypeExtension (*this, f, c);
+        return new class ConferenceTypeLinphoneExtension (*this, f, c);
       }
 
-      ConferenceTypeExtension& ConferenceTypeExtension::
-      operator= (const ConferenceTypeExtension& x)
+      ConferenceTypeLinphoneExtension& ConferenceTypeLinphoneExtension::
+      operator= (const ConferenceTypeLinphoneExtension& x)
       {
         if (this != &x)
         {
@@ -357,8 +357,8 @@ namespace LinphonePrivate
         return *this;
       }
 
-      ConferenceTypeExtension::
-      ~ConferenceTypeExtension ()
+      ConferenceTypeLinphoneExtension::
+      ~ConferenceTypeLinphoneExtension ()
       {
       }
 
@@ -497,7 +497,7 @@ namespace LinphonePrivate
     namespace ConferenceInfoLinphoneExtension
     {
       ::std::ostream&
-      operator<< (::std::ostream& o, const ConferenceTypeExtension& i)
+      operator<< (::std::ostream& o, const ConferenceTypeLinphoneExtension& i)
       {
         if (i.getEphemeral ())
         {
@@ -532,10 +532,10 @@ namespace LinphonePrivate
   {
     namespace ConferenceInfoLinphoneExtension
     {
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (const ::std::string& u,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (const ::std::string& u,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0,
@@ -549,16 +549,16 @@ namespace LinphonePrivate
 
         h.throw_if_failed< ::xsd::cxx::tree::parsing< char > > ();
 
-        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
             std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (const ::std::string& u,
-                                      ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (const ::std::string& u,
+                                            ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0,
@@ -571,16 +571,16 @@ namespace LinphonePrivate
         if (!d.get ())
           throw ::xsd::cxx::tree::parsing< char > ();
 
-        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
             std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (const ::std::string& u,
-                                      ::xercesc::DOMErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (const ::std::string& u,
+                                            ::xercesc::DOMErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::xsd::cxx::xml::dom::parse< char > (
@@ -589,92 +589,92 @@ namespace LinphonePrivate
         if (!d.get ())
           throw ::xsd::cxx::tree::parsing< char > ();
 
-        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
             std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::std::istream& is,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::std::istream& is,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0,
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::keep_dom) == 0);
 
         ::xsd::cxx::xml::sax::std_input_source isrc (is);
-        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (isrc, f, p);
+        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (isrc, f, p);
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::std::istream& is,
-                                      ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::std::istream& is,
+                                            ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0,
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::keep_dom) == 0);
 
         ::xsd::cxx::xml::sax::std_input_source isrc (is);
-        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (isrc, h, f, p);
+        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (isrc, h, f, p);
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::std::istream& is,
-                                      ::xercesc::DOMErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::std::istream& is,
+                                            ::xercesc::DOMErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::sax::std_input_source isrc (is);
-        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (isrc, h, f, p);
+        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (isrc, h, f, p);
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::std::istream& is,
-                                      const ::std::string& sid,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::std::istream& is,
+                                            const ::std::string& sid,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0,
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::keep_dom) == 0);
 
         ::xsd::cxx::xml::sax::std_input_source isrc (is, sid);
-        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (isrc, f, p);
+        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (isrc, f, p);
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::std::istream& is,
-                                      const ::std::string& sid,
-                                      ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::std::istream& is,
+                                            const ::std::string& sid,
+                                            ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0,
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::keep_dom) == 0);
 
         ::xsd::cxx::xml::sax::std_input_source isrc (is, sid);
-        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (isrc, h, f, p);
+        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (isrc, h, f, p);
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::std::istream& is,
-                                      const ::std::string& sid,
-                                      ::xercesc::DOMErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::std::istream& is,
+                                            const ::std::string& sid,
+                                            ::xercesc::DOMErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::xml::sax::std_input_source isrc (is, sid);
-        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (isrc, h, f, p);
+        return ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (isrc, h, f, p);
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::xercesc::InputSource& i,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::xercesc::InputSource& i,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::xsd::cxx::tree::error_handler< char > h;
 
@@ -684,16 +684,16 @@ namespace LinphonePrivate
 
         h.throw_if_failed< ::xsd::cxx::tree::parsing< char > > ();
 
-        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
             std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::xercesc::InputSource& i,
-                                      ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::xercesc::InputSource& i,
+                                            ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::xsd::cxx::xml::dom::parse< char > (
@@ -702,16 +702,16 @@ namespace LinphonePrivate
         if (!d.get ())
           throw ::xsd::cxx::tree::parsing< char > ();
 
-        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
             std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::xercesc::InputSource& i,
-                                      ::xercesc::DOMErrorHandler& h,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::xercesc::InputSource& i,
+                                            ::xercesc::DOMErrorHandler& h,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::xsd::cxx::xml::dom::parse< char > (
@@ -720,23 +720,23 @@ namespace LinphonePrivate
         if (!d.get ())
           throw ::xsd::cxx::tree::parsing< char > ();
 
-        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+        return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+          ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
             std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (const ::xercesc::DOMDocument& doc,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (const ::xercesc::DOMDocument& doc,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties& p)
       {
         if (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::keep_dom)
         {
           ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
             static_cast< ::xercesc::DOMDocument* > (doc.cloneNode (true)));
 
-          return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > (
-            ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConference_info_extension (
+          return ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > (
+            ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::parseConferenceInfoLinphoneExtension (
               std::move (d), f | ::LinphonePrivate::Xsd::XmlSchema::Flags::own_dom, p));
         }
 
@@ -744,11 +744,11 @@ namespace LinphonePrivate
         const ::xsd::cxx::xml::qualified_name< char > n (
           ::xsd::cxx::xml::dom::name< char > (e));
 
-        if (n.name () == "conference-info-extension" &&
+        if (n.name () == "conference-info-linphone-extension" &&
             n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
         {
-          ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > r (
-            ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension, char >::create (
+          ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > r (
+            ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension, char >::create (
               e, f, 0));
           return r;
         }
@@ -756,14 +756,14 @@ namespace LinphonePrivate
         throw ::xsd::cxx::tree::unexpected_element < char > (
           n.name (),
           n.namespace_ (),
-          "conference-info-extension",
+          "conference-info-linphone-extension",
           "linphone:xml:ns:conference-info-linphone-extension");
       }
 
-      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension >
-      parseConference_info_extension (::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d,
-                                      ::LinphonePrivate::Xsd::XmlSchema::Flags f,
-                                      const ::LinphonePrivate::Xsd::XmlSchema::Properties&)
+      ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension >
+      parseConferenceInfoLinphoneExtension (::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d,
+                                            ::LinphonePrivate::Xsd::XmlSchema::Flags f,
+                                            const ::LinphonePrivate::Xsd::XmlSchema::Properties&)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > c (
           ((f & ::LinphonePrivate::Xsd::XmlSchema::Flags::keep_dom) &&
@@ -782,11 +782,11 @@ namespace LinphonePrivate
                            (c.get () ? &c : &d),
                            0);
 
-        if (n.name () == "conference-info-extension" &&
+        if (n.name () == "conference-info-linphone-extension" &&
             n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
         {
-          ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension > r (
-            ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension, char >::create (
+          ::std::unique_ptr< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension > r (
+            ::xsd::cxx::tree::traits< ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension, char >::create (
               e, f, 0));
           return r;
         }
@@ -794,7 +794,7 @@ namespace LinphonePrivate
         throw ::xsd::cxx::tree::unexpected_element < char > (
           n.name (),
           n.namespace_ (),
-          "conference-info-extension",
+          "conference-info-linphone-extension",
           "linphone:xml:ns:conference-info-linphone-extension");
       }
     }
@@ -822,10 +822,10 @@ namespace LinphonePrivate
     {
       void
       serializeConferenceInfoLinphoneExtension (::std::ostream& o,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        const ::std::string& e,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                const ::std::string& e,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0);
@@ -844,11 +844,11 @@ namespace LinphonePrivate
 
       void
       serializeConferenceInfoLinphoneExtension (::std::ostream& o,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        const ::std::string& e,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                const ::std::string& e,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::xsd::cxx::xml::auto_initializer i (
           (f & ::LinphonePrivate::Xsd::XmlSchema::Flags::dont_initialize) == 0);
@@ -864,11 +864,11 @@ namespace LinphonePrivate
 
       void
       serializeConferenceInfoLinphoneExtension (::std::ostream& o,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        ::xercesc::DOMErrorHandler& h,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        const ::std::string& e,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                ::xercesc::DOMErrorHandler& h,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                const ::std::string& e,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::serializeConferenceInfoLinphoneExtension (s, m, f));
@@ -881,10 +881,10 @@ namespace LinphonePrivate
 
       void
       serializeConferenceInfoLinphoneExtension (::xercesc::XMLFormatTarget& t,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        const ::std::string& e,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                const ::std::string& e,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::serializeConferenceInfoLinphoneExtension (s, m, f));
@@ -899,11 +899,11 @@ namespace LinphonePrivate
 
       void
       serializeConferenceInfoLinphoneExtension (::xercesc::XMLFormatTarget& t,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        const ::std::string& e,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                ::LinphonePrivate::Xsd::XmlSchema::ErrorHandler& h,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                const ::std::string& e,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::serializeConferenceInfoLinphoneExtension (s, m, f));
@@ -915,11 +915,11 @@ namespace LinphonePrivate
 
       void
       serializeConferenceInfoLinphoneExtension (::xercesc::XMLFormatTarget& t,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        ::xercesc::DOMErrorHandler& h,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        const ::std::string& e,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                ::xercesc::DOMErrorHandler& h,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                const ::std::string& e,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::serializeConferenceInfoLinphoneExtension (s, m, f));
@@ -931,14 +931,14 @@ namespace LinphonePrivate
 
       void
       serializeConferenceInfoLinphoneExtension (::xercesc::DOMDocument& d,
-                                        const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags)
+                                                const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags)
       {
         ::xercesc::DOMElement& e (*d.getDocumentElement ());
         const ::xsd::cxx::xml::qualified_name< char > n (
           ::xsd::cxx::xml::dom::name< char > (e));
 
-        if (n.name () == "conference-info-extension" &&
+        if (n.name () == "conference-info-linphone-extension" &&
             n.namespace_ () == "linphone:xml:ns:conference-info-linphone-extension")
         {
           e << s;
@@ -948,19 +948,19 @@ namespace LinphonePrivate
           throw ::xsd::cxx::tree::unexpected_element < char > (
             n.name (),
             n.namespace_ (),
-            "conference-info-extension",
+            "conference-info-linphone-extension",
             "linphone:xml:ns:conference-info-linphone-extension");
         }
       }
 
       ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument >
-      serializeConferenceInfoLinphoneExtension (const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeExtension& s,
-                                        const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
-                                        ::LinphonePrivate::Xsd::XmlSchema::Flags f)
+      serializeConferenceInfoLinphoneExtension (const ::LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension& s,
+                                                const ::LinphonePrivate::Xsd::XmlSchema::NamespaceInfomap& m,
+                                                ::LinphonePrivate::Xsd::XmlSchema::Flags f)
       {
         ::LinphonePrivate::Xsd::XmlSchema::dom::unique_ptr< ::xercesc::DOMDocument > d (
           ::xsd::cxx::xml::dom::serialize< char > (
-            "conference-info-extension",
+            "conference-info-linphone-extension",
             "linphone:xml:ns:conference-info-linphone-extension",
             m, f));
 
@@ -969,13 +969,13 @@ namespace LinphonePrivate
       }
 
       void
-      operator<< (::xercesc::DOMElement& e, const ConferenceTypeExtension& i)
+      operator<< (::xercesc::DOMElement& e, const ConferenceTypeLinphoneExtension& i)
       {
         e << static_cast< const ::LinphonePrivate::Xsd::XmlSchema::Type& > (i);
 
         // any_attribute
         //
-        for (ConferenceTypeExtension::AnyAttributeConstIterator
+        for (ConferenceTypeLinphoneExtension::AnyAttributeConstIterator
              b (i.getAnyAttribute ().begin ()), n (i.getAnyAttribute ().end ());
              b != n; ++b)
         {
