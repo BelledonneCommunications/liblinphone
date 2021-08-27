@@ -155,19 +155,19 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 
 	const auto conferenceInfoNotify = createNotify(confInfo, true);
 
-	string conferenceInfoExtensionNotify = std::string();
+	string conferenceInfoLinphoneExtensionNotify = std::string();
 	if (ephemerable && chatRoom) {
-		ConferenceTypeLinphoneExtension confInfoExtension = ConferenceTypeLinphoneExtension(entity);
+		ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
 		EphemeralType ephemeralType = EphemeralType();
 		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
-		confInfoExtension.setEphemeral(ephemeralType);
-		conferenceInfoExtensionNotify = createConferenceInfoLinphoneExtensionNotify(confInfoExtension);
+		confInfoLinphoneExtension.setEphemeral(ephemeralType);
+		conferenceInfoLinphoneExtensionNotify = createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension);
 	}
 
 	if (acceptedContents.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
 		return conferenceInfoNotify;
-	} else if (!acceptConferenceInfo && acceptConferenceInfoLinphoneExtension && (!conferenceInfoExtensionNotify.empty())) {
-		return conferenceInfoExtensionNotify;
+	} else if (!acceptConferenceInfo && acceptConferenceInfoLinphoneExtension && (!conferenceInfoLinphoneExtensionNotify.empty())) {
+		return conferenceInfoLinphoneExtensionNotify;
 	} else if (acceptConferenceInfo && acceptConferenceInfoLinphoneExtension) {
 		list<Content> contents;
 		char token[17];
@@ -180,14 +180,14 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		contentConferenceInfo.setBodyFromUtf8(conferenceInfoNotify);
 		contents.push_back(move(contentConferenceInfo));
 
-		if (!conferenceInfoExtensionNotify.empty()) {
+		if (!conferenceInfoLinphoneExtensionNotify.empty()) {
 			Content contentConferenceInfoLinphoneExtension = Content();
 			belle_sip_random_token(token, sizeof(token));
 			contentConferenceInfoLinphoneExtension.addHeader("Content-Id", token);
-			contentConferenceInfoLinphoneExtension.addHeader("Content-Length", Utils::toString(conferenceInfoExtensionNotify.size()));
+			contentConferenceInfoLinphoneExtension.addHeader("Content-Length", Utils::toString(conferenceInfoLinphoneExtensionNotify.size()));
 
 			contentConferenceInfoLinphoneExtension.setContentType(ContentType::ConferenceInfoLinphoneExtension);
-			contentConferenceInfoLinphoneExtension.setBodyFromUtf8(conferenceInfoExtensionNotify);
+			contentConferenceInfoLinphoneExtension.setBodyFromUtf8(conferenceInfoLinphoneExtensionNotify);
 			contents.push_back(move(contentConferenceInfoLinphoneExtension));
 		}
 
@@ -634,14 +634,14 @@ string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & 
 		contents.back().setBodyFromUtf8(createNotify(confInfo));
 	}
 
-	ConferenceTypeLinphoneExtension confInfoExtension = ConferenceTypeLinphoneExtension(entity);
+	ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
 	EphemeralType ephemeralType = EphemeralType();
 	ephemeralType.setLifetime(std::to_string(lifetime));
-	confInfoExtension.setEphemeral(ephemeralType);
+	confInfoLinphoneExtension.setEphemeral(ephemeralType);
 
 	contents.emplace_back(Content());
 	contents.back().setContentType(ContentType::ConferenceInfoLinphoneExtension);
-	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoExtension));
+	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension));
 
 	if (contents.empty())
 		return Utils::getEmptyConstRefObject<string>();
