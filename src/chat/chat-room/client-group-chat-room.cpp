@@ -931,9 +931,6 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 
 void ClientGroupChatRoom::onConferenceKeywordsChanged (const vector<string> &keywords) {
 	L_D();
-for (const auto & k : keywords) {
-lInfo() << __func__ << " DEBUG DEBUG keyword " << k;
-}
 	if (find(keywords.cbegin(), keywords.cend(), "one-to-one") != keywords.cend())
 		d->capabilities |= ClientGroupChatRoom::Capabilities::OneToOne;
 	if (find(keywords.cbegin(), keywords.cend(), "ephemeral") != keywords.cend())
@@ -1209,7 +1206,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 			shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 			auto csp = session->getParams()->clone();
 			csp->removeCustomHeader("Ephemeral-Life-Time");
-			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
+			csp->addCustomHeader("Ephemeral-Life-Time", (ephem ? to_string(lifetime) : "0"));
 			session->update(csp, getSubject());
 		} else {
 			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
@@ -1261,7 +1258,10 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 		}
 
 		if (getState() == ConferenceInterface::State::Created) {
-			if (ephemeralEnabled()) {
+			d->params->setEphemeralLifetime(lifetime);
+			const bool enable = (lifetime != 0);
+			// If only changing the value of the message lifetime
+			if (ephemeralEnabled() == enable) {
 				shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 				auto csp = session->getParams()->clone();
 
@@ -1269,13 +1269,16 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 				csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 
 				session->update(csp, getSubject());
+			} else {
+				enableEphemeral(enable, true);
 			}
 		} else {
 			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
 		}
+	} else {
+		d->params->setEphemeralLifetime(lifetime);
 	}
 
-	d->params->setEphemeralLifetime(lifetime);
 	if (updateDb) {
 		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->params->getEphemeralLifetime() << ".";
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(getConferenceId(), lifetime);
