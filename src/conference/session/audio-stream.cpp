@@ -401,7 +401,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
 		if (mCurrentPlaybackCard) mCurrentPlaybackCard = ms_snd_card_ref(mCurrentPlaybackCard);
 
-		const auto streamCfg = stream.getActualConfiguration();
+		const auto & streamCfg = stream.getActualConfiguration();
 		if (streamCfg.getMixerToClientExtensionId() > 0) {
 			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters properly
 			audio_stream_set_mixer_to_client_extension_id(mStream, streamCfg.getMixerToClientExtensionId());
