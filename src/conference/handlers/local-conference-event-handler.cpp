@@ -693,7 +693,7 @@ void LocalConferenceEventHandler::notifyParticipant (const string &notify, const
 			case ParticipantDevice::State::Present:
 			case ParticipantDevice::State::Joining:
 			case ParticipantDevice::State::ScheduledForJoining:
-				notifyParticipantDevice(notify, device);
+				notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
 				break;
 			case ParticipantDevice::State::Leaving:
 			case ParticipantDevice::State::Left:
