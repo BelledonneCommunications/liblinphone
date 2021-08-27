@@ -28,6 +28,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoomPrivate;
+class RemoteConferenceEventHandler;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom :
@@ -39,6 +40,7 @@ class LINPHONE_PUBLIC ClientGroupChatRoom :
 	friend class CorePrivate;
 	friend class LimeX3dhEncryptionEngine;
 	friend class MainDb;
+	friend class RemoteConferenceEventHandler;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
