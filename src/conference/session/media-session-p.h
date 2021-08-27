@@ -194,8 +194,8 @@ private:
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
 	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) const;
 	void makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool offerNegotiatedMediaProtocolOnly, const bool forceCryptoKeyGeneration = false);
-	SalStreamDescription makeLocalStreamDescription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes);
-	SalStreamDescription makeConferenceParticipantVideoStream(const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<ParticipantDevice> & dev, PayloadTypeHandler & pth);
+	void fillLocalStreamDescription(SalStreamDescription & stream, std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes);
+	void fillConferenceParticipantVideoStream(SalStreamDescription &newStream, const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<ParticipantDevice> & dev, PayloadTypeHandler & pth);
 	void addNewConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, PayloadTypeHandler & pth);
 	void copyOldStreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & refMd, PayloadTypeHandler & pth);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
@@ -315,7 +315,7 @@ private:
 	AudioDevice * currentInputAudioDevice = nullptr;
 
 	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
-	void addStreamToMd(std::shared_ptr<SalMediaDescription> & md, int streamIdx, const SalStreamDescription & stream);
+	SalStreamDescription & addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx);
 
 	L_DECLARE_PUBLIC(MediaSession);
 };
