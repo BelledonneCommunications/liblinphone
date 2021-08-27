@@ -316,11 +316,11 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 void RemoteConferenceEventHandler::conferenceInfoExtensionNotifyReceived (const string &xmlBody) {
 	istringstream data(xmlBody);
-	unique_ptr<ConferenceTypeExtension> confInfo;
+	unique_ptr<ConferenceTypeLinphoneExtension> confInfo;
 	try {
 		confInfo = parseConferenceInfoLinphoneExtension(data, Xsd::XmlSchema::Flags::dont_validate);
 	} catch (const exception &) {
-		lError() << "Error while parsing conference-info-extension notify for: " << getConferenceId();
+		lError() << "Error while parsing conference-info-linphone-extension notify for: " << getConferenceId();
 		return;
 	}
 
@@ -328,13 +328,15 @@ void RemoteConferenceEventHandler::conferenceInfoExtensionNotifyReceived (const 
 	if (entityAddress != getConferenceId().getPeerAddress())
 		return;
 
-	auto ephemeralSettings = confInfo->getEphemeral();
-	auto ephemeralLifetime = ephemeralSettings.getLifetime();
+	auto ephemeralSettings = confInfo->getEphemeral().get();
+	auto ephemeralLifetime = ephemeralSettings.getLifetime().get();
 
 	const auto & core = conf->getCore();
-	auto & chatRoom = core->findChatroom(getConference());
+	auto chatRoom = core->findChatRoom(getConferenceId());
 	if (chatRoom) {
-		chatRoom->getCurrentParams()->setEphemeralLifetime(ephemeralLifetime);
+		const auto lifetime = std::stol(ephemeralLifetime);
+		chatRoom->getCurrentParams()->setEphemeralLifetime(lifetime);
+		chatRoom->getPrivate()->enableEphemeral((lifetime != 0));
 	}
 }
 
@@ -445,6 +447,7 @@ void RemoteConferenceEventHandler::notifyReceived (const Content &content) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
  	} else if (contentType == ContentType::ConferenceInfoLinphoneExtension) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
+	}
 }
 
 void RemoteConferenceEventHandler::multipartNotifyReceived (const Content &content) {

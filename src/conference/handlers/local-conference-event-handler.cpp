@@ -157,7 +157,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 
 	string conferenceInfoExtensionNotify = std::string();
 	if (ephemerable && chatRoom) {
-		ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
+		ConferenceTypeLinphoneExtension confInfoExtension = ConferenceTypeLinphoneExtension(entity);
 		EphemeralType ephemeralType = EphemeralType();
 		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
 		confInfoExtension.setEphemeral(ephemeralType);
@@ -577,10 +577,10 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 
 // -----------------------------------------------------------------------------
 
-string LocalConferenceEventHandler::createConferenceInfoLinphoneExtensionNotify (ConferenceTypeExtension confInfo) {
+string LocalConferenceEventHandler::createConferenceInfoLinphoneExtensionNotify (ConferenceTypeLinphoneExtension confInfo) {
 	stringstream notify;
 	Xsd::XmlSchema::NamespaceInfomap map;
-	map[""].name = "linphone:xml:ns:conference-info-extension";
+	map[""].name = "linphone:xml:ns:conference-info-linphone-extension";
 	serializeConferenceInfoLinphoneExtension(notify, confInfo, map);
 	return notify.str();
 }
@@ -634,7 +634,7 @@ string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & 
 		contents.back().setBodyFromUtf8(createNotify(confInfo));
 	}
 
-	ConferenceTypeExtension confInfoExtension = ConferenceTypeExtension(entity);
+	ConferenceTypeLinphoneExtension confInfoExtension = ConferenceTypeLinphoneExtension(entity);
 	EphemeralType ephemeralType = EphemeralType();
 	ephemeralType.setLifetime(std::to_string(lifetime));
 	confInfoExtension.setEphemeral(ephemeralType);

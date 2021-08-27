@@ -23,7 +23,7 @@
 #include "linphone/types.h"
 
 #include "xml/conference-info.h"
-#include "xml/conference-info-extension.h"
+#include "xml/conference-info-linphone-extension.h"
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
 #include "remote-conference-event-handler-base.h"
