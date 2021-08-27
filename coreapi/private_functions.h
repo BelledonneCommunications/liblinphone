@@ -42,6 +42,7 @@ extern "C" {
 
 LinphoneCallCbs *_linphone_call_cbs_new(void);
 LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
+LinphoneParticipantDeviceCbs *_linphone_participant_device_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
@@ -69,6 +70,7 @@ LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call);
 
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
+LINPHONE_PUBLIC MediaStream *linphone_call_get_video_stream (LinphoneCall *call, MediaStreamDir dir);
 LINPHONE_PUBLIC VideoStream * linphone_core_get_preview_stream(LinphoneCore *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
@@ -328,6 +330,9 @@ void _linphone_conference_notify_participant_admin_status_changed(LinphoneConfer
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
 
+void _linphone_participant_device_notify_capture_video_size_changed(LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size);
+
+
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);
 
@@ -561,6 +566,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc, MSZrt
 LinphoneImEncryptionEngineCbs * linphone_im_encryption_engine_cbs_new(void);
 
 LinphoneRange *linphone_range_new(void);
+LinphoneVideoSize *linphone_video_size_new(void);
 
 LINPHONE_PUBLIC LinphoneTransports *linphone_transports_new(void);
 

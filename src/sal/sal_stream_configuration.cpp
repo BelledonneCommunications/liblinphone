@@ -28,19 +28,15 @@ LINPHONE_BEGIN_NAMESPACE
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
 SalStreamConfiguration::SalStreamConfiguration(){
-	custom_sdp_attributes = NULL;
-
 	pad[0] = false;
 	pad[1] = false;
 
 	payloads.clear();
 	crypto.clear();
-
 }
 
 SalStreamConfiguration::~SalStreamConfiguration(){
 	PayloadTypeHandler::clearPayloadList(payloads);
-	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & other){
@@ -63,7 +59,6 @@ SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & ot
 	pad[1] = other.pad[1];
 	rtcp_fb = other.rtcp_fb;
 	rtcp_xr = other.rtcp_xr;
-	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
 	mid = other.mid;
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
 	mixer_to_client_extension_id = other.mixer_to_client_extension_id;
@@ -102,8 +97,6 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	pad[1] = other.pad[1];
 	rtcp_fb = other.rtcp_fb;
 	rtcp_xr = other.rtcp_xr;
-	sal_custom_sdp_attribute_free(custom_sdp_attributes);
-	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
 	mid = other.mid;
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
 	mixer_to_client_extension_id = other.mixer_to_client_extension_id;
@@ -343,10 +336,6 @@ const std::string & SalStreamConfiguration::getMid() const {
 
 const int & SalStreamConfiguration::getMidRtpExtHeaderId() const {
 	return mid_rtp_ext_header_id;
-}
-
-SalCustomSdpAttribute * SalStreamConfiguration::getCustomSdpAttributes() const {
-	return custom_sdp_attributes;
 }
 
 void SalStreamConfiguration::enableAvpfForStream() {

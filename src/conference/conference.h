@@ -27,6 +27,7 @@
 
 #include "address/address.h"
 
+#include "conference/conference-params.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "core/core-accessor.h"
@@ -52,58 +53,6 @@ class RemoteConference;
 
 }
 
-class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public ConferenceParamsInterface {
-	friend class MediaConference::Conference;
-	friend class MediaConference::LocalConference;
-	friend class MediaConference::RemoteConference;
-	public:
-		ConferenceParams(const ConferenceParams& params) = default;
-		ConferenceParams(const LinphoneCore *core = NULL);
-
-		ConferenceParams *clone()const override{
-			return new ConferenceParams(*this);
-		}
-
-		virtual void setConferenceFactoryAddress (const Address &address) override { m_factoryAddress = address; };
-		const Address getFactoryAddress() const { return m_factoryAddress; };
-
-		virtual void enableVideo(bool enable) override {m_enableVideo = enable;}
-		bool videoEnabled() const {return m_enableVideo;}
-
-		virtual void  enableAudio(bool enable) override {m_enableAudio = enable;};
-		bool audioEnabled() const {return m_enableAudio;}
-
-		virtual void  enableChat(bool enable) override {m_enableChat = enable;};
-		bool chatEnabled() const {return m_enableChat;}
-
-		void enableLocalParticipant (bool enable) { m_localParticipantEnabled = enable; }
-		bool localParticipantEnabled() const { return m_localParticipantEnabled; }
-
-		void enableOneParticipantConference (bool enable) { m_allowOneParticipantConference = enable; }
-		bool oneParticipantConferenceEnabled() const { return m_allowOneParticipantConference; }
-
-		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		const ConferenceAddress & getConferenceAddress() const { return m_conferenceAddress; };
-
-		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
-		const std::string &getSubject() const { return m_subject; };
-
-		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
-		const IdentityAddress &getMe() const { return m_me; };
-
-	private:
-		bool m_enableVideo = false;
-		bool m_enableAudio = false;
-		bool m_enableChat = false;
-		bool m_localParticipantEnabled = true;
-		bool m_allowOneParticipantConference = false;
-		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		//Address m_conferenceAddress = Address();
-		Address m_factoryAddress = Address();
-		std::string m_subject = "";
-		IdentityAddress m_me = IdentityAddress();
-};
-
 class LINPHONE_PUBLIC Conference :
 	public ConferenceInterface,
 	public ConferenceListener,
@@ -124,6 +73,10 @@ public:
 
 	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<ParticipantDevice> findParticipantDevice (const IdentityAddress &addr) const;
+	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel (const std::string &label) const;
+
+	virtual const std::shared_ptr<CallSession> getMainSession() const;
 
 	// TODO: Start Delete
 	virtual void join () override;
@@ -156,6 +109,9 @@ public:
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
+
+	const std::string &getUsername () const;
+	void setUsername (const std::string &username);
 
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
@@ -207,6 +163,8 @@ protected:
 	void resetLastNotify ();
 	void setConferenceId (const ConferenceId &conferenceId);
 
+	bool tryAddMeDevice();
+
 	ConferenceId conferenceId;
 
 	std::shared_ptr<ConferenceParams> confParams = nullptr;
@@ -214,6 +172,8 @@ protected:
 	// lastNotify belongs to the conference and not the the event handler.
 	// The event handler can access it using the getter
 	unsigned int lastNotify = 0;
+
+	std::string mUsername = "";
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
 

@@ -485,6 +485,13 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConferenc
 typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Callback used to notify that the capture video size of a participant device has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] size #LinphoneVideoSize of participant device @notnil @tobefreed
+ */
+typedef void (*LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size);
+
+/**
  * @}
 **/
 

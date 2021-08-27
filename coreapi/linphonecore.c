@@ -4554,7 +4554,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
 	bool defer = Call::toCpp(call)->initiateOutgoing();
 	if (!defer) {
-		if (Call::toCpp(call)->startInvite(nullptr) != 0) {
+		if (Call::toCpp(call)->startInvite(NULL) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
@@ -6353,7 +6353,7 @@ void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 }
 
 void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
-#ifdef ANDROID
+#ifdef __ANDROID__
 	getPlatformHelpers(lc)->setVideoWindow(id);
 #else
 	_linphone_core_set_native_video_window_id(lc, id);
@@ -6393,7 +6393,7 @@ void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 }
 
 void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
-#ifdef ANDROID
+#ifdef __ANDROID__
 	getPlatformHelpers(lc)->setVideoPreviewWindow(id);
 #else
 	_linphone_core_set_native_preview_window_id(lc, id);
@@ -8422,6 +8422,16 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 	LinphoneConference *conference = linphone_core_get_conference(lc);
 	if(conference == NULL) {
 		LinphoneConferenceParams *params = linphone_conference_params_new(lc);
+		if (call) {
+			const LinphoneCallParams * remote_call_params = linphone_call_get_remote_params(call);
+			LinphoneProxyConfig * proxy_cfg = linphone_call_get_dest_proxy(call);
+			LinphonePrivate::ConferenceParams::toCpp(params)->setProxyCfg(proxy_cfg);
+			if (remote_call_params) {
+				linphone_conference_params_set_audio_enabled(params, linphone_call_params_audio_enabled(remote_call_params));
+				linphone_conference_params_set_video_enabled(params, linphone_call_params_video_enabled(remote_call_params));
+				linphone_conference_params_set_chat_enabled(params, linphone_call_params_realtime_text_enabled(remote_call_params));
+			}
+		}
 		conference = linphone_core_create_conference_with_params(lc, params);
 		linphone_conference_params_unref(params);
 		linphone_conference_unref(conference); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */

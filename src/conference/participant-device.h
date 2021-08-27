@@ -64,6 +64,8 @@ public:
 	std::shared_ptr<Core> getCore () const;
 
 	inline const IdentityAddress &getAddress () const { return mGruu; }
+	inline const std::string &getLabel () const { return mLabel; }
+	inline void setLabel (const std::string &label) { mLabel = label; };
 	inline const std::string &getName () const { return mName; }
 	inline void setName (const std::string &name) { mName = name; }
 	Participant *getParticipant () const { return mParticipant; }
@@ -101,16 +103,28 @@ public:
 	bool setTextDirection(const LinphoneMediaDirection direction);
 	bool updateMedia();
 
+	void setWindowId(void * newWindowId);
+	void * getWindowId() const;
+	MSVideoSize getReceivedVideoSize() const;
+	
+	bctbx_list_t *getCallbacksList () const;
+	LinphoneParticipantDeviceCbs *getCurrentCbs () const;
+	void setCurrentCbs (LinphoneParticipantDeviceCbs *cbs);
+	void addCallbacks (LinphoneParticipantDeviceCbs *cbs);
+	void removeCallbacks (LinphoneParticipantDeviceCbs *cbs);
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
 	std::string mName;
+	std::string mLabel;
 	std::string mCapabilityDescriptor;
 	std::shared_ptr<CallSession> mSession;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
 	uint32_t mSsrc = 0;
+	void * mWindowId = NULL;
 
 	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 
@@ -118,6 +132,9 @@ private:
 
 	bool setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceMediaCapabilities capIdx);
 	LinphoneMediaDirection getMediaDirection(const ConferenceMediaCapabilities capIdx) const;
+
+	bctbx_list_t *mCallbacks = nullptr;
+	LinphoneParticipantDeviceCbs *mCurrentCbs = nullptr;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
