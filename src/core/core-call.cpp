@@ -124,9 +124,10 @@ int CorePrivate::removeCall (const shared_ptr<Call> &call) {
 	L_ASSERT(call);
 	auto iter = find(calls.begin(), calls.end(), call);
 	if (iter == calls.end()) {
-		lWarning() << "Could not find the call to remove";
+		lWarning() << "Could not find the call (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") to remove";
 		return -1;
 	}
+	lInfo() << "Removing the call (local address " << call->getLocalAddress().asString() << " remote address " << (call->getRemoteAddress() ? call->getRemoteAddress()->asString() : "Unknown") << ") from the list attached to the core";
 
 	calls.erase(iter);
 	return 0;
@@ -202,11 +203,11 @@ bool Core::areSoundResourcesLocked () const {
 				case CallSession::State::Referred:
 				case CallSession::State::IncomingEarlyMedia:
 				case CallSession::State::Updating:
-					lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources becaue it is state " << call->getState();
+					lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources because it is state " << call->getState();
 					return true;
 				case CallSession::State::StreamsRunning:
 					if (call->mediaInProgress()) {
-						lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources becaue it is state " << call->getState() << " and media is in progress";
+						lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources because it is state " << call->getState() << " and media is in progress";
 						return true;
 					}
 				break;

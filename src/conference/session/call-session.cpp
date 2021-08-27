@@ -733,19 +733,26 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 		else
 			newSubject = "Media change";
 	}
-	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
-		/* Give a chance to update the contact address if connectivity has changed */
-		char * contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
+	char * contactAddressStr = NULL;
+	if (destProxy) {
+		if (linphone_proxy_config_get_op(destProxy)) {
+			/* Give a chance to update the contact address if connectivity has changed */
+			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
 
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(destProxy));
+		}
+	} else {
+		op->setContactAddress(nullptr);
+	}
+
+	if (contactAddressStr) {
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
-		linphone_proxy_config_get_op(destProxy)->setContactAddress(contactAddress.getInternalAddress());
-
 		q->updateContactAddress(contactAddress);
-
 		op->setContactAddress(contactAddress.getInternalAddress());
-	} else
-		op->setContactAddress(nullptr);
+	}
+
 	return op->update(newSubject.c_str(), q->getParams()->getPrivate()->getNoUserConsent());
 }
 
@@ -808,11 +815,8 @@ void CallSessionPrivate::setContactOp () {
 		ms_free(contactAddressStr);
 		// Do not try to set contact address if it is not valid
 		if (contactAddress.isValid()) {
+			q->updateContactAddress (contactAddress);
 			if (isInConference()) {
-				const string confId = getConferenceId();
-				if (confId.empty() == false) {
-					contactAddress.setUriParam("conf-id", confId);
-				}
 				std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
 				if (conference) {
 
@@ -820,7 +824,6 @@ void CallSessionPrivate::setContactOp () {
 					conference->setConferenceAddress(contactAddress);
 				}
 			}
-			q->updateContactAddress (contactAddress);
 			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
 			op->setContactAddress(contactAddress.getInternalAddress());
 		} else {
@@ -887,8 +890,15 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		ms_free(addr);
 		return result;
 	} else if (destProxy){
-		const LinphoneAddress *addr = linphone_proxy_config_get_contact(destProxy);
-		if (addr && (linphone_proxy_config_get_op(destProxy) || linphone_proxy_config_get_dependency(destProxy) != nullptr)) {
+		const LinphoneAddress *addr = NULL;
+		if (linphone_proxy_config_get_contact(destProxy)) {
+			addr = linphone_proxy_config_get_contact(destProxy);
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+			addr = linphone_proxy_config_get_identity_address(destProxy);
+		} else {
+			lError() << "Unable to retrieve contact address from proxy confguration for call session " << this << " (local address " << q->getLocalAddress().asString() << " remote address " <<  (q->getRemoteAddress() ? q->getRemoteAddress()->asString() : "Unknown") << ").";
+		}
+		if (addr && (linphone_proxy_config_get_op(destProxy) || (linphone_proxy_config_get_dependency(destProxy) != nullptr) || linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
 			/* If using a proxy, use the contact address as guessed with the REGISTERs */
 			lInfo() << "Contact has been fixed using proxy";
 			result = linphone_address_clone(addr);
@@ -1496,6 +1506,26 @@ LinphoneCallLog * CallSession::getLog () const {
 	return d->log;
 }
 
+Address CallSession::getContactAddress() const {
+	L_D();
+	const auto op = d->getOp();
+	char * contactAddressStr = NULL;
+	if (op->getContactAddress()) {
+		contactAddressStr = sal_address_as_string(op->getContactAddress());
+	} else if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(d->getDestProxy()));
+	} else {
+		lError() << "Unable to retrieve contact address from proxy confguration for call " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
+	}
+	if (contactAddressStr) {
+		Address contactAddress(contactAddressStr);
+		updateContactAddress(contactAddress);
+		ms_free(contactAddressStr);
+		return contactAddress;
+	}
+	return Address();
+}
+
 LinphoneReason CallSession::getReason () const {
 	return linphone_error_info_get_reason(getErrorInfo());
 }
@@ -1628,7 +1658,7 @@ const CallSessionParams * CallSession::getParams () const {
 	return d->params;
 }
 
-void CallSession::updateContactAddress (Address & contactAddress) {
+void CallSession::updateContactAddress (Address & contactAddress) const {
 	L_D();
 
 	if (d->isInConference()) {

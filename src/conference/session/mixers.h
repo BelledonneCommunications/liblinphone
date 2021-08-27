@@ -30,6 +30,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class StreamMixer;
+class MS2VideoStream;
 
 /**
  * Generic listener for audio mixers.
@@ -76,11 +77,15 @@ public:
 	void setFocus(StreamsGroup *sg);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
+	
+	void setConferenceLayout(ConferenceParams::Layout layout){mLayout=layout;};
+	ConferenceParams::Layout getConferenceLayout() {return mLayout;};
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 private:
 	Core & mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
+	ConferenceParams::Layout mLayout;
 };
 
 inline std::ostream & operator<<(std::ostream &str, const MixerSession & session){
@@ -108,8 +113,16 @@ public:
 	 * Enable a local participant in this Mixer.
 	 */
 	virtual void enableLocalParticipant(bool enabled) = 0;
+	virtual void setLocalLabel(const std::string &label) {
+		mLocalLabel = label;
+	};
+	virtual std::string getLocalLabel() const {
+		return mLocalLabel;
+	};
 protected:
+	
 	MixerSession & mSession;
+	std::string mLocalLabel;
 };
 
 inline std::ostream & operator<<(std::ostream &str, const StreamMixer & mixer){
@@ -183,12 +196,15 @@ private:
  * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the mixer class.
  */
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
+	friend MS2VideoStream;
 public:
 	MS2VideoMixer(MixerSession & session);
-	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted);
+	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
+	void setLocalParticipantLabel(const std::string & label);
+	std::string getLocalParticipantLabel() const;
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
@@ -199,9 +215,13 @@ private:
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
-	MSVideoConference *mConference = nullptr;
+	MSVideoConference *mConferenceAllToAll = nullptr;
+	MSVideoConference *mConferenceOnetoAll = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
+	VideoStream *mLocalParticipantItcStream = nullptr; // TODO WORKAROUND - Stores the pointer to a stream created for active speaker layout so that it can be stopped when removing the local participant
+	MSVideoEndpoint *mMainLocalEndpoint = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
+	std::string mLocalParticipantLabel;
 	RtpProfile *mLocalDummyProfile = nullptr;
 	static constexpr int sVP8PayloadTypeNumber = 95;
 };

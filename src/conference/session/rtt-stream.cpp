@@ -130,6 +130,10 @@ void MS2RTTStream::initZrtp() {
 
 }
 
+std::string MS2RTTStream::getLabel()const {
+	return std::string();
+}
+
 void MS2RTTStream::startZrtp() {
 
 }
