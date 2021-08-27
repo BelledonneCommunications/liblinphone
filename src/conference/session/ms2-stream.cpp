@@ -510,15 +510,12 @@ void MS2Stream::finishEarlyMediaForking(){
  * Indeed, when RTP bundle mode is ON, this information is to be taken in the transport owner stream.
  */
 void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info){
-	auto stream = params.getResultStreamDescription();
-	if (mRtpBundle && !mOwnsBundle){
-		if (!mBundleOwner){
-			lError() << "Bundle owner shall be set !";
-		}else{
-			stream = params.resultMediaDescription->getStreamIdx(static_cast<unsigned int>(mBundleOwner->getIndex()));
-		}
+	if (mRtpBundle && !mOwnsBundle && !mBundleOwner){
+		lError() << "Bundle owner shall be set !";
 	}
-	
+
+	const auto & stream = (mRtpBundle && !mOwnsBundle && mBundleOwner) ? params.resultMediaDescription->getStreamIdx(static_cast<unsigned int>(mBundleOwner->getIndex())) : params.getResultStreamDescription();
+
 	info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
 	info->rtpPort = stream.rtp_port;
