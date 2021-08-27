@@ -13,8 +13,8 @@
 	<!--
 		conference info extension
 	-->
-	<xs:element name="conference-info-extension" type="tns:conference-type-extension"/>
-		<xs:complexType name="conference-type-extension">
+	<xs:element name="conference-info-linphone-extension" type="tns:conference-type-linphone-extension"/>
+		<xs:complexType name="conference-type-linphone-extension">
 			<xs:sequence>
 				<xs:element name="ephemeral" type="tns:ephemeral-type" minOccurs="0"/>
 			</xs:sequence>
