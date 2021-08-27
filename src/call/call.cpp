@@ -315,6 +315,9 @@ void Call::onCallSessionAccepting (const std::shared_ptr<CallSession> &session) 
 
 void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
 	LinphoneCallLog *log = session->getLog();
+	if (session->getState() == CallSession::State::PushIncomingReceived) {
+		session->setStateToEnded();
+	}
 	linphone_core_report_early_failed_call(getCore()->getCCore(),
 		linphone_call_log_get_dir(log),
 		linphone_address_clone(linphone_call_log_get_from_address(log)),
