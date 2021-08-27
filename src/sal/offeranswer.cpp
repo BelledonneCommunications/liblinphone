@@ -935,10 +935,6 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		SalStreamConfiguration actualCfg;
 
 		if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
-			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
-				rs.setProto(ls.getProto());
-				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
-			}
 			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
