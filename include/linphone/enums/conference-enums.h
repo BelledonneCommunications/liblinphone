@@ -27,15 +27,26 @@
  */
 
 typedef enum _LinphoneConferenceState{
-	LinphoneConferenceStateNone = 0, /**< Initial state */
-	LinphoneConferenceStateInstantiated = 1, /**< Conference is now instantiated on local */
-	LinphoneConferenceStateCreationPending = 2, /**< One creation request was sent to the server */
-	LinphoneConferenceStateCreated = 3, /**< Conference was created on the server */
-	LinphoneConferenceStateCreationFailed = 4, /**< Conference creation failed */
-	LinphoneConferenceStateTerminationPending = 5, /**< Wait for conference termination */
-	LinphoneConferenceStateTerminated = 6, /**< Conference exists on server but not in local */
-	LinphoneConferenceStateTerminationFailed = 7, /**< Conference termination failed */
-	LinphoneConferenceStateDeleted = 8, /**< Conference was deleted on the server */
+	LinphoneConferenceStateNone = 0,		/**< Initial state */
+	LinphoneConferenceStateInstantiated = 1,	/**< Conference is now instantiated on local */
+	LinphoneConferenceStateCreationPending = 2,	/**< One creation request was sent to the server */
+	LinphoneConferenceStateCreated = 3,		/**< Conference was created on the server */
+	LinphoneConferenceStateCreationFailed = 4,	/**< Conference creation failed */
+	LinphoneConferenceStateTerminationPending = 5,	/**< Wait for conference termination */
+	LinphoneConferenceStateTerminated = 6,		/**< Conference exists on server but not in local */
+	LinphoneConferenceStateTerminationFailed = 7,	/**< Conference termination failed */
+	LinphoneConferenceStateDeleted = 8,		 /**< Conference was deleted on the server */
 } LinphoneConferenceState;
+
+/**
+ * #LinphoneConferenceLayout is used to indicate the layout used by the conference.
+ * @ingroup conference
+ */
+
+typedef enum _LinphoneConferenceLayout{
+	LinphoneConferenceLayoutNone,          /**< None - participant who speaks is prominently displayed in the center of the screen */
+	LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
+	LinphoneConferenceLayoutGrid,          /**< Grid - each participant is given an equal sized image size */
+} LinphoneConferenceLayout;
 
 #endif // ifndef _L_CONFERENCE_ENUMS_H_

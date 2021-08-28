@@ -122,6 +122,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasDtls() const;
 		bool hasZrtp() const;
 		bool hasLimeIk() const;
+
 		const std::string & getRtcpAddress() const;
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
@@ -174,6 +175,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::list<PayloadType*> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 		int bandwidth = 0;
 		SalMulticastRole multicast_role = SalMulticastInactive;
+		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 
 	private:
 

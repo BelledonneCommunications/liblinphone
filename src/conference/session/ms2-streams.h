@@ -175,6 +175,7 @@ public:
 	virtual void setOutputDevice(AudioDevice *audioDevice) override;
 	virtual AudioDevice* getInputDevice() const override;
 	virtual AudioDevice* getOutputDevice() const override;
+	virtual std::string getLabel()const override;
 	
 	virtual MediaStream *getMediaStream()const override;
 	virtual ~MS2AudioStream();
@@ -265,7 +266,7 @@ public:
 	virtual MediaStream *getMediaStream()const override;
 	virtual VideoStream *getVideoStream()const override;
 	virtual MSWebCam *getVideoDevice()const override;
-
+	virtual std::string getLabel()const override;
 	void oglRender();
 	MSWebCam * getVideoDevice(CallSession::State targetState)const;
 
@@ -300,6 +301,7 @@ public:
 	virtual void finish() override;
 	virtual void initZrtp() override;
 	virtual void startZrtp() override;
+	virtual std::string getLabel()const override;
 	virtual ~MS2RTTStream();
 
 private:
