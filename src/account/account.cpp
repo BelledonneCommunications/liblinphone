@@ -838,14 +838,17 @@ void Account::update () {
 }
 
 string Account::getComputedPushNotificationParameters () {
-	if (!mCore|| !mCore->push_notification_enabled) {
+	if (!mCore) {
+		return string("");
+	}
+	if (!mCore->push_notification_enabled) {
 		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because core push notification are not enabled";
 		return string("");
 	}
 	if (!mParams->isPushNotificationAvailable()) {
 		lInfo() << "Couldn't compute push notifications parameters on account [" << this->toC() << "] because account params do not have available push notifications";
 		return string("");
-	}
+	} 
 
 	string provider = L_C_TO_STRING(linphone_push_notification_config_get_provider(mParams->mPushNotificationConfig));
 	bool_t use_legacy_params = !!linphone_config_get_int(mCore->config, "net", "use_legacy_push_notification_params", FALSE);
@@ -933,7 +936,6 @@ string Account::getComputedPushNotificationParameters () {
 	ostringstream result;
 	result << computedPushParams;
 	ms_free(computedPushParams);
-	lInfo() << "Push notifications parameters on account [" << this->toC() << "] successfully computed : " << result.str();
 	return result.str();
 }
 
@@ -1114,7 +1116,7 @@ void Account::onPushNotificationAllowedChanged (bool callDone) {
 	string contactUriParams = mParams->mContactUriParameters;
 
 	// Do not alter contact uri params for account without push notification allowed
-	if (!computedPushParams.empty() && mCore && mCore->push_notification_enabled && (mParams->mPushNotificationAllowed || mParams->mRemotePushNotificationAllowed)) {
+	if (!computedPushParams.empty() && (mParams->mPushNotificationAllowed || mParams->mRemotePushNotificationAllowed)) {
 		if (contactUriParams.empty() || contactUriParams != computedPushParams) {
 			mParams->setContactUriParameters(computedPushParams);
 
@@ -1127,7 +1129,8 @@ void Account::onPushNotificationAllowedChanged (bool callDone) {
 			lInfo() << "Push notification information [" << computedPushParams << "] added to account [" << this->toC() << "]";
 		}
 	} else {
-		if (!contactUriParams.empty()) {
+		// If we are not managing the push notifications in the SDK (mCore->push_notification_enabled), we exit without erasing the contact URI which may be used by the application.
+		if (!contactUriParams.empty() && mCore && mCore->push_notification_enabled) {
 			mParams->setContactUriParameters("");
 
 			// If callDone is false then this is called from setAccountParams and there is no need to call done()
