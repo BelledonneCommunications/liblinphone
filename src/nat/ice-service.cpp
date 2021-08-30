@@ -190,9 +190,11 @@ LinphoneCore *IceService::getCCore()const{
 	return mStreamsGroup.getCCore();
 }
 
-void IceService::gatherLocalCandidates(){
+int IceService::gatherLocalCandidates(){
 	list<string> localAddrs = IfAddrs::fetchLocalAddresses();
 	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
+	
+	if (!hasLocalNetworkPermission(!localAddrs.empty() ? *localAddrs.begin() : "")) return -1;
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
@@ -209,6 +211,7 @@ void IceService::gatherLocalCandidates(){
 			}
 		}
 	}
+	return 0;
 }
 
 /** Return values:
@@ -234,7 +237,10 @@ int IceService::gatherIceCandidates () {
 	ice_session_enable_short_turn_refresh(mIceSession, core->short_turn_refresh);
 
 	// Gather local host candidates.
-	gatherLocalCandidates();
+	if (gatherLocalCandidates() == -1){
+		lError() << "Local network permission is not granted, ICE must be disabled.";
+		return -1;
+	}
 	
 	if (ai && natPolicy && linphone_nat_policy_stun_server_activated(natPolicy)) {
 		string server = linphone_nat_policy_get_stun_server(natPolicy);
@@ -772,6 +778,86 @@ bool IceService::reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDesc
 		}
 	}
 	return false;
+}
+
+/* 
+ * The local network permission check is done by simply sending a packet to itself.
+ */
+bool IceService::hasLocalNetworkPermission(const std::string & localAddrHint){
+	ssize_t error;
+	struct addrinfo *res = nullptr;
+	struct addrinfo hints = {0};
+	string localAddr = localAddrHint;
+	ortp_socket_t sock = (ortp_socket_t)-1;
+	struct sockaddr_storage selfAddr;
+	socklen_t selfAddrLen = sizeof(selfAddr);
+	static const int timeout = 100; /*ms*/
+	string message("coucou");
+	uint64_t begin;
+	bool result = false;
+	
+	if (localAddr.empty()){
+		auto addresses = IfAddrs::fetchLocalAddresses();
+		if (addresses.empty()){
+			lError() << "Cannot check the local network permission because the local network addresses could not be fetched.";
+			return false;
+		}
+		localAddr = *addresses.begin();
+	}
+	
+	lInfo() << "Checking local network permission with address " << localAddr;
+	
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST;
+	
+	error = bctbx_getaddrinfo(localAddr.c_str(), "0", &hints, &res);
+	if (error != 0){
+		lError() << "bctbx_getaddrinfo() failed with error [" << gai_strerror((int)error) << "], unable to check local network permission.";
+		goto end;
+	}
+	sock = socket(res->ai_family, res->ai_socktype, IPPROTO_UDP);
+	if (sock == (ortp_socket_t)-1){
+		lError() << "Socket creation failed: " << getSocketError();
+		goto end;
+	}
+	set_non_blocking_socket(sock);
+	error = ::bind(sock, res->ai_addr, res->ai_addrlen);
+	if (error == -1){
+		lError() << "Cannot bind socket:" << getSocketError();
+		goto end;
+	}
+	error = getsockname(sock, (struct sockaddr*) &selfAddr, &selfAddrLen);
+	if (error == -1){
+		lError() << "getsockname() failed:" << getSocketError();
+		goto end;
+	}
+	
+	error = sendto(sock, message.c_str(), message.size(), 0, (struct sockaddr *)&selfAddr, selfAddrLen);
+	if (error == -1){
+		lError() << "Cannot sendto():" << getSocketError();
+		goto end;
+	}
+	begin = ms_get_cur_time_ms();
+	do{
+		uint8_t buffer[128];
+		struct sockaddr_storage ss;
+		socklen_t slen;
+		error = recvfrom(sock, (char*)buffer, sizeof(buffer), 0, (struct sockaddr *)&ss, &slen);
+		if (error > 0){
+			result = true;
+			break;
+		}else if (error == -1 && getSocketErrorCode() == BCTBX_EWOULDBLOCK){
+			lError() << "recvfrom() failed: " << getSocketError();
+			break;
+		}
+		ms_usleep(1000);
+	}while (ms_get_cur_time_ms() - begin < timeout);
+	lInfo() << "IceService::hasLocalNetworkPermission(): local permission is apparently " << (result ? "granted" : "denied");
+end:
+	if (sock != 1) close_socket(sock);
+	if (res) bctbx_freeaddrinfo(res);
+	return result;
 }
 
 
