@@ -32,7 +32,6 @@
 #include "lime.h"
 #include "conference_private.h"
 #include "logger/logger.h"
-
 #include "sqlite3_bctbx_vfs.h"
 
 #include "../src/chat/modifier/file-transfer-chat-message-modifier.h"
@@ -1738,7 +1737,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.vfu_with_info = !!linphone_config_get_int(lc->config,"sip","vfu_with_info",1);
 	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 63000));
 	lc->sal->setSupportedTags(linphone_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
-	LinphoneSupportLevel level_100rel = linphone_core_get_100rel_support_level(lc);
+	LinphoneSupportLevel level_100rel = linphone_core_get_tag_100rel_support_level(lc);
 	if (level_100rel != LinphoneSupportLevelNoSupport) {
 		linphone_core_add_supported_tag(lc, "100rel");
 	}
@@ -2698,14 +2697,6 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
-void linphone_core_update_account_push_params(LinphoneCore *core) {
-	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
-	for (; accounts != NULL; accounts = accounts->next) {
-		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		Account::toCpp(account)->updatePushNotificationParameters();
-	}
-}
-
 bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
 	for (; accounts != NULL; accounts = accounts->next) {
@@ -2715,25 +2706,38 @@ bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 	return TRUE;
 }
 
+LinphonePushNotificationConfig* linphone_core_get_push_notification_config(LinphoneCore *core) {
+	return core->push_config;
+}
+
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
 	linphone_push_notification_config_set_param(core->push_config, param);
 	linphone_push_notification_config_set_prid(core->push_config, prid);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		LinphoneAccountParams *newParams = linphone_account_params_clone(linphone_account_get_params(account));
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(newParams);
 		linphone_push_notification_config_set_param(push_cfg, param);
 		linphone_push_notification_config_set_prid(push_cfg, prid);
-		Account::toCpp(account)->updatePushNotificationParameters();
+		linphone_account_set_params(account, newParams);
+		linphone_account_params_unref(newParams);
 	}
 	ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
 }
 
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
-	linphone_config_set_int(core->config, "net", "push_notification", enable);
-	core->push_notification_enabled = enable;
-
-	linphone_core_update_account_push_params(core);
+	if (core->push_notification_enabled != enable) {
+		linphone_config_set_int(core->config, "net", "push_notification", enable);
+		core->push_notification_enabled = enable;
+		bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+		for (; accounts != NULL; accounts = accounts->next) {
+			Account *account = Account::toCpp((LinphoneAccount *)accounts->data);
+			if (account->getAccountParams()->isPushNotificationAvailable()) {
+				account->setNeedToRegister(true);
+			}
+		}
+	}
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
@@ -7883,11 +7887,11 @@ void linphone_core_enable_capability_negociation(LinphoneCore *lc, bool_t enable
 	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)enable);
 }
 
-LinphoneSupportLevel linphone_core_get_100rel_support_level(const LinphoneCore *lc) {
+LinphoneSupportLevel linphone_core_get_tag_100rel_support_level(const LinphoneCore *lc) {
 	return (LinphoneSupportLevel)linphone_config_get_int(lc->config, "sip", "100rel_support_level", LinphoneSupportLevelNoSupport);
 }
 
-void linphone_core_set_100rel_support_level(LinphoneCore *lc, LinphoneSupportLevel level) {
+void linphone_core_set_tag_100rel_support_level(LinphoneCore *lc, LinphoneSupportLevel level) {
 	linphone_config_set_int(lc->config, "sip", "100rel_support_level", (int)level);
 	if (level == LinphoneSupportLevelNoSupport) {
 		linphone_core_remove_supported_tag(lc, "100rel");
