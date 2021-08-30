@@ -246,6 +246,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participants(LinphoneConf
  * If the conference is in the state LinphoneConferenceStateCreationPending, then the conference will start on the input and output audio devices used for the currently active call, if any
  * @param conference The #LinphoneConference object. @notnil
  * @param call a #LinphoneCall that has to be added to the conference. @notnil
+ * @warning This function guarantees that the local endpoint is added to the conference only if one of calls added is in state StreamsRunning. It is highly recommended to call linphone_confererence_enter() to guarantee that the local endpoint is added to the conference.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConference *conference, LinphoneCall *call);
 
@@ -253,6 +254,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConfe
  * Join a participant to the conference.
  * @param conference The #LinphoneConference object. @notnil
  * @param uri a #LinphoneAddress that has to be added to the conference. @notnil
+ * @warning This function guarantees that the local endpoint is added to the conference only if there is a call state StreamsRunning towards one of the addresses. It is highly recommended to call linphone_confererence_enter() to guarantee that the local endpoint is added to the conference.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri);
 
