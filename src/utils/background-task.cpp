@@ -70,16 +70,16 @@ void BackgroundTask::stop () {
 		return;
 
 	lInfo() << "Ending background task [" << mId << "] with name: [" << mName << "]";
+	sal_end_background_task(mId);
 	shared_ptr<Sal> sal = mSal.lock();
 	if (sal) {
-	sal_end_background_task(mId);
-	if (mTimeout) {
-		sal->cancelTimer(mTimeout);
-		belle_sip_object_unref(mTimeout);
-		mTimeout = nullptr;
-	}
+		if (mTimeout) {
+			sal->cancelTimer(mTimeout);
+			belle_sip_object_unref(mTimeout);
+			mTimeout = nullptr;
+		}
 	} else {
-		lInfo() << "Sal alredy null";
+		lInfo() << "Sal already null";
 	}
 	mId = 0;
 }
@@ -97,12 +97,16 @@ void ExtraBackgroundTask::start (const shared_ptr<Core> &core, const std::functi
 }
 
 void ExtraBackgroundTask::handleTimeout() {
+	lWarning() << "ExtraBackgroundTask::handleTimeout()";
 	BackgroundTask::handleTimeout();
 
 	sExtraFunc();
 }
 
 void ExtraBackgroundTask::handleSalTimeout() {
+	lWarning() << "ExtraBackgroundTask::handleSalTimeout()";
+	BackgroundTask::handleSalTimeout();
+
 	sExtraSalFunc();
 }
 
