@@ -1461,9 +1461,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), (noShortMsg+1), int, "%i");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), 1, int, "%i");
 		marieHistory = linphone_chat_room_get_history(marieCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), (noShortMsg+1), int, "%i");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), 1, int, "%i");
 
 		for (auto chatRoom :focus.getCore().getChatRooms()) {
 			for (auto participant: chatRoom->getParticipants()) {
