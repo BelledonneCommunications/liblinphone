@@ -340,7 +340,7 @@ const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStrea
 	auto idx = findIdxStream(SalProtoRtpSavpf, type);
 	if (idx == -1) idx = findIdxStream(SalProtoRtpSavp, type);
 	if (idx != -1) {
-		return getStreamIdx(idx);
+		return getStreamIdx(static_cast<unsigned int>(idx));
 	}
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
@@ -348,7 +348,7 @@ const SalStreamDescription &SalMediaDescription::findSecureStreamOfType(SalStrea
 const SalStreamDescription &SalMediaDescription::findBestStream(SalStreamType type) const {
 	const auto idx = findIdxBestStream(type);
 	if (idx != -1) {
-		return getStreamIdx(idx);
+		return getStreamIdx(static_cast<unsigned int>(idx));
 	}
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
