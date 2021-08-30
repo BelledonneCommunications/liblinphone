@@ -570,6 +570,8 @@ static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 
+		linphone_core_set_ephemeral_lifetime(marie.getLc(), 5);
+
 		// Enable IMDN
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline.getLc()));
