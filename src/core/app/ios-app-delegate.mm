@@ -249,8 +249,11 @@
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		LinphoneAccountParams *newParams = linphone_account_params_clone(linphone_account_get_params(account));
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(newParams);
 		linphone_push_notification_config_set_bundle_identifier(push_cfg, [[NSBundle mainBundle] bundleIdentifier].UTF8String);
+		linphone_account_set_params(account, newParams);
+		linphone_account_params_unref(newParams);
 	}
 }
 
@@ -267,16 +270,19 @@
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
-
+		
+		LinphoneAccountParams *newParams = linphone_account_params_clone(linphone_account_get_params(account));
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(newParams);
 		if (tokenStr) {
 			linphone_push_notification_config_set_remote_token(push_cfg, tokenStr);
 		} else {
 			linphone_push_notification_config_set_remote_token(push_cfg, nullptr);
 		}
+		linphone_account_set_params(account, newParams);
+		linphone_account_params_unref(newParams);
+		
 	}
 
-	linphone_core_update_account_push_params(core->getCCore());
 }
 - (void)didRegisterForRemotePush:(NSData *)token {
 	if (token) {
@@ -297,11 +303,12 @@
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
-		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		LinphoneAccountParams *newParams = linphone_account_params_clone(linphone_account_get_params(account));
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(newParams);
 		linphone_push_notification_config_set_voip_token(push_cfg, [self stringFromToken:pushToken forType:@"voip"].UTF8String);
+		linphone_account_set_params(account, newParams);
+		linphone_account_params_unref(newParams);
 	}
-
-	linphone_core_update_account_push_params(core->getCCore());
 }
 
 - (void)pushRegistry:(PKPushRegistry *)registry didInvalidatePushTokenForType:(NSString *)type {
