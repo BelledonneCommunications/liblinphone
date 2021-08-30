@@ -2090,7 +2090,6 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
 	const std::string attrName("crypto");
-//	for(auto newStream = md->streams.begin(), oldStream = oldMd->streams.cbegin(); (newStream != md->streams.end() && oldStream != oldMd->streams.cend()); ++newStream, ++oldStream){
 	for (size_t i = 0; i < md->streams.size(); i++) {
 
 		auto & newStream = md->streams[i];
@@ -2191,6 +2190,10 @@ std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() cons
 			setupEncryptionKey(newCrypto, suite, static_cast<unsigned int>(cryptoId) + 1);
 			cryptos.emplace(std::next(cryptos.begin(),static_cast<ptrdiff_t>(cryptoId)),newCrypto);
 			cryptoId++;
+		} else if (isEncryptionMandatory() && ms_crypto_suite_is_unencrypted(suite)) {
+			lWarning() << "Not offering " << std::string(ms_crypto_suite_to_string(suite)) << " because either RTP or RTCP streams is not encrypted";
+		} else {
+			lWarning() << "Not offering " << std::string(ms_crypto_suite_to_string(suite));
 		}
 	}
 
