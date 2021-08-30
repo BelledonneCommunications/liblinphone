@@ -1577,10 +1577,9 @@ int ChatMessage::putCharacter (uint32_t character) {
 			d->rttMessage = "";
 		}
 	} else {
-		char *value = LinphonePrivate::Utils::utf8ToChar(character);
-		d->rttMessage += string(value);
+		string value = LinphonePrivate::Utils::unicodeToUtf8(character);
+		d->rttMessage += value;
 		lDebug() << "Sent RTT character: " << value << "(" << (unsigned long)character << "), pending text is " << d->rttMessage;
-		delete[] value;
 	}
 
 	text_stream_putchar32(

@@ -7479,6 +7479,10 @@ bool_t linphone_core_callkit_enabled (const LinphoneCore *core) {
 	return (bool_t)linphone_config_get_int(core->config, "app", "use_callkit", 0);
 }
 
+bool_t linphone_core_local_permission_enabled (const LinphoneCore *core){
+	return (bool_t)IceService::hasLocalNetworkPermission();
+}
+
 void linphone_core_set_remote_ringback_tone(LinphoneCore *lc, const char *file){
 	if (lc->sound_conf.ringback_tone){
 		ms_free(lc->sound_conf.ringback_tone);
