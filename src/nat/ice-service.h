@@ -108,6 +108,12 @@ public:
 	IceSession *getSession()const{
 		return mIceSession;
 	}
+	/** 
+	 * Check that the host has the "local network permission".
+	 * This is useful for iOS. If not, ICE cannot be used because the socket API will refuse to send packets to a local address.
+	 * In addition the source address specification (with sendmsg()/recvmsg() and control data block) does not work.
+	 */
+	static bool hasLocalNetworkPermission(const std::string & localAddr = "");
 private:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
@@ -123,7 +129,7 @@ private:
 	void deleteSession();
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
 	int gatherIceCandidates ();
-	void gatherLocalCandidates();
+	int gatherLocalCandidates();
 	StreamsGroup & mStreamsGroup;
 	IceSession * mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;
