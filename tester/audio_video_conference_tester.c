@@ -2428,7 +2428,8 @@ static void add_participant_after_conference_started_base(bool_t pause_all_calls
 
 	LinphoneConference* l_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(l_conference);
-	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
+	// As calls where paused before creating the conference, local participant is not added
+	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),2, int, "%d");
 
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -2455,7 +2456,7 @@ static void add_participant_after_conference_started_base(bool_t pause_all_calls
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
 	
-	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
+	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),3, int, "%d");
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
@@ -2567,7 +2568,8 @@ static void add_call_not_accepted_to_conference(void) {
 
 	lcs=bctbx_list_append(lcs,laure->lc);
 
-	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
+	// As calls where paused before adding to the conference, local participant is not added
+	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),2, int, "%d");
 
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
@@ -2579,7 +2581,8 @@ static void add_call_not_accepted_to_conference(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (!conference) goto end;
 
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),2, int, "%d");
+		// Marie left conference to call Pauline and she is not brought back into the conference because call between Pauline and her was paused
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),1, int, "%d");
 
 	}
 
