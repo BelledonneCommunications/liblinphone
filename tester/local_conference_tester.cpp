@@ -1389,7 +1389,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		pauline_stat=pauline.getStats();
 		linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 
-		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getCMgr()->stat.number_of_NotifyReceived,pauline_stat.number_of_NotifyReceived + 2,5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList,&pauline.getCMgr()->stat.number_of_NotifyReceived,pauline_stat.number_of_NotifyReceived + 1,5000));
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(marieCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
@@ -1461,9 +1461,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), (noShortMsg+1), int, "%i");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), 1, int, "%i");
 		marieHistory = linphone_chat_room_get_history(marieCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), (noShortMsg+1), int, "%i");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), 1, int, "%i");
 
 		for (auto chatRoom :focus.getCore().getChatRooms()) {
 			for (auto participant: chatRoom->getParticipants()) {
