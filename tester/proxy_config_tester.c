@@ -1100,8 +1100,7 @@ static void proxy_config_push_notification_core_restart(bool_t use_legacy_format
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
-	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(marie->lc);
-	int proxy_config_count = (int)bctbx_list_size(proxies);
+	int proxy_config_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
 	BC_ASSERT_EQUAL(proxy_config_count, 1, int, "%d");
 	
 	if (use_legacy_format) {
@@ -1172,13 +1171,63 @@ static void proxy_config_push_notification_core_restart(bool_t use_legacy_format
 	
 	linphone_core_manager_destroy(marie);
 }
-
 static void proxy_config_push_notification_core_restart_standard_params(void) {
 	proxy_config_push_notification_core_restart(FALSE);
 }
 static void proxy_config_push_notification_core_restart_legacy_params(void) {
 	proxy_config_push_notification_core_restart(TRUE);
 }
+
+static void proxy_config_remove_push_info_from_contact_uri_parameters(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneProxyConfig *marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_cfg);
+	int proxy_config_count = (int)bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc));
+	BC_ASSERT_EQUAL(proxy_config_count, 1, int, "%d");
+
+#if __ANDROID__ || TARGET_OS_IPHONE
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
+#else
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
+#endif
+	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
+
+	linphone_proxy_config_edit(marie_cfg);
+	linphone_proxy_config_set_push_notification_allowed(marie_cfg, TRUE);
+	linphone_proxy_config_set_contact_uri_parameters(marie_cfg, "pn-param=other-id;pn-prid=other-token;otherparam=othervalue;");
+	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg), "pn-param=other-id;pn-prid=other-token;otherparam=othervalue;");
+	linphone_proxy_config_done(marie_cfg);
+
+	// Second: enable push
+	linphone_core_set_push_notification_enabled(marie->lc, TRUE);
+
+	// Third: configure push informations
+	linphone_core_update_push_notification_information(marie->lc, "test-app-id", "test-push-token");
+	
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
+
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+1, 10000));
+
+	const char * savedPushParameters = linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "push_parameters", NULL);
+	BC_ASSERT_PTR_NOT_NULL(savedPushParameters);
+
+#ifdef __ANDROID__
+	const char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=fcm;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#elif TARGET_OS_IPHONE
+	const char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=apns.dev;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#else
+	const char *expectedSavedPushParameters = "pn-prid=test-push-token;pn-provider=liblinphone_tester;pn-param=test-app-id;pn-silent=1;pn-timeout=0;";
+#endif
+		
+	BC_ASSERT_STRING_EQUAL(savedPushParameters, expectedSavedPushParameters);
+	// Check that pn-param and pn-prid have been removed from contact uri parameters
+	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg), "otherparam=othervalue;");
+	
+	linphone_core_manager_destroy(marie);
+}
+
 
 test_t proxy_config_tests[] = {
 	TEST_NO_TAG("Phone normalization without proxy", phone_normalization_without_proxy),
@@ -1206,7 +1255,8 @@ test_t proxy_config_tests[] = {
 	TEST_ONE_TAG("Push notification params two proxies, both push 2", proxy_config_push_notification_params_two_proxies_both_push_2, "Push Notification"),
 	TEST_ONE_TAG("Push notification params two proxies, both push 3", proxy_config_push_notification_params_two_proxies_both_push_3, "Push Notification"),
 	TEST_ONE_TAG("Push notification params saved after core restart", proxy_config_push_notification_core_restart_standard_params, "Push Notification"),
-	TEST_ONE_TAG("Push notification legacy params saved after core restart", proxy_config_push_notification_core_restart_legacy_params, "Push Notification")
+	TEST_ONE_TAG("Push notification legacy params saved after core restart", proxy_config_push_notification_core_restart_legacy_params, "Push Notification"),
+	TEST_ONE_TAG("Remove push informations from contact uri parameters if core push are enabled", proxy_config_remove_push_info_from_contact_uri_parameters, "Push Notification")
 };
 
 test_suite_t proxy_config_test_suite = {"Proxy config", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
