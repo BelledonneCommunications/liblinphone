@@ -302,9 +302,11 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							}
 						} else if (mediaType.compare("video") == 0) {
 							device->setVideoDirection(mediaDirection);
-							const std::string label = media.getLabel().get();
-							if (!label.empty()) {
-								device->setLabel(label);
+							if (media.getLabel()) {
+								const std::string label = media.getLabel().get();
+								if (!label.empty()) {
+									device->setLabel(label);
+								}
 							}
 						} else if (mediaType.compare("text") == 0) {
 							device->setTextDirection(mediaDirection);
