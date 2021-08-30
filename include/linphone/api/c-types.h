@@ -206,9 +206,11 @@ typedef struct _LinphoneParticipantDeviceIdentity LinphoneParticipantDeviceIdent
 /**
  * @brief This object represents a call issued or received by the #LinphoneCore.
  * 
- * You may have multiple calls at the same time, but only one will be 
- * in #LinphoneCallStateStreamsRunning at any time unless they are merged into a #LinphoneConference,
- * others will be paused.
+ * Linphone only allows at most one active call at any given time and it will be
+ * in #LinphoneCallStateStreamsRunning. However, if the core is locally hosting a #LinphoneConference,
+ * you may have some or all the calls in the conference in #LinphoneCallStateStreamsRunning
+ * as well as an additional active call outside of the conference in #LinphoneCallStateStreamsRunning
+ * if the local participant of the #LinphoneConference is not part of it.
  * 
  * You can get the #LinphoneCallState of the call using linphone_call_get_state(),
  * it's current #LinphoneCallParams with linphone_call_get_current_params() and 
