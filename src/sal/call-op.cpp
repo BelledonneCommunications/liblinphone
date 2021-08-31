@@ -842,6 +842,15 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 	belle_sip_server_transaction_t *serverTransaction = nullptr;
 	auto request = belle_sip_request_event_get_request(event);
 	string method = belle_sip_request_get_method(request);
+
+	if (method == "BYE") {
+		/**
+		 * When the timer is quite short, it is possible that a timer renewal
+		 * is sent after the BYE is received. Here we cancel the timer to prevent that oddly case.
+		 */
+		op->haltSessionTimersTimer();
+	}
+
 	if (method != "ACK") { // ACK doesn't create a server transaction
 		serverTransaction = belle_sip_provider_create_server_transaction(op->mRoot->mProvider, belle_sip_request_event_get_request(event));
 		belle_sip_object_ref(serverTransaction);
