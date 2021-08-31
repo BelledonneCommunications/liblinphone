@@ -1302,6 +1302,10 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDeliveredToUser, marie_stat.number_of_LinphoneMessageDeliveredToUser + noMsg, 10000));
 
+		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), noMsg, int, "%i");
+
+		set_ephemeral_cbs(paulineHistory);
 		// Pauline marks the message as read, check that the state is now displayed on Marie's side
 		linphone_chat_room_mark_as_read(paulineCr);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDisplayed, marie_stat.number_of_LinphoneMessageDisplayed + noMsg, 10000));
@@ -1310,13 +1314,6 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
 			return false;
 		});
-
-		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
-		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
-		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), noMsg, int, "%i");
-		marieHistory = linphone_chat_room_get_history(marieCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), noMsg, int, "%i");
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, marie_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomEphemeralTimerStarted, pauline_stat.number_of_LinphoneChatRoomEphemeralTimerStarted + noMsg, 10000));
@@ -1330,10 +1327,16 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageEphemeralDeleted, marie_stat.number_of_LinphoneMessageEphemeralDeleted + noMsg, 15000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageEphemeralDeleted, pauline_stat.number_of_LinphoneMessageEphemeralDeleted + noMsg, 15000));
 
+		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+
 		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), 0, int, "%i");
 		marieHistory = linphone_chat_room_get_history(marieCr, 0);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), 0, int, "%i");
+
+		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 
 		pauline_stat=pauline.getStats();
 		// Disable ephemeral
@@ -1386,6 +1389,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 			return false;
 		});
 
+		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+
 		pauline_stat=pauline.getStats();
 		linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 
@@ -1430,6 +1436,8 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), (noShortMsg+1), int, "%i");
 
+		set_ephemeral_cbs(paulineHistory);
+
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageDeliveredToUser, marie_stat.number_of_LinphoneMessageDeliveredToUser + noShortMsg, 10000));
 
 		// Pauline marks the message as read, check that the state is now displayed on Marie's side
@@ -1448,22 +1456,21 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneMessageEphemeralDeleted, marie_stat.number_of_LinphoneMessageEphemeralDeleted + noShortMsg, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageEphemeralDeleted, pauline_stat.number_of_LinphoneMessageEphemeralDeleted + noShortMsg, 10000));
 
+		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+
 		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), 1, int, "%i");
 		marieHistory = linphone_chat_room_get_history(marieCr, 0);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), 1, int, "%i");
+
+		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
+		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
 
 		//wait bit more to detect side effect if any
 		CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
 			return false;
 		});
-
-		bctbx_list_free_with_data(paulineHistory, (bctbx_list_free_func)linphone_chat_message_unref);
-		bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_chat_message_unref);
-		paulineHistory = linphone_chat_room_get_history(paulineCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(paulineHistory), 1, int, "%i");
-		marieHistory = linphone_chat_room_get_history(marieCr, 0);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(marieHistory), 1, int, "%i");
 
 		for (auto chatRoom :focus.getCore().getChatRooms()) {
 			for (auto participant: chatRoom->getParticipants()) {
