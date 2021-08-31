@@ -153,7 +153,7 @@ void ChatRoomPrivate::realtimeTextReceived (uint32_t character, const shared_ptr
 
 		if ((character == NEW_LINE) || (character == CRLF) || (character == LF)) {
 			// End of message
-			string completeText = Utils::utf8ToString(lastMessageCharacters);
+			string completeText = Utils::unicodeToUtf8(lastMessageCharacters);
 
 			shared_ptr<ChatMessage> pendingMessage = q->createChatMessage();
 			pendingMessage->getPrivate()->setDirection(ChatMessage::Direction::Incoming);
@@ -174,7 +174,7 @@ void ChatRoomPrivate::realtimeTextReceived (uint32_t character, const shared_ptr
 			lastMessageCharacters.clear();
 		} else {
 			lastMessageCharacters.push_back(character);
-			string completeText = Utils::utf8ToString(lastMessageCharacters);
+			string completeText = Utils::unicodeToUtf8(lastMessageCharacters);
 			bctbx_debug("Received RTT character: [%llu], pending text is [%s]", character, completeText.c_str());
 		}
 	}
