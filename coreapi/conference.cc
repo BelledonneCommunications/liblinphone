@@ -791,11 +791,14 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 		Conference::addParticipant(call);
-		/*
-		 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
-		 * resources (mic and camera), which is done during the joinStreamsGroup() step.
-		 */
-		enter();
+
+		if (state == LinphoneCallStreamsRunning) {
+			/*
+			 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
+			 * resources (mic and camera), which is done during the joinStreamsGroup() step.
+			 */
+			enter();
+		}
 
 		// If current call is not NULL and the conference is in the creating pending state or instantied, then try to change audio route to keep the one currently used
 		if (startingConference) {

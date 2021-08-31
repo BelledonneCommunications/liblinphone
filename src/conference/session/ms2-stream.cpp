@@ -251,6 +251,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 
 		localDesc.setZrtpHash(enableZrtpHash, zrtphash);
 	}
+
 	if (localDesc.hasDtls()) {
 		/* Get the self fingerprint from call (it's computed at stream init) */
 		/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
