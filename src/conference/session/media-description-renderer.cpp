@@ -29,8 +29,6 @@ const SalStreamDescription & OfferAnswerContext::chooseStreamDescription(const s
 		return md->streams[index];
 	}
 
-	lError() << "Unable to find stream at index " << index << " because media description " << md << " has " << md->streams.size() << " streams";
-
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 

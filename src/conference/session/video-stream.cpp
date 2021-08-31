@@ -34,6 +34,7 @@
 #include "mediastreamer2/msogl.h"
 
 #include "linphone/core.h"
+#include "mediastreamer2/msitc.h"
 
 using namespace::std;
 
@@ -45,7 +46,17 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
-	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+
+	const auto & localDesc = params.getLocalStreamDescription();
+
+	if ((localDesc.getRtpPort() > 0) && (localDesc.getRtcpPort() > 0)) {
+		// port already set in SDP
+		mPortConfig.rtpPort =  localDesc.getRtpPort();
+		mPortConfig.rtcpPort =  localDesc.getRtcpPort();
+	}
+
+	mStream = video_stream_new2(getCCore()->factory, L_STRING_TO_C(bindIp), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+
 	initializeSessions(&mStream->ms);
 }
 
@@ -88,6 +99,14 @@ void MS2VideoStream::videoStreamEventCb (const MSFilter *f, const unsigned int e
 			MSVideoSize size = *(MSVideoSize *)args;
 			lInfo() << "Camera video preview size changed: " << size.width << "x" << size.height;
 			linphone_core_resize_video_preview(getCCore(), size.width, size.height);
+
+			shared_ptr<ParticipantDevice> device = getMediaSession().getParticipantDevice(getLabel());
+			if (device) {
+				LinphoneVideoSize *result = linphone_video_size_new();
+				result->width = size.width;
+				result->height = size.height;
+				_linphone_participant_device_notify_capture_video_size_changed(device->toC(), result);
+			}
 			break;
 		}
 		default:
@@ -159,6 +178,9 @@ void MS2VideoStream::startZrtp(){
 	}
 }
 
+std::string MS2VideoStream::getLabel()const {
+	return L_C_TO_STRING(mStream->label);
+}
 
 bool MS2VideoStream::prepare(){
 	
@@ -175,7 +197,12 @@ void MS2VideoStream::finishPrepare(){
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	
+	const auto & isInLocalConference = getMediaSessionPrivate().isInConference();
+	MS2VideoMixer * videoMixer = getVideoMixer();
+	const auto & sdpAttributes = isInLocalConference ? ctx.getLocalStreamDescription().custom_sdp_attributes : ctx.getRemoteStreamDescription().custom_sdp_attributes;
+	const char * label = sal_custom_sdp_attribute_find(sdpAttributes, "label");
+	const char * content = sal_custom_sdp_attribute_find(sdpAttributes, "content");
+
 	/* Shutdown preview */
 	MSFilter *source = nullptr;
 	if (getCCore()->previewstream) {
@@ -244,12 +271,16 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		video_stream_set_sent_video_size(mStream, vsize);
 	}
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
-	if (mNativeWindowId)
+	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	else if (getCCore()->video_window_id)
+	} else if (videoMixer && label && getMediaSession().getParticipantWindowId(label)) {
+		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
+	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
-	if (getCCore()->preview_window_id)
+	}
+	if (getCCore()->preview_window_id) {
 		video_stream_set_native_preview_window_id(mStream, getCCore()->preview_window_id);
+	}
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
 	
 	MS2Stream::render(ctx, targetState);
@@ -280,10 +311,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}else if (vstream.multicast_role == SalMulticastSender){
 		dir = MediaStreamSendOnly;
 	}
-	
+
 	MSWebCam *cam = getVideoDevice(targetState);
-	MS2VideoMixer * videoMixer = getVideoMixer();
-	
+
 	getMediaSession().getLog()->video_enabled = true;
 	media_stream_set_direction(&mStream->ms, dir);
 	lInfo() << "Device rotation =" << getCCore()->device_rotation;
@@ -298,6 +328,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		reusedPreview = true;
 	} else {
 		bool ok = true;
+		VideoStream *createdStream = nullptr;
 		MSMediaStreamIO io = MS_MEDIA_STREAM_IO_INITIALIZER;
 		if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "video", "rtp_io", FALSE)) {
 			io.input.type = io.output.type = MSResourceRtp;
@@ -312,10 +343,34 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
+			if (videoMixer == nullptr && dir == MediaStreamSendOnly && !isMain()) {
+				MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendRecv);
+				if (s){
+					createdStream = (VideoStream *)s->getMediaStream();
+					lInfo() << "[mix to all] find sendrecv stream for participant, used for itc.";
+				}
+			}
+
+			if (createdStream) {
+				io.input.type = MSResourceItc;
+				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, createdStream->itcsink);
+			} else {
+				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
-			AudioStream *as = getPeerAudioStream();
-			if (as) audio_stream_link_video(as, mStream);
+
+				if (videoMixer == nullptr && dir == MediaStreamSendRecv && isMain()) {
+					link_video_stream_with_itc_sink(mStream);
+					MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendOnly);
+					if (s){
+						lInfo() << "[mix to all] find sendonly stream for participant, used for itc.";
+						createdStream = (VideoStream *)s->getMediaStream();
+						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,createdStream->source);
+					}
+				}
+
+				AudioStream *as = getPeerAudioStream();
+				if (as) audio_stream_link_video(as, mStream);
+			}
 		}
 	}
 	mStartCount++;
@@ -346,9 +401,16 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		lWarning() << "Video preview (" << source << ") not reused: destroying it";
 		ms_filter_destroy(source);
 	}
+	if (label) {
+		video_stream_set_label(mStream, label);
+	}
 	if (videoMixer){
-		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.getDirection() == SalStreamRecvOnly));
+		if (mStream->label) {
+			video_stream_enable_router(mStream, true);
+		}
+		const bool_t isRemote = ((!mStream->label && !content) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
+		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, (mStream->label == NULL));
 	}
 }
 

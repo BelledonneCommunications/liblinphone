@@ -150,12 +150,12 @@ void MediaSessionParamsPrivate::adaptToNetwork (LinphoneCore *core, int pingTime
 
 SalStreamDir MediaSessionParamsPrivate::getSalAudioDirection () const {
 	L_Q();
-	return mediaDirectionToSalStreamDir(q->getAudioDirection());
+	return MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(q->getAudioDirection());
 }
 
 SalStreamDir MediaSessionParamsPrivate::getSalVideoDirection () const {
 	L_Q();
-	return mediaDirectionToSalStreamDir(q->getVideoDirection());
+	return MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(q->getVideoDirection());
 }
 
 // -----------------------------------------------------------------------------
@@ -336,6 +336,11 @@ void MediaSessionParams::setAudioBandwidthLimit (int value) {
 	d->audioBandwidthLimit = value;
 }
 
+void MediaSessionParams::setAudioDirection (SalStreamDir direction) {
+	L_D();
+	d->audioDirection = MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction);
+}
+
 void MediaSessionParams::setAudioDirection (LinphoneMediaDirection direction) {
 	L_D();
 	d->audioDirection = direction;
@@ -388,6 +393,11 @@ LinphonePayloadType * MediaSessionParams::getUsedVideoPayloadType () const {
 LinphoneMediaDirection MediaSessionParams::getVideoDirection () const {
 	L_D();
 	return d->videoDirection;
+}
+
+void MediaSessionParams::setVideoDirection (SalStreamDir direction) {
+	L_D();
+	d->videoDirection = MediaSessionParamsPrivate::salStreamDirToMediaDirection(direction);
 }
 
 void MediaSessionParams::setVideoDirection (LinphoneMediaDirection direction) {

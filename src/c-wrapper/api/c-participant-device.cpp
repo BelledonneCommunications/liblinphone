@@ -22,6 +22,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant-device.h"
+#include "private.h"
 
 // =============================================================================
 
@@ -79,4 +80,53 @@ LinphoneMediaDirection linphone_participant_device_get_text_direction (const Lin
 
 uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSsrc();
+}
+
+void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void* window_id){
+#ifdef __ANDROID__
+	LinphoneCore *lc = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCore()->getCCore();
+	getPlatformHelpers(lc)->setParticipantDeviceVideoWindow(participant_device, window_id);
+#else
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setWindowId(window_id);
+#endif
+}
+
+void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device){
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
+}
+
+LinphoneVideoSize *linphone_participant_device_get_received_video_size(const LinphoneParticipantDevice *participant_device) {
+	LinphoneVideoSize *result = linphone_video_size_new();
+	MSVideoSize size = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getReceivedVideoSize();
+	result->width = size.width;
+	result->height = size.height;
+	return result;
+}
+
+void linphone_participant_device_add_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->addCallbacks(cbs);
+}
+
+void linphone_participant_device_remove_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->removeCallbacks(cbs);
+}
+
+LinphoneParticipantDeviceCbs *linphone_participant_device_get_current_callbacks (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCurrentCbs();
+}
+
+const bctbx_list_t *linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCallbacksList();
+}
+
+#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
+for (bctbx_list_t *it = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCallbacksList(); it; it = bctbx_list_next(it)) { \
+LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setCurrentCbs(reinterpret_cast<LinphoneParticipantDeviceCbs *>(bctbx_list_get_data(it))); \
+	LinphoneParticipantDeviceCbs ## cbName ## Cb cb = linphone_participant_device_cbs_get_ ## functionName (LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCurrentCbs()); \
+	if (cb) \
+		cb(__VA_ARGS__); \
+}
+
+void _linphone_participant_device_notify_capture_video_size_changed(LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size) {
+	NOTIFY_IF_EXIST(CaptureVideoSizeChanged, capture_video_size_changed, participant_device, size)
 }
