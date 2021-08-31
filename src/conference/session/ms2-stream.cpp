@@ -100,7 +100,6 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 		removeFromBundle();
 		return ; /*No bundle to handle */
 	}
-		
 	mBundleOwner = dynamic_cast<MS2Stream*>(getGroup().getStream((size_t)index));
 	if (!mBundleOwner){
 		lError() << "Could not locate the stream owning the bundle's transport.";
@@ -127,7 +126,7 @@ RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription & sd){
 		mRtpBundle = rtp_bundle_new();
 		const auto & mid = sd.getChosenConfiguration().getMid();
 		const auto & mid_rtp_ext_header_id = sd.getChosenConfiguration().getMidRtpExtHeaderId();
-		lInfo() << "Stream " << *this << " with mid '" << mid << "'is the owner of rtp bundle " << mRtpBundle;
+		lInfo() << "Stream " << *this << " with mid '" << mid << "' is the owner of rtp bundle " << mRtpBundle;
 		rtp_bundle_add_session(mRtpBundle, L_STRING_TO_C(mid), mSessions.rtp_session);
 		rtp_bundle_set_mid_extension_id(mRtpBundle, mid_rtp_ext_header_id);
 		mOwnsBundle = true;
@@ -216,7 +215,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		localDesc.rtp_port = 0;
 		localDesc.setBundleOnly(TRUE);
 	}
-	
+
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
 	if (getMediaSessionPrivate().getOp() && getMediaSessionPrivate().getOp()->getRemoteContactAddress()) {
@@ -511,15 +510,12 @@ void MS2Stream::finishEarlyMediaForking(){
  * Indeed, when RTP bundle mode is ON, this information is to be taken in the transport owner stream.
  */
 void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info){
-	auto stream = params.getResultStreamDescription();
-	if (mRtpBundle && !mOwnsBundle){
-		if (!mBundleOwner){
-			lError() << "Bundle owner shall be set !";
-		}else{
-			stream = params.resultMediaDescription->getStreamIdx(static_cast<unsigned int>(mBundleOwner->getIndex()));
-		}
+	if (mRtpBundle && !mOwnsBundle && !mBundleOwner){
+		lError() << "Bundle owner shall be set !";
 	}
-	
+
+	const auto & stream = (mRtpBundle && !mOwnsBundle && mBundleOwner) ? params.resultMediaDescription->getStreamIdx(static_cast<unsigned int>(mBundleOwner->getIndex())) : params.getResultStreamDescription();
+
 	info->rtpAddr = stream.rtp_addr.empty() == false ? stream.rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
 	info->rtpPort = stream.rtp_port;
@@ -782,7 +778,7 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 	
 	configureRtpSession(stream->sessions.rtp_session);
 	setupDtlsParams(stream);
-	
+
 	if (mPortConfig.rtpPort == -1){
 		// Case where we requested random ports from the system. Now that they are allocated, get them.
 		mPortConfig.rtpPort = rtp_session_get_local_port(stream->sessions.rtp_session);
