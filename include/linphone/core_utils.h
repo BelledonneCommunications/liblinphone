@@ -169,6 +169,17 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_audio_route_changed (Linp
 */
 LINPHONE_PUBLIC bool_t linphone_core_callkit_enabled (const LinphoneCore *core);
 
+
+/**
+ * Special function to check if the local network permission has been granted by the user (useful for iOS).
+ * The test performed by this function may popup the local network permission dialog, for that reason
+ * it could be a good idea to check it twice to conclude that the user has deny the permission.
+ * @param core The #LinphoneCore object. @notnil
+ * @return TRUE if local permission request is granted, FALSE otherwise.
+ * @ingroup IOS
+*/
+LINPHONE_PUBLIC bool_t linphone_core_local_permission_enabled (const LinphoneCore *core);
+
 typedef bool_t (*LinphoneCoreIterateHook)(void *data);
 
 LINPHONE_PUBLIC void linphone_core_add_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook hook, void *hook_data);
