@@ -140,9 +140,11 @@ string Utils::stringToLower (const string &str) {
 
 // -----------------------------------------------------------------------------
 
-char *Utils::utf8ToChar (uint32_t ic) {
-	char *result = new char[5];
-	int size = 0;
+string Utils::unicodeToUtf8 (uint32_t ic) {
+	string result;
+	
+	result.resize(5);
+	size_t size = 0;
 	if (ic < 0x80) {
 		result[0] = static_cast<char>(ic);
 		size = 1;
@@ -162,14 +164,17 @@ char *Utils::utf8ToChar (uint32_t ic) {
 		result[0] = static_cast<char>(0xF0 + ((ic >> 18) & 0x7));
 		size = 4;
 	}
-	result[size] = '\0';
+	result.resize(size);
 	return result;
 }
 
-std::string Utils::utf8ToString (const std::vector<uint32_t>& chars) {
+/*
+ * TODO: not optmized at all. Good enough for small vectors.
+ */
+std::string Utils::unicodeToUtf8 (const std::vector<uint32_t>& chars) {
 	std::ostringstream ss;
 	for (auto character : chars) {
-		ss << Utils::utf8ToChar(character);
+		ss << Utils::unicodeToUtf8(character);
 	}
 	return ss.str();
 }
