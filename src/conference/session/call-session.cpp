@@ -129,7 +129,6 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 					default:
 						break;
 				}
-				setTerminated();
 				break;
 			case CallSession::State::Connected:
 				log->status = LinphoneCallSuccess;
@@ -148,6 +147,8 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 
 		if (newState == CallSession::State::Released) {
 			setReleased(); /* Shall be performed after app notification */
+		} else if ((newState == CallSession::State::End) || (newState == CallSession::State::Error)) {
+			setTerminated();
 		}
 	}
 }
