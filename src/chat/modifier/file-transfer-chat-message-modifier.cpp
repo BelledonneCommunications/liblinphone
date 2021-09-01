@@ -571,7 +571,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const share
 		FileTransferContent *fileTransferContent = new FileTransferContent();
 		fileTransferContent->setContentType(internalContent.getContentType());
 		fileTransferContent->setBody(internalContent.getBody());
-		string xml_body = fileTransferContent->getBodyAsString();
+		string xml_body = fileTransferContent->getBodyAsUtf8String();
 		parseFileTransferXmlIntoContent(xml_body.c_str(), fileTransferContent);
 		message->addContent(fileTransferContent);
 		return ChatMessageModifier::Result::Done;
@@ -580,7 +580,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const share
 	for (Content *content : message->getContents()) {
 		if (content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
-			string xml_body = fileTransferContent->getBodyAsString();
+			string xml_body = fileTransferContent->getBodyAsUtf8String();
 			parseFileTransferXmlIntoContent(xml_body.c_str(), fileTransferContent);
 		}
 	}
