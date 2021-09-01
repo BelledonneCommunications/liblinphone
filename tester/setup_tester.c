@@ -263,6 +263,22 @@ static void core_init_stop_start_test(void) {
 	}
 }
 
+static void core_set_user_agent(void) {
+	LinphoneCore* lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, NULL, system_context);
+
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		linphone_core_set_user_agent(lc, "part1", "part2");
+		linphone_core_start(lc);
+		BC_ASSERT_EQUAL(strcmp(linphone_core_get_user_agent(lc), "part1/part2"), 0, int, "%d");
+
+		linphone_core_stop(lc);
+		linphone_core_set_user_agent(lc, "part1b", "part2b");
+		linphone_core_start(lc);
+		BC_ASSERT_EQUAL(strcmp(linphone_core_get_user_agent(lc), "part1b/part2b"), 0, int, "%d");
+		linphone_core_unref(lc);
+	}
+}
+
 static void linphone_address_test(void) {
 	LinphoneAddress *address;
 
@@ -2313,6 +2329,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
 	TEST_NO_TAG("Linphone core init/unref", core_init_unref_test),
 	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
+	TEST_NO_TAG("Linphone core set user agent", core_set_user_agent),
 	TEST_NO_TAG("Linphone random transport port",core_sip_transport_test),
 	TEST_NO_TAG("Linphone interpret url", linphone_interpret_url_test),
 	TEST_NO_TAG("LPConfig from buffer", linphone_lpconfig_from_buffer),

@@ -1075,7 +1075,7 @@ void Account::addCallbacks (LinphoneAccountCbs *callbacks) {
 }
 
 void Account::removeCallbacks (LinphoneAccountCbs *callbacks) {
-	bctbx_list_remove(mCallbacksList, callbacks);
+	mCallbacksList = bctbx_list_remove(mCallbacksList, callbacks);
 }
 
 void Account::setCurrentCallbacks (LinphoneAccountCbs *callbacks) {

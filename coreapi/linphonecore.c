@@ -2797,6 +2797,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	// We need the Sal on the Android platform helper init
 	lc->sal = std::make_shared<LinphonePrivate::Sal>(nullptr);
+#if defined(PACKAGE_NAME) && defined(LIBLINPHONE_VERSION)
+	lc->sal->setUserAgent(linphone_config_get_string(lc->config, "sip", "user_agent", PACKAGE_NAME "/" LIBLINPHONE_VERSION));
+#else
+	lc->sal->setUserAgent(linphone_config_get_string(lc->config, "sip", "user_agent", "Unknown"));
+#endif
 	lc->sal->setRefresherRetryAfter(linphone_config_get_int(lc->config, "sip", "refresher_retry_after", 60000));
 	lc->sal->setHttpProxyHost(L_C_TO_STRING(linphone_core_get_http_proxy_host(lc)));
 	lc->sal->setHttpProxyPort(linphone_core_get_http_proxy_port(lc));
@@ -3583,6 +3588,7 @@ void linphone_core_set_user_agent(LinphoneCore *lc, const char *name, const char
 	ostringstream ua_string;
 	ua_string << (name ? name : "");
 	if (ver) ua_string << "/" << ver;
+	linphone_config_set_string(lc->config, "sip", "user_agent", ua_string.str().c_str());
 	if (lc->sal) {
 		lc->sal->setUserAgent(ua_string.str());
 	}
