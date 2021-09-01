@@ -113,7 +113,8 @@ public:
 	 * This is useful for iOS. If not, ICE cannot be used because the socket API will refuse to send packets to a local address.
 	 * In addition the source address specification (with sendmsg()/recvmsg() and control data block) does not work.
 	 */
-	static bool hasLocalNetworkPermission(const std::string & localAddr = "");
+	static bool hasLocalNetworkPermission(const std::list<std::string> & localAddrs);
+	static bool hasLocalNetworkPermission();
 private:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
