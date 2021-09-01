@@ -372,6 +372,13 @@ LINPHONE_PUBLIC LinphoneChatRoomState linphone_chat_room_get_state (const Linpho
 LINPHONE_PUBLIC bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *chat_room);
 
 /**
+ * Return the creation time for the chat room
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return the time at which the chat room was created
+ */
+time_t linphone_chat_room_get_creation_time(const LinphoneChatRoom *chat_room);
+
+/**
  * Return the last updated time for the chat room
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return the last updated time
