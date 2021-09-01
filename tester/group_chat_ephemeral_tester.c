@@ -34,7 +34,7 @@
 
 static const int x3dhServer_creationTimeout = 15000;
 
-static void set_ephemeral_cbs (bctbx_list_t *history) {
+void set_ephemeral_cbs (bctbx_list_t *history) {
 	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
 		const LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
 		if (linphone_chat_message_is_ephemeral(msg)) {
@@ -75,7 +75,7 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encrypted);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encrypted, LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -259,7 +259,7 @@ static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(con
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -346,7 +346,7 @@ static void mixed_ephemeral_message_test_curve(const int curveId) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -466,7 +466,7 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
@@ -579,7 +579,7 @@ static void ephemeral_group_message_test_curve (const int curveId) {
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	// Check that the chat room is correctly created on Pauline and Laure sides and that the participants are added

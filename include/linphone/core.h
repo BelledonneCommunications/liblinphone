@@ -5819,6 +5819,34 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
 
+/**
+ * Sets the default ephemeral message mode
+ * @param core the linphone core
+ * @param mode default ephemeral message mode #LinphoneChatRoomEphemeralMode
+ */
+LINPHONE_PUBLIC void linphone_core_chat_room_set_ephemeral_mode(LinphoneCore *core, LinphoneChatRoomEphemeralMode mode);
+
+/**
+ * Gets the default ephemeral message mode
+ * @core core the linphone core
+ * @return the default ephemeral message mode #LinphoneChatRoomEphemeralMode
+ **/
+LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_core_chat_room_get_ephemeral_mode(const LinphoneCore *core);
+
+/**
+ * Set ephemeral lifetime in seconds
+ * @param core the linphone core
+ * @param value lifetime of ephemeral messages in seconds
+ */
+LINPHONE_PUBLIC void linphone_core_set_ephemeral_lifetime(LinphoneCore *lc, long value);
+
+/**
+ * Gets the default lifetime of ephemeral messages in seconds
+ * @core core the linphone core
+ * @return lifetime of ephemeral messages in seconds
+ **/
+LINPHONE_PUBLIC long linphone_core_get_ephemeral_lifetime(const LinphoneCore *lc);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

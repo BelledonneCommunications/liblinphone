@@ -143,7 +143,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 	char *from = linphone_address_as_string(linphone_event_get_from(lev));
 	const ConferenceAddress local(from);
 
-	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
+	if ((notifyContent->getContentType() == ContentType::ConferenceInfo) || (notifyContent->getContentType() == ContentType::ConferenceInfoLinphoneExtension)) {
 		// Simple notify received directly from a chat-room
 		const string &xmlBody = notifyContent->getBodyAsUtf8String();
 		istringstream data(xmlBody);
@@ -164,7 +164,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 		if (!handler)
 			return;
 
-		handler->notifyReceived(xmlBody);
+		handler->notifyReceived(*notifyContent);
 		return;
 	}
 
@@ -194,9 +194,9 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 			continue;
 
 		if (contentType == ContentType::Multipart)
-			handler->multipartNotifyReceived(body);
-		else if (contentType == ContentType::ConferenceInfo)
-			handler->notifyReceived(body);
+			handler->multipartNotifyReceived(content);
+		else if ((contentType == ContentType::ConferenceInfo) || (contentType == ContentType::ConferenceInfoLinphoneExtension))
+			handler->notifyReceived(content);
 	}
 }
 

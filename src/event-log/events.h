@@ -27,5 +27,6 @@
 #include "conference/conference-available-media-event.h"
 #include "conference/conference-subject-event.h"
 #include "conference/conference-ephemeral-message-event.h"
+#include "conference/conference-ephemeral-event.h"
 
 #endif // ifndef _L_EVENTS_H_

@@ -86,6 +86,8 @@ public:
 	bool ephemeralEnabled () const override;
 	void setEphemeralLifetime (long lifetime, bool updateDb) override;
 	long getEphemeralLifetime () const override;
+	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) override;
+	AbstractChatRoom::EphemeralMode getEphemeralMode() const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
 	const ConferenceAddress &getConferenceAddress () const override;
