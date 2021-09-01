@@ -80,13 +80,19 @@ static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, Linpho
 }
 
 /**
- * @param[in] encryption	true to activate message encryption
+ * @param[in] encryption		true to activate message encryption
+ * @param[in] dual_auth_lime_server	true to use lime server performing dual authentication (in their exchange, clients can connect using digest auth only)
  * @param[in] external_sender	if true claire (from the external domain) will send the message, otherwise marie will do it
  * @param[in] restart_external_participant	if true claire (from the external domain) will restart her core, otherwise marie will do it
  * @param[in] hfts_domainA	File transfer server URL used by domain A (marie, pauline)
+ * @param[in] getProxy_domainA	Proxy to retrieve files received by users from domain A
  * @param[in] hfts_domainB	File transfer server URL used by domain B (claire)
+ * @param[in] getProxy_domainB	Proxy to retrieve files received by users from domain B
  */
-static void group_chat_hfts (bool_t encryption, bool_t external_sender, bool_t restart_external_participant, const char *hfts_domainA, const char *getProxy_domainA, const char *hfts_domainB, const char *getProxy_domainB) {
+static void group_chat_hfts (bool_t encryption, bool_t dual_auth_lime_server,
+			bool_t external_sender, bool_t restart_external_participant,
+			const char *hfts_domainA, const char *getProxy_domainA,
+			const char *hfts_domainB, const char *getProxy_domainB) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *claire = linphone_core_manager_create("claire_rc"); // External
@@ -109,14 +115,19 @@ static void group_chat_hfts (bool_t encryption, bool_t external_sender, bool_t r
 	}
 
 	if (encryption == TRUE) {
-		// marie and pauline are on the regular lime server
+		// marie and pauline are on the regular lime server, claire uses the lime-external one
 		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c25519");
-		linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_c25519_tlsauth_opt_url);
 		linphone_config_set_string(linphone_core_get_config(pauline->lc),"lime","curve","c25519");
-		linphone_core_set_lime_x3dh_server_url(pauline->lc, lime_server_c25519_tlsauth_opt_url);
-		// claire uses the lime-external one
 		linphone_config_set_string(linphone_core_get_config(claire->lc),"lime","curve","c25519");
-		linphone_core_set_lime_x3dh_server_url(claire->lc, lime_server_c25519_external_url);
+		if (dual_auth_lime_server == TRUE) {
+			linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_c25519_dual_auth_url);
+			linphone_core_set_lime_x3dh_server_url(pauline->lc, lime_server_c25519_dual_auth_url);
+			linphone_core_set_lime_x3dh_server_url(claire->lc, lime_server_c25519_external_dual_auth_url);
+		} else {
+			linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_c25519_tlsauth_opt_url);
+			linphone_core_set_lime_x3dh_server_url(pauline->lc, lime_server_c25519_tlsauth_opt_url);
+			linphone_core_set_lime_x3dh_server_url(claire->lc, lime_server_c25519_external_url);
+		}
 	}
 
 	if (send_file == TRUE) {
@@ -314,41 +325,47 @@ end:
 	linphone_core_manager_destroy(claire);
 }
 
-static void group_chat (bool_t encryption, bool_t external_sender, bool_t restart_external_participant) {
-	group_chat_hfts(encryption, external_sender, restart_external_participant, NULL, NULL, NULL, NULL);
+static void group_chat (bool_t encryption, bool_t dual_auth_lime_server, bool_t external_sender, bool_t restart_external_participant) {
+	group_chat_hfts(encryption, dual_auth_lime_server, external_sender, restart_external_participant, NULL, NULL, NULL, NULL);
 }
 
 static void group_chat_external_domain_participant (void) {
-	group_chat(FALSE, FALSE, FALSE);
+	group_chat(FALSE, FALSE, FALSE, FALSE);
 }
 static void group_chat_external_domain_participant_ext_sender (void) {
-	group_chat(FALSE, TRUE, FALSE);
+	group_chat(FALSE, FALSE, TRUE, FALSE);
 }
 static void encrypted_message(void) {
-	group_chat(TRUE, FALSE, FALSE);
+	group_chat(TRUE, FALSE, FALSE, FALSE);
 }
 static void encrypted_message_ext_sender(void) {
-	group_chat(TRUE, TRUE, FALSE);
+	group_chat(TRUE, FALSE, TRUE, FALSE);
 }
 static void group_chat_external_domain_participant_external_restart (void) {
-	group_chat(FALSE, FALSE, TRUE);
+	group_chat(FALSE, FALSE, FALSE, TRUE);
 }
 static void encrypted_message_ext_sender_external_restart(void) {
-	group_chat(TRUE, TRUE, TRUE);
+	group_chat(TRUE, FALSE, TRUE, TRUE);
 }
 static void group_chat_plain_with_file (void) {
-	group_chat_hfts(FALSE, FALSE, FALSE, file_transfer_url, NULL, file_transfer_url, NULL);
+	group_chat_hfts(FALSE, FALSE, FALSE, FALSE, file_transfer_url, NULL, file_transfer_url, NULL);
 }
 static void group_chat_plain_with_file_ext_sender (void) {
-	group_chat_hfts(FALSE, TRUE, FALSE, file_transfer_url, NULL, file_transfer_url, NULL);
+	group_chat_hfts(FALSE, FALSE, TRUE, FALSE, file_transfer_url, NULL, file_transfer_url, NULL);
 }
 static void group_chat_plain_with_file_auth_fileserver (void) {
-	group_chat_hfts(FALSE, FALSE, FALSE, file_transfer_url_digest_auth, file_transfer_get_proxy, file_transfer_url_digest_auth_external_domain, file_transfer_get_proxy_external_domain);
+	group_chat_hfts(FALSE, FALSE, FALSE, FALSE, file_transfer_url_digest_auth, file_transfer_get_proxy, file_transfer_url_digest_auth_external_domain, file_transfer_get_proxy_external_domain);
 }
 static void group_chat_plain_with_file_ext_sender_auth_fileserver (void) {
-	group_chat_hfts(FALSE, TRUE, FALSE, file_transfer_url_digest_auth, file_transfer_get_proxy, file_transfer_url_digest_auth_external_domain, file_transfer_get_proxy_external_domain);
+	group_chat_hfts(FALSE, FALSE, TRUE, FALSE, file_transfer_url_digest_auth, file_transfer_get_proxy, file_transfer_url_digest_auth_external_domain, file_transfer_get_proxy_external_domain);
 }
 
+static void encrypted_message_dual_auth(void) {
+	group_chat(TRUE, TRUE, FALSE, FALSE);
+}
+static void encrypted_message_dual_auth_ext_sender(void) {
+	group_chat(TRUE, TRUE, TRUE, FALSE);
+}
 test_t external_domain_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_ONE_TAG("Message sent from domainA", group_chat_external_domain_participant, "LeaksMemory" /*due to core restart*/),
@@ -360,7 +377,9 @@ test_t external_domain_tests[] = {
 	TEST_ONE_TAG("Encrypted message sent from domainA", encrypted_message, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Encrypted message sent from domainB", encrypted_message_ext_sender, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Message sent from domainA with external core restart", group_chat_external_domain_participant_external_restart, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Encrypted message sent from domainB with external core restart", encrypted_message_ext_sender_external_restart, "LeaksMemory" /*due to core restart*/)
+	TEST_ONE_TAG("Encrypted message sent from domainB with external core restart", encrypted_message_ext_sender_external_restart, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Encrypted message from domainA using dual auth lime server", encrypted_message_dual_auth, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Encrypted message from domainB using dual auth lime server", encrypted_message_dual_auth_ext_sender, "LeaksMemory" /*due to core restart*/)
 };
 
 test_suite_t external_domain_test_suite = {"External domain", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
