@@ -154,7 +154,7 @@ bool MediaSessionPrivate::tryEnterConference() {
 					// Send update to notify that the call enters conference
 					MediaSessionParams *newParams = q->getMediaParams()->clone();
 					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
-					q->update(newParams);
+					q->update(newParams, q->isCapabilityNegotiationEnabled());
 					delete newParams;
 				}
 				return true;
@@ -315,6 +315,7 @@ void MediaSessionPrivate::accepted () {
 			// If the call was added to a conference after the last INVITE session was started, the reINVITE to enter conference must be sent only if capability negotiation reINVITE was not sent
 			if (!capabilityNegotiationReInviteSent) {
 				// Add to conference if it was added after last INVITE message sequence started
+				// It occurs if the local participant calls the remote participant and the call is added to the conference when it is in state OutgoingInit, OutgoingProgress or OutgoingRinging
 				tryEnterConference();
 			}
 
@@ -1883,7 +1884,7 @@ void MediaSessionPrivate::onIceRestartNeeded(IceService & service){
 	L_Q();
 	getStreamsGroup().getIceService().restartSession(IR_Controlling);
 	MediaSessionParams newParams(*getParams());
-	q->update(&newParams);
+	q->update(&newParams, q->isCapabilityNegotiationEnabled());
 }
 
 void MediaSessionPrivate::tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> & md) {
@@ -2390,6 +2391,18 @@ void MediaSessionPrivate::startAccept(){
 		}
 	}
 
+	// It occurs if the remote participant calls the core hosting the conference and the call is added to the conference when it is in state IncomingReceived
+	if (getOp() && getOp()->getContactAddress()) {
+		char * contactAddressStr = sal_address_as_string(getOp()->getContactAddress());
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		const auto & confId = getConferenceId();
+		if (!confId.empty() && isInConference() && !contactAddress.hasUriParam("conf-id")) {
+			q->updateContactAddress(contactAddress);
+			op->setContactAddress(contactAddress.getInternalAddress());
+		}
+	}
+
 	/* Give a chance a set card prefered sampling frequency */
 	if (localDesc->streams[0].getMaxRate() > 0) {
 		lInfo() << "Configuring prefered card sampling rate to [" << localDesc->streams[0].getMaxRate() << "]";
@@ -2513,7 +2526,8 @@ void MediaSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 	L_Q();
 	lInfo() << "MediaSession [" << q << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
 	getStreamsGroup().getIceService().resetSession();
-	q->update(getParams());
+	MediaSessionParams newParams(*getParams());
+	q->update(&newParams, q->isCapabilityNegotiationEnabled());
 }
 
 void MediaSessionPrivate::repairByInviteWithReplaces () {
