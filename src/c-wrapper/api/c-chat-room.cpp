@@ -285,6 +285,10 @@ bctbx_list_t *linphone_chat_room_get_history (LinphoneChatRoom *cr, int nb_messa
 	return linphone_chat_room_get_history_range(cr, 0, nb_message);
 }
 
+bctbx_list_t *linphone_chat_room_get_unread_history (LinphoneChatRoom *cr) {
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getUnreadChatMessages());
+}
+
 bctbx_list_t *linphone_chat_room_get_history_range_message_events (LinphoneChatRoom *cr, int startm, int endm) {
 	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMessageHistoryRange(startm, endm));
 }
@@ -327,6 +331,10 @@ LinphoneChatRoomState linphone_chat_room_get_state (const LinphoneChatRoom *cr) 
 
 bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *cr) {
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->hasBeenLeft();
+}
+
+time_t linphone_chat_room_get_creation_time(const LinphoneChatRoom *cr) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCreationTime();
 }
 
 time_t linphone_chat_room_get_last_update_time(const LinphoneChatRoom *cr) {

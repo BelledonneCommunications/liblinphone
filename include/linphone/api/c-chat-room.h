@@ -230,6 +230,13 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history (LinphoneChatRoom *
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range (LinphoneChatRoom *chat_room, int begin, int end);
 
 /**
+ * Gets all unread messages for this chat room, sorted from oldest to most recent.
+ * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be retrieved @notnil
+ * @return A list of unread chat messages. \bctbx_list{LinphoneChatMessage} @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_unread_history (LinphoneChatRoom *chat_room);
+
+/**
  * Gets nb_events most recent chat message events from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
@@ -370,6 +377,13 @@ LINPHONE_PUBLIC LinphoneChatRoomState linphone_chat_room_get_state (const Linpho
  * @return TRUE if the chat room has been left, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *chat_room);
+
+/**
+ * Return the creation time for the chat room
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return the time at which the chat room was created
+ */
+LINPHONE_PUBLIC time_t linphone_chat_room_get_creation_time(const LinphoneChatRoom *chat_room);
 
 /**
  * Return the last updated time for the chat room
