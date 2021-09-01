@@ -499,6 +499,10 @@ list<shared_ptr<EventLog>> ChatRoom::getMessageHistoryRange (int begin, int end)
 	return getCore()->getPrivate()->mainDb->getHistoryRange(getConferenceId(), begin, end, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
+list<shared_ptr<ChatMessage>> ChatRoom::getUnreadChatMessages() const {
+	return getCore()->getPrivate()->mainDb->getUnreadChatMessages(getConferenceId());
+}
+
 int ChatRoom::getMessageHistorySize () const {
 	return getCore()->getPrivate()->mainDb->getHistorySize(getConferenceId(), MainDb::Filter::ConferenceChatMessageFilter);
 }
