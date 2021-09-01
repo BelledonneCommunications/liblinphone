@@ -167,7 +167,7 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 
 		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
 
-		lInfo() << "The Conference has been given the address " << conferenceAddress.asString();
+		lInfo() << "Conference " << this << " has been given the address " << conferenceAddress.asString();
 	} else {
 		lError() << "Cannot set the conference address of the Conference in state " << getState();
 		return;
