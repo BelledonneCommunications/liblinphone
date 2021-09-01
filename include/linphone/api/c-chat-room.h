@@ -175,6 +175,24 @@ LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom
 LINPHONE_PUBLIC long linphone_chat_room_get_ephemeral_lifetime (const LinphoneChatRoom *chat_room);
 
 /**
+ * Set the ephemeral mode of the chat room
+ * @see linphone_chat_room_ephemeral_enabled()
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param mode The ephemeral mode
+ * @warning This function does not enable ephemeral messages
+ */
+LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_mode (LinphoneChatRoom *chat_room, LinphoneChatRoomEphemeralMode mode);
+
+/**
+ * Get the ephemeral mode of the chat room.
+ * @see linphone_chat_room_ephemeral_enabled()
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return the ephemeral mode #LinphoneChatRoomEphemeralMode
+ */
+LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_chat_room_get_ephemeral_mode (const LinphoneChatRoom *chat_room);
+
+
+/**
  * Uses linphone spec to check if all participants support ephemeral messages.
  * It doesn't prevent to send ephemeral messages in the room but those who don't support it
  * won't delete messages after lifetime has expired.

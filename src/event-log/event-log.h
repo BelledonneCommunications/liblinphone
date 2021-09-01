@@ -57,7 +57,10 @@ public:
 		ConferenceSecurityEvent = LinphoneEventLogTypeConferenceSecurityEvent,
 		ConferenceEphemeralMessageLifetimeChanged = LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged,
 		ConferenceEphemeralMessageEnabled = LinphoneEventLogTypeConferenceEphemeralMessageEnabled,
-		ConferenceEphemeralMessageDisabled = LinphoneEventLogTypeConferenceEphemeralMessageDisabled
+		ConferenceEphemeralMessageDisabled = LinphoneEventLogTypeConferenceEphemeralMessageDisabled,
+		ConferenceEphemeralMessageManagedByAdmin = LinphoneEventLogTypeConferenceEphemeralMessageManagedByAdmin,
+		ConferenceEphemeralMessageManagedByParticipants = LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants,
+		ConferenceEphemeralLifetimeChanged = LinphoneEventLogTypeConferenceEphemeralLifetimeChanged
 	};
 
 	//casting to int to get rid of the enum compare warning.

@@ -49,7 +49,8 @@ typedef enum _LinphoneChatRoomCapabilities{
 	LinphoneChatRoomCapabilitiesProxy = 1 << 3, /**< Special proxy chat room flag */
 	LinphoneChatRoomCapabilitiesMigratable = 1 << 4, /**< Chat room migratable from Basic to Conference */
 	LinphoneChatRoomCapabilitiesOneToOne = 1 << 5, /**< A communication between two participants (can be Basic or Conference) */
-	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6 /**< Chat room is encrypted */
+	LinphoneChatRoomCapabilitiesEncrypted = 1 << 6, /**< Chat room is encrypted */
+	LinphoneChatRoomCapabilitiesEphemeral = 1 << 7 /**< Chat room can enable ephemeral messages */
 } LinphoneChatRoomCapabilities;
 
 
@@ -70,6 +71,15 @@ typedef enum _LinphoneChatRoomEncryptionBackend{
 	LinphoneChatRoomEncryptionBackendNone = 0, /**< No encryption. */
 	LinphoneChatRoomEncryptionBackendLime = 1 << 0 /**< Lime x3dh encryption. */
 } LinphoneChatRoomEncryptionBackend;
+
+/**
+ * #LinphoneChatRoomEphemeralMode is used to the ephemeral message mode used by a chat room.
+ * @ingroup chatroom
+ */
+typedef enum _LinphoneChatRoomEphemeralMode{
+	LinphoneChatRoomEphemeralModeDeviceManaged = 0, /**< Each device manages its own ephemeral settings. */
+	LinphoneChatRoomEphemeralModeAdminManaged = 1   /**< Ephemeral settings are chatroom wide and only admins can change them. */
+} LinphoneChatRoomEphemeralMode;
 
 
 #endif // ifndef _L_CHAT_ROOM_ENUMS_H_
