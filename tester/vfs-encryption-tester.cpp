@@ -472,7 +472,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	bctbx_list_t *participantsAddresses = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	LinphoneChatRoom *paulineCr = NULL;
 	if(!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);

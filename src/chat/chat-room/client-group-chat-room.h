@@ -28,6 +28,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoomPrivate;
+class RemoteConferenceEventHandler;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom :
@@ -39,6 +40,7 @@ class LINPHONE_PUBLIC ClientGroupChatRoom :
 	friend class CorePrivate;
 	friend class LimeX3dhEncryptionEngine;
 	friend class MainDb;
+	friend class RemoteConferenceEventHandler;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
@@ -93,6 +95,8 @@ public:
 	bool ephemeralEnabled () const override;
 	void setEphemeralLifetime (long lifetime, bool updateDb) override;
 	long getEphemeralLifetime () const override;
+	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) override;
+	AbstractChatRoom::EphemeralMode getEphemeralMode() const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
 	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };

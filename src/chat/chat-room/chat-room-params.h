@@ -64,6 +64,8 @@ public:
 	//Convenience constructors
 	ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend);
 	ChatRoomParams(std::string subject, bool encrypted, bool group, ChatRoomBackend backend);
+	ChatRoomParams(std::string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, ChatRoomBackend backend);
+	ChatRoomParams(std::string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, long lifetime, ChatRoomBackend backend);
 
 	ChatRoomParams *clone() const override { return new ChatRoomParams(*this); }
 
@@ -76,6 +78,8 @@ public:
 	bool isGroup() const;
 	bool isRealTimeText() const;
 	const std::string& getSubject() const;
+	long getEphemeralLifetime() const;
+	AbstractChatRoom::EphemeralMode getEphemeralMode() const;
 
 	void setChatRoomBackend(ChatRoomBackend backend);
 	void setChatRoomEncryptionBackend(ChatRoomEncryptionBackend backend);
@@ -83,6 +87,8 @@ public:
 	void setGroup(bool group);
 	void setRealTimeText(bool rtt);
 	void setSubject(std::string subject);
+	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode);
+	void setEphemeralLifetime(long lifetime);
 
 protected:
 	~ChatRoomParams() = default;
@@ -94,6 +100,8 @@ private:
 	bool mGroup = false; //one to one
 	bool mRtt = false; //Real Time Text
 	std::string mSubject;
+	AbstractChatRoom::EphemeralMode mEphemeralMode = AbstractChatRoom::EphemeralMode::DeviceManaged;
+	long mEphemeralLifetime = 86400;  //24 hours = 86400s
 };
 
 LINPHONE_END_NAMESPACE

@@ -1102,7 +1102,7 @@ void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactor
 	if (!conferenceFactoryUri.empty()) {
 		if (mCore) {
 			linphone_core_add_linphone_spec(mCore, "groupchat/1.1");
-			linphone_core_add_linphone_spec(mCore, "ephemeral");
+			linphone_core_add_linphone_spec(mCore, "ephemeral/1.1");
 		}
 	} else if (mCore) {
 		bool remove = true;
@@ -1118,7 +1118,7 @@ void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactor
 		}
 		if (remove) {
 			linphone_core_remove_linphone_spec(mCore, "groupchat/1.1");
-			linphone_core_remove_linphone_spec(mCore, "ephemeral");
+			linphone_core_remove_linphone_spec(mCore, "ephemeral/1.1");
 		}
 	}
 }
