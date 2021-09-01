@@ -210,6 +210,7 @@ static void remote_provisioning_check_push_params(void) {
 	
 	linphone_push_notification_config_set_voip_token(linphone_core_get_push_notification_config(marie->lc), "token:voip");
 	linphone_push_notification_config_set_bundle_identifier(linphone_core_get_push_notification_config(marie->lc), "linphone-tester");
+	linphone_push_notification_config_set_param(linphone_core_get_push_notification_config(marie->lc), "param");
 	
 	linphone_core_manager_start(marie, FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
@@ -225,6 +226,7 @@ static void remote_provisioning_check_push_params(void) {
 
 	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_voip_token(linphone_account_params_get_push_notification_config(marie_params)), "token:voip");
 	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_bundle_identifier(linphone_account_params_get_push_notification_config(marie_params)), "linphone-tester");
+	BC_ASSERT_STRING_EQUAL(linphone_push_notification_config_get_param(linphone_account_params_get_push_notification_config(marie_params)), "param");
 	
 	
 	linphone_account_params_set_push_notification_allowed(marie_params, TRUE);

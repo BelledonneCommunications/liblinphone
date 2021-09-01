@@ -42,21 +42,6 @@ PushNotificationConfig::PushNotificationConfig() {
 	mRemoteToken = "";
 }
 
-PushNotificationConfig::PushNotificationConfig(string const &serializedConfig) : PushNotificationConfig() {
-	Address pushParamsWrapper("sip:dummy;" + serializedConfig);
-	for (auto &param : mPushParams) {
-		string paramValue = pushParamsWrapper.getUriParamValue(param.first);
-		if (paramValue.empty()) {
-			// Check for legacy parameters
-			if (param.first == PushConfigPridKey) paramValue = pushParamsWrapper.getUriParamValue("pn-tok");
-			if (param.first == PushConfigParamKey) paramValue = pushParamsWrapper.getUriParamValue("app-id");
-			if (param.first == PushConfigProviderKey) paramValue = pushParamsWrapper.getUriParamValue("pn-type");
-		}
-		if (!paramValue.empty())
-			param.second = paramValue;
-	}
-}
-
 PushNotificationConfig::PushNotificationConfig(const PushNotificationConfig &other) : HybridObject(other) {
 	mPushParams = other.mPushParams;
 	mTeamId = other.mTeamId;
@@ -247,6 +232,21 @@ string PushNotificationConfig::asString(bool withRemoteSpecificParams, bool isLe
 	}
 	
 	return serializedConfig;
+}
+
+void PushNotificationConfig::readPushParamsFromString(string const& serializedConfig) {
+	Address pushParamsWrapper("sip:dummy;" + serializedConfig);
+	for (auto &param : mPushParams) {
+		string paramValue = pushParamsWrapper.getUriParamValue(param.first);
+		if (paramValue.empty()) {
+			// Check for legacy parameters
+			if (param.first == PushConfigPridKey) paramValue = pushParamsWrapper.getUriParamValue("pn-tok");
+			if (param.first == PushConfigParamKey) paramValue = pushParamsWrapper.getUriParamValue("app-id");
+			if (param.first == PushConfigProviderKey) paramValue = pushParamsWrapper.getUriParamValue("pn-type");
+		}
+		if (!paramValue.empty())
+			param.second = paramValue;
+	}
 }
 
 LINPHONE_END_NAMESPACE
