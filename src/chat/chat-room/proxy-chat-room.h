@@ -48,6 +48,7 @@ public:
 
 	std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getMessageHistoryRange (int begin, int end) const override;
+	std::list<std::shared_ptr<ChatMessage>> getUnreadChatMessages () const override;
 	int getMessageHistorySize () const override;
 	std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
