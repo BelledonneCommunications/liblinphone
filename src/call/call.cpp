@@ -335,6 +335,11 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 		lInfo() << "Resetting the current call";
 		getCore()->getPrivate()->setCurrentCall(nullptr);
 	}
+
+	// Terminating or removing participant from conference
+	// Do not wait for 200Ok reponse of BYE because it may take a long time to come back
+	exitFromConference(session);
+
 	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
 #if 0
@@ -382,9 +387,9 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 			CallSession::State sessionState = session->getState();
 			auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
-			conference->removeParticipant(session, (sessionState != LinphonePrivate::CallSession::State::Released));
+			conference->removeParticipant(session, (sessionState != LinphonePrivate::CallSession::State::End));
 		} else if (attachedToRemoteConference(session) && (getTransferState() == LinphonePrivate::CallSession::State::Idle)) {
-			// IOf the call has been transferred, then the conference must be kept alive
+			// If the call has been transferred, then the conference must be kept alive
 			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 			terminateConference();
 		}
@@ -453,9 +458,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			getPlatformHelpers(lc)->releaseMcastLock();
 			getPlatformHelpers(lc)->releaseCpuLock();
 
-			// Terminating or removing participant from conference after receiving the 200 OK of the BYE
-			exitFromConference(session);
-
 			break;
 		case CallSession::State::Resuming:
 		{
@@ -490,9 +492,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		}
 		break;
 		case CallSession::State::Error:
-			// Exit call from conference if an error occurred
-			exitFromConference(session);
-		BCTBX_NO_BREAK; // No break because a notification of last call ended may also be issued if the last remaining call errors out
 		case CallSession::State::End:
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
