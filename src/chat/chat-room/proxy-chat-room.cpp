@@ -115,6 +115,11 @@ list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistoryRange (int begin, int
 	return d->chatRoom->getMessageHistoryRange(begin, end);
 }
 
+list<shared_ptr<ChatMessage>> ProxyChatRoom::getUnreadChatMessages() const {
+	L_D();
+	return d->chatRoom->getUnreadChatMessages();
+}
+
 int ProxyChatRoom::getMessageHistorySize () const {
 	L_D();
 	return d->chatRoom->getMessageHistorySize();
