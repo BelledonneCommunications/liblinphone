@@ -109,11 +109,18 @@ const char *lime_server_any_domain_c448_url="https://lime.wildcard1.linphone.org
 const char *lime_server_c25519_tlsauth_req_url="https://lime.wildcard1.linphone.org:8543/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_tlsauth_req_url="https://lime.wildcard1.linphone.org:8543/lime-server-c448/lime-server.php";
 // These lime server authenticate user using optionnal TLS auth, falling back on digest auth if client did not provide a client certificate
+// Foreign domain external-domain.org is served on port 8643: lime_server_c25519/488_tlsauth_opt_url
 const char *lime_server_c25519_tlsauth_opt_url="https://lime.wildcard1.linphone.org:8544/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_tlsauth_opt_url="https://lime.wildcard1.linphone.org:8544/lime-server-c448/lime-server.php";
-// Lime server using TLS and digest auth on external-domain
+// Lime server using TLS and digest auth on external-domain - foreign domain is served by server on port 8544 : lime_server_c25519/488_tlsauth_opt_url
 const char *lime_server_c25519_external_url="https://lime.external-domain.org:8643/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_external_url="https://lime.external-domain.org:8643/lime-server-c448/lime-server.php";
+// Lime server enforcing both TLS and digest auth on sip.example.org
+const char *lime_server_c25519_dual_auth_url="https://lime.wildcard1.linphone.org:8545/lime-server-c25519/lime-server.php";
+const char *lime_server_c448_dual_auth_url="https://lime.wildcard1.linphone.org:8545/lime-server-c448/lime-server.php";
+// Lime server enforcing both TLS and digest auth on external-domain
+const char *lime_server_c25519_external_dual_auth_url="https://lime.external-domain.org:8644/lime-server-c25519/lime-server.php";
+const char *lime_server_c448_external_dual_auth_url="https://lime.external-domain.org:8644/lime-server-c448/lime-server.php";
 bool_t liblinphonetester_ipv6 = TRUE;
 const char * liblinphone_tester_ipv6_probing_address = "2a01:e00::2";
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
