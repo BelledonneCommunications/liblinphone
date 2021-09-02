@@ -521,6 +521,17 @@ void LocalConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::
 
 void LocalConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
+		if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
+			shared_ptr<CallSession> session = me->getSession();
+			if (session->getState() == CallSession::State::Idle) {
+				lInfo() << " Scheduling redirection to [" << addr <<"] for Call session ["<<session<<"]" ;
+				q->getCore()->doLater([session,addr] {
+					session->redirect(addr);
+				});
+			} else {
+					session->redirect(addr);
+			}
+		}
 		const ConferenceAddress & conferenceAddress = getConferenceAddress ();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 #ifdef HAVE_ADVANCED_IM
