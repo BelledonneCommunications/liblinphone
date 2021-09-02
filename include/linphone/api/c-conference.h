@@ -80,6 +80,48 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_addres
  */
 LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address);
 
+/**
+ * Set the conference start time
+ * @param conference The #LinphoneConference object. @notnil
+ * @param start the conference start time as the number of seconds between the start time and the 1st of January 1970. It is possible to convert it to the Network Time Protocol (NTP) time by adding 2208988800. In order to program an immediate start of a conference, then program the start time to 0
+ */
+void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start);
+
+/**
+ * Get the start time of the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return start time of a conference as time_t type or 0 for immediate start of a conference. For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams *params);
+
+/**
+ * Set the conference end time
+ * @param conference The #LinphoneConference object. @notnil
+ * @param end the conference end time as the number of seconds between the end time and the 1st of January 1970. It is possible to convert it to the Network Time Protocol (NTP) time by adding 2208988800. In order to program an undefined end of a conference, then program the end time to 0
+ */
+void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t end);
+
+/**
+ * Get the end time of the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return end time of a conference as time_t type or 0 for open end of a conference. For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params);
+
+/**
+ * Set the participant list type
+ * @param conference The #LinphoneConference object. @notnil
+ * @param type Participant list type #LinphoneConferenceParticipantListType. This allows to restrict the access to the conference to a selected set of participants
+ */
+void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type);
+
+
+/**
+ * Get the participant list type
+ * @param conference The #LinphoneConference object. @notnil
+ * @return participant list type #LinphoneConferenceParticipantListType.
+ */
+LinphoneConferenceParticipantListType linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params);
 
 /**
  * @}

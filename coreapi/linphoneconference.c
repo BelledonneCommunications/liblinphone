@@ -385,6 +385,30 @@ bool_t linphone_conference_params_is_one_participant_conference_enabled(const Li
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
 
+void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start){
+	ConferenceParams::toCpp(params)->setStartTime(start);
+}
+
+time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getStartTime();
+}
+
+void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t start){
+	ConferenceParams::toCpp(params)->setEndTime(start);
+}
+
+time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getEndTime();
+}
+
+void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type){
+	ConferenceParams::toCpp(params)->setParticipantListType(type);
+}
+
+LinphoneConferenceParticipantListType linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getParticipantListType();
+}
+
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getID().c_str();
 }
