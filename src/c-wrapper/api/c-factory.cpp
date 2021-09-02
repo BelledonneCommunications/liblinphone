@@ -437,9 +437,10 @@ LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authenticatio
 }
 
 LinphoneConferenceInfo *linphone_factory_create_conference_info(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->createConferenceInfo();
+	return linphone_conference_info_new();
 }
 
 LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content) {
-  return Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
+	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
+	return conferenceInfo ? linphone_conference_info_ref(conferenceInfo->toC()) : nullptr;
 }

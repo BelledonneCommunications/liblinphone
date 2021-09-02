@@ -443,7 +443,7 @@ static void _chat_message_process_auth_requested_upload (void *data, belle_sip_a
 void FileTransferChatMessageModifier::processAuthRequestedUpload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	/* extract username and domain from the message local adress */
-	auto address = message->getLocalAdress();
+	auto address = message->getLocalAddress();
 	/* Notes: When connecting to the fileSharing server, the user is already registered on the flexisip server
 	 * the requested auth info shall thus be present in linphone core
 	 * This request will thus not use the auth requested callback to get the information
@@ -525,7 +525,7 @@ int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const
 		action.c_str(),
 		uri,
 		belle_http_header_create("User-Agent", linphone_core_get_user_agent(message->getCore()->getCCore())),
-		belle_http_header_create("From", message->getLocalAdress().asString().c_str()),
+		belle_http_header_create("From", message->getLocalAddress().asString().c_str()),
 		nullptr
 	);
 
@@ -815,7 +815,7 @@ static void _chat_message_process_auth_requested_download (void *data, belle_sip
 void FileTransferChatMessageModifier::processAuthRequestedDownload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	/* extract username and domain from the message local adress */
-	auto address = message->getLocalAdress();
+	auto address = message->getLocalAddress();
 	/* Notes: When connecting to the fileSharing server, the user is already registered on the flexisip server
 	 * the requested auth info shall thus be present in linphone core
 	 * This request will thus not use the auth requested callback to get the information

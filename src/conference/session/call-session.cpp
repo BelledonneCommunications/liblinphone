@@ -792,6 +792,10 @@ void CallSessionPrivate::terminate () {
 		}
 	}
 	setState(CallSession::State::End, "Call terminated");
+
+	if (op && !op->hasDialog()) {
+		setState(CallSession::State::Released, "Call released");
+	}
 }
 
 void CallSessionPrivate::updateCurrentParams () const {}
@@ -849,7 +853,6 @@ void CallSessionPrivate::setContactOp () {
 			if (isInConference()) {
 				std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
 				if (conference) {
-
 					// Change conference address in order to add GRUU to it
 					conference->setConferenceAddress(contactAddress);
 				}
@@ -1323,13 +1326,13 @@ LinphoneStatus CallSession::redirect (const string &redirectUri) {
 LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 	L_D();
 	if (d->state != CallSession::State::IncomingReceived && d->state != CallSession::State::PushIncomingReceived) {
-		lError() << "Bad state for CallSession redirection";
+		lError() << "Bad state for CallSession redirection " << d->state;
 		return -1;
 	}
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);
-	d->op->declineWithErrorInfo(&sei, redirectAddr.getInternalAddress());
+	d->op->declineWithErrorInfo(&sei, redirectAddr.getInternalAddress(), ((getParams()->getPrivate()->getEndTime() < 0) ? 0 : getParams()->getPrivate()->getEndTime()));
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonMovedPermanently, 302, "Call redirected", nullptr);
 	d->nonOpError = true;
 	d->terminate();

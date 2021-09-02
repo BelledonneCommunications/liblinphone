@@ -47,7 +47,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 //Removes own address and existing participants from the list.
-//Also removes gru from kept addresses
+//Also removes gruu from kept addresses
 list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList (const list<IdentityAddress> &addresses) const {
 	L_Q();
 	list<IdentityAddress> cleanedList(addresses);
@@ -646,14 +646,14 @@ bool ClientGroupChatRoom::addParticipants (
 }
 
 void ClientGroupChatRoom::sendInvite (std::shared_ptr<CallSession> &session, const list<IdentityAddress> & addressList) {
-		Content content;
-		content.setBodyFromUtf8(getConference()->getResourceLists(addressList));
-		content.setContentType(ContentType::ResourceLists);
-		content.setContentDisposition(ContentDisposition::RecipientList);
-		if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-			content.setContentEncoding("deflate");
-		}
-		session->startInvite(nullptr, getSubject(), &content);
+	Content content;
+	content.setBodyFromUtf8(getConference()->getResourceLists(addressList));
+	content.setContentType(ContentType::ResourceLists);
+	content.setContentDisposition(ContentDisposition::RecipientList);
+	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
+		content.setContentEncoding("deflate");
+	}
+	session->startInvite(nullptr, getSubject(), &content);
 }
 
 bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {

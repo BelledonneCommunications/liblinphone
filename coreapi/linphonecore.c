@@ -4517,7 +4517,12 @@ bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const Linpho
 		);
 }
 
+
 LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params){
+	return linphone_core_invite_address_with_params_2(lc, addr, params, NULL, NULL);
+}
+
+LinphoneCall * linphone_core_invite_address_with_params_2(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params, const char * subject, const LinphoneContent * content){
 	const char *from=NULL;
 	LinphoneProxyConfig *proxy=NULL;
 	LinphoneAddress *parsed_url2=NULL;
@@ -4587,7 +4592,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
 	bool defer = Call::toCpp(call)->initiateOutgoing();
 	if (!defer) {
-		if (Call::toCpp(call)->startInvite(NULL) != 0) {
+		if (Call::toCpp(call)->startInvite(NULL, L_C_TO_STRING(subject), content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : nullptr) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
@@ -8505,6 +8510,19 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	return conf;
 }
 
+LinphoneConference *linphone_core_create_conference_on_server(LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants) {
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
+	// If a participant has an invalid address, the pointer to its address is NULL.
+	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty IdentityAddress (that is invalid)
+	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
+		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
+	});
+	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, true);
+	shared_ptr<LinphonePrivate::MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createConferenceOnServer(conferenceParams, identityAddress, participantsList);
+	if (conference) return linphone_conference_ref(conference->toC());
+	return NULL;
+}
+
 LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	list<LinphonePrivate::IdentityAddress> participantsList;
@@ -8513,9 +8531,19 @@ LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc, cons
 			return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
 		});
 	}
-	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
-	LinphonePrivate::IdentityAddress remoteAddress = remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::IdentityAddress();
+	LinphonePrivate::ConferenceAddress identityAddress = localAddr ? LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
+	LinphonePrivate::ConferenceAddress remoteAddress = remoteAddr ? LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::ConferenceAddress();
 	shared_ptr<LinphonePrivate::MediaConference::Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceParams, identityAddress, remoteAddress, participantsList);
+	LinphoneConference* c_conference = NULL;
+	if (conf) {
+		c_conference = conf->toC();
+	}
+	return c_conference;
+}
+
+LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, const LinphoneAddress *conferenceAddr) {
+	LinphonePrivate::ConferenceAddress conferenceAddress = conferenceAddr ? LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(conferenceAddr)) : LinphonePrivate::ConferenceAddress();
+	shared_ptr<LinphonePrivate::MediaConference::Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceAddress);
 	LinphoneConference* c_conference = NULL;
 	if (conf) {
 		c_conference = conf->toC();
@@ -8652,6 +8680,14 @@ bool_t linphone_core_conference_server_enabled (const LinphoneCore *lc) {
 	return linphone_config_get_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", FALSE) ? TRUE : FALSE;
 }
 
+void linphone_core_set_conference_participant_list_type (LinphoneCore *lc, LinphoneConferenceParticipantListType type) {
+	linphone_config_set_int(linphone_core_get_config(lc), "misc", "conference_participant_list_type", (int)type);
+}
+
+LinphoneConferenceParticipantListType linphone_core_get_conference_participant_list_type (const LinphoneCore *lc) {
+	return (LinphoneConferenceParticipantListType)linphone_config_get_int(linphone_core_get_config(lc), "misc", "conference_participant_list_type", (int)LinphoneConferenceParticipantListTypeOpen);
+}
+
 void linphone_core_set_tls_cert(LinphoneCore *lc, const char *tls_cert) {
 	if (lc->tls_cert) {
 		ms_free(lc->tls_cert);
@@ -8749,7 +8785,7 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
 }
 
-void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_information, const char *text) {
+void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text) {
 	const bctbx_list_t *participants = linphone_conference_info_get_participants(conference_information);
 	if (bctbx_list_size(participants) == 0) {
 		ms_warning("Cannot send conference information if no participants are added!");
@@ -8767,6 +8803,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConfe
 	bctbx_free(body);
 
 	bctbx_list_t *participants_copy = bctbx_list_copy(participants);
+	bctbx_list_free((bctbx_list_t *)participants);
 	size_t sent_count = 0;
 	size_t expected_sent_count = bctbx_list_size(participants_copy);
 	bctbx_list_t *it;
@@ -8807,7 +8844,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConfe
 
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	if (mainDb) mainDb->insertConferenceInfo(ConferenceInfo::toCpp(conference_information)->getSharedFromThis());
+	if (mainDb) mainDb->insertConferenceInfo(const_pointer_cast<ConferenceInfo>(ConferenceInfo::toCpp(conference_information)->getSharedFromThis()));
 #endif
 
 	linphone_content_unref(content);

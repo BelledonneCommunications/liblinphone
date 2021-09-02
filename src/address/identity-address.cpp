@@ -312,4 +312,11 @@ int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) co
 
 	return diff;
 }
+
+ConferenceAddress ConferenceAddress::getAddressWithoutGruu () const {
+	Address address(asString());
+	address.removeUriParam("gr");
+	return address;
+}
+
 LINPHONE_END_NAMESPACE

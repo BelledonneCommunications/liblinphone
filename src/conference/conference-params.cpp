@@ -29,6 +29,7 @@ ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
 		enableVideo(policy->automatically_initiate);
 		setLayout((ConferenceLayout)linphone_core_get_default_conference_layout(core));
+		setParticipantListType(static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
 	}
 }
 
@@ -38,11 +39,15 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_enableChat = params.m_enableChat;
 	m_localParticipantEnabled = params.m_localParticipantEnabled;
 	m_allowOneParticipantConference = params.m_allowOneParticipantConference;
+	m_participantListType = params.m_participantListType;
 	m_conferenceAddress = params.m_conferenceAddress;
 	m_factoryAddress = params.m_factoryAddress;
 	m_subject = params.m_subject;
 	m_layout = params.m_layout;
 	m_me = params.m_me;
+	m_startTime = params.m_startTime;
+	m_endTime = params.m_endTime;
+	m_proxyCfg = params.m_proxyCfg;
 }
 
 LINPHONE_END_NAMESPACE

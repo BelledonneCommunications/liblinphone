@@ -183,23 +183,21 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	const auto &event = mEvents.front(); // It should always be one event
 
 	if (!event->getOrganizer().empty()) {
-		LinphoneAddress *org = linphone_address_new(event->getOrganizer().c_str());
-		if (org) {
+		const auto & org = IdentityAddress(event->getOrganizer());
+		if (org.isValid()) {
 			confInfo->setOrganizer(org);
-			linphone_address_unref(org);
 		} else {
-			lWarning() << "Could not parse organizer's address:" << event->getOrganizer();
+			lWarning() << "Could not parse organizer's address:" << event->getOrganizer() << " because it is not a valid address";
 		}
 	}
 
 	for (const auto &attendee : event->getAttendees()) {
 		if (!attendee.empty()) {
-			LinphoneAddress *addr = linphone_address_new(attendee.c_str());
-			if (addr) {
+			const auto & addr = IdentityAddress(attendee);
+			if (addr.isValid()) {
 				confInfo->addParticipant(addr);
-				linphone_address_unref(addr);
 			} else {
-				lWarning() << "Could not parse attendee's address:" << attendee;
+				lWarning() << "Could not parse attendee's address:" << attendee << " because it is not a valid address";
 			}
 		}
 	}
@@ -211,12 +209,11 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	confInfo->setDuration(dur.tm_hour*60 + dur.tm_min + dur.tm_sec/60);
 
 	if (!event->getXConfUri().empty()) {
-		LinphoneAddress *uri = linphone_address_new(event->getXConfUri().c_str());
-		if (uri) {
+		const ConferenceAddress uri(event->getXConfUri());
+		if (uri.isValid()) {
 			confInfo->setUri(uri);
-			linphone_address_unref(uri);
 		} else {
-			lWarning() << "Could not parse conference's uri address:" << event->getSummary();
+			lWarning() << "Could not parse conference's uri address:" << event->getXConfUri() << " because it is not a valid address";
 		}
 	}
 

@@ -494,6 +494,8 @@ void start_core_for_conference(bctbx_list_t *coreManagerList);
 bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri);
 bctbx_list_t * init_core_for_conference_with_groupchat_version(bctbx_list_t *coreManagerList, const char *groupchat_version);
 
+void linphone_conference_server_refer_received(LinphoneCore *core, const char *refer_to);
+
 void reset_counters(stats* counters);
 
 void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message);
@@ -642,6 +644,7 @@ int liblinphone_tester_set_log_file(const char *filename);
 // Add internal callback for subscriptions and notifications
 LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies);
 void setup_mgr_for_conference(LinphoneCoreManager *mgr);
+void setup_conference_info_cbs(LinphoneCoreManager * mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 void check_conference_medias(LinphoneConference * local_conference, LinphoneConference * remote_conference);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);

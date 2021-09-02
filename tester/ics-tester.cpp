@@ -154,10 +154,9 @@ static void build_ics () {
 
 	auto confInfo = calendar.toConferenceInfo();
 
-	BC_ASSERT_PTR_NOT_NULL(confInfo->getOrganizer());
-	BC_ASSERT_PTR_NOT_NULL(confInfo->getUri());
-	BC_ASSERT_PTR_NOT_NULL(confInfo->getParticipants());
-	BC_ASSERT_EQUAL((int)bctbx_list_size(confInfo->getParticipants()), 2, int, "%d");
+	BC_ASSERT_TRUE(confInfo->getOrganizer().isValid());
+	BC_ASSERT_TRUE(confInfo->getUri().isValid());
+	BC_ASSERT_EQUAL(confInfo->getParticipants().size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(confInfo->getDuration(), 165, int, "%d");
 
 	const string confStr = confInfo->toIcsString();
@@ -179,19 +178,24 @@ static void conference_info_sent(LinphoneCore *core, const LinphoneConferenceInf
 	stat->number_of_LinphoneConferenceInfoOnSent++;
 }
 
+void setup_conference_info_cbs(LinphoneCoreManager * mgr) {
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_conference_info_on_participant_sent(cbs, conference_info_participant_sent);
+	linphone_core_cbs_set_conference_info_on_participant_error(cbs, conference_info_participant_error);
+	linphone_core_cbs_set_conference_info_on_sent(cbs, conference_info_sent);
+	linphone_core_add_callbacks(mgr->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	// Needed to send the ICS
+	linphone_core_set_file_transfer_server(mgr->lc, file_transfer_url);
+}
+
 static void send_conference_invitations(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
 
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_conference_info_on_participant_sent(cbs, conference_info_participant_sent);
-	linphone_core_cbs_set_conference_info_on_participant_error(cbs, conference_info_participant_error);
-	linphone_core_cbs_set_conference_info_on_sent(cbs, conference_info_sent);
-	linphone_core_add_callbacks(marie->lc, cbs);
-	linphone_core_cbs_unref(cbs);
-
-	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
+	setup_conference_info_cbs(marie);
 
 	time_t conf_time = ms_time(NULL) - (time_t)3600;
 	LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
@@ -226,7 +230,9 @@ static void send_conference_invitations(void) {
 	if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
 		BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
 		BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
-		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_conference_info_get_participants(conf_info_from_original_content)), 2, int, "%d");
+		const bctbx_list_t * participants = linphone_conference_info_get_participants(conf_info_from_original_content);
+		BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
+		bctbx_list_free((bctbx_list_t *)participants);
 		BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_original_content), 120, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_original_content) == conf_time);
 		linphone_conference_info_unref(conf_info_from_original_content);
@@ -257,7 +263,9 @@ static void send_conference_invitations(void) {
 		if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_content)) {
 			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_content)));
 			BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
-			BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_conference_info_get_participants(conf_info_from_content)), 2, int, "%d");
+			const bctbx_list_t * participants = linphone_conference_info_get_participants(conf_info_from_content);
+			BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
+			bctbx_list_free((bctbx_list_t *)participants);
 			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_content), 120, int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_content) == conf_time);
 			linphone_conference_info_unref(conf_info_from_content);

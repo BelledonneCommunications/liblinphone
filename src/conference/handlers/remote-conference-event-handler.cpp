@@ -240,6 +240,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 			} else {
 				participant = Participant::create(conf,address);
 				conf->participants.push_back(participant);
+				lInfo() << "Participant " << *participant << " is successfully added - conference " << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount() << " participants";
 
 				if (!isFullState) {
 					conf->notifyParticipantAdded(
@@ -311,6 +312,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				} else if (state == StateType::full) {
 
 					device = participant->addDevice(gruu);
+					lInfo() << "Participant device " << gruu.asString() << " is successfully added";
 
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
@@ -418,8 +420,12 @@ LinphoneMediaDirection RemoteConferenceEventHandler::mediaStatusToMediaDirection
 
 // -----------------------------------------------------------------------------
 
+bool RemoteConferenceEventHandler::alreadySubscribed() const {
+	return (!lev && subscriptionWanted);
+}
+
 void RemoteConferenceEventHandler::subscribe () {
-	if (lev || !subscriptionWanted)
+	if (!alreadySubscribed())
 		return; // Already subscribed or application did not request subscription
 
 

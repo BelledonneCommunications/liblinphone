@@ -42,6 +42,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
 	public:
+
 		ConferenceParams(const ConferenceParams& params);
 		ConferenceParams(const LinphoneCore *core = NULL);
 
@@ -82,17 +83,29 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		void setProxyCfg(LinphoneProxyConfig * p) { m_proxyCfg = p; };
 		LinphoneProxyConfig * getProxyCfg() const { return m_proxyCfg; };
 
+		virtual void setStartTime (const time_t &start) override { m_startTime = start; };
+		const time_t &getStartTime() const { return m_startTime; };
+
+		virtual void setEndTime (const time_t &end) override { m_endTime = end; };
+		const time_t &getEndTime() const { return m_endTime; };
+
+		virtual void setParticipantListType (const ParticipantListType &type) override { m_participantListType = type; };
+		const ParticipantListType &getParticipantListType() const { return m_participantListType; };
+
 	private:
 		bool m_enableVideo = false;
 		bool m_enableAudio = false;
 		bool m_enableChat = false;
 		bool m_localParticipantEnabled = true;
 		bool m_allowOneParticipantConference = false;
+		ParticipantListType m_participantListType = ParticipantListType::Open;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
 		ConferenceLayout m_layout = ConferenceLayout::None;
 		Address m_factoryAddress = Address();
 		std::string m_subject = "";
 		IdentityAddress m_me = IdentityAddress();
+		time_t m_startTime = (time_t)-1;
+		time_t m_endTime = (time_t)-1;
 		LinphoneProxyConfig * m_proxyCfg = nullptr;
 };
 

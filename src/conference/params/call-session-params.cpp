@@ -43,6 +43,8 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	mergeTcapLines = src->mergeTcapLines;
 	supportedEncryptions = src->supportedEncryptions;
 	disallowZrtp = src->disallowZrtp;
+	startTime = src->startTime;
+	endTime = src->endTime;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
@@ -59,6 +61,21 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 }
 
 // -----------------------------------------------------------------------------
+void CallSessionParamsPrivate::setStartTime(time_t time) {
+	startTime = time;
+}
+
+time_t CallSessionParamsPrivate::getStartTime() const {
+	return startTime;
+}
+
+void CallSessionParamsPrivate::setEndTime(time_t time) {
+	endTime = time;
+}
+
+time_t CallSessionParamsPrivate::getEndTime() const {
+	return endTime;
+}
 
 bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled () const {
 	return capabilityNegotiationReInvite;
@@ -116,8 +133,6 @@ const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedE
 	}
 
 	return encEnumList;
-
-
 }
 
 void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions) {
@@ -183,6 +198,8 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
+	d->startTime = (time_t)-1;
+	d->endTime = (time_t)-1;
 	setProxyConfig(NULL);
 }
 

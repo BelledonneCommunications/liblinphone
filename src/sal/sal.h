@@ -72,6 +72,7 @@ public:
 	using OnParsePresenceRequestedCb = void (*) (SalOp *op, const char *contentType, const char *contentSubtype, const char *content, SalPresenceModel **result);
 	using OnConvertPresenceToXMLRequestedCb = void (*) (SalOp *op, SalPresenceModel *presence, const char *contact, char **content);
 	using OnNotifyPresenceCb = void (*) (SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model, const char *msg);
+	using OnRedirectCb = int (*) (SalOp *op);
 	using OnSubscribePresenceReceivedCb = void (*) (SalPresenceOp *op, const char *from);
 	using OnSubscribePresenceClosedCb = void (*) (SalPresenceOp *op, const char *from);
 	using OnPingReplyCb = void (*) (SalOp *op);
@@ -120,6 +121,7 @@ public:
 		OnExpireCb on_expire;
 		OnNotifyResponseCb on_notify_response;
 		OnReferCb refer_received; // For out of dialog refer
+		OnRedirectCb process_redirect;
 	};
 
 	Sal(MSFactory *factory);

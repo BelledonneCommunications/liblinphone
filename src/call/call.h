@@ -224,7 +224,7 @@ public:
 	void startPushIncomingNotification ();
 	void startBasicIncomingNotification ();
 	void pauseForTransfer ();
-	int startInvite (const Address *destination);
+	int startInvite (const Address *destination, const std::string subject = std::string(), const Content *content = nullptr);
 	std::shared_ptr<Call> startReferredCall (const MediaSessionParams *params);
 	
 	// -----------------------------------------------------------------------------

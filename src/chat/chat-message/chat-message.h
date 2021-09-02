@@ -114,7 +114,7 @@ public:
 	const IdentityAddress &getAuthenticatedFromAddress () const;
 	const ConferenceAddress &getFromAddress () const;
 	const ConferenceAddress &getToAddress () const;
-	const ConferenceAddress &getLocalAdress () const;
+	const ConferenceAddress &getLocalAddress () const;
 	const std::string &getForwardInfo () const;
 
 	bool isReply () const;

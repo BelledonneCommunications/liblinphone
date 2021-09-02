@@ -28,7 +28,6 @@
 #include <bctoolbox/vfs.h>
 #include "tester_utils.h"
 #include "belle-sip/sipstack.h"
-#include "shared_tester_functions.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -619,12 +618,12 @@ static void conference_participant_removed(LinphoneConference *conference, const
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participants_removed++;
 }
-static void conference_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant) {
+static void conference_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_added++;
 }
-static void conference_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant) {
+static void conference_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_devices_removed++;
@@ -3478,6 +3477,7 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 					LinphoneConferenceParams *params = linphone_conference_params_new(lc);
 					// When local participant is disabled, the conference is not attached to the core (lc->conf_ctx)
 					linphone_conference_params_set_one_participant_conference_enabled(params, TRUE);
+					linphone_conference_params_set_subject(params, _linphone_call_get_subject(call));
 					linphone_conference_params_set_video_enabled(params, linphone_call_params_video_enabled(linphone_call_get_current_params(call)));
 					conference = linphone_core_create_conference_with_params(lc, params);
 					linphone_conference_params_unref(params);
@@ -3505,7 +3505,7 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 	}
 }
 
-static void linphone_conference_server_refer_received(LinphoneCore *core, const char *refer_to) {
+void linphone_conference_server_refer_received(LinphoneCore *core, const char *refer_to) {
 	char method[20];
 	LinphoneAddress *refer_to_addr = linphone_address_new(refer_to);
 	char *uri;

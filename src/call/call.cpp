@@ -271,8 +271,8 @@ void Call::pauseForTransfer () {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->pauseForTransfer();
 }
 
-int Call::startInvite (const Address *destination) {
-	return getActiveSession()->startInvite(destination, "");
+int Call::startInvite (const Address *destination, const std::string subject, const Content *content) {
+	return getActiveSession()->startInvite(destination, subject, content);
 }
 
 shared_ptr<Call> Call::startReferredCall (const MediaSessionParams *params) {
@@ -464,9 +464,12 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 			auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
 			conference->removeParticipant(session, (sessionState != LinphonePrivate::CallSession::State::End));
 		} else if (attachedToRemoteConference() && (getTransferState() == LinphonePrivate::CallSession::State::Idle)) {
-			// If the call has been transferred, then the conference must be kept alive
-			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-			terminateConference();
+			auto cConference = getConference();
+			if (cConference) {
+				auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
+				lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
+				terminateConference();
+			}
 		}
 		setConference (nullptr);
 	}
@@ -554,6 +557,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				if (attachedToRemoteConference()) {
 					if (!remoteContactAddress.hasParam("isfocus")) {
 						terminateConference();
+					} else {
+						// The conference has sent the reINVITE confirm the joining of the conference
+						auto conference = MediaConference::Conference::toCpp(getConference());
+						if (conference->getState() == ConferenceInterface::State::CreationPending) {
+							conference->finalizeCreation();
+						}
 					}
 				} else if (remoteContactAddress.hasParam("isfocus")) {
 					// Check if the request was sent by the focus (remote conference)
@@ -581,8 +590,13 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			} else if (attachedToRemoteConference()) {
 				// The participant rejoins the conference
 				auto conference = MediaConference::Conference::toCpp(getConference());
-				time_t creationTime = time(nullptr);
-				conference->notifyParticipantAdded(creationTime, false, conference->getMe());
+				const auto & previousState = getActiveSession()->getPreviousState();
+				// NOTIFY that a participant has been added only if we hit this code following an update from the conference
+				if (previousState != CallSession::State::UpdatedByRemote) {
+					// The participant rejoins the conference
+					time_t creationTime = time(nullptr);
+					conference->notifyParticipantAdded(creationTime, false, conference->getMe());
+				}
 			} else if (op && op->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
@@ -628,6 +642,10 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 		const auto confLayout = MediaSession::computeConferenceLayout(rmd);
 		confParams->setLayout(confLayout);
+		const auto & remoteParams = session->getRemoteParams();
+		confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
+		confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
+
 		// It is expected that the core of the remote conference is the participant one
 		auto remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 		setConference(remoteConf->toC());

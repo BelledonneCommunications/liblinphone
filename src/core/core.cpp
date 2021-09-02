@@ -1296,13 +1296,13 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
 
-	auto conf = findAudioVideoConference (conferenceId);
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
+	auto conf = findAudioVideoConference(prunedConferenceId);
 
 	// Conference does not exist or yes but with the same pointer!
 	L_ASSERT(conf == nullptr || conf == audioVideoConference);
 	if (conf == nullptr) {
-		lInfo() << "Insert audio video conference in RAM with conference ID " << conferenceId << ".";
-		ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
+		lInfo() << "Insert audio video conference " << audioVideoConference << " in RAM with conference ID " << conferenceId << ".";
 		audioVideoConferenceById[prunedConferenceId] = audioVideoConference;
 	}
 }
@@ -1320,16 +1320,16 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 
 }
 
-shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
+shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params, const ConferenceAddress &localAddress, const ConferenceAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
 
 	const auto it = std::find_if (audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&] (const auto & p) {
 		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
 		const auto &audioVideoConference = p.second;
 		const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-		const IdentityAddress &curLocalAddress = conferenceId.getLocalAddress();
+		const auto &curLocalAddress = conferenceId.getLocalAddress();
 		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu())
 			return false;
-		const IdentityAddress &curRemoteAddress = conferenceId.getPeerAddress();
+		const auto &curRemoteAddress = conferenceId.getPeerAddress();
 		if (remoteAddress.isValid() && remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
 			return false;
 
@@ -1362,6 +1362,63 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const s
 	shared_ptr<MediaConference::Conference> conference = nullptr;
 	if (it != audioVideoConferenceById.cend()) {
 		conference = it->second;
+	}
+
+	return conference;
+}
+
+shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const ConferenceAddress &conferenceAddress) const {
+
+	if (!conferenceAddress.isValid()) return nullptr;
+	const auto it = std::find_if (audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&] (const auto & p) {
+		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
+		const auto &audioVideoConference = p.second;
+		const auto curConferenceAddress = audioVideoConference->getConferenceAddress();
+		return (conferenceAddress == curConferenceAddress);
+	});
+
+	shared_ptr<MediaConference::Conference> conference = nullptr;
+	if (it != audioVideoConferenceById.cend()) {
+		conference = it->second;
+	}
+
+	return conference;
+}
+
+shared_ptr<MediaConference::Conference> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+	L_D()
+	if (!params) {
+		lWarning() << "Trying to create conference with null parameters";
+		return nullptr;
+	}
+
+	string conferenceFactoryUri = Core::getConferenceFactoryUri(getSharedFromThis(), localAddr);
+	if (conferenceFactoryUri.empty()) {
+		lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
+		return nullptr;
+	}
+
+	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
+	if (!localAddr.hasGruu()) {
+		lWarning() << "Local identity address [" << localAddr << "] doesn't have a gruu, let's try to find it";
+		IdentityAddress localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
+		if (localAddrWithGruu.isValid()) {
+			lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
+			conferenceId = ConferenceId(IdentityAddress(), localAddrWithGruu);
+		} else {
+			lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr << "], client group chat room creation will fail!";
+		}
+	}
+
+	auto conference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getSharedFromThis(), IdentityAddress(conferenceFactoryUri), conferenceId, nullptr, params), [](MediaConference::RemoteConference * c){c->unref();});
+
+	if (!conference) {
+		lWarning() << "Cannot create conference with subject [" << params->getSubject() <<"]";
+		return nullptr;
+	}
+	if (!conference->addParticipants(participants)) {
+		lWarning() << "Couldn't add participants to newly created chat room, aborting";
+		return nullptr;
 	}
 
 	return conference;

@@ -50,6 +50,7 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class ServerGroupChatRoomPrivate;
 	friend class ParticipantDevice;
 
+	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
 public:

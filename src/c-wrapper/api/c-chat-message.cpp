@@ -521,7 +521,7 @@ const LinphoneAddress *linphone_chat_message_get_peer_address (const LinphoneCha
 }
 
 const LinphoneAddress *linphone_chat_message_get_local_address (const LinphoneChatMessage *msg) {
-	const LinphonePrivate::Address & addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAdress().asAddress();
+	const LinphonePrivate::Address & addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAddress().asAddress();
 	return L_GET_C_BACK_PTR(&addr);
 }
 

@@ -103,7 +103,6 @@ static void call_received(SalCallOp *h) {
 		fromAddr = linphone_address_new(h->getFrom().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(h->getTo().c_str());
 
-
 	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 #ifdef HAVE_ADVANCED_IM
 		if (linphone_core_conference_server_enabled(lc)) {
@@ -206,11 +205,21 @@ static void call_received(SalCallOp *h) {
 		ms_warning("Advanced IM such as group chat is disabled!");
 		return;
 #endif
-	} else {
-		// TODO: handle media conference joining if the "text" feature tag is not present
+	} else if ((sal_address_has_param(h->getRemoteContactAddress(), "admin") && (strcmp(sal_address_get_param(h->getRemoteContactAddress(), "admin"), "1") == 0))) {
+		// Create a conference if remote is trying to schedule one or it is calling a conference focus
+		if (linphone_core_conference_server_enabled(lc)) {
+			shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(h->getTo())), ConferenceAddress(Address(h->getTo()))));
+			if (!conference) {
+				 if (h->isContentInRemote(ContentType::ResourceLists)) {
+					auto localConference = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
+					localConference->confirmCreation();
+					linphone_address_unref(toAddr);
+					linphone_address_unref(fromAddr);
+					return;
+				}
+			}
+		}
 	}
-
-
 
 	/* First check if we can answer successfully to this invite */
 	LinphonePresenceActivity *activity = nullptr;
@@ -1003,6 +1012,34 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 	static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
 }
 
+static int process_redirect(SalOp *op){
+	LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
+	LinphoneCall *call = linphone_core_get_call_by_callid(lc, op->getCallId().c_str());
+	LinphoneConference *conference = call ? linphone_call_get_conference(call) : NULL;
+	LinphoneConferenceState conference_state = conference ? linphone_conference_get_state(conference) : LinphoneConferenceStateNone;
+	std::shared_ptr<MediaConference::RemoteConference> remote_conference = conference ? dynamic_pointer_cast<MediaConference::RemoteConference>(MediaConference::Conference::toCpp(conference)->getSharedFromThis()) : NULL;
+	if (remote_conference && ((conference_state == LinphoneConferenceStateInstantiated) || (conference_state == LinphoneConferenceStateCreationPending))) {
+		const ConferenceId & conference_id = remote_conference->getConferenceId();
+		char * remote_contact_address = sal_address_as_string(op->getRemoteContactAddress());
+		char msg [350];
+		snprintf(msg, 350, "Conference %s has been succesfully created", remote_contact_address);
+		const ConferenceAddress conference_address(remote_contact_address);
+		ms_free(remote_contact_address);
+		remote_conference->setConferenceId(ConferenceId(conference_address, conference_id.getLocalAddress()));
+		remote_conference->setConferenceAddress(conference_address);
+		// Do not terminate conference if the call has been redirected
+		Call::toCpp(call)->setConference(NULL);
+		LinphoneErrorInfo *ei = linphone_error_info_new();
+		linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 200, msg, NULL);
+		linphone_call_terminate_with_error_info(call,ei);
+		linphone_error_info_unref(ei);
+		return 0;
+	} else {
+		return op->processRedirect();
+	}
+	return -1;
+}
+
 Sal::Callbacks linphone_sal_callbacks={
 	call_received,
 	call_rejected,
@@ -1042,4 +1079,5 @@ Sal::Callbacks linphone_sal_callbacks={
 	on_expire,
 	on_notify_response,
 	refer_received,
+	process_redirect,
 };

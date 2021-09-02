@@ -41,6 +41,10 @@ void linphone_conference_remove_callbacks (LinphoneConference *conference, Linph
 	MediaConference::Conference::toCpp(conference)->removeCallbacks(ConferenceCbs::toCpp(cbs)->getSharedFromThis());
 }
 
+void linphone_conference_set_current_callbacks (LinphoneConference *conference, LinphoneConferenceCbs *cbs) {
+	MediaConference::Conference::toCpp(conference)->setCurrentCallbacks(cbs ? ConferenceCbs::toCpp(cbs)->getSharedFromThis() : nullptr);
+}
+
 LinphoneConferenceCbs *linphone_conference_get_current_callbacks (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getCurrentCallbacks()->toC();
 }

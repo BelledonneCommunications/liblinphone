@@ -23,6 +23,7 @@
 #include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
 #include "c-wrapper/c-wrapper.h"
+#include "conference/conference-info.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -237,9 +238,9 @@ public:
 
   void setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
 
-  LinphoneConferenceInfo *createConferenceInfo() const;
+  std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
 
-  LinphoneConferenceInfo *createConferenceInfoFromIcalendarContent(LinphoneContent *content) const;
+  std::shared_ptr<ConferenceInfo> createConferenceInfoFromIcalendarContent(LinphoneContent *content) const;
 
 
 protected:

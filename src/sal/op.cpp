@@ -63,6 +63,7 @@ SalOp::~SalOp () {
 		belle_sip_object_unref(mEvent);
 
 	sal_error_info_reset(&mErrorInfo);
+	sal_error_info_reset(&mReasonErrorInfo);
 
 	if (mFromAddress)
 		sal_address_unref(mFromAddress);

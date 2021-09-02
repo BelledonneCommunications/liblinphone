@@ -560,7 +560,6 @@ LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices(LinphoneChatRoom *chat_room, const LinphoneAddress *participant_address, const bctbx_list_t *device_identities);
 
-
 /**
  * Notify the chatroom that a participant device has just registered.
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.

@@ -81,6 +81,7 @@ inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identi
 	os << "IdentityAddress(" << identityAddress.asString() << ")";
 	return os;
 }
+
 class LINPHONE_PUBLIC ConferenceAddress : public IdentityAddress {
 public:
 	ConferenceAddress (const std::string &address);
@@ -107,6 +108,7 @@ public:
 
 	bool operator< (const ConferenceAddress &other) const;
 
+	ConferenceAddress getAddressWithoutGruu () const;
 	virtual std::string asString () const override;
 
 	bool hasConfId () const;

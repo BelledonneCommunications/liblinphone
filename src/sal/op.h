@@ -144,6 +144,8 @@ public:
 	void setRetryFunction(const std::function<void ()> & retryFunc);
 	void resetRetryFunction();
 
+	int processRedirect ();
+
 protected:
 	enum class State {
 		Early = 0,
@@ -179,7 +181,6 @@ protected:
 	virtual void fillCallbacks () {}
 	void releaseImpl ();
 	void processAuthentication ();
-	int processRedirect ();
 
 	belle_sip_request_t *buildRequest (const std::string &method);
 	int sendRequest (belle_sip_request_t *request);

@@ -129,9 +129,13 @@ void linphone_call_params_set_used_audio_codec(LinphoneCallParams *params, OrtpP
 void linphone_call_params_set_used_video_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
 void linphone_call_params_set_used_text_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
 bool_t linphone_call_params_get_no_user_consent(const LinphoneCallParams *params);
+time_t linphone_call_params_get_start_time (const LinphoneCallParams *params);
+time_t linphone_call_params_get_end_time (const LinphoneCallParams *params);
 
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
+void linphone_call_params_set_end_time (LinphoneCallParams *params, time_t time);
+void linphone_call_params_set_start_time (LinphoneCallParams *params, time_t time);
 LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams *params, bool_t value);
 LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);

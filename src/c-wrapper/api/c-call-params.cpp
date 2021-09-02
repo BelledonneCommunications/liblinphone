@@ -563,6 +563,22 @@ void linphone_call_params_set_no_user_consent (LinphoneCallParams *params, bool_
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setNoUserConsent(!!value);
 }
 
+time_t linphone_call_params_get_start_time (const LinphoneCallParams *params) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getStartTime();
+}
+
+void linphone_call_params_set_start_time (LinphoneCallParams *params, time_t time) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setStartTime(time);
+}
+
+time_t linphone_call_params_get_end_time (const LinphoneCallParams *params) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getEndTime();
+}
+
+void linphone_call_params_set_end_time (LinphoneCallParams *params, time_t time) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setEndTime(time);
+}
+
 bctbx_list_t* linphone_call_params_get_custom_contents (const LinphoneCallParams *params) {
 	const list<LinphonePrivate::Content>& contents = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getCustomContents();
 	bctbx_list_t* c_contents = nullptr;

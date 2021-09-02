@@ -1344,6 +1344,23 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_with_params(LinphoneCore *co
 LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *core, const LinphoneAddress *addr, const LinphoneCallParams *params);
 
 /**
+ * Initiates an outgoing call given a destination #LinphoneAddress
+ * The #LinphoneAddress can be constructed directly using linphone_address_new(), or
+ * created by linphone_core_interpret_url().
+ * The application doesn't own a reference to the returned #LinphoneCall object.
+ * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
+ * If the proxy is not specified in parameters, the caller proxy will be automatically selected by finding what is the best to reach the destination of the call.
+ * @param core #LinphoneCore object @notnil
+ * @param addr The destination of the call (sip address). @notnil
+ * @param params Call parameters @notnil
+ * @param subject Subject of the call @maybenil
+ * @param content Body of the SIP INVITE @maybenil
+ * @return A #LinphoneCall object or NULL in case of failure. @maybenil
+ * @ingroup call_control
+**/
+LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_address_with_params_2(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params, const char * subject, const LinphoneContent * content);
+
+/**
  * @brief Start a new call as a consequence of a transfer request received from a call.
  *
  * This function is for advanced usage: the execution of transfers is automatically managed by the LinphoneCore. However if an application
@@ -4143,6 +4160,15 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(
 LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference(const LinphoneCore *core, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants);
 
 /**
+ * Find a conference.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param conferenceAddr #LinphoneAddress representing the conference address @notnil
+ * @return A pointer on #LinphoneConference whose conference address is the one provided as argument or NULL if none matches @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *core, const LinphoneAddress *conferenceAddr);
+
+/**
  * Add a participant to the conference. If no conference is going on
  * a new internal conference context is created and the participant is
  * added to it.
@@ -4276,6 +4302,20 @@ LINPHONE_PUBLIC void linphone_core_enable_conference_server (LinphoneCore *core,
  * @return A boolean value telling whether the conference server feature is enabled or not
  */
 LINPHONE_PUBLIC bool_t linphone_core_conference_server_enabled (const LinphoneCore *core);
+
+/**
+ * Select whether the default conference participant list is open or closed
+ * @param core A #LinphoneCore object @notnil
+ * @param type A #LinphoneConferenceParticipantListType participant list type
+ */
+LINPHONE_PUBLIC void linphone_core_set_conference_participant_list_type (LinphoneCore *lc, LinphoneConferenceParticipantListType type);
+
+/**
+ * Tells whether the default conference participant list is open or closed
+ * @param core A #LinphoneCore object @notnil
+ * @return A #LinphoneConferenceParticipantListType participant list type
+ */
+LINPHONE_PUBLIC LinphoneConferenceParticipantListType linphone_core_get_conference_participant_list_type (const LinphoneCore *lc);
 
 /**
  * @}
@@ -5985,7 +6025,7 @@ LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_la
  * @param text An optional text to be added to the sent chat message @maybenil
  * @ingroup conference
  */
-LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_information, const char *text);
+LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text);
 
 /**
  * Retrieve the list of conference information on DB.
@@ -6003,6 +6043,17 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(Linp
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core);
 
+/**
+ * Create conference on a server by inviting participants
+ * @param core The #LinphoneCore @notnil
+ * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
+ * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
+ * @param participants The initial list of participants of the chat room. \bctbx_list{LinphoneAddress} @notnil
+ * @return #LinphoneConference or NULL if no conference is created. @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_on_server(LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -6012,7 +6063,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_li
  * @ingroup call_control
  * @param core the #LinphoneCore object. @notnil
  * @param uri which should match call remote uri @notnil
- * @return #LinphoneCall or NULL is no match is found. @maybenil
+ * @return #LinphoneCall or NULL if no match is found. @maybenil
  * @deprecated 27/10/2020. Use linphone_core_get_call_by_remote_address2() instead.
  */
 LINPHONE_PUBLIC LinphoneCall* linphone_core_find_call_from_uri(const LinphoneCore *core, const char *uri);

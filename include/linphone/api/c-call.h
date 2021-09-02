@@ -97,7 +97,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_remote_address (const L
 /**
  * Returns the to address with its headers associated to this call
  * @param call #LinphoneCall object. @notnil
- * @return the #LinphoneAdress matching the TO of the call. @notnil
+ * @return the #LinphoneAddress matching the TO of the call. @notnil
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall * call);
 

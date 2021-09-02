@@ -62,6 +62,12 @@ public:
 	std::shared_ptr<CallSession> getReferer () const { return referer; }
 	void setReferer (std::shared_ptr<CallSession> session) { referer = session; }
 
+	void setStartTime(time_t time);
+	time_t getStartTime() const;
+
+	void setEndTime(time_t time);
+	time_t getEndTime() const;
+
 public:
 	std::string sessionName;
 
@@ -84,6 +90,9 @@ private:
 	std::unordered_map<std::string, std::string> customContactParameters;
 	std::shared_ptr<CallSession> referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
 	std::list<Content> customContents;
+
+	time_t startTime = (time_t)-1;
+	time_t endTime = (time_t)-1;
 
 	L_DECLARE_PUBLIC(CallSessionParams);
 };

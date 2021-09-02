@@ -175,7 +175,8 @@ public:
 	void insertAudioVideoConference (const std::shared_ptr<MediaConference::Conference> &audioVideoConference);
 	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
-	std::shared_ptr<MediaConference::Conference> searchAudioVideoConference(const std::shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const;
+	std::shared_ptr<MediaConference::Conference> searchAudioVideoConference(const std::shared_ptr<ConferenceParams> &params, const ConferenceAddress &localAddress, const ConferenceAddress &remoteAddress, const std::list<IdentityAddress> &participants) const;
+	std::shared_ptr<MediaConference::Conference> searchAudioVideoConference(const ConferenceAddress &conferenceAddress) const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.
@@ -267,6 +268,9 @@ public:
 	void onStopAsyncBackgroundTaskStarted(); /* Using background task to ensure stop core async ended */
 	void onStopAsyncBackgroundTaskStopped();
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
+
+	std::shared_ptr<MediaConference::Conference> createConferenceOnServer(const std::shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants);
+
 private:
 	Core ();
 

@@ -39,6 +39,12 @@ class LINPHONE_PUBLIC SalMediaDescription {
 	friend class MediaSessionPrivate;
 	public:
 
+		// Adding 2208988800 to convert from UNIX time to NTP
+		// UNIX time uses an epoch located at 1/1/1970-00:00h (UTC) and NTP uses 1/1/1900-00:00h.
+		// The offset between the two epochs is 70 years (with 17 leap year in between).
+		// number of seconds: (70*365 + 17)*86400 = 2208988800
+		static constexpr long long ntpToUnix = 2208988800;
+
 		SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps);
 		SalMediaDescription(belle_sdp_session_description_t  *sdp);
 		SalMediaDescription(const SalMediaDescription & other);
@@ -150,6 +156,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		SalMediaRecord record = SalMediaRecordNone;
 
 		bool mergeTcapLines = false;
+
+		std::list<std::pair<time_t, time_t>> times;
 	private:
 
 		SalStreamDescription::acap_map_t acaps;

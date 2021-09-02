@@ -2152,15 +2152,6 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 	BC_ASSERT_PTR_NOT_NULL(current_conf_params);
 	BC_ASSERT_TRUE((!!linphone_conference_params_is_video_enabled(current_conf_params)) == enable_video);
 
-	if (enable_video) {
-		// Participants should have received the subject change notification
-		// The initial update was answered by a 491 REquest pending therefore the event is triggered by the resent message
-		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_subject_changed, 1,10000));
-		}
-	}
-
 	bctbx_list_t* all_manangers_in_conf=bctbx_list_copy(participants);
 	all_manangers_in_conf = bctbx_list_append(all_manangers_in_conf, marie);
 	const LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(conf);

@@ -25,7 +25,6 @@
  * #LinphoneConferenceState is used to indicate the current state of a conference.
  * @ingroup conference
  */
-
 typedef enum _LinphoneConferenceState{
 	LinphoneConferenceStateNone = 0,		/**< Initial state */
 	LinphoneConferenceStateInstantiated = 1,	/**< Conference is now instantiated on local */
@@ -42,11 +41,23 @@ typedef enum _LinphoneConferenceState{
  * #LinphoneConferenceLayout is used to indicate the layout used by the conference.
  * @ingroup conference
  */
-
 typedef enum _LinphoneConferenceLayout{
 	LinphoneConferenceLayoutNone,          /**< None - participant who speaks is prominently displayed in the center of the screen */
 	LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
 	LinphoneConferenceLayoutGrid,          /**< Grid - each participant is given an equal sized image size */
 } LinphoneConferenceLayout;
+
+/**
+ * @brief Type of conference participant list.
+ * When participant list is closed, no more participants can be added other than those declared when creating the conference
+ * When participant list is open, other people can join the conference upon invitation of a participant
+no more participants can be added other than those declared when creating the conference
+ *
+ * @ingroup conference
+ */
+typedef enum _LinphoneConferenceParticipantListType{
+	LinphoneConferenceParticipantListTypeClosed = 0, /**< Only participants in the initiating INVITE are allowed to join the conference */
+	LinphoneConferenceParticipantListTypeOpen = 1, /**< All devices calling the conference URI are allowed to join the conference */
+} LinphoneConferenceParticipantListType;
 
 #endif // ifndef _L_CONFERENCE_ENUMS_H_

@@ -113,6 +113,31 @@ const list<Content>& SalCallOp::getAdditionalRemoteBodies () const {
 	return mAdditionalRemoteBodies;
 }
 
+bool SalCallOp::isContentInRemote (const ContentType &contentType) const {
+	if (contentType == ContentType::Sdp) {
+		return !mRemoteBody.isEmpty();
+	} else {
+		auto it = std::find_if(mAdditionalRemoteBodies.begin(), mAdditionalRemoteBodies.end(), [&contentType] (const Content & content) {
+			return (content.getContentType() == contentType);
+		});
+		return (it != mAdditionalRemoteBodies.end());
+	}
+	return false;
+}
+
+
+const Content SalCallOp::getContentInRemote (const ContentType &contentType) const {
+	if (contentType == ContentType::Sdp) {
+		return mRemoteBody;
+	} else {
+		auto it = std::find_if(mAdditionalRemoteBodies.begin(), mAdditionalRemoteBodies.end(), [&contentType] (const Content & content) {
+			return (content.getContentType() == contentType);
+		});
+		return (it != mAdditionalRemoteBodies.end()) ? *it : Content();
+	}
+	return Content();
+}
+
 belle_sip_header_allow_t *SalCallOp::createAllow (bool enableUpdate) {
 	ostringstream oss;
 	oss << "INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO, PRACK";
@@ -1373,7 +1398,7 @@ belle_sip_header_reason_t *SalCallOp::makeReasonHeader (const SalErrorInfo *info
 	return nullptr;
 }
 
-int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr) {
+int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr, const time_t expire) {
 	belle_sip_header_contact_t *contactHeader = nullptr;
 	belle_sip_header_retry_after_t *retryAfterHeader = nullptr;
 	int status = info->protocol_code;
@@ -1403,6 +1428,9 @@ int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress 
 
 	if (contactHeader)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(contactHeader));
+
+	if (expire != 0)
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), belle_sip_header_create("Expire", std::to_string(expire).c_str()));
 
 	if (retryAfterHeader)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(retryAfterHeader));

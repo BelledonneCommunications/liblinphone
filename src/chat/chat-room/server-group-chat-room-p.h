@@ -174,7 +174,7 @@ private:
 		void *context = nullptr; // TODO: unused currently, but can store a context pointer from the implementation of reginfo subscription.
 					 // This will remove the need for a map in conference server for holding subscriptions.
 	};
-	
+
 	std::list<IdentityAddress> invitedParticipants; // participants in the process of being added to the chatroom, while for registration information.
 	ChatRoomListener *chatRoomListener = this;
 	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/

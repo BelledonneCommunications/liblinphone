@@ -53,7 +53,15 @@ LINPHONE_PUBLIC void linphone_conference_remove_callbacks(LinphoneConference *co
  * Gets the current LinphoneConferenceCbs.
  * This is meant only to be called from a callback to be able to get the user_data associated with the LinphoneConferenceCbs that is calling the callback.
  * @param conference #LinphoneConference object. @notnil
- * @return The LinphoneConferenceCbs that has called the last callback. @notnil
+ * @param cbs The LinphoneConferenceCbs object. @notnil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_current_callbacks(LinphoneConference *conference, LinphoneConferenceCbs *cbs);
+
+/**
+ * Sets the current LinphoneConferenceCbs.
+ * This is meant only to be called from a callback to be able to get the user_data associated with the LinphoneConferenceCbs that is calling the callback.
+ * @param conference #LinphoneConference object. @notnil
+ * @return The #LinphoneConferenceCbs that has called the last callback. @notnil
  */
 LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_conference_get_current_callbacks(const LinphoneConference *conference);
 
@@ -80,6 +88,62 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_addres
  */
 LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address);
 
+/**
+ * Set the subject of the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @param subject the conference subject. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char * subject);
+
+/**
+ * Get conference subject
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference subject. @maybenil
+ */
+LINPHONE_PUBLIC const char * linphone_conference_params_get_subject(const LinphoneConferenceParams *params);
+
+/**
+ * Set the conference start time
+ * @param conference The #LinphoneConference object. @notnil
+ * @param start the conference start time as the number of seconds between the desired start time and the 1st of January 1970. In order to program an immediate start of a conference, then program the start time to 0
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start);
+
+/**
+ * Get the start time of the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return start time of a conference as time_t type or 0 for immediate start of a conference. For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+LINPHONE_PUBLIC time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams *params);
+
+/**
+ * Set the conference end time
+ * @param conference The #LinphoneConference object. @notnil
+ * @param end the conference end time as the number of seconds between the desired end time and the 1st of January 1970. In order to program an undefined end of a conference, then program the end time to 0
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t end);
+
+/**
+ * Get the end time of the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return end time of a conference as time_t type or 0 for open end of a conference. For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+LINPHONE_PUBLIC time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params);
+
+/**
+ * Set the participant list type
+ * @param conference The #LinphoneConference object. @notnil
+ * @param type Participant list type #LinphoneConferenceParticipantListType. This allows to restrict the access to the conference to a selected set of participants
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type);
+
+
+/**
+ * Get the participant list type
+ * @param conference The #LinphoneConference object. @notnil
+ * @return participant list type #LinphoneConferenceParticipantListType.
+ */
+LINPHONE_PUBLIC LinphoneConferenceParticipantListType linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params);
 
 /**
  * @}

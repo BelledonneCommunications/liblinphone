@@ -1471,7 +1471,7 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 	L_Q();
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
 	std::list<OrtpPayloadType*> emptyList;
@@ -1593,7 +1593,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 		ms_free(remoteContactAddressStr);
 
 		bool isInLocalConference = getParams()->getPrivate()->getInConference();
-		LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+		LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 
 		bool isConferenceLayoutActiveSpeaker = false;
 		if (conference) {
@@ -1815,6 +1815,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 
+	md->times.push_back(std::make_pair<time_t, time_t>(getParams()->getPrivate()->getStartTime(), getParams()->getPrivate()->getEndTime()));
+
 	md->accept_bundles = getParams()->rtpBundleEnabled() ||
 		linphone_config_get_bool(linphone_core_get_config(core), "rtp", "accept_bundle", TRUE);
 
@@ -1886,7 +1888,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	encList.push_back(getParams()->getMediaEncryption());
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	bool isConferenceLayoutActiveSpeaker = false;
 	bool isConferenceLayoutNone = false;
 	bool isVideoConferenceEnabled = false;
@@ -2580,11 +2582,13 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
-	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
-	if (proposeEarlyMedia)
-		q->acceptEarlyMedia();
-	else {
-		op->notifyRinging(false, linphone_core_get_tag_100rel_support_level(q->getCore()->getCCore()));
+	if (notifyRinging) {
+		bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
+		if (proposeEarlyMedia)
+			q->acceptEarlyMedia();
+		else {
+			op->notifyRinging(false, linphone_core_get_tag_100rel_support_level(q->getCore()->getCCore()));
+		}
 	}
 
 	acceptOrTerminateReplacedSessionInIncomingNotification();
@@ -2750,11 +2754,11 @@ LinphoneMediaDirection MediaSessionPrivate::getVideoDirFromMd (const std::shared
 
 int MediaSessionPrivate::getThumbnailStreamIdx() const {
 	L_Q();
-	// In order to set properly the negotiated parameters, we must know if the client is sending video to the conference, i.e. look at the thumbnail stream direction. In order to do so, we must know the label of the searched thumbnal stream.
+	// In order to set properly the negotiated parameters, we must know if the client is sending video to the conference, i.e. look at the thumbnail stream direction. In order to do so, we must know the label of the searched thumbnail stream.
 	// The local case is quite straightforward because all labels are known, but for the client is more difficult as the NOTIFY message may have not come or been processed.
 	// The algorithm below searches for the label in the main stream and then reuses the label to look for the desired thumbnail stream
 	auto streamIdx = -1;
-	LinphoneConference * conference = listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()));
+	LinphoneConference * conference = listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis())) : nullptr;
 	if (conference && op) {
 		bool isInLocalConference = getParams()->getPrivate()->getInConference();
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
@@ -4044,6 +4048,13 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			params->getPrivate()->setCustomSdpAttributes(md->custom_sdp_attributes);
 			params->enableRtpBundle(!md->bundles.empty());
 			params->setRecordingState(md->record);
+
+			const auto & times = md->times;
+			if (times.size() > 0) {
+				const auto & timePair = times.front();
+				params->getPrivate()->setStartTime(timePair.first);
+				params->getPrivate()->setEndTime(timePair.second);
+			}
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {

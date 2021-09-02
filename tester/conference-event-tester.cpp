@@ -1347,9 +1347,13 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 	}
 
 	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
-	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
-	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
-	BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
+	BC_ASSERT_PTR_NOT_NULL(participantCall);
+
+	if (participantCall) {
+		const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
+		std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+		BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
+	}
 
 	// Other participants call should not have their state modified
 	if (other_participants != NULL) {
@@ -1432,19 +1436,28 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	BC_ASSERT_PTR_NOT_NULL(confCall);
 
 	if (pause_call) {
-
-		BC_ASSERT_TRUE(linphone_call_get_state(confCall) == LinphoneCallStreamsRunning);
-		BC_ASSERT_TRUE(linphone_call_get_state(participantCall) == LinphoneCallStreamsRunning);
-		// Conference pauses the call
-		linphone_call_pause(confCall);
+		if (participantCall) {
+			BC_ASSERT_TRUE(linphone_call_get_state(participantCall) == LinphoneCallStreamsRunning);
+		}
+		if (confCall) {
+			BC_ASSERT_TRUE(linphone_call_get_state(confCall) == LinphoneCallStreamsRunning);
+			// Conference pauses the call
+			linphone_call_pause(confCall);
+		}
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(initial_conf_stats.number_of_LinphoneCallPaused + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	} else {
-
-		BC_ASSERT_TRUE(linphone_call_get_state(confCall) != LinphoneCallPausing);
-		BC_ASSERT_TRUE(linphone_call_get_state(confCall) != LinphoneCallPaused);
-		BC_ASSERT_TRUE(linphone_call_get_state(participantCall) != LinphoneCallPausedByRemote);
+		if (confCall) {
+			BC_ASSERT_TRUE(linphone_call_get_state(confCall) != LinphoneCallPausing);
+			BC_ASSERT_TRUE(linphone_call_get_state(confCall) != LinphoneCallPaused);
+		}
+		if (participantCall) {
+			BC_ASSERT_TRUE(linphone_call_get_state(participantCall) != LinphoneCallPausedByRemote);
+		}
 	}
+
+	participantCall = linphone_core_get_current_call(participant_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(participantCall);
 
 	int participantSize = (int)confListener->participants.size();
 	int participantDeviceSize = (int)confListener->participantDevices.size();
@@ -1505,13 +1518,16 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), (participantSize + increment), int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), (participantDeviceSize + increment), int, "%d");
 
-	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
-	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+	if (participantCall) {
+		const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
 
-	BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
+		std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
 
-	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(participantUri)->second);
+		BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
+
+		// Admin check
+		BC_ASSERT_TRUE(!confListener->participants.find(participantUri)->second);
+	}
 
 	if (other_participants_initial_stats) {
 		ms_free(other_participants_initial_stats);
@@ -1627,6 +1643,16 @@ void send_removed_notify_through_call() {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
+
+		for (bctbx_list_t *it = participants_mgrs; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+			LinphoneCall * pCall = linphone_core_get_current_call(m->lc);
+			if (m == pauline) {
+				BC_ASSERT_PTR_NULL(pCall);
+			} else {
+				BC_ASSERT_PTR_NOT_NULL(pCall);
+			}
+		}
 
 		remove_head_participant_list_from_conference_through_call(&removed_mgrs, &participants_mgrs, lcs, confListener, localConf, pauline);
 

@@ -36,45 +36,35 @@ ConferenceInfo::ConferenceInfo () {
 }
 
 ConferenceInfo::~ConferenceInfo () {
-	if (mOrganizer) linphone_address_unref(mOrganizer);
-	if (mParticipants) bctbx_list_free_with_data(mParticipants, (bctbx_list_free_func) linphone_address_unref);
-	if (mUri) linphone_address_unref(mUri);
+
 }
 
-const LinphoneAddress *ConferenceInfo::getOrganizer () const {
+const IdentityAddress &ConferenceInfo::getOrganizer () const {
 	return mOrganizer;
 }
 
-void ConferenceInfo::setOrganizer (LinphoneAddress *organizer) {
-	if (mOrganizer) linphone_address_unref(mOrganizer);
-
-	mOrganizer = organizer ? linphone_address_clone(organizer) : nullptr;
+void ConferenceInfo::setOrganizer (const IdentityAddress organizer) {
+	mOrganizer = organizer;
 }
 
-const bctbx_list_t *ConferenceInfo::getParticipants () const {
+const std::list<IdentityAddress> & ConferenceInfo::getParticipants () const {
 	return mParticipants;
 }
 
-void ConferenceInfo::setParticipants (bctbx_list_t *participants) {
-	if (mParticipants) {
-		bctbx_list_free_with_data(mParticipants, (bctbx_list_free_func) linphone_address_unref);
-	}
-
-	mParticipants = bctbx_list_copy_with_data(participants, (bctbx_list_copy_func) linphone_address_clone);
+void ConferenceInfo::setParticipants (const std::list<IdentityAddress> participants) {
+	mParticipants = participants;
 }
 
-void ConferenceInfo::addParticipant (LinphoneAddress *participant) {
-	mParticipants = bctbx_list_append(mParticipants, linphone_address_clone(participant));
+void ConferenceInfo::addParticipant (const IdentityAddress participant) {
+	mParticipants.push_back(participant);
 }
 
-const LinphoneAddress *ConferenceInfo::getUri () const {
+const ConferenceAddress &ConferenceInfo::getUri () const {
 	return mUri;
 }
 
-void ConferenceInfo::setUri (LinphoneAddress *uri) {
-	if (mUri) linphone_address_unref(mUri);
-
-	mUri = uri ? linphone_address_clone(uri) : nullptr;
+void ConferenceInfo::setUri (const ConferenceAddress uri) {
+	mUri = uri;
 }
 
 time_t ConferenceInfo::getDateTime () const {
@@ -112,28 +102,25 @@ void ConferenceInfo::setDescription (const string &description) {
 const string ConferenceInfo::toIcsString () const {
 	Ics::Icalendar cal;
 	auto event = make_shared<Ics::Event>();
-	char *tmp;
 
-	if (mOrganizer) {
-		tmp = linphone_address_as_string_uri_only(mOrganizer);
-		event->setOrganizer(tmp);
-		bctbx_free(tmp);
+	if (mOrganizer.isValid()) {
+		const auto uri = mOrganizer.getAddressWithoutGruu().asString();
+		event->setOrganizer(uri);
 	}
 
 	event->setSummary(mSubject);
 	event->setDescription(mDescription);
 
-	if (mUri) {
-		tmp = linphone_address_as_string_uri_only(mUri);
-		event->setXConfUri(tmp);
-		bctbx_free(tmp);
+	if (mUri.isValid()) {
+		const auto uri = mUri.asString();
+		event->setXConfUri(uri);
 	}
 	
-	bctbx_list_t *it;
-	for (it = mParticipants; it != NULL; it = it->next) {
-		tmp = linphone_address_as_string_uri_only((LinphoneAddress *) bctbx_list_get_data(it));
-		event->addAttendee(tmp);
-		bctbx_free(tmp);
+	for (const auto & participant : mParticipants) {
+		if (participant.isValid()) {
+			const auto uri = participant.getAddressWithoutGruu().asString();
+			event->addAttendee(uri);
+		}
 	}
 
 	event->setDateTimeStart(Utils::getTimeTAsTm(mDateTime));

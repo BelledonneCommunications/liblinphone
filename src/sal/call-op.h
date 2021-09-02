@@ -39,6 +39,8 @@ public:
 	int setLocalBody (Content &&body);
 	void addAdditionalLocalBody (const Content &content);
 	const std::list<Content>& getAdditionalRemoteBodies () const;
+	bool isContentInRemote (const ContentType &contentType) const;
+	const Content getContentInRemote (const ContentType &contentType) const;
 
 	const std::shared_ptr<SalMediaDescription> & getRemoteMediaDescription () { return mRemoteMedia; }
 	const Content &getRemoteBody () const { return mRemoteBody; }
@@ -48,7 +50,7 @@ public:
 	int notifyRinging (bool earlyMedia, const LinphoneSupportLevel supportLevel100Rel);
 	int accept ();
 	int decline (SalReason reason, const std::string &redirectionUri = "");
-	int declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr = nullptr);
+	int declineWithErrorInfo (const SalErrorInfo *info, const SalAddress *redirectionAddr = nullptr, const time_t expire = 0);
 
 	void haltSessionTimersTimer ();
 	void restartSessionTimersTimer (belle_sip_response_t *response, int delta);

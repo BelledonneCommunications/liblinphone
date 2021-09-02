@@ -31,6 +31,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/conference.h"
+#include "linphone/api/c-conference.h"
 
 #include "conference/participant.h"
 #include "conference/session/streams.h"
@@ -104,6 +105,10 @@ const LinphoneConferenceParams * linphone_conference_get_current_params(const Li
 
 LinphoneStatus linphone_conference_add_participant (LinphoneConference *conference, LinphoneCall *call) {
 	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis());
+}
+
+const LinphoneConferenceInfo * linphone_conference_create_conference_info(LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->createConferenceInfo()->toC();
 }
 
 LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri) {
@@ -443,6 +448,38 @@ void linphone_conference_params_set_layout(LinphoneConferenceParams *params, con
 
 LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params){
 	return (LinphoneConferenceLayout)ConferenceParams::toCpp(params)->getLayout();
+}
+
+void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char * subject){
+	ConferenceParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
+}
+
+const char * linphone_conference_params_get_subject(const LinphoneConferenceParams *params){
+	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getSubject());
+}
+
+void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start){
+	ConferenceParams::toCpp(params)->setStartTime(start);
+}
+
+time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getStartTime();
+}
+
+void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t start){
+	ConferenceParams::toCpp(params)->setEndTime(start);
+}
+
+time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getEndTime();
+}
+
+void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type){
+	ConferenceParams::toCpp(params)->setParticipantListType(static_cast<ConferenceParamsInterface::ParticipantListType>(type));
+}
+
+LinphoneConferenceParticipantListType linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params){
+	return static_cast<LinphoneConferenceParticipantListType>(ConferenceParams::toCpp(params)->getParticipantListType());
 }
 
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {

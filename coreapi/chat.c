@@ -122,7 +122,7 @@ LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const Linph
 LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams = params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	// If a participant has an invalid address, the pointer to its address is NULL.
-	// For the purpose of building an std::lsit from a bctbx_list_t, replace it by an empty IdentityAddress (that is invalid)
+	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty IdentityAddress (that is invalid)
 	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
 		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
 	});

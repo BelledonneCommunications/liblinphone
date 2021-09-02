@@ -23,6 +23,9 @@
 #include <ctime>
 #include <string>
 
+#include "address/address.h"
+#include "address/identity-address.h"
+
 #include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
@@ -34,17 +37,17 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
 	ConferenceInfo ();
-	~ConferenceInfo ();
+	virtual ~ConferenceInfo ();
 
-	const LinphoneAddress *getOrganizer () const;
-	void setOrganizer (LinphoneAddress *organizer);
+	const IdentityAddress &getOrganizer () const;
+	void setOrganizer (IdentityAddress organizer);
 
-	const bctbx_list_t *getParticipants () const;
-	void setParticipants (bctbx_list_t *participants);
-	void addParticipant (LinphoneAddress *participant);
+	const std::list<IdentityAddress> &getParticipants () const;
+	void setParticipants (const std::list<IdentityAddress> participants);
+	void addParticipant (const IdentityAddress participant);
 
-	const LinphoneAddress *getUri () const;
-	void setUri (LinphoneAddress *uri);
+	const ConferenceAddress &getUri () const;
+	void setUri (const ConferenceAddress uri);
 
 	time_t getDateTime () const;
 	void setDateTime (time_t dateTime);
@@ -63,9 +66,9 @@ public:
 	// Used only by the tester
 	void setCreationTime(time_t time);
 private:
-	LinphoneAddress *mOrganizer = nullptr;
-	bctbx_list_t *mParticipants = nullptr;
-	LinphoneAddress *mUri = nullptr;
+	IdentityAddress mOrganizer;
+	std::list<IdentityAddress> mParticipants;
+	ConferenceAddress mUri;
 	time_t mDateTime;
 	int mDuration = 0;
 	std::string mSubject = "";

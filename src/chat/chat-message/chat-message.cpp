@@ -19,6 +19,8 @@
 
 #include "object/object-p.h"
 
+#include "conference_private.h"
+
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
@@ -34,6 +36,7 @@
 #include "chat/modifier/encryption-chat-message-modifier.h"
 #include "chat/modifier/multipart-chat-message-modifier.h"
 #include "chat/notification/imdn.h"
+#include "chat/ics/ics.h"
 #include "conference/participant.h"
 #include "conference/participant-imdn-state.h"
 #include "content/content-disposition.h"
@@ -41,6 +44,7 @@
 #include "content/header/header-param.h"
 #include "core/core.h"
 #include "core/core-p.h"
+#include "factory/factory.h"
 #include "logger/logger.h"
 #include "sip-tools/sip-headers.h"
 
@@ -692,11 +696,35 @@ void ChatMessagePrivate::notifyReceiving () {
 	L_Q();
 
 	LinphoneChatRoom *chatRoom = static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom();
-	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
+	const auto & contentType = getContentType();
+	if (contentType == ContentType::Imdn ||  contentType == ContentType::ImIsComposing) {
 		// For compatibility, when CPIM is not used
 		positiveDeliveryNotificationRequired = false;
 		negativeDeliveryNotificationRequired = false;
 		displayNotificationRequired = false;
+	} else if (contentType == ContentType::Icalendar) {
+
+		auto conferenceInfo = Factory::get()->createConferenceInfoFromIcalendarContent(L_GET_C_BACK_PTR(getContents().front()));
+		if (conferenceInfo) {
+			auto confParams = ConferenceParams::create(q->getCore()->getCCore());
+			confParams->setSubject(conferenceInfo->getSubject());
+			auto startTime = conferenceInfo->getDateTime();
+			confParams->setStartTime(startTime);
+			auto duration = conferenceInfo->getDuration();
+			if (duration > 0) {
+				// duration is in minutes therefore convert it to seconds by multiplying it by 60
+				time_t endTime = startTime + duration * 60;
+				confParams->setEndTime(endTime);
+			}
+			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};
+			for (const auto & participant : conferenceInfo->getParticipants()) {
+				invitees.push_back(participant);
+			}
+
+			const ConferenceAddress confAddr(conferenceInfo->getUri());
+			const ConferenceId confId(confAddr, q->getLocalAddress());
+			auto remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), confAddr, confId, invitees, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
+		}
 	}
 
 	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(
@@ -1441,7 +1469,7 @@ const ConferenceAddress &ChatMessage::getToAddress () const {
 	return d->toAddress;
 }
 
-const ConferenceAddress &ChatMessage::getLocalAdress () const {
+const ConferenceAddress &ChatMessage::getLocalAddress () const {
 	L_D();
 	if (getDirection() == Direction::Outgoing)
 		return d->fromAddress;

@@ -101,6 +101,8 @@ SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & 
 
 	haveLimeIk = other.haveLimeIk;
 
+	times = other.times;
+
 	return *this;
 }
 
@@ -128,6 +130,18 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		bandwidth=belle_sdp_session_description_get_bandwidth ( sdp,"AS" );
 	}
 
+	for (bctbx_list_t * time_it = belle_sdp_session_description_get_time_descriptions(sdp); time_it != NULL; time_it = time_it->next) {
+		belle_sdp_time_description_t *time_attr = (belle_sdp_time_description_t *)time_it->data;
+		belle_sdp_time_t * sdp_time = belle_sdp_time_description_get_time(time_attr);
+		long long startTime = belle_sdp_time_get_start(sdp_time);
+		long long stopTime = belle_sdp_time_get_stop(sdp_time);
+		std::pair<time_t, time_t> timePair = std::make_pair<time_t, time_t>(
+			(startTime == 0) ? (time_t)-1 : startTime - SalMediaDescription::ntpToUnix,
+			(stopTime == 0) ? (time_t)-1 : stopTime - SalMediaDescription::ntpToUnix
+		);
+		times.push_back(timePair);
+	}
+	
 	belle_sdp_origin_t *origin = belle_sdp_session_description_get_origin(sdp);
 	origin_addr = belle_sdp_origin_get_address(origin);
 	session_id = belle_sdp_origin_get_session_id(origin);
@@ -850,7 +864,17 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 
 	}
 
-	belle_sdp_session_description_set_time_description ( session_desc,belle_sdp_time_description_create ( 0,0 ) );
+	if (times.size() > 0) {
+		for (const auto & timePair : times) {
+			auto startTime = timePair.first;
+			auto stopTime = timePair.second;
+			long long ntpStartTime = (startTime < 0) ? 0 : startTime + SalMediaDescription::ntpToUnix;
+			long long ntpStopTime = (stopTime < 0) ? 0 : stopTime + SalMediaDescription::ntpToUnix;
+			belle_sdp_session_description_set_time_description ( session_desc,belle_sdp_time_description_create(ntpStartTime, ntpStopTime) );
+		}
+	} else {
+		belle_sdp_session_description_set_time_description ( session_desc,belle_sdp_time_description_create(0, 0) );
+	}
 
 	if ( bandwidth>0 ) {
 		belle_sdp_session_description_set_bandwidth ( session_desc,"AS",bandwidth );

@@ -621,11 +621,11 @@ Factory::~Factory (){
 	clean();
 }
 
-LinphoneConferenceInfo *Factory::createConferenceInfo() const {
-	return linphone_conference_info_new();
+std::shared_ptr<ConferenceInfo> Factory::createConferenceInfo() const {
+	return ConferenceInfo::create();
 }
 
-LinphoneConferenceInfo *Factory::createConferenceInfoFromIcalendarContent(LinphoneContent *content) const {
+std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarContent(LinphoneContent *content) const {
 	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
 	if (!contentType.strongEqual(ContentType::Icalendar)) return nullptr;
 
@@ -664,7 +664,7 @@ LinphoneConferenceInfo *Factory::createConferenceInfoFromIcalendarContent(Linpho
 
 	auto ics = Ics::Icalendar::createFromString(buffer.str());
 
-	return ics ? linphone_conference_info_ref(ics->toConferenceInfo()->toC()) : nullptr;
+	return ics ? ics->toConferenceInfo() : nullptr;
 }
 
 LINPHONE_END_NAMESPACE

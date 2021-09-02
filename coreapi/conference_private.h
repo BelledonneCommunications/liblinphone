@@ -23,6 +23,7 @@
 #include "linphone/core.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
+#include "conference/conference-info.h"
 #include "call/audio-device/audio-device.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -100,9 +101,6 @@ class Conference;
 class LocalConference;
 class RemoteConference;
 
-
-
-
 /*
  * Base class for audio/video conference.
  */
@@ -139,11 +137,16 @@ public:
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) = 0;
 
+	const std::shared_ptr<LinphonePrivate::ConferenceInfo> & createConferenceInfo();
+
 	virtual int terminate() = 0;
 	virtual void finalizeCreation() = 0;
 
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
+
+	bool isConferenceEnded() const;
+	bool isConferenceStarted() const;
 
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
@@ -173,8 +176,6 @@ public:
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
-	void checkIfTerminated();
-
 	void setID(const std::string &conferenceID) {
 		mConferenceID = conferenceID;
 	}
@@ -183,10 +184,13 @@ public:
 	}
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+	void setConferenceId (const ConferenceId &conferenceId);
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 protected:
-	void setConferenceId (const ConferenceId &conferenceId);
+
+	std::list<IdentityAddress> invitedAddresses;
+	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = nullptr;
 
 protected:
 
@@ -197,13 +201,13 @@ protected:
 	void *mCbUserData = nullptr;
 };
 
-
 /*
  * Class for an audio/video conference running locally.
  */
 class LINPHONE_PUBLIC LocalConference: public Conference {
 public:
 	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
+	LocalConference (const std::shared_ptr<Core> &core, SalCallOp *op);
 
 	virtual ~LocalConference();
 
@@ -260,10 +264,18 @@ public:
 
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
+	void confirmCreation();
+
 private:
 
 	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> & session);
+	void updateParticipantsSessions();
+	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freshlyRegistered = false);
+	void acceptSession (const std::shared_ptr<CallSession> &session);
+	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void chooseAnotherAdminIfNoneInConference();
+	void checkIfTerminated();
+
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
@@ -281,11 +293,15 @@ class LINPHONE_PUBLIC RemoteConference:
 	public Conference,
 	public ConferenceListenerInterface {
 public:
-	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &focus, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
+	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &focusAddr, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	RemoteConference(const std::shared_ptr<Core> &core, const std::shared_ptr<LinphonePrivate::Call>& focusCall, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
+	RemoteConference (const std::shared_ptr<Core> &core, const ConferenceAddress &confAddr, const ConferenceId &conferenceId, const std::list<IdentityAddress> &invitees, CallSessionListener *listener, const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
+
 	virtual ~RemoteConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
+	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
+	virtual bool addParticipants(const std::list<IdentityAddress> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
@@ -309,7 +325,6 @@ public:
 	virtual bool isRecording() const override {
 		return false;
 	}
-	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
@@ -338,7 +353,7 @@ public:
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 private:
-	std::shared_ptr<CallSession> focusSession;
+	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
@@ -351,10 +366,16 @@ private:
 	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
 
+	bool finalized = false;
+	std::string pendingSubject;
+	std::shared_ptr<Participant> focus;
 	LinphoneCoreCbs *m_coreCbs;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 
+	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
+	std::shared_ptr<CallSession> createSession ();
+	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
 };
 
 }// end of namespace MediaConference

@@ -429,3 +429,8 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants, L
 		}
 	}
 }
+
+const char * _linphone_call_get_subject(LinphoneCall * call) {
+	SalCallOp * op = Call::toCpp(call)->getOp();
+	return L_STRING_TO_C(op->getSubject());
+}

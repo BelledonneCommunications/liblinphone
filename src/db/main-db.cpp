@@ -509,13 +509,13 @@ void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long 
 
 long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
 #ifdef HAVE_DB_STORAGE
-	if (conferenceInfo->getOrganizer() == nullptr || conferenceInfo->getUri() == nullptr) {
+	if (!conferenceInfo->getOrganizer().isValid() || !conferenceInfo->getUri().isValid()) {
 		lError() << "Trying to insert a Conference Info without organizer or URI!";
 		return -1;
 	}
 
-	const long long &organizerSipAddressId = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(conferenceInfo->getOrganizer())->asString());
-	const long long &uriSipAddressid = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(conferenceInfo->getUri())->asString());
+	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizer().asString());
+	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
 	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
 	int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getSubject();
@@ -550,11 +550,10 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
 
-	const bctbx_list_t *iter;
-	for (iter = conferenceInfo->getParticipants(); iter != NULL; iter = bctbx_list_next(iter)) {
+	for (const auto & participantAddress : conferenceInfo->getParticipants()) {
 		insertConferenceInfoParticipant(
 			conferenceInfoId,
-			insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT((LinphoneAddress *) bctbx_list_get_data(iter))->asString())
+			insertSipAddress(participantAddress.asString())
 		);
 	}
 
@@ -1470,13 +1469,11 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 
 	auto conferenceInfo = ConferenceInfo::create();
 
-	LinphoneAddress* address = linphone_address_new(row.get<string>(1).c_str());
-	conferenceInfo->setOrganizer(address);
-	linphone_address_unref(address);
+	IdentityAddress organizer(row.get<string>(1));
+	conferenceInfo->setOrganizer(organizer);
 
-	address = linphone_address_new(row.get<string>(2).c_str());
-	conferenceInfo->setUri(address);
-	linphone_address_unref(address);
+	ConferenceAddress uri(row.get<string>(2));
+	conferenceInfo->setUri(uri);
 
 	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
 	conferenceInfo->setDuration(row.get<int>(4));
@@ -1492,9 +1489,8 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	soci::session *session = dbSession.getBackendSession();
 	soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(dbConferenceInfoId));
 	for (const auto &participantRow : participantRows) {
-		LinphoneAddress* address = linphone_address_new(participantRow.get<string>(0).c_str());
-		conferenceInfo->addParticipant(address);
-		linphone_address_unref(address);
+		IdentityAddress participant(participantRow.get<string>(0));
+		conferenceInfo->addParticipant(participant);
 	}
 
 	cache(conferenceInfo, dbConferenceInfoId);
@@ -4237,7 +4233,7 @@ void MainDb::deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &confer
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &organizerSipAddressId = d->selectSipAddressId(L_GET_CPP_PTR_FROM_C_OBJECT(conferenceInfo->getOrganizer())->asString());
+		const long long &organizerSipAddressId = d->selectSipAddressId(conferenceInfo->getOrganizer().asString());
 		const long long &dbConferenceId = d->selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), conferenceInfo->getSubject());
 
 		*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId", soci::use(dbConferenceId);

@@ -341,7 +341,7 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 			case 302:
 			case 301:
 				op->mAuthRequests = 0;
-				if (op->processRedirect() == 0)
+				if (op->mRoot->mCallbacks.process_redirect(op) == 0)
 					return;
 				break;
 			case 491: /* request pending */
@@ -481,6 +481,8 @@ void Sal::setCallbacks (const Callbacks *cbs) {
 		mCallbacks.on_publish_response = (OnPublishResponseCb)unimplementedStub;
 	if (!mCallbacks.on_expire)
 		mCallbacks.on_expire = (OnExpireCb)unimplementedStub;
+	if (!mCallbacks.process_redirect)
+		mCallbacks.process_redirect = (OnRedirectCb)unimplementedStub;
 }
 
 void Sal::setTlsProperties () {

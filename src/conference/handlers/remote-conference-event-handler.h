@@ -49,6 +49,7 @@ public:
 	~RemoteConferenceEventHandler ();
 
 	void subscribe (const ConferenceId &conferenceId);
+	bool alreadySubscribed() const;
 	void notifyReceived (const Content &content);
 	void multipartNotifyReceived (const Content &content);
 	void unsubscribe () override;
