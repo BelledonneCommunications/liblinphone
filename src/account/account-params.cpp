@@ -96,7 +96,8 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	if (lc && lc->push_config) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	} else {
-		mPushNotificationConfig = new PushNotificationConfig(string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
+		mPushNotificationConfig = new PushNotificationConfig();
+		mPushNotificationConfig->readPushParamsFromString(string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
 	}
 }
 
@@ -128,24 +129,13 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mContactUriParameters = linphone_config_get_string(config, key, "contact_uri_parameters", mContactUriParameters.c_str());
 	string pushParameters = linphone_config_get_string(config, key, "push_parameters", "");
 	
-	bool corePushEnabled = linphone_core_is_push_notification_enabled(lc);
-	if (corePushEnabled && !pushParameters.empty()) {
-		// If pushParameters have been saved previously, then we have all the necessary push informations available and we should not need to save
-		// the push informations from the core (voip token, remote token, team ID, bundle identifier)
-		if (mPushNotificationConfig) mPushNotificationConfig->unref();
-		mPushNotificationConfig = new PushNotificationConfig(pushParameters);
-	} else {
-		PushNotificationConfig* oldConfig = mPushNotificationConfig;
-		mPushNotificationConfig = new PushNotificationConfig(mContactUriParameters);
-		if (oldConfig) {
-			// Saving the push infos that may have been set before the account was created
-			mPushNotificationConfig->setVoipToken(oldConfig->getVoipToken());
-			mPushNotificationConfig->setRemoteToken(oldConfig->getRemoteToken());
-			mPushNotificationConfig->setTeamId(oldConfig->getTeamId());
-			mPushNotificationConfig->setBundleIdentifer(oldConfig->getBundleIdentifer());
-			oldConfig->unref();
-		}
+	//mPushNotificationConfig can't be null because it is always created in AccountParams(lc) called previously
+	if (linphone_core_is_push_notification_enabled(lc) && !pushParameters.empty()) {
+		mPushNotificationConfig->readPushParamsFromString(pushParameters);
+	} else if (!mContactUriParameters.empty()){
+		mPushNotificationConfig->readPushParamsFromString(mContactUriParameters);
 	}
+	
 	mExpires = linphone_config_get_int(config, key, "reg_expires", mExpires);
 	mRegisterEnabled = !!linphone_config_get_int(config, key, "reg_sendregister", mRegisterEnabled);
 	mPublishEnabled = !!linphone_config_get_int(config, key, "publish", mPublishEnabled);
