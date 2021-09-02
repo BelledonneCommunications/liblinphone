@@ -270,6 +270,8 @@ char * linphone_call_log_to_str(const LinphoneCallLog *cl){
 		case LinphoneCallDeclinedElsewhere:
 			status="declined elsewhere";
 			break;
+		case LinphoneCallDeclinedByCallkit:
+			status="declined by callkit";
 		default:
 			status="unknown";
 	}
