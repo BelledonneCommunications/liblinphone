@@ -261,16 +261,17 @@ LdapContactSearch* LdapContactProvider::requestSearch( int msgid ) {
 
 int LdapContactProvider::completeContact( LdapContactFields* contact, const char* attr_name, const char* attr_value) {
 	// These loops follow the priority rule on position in attributes array. The first item is better than the last.
-	for(size_t attributeIndex = 0 ; attributeIndex < mNameAttributes.size() && (contact->mName.second < 0 || (std::string(attr_value) != "" && contact->mName.second > (int)attributeIndex)) ; ++attributeIndex){
+	std::string attributeValueLocale = Utils::utf8ToLocale(attr_value);
+	for(size_t attributeIndex = 0 ; attributeIndex < mNameAttributes.size() && (contact->mName.second < 0 || (attributeValueLocale != "" && contact->mName.second > (int)attributeIndex)) ; ++attributeIndex){
 		if( attr_name == mNameAttributes[attributeIndex]){
-			contact->mName.first = attr_value;
+			contact->mName.first = attributeValueLocale;
 			contact->mName.second = (int)attributeIndex;
 		}
 	}
-	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() && (contact->mSip.second < 0 || (std::string(attr_value) != "" && contact->mSip.second >= (int)attributeIndex)) ; ++attributeIndex){
+	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() && (contact->mSip.second < 0 || (attributeValueLocale != "" && contact->mSip.second >= (int)attributeIndex)) ; ++attributeIndex){
 		if( attr_name == mSipAttributes[attributeIndex]){// Complete SIP with custom data (scheme and domain)
 			std::string sip;
-			sip += attr_value;
+			sip += attributeValueLocale;
 // Test if this sip is ok	
 			LinphoneAddress* la = linphone_core_interpret_url(mCore->getCCore(), sip.c_str());
 			if( !la){
