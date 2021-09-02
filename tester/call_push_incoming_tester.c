@@ -188,6 +188,48 @@ static void push_early_decline_call(void) {
 	simple_push_call_base(TRUE, FALSE, TRUE, TRUE);
 }
 
+#define TEST_GROUP_ID "test group id"
+
+void shared_core_accpet_call(void) {
+	LinphoneCall *marie_call;
+	bool_t did_receive_call;
+	LinphoneCoreManager *pauline_main;
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline_ex = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
+	linphone_core_manager_start(pauline_ex, TRUE);
+	BC_ASSERT_PTR_NOT_NULL(marie_call=linphone_core_invite_address(marie->lc,pauline_ex->identity));
+
+	did_receive_call = wait_for_until(pauline_ex->lc, marie->lc,&pauline_ex->stat.number_of_LinphoneCallIncomingReceived,1,12000);
+	BC_ASSERT_EQUAL(did_receive_call, 1, int, "%d");
+
+	// Send 503 to keep the call in remote
+	LinphoneErrorInfo *ei = linphone_error_info_new();
+	linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 503, "Media Lost", NULL);
+	linphone_call_terminate_with_error_info(linphone_core_get_current_call(pauline_ex->lc), ei);
+	linphone_error_info_unref(ei);
+	BC_ASSERT_TRUE(wait_for_until(pauline_ex->lc,marie->lc,&pauline_ex->stat.number_of_LinphoneCallEnd,1, 2000));
+	BC_ASSERT_TRUE(wait_for_until(pauline_ex->lc,marie->lc,&pauline_ex->stat.number_of_LinphoneCallReleased,1, 2000));
+
+	// start main core, and receive again the same call
+	pauline_main = linphone_core_manager_create_shared("", TEST_GROUP_ID, TRUE, pauline_ex);
+	linphone_core_manager_start(pauline_main, TRUE);
+	did_receive_call = wait_for_until(pauline_main->lc,marie->lc,&pauline_main->stat.number_of_LinphoneCallIncomingReceived,1, 5000);
+	BC_ASSERT_EQUAL(did_receive_call, 1, int, "%d");
+	if (!did_receive_call)
+		goto end;
+
+	linphone_call_accept(linphone_core_get_current_call(pauline_main->lc));
+	BC_ASSERT_TRUE(wait_for(pauline_main->lc,marie->lc,&pauline_main->stat.number_of_LinphoneCallConnected,1));
+	BC_ASSERT_TRUE(wait_for(pauline_main->lc,marie->lc,&marie->stat.number_of_LinphoneCallConnected,1));
+	wait_for_until(pauline_main->lc, marie->lc, NULL, 5, 500);
+	end_call(marie, pauline_main);
+	
+end:
+	if (pauline_main) linphone_core_manager_destroy(pauline_main);
+	linphone_core_manager_destroy(pauline_ex);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t push_incoming_call_tests[] = {
 	TEST_NO_TAG("Simple accept call", simple_accept_call),
 	TEST_NO_TAG("Push accept call", push_accept_call),
@@ -198,6 +240,7 @@ test_t push_incoming_call_tests[] = {
 	TEST_NO_TAG("Simple decline call", simple_decline_call),
 	TEST_NO_TAG("Push decline call", push_decline_call),
 	TEST_NO_TAG("Push early decline call", push_early_decline_call),
+	TEST_NO_TAG("Shared core accept call", shared_core_accpet_call),
 };
 
 test_suite_t push_incoming_call_test_suite = {"Push Incoming Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
