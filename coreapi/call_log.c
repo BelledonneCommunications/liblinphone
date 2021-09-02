@@ -225,6 +225,15 @@ const LinphoneAddress *linphone_call_log_get_remote_address(const LinphoneCallLo
 	return (cl->dir == LinphoneCallIncoming) ? cl->from : cl->to;
 }
 
+void linphone_call_log_set_remote_address(LinphoneCallLog *cl, LinphoneAddress * addr){
+	LinphoneAddress ** addrToChange = &cl->to;
+	linphone_address_ref(addr);
+	if (cl->dir == LinphoneCallIncoming)
+		addrToChange = &cl->from;
+	if (*addrToChange!=NULL) linphone_address_unref(*addrToChange);
+	*addrToChange = addr;
+}
+
 const rtp_stats_t *linphone_call_log_get_remote_stats(const LinphoneCallLog *cl){
 	return &cl->remote_stats;
 }
