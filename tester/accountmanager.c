@@ -297,7 +297,7 @@ void account_create_in_server_db(Account *account, LinphoneProxyConfig *cfg){
 		ms_fatal("Could not create account %s on db (missing callbacks)", linphone_proxy_config_get_identity(cfg));
 	}
 
-	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 15000) == FALSE)
+	if (wait_for_until(lc, NULL, &state.account_created, TRUE, 30000) == FALSE)
 		ms_fatal("Could not create account %s on db", linphone_proxy_config_get_identity(cfg));
 
 	LinphoneAuthInfo *ai = linphone_auth_info_new_for_algorithm(username, NULL, password, NULL, domain, domain, algorithm);
