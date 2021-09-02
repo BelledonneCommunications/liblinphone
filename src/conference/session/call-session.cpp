@@ -129,6 +129,11 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 					default:
 						break;
 				}
+
+				if (prevState == CallSession::State::PushIncomingReceived) {
+					log->status = LinphoneCallHangedUp;
+				}
+
 				setTerminated();
 				break;
 			case CallSession::State::Connected:

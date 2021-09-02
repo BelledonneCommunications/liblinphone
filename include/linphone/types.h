@@ -263,7 +263,9 @@ typedef enum _LinphoneCallStatus {
 	LinphoneCallDeclined = 3, /**< The call was declined, either locally or by remote end */
 	LinphoneCallEarlyAborted = 4, /**<The call was aborted before being advertised to the application - for protocol reasons*/
 	LinphoneCallAcceptedElsewhere = 5, /**<The call was answered on another device*/
-	LinphoneCallDeclinedElsewhere = 6 /**<The call was declined on another device*/
+	LinphoneCallDeclinedElsewhere = 6, /**<The call was declined on another device*/
+	LinphoneCallHangedUp /**<The call was hanged up locally*/
+
 } LinphoneCallStatus;
 
 // -----------------------------------------------------------------------------
