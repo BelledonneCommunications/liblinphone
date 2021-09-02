@@ -495,21 +495,11 @@ void AndroidPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
 }
 
 void AndroidPlatformHelpers::onRecordingStarted() const {
-	JNIEnv *env = ms_get_jni_env();
-	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mSetAudioManagerCommunicationMode);
-		}
-	}
+	
 }
 
 void AndroidPlatformHelpers::onRecordingPaused() const {
-	JNIEnv *env = ms_get_jni_env();
-	if (env) {
-		if (mJavaCoreManager) {
-			env->CallVoidMethod(mJavaCoreManager, mSetAudioManagerNormalMode);
-		}
-	}
+	
 }
 
 // -----------------------------------------------------------------------------
