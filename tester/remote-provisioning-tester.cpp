@@ -137,8 +137,8 @@ static void remote_provisioning_file(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-
 static void flexiapi_remote_provisioning_flow(void) {
+#ifdef HAVE_FLEXIAPI
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 	linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "config-uri", "http://provisioning.example.org:10080/flexiapi/provisioning");
 
@@ -203,6 +203,9 @@ static void flexiapi_remote_provisioning_flow(void) {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
+#else
+	BC_PASS("Test not run because FlexiAPI was not compiled");
+#endif // HAVE_FLEXIAPI
 }
 
 static void remote_provisioning_check_push_params(void) {
