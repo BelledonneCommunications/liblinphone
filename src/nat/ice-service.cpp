@@ -105,7 +105,17 @@ void IceService::checkSession (IceRole role, bool preferIpv6DefaultCandidates) {
 }
 
 void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
-	if (!mIceSession) return;
+	if (!mIceSession) {
+		/* fillLocalMediaDescription() is invoked multiple times. If ICE decides to shutdown in between, make sure everything set previously is cleared.*/
+		ctx.localMediaDescription->ice_ufrag.clear();
+		ctx.localMediaDescription->ice_pwd.clear();
+		for (auto &stream : ctx.localMediaDescription->streams){
+			stream.ice_ufrag.clear();
+			stream.ice_pwd.clear();
+			stream.ice_candidates.clear();
+		}
+		return;
+	}
 
 	if (mGatheringFinished){
 		if (ctx.remoteMediaDescription)
@@ -190,9 +200,11 @@ LinphoneCore *IceService::getCCore()const{
 	return mStreamsGroup.getCCore();
 }
 
-void IceService::gatherLocalCandidates(){
+int IceService::gatherLocalCandidates(){
 	list<string> localAddrs = IfAddrs::fetchLocalAddresses();
 	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
+	
+	if (!hasLocalNetworkPermission(localAddrs)) return -1;
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
@@ -209,6 +221,7 @@ void IceService::gatherLocalCandidates(){
 			}
 		}
 	}
+	return 0;
 }
 
 /** Return values:
@@ -234,7 +247,10 @@ int IceService::gatherIceCandidates () {
 	ice_session_enable_short_turn_refresh(mIceSession, core->short_turn_refresh);
 
 	// Gather local host candidates.
-	gatherLocalCandidates();
+	if (gatherLocalCandidates() == -1){
+		lError() << "Local network permission is not granted, ICE must be disabled.";
+		return -1;
+	}
 	
 	if (ai && natPolicy && linphone_nat_policy_stun_server_activated(natPolicy)) {
 		string server = linphone_nat_policy_get_stun_server(natPolicy);
@@ -772,6 +788,96 @@ bool IceService::reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDesc
 		}
 	}
 	return false;
+}
+
+bool IceService::hasLocalNetworkPermission(){
+	return hasLocalNetworkPermission(IfAddrs::fetchLocalAddresses());
+}
+
+/* 
+ * The local network permission check is done by simply sending a packet to itself.
+ */
+bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localAddrs){
+	ssize_t error;
+	struct addrinfo *res = nullptr;
+	struct addrinfo hints = {0};
+	string localAddr;
+	bctbx_socket_t sock = (ortp_socket_t)-1;
+	struct sockaddr_storage selfAddr;
+	socklen_t selfAddrLen = sizeof(selfAddr);
+	static const int timeout = 100; /*ms*/
+	string message("coucou");
+	uint64_t begin;
+	bool result = false;
+	
+	if (localAddrs.empty()){
+		lError() << "Cannot check the local network permission because the local network addresses are unknown.";
+		return false;
+	}
+	/* Select the first one that is IPv4. Indeed IPv6 address are usually global scope, then
+	 * not subject to the local network permission. */
+	for (auto addr : localAddrs){
+		if (localAddr.empty()) localAddr = addr;
+		if (addr.find(':') == string::npos){
+			/* not an IPv6 address */
+			localAddr = addr;
+			break;
+		}
+	}
+	
+	lInfo() << "Checking local network permission with address " << localAddr;
+	
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST;
+	
+	error = bctbx_getaddrinfo(localAddr.c_str(), "0", &hints, &res);
+	if (error != 0){
+		lError() << "bctbx_getaddrinfo() failed with error [" << gai_strerror((int)error) << "], unable to check local network permission.";
+		goto end;
+	}
+	sock = bctbx_socket(res->ai_family, res->ai_socktype, IPPROTO_UDP);
+	if (sock == (ortp_socket_t)-1){
+		lError() << "Socket creation failed: " << getSocketError();
+		goto end;
+	}
+	bctbx_socket_set_non_blocking(sock);
+	error = bctbx_bind(sock, res->ai_addr, (socklen_t)res->ai_addrlen);
+	if (error == -1){
+		lError() << "Cannot bind socket:" << getSocketError();
+		goto end;
+	}
+	error = bctbx_getsockname(sock, (struct sockaddr*) &selfAddr, &selfAddrLen);
+	if (error == -1){
+		lError() << "getsockname() failed:" << getSocketError();
+		goto end;
+	}
+	
+	error = bctbx_sendto(sock, message.c_str(), message.size(), 0, (struct sockaddr *)&selfAddr, selfAddrLen);
+	if (error == -1){
+		lError() << "Cannot sendto():" << getSocketError();
+		goto end;
+	}
+	begin = ms_get_cur_time_ms();
+	do{
+		uint8_t buffer[128];
+		struct sockaddr_storage ss;
+		socklen_t slen;
+		error = bctbx_recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss, &slen);
+		if (error > 0){
+			result = true;
+			break;
+		}else if (error == -1 && !(getSocketErrorCode() == BCTBX_EWOULDBLOCK || getSocketErrorCode() == EAGAIN)){
+			lError() << "recvfrom() failed: " << getSocketError();
+			break;
+		}
+		ms_usleep(1000);
+	}while (ms_get_cur_time_ms() - begin < timeout);
+	lInfo() << "IceService::hasLocalNetworkPermission(): local permission is apparently " << (result ? "granted" : "denied");
+end:
+	if (sock != 1) bctbx_socket_close(sock);
+	if (res) bctbx_freeaddrinfo(res);
+	return result;
 }
 
 
