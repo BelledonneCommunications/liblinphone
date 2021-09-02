@@ -19,9 +19,11 @@
 
 // TODO: Remove me later.
 #include "linphone/core.h"
+#include "linphone/utils/utils.h"
 
 #include "content-p.h"
 #include "file-content.h"
+#include <algorithm>
 
 // =============================================================================
 
@@ -96,7 +98,8 @@ size_t FileContent::getFileSize () const {
 
 void FileContent::setFileName (const string &name) {
 	L_D();
-	d->fileName = name;
+	
+	d->fileName = Utils::normalizeFilename(name);
 }
 
 const string &FileContent::getFileName () const {
