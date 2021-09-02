@@ -105,6 +105,13 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_log_get_local_address(const
 LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_remote_address(const LinphoneCallLog *call_log);
 
 /**
+ * Set the remote address (that is from or to depending on call direction).
+ * @param call_log #LinphoneCallLog object @notnil
+ * @param address #LinphoneAddress object @notnil
+**/
+LINPHONE_PUBLIC void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress * address);
+
+/**
  * Get the RTP statistics computed by the remote end and sent back via RTCP.
  * @note Not implemented yet.
  * @param call_log #LinphoneCallLog object @notnil
