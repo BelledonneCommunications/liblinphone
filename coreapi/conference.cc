@@ -498,6 +498,7 @@ LocalConference::LocalConference (
 
 	setConferenceAddress(contactAddress);
 	setState(ConferenceInterface::State::CreationPending);
+	finalizeCreation();
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
 }
@@ -957,9 +958,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 					}
 				}
 
-				setState(ConferenceInterface::State::TerminationPending);
-
 				leave();
+				setState(ConferenceInterface::State::TerminationPending);
 
 				/* invoke removeParticipant() recursively to remove this last participant. */
 				bool success = Conference::removeParticipant(remainingParticipant);
@@ -1325,6 +1325,8 @@ void RemoteConference::finalizeCreation() {
 			eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 			eventHandler->subscribe(getConferenceId());
 		}
+	#else
+		setState(ConferenceInterface::State::Created);
 	#endif // HAVE_ADVANCED_IM
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
