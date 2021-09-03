@@ -103,8 +103,8 @@ namespace Utils {
 
 	LINPHONE_PUBLIC std::string stringToLower (const std::string &str);
 
-	LINPHONE_PUBLIC char *utf8ToChar (uint32_t ic);
-	LINPHONE_PUBLIC std::string utf8ToString (const std::vector<uint32_t>& chars);
+	LINPHONE_PUBLIC std::string unicodeToUtf8 (uint32_t ic);
+	LINPHONE_PUBLIC std::string unicodeToUtf8 (const std::vector<uint32_t>& chars);
 
 	LINPHONE_PUBLIC inline std::string cStringToCppString (const char *str) {
 		return str ? str : "";
