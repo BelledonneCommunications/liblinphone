@@ -167,7 +167,7 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 
 		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
 
-		lInfo() << "The Conference has been given the address " << conferenceAddress.asString();
+		lInfo() << "Conference " << this << " has been given the address " << conferenceAddress.asString();
 	} else {
 		lError() << "Cannot set the conference address of the Conference in state " << getState();
 		return;
@@ -836,13 +836,19 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		}
 	}
 
+	CallSession::State sessionState = session->getState();
+
 	std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(session);
-	if (!participant) {
-		lError() << "Trying to remove participant " << *session->getRemoteAddress() << " with session " << session << " which is not part of conference " << getConferenceAddress();
+	if (participant) {
+		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
+		Conference::removeParticipant(participant);
+		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
+	} else {
+		if ((sessionState != LinphonePrivate::CallSession::State::Released) && (sessionState != LinphonePrivate::CallSession::State::End)) {
+			lError() << "Trying to remove participant " << *session->getRemoteAddress() << " with session " << session << " which is not part of conference " << getConferenceAddress();
+		}
 		return -1;
 	}
-
-	CallSession::State sessionState = session->getState();
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
 
@@ -882,7 +888,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		} else {
 			// Terminate session (i.e. send a BYE) as per RFC
 			// This is the default behaviour
-			if ((sessionState != LinphonePrivate::CallSession::State::Released) && contactAddress.hasUriParam("conf-id")) {
+			if ((sessionState != LinphonePrivate::CallSession::State::End) && contactAddress.hasUriParam("conf-id")) {
 				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->terminate();
 			}
 		}
@@ -890,13 +896,6 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		if (call) {
 			call->setConference(nullptr);
 		}
-	}
-	
-	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
-	if (participant) {
-		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
-		Conference::removeParticipant(participant);
-		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 	}
 
 	// If conference is in termination pending state, terminate method is already taking care of state kicking participants out of the conference
@@ -1039,13 +1038,15 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 
 int LocalConference::terminate () {
 	setState(ConferenceInterface::State::TerminationPending);
-	for (auto participant : participants){
-		for (const auto & device : participant->getDevices()) {
-			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(device->getSession());
-			if (session) {
-				lInfo() << "Terminating session of participant " << *participant;
-				session->terminate();
-			}
+
+	auto participantIt = participants.begin();
+	while (participantIt != participants.end()) {
+		auto participant = *participantIt;
+		std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(participant->getSession());
+		participantIt++;
+		if (session) {
+			lInfo() << "Terminating session of participant " << *participant;
+			session->terminate();
 		}
 	}
 
