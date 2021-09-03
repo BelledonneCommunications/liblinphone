@@ -43,6 +43,7 @@ std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 		case AbstractChatRoom::Capabilities::Migratable: lhs << "Migratable"; break;
 		case AbstractChatRoom::Capabilities::OneToOne: lhs << "OneToOne"; break;
 		case AbstractChatRoom::Capabilities::Encrypted: lhs << "Encrypted"; break;
+		case AbstractChatRoom::Capabilities::Ephemeral: lhs << "Ephemeral"; break;
 	}
 	return lhs;
 }
@@ -56,5 +57,14 @@ std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::SecurityLevel e) {
 	}
 	return lhs;
 }
+
+std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::EphemeralMode e) {
+	switch(e) {
+		case AbstractChatRoom::EphemeralMode::DeviceManaged: lhs << "DeviceManaged"; break;
+		case AbstractChatRoom::EphemeralMode::AdminManaged: lhs << "AdminManaged"; break;
+	}
+	return lhs;
+}
+
 
 LINPHONE_END_NAMESPACE

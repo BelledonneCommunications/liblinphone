@@ -197,8 +197,11 @@ namespace {
 			EventLog::Type::ConferenceSubjectChanged,
 			EventLog::Type::ConferenceSecurityEvent,
 			EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
+			EventLog::Type::ConferenceEphemeralMessageManagedByAdmin,
+			EventLog::Type::ConferenceEphemeralMessageManagedByParticipants,
 			EventLog::Type::ConferenceEphemeralMessageEnabled,
-			EventLog::Type::ConferenceEphemeralMessageDisabled
+			EventLog::Type::ConferenceEphemeralMessageDisabled,
+			EventLog::Type::ConferenceEphemeralLifetimeChanged
 		>::get();
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
@@ -211,7 +214,9 @@ namespace {
 			EventLog::Type::ConferenceSecurityEvent,
 			EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
 			EventLog::Type::ConferenceEphemeralMessageEnabled,
-			EventLog::Type::ConferenceEphemeralMessageDisabled
+			EventLog::Type::ConferenceEphemeralMessageDisabled,
+			EventLog::Type::ConferenceEphemeralMessageManagedByAdmin,
+			EventLog::Type::ConferenceEphemeralMessageManagedByParticipants
 		>::get();
 	#endif // ifdef _WIN32
 
@@ -710,7 +715,10 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 			eventLog = selectConferenceSecurityEvent(conferenceId, type, row);
 			break;
 
+		case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 		case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
+		case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
+		case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 		case EventLog::Type::ConferenceEphemeralMessageEnabled:
 		case EventLog::Type::ConferenceEphemeralMessageDisabled:
 			eventLog = selectConferenceEphemeralMessageEvent(conferenceId, type, row);
@@ -1988,23 +1996,23 @@ void MainDb::init () {
 			"    ON DELETE CASCADE"
 			") " + charset;
 
-			*session <<
-				"CREATE TABLE IF NOT EXISTS one_to_one_chat_room ("
-				"  chat_room_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+		*session <<
+			"CREATE TABLE IF NOT EXISTS one_to_one_chat_room ("
+			"  chat_room_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 
-				"  participant_a_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
-				"  participant_b_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  participant_a_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  participant_b_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
 
-				"  FOREIGN KEY (chat_room_id)"
-				"    REFERENCES chat_room(id)"
-				"    ON DELETE CASCADE,"
-				"  FOREIGN KEY (participant_a_sip_address_id)"
-				"    REFERENCES sip_address(id)"
-				"    ON DELETE CASCADE,"
-				"  FOREIGN KEY (participant_b_sip_address_id)"
-				"    REFERENCES sip_address(id)"
-				"    ON DELETE CASCADE"
-				") " + charset;
+			"  FOREIGN KEY (chat_room_id)"
+			"    REFERENCES chat_room(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (participant_a_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (participant_b_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant ("
@@ -2375,9 +2383,12 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				eventId = d->insertConferenceSubjectEvent(eventLog);
 				break;
 
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 				eventId = d->insertConferenceEphemeralMessageEvent(eventLog);
 				break;
 		}
@@ -2431,9 +2442,12 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceAvailableMediaChanged:
 			case EventLog::Type::ConferenceSubjectChanged:
+			case EventLog::Type::ConferenceEphemeralLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
 			case EventLog::Type::ConferenceEphemeralMessageDisabled:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
+			case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 				return false;
 		}
 
@@ -2537,7 +2551,7 @@ shared_ptr<EventLog> MainDb::getEvent (const unique_ptr<MainDb> &mainDb, const l
 		*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent),
 			soci::into(row), soci::use(storageId);
 
-		ConferenceId conferenceId(IdentityAddress(row.get<string>(16)), IdentityAddress(row.get<string>(17)));
+		ConferenceId conferenceId(ConferenceAddress(row.get<string>(16)), ConferenceAddress(row.get<string>(17)));
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom)
 			return shared_ptr<EventLog>();

@@ -163,12 +163,15 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	const string &subject,
 	const ConferenceId &conferenceId,
 	const Content &content,
-	bool encrypted
+	bool encrypted,
+	AbstractChatRoom::EphemeralMode ephemerableMode,
+	long ephemeralLifeTime
 ) {
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 
-	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	shared_ptr<ChatRoomParams> params = ChatRoomParams::create(subject, encrypted, true, ephemerableMode, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+	params->setEphemeralLifetime(ephemeralLifeTime);
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom(new ClientGroupChatRoom(
 										    q->getSharedFromThis(),
 										    conferenceId.getPeerAddress(),
@@ -479,11 +482,12 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 }
 
 void CorePrivate::initEphemeralMessages () {
+	L_Q();
 	if (mainDb && mainDb->isInitialized()) {
 		ephemeralMessages.clear();
 		ephemeralMessages = mainDb->getEphemeralMessages();
 		if (!ephemeralMessages.empty()) {
-			lInfo() << "[Ephemeral] list initiated";
+			lInfo() << "[Ephemeral] list initiated on core " << linphone_core_get_identity(q->getCCore());
 			shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 			startEphemeralMessageTimer(msg->getEphemeralExpireTime());
 		}

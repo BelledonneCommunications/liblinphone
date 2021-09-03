@@ -262,6 +262,17 @@ long ProxyChatRoom::getEphemeralLifetime () const {
 	return d->chatRoom->getEphemeralLifetime();
 }
 
+void ProxyChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
+	L_D();
+	d->chatRoom->setEphemeralMode(mode, updateDb);
+}
+
+AbstractChatRoom::EphemeralMode ProxyChatRoom::getEphemeralMode() const {
+	L_D();
+	return d->chatRoom->getEphemeralMode();
+}
+
+
 bool ProxyChatRoom::ephemeralSupportedByAllParticipants () const {
 	L_D();
 	return d->chatRoom->ephemeralSupportedByAllParticipants();
