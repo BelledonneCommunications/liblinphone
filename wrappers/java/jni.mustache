@@ -512,16 +512,24 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_removeListener(JNIEn
 	}
 	{{#isNotCore}}const {{/isNotCore}}bctbx_list_t *cbs_list = {{cPrefix}}_get_callbacks_list(cptr);
 	bctbx_list_t *it;
+	{{classCName}}Cbs *cbsToRemove = nullptr;
+
 	for (it = (bctbx_list_t *)cbs_list; it != nullptr; it = it->next) {
 		{{classCName}}Cbs *cbs = ({{classCName}}Cbs *)it->data;
 		jobject listener = (jobject) belle_sip_object_data_get((belle_sip_object_t *)cbs, belle_sip_java_listener_user_data_key);
 		if (env->IsSameObject(listener, jlistener)) {
-			belle_sip_object_data_remove((belle_sip_object_t *)cbs, belle_sip_java_listener_user_data_key); // Global ref will be deleted by belle_sip_java_listener_data_removed_callback
-			{{cPrefix}}_remove_callbacks(cptr, cbs);
+			cbsToRemove = cbs;
 			break;
 		}
 	}
 	{{#isCore}}bctbx_list_free(cbs_list);{{/isCore}}
+
+	if (cbsToRemove != nullptr) {
+		belle_sip_object_data_remove((belle_sip_object_t *)cbsToRemove, belle_sip_java_listener_user_data_key); // Global ref will be deleted by belle_sip_java_listener_data_removed_callback
+		{{cPrefix}}_remove_callbacks(cptr, cbsToRemove);
+	} else {
+		bctbx_error("Failed to find the native listener matching jobject [%p]", jlistener);
+	}
 }
 {{/isMultiListener}}
 {{/interfaces}}
