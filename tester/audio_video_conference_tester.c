@@ -7296,14 +7296,14 @@ static void try_to_create_second_conference_with_local_participant(void) {
 	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(conference);
 
-	linphone_core_terminate_conference(marie->lc);
-
 	LinphoneConferenceParams * new_maries_conference_params = linphone_conference_params_new (marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(new_maries_conference_params);
 	BC_ASSERT_TRUE(linphone_conference_params_is_local_participant_enabled(new_maries_conference_params));
 	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
 	BC_ASSERT_PTR_NULL(new_maries_conference);
 	linphone_conference_params_unref(new_maries_conference_params);
+
+	linphone_core_terminate_conference(marie->lc);
 
 	int idx = 0;
 	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
