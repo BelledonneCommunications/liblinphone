@@ -92,9 +92,14 @@ def generate(name):
 		"--modifier-regex", "%([^,-]+)-([^,-]+)-?([^,-]*),([^,]+),([^,]+)%set\\u$1\\u$2\\u$3\\l\\u$4\\u$5%",
 		"--modifier-regex", "%([^,-]+)-?([^,-]*),([^,]+),([^,]+)%set\\u$1\\u$2\\l\\u$3\\u$4%",
 		"--parser-regex", "%([^-]+)-?([^-]*)%parse\\u$1\\u$2%",
+		"--parser-regex", "%([^-]+)-?([^-]*)-?([^-]*)%parse\\u$1\\u$2\\u$3%",
+		"--parser-regex", "%([^-]+)-?([^-]*)-?([^-]*)-?([^-]*)%parse\\u$1\\u$2\\u$3\\u$4%",
 		"--serializer-regex", "%([^-]+)-?([^-]*)%serialize\\u$1\\u$2%",
+		"--serializer-regex", "%([^-]+)-?([^-]*)-?([^-]*)%serialize\\u$1\\u$2\\u$3%",
+		"--serializer-regex", "%([^-]+)-?([^-]*)-?([^-]*)-?([^-]*)%serialize\\u$1\\u$2\\u$3\\u$4%",
 		"--namespace-map", "http://www.w3.org/2001/XMLSchema=LinphonePrivate::Xsd::XmlSchema",
 		"--namespace-map", "urn:ietf:params:xml:ns:conference-info=LinphonePrivate::Xsd::ConferenceInfo",
+		"--namespace-map", "linphone:xml:ns:conference-info-linphone-extension=LinphonePrivate::Xsd::ConferenceInfoLinphoneExtension",
 		"--namespace-map", "urn:ietf:params:xml:ns:imdn=LinphonePrivate::Xsd::Imdn",
 		"--namespace-map", "urn:ietf:params:xml:ns:im-iscomposing=LinphonePrivate::Xsd::IsComposing",
 		"--namespace-map", "http://www.linphone.org/xsds/imdn.xsd=LinphonePrivate::Xsd::LinphoneImdn",
@@ -109,6 +114,7 @@ def generate(name):
 def main(argv = None):
 	generate("xml")
 	generate("conference-info")
+	generate("conference-info-linphone-extension")
 	generate("imdn")
 	generate("is-composing")
 	generate("linphone-imdn")

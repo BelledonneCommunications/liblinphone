@@ -175,7 +175,7 @@ static void group_chat_hfts (bool_t encryption, bool_t dual_auth_lime_server,
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encryption);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encryption, LinphoneChatRoomEphemeralModeDeviceManaged);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr))
 		goto end;
 

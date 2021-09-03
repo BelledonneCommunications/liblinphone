@@ -191,7 +191,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 
 	// 2. Update state and notify changes.
-	lInfo() << "Chat message " << sharedMessage << ": moving from " << Utils::toString(state) << " to " << Utils::toString(newState);
+	lInfo() << "Chat message " << sharedMessage << " of chat room " << (q->getChatRoom() ? q->getChatRoom()->getConferenceId() : ConferenceId()) << " : moving from " << Utils::toString(state) << " to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
 
