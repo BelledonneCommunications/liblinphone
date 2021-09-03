@@ -534,7 +534,7 @@ void LocalConference::finalizeCreation() {
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
-		eventHandler->subscribeReceived(event, false);
+		eventHandler->subscribeReceived(event);
 	}
 #endif // HAVE_ADVANCED_IM
 }
@@ -1726,10 +1726,20 @@ AudioStream *RemoteConference::getAudioStream(){
 	return stream ? (AudioStream*)stream->getMediaStream() : nullptr;
 }
 
-void RemoteConference::notifyReceived (const string &body) {
+void RemoteConference::multipartNotifyReceived (const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
-		eventHandler->notifyReceived(body);
+		eventHandler->multipartNotifyReceived(content);
+	}
+#else
+	lInfo() << "Advanced IM such as conferencing events is disabled!";
+#endif // HAVE_ADVANCED_IM
+}
+
+void RemoteConference::notifyReceived (const Content &content) {
+#ifdef HAVE_ADVANCED_IM
+	if (eventHandler) {
+		eventHandler->notifyReceived(content);
 	}
 #else
 	lInfo() << "Advanced IM such as conferencing events is disabled!";
