@@ -19,10 +19,13 @@
 
 // TODO: Remove me later.
 #include "linphone/core.h"
+#include "linphone/utils/utils.h"
 
 #include "content-p.h"
 #include "file-transfer-content.h"
 #include "bctoolbox/crypto.h"
+
+#include <algorithm>
 
 // =============================================================================
 
@@ -131,7 +134,8 @@ bool FileTransferContent::operator== (const FileTransferContent &other) const {
 
 void FileTransferContent::setFileName (const string &name) {
 	L_D();
-	d->fileName = name;
+
+	d->fileName = Utils::normalizeFilename(name);
 }
 
 const string &FileTransferContent::getFileName () const {
