@@ -2702,15 +2702,9 @@ static void conference_with_last_call_paused(void) {
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
-	linphone_call_resume(marie_call_laure);
-
-	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallResuming,1));
-	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,2));
-	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,4));
-
 	LinphoneConference* l_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(l_conference);
-	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
+	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),3, int, "%d");
 
 	// Wait that the three participants are joined to the local conference, by checking the StreamsRunning states
@@ -2719,7 +2713,7 @@ static void conference_with_last_call_paused(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
 	
-	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
+	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),3, int, "%d");
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
@@ -7410,14 +7404,14 @@ static void try_to_create_second_conference_with_local_participant(void) {
 	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(conference);
 
-	linphone_core_terminate_conference(marie->lc);
-
 	LinphoneConferenceParams * new_maries_conference_params = linphone_conference_params_new (marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(new_maries_conference_params);
 	BC_ASSERT_TRUE(linphone_conference_params_is_local_participant_enabled(new_maries_conference_params));
 	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
 	BC_ASSERT_PTR_NULL(new_maries_conference);
 	linphone_conference_params_unref(new_maries_conference_params);
+
+	linphone_core_terminate_conference(marie->lc);
 
 	int idx = 0;
 	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
