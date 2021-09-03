@@ -1392,12 +1392,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	md->addr = mediaLocalIp;
 
 	LinphoneAddress *addr = nullptr;
-	if (destProxy) {
-		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
-	} else {
+	if (destProxy == nullptr) {
 		addr = linphone_address_new(linphone_core_get_identity(core));
+	} else if (linphone_proxy_config_get_identity_address(destProxy)) {
+		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
 	}
-	if (linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
+	if (addr && linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
 		md->username = linphone_address_get_username(addr);
 	}
 
