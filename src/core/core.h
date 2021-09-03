@@ -62,26 +62,28 @@ namespace MediaConference {
 }
 
 class LINPHONE_PUBLIC Core : public Object {
-	friend class BasicToClientGroupChatRoom;
-	friend class BasicToClientGroupChatRoomPrivate;
 	friend class Call;
 	friend class CallSession;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
 	friend class ChatRoom;
 	friend class ChatRoomPrivate;
+#ifdef HAVE_ADVANCED_IM
+	friend class BasicToClientGroupChatRoom;
+	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
+	friend class RemoteConferenceEventHandler;
+	friend class RemoteConferenceListEventHandler;
+	friend class ServerGroupChatRoom;
+	friend class ServerGroupChatRoomPrivate;
+#endif // HAVE_ADVANCED_IM
 	friend class Imdn;
 	friend class LocalConferenceEventHandler;
 	friend class MainDb;
 	friend class MainDbEventKey;
 	friend class MediaSessionPrivate;
-	friend class RemoteConferenceEventHandler;
-	friend class RemoteConferenceListEventHandler;
-	friend class ServerGroupChatRoom;
-	friend class ServerGroupChatRoomPrivate;
 	friend class CallSessionPrivate;
 	friend class ToneManager;
 	friend class EventLog;

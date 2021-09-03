@@ -20,7 +20,9 @@
 #include "bctoolbox/crypto.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room.h"
+#endif // HAVE_ADVANCED_IM
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
