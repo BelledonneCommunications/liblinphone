@@ -46,6 +46,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 using namespace Xsd::ConferenceInfo;
+using namespace Xsd::ConferenceInfoLinphoneExtension;
 
 // =============================================================================
 
@@ -55,7 +56,7 @@ LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference
 // -----------------------------------------------------------------------------
 
 void LocalConferenceEventHandler::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
-	notifyParticipantDevice(notify, device);
+	notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
 }
 
 void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
@@ -70,7 +71,24 @@ void LocalConferenceEventHandler::notifyAll (const string &notify) {
 		notifyParticipant(notify, participant);
 }
 
-string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
+string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
+	vector<string> acceptedContents = vector<string>();
+	if (lev) {
+		const auto message = (belle_sip_message_t*)lev->op->getRecvCustomHeaders();
+		for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
+			acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+		}
+	}
+	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") != acceptedContents.end());
+	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
+
+	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	// Enquire whether this conference belongs to a server group chat room
+	shared_ptr<Core> core = conf->getCore();
+	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+	const bool oneToOne = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne) : false;
+	const bool ephemerable = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Ephemeral) : false;
 	string entity = conf->getConferenceAddress().asString();
 	string subject = conf->getSubject();
 	ConferenceType confInfo = ConferenceType(entity);
@@ -85,8 +103,15 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	const auto & textEnabled = confParams.chatEnabled();
 	const LinphoneMediaDirection textDirection = textEnabled ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive;
 	addAvailableMediaCapabilities(audioDirection, videoDirection, textDirection, confDescr);
+	std::string keywordList;
 	if (oneToOne) {
-		KeywordsType keywords(sizeof(char), "one-to-one");
+		keywordList += "one-to-one ";
+	}
+	if (ephemerable) {
+		keywordList += "ephemeral ";
+	}
+	if (!keywordList.empty()) {
+		KeywordsType keywords(sizeof(char), keywordList.c_str());
 		confDescr.setKeywords(keywords);
 	}
 	confInfo.setUsers(users);
@@ -130,7 +155,56 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 		confInfo.getUsers()->getUser().push_back(user);
 	}
 
-	return createNotify(confInfo, true);
+	const auto conferenceInfoNotify = createNotify(confInfo, true);
+
+	string conferenceInfoLinphoneExtensionNotify = std::string();
+	if (ephemerable && chatRoom) {
+		ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
+		EphemeralType ephemeralType = EphemeralType();
+		ephemeralType.setMode(Utils::toString(chatRoom->getCurrentParams()->getEphemeralMode()));
+		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
+		confInfoLinphoneExtension.setEphemeral(ephemeralType);
+		conferenceInfoLinphoneExtensionNotify = createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension);
+	}
+
+	if (acceptedContents.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
+		return conferenceInfoNotify;
+	} else if (!acceptConferenceInfo && acceptConferenceInfoLinphoneExtension && (!conferenceInfoLinphoneExtensionNotify.empty())) {
+		return conferenceInfoLinphoneExtensionNotify;
+	} else if (acceptConferenceInfo && acceptConferenceInfoLinphoneExtension) {
+		list<Content> contents;
+		char token[17];
+
+		Content contentConferenceInfo = Content();
+		contentConferenceInfo.setContentType(ContentType::ConferenceInfo);
+		belle_sip_random_token(token, sizeof(token));
+		contentConferenceInfo.addHeader("Content-Id", token);
+		contentConferenceInfo.addHeader("Content-Length", Utils::toString(conferenceInfoNotify.size()));
+		contentConferenceInfo.setBodyFromUtf8(conferenceInfoNotify);
+		contents.push_back(move(contentConferenceInfo));
+
+		if (!conferenceInfoLinphoneExtensionNotify.empty()) {
+			Content contentConferenceInfoLinphoneExtension = Content();
+			belle_sip_random_token(token, sizeof(token));
+			contentConferenceInfoLinphoneExtension.addHeader("Content-Id", token);
+			contentConferenceInfoLinphoneExtension.addHeader("Content-Length", Utils::toString(conferenceInfoLinphoneExtensionNotify.size()));
+
+			contentConferenceInfoLinphoneExtension.setContentType(ContentType::ConferenceInfoLinphoneExtension);
+			contentConferenceInfoLinphoneExtension.setBodyFromUtf8(conferenceInfoLinphoneExtensionNotify);
+			contents.push_back(move(contentConferenceInfoLinphoneExtension));
+		}
+
+		if (contents.empty())
+			return Utils::getEmptyConstRefObject<string>();
+
+		list<Content *> contentPtrs;
+		for (auto &content : contents)
+			contentPtrs.push_back(&content);
+		string multipart = ContentManager::contentListToMultipart(contentPtrs, MultipartBoundary).getBodyAsUtf8String();
+		return multipart;
+	}
+
+	return Utils::getEmptyConstRefObject<string>();
 }
 
 void LocalConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, ConferenceDescriptionType & confDescr) {
@@ -506,6 +580,14 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 
 // -----------------------------------------------------------------------------
 
+string LocalConferenceEventHandler::createConferenceInfoLinphoneExtensionNotify (ConferenceTypeLinphoneExtension confInfo) {
+	stringstream notify;
+	Xsd::XmlSchema::NamespaceInfomap map;
+	map[""].name = "linphone:xml:ns:conference-info-linphone-extension";
+	serializeConferenceInfoLinphoneExtension(notify, confInfo, map);
+	return notify.str();
+}
+
 string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool isFullState) {
 	confInfo.setVersion(conf->getLastNotify());
 	confInfo.setState(isFullState ? StateType::full : StateType::partial);
@@ -533,6 +615,85 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
 
 	return createNotify(confInfo);
+}
+
+string LocalConferenceEventHandler::createNotifyEphemeralMode (const EventLog::Type & type) {
+	list<Content> contents;
+
+	string entity = conf->getConferenceAddress().asString();
+	ConferenceType confInfo = ConferenceType(entity);
+	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
+	std::string keywordList;
+	keywordList += "ephemeral";
+	if (!keywordList.empty()) {
+		KeywordsType keywords(sizeof(char), keywordList.c_str());
+		confDescr.setKeywords(keywords);
+	}
+	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+	contents.emplace_back(Content());
+	contents.back().setContentType(ContentType::ConferenceInfo);
+	contents.back().setBodyFromUtf8(createNotify(confInfo));
+
+	ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
+	EphemeralType ephemeralType = EphemeralType();
+
+	const auto mode = (type == EventLog::Type::ConferenceEphemeralMessageManagedByAdmin) ? Utils::toString(AbstractChatRoom::EphemeralMode::AdminManaged) : Utils::toString(AbstractChatRoom::EphemeralMode::DeviceManaged);
+	ephemeralType.setMode(mode);
+	confInfoLinphoneExtension.setEphemeral(ephemeralType);
+
+	contents.emplace_back(Content());
+	contents.back().setContentType(ContentType::ConferenceInfoLinphoneExtension);
+	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension));
+
+	if (contents.empty())
+		return Utils::getEmptyConstRefObject<string>();
+
+	list<Content *> contentPtrs;
+	for (auto &content : contents)
+		contentPtrs.push_back(&content);
+	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
+	return multipart;
+}
+
+string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & lifetime) {
+	list<Content> contents;
+
+	string entity = conf->getConferenceAddress().asString();
+	if (lifetime != 0) {
+		ConferenceType confInfo = ConferenceType(entity);
+		ConferenceDescriptionType confDescr = ConferenceDescriptionType();
+		std::string keywordList;
+		keywordList += "ephemeral";
+		if (!keywordList.empty()) {
+			KeywordsType keywords(sizeof(char), keywordList.c_str());
+			confDescr.setKeywords(keywords);
+		}
+		confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+		contents.emplace_back(Content());
+		contents.back().setContentType(ContentType::ConferenceInfo);
+		contents.back().setBodyFromUtf8(createNotify(confInfo));
+	}
+
+	ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
+	EphemeralType ephemeralType = EphemeralType();
+	ephemeralType.setLifetime(std::to_string(lifetime));
+	confInfoLinphoneExtension.setEphemeral(ephemeralType);
+
+	contents.emplace_back(Content());
+	contents.back().setContentType(ContentType::ConferenceInfoLinphoneExtension);
+	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension));
+
+	if (contents.empty())
+		return Utils::getEmptyConstRefObject<string>();
+
+	list<Content *> contentPtrs;
+	for (auto &content : contents)
+		contentPtrs.push_back(&content);
+	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
+	return multipart;
+
 }
 
 string LocalConferenceEventHandler::createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
@@ -574,7 +735,7 @@ void LocalConferenceEventHandler::notifyParticipant (const string &notify, const
 			case ParticipantDevice::State::Present:
 			case ParticipantDevice::State::Joining:
 			case ParticipantDevice::State::ScheduledForJoining:
-				notifyParticipantDevice(notify, device);
+				notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
 				break;
 			case ParticipantDevice::State::Leaving:
 			case ParticipantDevice::State::Left:
@@ -611,7 +772,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool oneToOne) {
+void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 	char *addrStr = linphone_address_as_string(lAddr);
 	Address participantAddress(addrStr);
@@ -644,7 +805,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 		device->setConferenceSubscribeEvent(lev);
 		if (evLastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
-			notifyFullState(createNotifyFullState(oneToOne), device);
+			notifyFullState(createNotifyFullState(lev), device);
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
@@ -679,10 +840,10 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 	}
 }
 
-string LocalConferenceEventHandler::getNotifyForId (int notifyId, bool oneToOne) {
+string LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent *lev) {
 	unsigned int lastNotify = conf->getLastNotify();
 	if (notifyId == 0)
-		return createNotifyFullState(oneToOne);
+		return createNotifyFullState(lev);
 	else if (notifyId < static_cast<int>(lastNotify))
 		return createNotifyMultipart(notifyId);
 
@@ -723,7 +884,7 @@ void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<C
 void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifySubjectChanged());
+		notifyAll(createNotifySubjectChanged(event->getSubject()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}
@@ -765,6 +926,24 @@ void LocalConferenceEventHandler::onParticipantDeviceMediaChanged (const std::sh
 		notifyAll(createNotifyParticipantDeviceMediaChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
+	}
+}
+
+void LocalConferenceEventHandler::onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyEphemeralMode(event->getType()));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of device " << device->getAddress() << " having changed ephemeral mode to " << event->getType();
+	}
+}
+
+void LocalConferenceEventHandler::onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyEphemeralLifetime(event->getEphemeralLifetime()));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of device " << device->getAddress() << " having changed ephemeral lifetime to " << event->getEphemeralLifetime();
 	}
 }
 

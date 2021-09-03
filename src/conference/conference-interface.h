@@ -261,6 +261,20 @@ public:
 	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
 
 	/*
+	* This fonction is called each time a participant device changes the ephemeral mode
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed the ephemeral settings
+	*/
+	virtual void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+
+	/*
+	* This fonction is called each time a participant device changes the ephemeral settings
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed the ephemeral settings
+	*/
+	virtual void onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+
+	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.
 	 * @param[in] event informations related to the new admin participant. @notnil
 	 * @param[in] participant participant whose admin status changed. @notnil

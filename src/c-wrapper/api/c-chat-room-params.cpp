@@ -20,6 +20,8 @@
 #include "linphone/api/c-chat-room-params.h"
 #include "chat/chat-room/chat-room-params.h"
 #include "c-wrapper/c-wrapper.h"
+#include "linphone/wrapper_utils.h"
+#include "core/core-p.h"
 
 // =============================================================================
 
@@ -29,6 +31,10 @@ using namespace LinphonePrivate;
 
 LinphoneChatRoomParams *linphone_chat_room_params_new(void) {
 	return ChatRoomParams::createCObject();
+}
+
+LinphoneChatRoomParams *linphone_chat_room_params_new_and_init(LinphoneCore *core) {
+	return ChatRoomParams::getDefaults(L_GET_CPP_PTR_FROM_C_OBJECT(core))->toC();
 }
 
 LinphoneChatRoomParams *linphone_chat_room_params_clone(const LinphoneChatRoomParams *params) {
@@ -60,6 +66,14 @@ bool_t linphone_chat_room_params_group_enabled(const LinphoneChatRoomParams *par
 	return ChatRoomParams::toCpp(params)->isGroup();
 }
 
+LinphoneChatRoomEphemeralMode linphone_chat_room_params_get_ephemeral_mode(const LinphoneChatRoomParams *params) {
+	return static_cast<LinphoneChatRoomEphemeralMode>(ChatRoomParams::toCpp(params)->getEphemeralMode());
+}
+
+long linphone_chat_room_params_get_ephemeral_lifetime(const LinphoneChatRoomParams *params) {
+	return ChatRoomParams::toCpp(params)->getEphemeralLifetime();
+}
+
 bool_t linphone_chat_room_params_encryption_enabled(const LinphoneChatRoomParams *params) {
 	return ChatRoomParams::toCpp(params)->isEncrypted();
 }
@@ -78,6 +92,14 @@ void linphone_chat_room_params_set_encryption_backend(LinphoneChatRoomParams *pa
 
 void linphone_chat_room_params_enable_group(LinphoneChatRoomParams *params, bool_t group) {
 	ChatRoomParams::toCpp(params)->setGroup(!!group);
+}
+
+void linphone_chat_room_params_set_ephemeral_mode(LinphoneChatRoomParams *params, LinphoneChatRoomEphemeralMode mode) {
+	ChatRoomParams::toCpp(params)->setEphemeralMode(static_cast<AbstractChatRoom::EphemeralMode>(mode));
+}
+
+void linphone_chat_room_params_set_ephemeral_lifetime(LinphoneChatRoomParams *params, long lifetime) {
+	ChatRoomParams::toCpp(params)->setEphemeralLifetime(lifetime);
 }
 
 void linphone_chat_room_params_enable_encryption(LinphoneChatRoomParams *params, bool_t encrypted) {

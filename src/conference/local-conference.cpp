@@ -74,8 +74,7 @@ bool LocalConference::isIn() const{
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findChatRoom(conferenceId);
-	eventHandler->subscribeReceived(event, !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne));
+	eventHandler->subscribeReceived(event);
 #endif
 }
 
@@ -106,6 +105,18 @@ shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
 	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+}
+
+shared_ptr<ConferenceEphemeralEvent> LocalConference::notifyEphemeralModeChanged (time_t creationTime, const bool isFullState, const EventLog::Type type, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyEphemeralModeChanged (creationTime, isFullState, type, participantDevice);
+}
+
+shared_ptr<ConferenceEphemeralEvent> LocalConference::notifyEphemeralChanged (time_t creationTime, const bool isFullState, long lifetime, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyEphemeralChanged (creationTime, isFullState, lifetime, participantDevice);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {

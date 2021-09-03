@@ -97,6 +97,9 @@ public:
 	bool subscribeRegistrationForParticipants(const std::list<IdentityAddress> &participants, bool newInvited);
 	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
 	void handleSubjectChange(SalCallOp *op);
+	void handleEphemeralSettingsChange(const std::shared_ptr<CallSession> &session);
+	void setEphemeralLifetime(long time, const std::shared_ptr<CallSession> &session);
+	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode, const std::shared_ptr<CallSession> &session);
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 	void updateParticipantDevices (const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
