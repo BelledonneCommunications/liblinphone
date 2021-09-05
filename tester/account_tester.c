@@ -90,6 +90,7 @@ static void registration_state_changed_callback_on_account(void) {
 }
 
 static void no_unregister_when_changing_transport(void) {
+#ifdef HAVE_ADVANCED_IM
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
@@ -131,6 +132,7 @@ static void no_unregister_when_changing_transport(void) {
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+#endif // HAVE_ADVANCED_IM
 }
 
 test_t account_tests[] = {
