@@ -23,7 +23,10 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
+
+#ifdef HAVE_FLEXIAPI
 #include "FlexiAPIClient.hh"
+#endif
 
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/regex.h"
