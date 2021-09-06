@@ -570,7 +570,7 @@ static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 
-		linphone_core_set_default_ephemeral_lifetime(marie.getLc(), 5);
+		linphone_core_set_default_ephemeral_lifetime(marie.getLc(), 25);
 
 		// Enable IMDN
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
@@ -589,7 +589,16 @@ static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted
 		// Marie creates a new group chat room
 		const char *initialSubject = "Colleagues";
 		const LinphoneChatRoomEphemeralMode adminMode = LinphoneChatRoomEphemeralModeAdminManaged;
-		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, encrypted, adminMode);
+		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie.getLc());
+
+		linphone_chat_room_params_enable_group(params, FALSE);
+		linphone_chat_room_params_enable_encryption(params, FALSE);
+		linphone_chat_room_params_set_ephemeral_mode(params, adminMode);
+		linphone_chat_room_params_set_ephemeral_lifetime(params, 5);
+		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+
+		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_params(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, params);
+		linphone_chat_room_params_unref(params);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 		
@@ -598,8 +607,10 @@ static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(marieCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 5, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(paulineCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(paulineCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 5, int, "%d");
 
 		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([&focus] {
 			for (auto chatRoom :focus.getCore().getChatRooms()) {
@@ -937,8 +948,10 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(marieCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(paulineCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(paulineCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 1, int, "%d");
 
 		pauline_stat=pauline.getStats();
 		linphone_chat_room_set_ephemeral_lifetime(marieCr, 0);
@@ -1064,7 +1077,9 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
-		
+
+		linphone_core_set_default_ephemeral_lifetime(marie.getLc(), 5);
+
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 
@@ -1109,8 +1124,10 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(marieCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 5, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(paulineCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(paulineCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 5, int, "%d");
 
 		pauline_stat=pauline.getStats();
 		linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
@@ -1282,8 +1299,10 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_tog
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(marieCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 5, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_mode(paulineCr), adminMode, int, "%d");
 		BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(paulineCr));
+		BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(paulineCr), 5, int, "%d");
 
 		pauline_stat=pauline.getStats();
 		linphone_chat_room_set_ephemeral_lifetime(marieCr, 10);
