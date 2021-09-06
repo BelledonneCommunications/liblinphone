@@ -166,6 +166,9 @@ public:
 
 	static void deleteChatRoom (const std::shared_ptr<const AbstractChatRoom> &chatRoom);
 
+	static const std::string ephemeralVersionAsString();
+	static const std::string groupChatVersionAsString();
+
 	// ---------------------------------------------------------------------------
 	// Audio Video Conference.
 	// ---------------------------------------------------------------------------

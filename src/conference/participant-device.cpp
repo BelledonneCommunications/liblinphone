@@ -205,4 +205,13 @@ bool ParticipantDevice::updateMedia() {
 	return mediaChanged;
 }
 
+bool ParticipantDevice::adminModeSupported() const {
+	return mSupportAdminMode;
+
+}
+
+void ParticipantDevice::enableAdminModeSupport(bool support) {
+	mSupportAdminMode = support;
+
+}
 LINPHONE_END_NAMESPACE
