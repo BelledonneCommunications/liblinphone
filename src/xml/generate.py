@@ -39,15 +39,11 @@ def generate(name):
 		print("Cannot find xsdcxx (or xsd) program in the PATH")
 		return -1
 	print("Using " + xsdcxx)
-	cwd = os.getcwd()
 	script_dir = os.path.dirname(os.path.realpath(__file__))
 	source_file = name + ".xsd"
 	print("Generating code from " + source_file)
-	source_file = os.path.join("xml", source_file)
-	prologue_file = os.path.join("xml", "prologue.txt")
-	epilogue_file = os.path.join("xml", "epilogue.txt")
-	work_dir = os.path.join(script_dir, "..")
-	os.chdir(work_dir)
+	prologue_file =  "prologue.txt"
+	epilogue_file =  "epilogue.txt"
 	p = Popen([xsdcxx,
 		"cxx-tree",
 		"--generate-wildcard",
@@ -62,9 +58,11 @@ def generate(name):
 		"--ixx-suffix", ".h",
 		"--cxx-suffix", ".cpp",
 		"--location-regex", "%http://.+/(.+)%$1%",
-		"--output-dir", "xml",
+		"--output-dir", ".",
 		"--show-sloc",
 		"--prologue-file", prologue_file,
+		"--cxx-prologue-file", prologue_file,
+		"--cxx-epilogue-file", epilogue_file,
 		"--epilogue-file", epilogue_file,
 		"--root-element-first",
 		"--type-regex", "%(?:[^ ]* )?([^,-]+)-([^,-]+)-([^,-]+)-?([^,-]*)%\\u$1\\u$2\\u$3\\u$4%",
@@ -108,7 +106,14 @@ def generate(name):
 		source_file
 		], shell=False)
 	p.communicate()
-	os.chdir(cwd)
+	os.system("sed -e \'1,32d\' "+os.path.splitext(source_file)[0]+".cpp"+">" + os.path.splitext(source_file)[0]+".cpp.tmp")
+	os.system("cat linphone-copyright.txt >"+os.path.splitext(source_file)[0]+".cpp")
+	os.system("cat "+os.path.splitext(source_file)[0]+".cpp.tmp >>"+os.path.splitext(source_file)[0]+".cpp")
+	os.system("rm "+os.path.splitext(source_file)[0]+".cpp.tmp ")
+	os.system("sed -e \'1,32d\' "+os.path.splitext(source_file)[0]+".h"+">" + os.path.splitext(source_file)[0]+".h.tmp")
+	os.system("cat linphone-copyright.txt >"+os.path.splitext(source_file)[0]+".h")
+	os.system("cat "+os.path.splitext(source_file)[0]+".h.tmp >>"+os.path.splitext(source_file)[0]+".h")
+	os.system("rm "+os.path.splitext(source_file)[0]+".h.tmp ")
 	return 0
 
 def main(argv = None):

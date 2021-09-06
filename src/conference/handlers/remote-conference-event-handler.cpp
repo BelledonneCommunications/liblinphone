@@ -31,6 +31,8 @@
 #include "logger/logger.h"
 #include "remote-conference-event-handler.h"
 
+#include <xsd/cxx/xml/string.hxx>
+
 // TODO: Remove me later.
 #include "private.h"
 
@@ -105,7 +107,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	bool isFullState = confInfo->getState() == StateType::full;
 
-	// 3. Notify subject and keywords.
+	// 3. Notify ephemeral settings, media, subject and keywords.
 	if (confDescription.present()) {
 		auto &subject = confDescription.get().getSubject();
 		if (subject.present() && !subject.get().empty()) {
@@ -145,6 +147,39 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					conf->confParams->enableChat(enabled);
 				} else {
 					lError() << "Unrecognized media type " << mediaType;
+				}
+			}
+		}
+
+		auto & anySequence (confDescription.get().getAny());
+
+		for (auto anyElementIt = anySequence.begin(); anyElementIt != anySequence.end (); ++anyElementIt) {
+			const xercesc_3_1::DOMElement& anyElement (*anyElementIt);
+			string name (xsd::cxx::xml::transcode<char>(anyElement.getLocalName()));
+			string nodeName (xsd::cxx::xml::transcode<char>(anyElement.getNodeName()));
+			string nodeValue (xsd::cxx::xml::transcode<char>(anyElement.getNodeValue()));
+			if (nodeName.compare("linphone-cie:ephemeral") == 0) {
+				Ephemeral ephemeral = Ephemeral(anyElement);
+				auto ephemeralLifetime = ephemeral.getLifetime();
+				auto ephemeralMode = ephemeral.getMode();
+
+				const auto & core = conf->getCore();
+				auto chatRoom = core->findChatRoom(getConferenceId());
+				std::shared_ptr<LinphonePrivate::ClientGroupChatRoom> cgcr = nullptr;
+				if (chatRoom && (chatRoom->getConference().get() == conf)) {
+					cgcr = dynamic_pointer_cast<LinphonePrivate::ClientGroupChatRoom>(chatRoom);
+				}
+				if (cgcr) {
+					if (ephemeralMode.empty() || (ephemeralMode.compare("admin-managed") == 0)) {
+						cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::AdminManaged);
+						if (!ephemeralLifetime.empty()) {
+							const auto lifetime = std::stol(ephemeralLifetime);
+							cgcr->getCurrentParams()->setEphemeralLifetime(lifetime);
+							cgcr->getPrivate()->enableEphemeral((lifetime != 0));
+						}
+					} else if (ephemeralMode.compare("device-managed") == 0) {
+						cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);
+					}
 				}
 			}
 		}
@@ -280,6 +315,25 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				}
 
 				if (state != StateType::deleted) {
+/*
+					auto & deviceAnySequence (endpoint.getJoiningInfo().get().getAny());
+
+					for (auto anyElementIt = deviceAnySequence.begin(); anyElementIt != deviceAnySequence.end (); ++anyElementIt) {
+						const xercesc_3_1::DOMElement& anyElement (*anyElementIt);
+						string name (xsd::cxx::xml::transcode<char>(anyElement.getLocalName()));
+						string nodeName (xsd::cxx::xml::transcode<char>(anyElement.getNodeName()));
+						string nodeValue (xsd::cxx::xml::transcode<char>(anyElement.getNodeValue()));
+						if (nodeName.compare("linphone-cie:service-description") == 0) {
+							const auto service = ServiceDescription(anyElement);
+							const auto serviceId = service.getServiceId();
+							const auto serviceVersion = Utils::Version(service.getVersion());
+							if (serviceId.compare("ephemeral") == 0) {
+								device->enableAdminModeSupport((serviceVersion > Utils::Version(1,1)));
+							}
+						}
+					}
+*/
+
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						const LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
@@ -310,46 +364,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 		if (conf->getState() == ConferenceInterface::State::CreationPending) {
 			// Move to Created state when the list of participants is received
 			conf->setState(ConferenceInterface::State::Created);
-		}
-	}
-}
-
-void RemoteConferenceEventHandler::conferenceInfoLinphoneExtensionNotifyReceived (const string &xmlBody) {
-	istringstream data(xmlBody);
-	unique_ptr<ConferenceTypeLinphoneExtension> confInfo;
-	try {
-		confInfo = parseConferenceInfoLinphoneExtension(data, Xsd::XmlSchema::Flags::dont_validate);
-	} catch (const exception &) {
-		lError() << "Error while parsing conference-info-linphone-extension notify for: " << getConferenceId();
-		return;
-	}
-
-	IdentityAddress entityAddress(confInfo->getEntity().c_str());
-	if (entityAddress != getConferenceId().getPeerAddress())
-		return;
-
-	auto ephemeralSettings = confInfo->getEphemeral().get();
-	auto ephemeralLifetime = ephemeralSettings.getLifetime();
-	auto ephemeralLifetimeStr = ephemeralLifetime ? ephemeralLifetime.get() : std::string();
-	auto ephemeralMode = ephemeralSettings.getMode();
-	auto ephemeralModeStr = ephemeralMode ? ephemeralMode.get() : std::string();
-
-	const auto & core = conf->getCore();
-	auto chatRoom = core->findChatRoom(getConferenceId());
-	std::shared_ptr<LinphonePrivate::ClientGroupChatRoom> cgcr = nullptr;
-	if (chatRoom && (chatRoom->getConference().get() == conf)) {
-		cgcr = dynamic_pointer_cast<LinphonePrivate::ClientGroupChatRoom>(chatRoom);
-	}
-	if (cgcr) {
-		if (ephemeralModeStr.empty() || (ephemeralModeStr == Utils::toString(AbstractChatRoom::EphemeralMode::AdminManaged))) {
-			cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::AdminManaged);
-			if (!ephemeralLifetimeStr.empty()) {
-				const auto lifetime = std::stol(ephemeralLifetimeStr);
-				cgcr->getCurrentParams()->setEphemeralLifetime(lifetime);
-				cgcr->getPrivate()->enableEphemeral((lifetime != 0));
-			}
-		} else if (ephemeralModeStr == Utils::toString(AbstractChatRoom::EphemeralMode::DeviceManaged)) {
-			cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);
 		}
 	}
 }
@@ -393,7 +407,6 @@ void RemoteConferenceEventHandler::subscribe () {
 	lev->op->setFrom(localAddress);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
-	linphone_event_add_custom_header(lev, "Accept", "application/conference-info+xml, application/conference-info-linphone-extension+xml");
 	linphone_address_unref(lAddr);
 	linphone_address_unref(peerAddr);
 	linphone_event_set_internal(lev, TRUE);
@@ -459,8 +472,6 @@ void RemoteConferenceEventHandler::notifyReceived (const Content &content) {
 	const ContentType &contentType = content.getContentType();
 	if (contentType == ContentType::ConferenceInfo) {
 		conferenceInfoNotifyReceived(content.getBodyAsUtf8String());
- 	} else if (contentType == ContentType::ConferenceInfoLinphoneExtension) {
-		conferenceInfoLinphoneExtensionNotifyReceived(content.getBodyAsUtf8String());
 	}
 }
 
