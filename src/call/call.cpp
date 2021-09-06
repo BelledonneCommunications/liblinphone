@@ -348,6 +348,10 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 #endif // if 0
 	if (!getCore()->getPrivate()->hasCalls())
 		ms_bandwidth_controller_reset_state(core->bw_controller);
+
+	if (linphone_core_get_calls_nb(core) == 0) {
+		linphone_core_notify_last_call_ended(core);
+	}
 }
 
 void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
@@ -490,12 +494,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				conference->participantDeviceMediaChanged(session);
 			}
 		}
-		break;
-		case CallSession::State::Error:
-		case CallSession::State::End:
-			if (linphone_core_get_calls_nb(lc) == 0) {
-				linphone_core_notify_last_call_ended(lc);
-			}
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
