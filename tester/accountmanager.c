@@ -76,7 +76,7 @@ typedef struct _AccountManager AccountManager;
 static AccountManager *the_am=NULL;
 
 static void account_manager_generate_unique_id(AccountManager * am) {
-	const int tokenLength = 6;
+	const int tokenLength = 14;
 	if (am->unique_id)
 		ms_free(am->unique_id);
 	am->unique_id=sal_get_random_token(tokenLength);
