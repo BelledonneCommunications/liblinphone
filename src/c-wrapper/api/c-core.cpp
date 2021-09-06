@@ -221,8 +221,12 @@ VideoStream * linphone_core_get_preview_stream(LinphoneCore *lc) {
 	return lc->previewstream;
 }
 
-const char *linphone_core_get_groupchat_version(void){
-	return "1.1"; //FIXME use CorePrivate::groupChatversion
+const char *linphone_core_get_groupchat_version(const LinphoneCore *lc){
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->groupChatVersionAsString());
+}
+
+const char *linphone_core_get_ephemeral_version(const LinphoneCore *lc){
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->ephemeralVersionAsString());
 }
 
 bool_t linphone_core_is_in_background(const LinphoneCore *lc) {

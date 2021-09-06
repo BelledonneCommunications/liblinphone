@@ -169,6 +169,7 @@ public:
 	void pushReceivedBackgroundTaskEnded ();
 	
 	static const Utils::Version groupChatProtocolVersion;
+	static const Utils::Version ephemeralProtocolVersion;
 private:
 	bool isInBackground = false;
 	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
