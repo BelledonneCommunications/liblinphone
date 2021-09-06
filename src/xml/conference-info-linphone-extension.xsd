@@ -13,21 +13,35 @@
 	<!--
 		conference info extension
 	-->
-	<xs:element name="conference-info-linphone-extension" type="tns:conference-type-linphone-extension"/>
-		<xs:complexType name="conference-type-linphone-extension">
-			<xs:sequence>
-				<xs:element name="ephemeral" type="tns:ephemeral-type" minOccurs="0"/>
-			</xs:sequence>
-			<xs:attribute name="entity" type="xs:anyURI" use="required"/>
-			<xs:anyAttribute namespace="##other" processContents="lax"/>
-		</xs:complexType>
 
-		<xs:complexType name="ephemeral-type">
+	<xs:simpleType name="modeType">
+		<xs:union memberTypes="tns:modeEnum xs:string"/>
+	</xs:simpleType>
+	<xs:simpleType name="modeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="device-managed"/>
+			<xs:enumeration value="admin-managed"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:element name="ephemeral">
+		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="lifetime" type="xs:string" minOccurs="0"/>
-				<xs:element name="mode" type="xs:string" minOccurs="0"/>
+				<xs:element name="mode" type="tns:modeType"/>
+				<xs:element name="lifetime" type="xs:string" />
+				<xs:any namespace="##targetNamespace" processContents="strict" maxOccurs="unbounded" />	
 			</xs:sequence>
-			<xs:anyAttribute namespace="##other" processContents="lax"/>
 		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="service-description">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="service-id" type="xs:string" />
+				<xs:element name="version" type="xs:string" />
+				<xs:any namespace="##targetNamespace" processContents="strict" maxOccurs="unbounded" />	
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
 
 </xs:schema>
