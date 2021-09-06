@@ -160,7 +160,6 @@ protected:
 private:
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
-	std::string createConferenceInfoLinphoneExtensionNotify (Xsd::ConferenceInfoLinphoneExtension::ConferenceTypeLinphoneExtension confInfo);
 	std::string createNotifySubjectChanged (const std::string &subject);
 	std::string createNotifyEphemeralLifetime (const long & lifetime);
 	std::string createNotifyEphemeralMode (const EventLog::Type & type);

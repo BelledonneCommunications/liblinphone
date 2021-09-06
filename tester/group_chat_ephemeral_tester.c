@@ -475,7 +475,7 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 	if(!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 
 	BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(marieCr));
-	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 86400, long, "%ld");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 0, long, "%ld");
 	
 	//TODO: uncomment this assert when linphone_chat_room_ephemeral_supported_by_all_participants() is implemented.
 	// Today (2020, March), the conference server does not notify the device capabilities to the participants.

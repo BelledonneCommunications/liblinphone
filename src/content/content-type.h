@@ -69,7 +69,6 @@ public:
 	LINPHONE_PUBLIC friend std::ostream &operator<< (std::ostream &os, const ContentType &header);
 
 	static const ContentType ConferenceInfo;
-	static const ContentType ConferenceInfoLinphoneExtension;
 	static const ContentType Cpim;
 	static const ContentType Encrypted;
 	static const ContentType ExternalBody;
