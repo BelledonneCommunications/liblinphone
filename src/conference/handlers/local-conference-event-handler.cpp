@@ -160,6 +160,18 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 	string conferenceInfoLinphoneExtensionNotify = std::string();
 	if (ephemerable && chatRoom) {
 		ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
+
+		for (const auto &participant : participants) {
+			UserType user = UserType();
+			user.setEntity(participant->getAddress().asString());
+			for (const auto &device : participant->getDevices()) {
+				const string &gruu = device->getAddress().asString();
+				EndpointType endpoint = EndpointType();
+				endpoint.setEntity(gruu);
+				endpoint.setEphemerable(device->adminModeSupported());
+			}
+		}
+
 		EphemeralType ephemeralType = EphemeralType();
 		ephemeralType.setMode(Utils::toString(chatRoom->getCurrentParams()->getEphemeralMode()));
 		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
