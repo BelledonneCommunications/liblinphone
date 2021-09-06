@@ -35,7 +35,7 @@ ChatRoomParams::ChatRoomParams() {
 	mRtt = false;
 	mSubject = "";
 	mEphemeralMode = AbstractChatRoom::EphemeralMode::DeviceManaged;
-	mEphemeralLifetime = 86400;
+	mEphemeralLifetime = 0;
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
@@ -45,7 +45,7 @@ ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatR
 	: ChatRoomParams(subject, encrypted, group, AbstractChatRoom::EphemeralMode::DeviceManaged, backend) {}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, ChatRoomBackend backend)
-	: ChatRoomParams(subject, encrypted, group, mode, 86400, backend) {}
+	: ChatRoomParams(subject, encrypted, group, mode, 0, backend) {}
 
 ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, AbstractChatRoom::EphemeralMode mode, long lifetime, ChatRoomBackend backend)
 	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject), mEphemeralMode(mode), mEphemeralLifetime(lifetime) {
