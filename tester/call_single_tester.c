@@ -1250,7 +1250,7 @@ static void early_cancelled_call(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_called_without_any_response(void) {
+static void call_called_without_any_response_base(bool_t with_network_switch) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( "pauline_rc",FALSE);
 
@@ -1262,6 +1262,13 @@ static void call_called_without_any_response(void) {
 
 	/* Wait a bit. */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,NULL,NULL,0,2000));
+	
+	if (with_network_switch) {
+		linphone_core_set_network_reachable(pauline->lc, FALSE);
+		linphone_core_set_network_reachable(pauline->lc, TRUE);
+		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationProgress,2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationOk,2));
+	}
 	/* Cancel the call. */
 	linphone_call_terminate(out_call);
 
@@ -1277,6 +1284,14 @@ static void call_called_without_any_response(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void call_called_without_any_response(void) {
+	call_called_without_any_response_base(FALSE);
+}
+
+static void call_called_without_any_response_with_network_switch(void) {
+	call_called_without_any_response_base(TRUE);
 }
 
 static void cancelled_ringing_call(void) {
@@ -5716,6 +5731,7 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
 	TEST_NO_TAG("Call cancelled without response", call_called_without_any_response),
+    TEST_NO_TAG("Call cancelled without response and network switch", call_called_without_any_response_with_network_switch),
 	TEST_NO_TAG("Early cancelled call", early_cancelled_call),
 	TEST_NO_TAG("Call with DNS timeout", call_with_dns_time_out),
 	TEST_NO_TAG("Cancelled ringing call", cancelled_ringing_call),

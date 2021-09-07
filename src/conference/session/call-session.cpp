@@ -930,11 +930,11 @@ void CallSessionPrivate::repairByInviteWithReplaces () {
 	L_Q();
 	lInfo() << "CallSession [" << q << "] is going to have a new INVITE replacing the previous one in order to recover from lost connectivity";
 	string callId = op->getCallId();
-	const char *fromTag = op->getLocalTag();
-	const char *toTag = op->getRemoteTag();
+	string fromTag = op->getLocalTag();
+	string toTag = op->getRemoteTag();
 	op->killDialog();
 	createOp();
-	op->setReplaces(callId.c_str(), fromTag, toTag);
+	op->setReplaces(callId.c_str(), fromTag, toTag.empty()?"0":toTag); // empty tag is set to 0 as defined by rfc3891
 	q->startInvite(nullptr);
 }
 
@@ -989,9 +989,7 @@ void CallSessionPrivate::repairIfBroken () {
 			break;
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingProgress:
-			if (op->cancelInvite() == 0){
-				reinviteOnCancelResponseRequested = true;
-			}
+			repairByInviteWithReplaces();
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:

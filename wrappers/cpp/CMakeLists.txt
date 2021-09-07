@@ -62,7 +62,7 @@ target_link_libraries(linphone++
 set_target_properties(linphone++ PROPERTIES
 	FRAMEWORK TRUE
 	MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphonecpp
-	MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+	MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
 )
 
 target_include_directories(linphone++
