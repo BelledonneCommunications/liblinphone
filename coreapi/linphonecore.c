@@ -3986,6 +3986,10 @@ void linphone_core_iterate(LinphoneCore *lc){
 		}
 	}
 
+	if (lc->iterate_thread_id == 0) {
+		lc->iterate_thread_id = bctbx_thread_self();
+	}
+
 	if (lc->ecc!=NULL){
 		LinphoneEcCalibratorStatus ecs=ec_calibrator_get_status(lc->ecc);
 		if (ecs!=LinphoneEcCalibratorInProgress){
