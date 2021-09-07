@@ -22,7 +22,7 @@
 
 #include <memory>
 
-#include <belle-sip/object++.hh>
+#include "c-wrapper/c-wrapper.h"
 
 #include "account-params.h"
 #include "c-wrapper/internal/c-sal.h"
@@ -39,7 +39,9 @@ typedef enum _LinphoneAccountAddressComparisonResult {
 	LinphoneAccountAddressWeakEqual
 } LinphoneAccountAddressComparisonResult;
 
-class Account : public bellesip::HybridObject<LinphoneAccount, Account> {
+class AccountCbs;
+
+class Account : public bellesip::HybridObject<LinphoneAccount, Account> , public UserDataAccessor, public CallbacksHolder<AccountCbs>{
 public:
 	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params);
 	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
@@ -59,7 +61,6 @@ public:
 	void setNeedToRegister (bool needToRegister);
 	void setDeletionDate (time_t deletionDate);
 	void setSipEtag (const std::string& sipEtag);
-	void setUserData (void *userData);
 	void setCore (LinphoneCore *lc);
 	void setErrorInfo (LinphoneErrorInfo *errorInfo);
 	void setContactAddress (LinphoneAddress *contact);
@@ -77,7 +78,6 @@ public:
 	bool getRegisterChanged () const;
 	time_t getDeletionDate () const;
 	const std::string& getSipEtag () const;
-	void* getUserData () const;
 	LinphoneCore* getCore () const;
 	LinphoneErrorInfo* getErrorInfo ();
 	LinphoneAddress* getContactAddress () const;
@@ -112,12 +112,7 @@ public:
 	LinphoneTransportType getTransport ();
 
 	// Callbacks
-	void addCallbacks (LinphoneAccountCbs *callbacks);
-	void removeCallbacks (LinphoneAccountCbs *callbacks);
-	void setCurrentCallbacks (LinphoneAccountCbs *callbacks);
-	LinphoneAccountCbs* getCurrentCallbacks () const;
-
-	const bctbx_list_t* getCallbacksList () const;
+	
 
 	// Utils
 	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses (const LinphoneAddress *a, const LinphoneAddress *b);
@@ -154,8 +149,6 @@ private:
 
 	std::string mSipEtag;
 
-	void *mUserData;
-
 	LinphoneCore *mCore = nullptr;
 
 	LinphoneErrorInfo *mErrorInfo = nullptr;
@@ -174,9 +167,6 @@ private:
 
 	std::shared_ptr<Account> mDependency = nullptr;
 
-	bctbx_list_t *mCallbacksList = nullptr;
-	LinphoneAccountCbs *mCurrentCallbacks = nullptr;
-
 	unsigned long long mPreviousPublishParamsHash[2] = {0};
 	std::shared_ptr<AccountParams> mOldParams;
 
@@ -184,6 +174,15 @@ private:
 	// api to be usable at the same time. This should be removed as soon as 
 	// proxy configs can be replaced.
 	LinphoneProxyConfig *mConfig = nullptr;
+};
+
+
+class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>, public UserDataAccessor {
+	public:
+		LinphoneAccountCbsRegistrationStateChangedCb getRegistrationStateChanged()const;
+		void setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb);
+	private:
+		LinphoneAccountCbsRegistrationStateChangedCb mRegistrationStateChangedCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
