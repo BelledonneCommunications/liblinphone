@@ -18,60 +18,41 @@
  */
 
 #include "linphone/api/c-account-cbs.h"
-
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 
-// =============================================================================
-
-struct _LinphoneAccountCbs {
-	belle_sip_object_t base;
-	void *userData;
-	LinphoneAccountCbsRegistrationStateChangedCb registration_state_changed;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCbs);
-
-BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneAccountCbs);
-
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneAccountCbs, belle_sip_object_t,
-	NULL, // destroy
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
+using namespace LinphonePrivate;
 
 // =============================================================================
 
 LinphoneAccountCbs * linphone_account_cbs_new (void) {
-	return belle_sip_object_new(LinphoneAccountCbs);
+	return AccountCbs::createCObject();
 }
 
 LinphoneAccountCbs * linphone_account_cbs_ref (LinphoneAccountCbs *cbs) {
-	belle_sip_object_ref(cbs);
+	AccountCbs::toCpp(cbs)->ref();
 	return cbs;
 }
 
 void linphone_account_cbs_unref (LinphoneAccountCbs *cbs) {
-	belle_sip_object_unref(cbs);
+	AccountCbs::toCpp(cbs)->unref();
 }
 
 void* linphone_account_cbs_get_user_data (const LinphoneAccountCbs *cbs) {
-	return cbs->userData;
+	return AccountCbs::toCpp(cbs)->getUserData();
 }
 
 void linphone_account_cbs_set_user_data (LinphoneAccountCbs *cbs, void *ud) {
-	cbs->userData = ud;
+	AccountCbs::toCpp(cbs)->setUserData(ud);
 }
 
 LinphoneAccountCbsRegistrationStateChangedCb linphone_account_cbs_get_registration_state_changed (
-	const LinphoneAccountCbs *cbs
-) {
-	return cbs->registration_state_changed;
+	const LinphoneAccountCbs *cbs) {
+	return AccountCbs::toCpp(cbs)->getRegistrationStateChanged();
 }
 
 void linphone_account_cbs_set_registration_state_changed (
 	LinphoneAccountCbs *cbs,
-	LinphoneAccountCbsRegistrationStateChangedCb cb
-) {
-	cbs->registration_state_changed = cb;
+	LinphoneAccountCbsRegistrationStateChangedCb cb) {
+	AccountCbs::toCpp(cbs)->setRegistrationStateChanged(cb);
 }
