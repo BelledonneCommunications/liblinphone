@@ -612,13 +612,83 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 	linphone_core_enable_keep_alive(androidPlatformHelper->getCore()->getCCore(), enable ? TRUE : FALSE);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(JNIEnv *env, jobject thiz, jlong ptr, jstring param, jstring prid) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(JNIEnv *env, jobject thiz, jlong ptr, jstring jparam, jstring jprid) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
-	const char *paramC = GetStringUTFChars(env, param);
-	const char *pridC = GetStringUTFChars(env, prid);
-	linphone_core_update_push_notification_information(core, paramC, pridC);
-	ReleaseStringUTFChars(env, prid, pridC);
-	ReleaseStringUTFChars(env, param, paramC);
+	const char *paramC = GetStringUTFChars(env, jparam);
+	const char *pridC = GetStringUTFChars(env, jprid);
+	std::string param = paramC;
+	std::string prid = pridC;
+
+	const std::function<void ()> fun = [core, param, prid]() {
+		linphone_core_update_push_notification_information(core, param.c_str(), prid.c_str());
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+	
+	ReleaseStringUTFChars(env, jprid, pridC);
+	ReleaseStringUTFChars(env, jparam, paramC);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_stopCore(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_stop(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_leaveConference(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_leave_conference(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_pauseAllCalls(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_pause_all_calls(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_reloadSoundDevices(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_reload_sound_devices(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterBackground(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_enter_background(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_enterForeground(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_enter_foreground(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_ensureRegistered(JNIEnv *env, jobject thiz, jlong ptr) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	
+	const std::function<void ()> fun = [core]() {
+		linphone_core_ensure_registered(core);
+	};
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
 LINPHONE_END_NAMESPACE

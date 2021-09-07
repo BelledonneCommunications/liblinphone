@@ -1247,6 +1247,15 @@ void Core::doLater(const std::function<void ()> &something){
 	getPrivate()->doLater(something);
 }
 
+void Core::performOnIterateThread(const std::function<void ()> &something){
+	unsigned long currentThreadId = bctbx_thread_self();
+	if (currentThreadId == getCCore()->iterate_thread_id) {
+		something();
+	} else {
+		doLater(something);
+	}
+}
+
 belle_sip_source_t *Core::createTimer(const std::function<bool ()> &something, unsigned int milliseconds, const string &name){
 	return belle_sip_main_loop_create_cpp_timeout_2(getPrivate()->getMainLoop(), something, (unsigned)milliseconds, name.c_str());
 }
