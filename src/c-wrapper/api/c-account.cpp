@@ -135,24 +135,23 @@ int linphone_account_get_unread_chat_message_count(LinphoneAccount *account) {
 }
 
 void linphone_account_add_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs) {
-	Account::toCpp(account)->addCallbacks(linphone_account_cbs_ref(cbs));
+	Account::toCpp(account)->addCallbacks(AccountCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 void linphone_account_remove_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs) {
-	Account::toCpp(account)->removeCallbacks(cbs);
-	linphone_account_cbs_unref(cbs);
+	Account::toCpp(account)->removeCallbacks(AccountCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 LinphoneAccountCbs *linphone_account_get_current_callbacks(const LinphoneAccount *account) {
-	return Account::toCpp(account)->getCurrentCallbacks();
+	return Account::toCpp(account)->getCurrentCallbacks()->toC();
 }
 
 void linphone_account_set_current_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs) {
-	Account::toCpp(account)->setCurrentCallbacks(cbs);
+	Account::toCpp(account)->setCurrentCallbacks(AccountCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 const bctbx_list_t *linphone_account_get_callbacks_list(const LinphoneAccount *account) {
-	return Account::toCpp(account)->getCallbacksList();
+	return Account::toCpp(account)->getCCallbacksList();
 }
 
 void _linphone_account_notify_registration_state_changed(LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
