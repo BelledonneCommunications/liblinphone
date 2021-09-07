@@ -4217,7 +4217,7 @@ LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, c
 	}
 	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
 	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-	if (!found_cfg) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
+	if (!found_cfg && default_cfg && linphone_address_weak_equal(uri, linphone_proxy_config_get_identity_address(default_cfg))) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
 	return found_cfg;
 }
 
