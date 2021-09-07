@@ -248,6 +248,8 @@ public:
 	Address interpretUrl (const std::string &url) const;
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
 	void doLater(const std::function<void ()> &something);
+	// Execure specified lambda now if this method is called on the same thread as linphone_core_iterate(), otherwise do the same as doLater() above.
+	void performOnIterateThread(const std::function<void ()> &something);
 
 	/*
 	 * Run supplied std::function as a timer. It should return true if repeated, false otherwise.

@@ -81,7 +81,15 @@ public class CoreManager {
     private BluetoothHelper mBluetoothHelper;
     private ShutdownReceiver mShutdownReceiver;
 
+	// These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
+	private native void stopCore(long ptr);
+	private native void leaveConference(long ptr);
+	private native void pauseAllCalls(long ptr);
+	private native void reloadSoundDevices(long ptr);
+	private native void enterBackground(long ptr);
+	private native void enterForeground(long ptr);
+	private native void ensureRegistered(long ptr);
 
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
@@ -156,6 +164,10 @@ public class CoreManager {
     public Core getCore() {
         return mCore;
     }
+
+	public void ensureRegistered() {
+		ensureRegistered(mCore.getNativePointer());
+	}
 
     public void onLinphoneCoreStart() {
         if (mCore.isAutoIterateEnabled()) {
@@ -255,7 +267,7 @@ public class CoreManager {
 
     public void stop() {
         Log.i("[Core Manager] Stopping");
-        mCore.stop();
+        stopCore(mCore.getNativePointer());
     }
 
     public void onLinphoneCoreStop() {
@@ -326,10 +338,10 @@ public class CoreManager {
             if (pauseCallsWhenAudioFocusIsLost) {
                 if (mCore.isInConference()) {
                     Log.i("[Core Manager] App has lost audio focus, leaving conference");
-                    mCore.leaveConference();
+                    leaveConference(mCore.getNativePointer());
                 } else {
                     Log.i("[Core Manager] App has lost audio focus, pausing all calls");
-                    mCore.pauseAllCalls();
+                    pauseAllCalls(mCore.getNativePointer());
                 }
                 mAudioHelper.releaseCallAudioFocus();
             } else {
@@ -348,7 +360,7 @@ public class CoreManager {
                 public void run() {
                     Log.i("[Core Manager] Reloading sound devices");
                     if (mCore != null) {
-                        mCore.reloadSoundDevices();
+                        reloadSoundDevices(mCore.getNativePointer());
                     }
                 }
             }, 500);
@@ -367,7 +379,7 @@ public class CoreManager {
                 public void run() {
                     Log.i("[Core Manager] Reloading sound devices");
                     if (mCore != null) {
-                        mCore.reloadSoundDevices();
+                        reloadSoundDevices(mCore.getNativePointer());
                     }
                 }
             }, 500);
@@ -379,14 +391,14 @@ public class CoreManager {
     public void onBackgroundMode() {
         Log.i("[Core Manager] App has entered background mode");
         if (mCore != null) {
-            mCore.enterBackground();
+            enterBackground(mCore.getNativePointer());
         }
     }
 
     public void onForegroundMode() {
         Log.i("[Core Manager] App has left background mode");
         if (mCore != null) {
-            mCore.enterForeground();
+            enterForeground(mCore.getNativePointer());
         }
     }
 
