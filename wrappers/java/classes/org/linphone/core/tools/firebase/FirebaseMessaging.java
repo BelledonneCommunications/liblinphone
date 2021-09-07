@@ -70,7 +70,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
                     Log.i("[Push Notification] Notifying Core");
-                    core.ensureRegistered();
+                    CoreManager.instance().ensureRegistered();
                 } else {
                     Log.i("[Push Notification] Notifying application");
                     notifyAppPushReceivedWithoutCoreAvailable();
