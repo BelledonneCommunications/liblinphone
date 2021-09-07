@@ -320,8 +320,14 @@ void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReacha
 }
 
 void RemoteConferenceListEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
-	if (state == LinphoneRegistrationOk)
+	if (state == LinphoneRegistrationOk )
 		subscribe();
+	else if(state == LinphoneRegistrationCleared && lev && lev->op){// On cleared, restart subscription if the cleared proxy config is the current subscription
+		const LinphoneAddress * cfgAddress = linphone_proxy_config_get_contact(cfg);
+		LinphoneAddress * currentAddress = linphone_address_new(lev->op->getFrom().c_str());
+		if( linphone_address_weak_equal(currentAddress, cfgAddress))
+			unsubscribe();
+	}
 }
 
 void RemoteConferenceListEventHandler::onEnteringBackground () {
