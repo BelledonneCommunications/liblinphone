@@ -68,8 +68,8 @@ public:
 	int notifyReferState (SalCallOp *newCallOp);
 	bool compareOp (const SalCallOp *otherCallOp) const;
 	bool dialogRequestPending () const { return (belle_sip_dialog_request_pending(mDialog) != 0); }
-	const char *getLocalTag () { return belle_sip_dialog_get_local_tag(mDialog); }
-	const char *getRemoteTag () { return belle_sip_dialog_get_remote_tag(mDialog); }
+	const char *getLocalTag ();
+	const char *getRemoteTag ();
 	void setReplaces (const std::string &callId, const std::string &fromTag, const std::string &toTag);
 	void setSdpHandling (SalOpSDPHandling handling);
 
