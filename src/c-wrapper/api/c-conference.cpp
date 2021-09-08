@@ -50,31 +50,31 @@ const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConfere
 }
 
 void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_added, participant);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_added, participant);
 }
 
 void _linphone_conference_notify_participant_removed(LinphoneConference *conference, const LinphoneParticipant *participant) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_removed, participant);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_removed, participant);
 }
 
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_added, participant_device);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_added, participant_device);
 }
 
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_removed, participant_device);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_removed, participant_device);
 }
 
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_admin_status_changed, participant);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_admin_status_changed, participant);
 }
 
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_subject_changed, subject);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_subject_changed, subject);
 }
 
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_state_changed, newState);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_WITH_C(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_state_changed, newState);
 }
 
 LinphoneCore *linphone_conference_get_core (const LinphoneConference *conference) {
