@@ -63,9 +63,6 @@ Account::~Account () {
 	if (mServiceRouteAddress) linphone_address_unref(mServiceRouteAddress);
 	if (mContactAddress) linphone_address_unref(mContactAddress);
 	if (mContactAddressWithoutParams) linphone_address_unref(mContactAddressWithoutParams);
-
-	bctbx_list_for_each(mCallbacksList, (bctbx_list_iterate_func)linphone_account_cbs_unref);
-
 	releaseOps();
 }
 
@@ -253,10 +250,6 @@ void Account::setSipEtag (const std::string& sipEtag) {
 	mSipEtag = sipEtag;
 }
 
-void Account::setUserData (void *userData) {
-	mUserData = userData;
-}
-
 void Account::setCore (LinphoneCore *lc) {
 	mCore = lc;
 }
@@ -434,10 +427,6 @@ time_t Account::getDeletionDate () const {
 
 const std::string& Account::getSipEtag () const {
 	return mSipEtag;
-}
-
-void *Account::getUserData () const {
-	return mUserData;
 }
 
 LinphoneCore *Account::getCore () const {
@@ -1070,26 +1059,6 @@ void Account::resolveDependencies () {
 
 // -----------------------------------------------------------------------------
 
-void Account::addCallbacks (LinphoneAccountCbs *callbacks) {
-	mCallbacksList = bctbx_list_append(mCallbacksList, callbacks);
-}
-
-void Account::removeCallbacks (LinphoneAccountCbs *callbacks) {
-	mCallbacksList = bctbx_list_remove(mCallbacksList, callbacks);
-}
-
-void Account::setCurrentCallbacks (LinphoneAccountCbs *callbacks) {
-	mCurrentCallbacks = callbacks;
-}
-
-LinphoneAccountCbs* Account::getCurrentCallbacks () const {
-	return mCurrentCallbacks;
-}
-
-const bctbx_list_t* Account::getCallbacksList () const {
-	return mCallbacksList;
-}
-
 void Account::onInternationalPrefixChanged () {
 	/* Ensure there is a default account otherwise after invalidating friends maps we won't be able to recompute phone numbers */
 	/* Also it is useless to do it if the account being edited isn't the default one */
@@ -1137,6 +1106,15 @@ void Account::setConfig (LinphoneProxyConfig *config) {
 
 LinphoneAccountAddressComparisonResult Account::isServerConfigChanged() {
 	return isServerConfigChanged(mOldParams, mParams);
+}
+
+
+LinphoneAccountCbsRegistrationStateChangedCb AccountCbs::getRegistrationStateChanged()const{
+	return mRegistrationStateChangedCb;
+}
+
+void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb){
+	mRegistrationStateChangedCb = cb;
 }
 
 LINPHONE_END_NAMESPACE
