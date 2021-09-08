@@ -27,8 +27,56 @@
 #include "belle-sip/sipstack.h"
 #include <bctoolbox/defs.h>
 #include "shared_tester_functions.h"
+/*Case where the caller disconnects just after initiating the call (state outgoingprogress)*/
+static void recovered_call_on_network_switch_in_very_early_state(void) {
+	LinphoneCall *incoming_call;
+	const LinphoneCallParams *remote_params;
+	
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 
-/*Case where the caller disconnects just after initiating the call*/
+	/* This is to activate media relay on Flexisip server*/
+	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
+	linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
+
+	
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1))) goto end;
+	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1))) goto end;
+
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NetworkReachableFalse, 1);
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NetworkReachableTrue, 2);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingRinging, 1, int, "%i");
+	
+	incoming_call = linphone_core_get_current_call(pauline->lc);
+	remote_params = linphone_call_get_remote_params(incoming_call);
+	BC_ASSERT_PTR_NOT_NULL(remote_params);
+	if (remote_params != NULL) {
+		const char *replaces_header = linphone_call_params_get_custom_header(remote_params, "Replaces");
+		BC_ASSERT_PTR_NOT_NULL(replaces_header);
+	}
+	linphone_call_accept(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingReceived, 1, int, "%i");
+	
+	liblinphone_tester_check_rtcp(marie,pauline);
+	
+	linphone_call_terminate(incoming_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+end:
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+/*Case where the caller disconnects just after initiating the call (state outgoingRinging)*/
 static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager* callerMgr) {
 	const LinphoneCallParams *remote_params;
 	LinphoneCall *incoming_call;
@@ -835,6 +883,7 @@ static test_t call_recovery_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early state 2", recovered_call_on_network_switch_in_early_state_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 3", recovered_call_on_network_switch_in_early_state_3, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 4", recovered_call_on_network_switch_in_early_state_4, "CallRecovery"),
+	TEST_ONE_TAG("Recovered call on network switch in very early state", recovered_call_on_network_switch_in_very_early_state, "CallRecovery"),
 #if 0 // enable this test when library has support for it
 	TEST_ONE_TAG("Recovered call on socket disconnection in early state", recovered_call_on_socket_disconnection_in_early_state, "CallRecovery"),
 #endif
