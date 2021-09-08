@@ -79,11 +79,9 @@ if (ENABLE_DB_STORAGE)
 	if (SOCI_FOUND)
 		#take care of the order  for static link
 		if(APPLE OR ANDROID)
-			list(APPEND INTERFACE_LIBS ${SOCI_sqlite3_PLUGIN})
-			list(APPEND LINK_LIBS ${SOCI_sqlite3_PLUGIN})
+			list(APPEND LINK_LIBS soci_sqlite3)
 		endif()
-		list(APPEND INTERFACE_LIBS soci)
-		list(APPEND LINK_LIBS ${SOCI_LIBRARIES})
+		list(APPEND LINK_LIBS soci_core)
 	endif()
 endif()
 if(SQLITE3_FOUND)
@@ -669,7 +667,7 @@ if(ENABLE_SHARED)
 		set_target_properties(linphone PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
-			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+			MACOSX_FRAMEWORK_INFO_PLIST "${PROJECT_SOURCE_DIR}/build/osx/Info.plist.in"
 			RESOURCE "${LINPHONE_RESOURCES}"
 			PUBLIC_HEADER "${one_header_file}"
 		)
