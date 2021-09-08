@@ -21,6 +21,7 @@
 #define _L_C_WRAPPER_H_
 
 #include "linphone/api/c-types.h"
+#include "logger/logger.h"
 
 /*
  * This include file provides routines for C to C++ mapping of objects within the library.
@@ -77,10 +78,12 @@
 	do{ \
 		std::list< std::shared_ptr< cppType ## Cbs > > callbacksCopy = cppObject->getCallbacksList(); \
 		for (auto & cbs : callbacksCopy) { \
-			cppObject->setCurrentCallbacks(cbs); \
-			auto cb = cbGetter (cbs->toC()); \
-			if (cb) \
-				cb(cppObject->toC(), __VA_ARGS__); \
+			if (cbs->isActive()){ \
+				cppObject->setCurrentCallbacks(cbs); \
+				auto cb = cbGetter (cbs->toC()); \
+				if (cb) \
+					cb(cppObject->toC(), __VA_ARGS__); \
+			}\
 		} \
 		cppObject->setCurrentCallbacks(nullptr); \
 	}while(0)
@@ -89,10 +92,12 @@
 	do{ \
 		std::list< std::shared_ptr< cppType ## Cbs > > callbacksCopy = cppObject->getCallbacksList(); \
 		for (auto & cbs : callbacksCopy) { \
-			cppObject->setCurrentCallbacks(cbs); \
-			auto cb = cbGetter (cbs->toC()); \
-			if (cb) \
-				cb(cppObject->toC()); \
+			if (cbs->isActive()){ \
+				cppObject->setCurrentCallbacks(cbs); \
+				auto cb = cbGetter (cbs->toC()); \
+				if (cb) \
+					cb(cppObject->toC()); \
+			}\
 		} \
 		cppObject->setCurrentCallbacks(nullptr); \
 	}while(0)
@@ -109,6 +114,21 @@ private:
 };
 
 /*
+ * Base class for all '*Cbs' classes.
+ */
+class Callbacks : public UserDataAccessor{
+	public:
+		inline void setActive(bool active){
+			mIsActive = active;
+		}
+		inline bool isActive()const{
+			return mIsActive;
+		}
+	private:
+		bool mIsActive = true;
+};
+
+/*
  * Template class for classes that hold callbacks (such as LinphoneCallCbs, LinphoneAccountCbs etc.
  * The invocation of callbacks can be done with the LINPHONE_HYBRID_OBJECT_INVOKE_CBS() macro.
  */
@@ -119,10 +139,21 @@ class CallbacksHolder{
 			if (mCCallbacksList) bctbx_list_free(mCCallbacksList);
 		}
 		void addCallbacks (const std::shared_ptr<_CppCbsType> &callbacks){
-			mCallbacksList.push_back(callbacks);
+			if (find(mCallbacksList.begin(), mCallbacksList.end(), callbacks) == mCallbacksList.end()){
+				mCallbacksList.push_back(callbacks);
+				callbacks->setActive(true);
+			}else{
+				lError() << "Rejected Callbacks " << typeid(_CppCbsType).name() << " [" << (void*) callbacks.get() << "] added twice.";
+			}
 		}
 		void removeCallbacks (const std::shared_ptr<_CppCbsType> &callbacks){
-			mCallbacksList.remove(callbacks);
+			auto it = find(mCallbacksList.begin(), mCallbacksList.end(), callbacks);
+			if (it != mCallbacksList.end()){
+				mCallbacksList.erase(it);
+				callbacks->setActive(false);
+			}else{
+				lError() << "Attempt to remove " << typeid(_CppCbsType).name() << " [" << (void*) callbacks.get() << "] that does not exist.";
+			}
 		}
 		void setCurrentCallbacks (const std::shared_ptr<_CppCbsType> &callbacks){
 			mCurrentCallbacks = callbacks;
@@ -140,7 +171,7 @@ class CallbacksHolder{
 			}
 			for (auto & cbs : mCallbacksList){
 				/* no need to take a ref, mCallbacksList already has one. */
-				mCCallbacksList = bctbx_list_append(mCCallbacksList, cbs.get());
+				mCCallbacksList = bctbx_list_append(mCCallbacksList, cbs->toC());
 			}
 			return mCCallbacksList;
 		}

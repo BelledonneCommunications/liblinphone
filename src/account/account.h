@@ -177,7 +177,7 @@ private:
 };
 
 
-class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>, public UserDataAccessor {
+class AccountCbs : public bellesip::HybridObject<LinphoneAccountCbs, AccountCbs>, public Callbacks {
 	public:
 		LinphoneAccountCbsRegistrationStateChangedCb getRegistrationStateChanged()const;
 		void setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb);
