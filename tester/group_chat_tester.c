@@ -4324,13 +4324,15 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
-	LinphoneChatRoom *marieCr = NULL, *paulineCr = NULL, *chloeCr = NULL;
+	LinphoneCoreManager *chloe2 = linphone_core_manager_create("chloe_rc");
+	LinphoneChatRoom *marieCr = NULL, *paulineCr = NULL, *chloeCr = NULL, *chloe2Cr = NULL;
 	const LinphoneAddress *confAddr = NULL;
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, chloe);
+	coresManagerList = bctbx_list_append(coresManagerList, chloe2);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -4338,28 +4340,35 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	stats initialChloeStats = chloe->stat;
+	stats initialChloe2Stats = chloe2->stat;
+	bctbx_list_t *chloeMessages = NULL, *chloe2Messages = NULL, *chloe2DisplayedMessages = NULL;
+	stats chloeMessagesStats = {0}, chloe2MessagesStats = {0}, chloe2DisplayedMessagesStats = {0};
+	int messageCount = 0;
 
-	// Enable IMDN
+// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe->lc));
-
-	// Marie creates a new group chat room
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe2->lc));
+	
+// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
 	confAddr = linphone_chat_room_get_conference_address(marieCr);
 	if (!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
 
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
-
-	// Check that the chat room is correctly created on Chloe's side and that the participants are added
+// Check that the chat room is correctly created on Chloe's side and that the participants are added
 	chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloeCr)) goto end;
+// Check that the chat room is correctly created on Chloe2's side and that the participants are added
+	chloe2Cr = check_creation_chat_room_client_side(coresList, chloe2, &initialChloe2Stats, confAddr, initialSubject, 2, FALSE);
+	if (!BC_ASSERT_PTR_NOT_NULL(chloe2Cr)) goto end;
 
-	// Chloe begins composing a message
+// Chloe begins composing a message
 	const char *chloeTextMessage = "Hello";
 	const char *chloeTextMessage2 = "Long time no talk";
 	const char *chloeTextMessage3 = "How are you?";
@@ -4368,16 +4377,40 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 	LinphoneChatMessage *chloeMessage3 = _send_message(chloeCr, chloeTextMessage3);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 3, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 3, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe2->stat.number_of_LinphoneMessageReceived, initialChloe2Stats.number_of_LinphoneMessageReceived + 3, 5000));
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
+	LinphoneChatMessage *chloe2LastMsg = chloe2->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(chloe2LastMsg))
+		goto end;
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage3);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(chloe2LastMsg), chloeTextMessage3);
 	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 	linphone_address_unref(chloeAddr);
 
-	// Mark the messages as read on Marie's and Pauline's sides
+// Mark as read on Chloe and Chloe2 should not impact the message status
+	linphone_chat_room_mark_as_read(chloeCr);
+	linphone_chat_room_mark_as_read(chloe2Cr);
+// Mark the messages as read on Marie's sides
 	linphone_chat_room_mark_as_read(marieCr);
+	wait_for_list(coresList, 0, 1, 2000);
+
+// Get Chloe2 messages and use them to set callbacks. Check callback status and messages status
+	chloe2Messages = liblinphone_tester_get_messages_and_states(chloe2Cr, &messageCount, &chloe2MessagesStats);// Do not unref chloe2Messages to keep callbacks
+	if (!BC_ASSERT_PTR_NOT_NULL(chloe2Messages))
+		goto end;
+	for(bctbx_list_t * elem = chloe2Messages ; elem != NULL ; elem = bctbx_list_next(elem))
+		linphone_chat_message_cbs_set_msg_state_changed(linphone_chat_message_get_callbacks((LinphoneChatMessage*)elem->data), liblinphone_tester_chat_message_msg_state_changed);
+
+// All participants didn't read messages yet (only Marie) : number_of_LinphoneMessageDisplayed == displayedCount
+	BC_ASSERT_EQUAL(chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed, int, "%d");
+	BC_ASSERT_EQUAL(chloe2->stat.number_of_LinphoneMessageDisplayed, initialChloe2Stats.number_of_LinphoneMessageDisplayed, int, "%d");
+	BC_ASSERT_EQUAL(chloe2MessagesStats.number_of_LinphoneMessageDisplayed, 0, int, "%d");
+	BC_ASSERT_EQUAL(messageCount, 3, int, "%d");
+
+// Mark the messages as read on Pauline's sides
 	if (read_while_offline) {
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
 		linphone_chat_room_mark_as_read(paulineCr);
@@ -4386,20 +4419,42 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 	} else {
 		linphone_chat_room_mark_as_read(paulineCr);
 	}
-	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 5000));
-	BC_ASSERT_EQUAL(chloe->stat.number_of_LinphoneMessageDeliveredToUser, 0, int, "%d");
+
+// Messages have been read
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 3, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe2->stat.number_of_LinphoneMessageDisplayed, initialChloe2Stats.number_of_LinphoneMessageDisplayed + 3, 5000));
+	BC_ASSERT_EQUAL(chloe->stat.number_of_LinphoneMessageDeliveredToUser, 3, int, "%d");	// 3 for sending to chloe2
+	
 	if (read_while_offline) {
 		wait_for_list(coresList, 0, 1, 2000); // To prevent memory leak
 	}
+	wait_for_list(coresList, 0, 1, 2000);
+	
+// Test internal data on Chloe2 and check consistency between callback and messages
+	chloe2DisplayedMessages = liblinphone_tester_get_messages_and_states(chloe2Cr, &messageCount, &chloe2DisplayedMessagesStats);
+	BC_ASSERT_EQUAL(chloe2DisplayedMessagesStats.number_of_LinphoneMessageDisplayed, 3, int, "%d");// All messages have been read
+	BC_ASSERT_EQUAL(messageCount, 3, int, "%d");
+// Test internal data on Chloe
+	chloeMessages = liblinphone_tester_get_messages_and_states(chloeCr, &messageCount, &chloeMessagesStats);
+	if (!BC_ASSERT_PTR_NOT_NULL(chloeMessages))
+		goto end;
+	BC_ASSERT_EQUAL(chloeMessagesStats.number_of_LinphoneMessageDisplayed, 3, int, "%d");// All messages have been read
+	BC_ASSERT_EQUAL(messageCount, 3, int, "%d");
 
 	linphone_chat_message_unref(chloeMessage3);
 	linphone_chat_message_unref(chloeMessage2);
 	linphone_chat_message_unref(chloeMessage);
 
 end:
+
+	if(chloeMessages) bctbx_list_free_with_data(chloeMessages, (bctbx_list_free_func)linphone_chat_message_unref);
+	if(chloe2Messages) bctbx_list_free_with_data(chloe2Messages, (bctbx_list_free_func)linphone_chat_message_unref);
+	if(chloe2DisplayedMessages) bctbx_list_free_with_data(chloe2DisplayedMessages, (bctbx_list_free_func)linphone_chat_message_unref);
+	
 	// Clean db from chat room
 	if (marieCr) linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	if (chloeCr) linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
+	if (chloe2Cr) linphone_core_manager_delete_chat_room(chloe2, chloe2Cr, coresList);
 	if (paulineCr) linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
 	bctbx_list_free(coresList);
@@ -4407,6 +4462,7 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(chloe);
+	linphone_core_manager_destroy(chloe2);
 }
 
 static void aggregated_imdn_for_group_chat_room (void) {

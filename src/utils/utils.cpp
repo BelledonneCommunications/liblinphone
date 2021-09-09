@@ -185,6 +185,22 @@ string Utils::trim (const string &str) {
 	return (itBack <= itFront ? string() : string(itFront, itBack));
 }
 
+std::string Utils::normalizeFilename(const std::string& str){
+	std::string result(str);
+#ifdef _WIN32
+	const std::string illegalCharacters = "\\/:*\"<>|";
+#elif defined(__APPLE__)
+	const std::string illegalCharacters = ":/";
+#else
+	const std::string illegalCharacters = "/";
+#endif
+// Invisible and illegal characters should not be part of a filename
+	result.erase(std::remove_if(result.begin(), result.end(), [illegalCharacters](const unsigned char& c){
+		return c < ' ' || illegalCharacters.find((char)c) != std::string::npos;
+	}), result.end());
+	return result;
+}
+
 // -----------------------------------------------------------------------------
 
 tm Utils::getTimeTAsTm (time_t t) {
