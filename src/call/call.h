@@ -25,7 +25,7 @@
 #include "core/core-accessor.h"
 #include "object/object.h"
 
-#include <belle-sip/object++.hh>
+#include <c-wrapper/c-wrapper.h>
 #include "linphone/api/c-types.h"
 
 #include "object/object-p.h"
@@ -51,7 +51,28 @@ namespace MediaConference {
 	class Conference;
 }
 
-class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>, public CoreAccessor, public CallSessionListener {
+class CallCbs : public bellesip::HybridObject<LinphoneCallCbs, CallCbs>, public Callbacks{
+public:
+	LinphoneCallCbsDtmfReceivedCb dtmfReceivedCb;
+	LinphoneCallCbsEncryptionChangedCb encryptionChangedCb;
+	LinphoneCallCbsInfoMessageReceivedCb infoMessageReceivedCb;
+	LinphoneCallCbsStateChangedCb stateChangedCb;
+	LinphoneCallCbsStatsUpdatedCb statsUpdatedCb;
+	LinphoneCallCbsTransferStateChangedCb transferStateChangedCb;
+	LinphoneCallCbsAckProcessingCb ackProcessing;
+	LinphoneCallCbsTmmbrReceivedCb tmmbrReceivedCb;
+	LinphoneCallCbsSnapshotTakenCb snapshotTakenCb;
+	LinphoneCallCbsNextVideoFrameDecodedCb nextVideoFrameDecodedCb;
+	LinphoneCallCbsCameraNotWorkingCb cameraNotWorkingCb;
+	LinphoneCallCbsAudioDeviceChangedCb audioDeviceChangedCb;
+};
+
+
+class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>, 
+				public CoreAccessor, 
+				public CallSessionListener,
+				public CallbacksHolder<CallCbs>,
+				public UserDataAccessor {
 	friend class CallSessionPrivate;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
@@ -269,17 +290,7 @@ public:
 	bool attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const;
 	void setConference (LinphoneConference *ref);
 	MSAudioEndpoint *getEndpoint () const;
-	void setEndpoint (MSAudioEndpoint *endpoint);
-	bctbx_list_t *getCallbacksList () const;
-	LinphoneCallCbs *getCurrentCallbacks () const;
-	void setCurrentCallbacks (LinphoneCallCbs *cbs);
-	void addCallbacks (LinphoneCallCbs *cbs);
-	void removeCallbacks (LinphoneCallCbs *cbs);
-	
-	void *getUserData () const;
-	void setUserData (void *ud);
-	
-
+	void setEndpoint (MSAudioEndpoint *endpoint);	
 	bool canSoundResourcesBeFreed () const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 
@@ -291,17 +302,12 @@ private:
 	bool mPlayingRingbackTone = false;
 
 	BackgroundTask mBgTask;
-
-	bctbx_list_t *mCallbacks = nullptr;
-	LinphoneCallCbs *mCurrentCbs = nullptr;
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
 	void changeSubjectInLocalConference(SalCallOp *op);
 	void terminateConference();
 	void cleanupSessionAndUnrefCObjectCall();
-	
-	void *mUserData = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
