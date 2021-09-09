@@ -88,7 +88,7 @@ const char *linphone_conference_info_get_subject(const LinphoneConferenceInfo *c
 }
 
 void linphone_conference_info_set_subject(LinphoneConferenceInfo *conference_info, const char *subject) {
-	ConferenceInfo::toCpp(conference_info)->setDescription(L_C_TO_STRING(subject));
+	ConferenceInfo::toCpp(conference_info)->setSubject(L_C_TO_STRING(subject));
 }
 
 const char *linphone_conference_info_get_description(const LinphoneConferenceInfo *conference_info) {

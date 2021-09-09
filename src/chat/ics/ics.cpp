@@ -92,7 +92,7 @@ std::string Ics::Event::asString () const {
 	output << "BEGIN:VEVENT\r\n";
 
 	output << setfill('0') << "DTSTART:"
-		<< setw(4) << mDateTimeStart.tm_year
+		<< setw(4) << (mDateTimeStart.tm_year + 1900)
 		<< setw(2) << (mDateTimeStart.tm_mon + 1)
 		<< setw(2) << mDateTimeStart.tm_mday
 		<< "T" 

@@ -54,7 +54,7 @@ namespace Ics {
 
 		const tm getDateStart () {
 			tm time = {0};
-			time.tm_year = mYear;
+			time.tm_year = mYear - 1900;
 			time.tm_mon = mMonth - 1;
 			time.tm_mday = mDay;
 			time.tm_hour = mHour;
