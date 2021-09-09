@@ -51,20 +51,33 @@ struct X3dhServerPostContext {
 
 void LimeManager::processIoError (void *data, const belle_sip_io_error_event_t *event) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
-	(userData->responseProcess)(0, vector<uint8_t>{});
+	try  {
+		(userData->responseProcess)(0, vector<uint8_t>{});
+	} catch (const exception &e) {
+		lError() << "Processing IoError on lime server request triggered an exception: "<<e.what();
+	}
 	delete(userData);
 }
 
 void LimeManager::processResponse (void *data, const belle_http_response_event_t *event) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
+
 	if (event->response){
 		auto code=belle_http_response_get_status_code(event->response);
 		belle_sip_message_t *message = BELLE_SIP_MESSAGE(event->response);
 		auto body = reinterpret_cast<const uint8_t *>(belle_sip_message_get_body(message));
 		auto bodySize = belle_sip_message_get_body_size(message);
-		(userData->responseProcess)(code, vector<uint8_t>{body, body+bodySize});
+		try  { // the response processing might generate an exception, make sure it will not flow up to belle-sip otherwise it will cause an abort
+			(userData->responseProcess)(code, vector<uint8_t>{body, body+bodySize});
+		} catch (const exception &e) {
+			lError() << "Processing lime server response triggered an exception: "<<e.what();
+		}
 	} else {
-		(userData->responseProcess)(0, vector<uint8_t>{});
+		try  {
+			(userData->responseProcess)(0, vector<uint8_t>{});
+		} catch (const exception &e) {
+			lError() << "Processing empty response event on lime server request triggered an exception: "<<e.what();
+		}
 	}
 	delete(userData);
 }
