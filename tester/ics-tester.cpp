@@ -88,7 +88,7 @@ static void build_ics () {
 	event->setXConfUri("sip:videoconf1@sip.linphone.org");
 
 	tm date = {0};
-	date.tm_year = 2021;
+	date.tm_year = 2021 - 1900;
 	date.tm_mon = 7;
 	date.tm_mday = 22;
 	date.tm_hour = 10;
