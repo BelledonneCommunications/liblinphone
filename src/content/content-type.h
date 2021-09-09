@@ -85,6 +85,7 @@ public:
 	static const ContentType Sdp;
 	static const ContentType SipFrag;
 	static const ContentType VoiceRecording;
+	static const ContentType Icalendar;
 
 private:
 	L_DECLARE_PRIVATE(ContentType);

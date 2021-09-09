@@ -157,6 +157,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/cpim/parser/cpim-parser.h
 	chat/encryption/encryption-engine.h
 	chat/encryption/legacy-encryption-engine.h
+	chat/ics/ics.h
+	chat/ics/parser/ics-parser.h
 	chat/modifier/chat-message-modifier.h
 	chat/modifier/cpim-chat-message-modifier.h
 	chat/modifier/encryption-chat-message-modifier.h
@@ -167,6 +169,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/is-composing.h
 	conference/conference-enums.h
 	conference/conference-id.h
+	conference/conference-info.h
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
@@ -346,6 +349,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-chat-room.cpp
 	c-wrapper/api/c-content.cpp
 	c-wrapper/api/c-conference-cbs.cpp
+	c-wrapper/api/c-conference-info.cpp
 	c-wrapper/api/c-conference.cpp
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
@@ -380,6 +384,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/cpim/message/cpim-message.cpp
 	chat/cpim/parser/cpim-parser.cpp
 	chat/encryption/legacy-encryption-engine.cpp
+	chat/ics/ics.cpp
+	chat/ics/parser/ics-parser.cpp
 	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
@@ -388,6 +394,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference-enums.cpp
 	conference/conference-id.cpp
+	conference/conference-info.cpp
 	conference/conference.cpp
 	conference/conference-interface.cpp
 	conference/notify-conference-listener.cpp
@@ -634,6 +641,7 @@ if(ENABLE_SHARED)
 	)
 	set(LINPHONE_RESOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ics_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
