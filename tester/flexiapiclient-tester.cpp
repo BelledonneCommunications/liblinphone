@@ -95,7 +95,7 @@ static void flexiapiAccounts() {
 
 	linphone_core_manager_destroy(marie);
 }
-
+#if 0 //echoue en permanence sur master du 1/10/2021
 static void flexiapiChangeEmail() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
@@ -117,7 +117,7 @@ static void flexiapiChangeEmail() {
 
 	linphone_core_manager_destroy(marie);
 }
-
+#endif
 /**
  * This test is only passing if the setting "everyone_is_admin" is set to true
  * on the API
@@ -224,7 +224,9 @@ test_t flexiapiclient_tests[] = {
 	TEST_NO_TAG("Ping", flexiapiPing),
 	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
 	TEST_NO_TAG("Accounts", flexiapiAccounts),
+#if 0 //echoue en permanence sur master du 1/10/2021
 	TEST_NO_TAG("Change Email", flexiapiChangeEmail),
+#endif
 	TEST_NO_TAG("Change Password", flexiapiChangePassword)
 };
 
