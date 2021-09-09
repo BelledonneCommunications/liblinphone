@@ -536,6 +536,7 @@ LinphoneCoreManager *get_manager(LinphoneCore *lc);
 const char *liblinphone_tester_get_subscribe_content(void);
 const char *liblinphone_tester_get_notify_content(void);
 void liblinphone_tester_chat_message_state_change(LinphoneChatMessage* msg,LinphoneChatMessageState state,void* ud);
+bool_t liblinphone_tester_chat_message_msg_update_stats(stats * counters, LinphoneChatMessageState state);
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
@@ -543,6 +544,9 @@ void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg)
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
 void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
+bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats);	// Return all LinphoneChatMessage and count states
+
+
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);
