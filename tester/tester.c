@@ -2041,7 +2041,7 @@ void compare_files(const char *path1, const char *path2) {
 	int64_t s1 = bctbx_file_size(f1);
 	int64_t s2 = bctbx_file_size(f2);
 
-	BC_ASSERT_TRUE(s1==s2);
+	BC_ASSERT_EQUAL((long)s2, (long)s1, long, "%ld");
 	BC_ASSERT_TRUE(s1 != BCTBX_VFS_ERROR);
 	if (s1 != s2 || s1 == BCTBX_VFS_ERROR) return;
 	ssize_t fileSize = (ssize_t)s1;
@@ -2721,22 +2721,30 @@ void tester_file_transfer_send_2(LinphoneChatMessage *msg, LinphoneContent* cont
 /**
  * function invoked to report file transfer progress.
  * */
-void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
+
+
+void file_transfer_progress_indication_base(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total, bool_t reset_num_of_file_transfer) {
 	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
 	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
 	int progress = (int)((offset * 100)/total);
 	LinphoneCore *lc = linphone_chat_message_get_core(msg);
 	stats *counters = get_stats(lc);
 	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+	BC_ASSERT_LOWER(progress, 100, int,"%i");
+	BC_ASSERT_GREATER(progress, 0, int,"%i");
+	if (progress > 100 || progress < 0) {
+		bctbx_error("Unexpected progress value. offset = [%zu], total=[%zu]", offset, total);
+	}
 
-	if (progress == 0) {
+	if (reset_num_of_file_transfer && progress == 0) {
 		counters->number_of_LinphoneFileTransfer = 0;
 	}
 	counters->number_of_LinphoneFileTransfer++;
 
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
-		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
+		"File transfer name [%s] [%d%%] %s of type [%s/%s] %s [%s] \n",
+		linphone_content_get_name(content),
 		progress,
 		linphone_chat_message_is_outgoing(msg) ? "sent" : "received",
 		linphone_content_get_type(content),
@@ -2747,33 +2755,15 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
 	counters->progress_of_LinphoneFileTransfer = progress;
 	if (progress == 100) {
 		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
-		BC_ASSERT_LOWER(counters->number_of_LinphoneFileTransfer, 100, int, "%d");
 	}
 	free(address);
 }
-void file_transfer_progress_indication_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
-	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
-	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
-	int progress = (int)((offset * 100)/total);
-	LinphoneCore *lc = linphone_chat_message_get_core(msg);
-	stats *counters = get_stats(lc);
-	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
+	file_transfer_progress_indication_base(msg, content, offset, total, TRUE);
+}
 
-	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
-	bctbx_message(
-		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
-		progress,
-		linphone_chat_message_is_outgoing(msg) ? "sent" : "received",
-		linphone_content_get_type(content),
-		linphone_content_get_subtype(content),
-		linphone_chat_message_is_outgoing(msg) ? "to" : "from",
-		address
-	);
-	counters->progress_of_LinphoneFileTransfer = progress;
-	if (progress == 100) {
-		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
-	}
-	free(address);
+void file_transfer_progress_indication_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
+	file_transfer_progress_indication_base(msg, content, offset, total, FALSE);
 }
 
 /**
