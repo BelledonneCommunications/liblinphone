@@ -2041,7 +2041,7 @@ void compare_files(const char *path1, const char *path2) {
 	int64_t s1 = bctbx_file_size(f1);
 	int64_t s2 = bctbx_file_size(f2);
 
-	BC_ASSERT_TRUE(s1==s2);
+	BC_ASSERT_EQUAL(s1, s2, int64_t, "%lld");
 	BC_ASSERT_TRUE(s1 != BCTBX_VFS_ERROR);
 	if (s1 != s2 || s1 == BCTBX_VFS_ERROR) return;
 	ssize_t fileSize = (ssize_t)s1;
