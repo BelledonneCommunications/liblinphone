@@ -309,6 +309,7 @@ set(SOURCE_FILES_CXX
 	remote-provisioning-tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
+	ics-tester.cpp
 	multipart-tester.cpp
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
