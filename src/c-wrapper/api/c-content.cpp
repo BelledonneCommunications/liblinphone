@@ -388,6 +388,16 @@ bool_t linphone_content_is_voice_recording (const LinphoneContent *content) {
 	return false;
 }
 
+bool_t linphone_content_is_icalendar (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile()) {
+		return c->getContentType().strongEqual(LinphonePrivate::ContentType::Icalendar);
+	} else if (c->isFileTransfer()) {
+		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFileContentType().strongEqual(LinphonePrivate::ContentType::Icalendar);
+	}
+	return false;
+}
+
 bool_t linphone_content_is_file (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	return c->isFile(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list
