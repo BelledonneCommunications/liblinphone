@@ -521,41 +521,34 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 			stream.rtcp_addr.clear();
 		}
 
-		if ((strlen(ice_check_list_local_pwd(cl)) != desc->ice_pwd.length()) || (desc->ice_pwd.compare(ice_check_list_local_pwd(cl)) != 0) || usePerStreamUfragPassword) {
+		if (desc->ice_pwd.compare(ice_check_list_local_pwd(cl)) != 0 || usePerStreamUfragPassword) {
 			stream.ice_pwd = L_C_TO_STRING(ice_check_list_local_pwd(cl));
 		} else {
 			stream.ice_pwd.clear();
 		}
 
-		if ((strlen(ice_check_list_local_ufrag(cl)) != desc->ice_ufrag.length()) || (desc->ice_ufrag.compare(ice_check_list_local_ufrag(cl))) || usePerStreamUfragPassword) {
+		if (desc->ice_ufrag.compare(ice_check_list_local_ufrag(cl)) != 0 || usePerStreamUfragPassword) {
 			stream.ice_ufrag = L_C_TO_STRING(ice_check_list_local_ufrag(cl));
 		} else {
 			stream.ice_ufrag.clear();
 		}
 
 		stream.ice_mismatch = ice_check_list_is_mismatch(cl);
-		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
+		list<IceCandidate*> candidatesToInclude;
+		if ((ice_check_list_state(cl) == ICL_Running)){
+			// Include all candidates
+			for (bctbx_list_t *elem = cl->local_candidates; elem != nullptr; elem = elem->next){
+				IceCandidate *iceCandidate = static_cast<IceCandidate *>(elem->data);
+				candidatesToInclude.push_back(iceCandidate);
+			}
+		}else if (ice_check_list_state(cl) == ICL_Completed){
+			// Only include the nominated candidates.
+			if (rtpCandidate) candidatesToInclude.push_back(rtpCandidate);
+			if (rtcpCandidate) candidatesToInclude.push_back(rtcpCandidate);
+		}
+		if (!candidatesToInclude.empty()){
 			stream.ice_candidates.clear();
-			for (int j = 0; j < (int)bctbx_list_size(cl->local_candidates); j++) {
-				IceCandidate *iceCandidate = static_cast<IceCandidate *>(bctbx_list_nth_data(cl->local_candidates, j));
-				std::string defaultAddr = std::string();
-				int defaultPort = 0;
-				if (iceCandidate->componentID == 1) {
-					defaultAddr = stream.rtp_addr;
-					defaultPort = stream.rtp_port;
-				} else if (iceCandidate->componentID == 2) {
-					defaultAddr = stream.rtcp_addr;
-					defaultPort = stream.rtcp_port;
-				} else
-					continue;
-				if (defaultAddr.empty() == false)
-					defaultAddr = desc->addr;
-				// Only include the candidates matching the default destination for each component of the stream if the state is Completed as specified in RFC5245 section 9.1.2.2.
-				if (
-					ice_check_list_state(cl) == ICL_Completed &&
-					!((iceCandidate->taddr.port == defaultPort) && (strlen(iceCandidate->taddr.ip) == defaultAddr.length()) && (defaultAddr.compare(iceCandidate->taddr.ip) == 0))
-				)
-					continue;
+			for (auto iceCandidate : candidatesToInclude){
 				SalIceCandidate salCandidate;
 				salCandidate.foundation = L_C_TO_STRING(iceCandidate->foundation);
 				salCandidate.componentID = iceCandidate->componentID;
@@ -566,13 +559,11 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 				if (iceCandidate->base && (iceCandidate->base != iceCandidate)) {
 					salCandidate.raddr = L_C_TO_STRING(iceCandidate->base->taddr.ip);
 					salCandidate.rport = iceCandidate->base->taddr.port;
-				} else {
-					salCandidate.raddr.clear();
-					salCandidate.rport = 0;
 				}
 				stream.ice_candidates.push_back(salCandidate);
 			}
 		}
+		
 		if ((ice_check_list_state(cl) == ICL_Completed) && (ice_session_role(mIceSession) == IR_Controlling)) {
 			stream.ice_remote_candidates.clear();
 			if (ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate)) {
@@ -862,7 +853,7 @@ bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localA
 	do{
 		uint8_t buffer[128];
 		struct sockaddr_storage ss;
-		socklen_t slen;
+		socklen_t slen = sizeof(ss);
 		error = bctbx_recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss, &slen);
 		if (error > 0){
 			result = true;
