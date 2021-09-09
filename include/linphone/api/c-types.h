@@ -158,6 +158,13 @@ typedef struct _LinphoneConferenceParams LinphoneConferenceParams;
  */
 typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
 
+/**
+ * @brief Object defining all informations of a conference
+ *
+ * @ingroup conference
+ */
+typedef struct _LinphoneConferenceInfo LinphoneConferenceInfo;
+
 // -----------------------------------------------------------------------------
 // Participants.
 // -----------------------------------------------------------------------------
