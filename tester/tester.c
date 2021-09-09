@@ -2576,39 +2576,58 @@ void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCall
 	}
 }
 
-void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
-	LinphoneCore *lc = linphone_chat_message_get_core(msg);
-	stats *counters = get_stats(lc);
+bool_t liblinphone_tester_chat_message_msg_update_stats(stats * counters, LinphoneChatMessageState state){
+	bool_t notHandled = FALSE;
 	switch (state) {
 		case LinphoneChatMessageStateIdle:
-			return;
+			break;
 		case LinphoneChatMessageStateDelivered:
 			counters->number_of_LinphoneMessageDelivered++;
-			return;
+			break;
 		case LinphoneChatMessageStateNotDelivered:
 			counters->number_of_LinphoneMessageNotDelivered++;
-			return;
+			break;
 		case LinphoneChatMessageStateInProgress:
 			counters->number_of_LinphoneMessageInProgress++;
-			return;
+			break;
 		case LinphoneChatMessageStateFileTransferError:
 			counters->number_of_LinphoneMessageNotDelivered++;
 			counters->number_of_LinphoneMessageFileTransferError++;
-			return;
+			break;
 		case LinphoneChatMessageStateFileTransferDone:
 			counters->number_of_LinphoneMessageFileTransferDone++;
-			return;
+			break;
 		case LinphoneChatMessageStateDeliveredToUser:
 			counters->number_of_LinphoneMessageDeliveredToUser++;
-			return;
+			break;
 		case LinphoneChatMessageStateDisplayed:
 			counters->number_of_LinphoneMessageDisplayed++;
-			return;
+			break;
 		case LinphoneChatMessageStateFileTransferInProgress:
 			counters->number_of_LinphoneMessageFileTransferInProgress++;
-			return;
+			break;
+		default:{
+				notHandled = TRUE;
+			}
 	}
-	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+	return notHandled;
+}
+
+void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	if(liblinphone_tester_chat_message_msg_update_stats(counters, state))
+		ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+}
+
+bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats) {	// Return all LinphoneChatMessage and count states
+	bctbx_list_t * messages = linphone_chat_room_get_history(cr, 0);
+	*messageCount = 0;
+	for(bctbx_list_t * elem = messages ; elem != NULL ; elem = bctbx_list_next(elem)){
+		++(*messageCount);
+		liblinphone_tester_chat_message_msg_update_stats(stats, linphone_chat_message_get_state((LinphoneChatMessage*)elem->data));
+	}
+	return messages;
 }
 
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
