@@ -27,6 +27,7 @@ install(FILES rootca.pem
 
 set(GRAMMAR_FILES
 	cpim_grammar
+	ics_grammar
 	identity_grammar
 )
 

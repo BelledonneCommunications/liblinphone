@@ -91,6 +91,7 @@ set(C_API_HEADER_FILES
 	c-chat-room.h
 	c-chat-room-params.h
 	c-content.h
+	c-conference-info.h
 	c-dial-plan.h
 	c-event-log.h
 	c-factory.h
