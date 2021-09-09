@@ -230,19 +230,17 @@ LINPHONE_END_NAMESPACE
 #define L_REGISTER_ID(CPP_TYPE, C_TYPE) BELLE_SIP_TYPE_ID(Linphone ## C_TYPE),
 
 /* Only pure belle_sip_object_t defined in C shall be declared here.
- * HybridObject<> derived don't need to be declared here */
+ * WARNING HybridObject<> derived don't need to be declared here */
 BELLE_SIP_DECLARE_TYPES_BEGIN(linphone, 10000)
 L_REGISTER_TYPES(L_REGISTER_ID)
 BELLE_SIP_TYPE_ID(LinphoneAccountCreator),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
 BELLE_SIP_TYPE_ID(LinphoneBuffer),
-BELLE_SIP_TYPE_ID(LinphoneCallCbs),
 BELLE_SIP_TYPE_ID(LinphoneCallLog),
 BELLE_SIP_TYPE_ID(LinphoneCallStats),
 BELLE_SIP_TYPE_ID(LinphoneChatMessageCbs),
 BELLE_SIP_TYPE_ID(LinphoneChatRoomCbs),
-BELLE_SIP_TYPE_ID(LinphoneConferenceCbs),
 BELLE_SIP_TYPE_ID(LinphoneConfig),
 BELLE_SIP_TYPE_ID(LinphoneContactProvider),
 BELLE_SIP_TYPE_ID(LinphoneContactSearch),
@@ -275,8 +273,6 @@ BELLE_SIP_TYPE_ID(LinphonePresenceNote),
 BELLE_SIP_TYPE_ID(LinphonePresencePerson),
 BELLE_SIP_TYPE_ID(LinphonePresenceService),
 BELLE_SIP_TYPE_ID(LinphoneProxyConfig),
-BELLE_SIP_TYPE_ID(LinphonePushNotificationMessage),
-BELLE_SIP_TYPE_ID(LinphonePushNotificationConfig),
 BELLE_SIP_TYPE_ID(LinphoneRange),
 BELLE_SIP_TYPE_ID(LinphoneRecorder),
 BELLE_SIP_TYPE_ID(LinphoneRecorderParams),

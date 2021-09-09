@@ -800,7 +800,6 @@ Call::Call (
 }
 
 Call::~Call () {
-	bctbx_list_free_with_data(mCallbacks, (bctbx_list_free_func)linphone_call_cbs_unref);
 }
 
 void Call::configure (
@@ -1277,33 +1276,5 @@ void Call::setEndpoint (MSAudioEndpoint *endpoint) {
 	mEndpoint = endpoint;
 }
 
-bctbx_list_t *Call::getCallbacksList () const {
-	return mCallbacks;
-}
-
-LinphoneCallCbs *Call::getCurrentCallbacks () const{
-	return mCurrentCbs;
-}
-
-void Call::setCurrentCallbacks (LinphoneCallCbs *cbs) {
-	mCurrentCbs = cbs;
-}
-
-void Call::addCallbacks (LinphoneCallCbs *cbs) {
-	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
-}
-
-void Call::removeCallbacks (LinphoneCallCbs *cbs) {
-	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
-	belle_sip_object_unref(cbs);
-}
-
-void *Call::getUserData () const{
-	return mUserData;
-}
-
-void Call::setUserData (void *ud) {
-	mUserData = ud;
-}
 
 LINPHONE_END_NAMESPACE

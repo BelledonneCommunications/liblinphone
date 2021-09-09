@@ -75,7 +75,6 @@ Conference::Conference(
 }
 
 Conference::~Conference() {
-	bctbx_list_free_with_data(mCallbacks, (void(*)(void *))belle_sip_object_unref);
 }
 
 void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
@@ -386,7 +385,7 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 		LinphonePrivate::Conference::setState(state);
 		if (previousState != state) {
 			if (mStateChangedCb) {
-				mStateChangedCb(toC(), (LinphoneConferenceState)state, mUserData);
+				mStateChangedCb(toC(), (LinphoneConferenceState)state, mCbUserData);
 			}
 		}
 	}
@@ -429,35 +428,6 @@ bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePri
 	for (const auto &p : participants)
 		soFarSoGood &= removeParticipant(p);
 	return soFarSoGood;
-}
-
-bctbx_list_t *Conference::getCallbacksList () const {
-	return mCallbacks;
-}
-
-LinphoneConferenceCbs *Conference::getCurrentCallbacks () const{
-	return mCurrentCbs;
-}
-
-void Conference::setCurrentCallbacks (LinphoneConferenceCbs *cbs) {
-	mCurrentCbs = cbs;
-}
-
-void Conference::addCallbacks (LinphoneConferenceCbs *cbs) {
-	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
-}
-
-void Conference::removeCallbacks (LinphoneConferenceCbs *cbs) {
-	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
-	belle_sip_object_unref(cbs);
-}
-
-void *Conference::getUserData () const{
-	return userData;
-}
-
-void Conference::setUserData (void *ud) {
-	userData = ud;
 }
 
 LocalConference::LocalConference (
