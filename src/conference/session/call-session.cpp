@@ -853,7 +853,11 @@ void CallSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool medi
 }
 
 void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const std::string &message) {
-	repairIfBroken();
+	//might be better to add callbacks on Account, but due to the lake of internal listener, it is dangerous to expose internal listeners to public object.
+	if (cfg == destProxy && cstate == LinphoneRegistrationOk)
+		repairIfBroken();
+	/*else
+		only repair call when the right proxy is in state connected*/
 }
 
 // -----------------------------------------------------------------------------
