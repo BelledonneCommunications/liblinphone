@@ -19,42 +19,12 @@
 
 #include "linphone/api/c-call-cbs.h"
 
-#include "c-wrapper/c-wrapper.h"
+#include "call/call.h"
 
-// =============================================================================
-
-struct _LinphoneCallCbs {
-	belle_sip_object_t base;
-	void *userData;
-	LinphoneCallCbsDtmfReceivedCb dtmfReceivedCb;
-	LinphoneCallCbsEncryptionChangedCb encryptionChangedCb;
-	LinphoneCallCbsInfoMessageReceivedCb infoMessageReceivedCb;
-	LinphoneCallCbsStateChangedCb stateChangedCb;
-	LinphoneCallCbsStatsUpdatedCb statsUpdatedCb;
-	LinphoneCallCbsTransferStateChangedCb transferStateChangedCb;
-	LinphoneCallCbsAckProcessingCb ackProcessing;
-	LinphoneCallCbsTmmbrReceivedCb tmmbrReceivedCb;
-	LinphoneCallCbsSnapshotTakenCb snapshotTakenCb;
-	LinphoneCallCbsNextVideoFrameDecodedCb nextVideoFrameDecodedCb;
-	LinphoneCallCbsCameraNotWorkingCb cameraNotWorkingCb;
-	LinphoneCallCbsAudioDeviceChangedCb audioDeviceChangedCb;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallCbs);
-
-BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneCallCbs);
-
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneCallCbs, belle_sip_object_t,
-	NULL, // destroy
-	NULL, // clone
-	NULL, // marshal
-	FALSE
-);
-
-// =============================================================================
+using namespace LinphonePrivate;
 
 LinphoneCallCbs *_linphone_call_cbs_new (void) {
-	return belle_sip_object_new(LinphoneCallCbs);
+	return CallCbs::createCObject();
 }
 
 LinphoneCallCbs *linphone_call_cbs_ref (LinphoneCallCbs *cbs) {
@@ -67,105 +37,105 @@ void linphone_call_cbs_unref (LinphoneCallCbs *cbs) {
 }
 
 void *linphone_call_cbs_get_user_data (const LinphoneCallCbs *cbs) {
-	return cbs->userData;
+	return CallCbs::toCpp(cbs)->getUserData();
 }
 
 void linphone_call_cbs_set_user_data (LinphoneCallCbs *cbs, void *ud) {
-	cbs->userData = ud;
+	CallCbs::toCpp(cbs)->setUserData(ud);
 }
 
 LinphoneCallCbsDtmfReceivedCb linphone_call_cbs_get_dtmf_received (LinphoneCallCbs *cbs) {
-	return cbs->dtmfReceivedCb;
+	return CallCbs::toCpp(cbs)->dtmfReceivedCb;
 }
 
 void linphone_call_cbs_set_dtmf_received (LinphoneCallCbs *cbs, LinphoneCallCbsDtmfReceivedCb cb) {
-	cbs->dtmfReceivedCb = cb;
+	CallCbs::toCpp(cbs)->dtmfReceivedCb = cb;
 }
 
 LinphoneCallCbsEncryptionChangedCb linphone_call_cbs_get_encryption_changed (LinphoneCallCbs *cbs) {
-	return cbs->encryptionChangedCb;
+	return CallCbs::toCpp(cbs)->encryptionChangedCb;
 }
 
 void linphone_call_cbs_set_encryption_changed (LinphoneCallCbs *cbs, LinphoneCallCbsEncryptionChangedCb cb) {
-	cbs->encryptionChangedCb = cb;
+	CallCbs::toCpp(cbs)->encryptionChangedCb = cb;
 }
 
 LinphoneCallCbsInfoMessageReceivedCb linphone_call_cbs_get_info_message_received (LinphoneCallCbs *cbs) {
-	return cbs->infoMessageReceivedCb;
+	return CallCbs::toCpp(cbs)->infoMessageReceivedCb;
 }
 
 void linphone_call_cbs_set_info_message_received (LinphoneCallCbs *cbs, LinphoneCallCbsInfoMessageReceivedCb cb) {
-	cbs->infoMessageReceivedCb = cb;
+	CallCbs::toCpp(cbs)->infoMessageReceivedCb = cb;
 }
 
 LinphoneCallCbsStateChangedCb linphone_call_cbs_get_state_changed (LinphoneCallCbs *cbs) {
-	return cbs->stateChangedCb;
+	return CallCbs::toCpp(cbs)->stateChangedCb;
 }
 
 void linphone_call_cbs_set_state_changed (LinphoneCallCbs *cbs, LinphoneCallCbsStateChangedCb cb) {
-	cbs->stateChangedCb = cb;
+	CallCbs::toCpp(cbs)->stateChangedCb = cb;
 }
 
 LinphoneCallCbsStatsUpdatedCb linphone_call_cbs_get_stats_updated (LinphoneCallCbs *cbs) {
-	return cbs->statsUpdatedCb;
+	return CallCbs::toCpp(cbs)->statsUpdatedCb;
 }
 
 void linphone_call_cbs_set_stats_updated (LinphoneCallCbs *cbs, LinphoneCallCbsStatsUpdatedCb cb) {
-	cbs->statsUpdatedCb = cb;
+	CallCbs::toCpp(cbs)->statsUpdatedCb = cb;
 }
 
 LinphoneCallCbsTransferStateChangedCb linphone_call_cbs_get_transfer_state_changed (LinphoneCallCbs *cbs) {
-	return cbs->transferStateChangedCb;
+	return CallCbs::toCpp(cbs)->transferStateChangedCb;
 }
 
 void linphone_call_cbs_set_transfer_state_changed (LinphoneCallCbs *cbs, LinphoneCallCbsTransferStateChangedCb cb) {
-	cbs->transferStateChangedCb = cb;
+	CallCbs::toCpp(cbs)->transferStateChangedCb = cb;
 }
 
 LinphoneCallCbsAckProcessingCb linphone_call_cbs_get_ack_processing (LinphoneCallCbs *cbs){
-	return cbs->ackProcessing;
+	return CallCbs::toCpp(cbs)->ackProcessing;
 }
 
 void linphone_call_cbs_set_ack_processing (LinphoneCallCbs *cbs, LinphoneCallCbsAckProcessingCb cb){
-	cbs->ackProcessing = cb;
+	CallCbs::toCpp(cbs)->ackProcessing = cb;
 }
 
 LinphoneCallCbsTmmbrReceivedCb linphone_call_cbs_get_tmmbr_received (LinphoneCallCbs *cbs) {
-	return cbs->tmmbrReceivedCb;
+	return CallCbs::toCpp(cbs)->tmmbrReceivedCb;
 }
 
 void linphone_call_cbs_set_tmmbr_received (LinphoneCallCbs *cbs, LinphoneCallCbsTmmbrReceivedCb cb) {
-	cbs->tmmbrReceivedCb = cb;
+	CallCbs::toCpp(cbs)->tmmbrReceivedCb = cb;
 }
 
 LinphoneCallCbsSnapshotTakenCb linphone_call_cbs_get_snapshot_taken(LinphoneCallCbs *cbs) {
-	return cbs->snapshotTakenCb;
+	return CallCbs::toCpp(cbs)->snapshotTakenCb;
 }
 
 void linphone_call_cbs_set_snapshot_taken(LinphoneCallCbs *cbs, LinphoneCallCbsSnapshotTakenCb cb) {
-	cbs->snapshotTakenCb = cb;
+	CallCbs::toCpp(cbs)->snapshotTakenCb = cb;
 }
 
 LinphoneCallCbsNextVideoFrameDecodedCb linphone_call_cbs_get_next_video_frame_decoded(LinphoneCallCbs *cbs) {
-	return cbs->nextVideoFrameDecodedCb;
+	return CallCbs::toCpp(cbs)->nextVideoFrameDecodedCb;
 }
 
 void linphone_call_cbs_set_next_video_frame_decoded(LinphoneCallCbs *cbs, LinphoneCallCbsNextVideoFrameDecodedCb cb) {
-	cbs->nextVideoFrameDecodedCb = cb;
+	CallCbs::toCpp(cbs)->nextVideoFrameDecodedCb = cb;
 }
 
 LinphoneCallCbsCameraNotWorkingCb linphone_call_cbs_get_camera_not_working(LinphoneCallCbs *cbs) {
-	return cbs->cameraNotWorkingCb;
+	return CallCbs::toCpp(cbs)->cameraNotWorkingCb;
 }
 
 void linphone_call_cbs_set_camera_not_working(LinphoneCallCbs *cbs, LinphoneCallCbsCameraNotWorkingCb cb) {
-	cbs->cameraNotWorkingCb = cb;
+	CallCbs::toCpp(cbs)->cameraNotWorkingCb = cb;
 }
 
 LinphoneCallCbsAudioDeviceChangedCb linphone_call_cbs_get_audio_device_changed(LinphoneCallCbs *cbs) {
-	return cbs->audioDeviceChangedCb;
+	return CallCbs::toCpp(cbs)->audioDeviceChangedCb;
 }
 
 void linphone_call_cbs_set_audio_device_changed(LinphoneCallCbs *cbs, LinphoneCallCbsAudioDeviceChangedCb cb) {
-	cbs->audioDeviceChangedCb = cb;
+	CallCbs::toCpp(cbs)->audioDeviceChangedCb = cb;
 }

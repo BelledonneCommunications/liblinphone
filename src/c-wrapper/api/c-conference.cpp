@@ -34,19 +34,19 @@ using namespace LinphonePrivate;
 // =============================================================================
 
 void linphone_conference_add_callbacks (LinphoneConference *conference, LinphoneConferenceCbs *cbs) {
-	MediaConference::Conference::toCpp(conference)->addCallbacks(cbs);
+	MediaConference::Conference::toCpp(conference)->addCallbacks(ConferenceCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 void linphone_conference_remove_callbacks (LinphoneConference *conference, LinphoneConferenceCbs *cbs) {
-	MediaConference::Conference::toCpp(conference)->removeCallbacks(cbs);
+	MediaConference::Conference::toCpp(conference)->removeCallbacks(ConferenceCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 LinphoneConferenceCbs *linphone_conference_get_current_callbacks (const LinphoneConference *conference) {
-	return MediaConference::Conference::toCpp(conference)->getCurrentCallbacks();
+	return MediaConference::Conference::toCpp(conference)->getCurrentCallbacks()->toC();
 }
 
 const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConference *conference) {
-	return MediaConference::Conference::toCpp(conference)->getCallbacksList();
+	return MediaConference::Conference::toCpp(conference)->getCCallbacksList();
 }
 
 void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant) {

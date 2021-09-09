@@ -25,7 +25,7 @@
 #include "conference/conference.h"
 #include "call/audio-device/audio-device.h"
 
-#include "belle-sip/object++.hh"
+#include "c-wrapper/c-wrapper.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,17 +80,36 @@ class RemoteConferenceEventHandler;
 class LocalAudioVideoConferenceEventHandler;
 #endif // HAVE_ADVANCED_IM
 
+
+class ConferenceCbs : public bellesip::HybridObject<LinphoneConferenceCbs, ConferenceCbs>, public Callbacks{
+public:
+	LinphoneConferenceCbsParticipantAddedCb participantAddedCb;
+	LinphoneConferenceCbsParticipantRemovedCb participantRemovedCb;
+	LinphoneConferenceCbsParticipantDeviceAddedCb participantDeviceAddedCb;
+	LinphoneConferenceCbsParticipantDeviceRemovedCb participantDeviceRemovedCb;
+	LinphoneConferenceCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
+	LinphoneConferenceCbsStateChangedCb stateChangedCb;
+	LinphoneConferenceCbsSubjectChangedCb subjectChangedCb;
+	LinphoneConferenceCbsAudioDeviceChangedCb audioDeviceChangedCb;
+};
+
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
 class Conference;
 class LocalConference;
 class RemoteConference;
 
+
+
+
 /*
  * Base class for audio/video conference.
  */
 
-class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
+class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, 
+					public LinphonePrivate::Conference,
+					public LinphonePrivate::CallbacksHolder<LinphonePrivate::ConferenceCbs>,
+					public UserDataAccessor{
 #ifdef HAVE_ADVANCED_IM
 	friend class LocalAudioVideoConferenceEventHandler;
 #endif // HAVE_ADVANCED_IM
@@ -141,22 +160,13 @@ public:
 	void setState (LinphonePrivate::ConferenceInterface::State state) override;
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
 		mStateChangedCb = cb;
-		mUserData = userData;
+		mCbUserData = userData;
 	}
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
 	virtual void join () override;
 	virtual void join (const IdentityAddress &participantAddress) override;
-
-	bctbx_list_t *getCallbacksList () const;
-	LinphoneConferenceCbs *getCurrentCallbacks () const;
-	void setCurrentCallbacks (LinphoneConferenceCbs *cbs);
-	void addCallbacks (LinphoneConferenceCbs *cbs);
-	void removeCallbacks (LinphoneConferenceCbs *cbs);
-
-	void *getUserData () const;
-	void setUserData (void *ud);
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
@@ -181,11 +191,7 @@ protected:
 	std::string mConferenceID;
 
 	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
-	// TODO: Delete mUserData
-	void *mUserData = nullptr;
-	void *userData = nullptr;
-	bctbx_list_t *mCallbacks = nullptr;
-	LinphoneConferenceCbs *mCurrentCbs = nullptr;
+	void *mCbUserData = nullptr;
 };
 
 
