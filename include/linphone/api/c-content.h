@@ -287,6 +287,13 @@ LINPHONE_PUBLIC bool_t linphone_content_is_text (const LinphoneContent *content)
 LINPHONE_PUBLIC bool_t linphone_content_is_voice_recording (const LinphoneContent *content);
 
 /**
+ * Tells whether or not this content contains an icalendar by checking it's content type.
+ * @param content #LinphoneContent object. @notnil
+ * @return TRUE if this content type is 'text/calendar;conference-event=yes', FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_content_is_icalendar (const LinphoneContent *content);
+
+/**
  * Tells whether or not this content contains a file.
  * @param content #LinphoneContent object. @notnil
  * @return TRUE if this content contains a file, FALSE otherwise.

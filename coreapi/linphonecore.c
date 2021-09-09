@@ -1681,6 +1681,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	bool_t auto_download_voice_recordings = linphone_config_get_bool(lc->config, "app", "auto_download_incoming_voice_recordings", TRUE);
 	linphone_core_set_auto_download_voice_recordings_enabled(lc, auto_download_voice_recordings);
 
+	bool_t auto_download_icalendars = linphone_config_get_bool(lc->config, "app", "auto_download_incoming_icalendars", TRUE);
+	linphone_core_set_auto_download_icalendars_enabled(lc, auto_download_icalendars);
+
 	tmp=linphone_config_get_int(lc->config,"app","sender_name_hidden_in_forward_message",0);
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
@@ -4811,6 +4814,15 @@ bool_t linphone_core_is_auto_download_voice_recordings_enabled(LinphoneCore *lc)
 void linphone_core_set_auto_download_voice_recordings_enabled(LinphoneCore *lc, bool_t auto_download_voice_recordings) {
 	lc->auto_download_incoming_voice_recordings = auto_download_voice_recordings;
 	linphone_config_set_bool(lc->config, "app", "auto_download_incoming_voice_recordings", auto_download_voice_recordings);
+}
+
+bool_t linphone_core_is_auto_download_icalendars_enabled(LinphoneCore *lc) {
+	return lc->auto_download_incoming_icalendars;
+}
+
+void linphone_core_set_auto_download_icalendars_enabled(LinphoneCore *lc, bool_t auto_download_icalendars) {
+	lc->auto_download_incoming_icalendars = auto_download_icalendars;
+	linphone_config_set_bool(lc->config, "app", "auto_download_incoming_icalendars", auto_download_icalendars);
 }
 
 bool_t linphone_core_is_sender_name_hidden_in_forward_message(LinphoneCore *lc) {
@@ -8648,4 +8660,45 @@ void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, const char *suites
 
 const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
+}
+
+void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text) {
+	bctbx_list_t *participants = bctbx_list_copy(linphone_conference_info_get_participants(conference_information));
+
+	bctbx_list_t *it;
+	for (it = participants; it != NULL; it = it->next) {
+		bctbx_list_t *add_participant = bctbx_list_append(NULL, (LinphoneAddress *) bctbx_list_get_data(it));
+		LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(core);
+
+		LinphoneChatRoom *cr = linphone_core_create_chat_room_6(core,
+			chat_room_params,
+			linphone_conference_info_get_organizer(conference_information),
+			add_participant);
+
+		linphone_chat_room_params_unref(chat_room_params);
+		bctbx_list_free(add_participant);
+
+		if (!cr) continue;
+
+		LinphoneContent *content = linphone_core_create_content(core);
+		linphone_content_set_type(content, "text");
+		linphone_content_set_subtype(content, "calendar");
+		linphone_content_add_content_type_parameter(content, "conference-event", "yes");
+		linphone_content_set_name(content, "conference.ics");
+
+		char *body = linphone_conference_info_get_icalendar_string(conference_information);
+		linphone_content_set_utf8_text(content, body);
+		bctbx_free(body);
+
+		LinphoneChatMessage *msg = linphone_chat_room_create_file_transfer_message(cr, content);
+		if (text) linphone_chat_message_add_utf8_text_content(msg, text);
+
+		linphone_chat_message_send(msg);
+
+		linphone_content_unref(content);
+		linphone_chat_message_unref(msg);
+		linphone_chat_room_unref(cr);
+	}
+
+	bctbx_list_free(participants);
 }
