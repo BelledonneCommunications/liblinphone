@@ -310,10 +310,12 @@ public class AndroidPlatformHelper {
         String mPauseSoundFile = basePath + "/share/sounds/linphone/rings/dont_wait_too_long.mkv";
         String mErrorToneFile = basePath + "/share/sounds/linphone/incoming_chat.wav";
         String mGrammarCpimFile = basePath + "/share/belr/grammars/cpim_grammar";
+        String mGrammarIcsFile = basePath + "/share/belr/grammars/ics_grammar";
         String mGrammarIdentityFile = basePath + "/share/belr/grammars/identity_grammar";
         String mGrammarVcardFile = basePath + "/share/belr/grammars/vcard_grammar";
 
         copyEvenIfExists(getResourceIdentifierFromName("cpim_grammar"), mGrammarCpimFile);
+        copyEvenIfExists(getResourceIdentifierFromName("ics_grammar"), mGrammarIcsFile);
         copyEvenIfExists(getResourceIdentifierFromName("identity_grammar"), mGrammarIdentityFile);
         copyEvenIfExists(getResourceIdentifierFromName("vcard_grammar"), mGrammarVcardFile);
         copyEvenIfExists(getResourceIdentifierFromName("rootca"), mLinphoneRootCaFile);
