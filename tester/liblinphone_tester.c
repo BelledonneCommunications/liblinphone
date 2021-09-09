@@ -458,6 +458,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&recorder_test_suite);
 	bc_tester_add_suite(&dtmf_test_suite);
 	bc_tester_add_suite(&cpim_test_suite);
+	bc_tester_add_suite(&ics_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);
 	bc_tester_add_suite(&clonable_object_test_suite);
 #ifdef HAVE_DB_STORAGE

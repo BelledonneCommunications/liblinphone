@@ -5113,7 +5113,7 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_linphone_specs_list (Linph
  * Create a chat room.
  *
  * @param core A #LinphoneCore object @notnil
- * @param params The chat room creation parameters #LinphoneChatRoomParams @maybenil
+ * @param params The chat room creation parameters #LinphoneChatRoomParams @notnil
  * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
  * @param participants The initial list of participants of the chat room. \bctbx_list{LinphoneAddress} @notnil
  * @return The newly created chat room (can be an existing one if backend is Basic) or NULL. @maybenil
@@ -5569,6 +5569,22 @@ LINPHONE_PUBLIC void linphone_core_set_auto_download_voice_recordings_enabled(Li
 LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_voice_recordings_enabled(LinphoneCore *core);
 
 /**
+ * Auto download files attach to a chat message if it's content type matches the one we use for icalendars.
+ * @param core #LinphoneCore object @notnil
+ * @param auto_download_icalendars TRUE to automatically download incoming icalendars, FALSE to disable it.
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC void linphone_core_set_auto_download_icalendars_enabled(LinphoneCore *core, bool_t auto_download_icalendars);
+
+/**
+ * Gets if the auto download for incoming icalendars is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if icalendars will be automatically downloaded, FALSE otherwise.
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_icalendars_enabled(LinphoneCore *core);
+
+/**
  * Returns whether or not sender name is hidden in forward message.
  * @param core The #LinphoneCore @notnil
  * @return whether or not the feature
@@ -5846,6 +5862,14 @@ LINPHONE_PUBLIC void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *
  * @return lifetime of ephemeral messages in seconds
  **/
 LINPHONE_PUBLIC long linphone_core_get_default_ephemeral_lifetime(const LinphoneCore *lc);
+
+/**
+ * Send the conference invitations to all participants as an ICS file.
+ * @param core The #LinphoneCore @notnil
+ * @param conference_information The #LinphoneConferenceInfo @notnil
+ * @param text An optional text to be added to the sent chat message @maybenil
+ */
+LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text);
 
 /************ */
 /* DEPRECATED */

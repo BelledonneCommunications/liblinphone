@@ -804,6 +804,7 @@ namespace LinphonePrivate {
 	bool_t send_imdn_if_unregistered; \
 	LinphonePushNotificationConfig *push_config;\
 	bool_t auto_download_incoming_voice_recordings; \
+	bool_t auto_download_incoming_icalendars; \
 	unsigned long iterate_thread_id;
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
