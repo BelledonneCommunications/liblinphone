@@ -543,19 +543,19 @@ LinphoneCallStats *linphone_call_get_text_stats (LinphoneCall *call) {
 }
 
 void linphone_call_add_callbacks (LinphoneCall *call, LinphoneCallCbs *cbs) {
-	Call::toCpp(call)->addCallbacks(cbs);
+	Call::toCpp(call)->addCallbacks(CallCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 void linphone_call_remove_callbacks (LinphoneCall *call, LinphoneCallCbs *cbs) {
-	Call::toCpp(call)->removeCallbacks(cbs);
+	Call::toCpp(call)->removeCallbacks(CallCbs::toCpp(cbs)->getSharedFromThis());
 }
 
 LinphoneCallCbs *linphone_call_get_current_callbacks (const LinphoneCall *call) {
-	return Call::toCpp(call)->getCurrentCallbacks();
+	return Call::toCpp(call)->getCurrentCallbacks()->toC();
 }
 
 const bctbx_list_t *linphone_call_get_callbacks_list(const LinphoneCall *call) {
-	return Call::toCpp(call)->getCallbacksList();
+	return Call::toCpp(call)->getCCallbacksList();
 }
 
 void linphone_call_set_params (LinphoneCall *call, const LinphoneCallParams *params) {

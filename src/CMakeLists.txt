@@ -328,6 +328,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	address/identity-address-parser.cpp
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
+	c-wrapper/c-wrapper.cpp
 	c-wrapper/api/c-account.cpp
 	c-wrapper/api/c-account-cbs.cpp
 	c-wrapper/api/c-account-params.cpp

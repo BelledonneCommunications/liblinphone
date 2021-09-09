@@ -44,6 +44,7 @@ class Content;
 class ParticipantDevice;
 class LocalConferenceEventHandler;
 
+
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
 class Conference;
