@@ -157,6 +157,12 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	else
 		ms_error("IosPlatformHelpers did not find cpim grammar resource directory...");
 
+	string icsPath = getResourceDirPath(Framework, "ics_grammar");
+	if (!icsPath.empty())
+		belr::GrammarLoader::get().addPath(icsPath);
+	else
+		ms_error("IosPlatformHelpers did not find ics grammar resource directory...");
+
 	string identityPath = getResourceDirPath(Framework, "identity_grammar");
 	if (!identityPath.empty())
 		belr::GrammarLoader::get().addPath(identityPath);

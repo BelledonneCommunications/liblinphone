@@ -864,6 +864,7 @@ void ChatMessagePrivate::handleAutoDownload() {
 	} else {
 		int maxSize = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
 		bool_t autoDownloadVoiceRecordings = linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
+		bool_t autoDownloadIcalendars = linphone_core_is_auto_download_icalendars_enabled(q->getCore()->getCCore());
 		string downloadPath = q->getCore()->getDownloadPath();
 
 		if (downloadPath.empty()) {
@@ -875,7 +876,8 @@ void ChatMessagePrivate::handleAutoDownload() {
 					ContentType fileContentType = ftc->getFileContentType();
 					
 					if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
-					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))) {
+					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
+					|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
 						string filepath = downloadPath + ftc->getFileName();
 						lInfo() << "Automatically downloading file to " << filepath;
 						ftc->setFilePath(filepath);
