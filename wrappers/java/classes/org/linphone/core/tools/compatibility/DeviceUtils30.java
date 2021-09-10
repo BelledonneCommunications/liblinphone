@@ -46,10 +46,15 @@ public class DeviceUtils30 {
 			Log.i("DESCRIPTION=", exitInfo.getDescription());
 			if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR) {
 				try {
-					String trace = new BufferedReader(new InputStreamReader(exitInfo.getTraceInputStream())).lines().collect(Collectors.joining("\n"));
-					Log.w("TRACE=", trace);
+					InputStream inputStream = exitInfo.getTraceInputStream();
+					if (inputStream != null) {
+						String trace = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+						Log.w("TRACE=", trace);
+					} else {
+						Log.w("[Device Utils 30] No input stream for exit info");
+					}
 				} catch (IOException e) {
-					Log.e("Exception while trying to get trace input stream: ", e);
+					Log.e("[Device Utils 30] Exception while trying to get trace input stream: ", e);
 				}
 			}
 			Log.i("=========================================");
