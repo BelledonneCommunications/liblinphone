@@ -118,6 +118,16 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	if (routes != nullptr) {
 		setRoutesFromStringList(routes);
 		bctbx_list_free_with_data(routes, (bctbx_list_free_func)bctbx_free);
+	} else {
+		// Remove default routes if the existing account doesn't have any
+		if (mRoutes) {
+			bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
+			mRoutes = nullptr;
+		}
+		if (mRoutesString) {
+			bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
+			mRoutesString = nullptr;
+		}
 	}
 
 	mRealm = linphone_config_get_string(config, key, "realm", mRealm.c_str());
