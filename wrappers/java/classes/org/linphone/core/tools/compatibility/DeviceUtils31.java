@@ -46,10 +46,20 @@ public class DeviceUtils31 {
 			Log.i("DESCRIPTION=", exitInfo.getDescription());
 			if (exitInfo.getReason() == ApplicationExitInfo.REASON_ANR || exitInfo.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
 				try {
-					String trace = new BufferedReader(new InputStreamReader(exitInfo.getTraceInputStream())).lines().collect(Collectors.joining("\n"));
-					Log.w("TRACE=", trace);
+					InputStream inputStream = exitInfo.getTraceInputStream();
+					if (inputStream != null) {
+						if (exitInfo.getReason() == ApplicationExitInfo.REASON_CRASH_NATIVE) {
+							//Tombstone tombstone = Tombstone.parseFrom(inputStream);
+							//Log.w("TOMBSTONE=", tombstone.toString());
+						} else {
+							String trace = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+							Log.w("TRACE=", trace);
+						}
+					} else {
+						Log.w("[Device Utils 31] No input stream for exit info");
+					}
 				} catch (IOException e) {
-					Log.e("Exception while trying to get trace input stream: ", e);
+					Log.e("[Device Utils 31] Exception while trying to get trace input stream: ", e);
 				}
 			}
 			Log.i("=========================================");
