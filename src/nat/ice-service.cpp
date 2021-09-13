@@ -421,8 +421,7 @@ void IceService::clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescrip
 			continue;
 		const auto & localStream = localDesc->streams[i];
 		const auto & stream = remoteDesc->streams[i];
-		if ((localIsOfferer && stream.getChosenConfiguration().rtcp_mux && localStream.getChosenConfiguration().rtcp_mux)
-			|| (!localIsOfferer && stream.getChosenConfiguration().rtcp_mux)) {
+		if (stream.getChosenConfiguration().rtcp_mux && localStream.getChosenConfiguration().rtcp_mux) {
 			ice_check_list_remove_rtcp_candidates(cl);
 		}
 	}
