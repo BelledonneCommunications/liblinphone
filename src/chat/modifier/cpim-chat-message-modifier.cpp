@@ -161,11 +161,17 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 }
 
 ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<ChatMessage> &message, int &errorCode) {
-	const Content *content;
+	const Content *content = nullptr;
 	if (!message->getInternalContent().isEmpty())
 		content = &(message->getInternalContent());
-	else
+	else if (message->getContents().size() > 0)
 		content = message->getContents().front();
+
+	if (content == nullptr) {
+		lError() << "[CPIM] Couldn't find a valid content in the message";
+		errorCode = 503; // IO error
+		return ChatMessageModifier::Result::Error;
+	}
 
 	if (content->getContentType() != ContentType::Cpim) {
 		lError() << "[CPIM] Message is not CPIM but " << content->getContentType();
