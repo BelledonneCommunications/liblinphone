@@ -65,6 +65,7 @@ extern test_suite_t event_test_suite;
 extern test_suite_t main_db_test_suite;
 extern test_suite_t flexisip_test_suite;
 extern test_suite_t group_chat_test_suite;
+extern test_suite_t group_chat2_test_suite;
 extern test_suite_t secure_group_chat_test_suite;
 extern test_suite_t ephemeral_group_chat_test_suite;
 extern test_suite_t log_collection_test_suite;

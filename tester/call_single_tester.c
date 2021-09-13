@@ -1483,15 +1483,16 @@ static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia) {
 		linphone_call_ref(in_call);
 		if (use_earlymedia)
 			linphone_call_accept_early_media(in_call);
+		LinphoneCoreToneManagerStats * paulineToneManagerStats = linphone_core_get_tone_manager_stats(pauline->lc);
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingtone, 1, int, "%d");
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingbackTone,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&paulineToneManagerStats->number_of_startRingbackTone,1));
 		if (!use_timeout)
 			linphone_call_terminate(in_call);
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopRingtone, 1, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingbackTone, 1, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startErrorTone, 1, int, "%d");
+		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_stopRingbackTone, 1, int, "%d");
+		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_startErrorTone, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd,1, int, "%d");
 		BC_ASSERT_EQUAL(use_timeout ? pauline->stat.number_of_LinphoneCallError : pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call),LinphoneReasonDeclined, int, "%d");

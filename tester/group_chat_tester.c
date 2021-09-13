@@ -7147,7 +7147,9 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("Migrate basic chat room to client group chat room failure", group_chat_room_migrate_from_basic_to_client_fail, "LeaksMemory", "Migration"),
 	TEST_ONE_TAG("Migrate basic chat room to client group chat room not needed", group_chat_donot_room_migrate_from_basic_chat_room, "Migration"),
 	TEST_NO_TAG("Send file", group_chat_room_send_file),
-	TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2),
+	TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2)
+};
+test_t group_chat2_tests[] = {
 	TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
 	TEST_NO_TAG("Send 2 files + text", group_chat_room_send_two_files_plus_text),
 	TEST_NO_TAG("Send multipart message with custom content types", group_chat_room_send_multipart_custom_content_types),
@@ -7201,6 +7203,15 @@ test_suite_t group_chat_test_suite = {
 	liblinphone_tester_after_each,
 	sizeof(group_chat_tests) / sizeof(group_chat_tests[0]), group_chat_tests
 };
+test_suite_t group_chat2_test_suite = {
+	"Group Chat2",
+	NULL,
+	NULL,
+	liblinphone_tester_before_each,
+	liblinphone_tester_after_each,
+	sizeof(group_chat2_tests) / sizeof(group_chat2_tests[0]), group_chat2_tests
+};
+
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop

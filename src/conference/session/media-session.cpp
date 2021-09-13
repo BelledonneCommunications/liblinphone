@@ -443,8 +443,6 @@ bool MediaSessionPrivate::failure () {
 			&MediaSessionPrivate::resumeAfterFailedTransfer, referer.get(),
 			"Automatic CallSession resuming after failed transfer");
 	}
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
-	q->getCore()->getPrivate()->getToneManager()->startErrorTone(q->getSharedFromThis(), linphone_reason_from_sal(ei->reason));// Play an error tone if it is allowed
 
 	return false;
 }
@@ -546,11 +544,8 @@ void MediaSessionPrivate::telephoneEventReceived (int event) {
 }
 
 void MediaSessionPrivate::terminated () {
-	L_Q();
 	stopStreams();
 	CallSessionPrivate::terminated();
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());// Stop all tones and start limited one
-	q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallEnd);
 }
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
@@ -2208,8 +2203,6 @@ void MediaSessionPrivate::terminate () {
 	}
 	stopStreams();
 	CallSessionPrivate::terminate();
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
-	q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallEnd);
 }
 
 void MediaSessionPrivate::updateCurrentParams () const {
