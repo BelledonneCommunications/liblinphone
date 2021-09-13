@@ -24,7 +24,9 @@
 #include "account/account.h"
 #include "call/call.h"
 #include "address/address.h"
+#ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room.h"
+#endif // HAVE_ADVANCED_IM
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
 #include "conference/session/media-session-p.h"

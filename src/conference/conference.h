@@ -110,6 +110,7 @@ class LINPHONE_PUBLIC Conference :
 	public ConferenceListener,
 	public CoreAccessor {
 	friend class CallSessionPrivate;
+#ifdef HAVE_ADVANCED_IM
 	friend class LocalConferenceEventHandler;
 	friend class LocalAudioVideoConferenceEventHandler;
 	friend class RemoteConferenceEventHandler;
@@ -117,6 +118,7 @@ class LINPHONE_PUBLIC Conference :
 	friend class ClientGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 	friend class ServerGroupChatRoom;
+#endif // HAVE_ADVANCED_IM
 public:
 
 	~Conference();
