@@ -230,6 +230,10 @@ static void call_with_ice_and_rtcp_mux_without_reinvite(void){
 	_call_with_rtcp_mux(TRUE, TRUE, TRUE,FALSE);
 }
 
+static void call_with_ice_and_rtcp_mux_not_accepted(void){
+	_call_with_rtcp_mux(TRUE, FALSE, TRUE,TRUE);
+}
+
 static bool_t is_matching_a_local_address(const std::string &ip, const bctbx_list_t *addresses){
 	if (ip.empty()) return FALSE;
 	for (; addresses != NULL; addresses = addresses->next){
@@ -669,6 +673,7 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE and no SDP in 200 OK", call_with_early_media_ice_and_no_sdp_in_200, "ICE"),
 	TEST_ONE_TAG("Call with ICE and rtcp-mux", call_with_ice_and_rtcp_mux, "ICE"),
 	TEST_ONE_TAG("Call with ICE and rtcp-mux without ICE re-invite", call_with_ice_and_rtcp_mux_without_reinvite, "ICE"),
+	TEST_ONE_TAG("Call with ICE and rtcp-mux not accepted", call_with_ice_and_rtcp_mux_not_accepted,"ICE"),
 	TEST_ONE_TAG("Call with ICE with default candidate not stun", call_with_ice_with_default_candidate_not_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE with default candidate not stun and ipv4 prefered", call_with_ice_with_default_candidate_not_stun_ipv4_prefered, "ICE"),
 	TEST_ONE_TAG("Call with ICE without stun server", call_with_ice_without_stun, "ICE"),
