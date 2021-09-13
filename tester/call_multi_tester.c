@@ -622,6 +622,8 @@ static void call_transfer_existing_ringing_call(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 1, 2000));
 
 		end_call(pauline, laure);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd, 2, 2000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallEnd, 2, 2000));
 	}
 
 end:
@@ -662,14 +664,16 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 	BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
-
+	
+//Decline
 	linphone_call_decline(pauline_called_by_laure, LinphoneReasonDeclined);
 	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallEnd,1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallReleased,1, 10000));
 
-	// check that rigntone player restart
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 1, int, "%d");
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 2, int, "%d");
+	// check that ringtone player restart
+	LinphoneCoreToneManagerStats * paulineToneManagerStats = linphone_core_get_tone_manager_stats(pauline->lc);
+	BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_stopRingtone, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for_list(core_list,&paulineToneManagerStats->number_of_startRingtone,2, 2000));
 
 	BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
 	linphone_call_terminate(pauline_called_by_marie);
@@ -685,6 +689,107 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 	bctbx_list_free(core_list);
+}
+
+void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCall* pauline_called_by_marie;
+	LinphoneCall* marie_called_by_laure;
+	LinphoneCall* laure_call = NULL;
+	LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneCallParams *laure_params=linphone_core_create_call_params(laure->lc, NULL);
+	bctbx_list_t *core_list = NULL;
+	
+	// Do not allow Pauline to use files as the goal of the test is to test audio routes on ring stream
+	linphone_core_set_use_files(marie->lc, FALSE);
+	
+	core_list = bctbx_list_append(core_list, marie->lc);
+	core_list = bctbx_list_append(core_list, pauline->lc);
+	core_list = bctbx_list_append(core_list, laure->lc);
+	
+// Enable ICE	
+	enable_stun_in_core(marie, activate_ice);
+	enable_stun_in_core(pauline, activate_ice);
+	enable_stun_in_core(laure, activate_ice);
+	if(activate_ice){
+		linphone_core_manager_wait_for_stun_resolution(marie);
+		linphone_core_manager_wait_for_stun_resolution(pauline);
+		linphone_core_manager_wait_for_stun_resolution(laure);
+	}
+	
+
+// Marie call Pauline
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params));
+	linphone_call_params_unref(marie_params);
+
+	BC_ASSERT_TRUE(wait_for_list(core_list, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1, 10000));
+	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
+	
+
+// Laure call Marie
+	laure_call = linphone_core_invite_address_with_params(laure->lc,marie->identity,laure_params);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	LinphoneCallLog * laure_call_log = linphone_call_get_call_log(laure_call);
+	linphone_call_params_unref(laure_params);
+
+	BC_ASSERT_TRUE(wait_for_list(core_list, &marie->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	
+	const char * laure_call_id = linphone_call_log_get_call_id(laure_call_log);
+	marie_called_by_laure=linphone_core_get_call_by_callid(marie->lc, laure_call_id);
+	//marie_called_by_laure=linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_TRUE(wait_for_list(core_list, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list, &laure->stat.number_of_LinphoneCallOutgoingRinging, 1, 10000));
+	
+	LinphoneCoreToneManagerStats * marieToneStats = linphone_core_get_tone_manager_stats(marie->lc);
+	//BC_ASSERT_EQUAL(marieToneStats->number_of_startRingtone, 1, int, "%d");
+	//BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(marie->lc)));
+	
+	wait_for_list(core_list, 0, 1, 2000);// Let some time ringing
+	
+// Pauline accept Marie
+	linphone_call_accept(pauline_called_by_marie);
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_stopRingbackTone,1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallStreamsRunning,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marie->stat.number_of_LinphoneCallStreamsRunning,1, 10000));
+	if( activate_ice )
+		BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_startRingtone,3, 5000));	// Start and update from Updating/Streaming state coming from ICE
+	else
+		BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_startRingtone,1, 5000));	
+
+	//BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
+	
+// Marie accept Laure	
+	linphone_call_accept(marie_called_by_laure);
+
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_stopRingtone,1, 5000));	// End of named tone
+	
+	linphone_call_terminate(marie_called_by_laure);
+	linphone_call_terminate(pauline_called_by_marie);
+	
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marie->stat.number_of_LinphoneCallEnd,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marie->stat.number_of_LinphoneCallReleased,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&laure->stat.number_of_LinphoneCallEnd,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&laure->stat.number_of_LinphoneCallReleased,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallEnd,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallReleased,1, 10000));
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+	bctbx_list_free(core_list);
+}
+
+void stop_ringing_when_accepting_call_while_holding_another_with_ice (void){
+	stop_ringing_when_accepting_call_while_holding_another(TRUE);
+}
+
+void stop_ringing_when_accepting_call_while_holding_another_without_ice (void){
+	stop_ringing_when_accepting_call_while_holding_another(FALSE);
 }
 
 void no_auto_answer_on_fake_call_with_replaces_header (void) {
@@ -1244,7 +1349,10 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call transfer existing ringing call", call_transfer_existing_ringing_call),
 	TEST_NO_TAG("Do not stop ringing when declining one of two incoming calls", do_not_stop_ringing_when_declining_one_of_two_incoming_calls),
 	TEST_NO_TAG("No auto answer on fake call with Replaces header", no_auto_answer_on_fake_call_with_replaces_header),
-	TEST_NO_TAG("Resuming on inactive stream", resuming_inactive_stream)
+	TEST_NO_TAG("Resuming on inactive stream", resuming_inactive_stream),
+	TEST_NO_TAG("Stop ringing when accepting call while holding another with ICE", stop_ringing_when_accepting_call_while_holding_another_with_ice),
+	TEST_NO_TAG("Stop ringing when accepting call while holding another without ICE", stop_ringing_when_accepting_call_while_holding_another_without_ice),
+	
 };
 
 test_suite_t multi_call_test_suite = {"Multi call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
