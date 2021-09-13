@@ -279,6 +279,26 @@ const string Content::getPlainFilePathFromEncryptedFile(const string& filePath) 
 
 	string plainPath(filePath);
 	plainPath.append(".bctbx_evfs_plain"); // TODO: have a tmp dir to store all plain version so it is easier to clean?
+	if (bctbx_file_exist(plainPath.c_str()) == 0) {
+		lWarning() << "[Content] File [" << plainPath << "] already exists, trying another name";
+
+		size_t lastIndex = plainPath.find_last_of("/\\");
+		string fileDir = "";
+		string fileName = plainPath;
+		if (lastIndex < plainPath.size()) {
+			fileDir = plainPath.substr(0, lastIndex + 1);
+			fileName = plainPath.substr(lastIndex + 1);
+		}
+
+		int index = 1;
+		string plainPathTest(fileDir + std::to_string(index) + "_" + fileName);
+		while (bctbx_file_exist(plainPathTest.c_str()) == 0) {
+			lWarning() << "[Content] File [" << plainPathTest << "] already exists, trying another name";
+			index += 1;
+			plainPathTest = fileDir + std::to_string(index) + "_" + fileName;
+		}
+		plainPath = plainPathTest;
+	}
 
 	// open the file using encrypted vfs
 	auto cf = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.data(), "r");

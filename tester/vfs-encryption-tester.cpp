@@ -517,8 +517,21 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 		// check it is plain and match the sent one
 		BC_ASSERT_FALSE(is_encrypted(plainFilePath));
 		compare_files(plainFilePath, sendFilepath);
+		auto plainFilePath2 = linphone_content_get_plain_file_path(content);
+		// Make sure the second path returned is different from the first one as the file already exists
+		BC_ASSERT_STRING_NOT_EQUAL(plainFilePath, plainFilePath2);
+		compare_files(plainFilePath2, sendFilepath);
+		auto plainFilePath3 = linphone_content_get_plain_file_path(content);
+		// Make sure the second path returned is different from the first one as the file already exists
+		BC_ASSERT_STRING_NOT_EQUAL(plainFilePath, plainFilePath3);
+		BC_ASSERT_STRING_NOT_EQUAL(plainFilePath2, plainFilePath3);
+		compare_files(plainFilePath3, sendFilepath);
 		std::remove(plainFilePath);
+		std::remove(plainFilePath2);
+		std::remove(plainFilePath3);
 		bctbx_free(plainFilePath);
+		bctbx_free(plainFilePath2);
+		bctbx_free(plainFilePath3);
 	}
 end:
 	// cleaning
