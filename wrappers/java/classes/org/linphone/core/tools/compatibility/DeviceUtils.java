@@ -76,4 +76,11 @@ public class DeviceUtils {
 			DeviceUtils23.vibrate(vibrator);
 		}
 	}
+
+	public static int getPerformanceClass() {
+		if (Version.sdkAboveOrEqual(Version.API31_ANDROID_12)) {
+			return DeviceUtils31.getPerformanceClass();
+		}
+		return -1;
+	}
 }
