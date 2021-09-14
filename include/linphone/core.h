@@ -4177,6 +4177,7 @@ LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_param
  * @param core #LinphoneCore @notnil
  * @param path Path to the file where the recording will be written @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 14/09/2021 Use linphone_conference_start_recording() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_start_conference_recording(LinphoneCore *core, const char *path);
 
@@ -4184,6 +4185,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_start_conference_recording(Linphone
  * Stop recording the running conference
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 14/09/2021 Use linphone_conference_stop_recording() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_stop_conference_recording(LinphoneCore *core);
 

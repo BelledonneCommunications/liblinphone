@@ -414,6 +414,28 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_conference_get_output_audio_
  */
 LINPHONE_PUBLIC int linphone_conference_get_participant_device_volume(LinphoneConference *conference, LinphoneParticipantDevice *device);
 
+/**
+ * Starts recording the conference.
+ * @param conference A #LinphoneConference object @notnil
+ * @param path Where to record the conference @notnil
+ * @return 0 if succeeded. Negative number in case of failure.
+ */
+LINPHONE_PUBLIC int linphone_conference_start_recording(LinphoneConference *conference, const char *path);
+
+/**
+ * Stops the conference recording.
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number in case of failure.
+ */
+LINPHONE_PUBLIC int linphone_conference_stop_recording(LinphoneConference *conference);
+
+/**
+ * Gets whether the conference is currently being recorded.
+ * @param conference A #LinphoneConference object @notnil
+ * @return TRUE if conference is being recorded, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_is_recording(const LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -446,9 +468,6 @@ AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference
 int linphone_conference_mute_microphone(LinphoneConference *conference, bool_t val);
 bool_t linphone_conference_microphone_is_muted(const LinphoneConference *conference);
 float linphone_conference_get_input_volume(const LinphoneConference *conference);
-
-int linphone_conference_start_recording(LinphoneConference *conference, const char *path);
-int linphone_conference_stop_recording(LinphoneConference *conference);
 
 void linphone_conference_on_call_terminating(LinphoneConference *conference, LinphoneCall *call);
 
