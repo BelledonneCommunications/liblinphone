@@ -613,7 +613,7 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 							string typeStr = belle_sip_header_content_type_get_type(contentTypeHeader);
 							string subtypeStr = belle_sip_header_content_type_get_subtype(contentTypeHeader);
 							if ((code == 491) && (typeStr == "application") && (subtypeStr == "media_control+xml")) {
-								unsigned int retryIn = rand() % 1001; // [0;1000]
+								unsigned int retryIn = (unsigned int) rand() % 1001; // [0;1000]
 								belle_sip_source_t *s = op->mRoot->createTimer(vfuRetryCb, op->ref(), retryIn, "vfu request retry");
 								lInfo() << "Rejected vfu request on op [" << op << "], just retry in [" << retryIn << "] ms";
 								belle_sip_object_unref(s);
