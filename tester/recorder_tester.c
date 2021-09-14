@@ -100,7 +100,7 @@ static void record_file(const char *filename, bool_t supported_format, const cha
 	ms_message("We check if the recorder is running, res2 = %d\n", res2);
 	if(!res2) goto fail;
 
-	wait_for_until(lc_manager->lc, NULL, NULL, 0, 5000);
+	wait_for_until(lc_manager->lc, NULL, NULL, 0, 5500);
 	
 	int duration = linphone_recorder_get_duration(recorder);
 	BC_ASSERT_GREATER(duration, 5000, int , "%d");
