@@ -135,6 +135,7 @@ public:
 
 	virtual int startRecording(const char *path) = 0;
 	virtual int stopRecording() = 0;
+	virtual bool isRecording() const = 0;
 
 	void setState (LinphonePrivate::ConferenceInterface::State state) override;
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
@@ -217,6 +218,7 @@ public:
 
 	virtual int startRecording(const char *path) override;
 	virtual int stopRecording() override;
+	virtual bool isRecording() const override;
 	
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
@@ -287,6 +289,9 @@ public:
 	}
 	virtual int stopRecording() override {
 		return 0;
+	}
+	virtual bool isRecording() const override {
+		return false;
 	}
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;

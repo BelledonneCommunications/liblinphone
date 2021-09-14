@@ -179,10 +179,10 @@ void MS2AudioMixer::startRecording(){
 		return;
 	}
 	if (!mRecordEndpoint) {
-		mRecordEndpoint = ms_audio_endpoint_new_recorder(getSession().getCCore()->factory);
+		mRecordEndpoint = ms_audio_endpoint_new_recorder(getSession().getCCore()->factory, mRecordPath.c_str());
 		ms_audio_conference_add_member(mConference, mRecordEndpoint);
 	}
-	ms_audio_recorder_endpoint_start(mRecordEndpoint, mRecordPath.c_str());
+	ms_audio_recorder_endpoint_start(mRecordEndpoint);
 }
 
 void MS2AudioMixer::stopRecording(){
