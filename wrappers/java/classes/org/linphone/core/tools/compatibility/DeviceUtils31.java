@@ -23,6 +23,7 @@ import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
 import android.text.format.DateFormat;
+import android.os.Build;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -64,5 +65,9 @@ public class DeviceUtils31 {
 			}
 			Log.i("=========================================");
 		}
+	}
+
+	public static int getPerformanceClass() {
+		return Build.VERSION.MEDIA_PERFORMANCE_CLASS;
 	}
 }
