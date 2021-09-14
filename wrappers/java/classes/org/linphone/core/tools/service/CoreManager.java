@@ -476,6 +476,7 @@ public class CoreManager {
         Log.i("MODEL=" + Build.MODEL);
         Log.i("MANUFACTURER=" + Build.MANUFACTURER);
         Log.i("ANDROID SDK=" + Build.VERSION.SDK_INT);
+		Log.i("PERFORMANCE CLASS=" + DeviceUtils.getPerformanceClass());
         StringBuilder sb = new StringBuilder();
         sb.append("ABIs=");
         for (String abi : Version.getCpuAbis()) {

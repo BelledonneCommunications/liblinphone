@@ -243,6 +243,10 @@ int linphone_conference_stop_recording (LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->stopRecording();
 }
 
+bool_t linphone_conference_is_recording(const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->isRecording();
+}
+
 bool_t linphone_conference_check_class (LinphoneConference *conference, LinphoneConferenceClass _class) {
 	const auto & cpp_conference = *LinphonePrivate::MediaConference::Conference::toCpp(conference);
 	switch(_class) {
