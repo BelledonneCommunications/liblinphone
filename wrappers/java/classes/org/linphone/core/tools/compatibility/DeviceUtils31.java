@@ -65,4 +65,8 @@ public class DeviceUtils31 {
 			Log.i("=========================================");
 		}
 	}
+
+	public static int getPerformanceClass() {
+		return android.os.Build.VERSION.MEDIA_PERFORMANCE_CLASS;
+	}
 }
