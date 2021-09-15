@@ -427,3 +427,7 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
     secretSize
   );
 }
+
+LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory){
+	return Factory::toCpp(factory)->createDigestAuthenticationPolicy();
+}
