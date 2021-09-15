@@ -103,6 +103,7 @@ set(C_API_HEADER_FILES
 	c-push-notification-message.h
 	c-push-notification-config.h
 	c-search-result.h
+	c-digest-authentication-policy.h
 	c-types.h
 )
 
