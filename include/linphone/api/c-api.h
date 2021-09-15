@@ -52,6 +52,7 @@
 #include "linphone/api/c-recorder.h"
 #include "linphone/api/c-recorder-params.h"
 #include "linphone/api/c-search-result.h"
+#include "linphone/api/c-digest-authentication-policy.h"
 #include "linphone/api/c-types.h"
 
 #endif // ifndef _L_C_API_H_

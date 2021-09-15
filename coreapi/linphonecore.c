@@ -2362,6 +2362,11 @@ static void _linphone_core_read_config(LinphoneCore * lc) {
 		linphone_tunnel_configure(lc->tunnel);
 	}
 #endif
+	{
+		LinphoneDigestAuthenticationPolicy *policy = linphone_digest_authentication_policy_new_from_config(lc->config);
+		linphone_core_set_digest_authentication_policy(lc, policy);
+		linphone_digest_authentication_policy_unref(policy);
+	}
 
 	lc->auto_net_state_mon=lc->sip_conf.auto_net_state_mon;
 }
