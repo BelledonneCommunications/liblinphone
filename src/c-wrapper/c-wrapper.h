@@ -207,12 +207,7 @@ LINPHONE_END_NAMESPACE
 	F(SearchResult, SearchResult)
 
 #define L_REGISTER_SUBTYPES(F) \
-	F(AbstractChatRoom, BasicChatRoom) \
-	F(AbstractChatRoom, BasicToClientGroupChatRoom) \
 	F(AbstractChatRoom, ChatRoom) \
-	F(AbstractChatRoom, ClientGroupChatRoom) \
-	F(AbstractChatRoom, ClientGroupToBasicChatRoom) \
-	F(AbstractChatRoom, ServerGroupChatRoom) \
 	F(EventLog, ConferenceCallEvent) \
 	F(EventLog, ConferenceChatMessageEvent) \
 	F(EventLog, ConferenceEvent) \
@@ -222,6 +217,15 @@ LINPHONE_END_NAMESPACE
 	F(EventLog, ConferenceSecurityEvent) \
 	F(EventLog, ConferenceSubjectEvent) \
 	F(EventLog, ConferenceEphemeralMessageEvent)
+
+#ifdef HAVE_ADVANCED_IM
+#define L_REGISTER_ADVANCED_IM_SUBTYPES(F) \
+	F(AbstractChatRoom, BasicChatRoom) \
+	F(AbstractChatRoom, BasicToClientGroupChatRoom) \
+	F(AbstractChatRoom, ClientGroupChatRoom) \
+	F(AbstractChatRoom, ClientGroupToBasicChatRoom) \
+	F(AbstractChatRoom, ServerGroupChatRoom)
+#endif // HAVE_ADVANCED_IM
 
 // =============================================================================
 // Register belle-sip ID.
@@ -295,6 +299,9 @@ BELLE_SIP_DECLARE_TYPES_END
 
 L_REGISTER_TYPES(L_REGISTER_TYPE);
 L_REGISTER_SUBTYPES(L_REGISTER_SUBTYPE);
+#ifdef HAVE_ADVANCED_IM
+L_REGISTER_ADVANCED_IM_SUBTYPES(L_REGISTER_SUBTYPE)
+#endif // HAVE_ADVANCED_IM
 
 #undef L_REGISTER_SUBTYPES
 #undef L_REGISTER_TYPES
