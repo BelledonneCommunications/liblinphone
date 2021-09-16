@@ -630,7 +630,7 @@ void IosPlatformHelpers::kickOffConnectivity() {
 			bool timeout_reached = FALSE;
 			int loop = 0;
 			CFWriteStreamRef writeStream;
-			CFStreamCreatePairWithSocketToHost(NULL, (CFStringRef) "192.168.0.200" /*"linphone.org"*/, 15000, nil,
+			CFStreamCreatePairWithSocketToHost(NULL, (CFStringRef) @"192.168.0.200" /*"linphone.org"*/, 15000, nil,
 							   &writeStream);
 			bool res = CFWriteStreamOpen(writeStream);
 			const char *buff = "hello";
@@ -660,8 +660,12 @@ void IosPlatformHelpers::kickOffConnectivity() {
 			if (status == kCFStreamStatusOpen) {
 				CFWriteStreamWrite(writeStream, (const UInt8 *)buff, (CFIndex) strlen(buff));
 			} else if (!timeout_reached) {
-				CFErrorRef error = CFWriteStreamCopyError(writeStream);
-				CFRelease(error);
+				CFErrorRef cfError = CFWriteStreamCopyError(writeStream);
+				if (cfError) {
+					NSError *error = (__bridge NSError *)cfError;
+					lError() << "CFStream error " << error.localizedDescription;
+					CFRelease(cfError);
+				}
 			} else if (timeout_reached) {
 				ms_message("CFStream timeout reached");
 			}
