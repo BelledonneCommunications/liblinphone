@@ -10,8 +10,22 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## [5.1.0] Unreleased
 
+### Added
+- LinphoneRecorder API added to record voice messages, that can later be sent in a LinphoneChatMessage.
+
 ### Changed
 - Java wrapper no longer catches app exceptions that happens in listener
+
+### Security fixes
+- To protect against "SIP digest leak", MD5 and digestion without qop=auth can be disabled by configuration
+  See linphone_core_set_digest_authentication_policy() in reference documentation for more details.
+  Alternatively the following properties can be added in linphonerc configuration file:
+    [digest_authentication_policy]
+    allow_md5=0
+    allow_no_qop=0
+  To preserve maximum interoperability with available SIP services, default values for both options are 1 (true).
+  Using a robust password is anyway highly recommended to avoid brute force attacks.
+
 
 ## [5.0.0] 2021-07-08
 
