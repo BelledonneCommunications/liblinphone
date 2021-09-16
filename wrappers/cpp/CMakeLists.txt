@@ -1,6 +1,6 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2017  Belledonne Communications, Grenoble France
+# Copyright (C) 2010-2021 Belledonne Communications, Grenoble France
 #
 ############################################################################
 #
@@ -56,7 +56,7 @@ if(MSVC)
 endif()
 target_compile_definitions(linphone++ PRIVATE "-DLINPHONECXX_EXPORTS")
 target_link_libraries(linphone++
-	PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
+	PRIVATE bctoolbox bellesip linphone
 )
 
 set_target_properties(linphone++ PROPERTIES
@@ -66,12 +66,13 @@ set_target_properties(linphone++ PROPERTIES
 )
 
 target_include_directories(linphone++
-	PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
-	PRIVATE ${PROJECT_BINARY_DIR}/include
-	PRIVATE ${PROJECT_SOURCE_DIR}/include
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-	PRIVATE ${BCTOOLBOX_INCLUDE_DIRS}
-	PRIVATE ${BELLESIP_INCLUDE_DIRS}
+	PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+		$<INSTALL_INTERFACE:include>
+	PRIVATE
+		${PROJECT_BINARY_DIR}/include
+		${PROJECT_SOURCE_DIR}/include
 )
 set_target_properties(linphone++ PROPERTIES SOVERSION ${LINPHONE_SO_VERSION})
 
@@ -94,9 +95,11 @@ write_basic_package_version_file(
 	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY AnyNewerVersion
 )
-export(EXPORT LinphoneCxxTargets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxTargets.cmake"
-)
+if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
+	export(EXPORT LinphoneCxxTargets
+		FILE "${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxTargets.cmake"
+	)
+endif()
 configure_file(LinphoneCxxConfig.cmake.in LinphoneCxxConfig.cmake @ONLY)
 
 install(EXPORT LinphoneCxxTargets
