@@ -2033,6 +2033,27 @@ LINPHONE_PUBLIC void linphone_core_abort_authentication(LinphoneCore *core, Linp
  **/
 LINPHONE_PUBLIC void linphone_core_clear_all_auth_info(LinphoneCore *core);
 
+
+/**
+ * Setup a new digest authentication policy applicable for SIP and HTTP.
+ * 
+ * Setup a new digest authentication policy applicable for SIP and HTTP.
+ * @param core the #LinphoneCore @notnil
+ * @param policy a #LinphoneDigestAuthenticationPolicy @notnil
+ * @ingroup authentication
+ **/
+LINPHONE_PUBLIC void linphone_core_set_digest_authentication_policy(LinphoneCore *core, LinphoneDigestAuthenticationPolicy *policy);
+
+/**
+ * Get the current digest authentication policy applicable for SIP and HTTP.
+ * 
+ * Get the current digest authentication policy applicable for SIP and HTTP.
+ * @param core the #LinphoneCore @notnil
+ * @return The current digest authentication policy. @notnil
+ * @ingroup authentication
+ **/
+LINPHONE_PUBLIC const LinphoneDigestAuthenticationPolicy * linphone_core_get_digest_authentication_policy(const LinphoneCore *core);
+
 /**
  * Set the #LinphoneAccountCreator url on the #LinphoneCore
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil

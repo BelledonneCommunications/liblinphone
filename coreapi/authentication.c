@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -15,22 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
-/*
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Library General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
 #include "linphone/core.h"
@@ -403,4 +387,17 @@ void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc, belle_sip_auth_ev
 			lError() << "Connection gets an auth event of unexpected type";
 		break;
 	}
+}
+
+void linphone_core_set_digest_authentication_policy(LinphoneCore *core, LinphoneDigestAuthenticationPolicy *policy){
+	belle_sip_stack_t *stack = reinterpret_cast<belle_sip_stack_t *>(core->sal->getStackImpl());
+	belle_sip_stack_set_digest_authentication_policy(stack, (belle_sip_digest_authentication_policy_t*) policy);
+	if (linphone_core_ready(core)){
+		linphone_digest_authentication_policy_save(policy, core->config);
+	}
+}
+
+const LinphoneDigestAuthenticationPolicy * linphone_core_get_digest_authentication_policy(const LinphoneCore *core){
+	belle_sip_stack_t *stack = reinterpret_cast<belle_sip_stack_t *>(core->sal->getStackImpl());
+	return (const LinphoneDigestAuthenticationPolicy*)belle_sip_stack_get_digest_authentication_policy(stack);
 }

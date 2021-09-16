@@ -106,6 +106,7 @@ set(C_API_HEADER_FILES
 	c-recorder.h
 	c-recorder-params.h
 	c-search-result.h
+	c-digest-authentication-policy.h
 	c-types.h
 )
 

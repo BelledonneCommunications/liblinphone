@@ -77,7 +77,7 @@ static void register_with_refresh_base_3_for_algo(
 
 	counters = get_stats(lc);
 	reset_counters(counters);
-	linphone_core_set_transports(lc, transport);
+	if (transport) linphone_core_set_transports(lc, transport);
 
 	proxy_cfg = linphone_core_create_proxy_config(lc);
 
@@ -401,6 +401,38 @@ static void ha1_authenticated_register(void){
 	linphone_auth_info_unref(info);
 	counters = &lcm->stat;
 	register_with_refresh(lcm,FALSE,auth_domain,route);
+	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
+	linphone_core_manager_destroy(lcm);
+}
+
+static void md5_digest_rejected(void){
+	stats* counters;
+	LinphoneCoreManager* lcm = create_lcm();
+	char ha1[33];
+	LinphoneAuthInfo *info;
+	char route[256];
+	const LinphoneDigestAuthenticationPolicy *default_policy;
+	LinphoneDigestAuthenticationPolicy *policy = linphone_factory_create_digest_authentication_policy(linphone_factory_get());
+	
+	/* The goal of this test is to make sure that if MD5 is not allowed per configuration, then authentication and registration 
+	 * will not take place. To ensure that the client will not use SHA-256, only an MD5 password is provided.
+	 */
+	sal_auth_compute_ha1(test_username,auth_domain,test_password,ha1);
+	info=linphone_auth_info_new_for_algorithm(test_username,NULL,NULL,ha1,auth_domain,NULL,NULL); /*create authentication structure from identity*/
+	sprintf(route,"sip:%s",test_route);
+	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
+	linphone_auth_info_unref(info);
+	counters = &lcm->stat;
+	
+	default_policy = linphone_core_get_digest_authentication_policy(lcm->lc);
+	if (BC_ASSERT_PTR_NOT_NULL(default_policy)){
+		BC_ASSERT_TRUE(linphone_digest_authentication_policy_get_allow_md5(default_policy));
+		BC_ASSERT_TRUE(linphone_digest_authentication_policy_get_allow_no_qop(default_policy));
+	}
+	linphone_digest_authentication_policy_set_allow_md5(policy, FALSE);
+	linphone_core_set_digest_authentication_policy(lcm->lc, policy);
+	linphone_digest_authentication_policy_unref(policy);
+	register_with_refresh_base_3(lcm->lc, FALSE, auth_domain, route, FALSE, NULL,LinphoneRegistrationFailed);
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
 	linphone_core_manager_destroy(lcm);
 }
@@ -1543,7 +1575,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu),
 	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address),
 	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port),
-	TEST_NO_TAG("Cleanup of unreliable channels", unreliable_channels_cleanup)
+	TEST_NO_TAG("Cleanup of unreliable channels", unreliable_channels_cleanup),
+	TEST_NO_TAG("MD5-based digest rejected by policy", md5_digest_rejected)
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

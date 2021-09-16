@@ -593,6 +593,10 @@ void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *s
 	});
 }
 
+LinphoneDigestAuthenticationPolicy * Factory::createDigestAuthenticationPolicy()const{
+	return linphone_digest_authentication_policy_new();
+}
+
 Factory::~Factory (){
 	bctbx_list_free_with_data(mSupportedVideoDefinitions, (bctbx_list_free_func)linphone_video_definition_unref);
 
