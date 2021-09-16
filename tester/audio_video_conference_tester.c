@@ -8872,7 +8872,6 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Add all calls to conference", add_all_calls_to_conference),
 	TEST_NO_TAG("Add not accepted calls made by local participant to conference", add_call_not_accepted_to_conference_local),
 	TEST_NO_TAG("Add not accepted calls to local participant to conference", add_call_not_accepted_to_conference_remote),
-	TEST_NO_TAG("Add call not accepted to conference", add_call_not_accepted_to_conference),
 	TEST_NO_TAG("Remove participant from video conference", remove_participant_from_video_conference),
 	TEST_NO_TAG("Focus takes quick call after conference started and then resumes it", focus_takes_quick_call_after_conference_started),
 	TEST_NO_TAG("Focus takes call after conference started and participants leave", focus_takes_call_after_conference_started_and_participants_leave),

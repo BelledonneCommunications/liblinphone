@@ -814,12 +814,14 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 					L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 				mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
-
-				/*
-				 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
-				 * resources (mic and camera), which is done during the joinStreamsGroup() step.
-				 */
-				enter();
+				
+				if (state == LinphoneCallStreamsRunning) {
+					/*
+					 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
+					 * resources (mic and camera), which is done during the joinStreamsGroup() step.
+					 */
+					enter();
+				}
 
 			break;
 			default:
@@ -947,8 +949,6 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		Conference::removeParticipant(participant);
 		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 	}
-
-	CallSession::State sessionState = session->getState();
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
 
