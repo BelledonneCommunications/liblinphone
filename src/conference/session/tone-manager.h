@@ -54,6 +54,8 @@ class ToneManager : public CoreAccessor {
 
         // callback file player
         void onFilePlayerEnd(unsigned int eventId);
+        void onPlayToneEnd(unsigned int eventId);
+        
 
         // tester
         LinphoneCoreToneManagerStats *getStats();
@@ -106,9 +108,11 @@ class ToneManager : public CoreAccessor {
         // stop
         void doStopRingbackTone();
         void doStopTone();
-        void doStopToneToPlaySomethingElse(const std::shared_ptr<CallSession> &session);
+        void doStopAllTones();
         void doStopRingtone(const std::shared_ptr<CallSession> &session);
         void doStop(const std::shared_ptr<CallSession> &session, ToneManager::State newState);
+        
+        void updateRings();// UpdateRings is call after a tone end, or when updating call state
 
         // sound
         MSFilter *getAudioResource(AudioResourceType rtype, MSSndCard *card, bool create);
