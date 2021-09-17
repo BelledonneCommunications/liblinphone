@@ -116,16 +116,16 @@ std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(c
 void LdapContactProvider::initializeLdap(){
 	int proto_version = LDAP_VERSION3;
 	int ret = ldap_set_option(NULL, LDAP_OPT_PROTOCOL_VERSION, &proto_version);
+	int debLevel = 0;
 	mCurrentAction = ACTION_NONE;
 	if( ret != LDAP_SUCCESS )
 		ms_error( "[LDAP] Problem initializing default Protocol version to 3 : %x (%s)", ret, ldap_err2string(ret));
 // Setting global options for the next initialization. These options cannot be done with the LDAP instance directly.
-	if(mConfig.count("debug")>0 && mConfig["debug"] == "1"){
-		int debLevel = 7;
-		ret = ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debLevel);
-		if( ret != LDAP_SUCCESS )
-			ms_error( "[LDAP] Problem initializing debug options to mode 7 : %x (%s)", ret, ldap_err2string(ret));	
-	}
+	if(mConfig.count("debug")>0 && mConfig["debug"] == "1")
+		debLevel = 7;
+	ret = ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debLevel);
+	if( ret != LDAP_SUCCESS )
+		ms_error( "[LDAP] Problem initializing debug options to mode 7 : %x (%s)", ret, ldap_err2string(ret));	
 	if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
 		std::string caFile = linphone_core_get_root_ca(mCore->getCCore());
 		bool enableVerification = true;
@@ -268,7 +268,7 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 			contact->mName.second = (int)attributeIndex;
 		}
 	}
-	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() && (contact->mSip.second < 0 || (attributeValueLocale != "" && contact->mSip.second >= (int)attributeIndex)) ; ++attributeIndex){
+	for(size_t attributeIndex = 0 ; attributeIndex < mSipAttributes.size() ; ++attributeIndex){
 		if( attr_name == mSipAttributes[attributeIndex]){// Complete SIP with custom data (scheme and domain)
 			std::string sip;
 			sip += attributeValueLocale;
@@ -279,19 +279,14 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 				if(mConfig.count("sip_domain")>0 && mConfig.at("sip_domain") != "")
 					linphone_address_set_domain(la, mConfig.at("sip_domain").c_str());
 				char *newSip = linphone_address_as_string(la);
-				if( contact->mSip.second != (int)attributeIndex){
-					contact->mSip.first.clear();
-					contact->mSip.second = (int)attributeIndex;
-				}
-				contact->mSip.first.push_back(newSip);
-				contact->mSip.second = (int)attributeIndex;
+				contact->mSip[newSip] = 0;
 				ms_free(newSip);
 				linphone_address_unref(la);
 			}
 		}
 	}
 	// return 1 if the structure has enough data to create a linphone friend
-	if( contact->mName.second >= 0 && contact->mSip.second >= 0 )
+	if( contact->mName.second >= 0 && contact->mSip.size() > 0 )
 		return 1;
 	else
 		return 0;
@@ -544,8 +539,8 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 					attr = ldap_next_attribute(mLd, entry, ber);
 				}
 				if( contact_complete ) {
-					for(size_t i = 0 ; i < ldapData.mSip.first.size() ; ++i){
-						LinphoneAddress* la = linphone_core_interpret_url(lc, ldapData.mSip.first[i].c_str());
+					for(auto sipAddress : ldapData.mSip) {
+						LinphoneAddress* la = linphone_core_interpret_url(lc, sipAddress.first.c_str());
 						if( la ){
 							linphone_address_set_display_name(la, ldapData.mName.first.c_str());
 							req->mFoundEntries = bctbx_list_append(req->mFoundEntries, la);

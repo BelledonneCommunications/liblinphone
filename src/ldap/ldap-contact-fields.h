@@ -22,24 +22,22 @@
 
 #include "linphone/types.h"
 #include <vector>
+#include <map>
 
 LINPHONE_BEGIN_NAMESPACE
 
 class LdapContactFields {
 public:
-
 	LdapContactFields();
 
 	/**
 	 * Regroup findings and keep the best choices.
 	 * 
-	 * A pair is the list of string to use with its priority. If -1, then there is not defined result.
-	 * It is used for giving priority on attributes (eg: mobile and then telephoneNumber if mobile is not good enough to take account)
+	 * A map of string to ensure having uniques.
 	 * A list can be all mobile numbers
 	 */
 	std::pair< std::string, int> mName;
-	std::pair< std::vector<std::string>, int> mSip;
-
+	std::map<std::string, int> mSip;
 };
 
 LINPHONE_END_NAMESPACE
