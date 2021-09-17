@@ -20,12 +20,12 @@
 #include <ctime>
 
 #include "address/address.h"
+#include "belr/grammarbuilder.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "core/core.h"
-#include "belr/grammarbuilder.h"
 #include "linphone/api/c-api.h"
 // TODO: Remove me later.
 #include "private.h"
@@ -139,12 +139,13 @@ static void send_conference_invitations(void) {
 
 	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
 
+	time_t conf_time = ms_time(NULL);
 	LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
 	linphone_conference_info_set_organizer(conf_info, marie->identity);
 	linphone_conference_info_add_participant(conf_info, pauline->identity);
 	linphone_conference_info_add_participant(conf_info, laure->identity);
 	linphone_conference_info_set_duration(conf_info, 120);
-	linphone_conference_info_set_date_time(conf_info, ms_time(NULL));
+	linphone_conference_info_set_date_time(conf_info, conf_time);
 	linphone_conference_info_set_subject(conf_info, "Video conference presentation");
 	linphone_conference_info_set_description(conf_info, "Talk about video conference and divide tasks.");
 
@@ -159,6 +160,9 @@ static void send_conference_invitations(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceived,1));
 
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
+
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message != NULL) {
 		const string expected = ContentType::Icalendar.getMediaType();
@@ -169,6 +173,19 @@ static void send_conference_invitations(void) {
 	if (laure->stat.last_received_chat_message != NULL) {
 		const string expected = ContentType::Icalendar.getMediaType();
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(laure->stat.last_received_chat_message), expected.c_str());
+
+		const bctbx_list_t* contents = linphone_chat_message_get_contents(laure->stat.last_received_chat_message);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int, "%d");
+		LinphoneContent *content = (LinphoneContent *) bctbx_list_get_data(contents);
+
+		LinphoneConferenceInfo *conf_info_from_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), content);
+		if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_content)) {
+			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_content)));
+			BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_conference_info_get_participants(conf_info_from_content)), 2, int, "%d");
+			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_content), 120, int, "%d");
+			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_content) == conf_time);
+			linphone_conference_info_unref(conf_info_from_content);
+		}
 	}
 
 	linphone_core_manager_destroy(marie);

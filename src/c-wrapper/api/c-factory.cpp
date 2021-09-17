@@ -431,3 +431,11 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
 LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory){
 	return Factory::toCpp(factory)->createDigestAuthenticationPolicy();
 }
+
+LinphoneConferenceInfo *linphone_factory_create_conference_info(LinphoneFactory *factory) {
+  return Factory::toCpp(factory)->createConferenceInfo();
+}
+
+LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content) {
+  return Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
+}

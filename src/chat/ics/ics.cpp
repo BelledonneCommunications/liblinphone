@@ -141,7 +141,7 @@ std::string Ics::Icalendar::asString () const {
 	return output.str();
 }
 
-std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () {
+std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	if (mEvents.empty()) return nullptr;
 
 	auto confInfo = ConferenceInfo::create();

@@ -607,6 +607,21 @@ LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *facto
 **/
 LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
 
+/**
+ * Creates an object #LinphoneConferenceInfo
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneConferenceInfo @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info(LinphoneFactory *factory);
+
+/**
+ * Creates an object #LinphoneConferenceInfo from an Icalendar #LinphoneContent
+ * @param factory the #LinphoneFactory @notnil
+ * @param content the Icalendar #LinphoneContent @notnil
+ * @return a #LinphoneConferenceInfo created from an Icalendar #LinphoneContent @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

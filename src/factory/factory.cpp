@@ -19,10 +19,15 @@
 
 #include "factory.h"
 
+#include <fstream>
+#include <sstream>
+
 #include "address/address.h"
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include "bctoolbox/crypto.h"
+#include "chat/ics/ics.h"
+#include "conference/conference-info.h"
 #include "sqlite3_bctbx_vfs.h"
 
 // TODO: From coreapi. Remove me later.
@@ -609,6 +614,25 @@ Factory::~Factory (){
 		mEvfsMasterKey = nullptr;
 	}
 	clean();
+}
+
+LinphoneConferenceInfo *Factory::createConferenceInfo() const {
+	return linphone_conference_info_new();
+}
+
+LinphoneConferenceInfo *Factory::createConferenceInfoFromIcalendarContent(LinphoneContent *content) const {
+	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
+	if (!contentType.strongEqual(ContentType::Icalendar)) return nullptr;
+
+	std::ifstream contentFile(linphone_content_get_file_path(content));
+	if (!contentFile.is_open()) return nullptr;
+
+	std::stringstream buffer;
+	buffer << contentFile.rdbuf();
+
+	auto ics = Ics::Icalendar::createFromString(buffer.str());
+
+	return ics ? linphone_conference_info_ref(ics->toConferenceInfo()->toC()) : nullptr;
 }
 
 LINPHONE_END_NAMESPACE
