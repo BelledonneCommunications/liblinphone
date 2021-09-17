@@ -79,7 +79,7 @@ namespace Ics {
 
 		std::string asString () const;
 
-		std::shared_ptr<ConferenceInfo> toConferenceInfo ();
+		std::shared_ptr<ConferenceInfo> toConferenceInfo () const;
 
 		static std::shared_ptr<const Icalendar> createFromString (const std::string &str);
 
