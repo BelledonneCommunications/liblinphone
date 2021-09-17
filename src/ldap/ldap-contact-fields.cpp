@@ -22,7 +22,6 @@
 LINPHONE_BEGIN_NAMESPACE
 
 LdapContactFields::LdapContactFields(){
-	mSip.second = -1;
 	mName.second = -1;
 }
 
