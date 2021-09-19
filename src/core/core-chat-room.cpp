@@ -34,7 +34,7 @@
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
-#endif
+#endif // HAVE_ADVANCED_IM
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
