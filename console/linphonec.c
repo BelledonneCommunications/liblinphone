@@ -370,8 +370,7 @@ linphonec_text_received(LinphoneCore *lc, LinphoneChatRoom *cr,
 
 static void linphonec_dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf){
 	char *from=linphone_call_get_remote_address_as_string(call);
-	fprintf(stdout,"Receiving tone %c from %s\n",dtmf,from);
-	fflush(stdout);
+	linphonec_out("Receiving tone %c from %s\n",dtmf,from);
 	ms_free(from);
 }
 
