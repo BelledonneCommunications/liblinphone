@@ -5862,6 +5862,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audi
  * Sets the default ephemeral message mode
  * @param core the linphone core
  * @param mode default ephemeral message mode #LinphoneChatRoomEphemeralMode
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC void linphone_core_chat_room_set_default_ephemeral_mode(LinphoneCore *core, LinphoneChatRoomEphemeralMode mode);
 
@@ -5869,6 +5870,7 @@ LINPHONE_PUBLIC void linphone_core_chat_room_set_default_ephemeral_mode(Linphone
  * Gets the default ephemeral message mode
  * @core core the linphone core
  * @return the default ephemeral message mode #LinphoneChatRoomEphemeralMode
+ * @ingroup chatroom
  **/
 LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_core_chat_room_get_default_ephemeral_mode(const LinphoneCore *core);
 
@@ -5876,6 +5878,7 @@ LINPHONE_PUBLIC LinphoneChatRoomEphemeralMode linphone_core_chat_room_get_defaul
  * Set the default ephemeral lifetime in seconds
  * @param core the linphone core
  * @param value lifetime of ephemeral messages in seconds
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value);
 
@@ -5883,6 +5886,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *
  * Gets the default lifetime of ephemeral messages in seconds
  * @core core the linphone core
  * @return lifetime of ephemeral messages in seconds
+ * @ingroup chatroom
  **/
 LINPHONE_PUBLIC long linphone_core_get_default_ephemeral_lifetime(const LinphoneCore *lc);
 
@@ -5891,6 +5895,7 @@ LINPHONE_PUBLIC long linphone_core_get_default_ephemeral_lifetime(const Linphone
  * @param core The #LinphoneCore @notnil
  * @param conference_information The #LinphoneConferenceInfo @notnil
  * @param text An optional text to be added to the sent chat message @maybenil
+ * @ingroup conference
  */
 LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text);
 
