@@ -173,6 +173,7 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 		case CallSession::State::Paused:
 		case CallSession::State::PausedByRemote:
 // Update current tones when pausing or when the current call is running
+			setState(session, State::Call);
 			updateRings();
 			break;
 		default:
