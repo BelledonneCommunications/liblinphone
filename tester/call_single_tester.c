@@ -2171,6 +2171,10 @@ static void call_callee_with_custom_header_or_sdp_attributes(void) {
 void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accept_video) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	
+	
+	LinphoneCoreToneManagerStats *marieToneManagerStats = linphone_core_get_tone_manager_stats(marie->lc);
+	LinphoneCoreToneManagerStats *paulineToneManagerStats = linphone_core_get_tone_manager_stats(pauline->lc);
 
 	if (accept_video) {
 		LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
@@ -2220,6 +2224,8 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	if (with_losses) {
 		sal_set_send_error(linphone_core_get_sal(marie->lc),1500); /*to trash 200ok without generating error*/
 	}
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&paulineToneManagerStats->number_of_startRingbackTone,1))) goto end;
+	
 	linphone_call_pause(call_pauline);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausing,1));
 
@@ -2230,8 +2236,10 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
+	
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&paulineToneManagerStats->number_of_stopRingbackTone,1))) goto end;
 
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startNamedTone, 1, int, "%d");
+	BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_startNamedTone, 1, int, "%d");
 
 	/*check if video stream is not offered*/
 	BC_ASSERT_EQUAL((int)linphone_call_get_stream_count(call_pauline), 1, int, "%i");
@@ -2250,7 +2258,8 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 
 	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
 	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone, 1, int, "%d");
+	
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&paulineToneManagerStats->number_of_stopTone,1))) goto end;
 
 	/*check if video stream is not offered*/
 	BC_ASSERT_EQUAL((int)linphone_call_get_stream_count(call_pauline), 1, int, "%i");
@@ -2302,7 +2311,7 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPaused,1));
 
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, 1, int, "%d");
+	BC_ASSERT_EQUAL(marieToneManagerStats->number_of_startNamedTone, 1, int, "%d");
 
 	/*check if video stream is not offered*/
 	BC_ASSERT_EQUAL((int)linphone_call_get_stream_count(call_pauline), 1, int, "%i");
@@ -2322,7 +2331,8 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	int streams_running = (with_losses) ? 4 : 3;
 	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,streams_running))) goto end;
 	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,streams_running))) goto end;
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopTone, 1, int, "%d");
+	
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marieToneManagerStats->number_of_stopTone,1))) goto end;
 
 	/*check if video stream is not offered*/
 	BC_ASSERT_EQUAL((int)linphone_call_get_stream_count(call_pauline), 1, int, "%i");
@@ -2408,7 +2418,7 @@ static void call_paused_resumed_no_register(void) {
 	int streams_running = 2;
 	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,streams_running))) goto end;
 	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,streams_running))) goto end;
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopTone, 1, int, "%d");
+	if( !BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopTone,1))) goto end;
 
 	/*same here: wait a while for a bit of a traffic, we need to receive a RTCP packet*/
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 5000);
