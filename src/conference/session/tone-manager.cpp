@@ -166,13 +166,16 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 		case CallSession::State::End:
 // On release, play the a generic end of call tone
 			doStop(session, State::None);	// Stop rings related to the sessions. startErrorTone will set the new state if a tone is played.
-			doStartErrorTone(session, session->getReason());
-			mStats->number_of_startErrorTone++;
+			if(linphone_core_tone_indications_enabled(getCore()->getCCore())) {
+				doStartErrorTone(session, session->getReason());
+				mStats->number_of_startErrorTone++;
+			}
 			break;
 		case CallSession::State::StreamsRunning:
 		case CallSession::State::Paused:
 		case CallSession::State::PausedByRemote:
 // Update current tones when pausing or when the current call is running
+			setState(session, State::Call);
 			updateRings();
 			break;
 		default:
