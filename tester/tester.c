@@ -2936,6 +2936,9 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	bool_t did_receive_call;
 	LinphoneCall *callee_call=NULL;
 	LinphoneCall *caller_call=NULL;
+	
+	LinphoneCoreToneManagerStats *callee_stats = linphone_core_get_tone_manager_stats(callee_mgr->lc);
+	LinphoneCoreToneManagerStats *caller_stats = linphone_core_get_tone_manager_stats(caller_mgr->lc);
 
 	/* TODO: This should be handled correctly inside the liblinphone library but meanwhile handle this here. */
 	linphone_core_manager_wait_for_stun_resolution(caller_mgr);
@@ -3000,15 +3003,14 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		}
 		linphone_address_unref(callee_from);
 	}
-
-	LinphoneCoreToneManagerStats *callee_stats = linphone_core_get_tone_manager_stats(callee_mgr->lc);
+	
 	if (callee_stats->number_of_startRingbackTone == callee_stats->number_of_stopRingbackTone) {
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_startRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived, int, "%d");
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived));
 	} else {
 		// in this case, the call is currently in RingbackTone so the Ringtone should not start
-		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_startRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived-1, int, "%d");
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived-1));
 	}
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_startRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
+	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_stats->number_of_startRingbackTone,caller_mgr->stat.number_of_LinphoneCallOutgoingRinging));
 
 	// Local call parameters are available after moving to OutgoingRinging
 	if (!caller_params && caller_call){
@@ -3093,9 +3095,14 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallConnected,initial_caller.number_of_LinphoneCallConnected+1));
 
 	result = wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+1, 2000) && wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+1, 2000);
-
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(callee_mgr->lc)->number_of_stopRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived, int, "%d");
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
+	
+	BC_ASSERT_EQUAL(callee_stats->number_of_startErrorTone, callee_mgr->stat.number_of_LinphoneCallEnd + callee_mgr->stat.number_of_LinphoneCallError, int, "%d");
+	
+	if (callee_stats->number_of_startRingbackTone != callee_stats->number_of_stopRingbackTone)// in this case, the call is currently in RingbackTone so the Ringtone didn't start and stop didn't change
+		BC_ASSERT_EQUAL(callee_stats->number_of_stopRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived-1, int, "%d");
+	else
+		BC_ASSERT_EQUAL(callee_stats->number_of_stopRingtone, callee_mgr->stat.number_of_LinphoneCallIncomingReceived, int, "%d");
+	BC_ASSERT_EQUAL(caller_stats->number_of_stopRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
 
 	if (result != 0) {
 		if ((matched_enc == LinphoneMediaEncryptionDTLS) || (matched_enc == LinphoneMediaEncryptionZRTP)) {

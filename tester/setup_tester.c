@@ -1926,13 +1926,16 @@ static void search_friend_chat_room_remote(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 #ifdef LDAP_ENABLED
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 6, int, "%d");// Sorted by display names
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 9, int, "%d");// Sorted by display names
 		_check_friend_result_list(marie->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);	// "Chloe"
-		_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org", NULL);	// "Laure"
-		_check_friend_result_list(marie->lc, resultList, 2, "sip:0601234567@ldap.example.org", NULL);	// "Marie"
-		_check_friend_result_list(marie->lc, resultList, 3, "sip:Pauline@ldap.example.org", NULL);	//"Pauline"
-		_check_friend_result_list(marie->lc, resultList, 4, addr, NULL);	// "pauline_***" *** is dynamic
-		_check_friend_result_list(marie->lc, resultList, 5, "sip:pauline@sip.example.org", NULL);	// "Paupoche"
+		_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org", NULL);	// "Laure" mobile
+		_check_friend_result_list(marie->lc, resultList, 2, "sip:Laure@ldap.example.org", NULL);	// "Laure"	sn
+		_check_friend_result_list(marie->lc, resultList, 3, "sip:0212345678@ldap.example.org", NULL);	//"Marie" telephoneNumber
+		_check_friend_result_list(marie->lc, resultList, 4, "sip:0601234567@ldap.example.org", NULL);	// "Marie" mobile
+		_check_friend_result_list(marie->lc, resultList, 5, "sip:Marie@ldap.example.org", NULL);	// "Marie" sn
+		_check_friend_result_list(marie->lc, resultList, 6, "sip:Pauline@ldap.example.org", NULL);	//"Pauline" sn
+		_check_friend_result_list(marie->lc, resultList, 7, addr, NULL);	// "pauline_***" *** is dynamic
+		_check_friend_result_list(marie->lc, resultList, 8, "sip:pauline@sip.example.org", NULL);	// "Paupoche"
 		// marie_rc has an hardcoded friend for pauline
 #else
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
