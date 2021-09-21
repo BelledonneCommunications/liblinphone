@@ -132,10 +132,26 @@ static void build_ics () {
 	BC_ASSERT_STRING_EQUAL(confStr.c_str(), expectedIcs.c_str());
 }
 
+static void conference_info_participant_sent(LinphoneCore *core, LinphoneAddress *address) {
+	stats *stat = get_stats(core);
+	stat->number_of_LinphoneConferenceInfoOnParticipantSent++;
+}
+
+static void conference_info_participant_error(LinphoneCore *core, LinphoneAddress *address, LinphoneConferenceInfoError error) {
+	stats *stat = get_stats(core);
+	stat->number_of_LinphoneConferenceInfoOnParticipantError++;
+}
+
 static void send_conference_invitations(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_conference_info_on_participant_sent(cbs, conference_info_participant_sent);
+	linphone_core_cbs_set_conference_info_on_participant_error(cbs, conference_info_participant_error);
+	linphone_core_add_callbacks(marie->lc, cbs);
+	linphone_core_cbs_unref(cbs);
 
 	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
 
@@ -187,6 +203,9 @@ static void send_conference_invitations(void) {
 			linphone_conference_info_unref(conf_info_from_content);
 		}
 	}
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnParticipantSent, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnParticipantError, 0, int, "%d");
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
