@@ -607,6 +607,22 @@ void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *c
 	cbs->vtable->account_registration_state_changed = cb;
 }
 
+void linphone_core_cbs_set_conference_info_on_participant_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnParticipantSentCb cb) {
+	cbs->vtable->conference_info_on_participant_sent = cb;
+}
+
+LinphoneCoreCbsConferenceInfoOnParticipantSentCb linphone_core_cbs_get_conference_info_on_participant_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_on_participant_sent;
+}
+
+void linphone_core_cbs_set_conference_info_on_participant_error(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnParticipantErrorCb cb) {
+	cbs->vtable->conference_info_on_participant_error = cb;
+}
+
+LinphoneCoreCbsConferenceInfoOnParticipantErrorCb linphone_core_cbs_get_conference_info_on_participant_error(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_on_participant_error;
+}
+
 
 void lc_callback_obj_init(LCCallbackObj *obj,LinphoneCoreCbFunc func,void* ud) {
 	obj->_func=func;
@@ -8672,7 +8688,8 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 
 	bctbx_list_t *it;
 	for (it = participants; it != NULL; it = it->next) {
-		bctbx_list_t *add_participant = bctbx_list_append(NULL, (LinphoneAddress *) bctbx_list_get_data(it));
+		LinphoneAddress *participant = (LinphoneAddress *) bctbx_list_get_data(it);
+		bctbx_list_t *add_participant = bctbx_list_append(NULL, participant);
 		LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(core);
 
 		LinphoneChatRoom *cr = linphone_core_create_chat_room_6(core,
@@ -8683,7 +8700,10 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		linphone_chat_room_params_unref(chat_room_params);
 		bctbx_list_free(add_participant);
 
-		if (!cr) continue;
+		if (!cr) {
+			linphone_core_notify_conference_info_on_participant_error(core, participant, LinphoneConferenceInfoChatRoomError);
+			continue;
+		}
 
 		LinphoneContent *content = linphone_core_create_content(core);
 		linphone_content_set_type(content, "text");
@@ -8699,6 +8719,9 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		if (text) linphone_chat_message_add_utf8_text_content(msg, text);
 
 		linphone_chat_message_send(msg);
+
+		// TODO: Check that the message is delivered before notifying
+		linphone_core_notify_conference_info_on_participant_sent(core, participant);
 
 		linphone_content_unref(content);
 		linphone_chat_message_unref(msg);
