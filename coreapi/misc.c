@@ -378,6 +378,8 @@ SalReason linphone_reason_to_sal(LinphoneReason reason){
 			return SalReasonServerTimeout;
 		case LinphoneReasonNotAnswered:
 			return SalReasonRequestTimeout;
+		case LinphoneReasonTransferred:
+			return SalReasonNone;
 		case LinphoneReasonUnknown:
 			return SalReasonUnknown;
 	}

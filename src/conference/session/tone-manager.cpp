@@ -167,7 +167,11 @@ void ToneManager::update(const std::shared_ptr<CallSession> &session) {
 // On release, play the a generic end of call tone
 			doStop(session, State::None);	// Stop rings related to the sessions. startErrorTone will set the new state if a tone is played.
 			if(linphone_core_tone_indications_enabled(getCore()->getCCore())) {
-				doStartErrorTone(session, session->getReason());
+				auto state = session->getTransferState();
+				if( state == CallSession::State::Connected)
+					doStartErrorTone(session, LinphoneReasonTransferred);
+				else
+					doStartErrorTone(session, session->getReason());
 				mStats->number_of_startErrorTone++;
 			}
 			break;
@@ -686,10 +690,6 @@ void ToneManager::playTone(const std::shared_ptr<CallSession> &session, MSDtmfGe
 		
 		ms_filter_remove_notify_callback(f,&on_play_tone_end, this );
 		ms_filter_add_notify_callback(f, &on_play_tone_end, this, FALSE);
-		if (tone.repeat_count > 0) {
-			int delay = (tone.duration + tone.interval) * tone.repeat_count + 1000;
-			createTimerToCleanTonePlayer((unsigned int) delay);
-		}
 	}
 }
 
