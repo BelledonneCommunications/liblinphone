@@ -109,6 +109,8 @@ const char *linphone_reason_to_string(LinphoneReason err){
 			return "Session Interval Too Small";
 		case LinphoneReasonServerTimeout:
 			return "Server timeout";
+		case LinphoneReasonTransferred:
+			return "Call transferred";
 		case LinphoneReasonUnknown:
 			return "Unknown error";
 	}
