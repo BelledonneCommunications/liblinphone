@@ -60,7 +60,7 @@ void ConferenceInfo::setParticipants (bctbx_list_t *participants) {
 		bctbx_list_free_with_data(mParticipants, (bctbx_list_free_func) linphone_address_unref);
 	}
 
-	mParticipants = participants;
+	mParticipants = bctbx_list_copy_with_data(participants, (bctbx_list_copy_func) linphone_address_clone);
 }
 
 void ConferenceInfo::addParticipant (LinphoneAddress *participant) {
@@ -112,17 +112,22 @@ void ConferenceInfo::setDescription (const string &description) {
 const string ConferenceInfo::toIcsString () const {
 	Ics::Icalendar cal;
 	auto event = make_shared<Ics::Event>();
+	char *tmp;
 
-	char *tmp = linphone_address_as_string_uri_only(mOrganizer);
-	event->setOrganizer(tmp);
-	bctbx_free(tmp);
+	if (mOrganizer) {
+		tmp = linphone_address_as_string_uri_only(mOrganizer);
+		event->setOrganizer(tmp);
+		bctbx_free(tmp);
+	}
 
 	event->setSummary(mSubject);
 	event->setDescription(mDescription);
 
-	tmp = linphone_address_as_string_uri_only(mUri);
-	event->setXConfUri(tmp);
-	bctbx_free(tmp);
+	if (mUri) {
+		tmp = linphone_address_as_string_uri_only(mUri);
+		event->setXConfUri(tmp);
+		bctbx_free(tmp);
+	}
 	
 	bctbx_list_t *it;
 	for (it = mParticipants; it != NULL; it = it->next) {

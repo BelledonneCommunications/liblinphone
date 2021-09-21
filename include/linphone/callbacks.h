@@ -508,6 +508,20 @@ typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
 typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *core, LinphoneAccount *account, LinphoneRegistrationState state, const char *message);
 
 /**
+ * Callback notifying that a conference invitation has been sent to #LinphoneAddress.
+ * @param core The #LinphoneCore object. @notnil
+ * @param participant The #LinphoneAddress object corresponding to the participant. @notnil
+ */
+typedef void (*LinphoneCoreCbsConferenceInfoOnParticipantSentCb)(LinphoneCore *core, LinphoneAddress *participant);
+
+/**
+ * Callback notifying that a conference invitation could not be sent to #LinphoneAddress.
+ * @param core The #LinphoneCore object. @notnil
+ * @param participant The #LinphoneAddress object corresponding to the participant. @notnil
+ */
+typedef void (*LinphoneCoreCbsConferenceInfoOnParticipantErrorCb)(LinphoneCore *core, LinphoneAddress *participant, LinphoneConferenceInfoError error);
+
+/**
  * @}
 **/
 
