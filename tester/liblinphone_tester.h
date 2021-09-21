@@ -394,6 +394,9 @@ typedef struct _stats {
 	int number_of_LinphoneCoreAudioDeviceChanged;
 	int number_of_LinphoneCoreAudioDevicesListUpdated;
 	int number_of_LinphoneCoreVersionUpdateCheck;
+
+	int number_of_LinphoneConferenceInfoOnParticipantSent;
+	int number_of_LinphoneConferenceInfoOnParticipantError;
 }stats;
 
 typedef struct _LinphoneCoreManager {
