@@ -1044,7 +1044,8 @@ typedef enum _LinphoneReason{
 	LinphoneReasonBadGateway = 19, /**< Bad gateway */
 	LinphoneReasonSessionIntervalTooSmall = 20, /**< The received request contains a Session-Expires header field with a duration below the minimum timer */
 	LinphoneReasonServerTimeout = 21, /**< Server timeout */
-	LinphoneReasonUnknown = 22 /**< Unknown reason */
+	LinphoneReasonUnknown = 22, /**< Unknown reason */
+	LinphoneReasonTransferred= 23 /**< The call has been transferred */
 } LinphoneReason;
 
 #define LinphoneReasonBadCredentials LinphoneReasonForbidden

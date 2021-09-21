@@ -752,9 +752,14 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 }
 
 void CallSessionPrivate::terminate () {
-	if ((state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia) && (linphone_error_info_get_reason(ei) != LinphoneReasonNotAnswered)) {
-		linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
-		nonOpError = true;
+	if ((state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia)){
+		LinphoneReason reason = linphone_error_info_get_reason(ei);
+		if( reason == LinphoneReasonNone) {
+			linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
+			nonOpError = true;
+		}else if( reason != LinphoneReasonNotAnswered) {
+			nonOpError = true;
+		}
 	}
 	setState(CallSession::State::End, "Call terminated");
 }
@@ -1164,6 +1169,7 @@ LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 		return -1;
 	}
 	if (ei) {
+		linphone_error_info_set(d->ei, nullptr, linphone_error_info_get_reason(ei), linphone_error_info_get_protocol_code(ei), linphone_error_info_get_phrase(ei), nullptr );
 		linphone_error_info_to_sal(ei, &sei);
 		d->op->declineWithErrorInfo(&sei , nullptr);
 	} else
