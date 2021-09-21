@@ -60,7 +60,7 @@ void ConferenceInfo::setParticipants (bctbx_list_t *participants) {
 		bctbx_list_free_with_data(mParticipants, (bctbx_list_free_func) linphone_address_unref);
 	}
 
-	mParticipants = participants;
+	mParticipants = bctbx_list_copy_with_data(participants, (bctbx_list_copy_func) linphone_address_clone);
 }
 
 void ConferenceInfo::addParticipant (LinphoneAddress *participant) {
