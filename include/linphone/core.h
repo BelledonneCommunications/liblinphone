@@ -279,6 +279,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
 	LinphoneCoreCbsChatRoomExhumedCb chat_room_exhumed;
 	LinphoneCoreCbsAccountRegistrationStateChangedCb account_registration_state_changed;
+	LinphoneCoreCbsConferenceInfoOnSentCb conference_info_on_sent;
 	LinphoneCoreCbsConferenceInfoOnParticipantSentCb conference_info_on_participant_sent;
 	LinphoneCoreCbsConferenceInfoOnParticipantErrorCb conference_info_on_participant_error;
 	void *user_data; /**<User data associated with the above callbacks */
@@ -1012,6 +1013,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_account_registration_state_changed(Li
  * @return The current account registration state changed callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsAccountRegistrationStateChangedCb linphone_core_cbs_get_account_registration_state_changed(LinphoneCoreCbs *cbs);
+
+/*
+ * Set the conference info sent callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The conference info sent callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_on_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnSentCb cb);
+
+/**
+ * Get the conference info sent callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The current conference info sent callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoOnSentCb linphone_core_cbs_get_conference_info_on_sent(LinphoneCoreCbs *cbs);
 
 /*
  * Set the conference info on participant sent callback.

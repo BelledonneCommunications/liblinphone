@@ -132,14 +132,19 @@ static void build_ics () {
 	BC_ASSERT_STRING_EQUAL(confStr.c_str(), expectedIcs.c_str());
 }
 
-static void conference_info_participant_sent(LinphoneCore *core, LinphoneAddress *address) {
+static void conference_info_participant_sent(LinphoneCore *core, const LinphoneConferenceInfo *info, const LinphoneAddress *address) {
 	stats *stat = get_stats(core);
 	stat->number_of_LinphoneConferenceInfoOnParticipantSent++;
 }
 
-static void conference_info_participant_error(LinphoneCore *core, LinphoneAddress *address, LinphoneConferenceInfoError error) {
+static void conference_info_participant_error(LinphoneCore *core, const LinphoneConferenceInfo *info, const LinphoneAddress *address, LinphoneConferenceInfoError error) {
 	stats *stat = get_stats(core);
 	stat->number_of_LinphoneConferenceInfoOnParticipantError++;
+}
+
+static void conference_info_sent(LinphoneCore *core, const LinphoneConferenceInfo *info) {
+	stats *stat = get_stats(core);
+	stat->number_of_LinphoneConferenceInfoOnSent++;
 }
 
 static void send_conference_invitations(void) {
@@ -150,6 +155,7 @@ static void send_conference_invitations(void) {
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_conference_info_on_participant_sent(cbs, conference_info_participant_sent);
 	linphone_core_cbs_set_conference_info_on_participant_error(cbs, conference_info_participant_error);
+	linphone_core_cbs_set_conference_info_on_sent(cbs, conference_info_sent);
 	linphone_core_add_callbacks(marie->lc, cbs);
 	linphone_core_cbs_unref(cbs);
 
@@ -206,6 +212,7 @@ static void send_conference_invitations(void) {
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnParticipantSent, 2, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnParticipantError, 0, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnSent, 1, int, "%d");
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);

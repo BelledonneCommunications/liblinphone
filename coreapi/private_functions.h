@@ -621,8 +621,9 @@ void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCali
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);
 void linphone_core_notify_ec_calibration_audio_uninit(LinphoneCore *lc);
 void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *chat_room);
-void linphone_core_notify_conference_info_on_participant_sent(LinphoneCore *lc, LinphoneAddress *address);
-void linphone_core_notify_conference_info_on_participant_error(LinphoneCore *lc, LinphoneAddress *address, LinphoneConferenceInfoError error);
+void linphone_core_notify_conference_info_on_participant_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address);
+void linphone_core_notify_conference_info_on_participant_error(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address, LinphoneConferenceInfoError error);
+void linphone_core_notify_conference_info_on_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
 
 void set_playback_gain_db(AudioStream *st, float gain);
 
