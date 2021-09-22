@@ -2822,9 +2822,9 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
 		" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
 		" LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
-		" LEFT OUTER JOIN chat_message_ephemeral_event ON conference_event_view.id = chat_message_ephemeral_event.event_id"
-		" WHERE expired_time > :nullTime"
-		" ORDER BY expired_time ASC";
+		" LEFT JOIN chat_message_ephemeral_event ON conference_event_view.id = chat_message_ephemeral_event.event_id"
+		" WHERE chat_message_ephemeral_event.expired_time > :nullTime"
+		" ORDER BY chat_message_ephemeral_event.expired_time ASC";
 
 	if (getBackend() == MainDb::Backend::Sqlite3) {
 			query += " LIMIT :maxMessages";
