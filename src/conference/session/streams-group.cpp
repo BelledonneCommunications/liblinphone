@@ -334,6 +334,23 @@ Stream * StreamsGroup::lookupStream(const SalStreamType type, const std::string 
 	return nullptr;
 }
 
+VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
+	for (auto &stream : mStreams){
+		const auto streamLabel = stream->getLabel();
+		if ((stream->getType() == SalVideo) && (refStream->label && strcmp(refStream->label, streamLabel.c_str()) == 0)) {
+			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+			MediaStream *ms = s->getMediaStream();
+			if (ms && media_stream_get_direction(ms) != MediaStreamRecvOnly) {
+				VideoStream *vs = (VideoStream *)ms;
+				if (video_stream_thumbnail_enabled(vs) != video_stream_thumbnail_enabled(refStream)){
+					return vs;
+				}
+			}
+		}
+	}
+	return nullptr;
+}
+
 
 bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) {
 	for (auto &stream : mStreams){
