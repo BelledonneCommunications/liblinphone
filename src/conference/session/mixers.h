@@ -199,7 +199,7 @@ class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 	friend MS2VideoStream;
 public:
 	MS2VideoMixer(MixerSession & session);
-	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool activeSpeaker);
+	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
 	void setFocus(StreamsGroup *sg);
@@ -215,8 +215,8 @@ private:
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
 	int getOutputBandwidth();
-	MSVideoConference *mConferenceAllToAll = nullptr;
-	MSVideoConference *mConferenceOnetoAll = nullptr;
+	MSVideoConference *mConferenceMix = nullptr; // Add only normal streams to get switched stream (active speaker) and all routed normal streams (mosaic)
+	MSVideoConference *mConferenceThumbnail = nullptr; // Add only mini streams and get all routed mini streams (active speaker)
 	VideoStream *mLocalParticipantStream = nullptr;
 	VideoStream *mLocalParticipantItcStream = nullptr; // TODO WORKAROUND - Stores the pointer to a stream created for active speaker layout so that it can be stopped when removing the local participant
 	MSVideoEndpoint *mMainLocalEndpoint = nullptr;

@@ -202,9 +202,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	const auto & sdpAttributes = isInLocalConference ? ctx.getLocalStreamDescription().custom_sdp_attributes : ctx.getRemoteStreamDescription().custom_sdp_attributes;
 	const char * label = sal_custom_sdp_attribute_find(sdpAttributes, "label");
 	const char * content = sal_custom_sdp_attribute_find(sdpAttributes, "content");
+	MSFilter *source = nullptr;
+
+	video_stream_enable_thumbnail(mStream, content && !strcmp(content, "thumbnail"));
 
 	/* Shutdown preview */
-	MSFilter *source = nullptr;
 	if (getCCore()->previewstream) {
 		if (getCCore()->video_conf.reuse_preview_source)
 			source = video_preview_stop_reuse_source(getCCore()->previewstream);
@@ -328,7 +330,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		reusedPreview = true;
 	} else {
 		bool ok = true;
-		VideoStream *createdStream = nullptr;
+		VideoStream *itcStream = nullptr;
+		MSFilter *itcFilter = nullptr;
 		MSMediaStreamIO io = MS_MEDIA_STREAM_IO_INITIALIZER;
 		if (linphone_config_get_bool(linphone_core_get_config(getCCore()), "video", "rtp_io", FALSE)) {
 			io.input.type = io.output.type = MSResourceRtp;
@@ -343,28 +346,22 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			if (videoMixer == nullptr && dir == MediaStreamSendOnly && !isMain()) {
-				MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendRecv);
-				if (s){
-					createdStream = (VideoStream *)s->getMediaStream();
-					lInfo() << "[mix to all] find sendrecv stream for participant, used for itc.";
+			if (videoMixer == nullptr && dir == MediaStreamSendOnly && content && !strcmp(content, "thumbnail")) {
+				itcStream = getGroup().lookupItcStream(mStream);
+				if (itcStream) {
+					itcFilter = itcStream->itcsink;
 				}
-			}
-
-			if (createdStream) {
 				io.input.type = MSResourceItc;
-				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, createdStream->itcsink);
+				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, itcFilter);
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
 
-				if (videoMixer == nullptr && dir == MediaStreamSendRecv && isMain()) {
+				if (videoMixer == nullptr && dir != MediaStreamRecvOnly && (!content || strcmp(content, "thumbnail"))) {
 					link_video_stream_with_itc_sink(mStream);
-					MS2Stream *s = getGroup().lookupVideoStreamInterface<MS2Stream>(MediaStreamSendOnly);
-					if (s){
-						lInfo() << "[mix to all] find sendonly stream for participant, used for itc.";
-						createdStream = (VideoStream *)s->getMediaStream();
-						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,createdStream->source);
+					itcStream = getGroup().lookupItcStream(mStream);
+					if (itcStream){
+						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,itcStream->source);
 					}
 				}
 
@@ -405,12 +402,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		video_stream_set_label(mStream, label);
 	}
 	if (videoMixer){
-		if (mStream->label) {
-			video_stream_enable_router(mStream, true);
-		}
 		const bool_t isRemote = ((!mStream->label && !content) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, (mStream->label == NULL));
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_thumbnail_enabled(mStream));
 	}
 }
 
