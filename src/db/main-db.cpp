@@ -2815,19 +2815,18 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 #ifdef HAVE_DB_STORAGE
 	// Keep chat_room_id at the end of the query !!!
 	string query =
-		"SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, lifetime, reply_message_id, reply_sender_address.value, chat_room_id"
+		"SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, chat_message_ephemeral_event.ephemeral_lifetime, chat_message_ephemeral_event.expired_time, lifetime, reply_message_id, reply_sender_address.value, chat_room_id"
 		" FROM conference_event_view"
 		" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 		" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
 		" LEFT JOIN sip_address AS device_sip_address ON device_sip_address.id = device_sip_address_id"
 		" LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id"
 		" LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id"
-		" WHERE event_id in ("
-		" SELECT event_id"
-		" FROM chat_message_ephemeral_event"
+		" LEFT OUTER JOIN chat_message_ephemeral_event ON conference_event_view.id = chat_message_ephemeral_event.event_id"
 		" WHERE expired_time > :nullTime"
 		" ORDER BY expired_time ASC";
-	query += getBackend() == MainDb::Backend::Sqlite3 ? " LIMIT :maxMessages) ORDER BY expired_time ASC" : " ) ORDER BY expired_time ASC";
+
+	query += getBackend() == MainDb::Backend::Sqlite3 ? " LIMIT :maxMessages";
 
 	return L_DB_TRANSACTION {
 		L_D();
