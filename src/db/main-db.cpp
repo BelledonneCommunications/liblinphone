@@ -2826,7 +2826,9 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" WHERE expired_time > :nullTime"
 		" ORDER BY expired_time ASC";
 
-	query += getBackend() == MainDb::Backend::Sqlite3 ? " LIMIT :maxMessages";
+	if (getBackend() == MainDb::Backend::Sqlite3) {
+			query += " LIMIT :maxMessages";
+	}
 
 	return L_DB_TRANSACTION {
 		L_D();
