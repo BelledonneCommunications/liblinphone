@@ -905,7 +905,7 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 	while (it != contents.end()) {
 		Content *content = *it;
 		if (content->isFileTransfer()) {
-			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
+			auto *fileTransferContent = static_cast<FileTransferContent *>(content);
 			FileContent *fileContent = fileTransferContent->getFileContent();
 			it = contents.erase(it);
 			it = contents.insert(it, fileContent);
@@ -1219,8 +1219,15 @@ bool ChatMessagePrivate::isValidStateTransition (ChatMessage::State currentState
 
 // -----------------------------------------------------------------------------
 
-ChatMessage::ChatMessage (const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction) :
-	Object(*new ChatMessagePrivate(chatRoom, direction)), CoreAccessor(chatRoom->getCore()) {
+ChatMessage::ChatMessage(const shared_ptr<AbstractChatRoom> &chatRoom, ChatMessage::Direction direction)
+	: Object(*new ChatMessagePrivate(chatRoom, direction)), CoreAccessor(chatRoom->getCore()) {
+	L_D();
+
+	if(!d->senderAuthenticationEnabled) return;
+
+	if (direction == ChatMessage::Direction::Outgoing && d->toAddress.getUsername() == d->authenticatedFromAddress.getUsername()) {
+		d->addSalCustomHeader(PriorityHeader::HeaderName, PriorityHeader::NonUrgent);
+	}
 }
 
 ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.getPublic()->getChatRoom()->getCore()) {}
