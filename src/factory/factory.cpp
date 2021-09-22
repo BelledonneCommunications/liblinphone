@@ -624,11 +624,26 @@ LinphoneConferenceInfo *Factory::createConferenceInfoFromIcalendarContent(Linpho
 	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
 	if (!contentType.strongEqual(ContentType::Icalendar)) return nullptr;
 
-	std::ifstream contentFile(linphone_content_get_file_path(content));
-	if (!contentFile.is_open()) return nullptr;
-
 	std::stringstream buffer;
-	buffer << contentFile.rdbuf();
+
+	const char *filepath = linphone_content_get_file_path(content);
+	if (filepath) {
+		std::ifstream contentFile(filepath);
+		if (!contentFile.is_open()) {
+			bctbx_error("Could not open Icalendar content file path: %s", filepath);
+			return nullptr;
+		}
+
+		buffer << contentFile.rdbuf();
+	} else {
+		const char *body = linphone_content_get_utf8_text(content);
+		if (!body) {
+			bctbx_error("Icalendar content has no body and no file path");
+			return nullptr;
+		}
+
+		buffer << body;
+	}
 
 	auto ics = Ics::Icalendar::createFromString(buffer.str());
 
