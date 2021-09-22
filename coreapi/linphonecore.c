@@ -8692,12 +8692,27 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 }
 
 void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text) {
-	bctbx_list_t *participants = bctbx_list_copy(linphone_conference_info_get_participants(conference_information));
+	const bctbx_list_t *participants = linphone_conference_info_get_participants(conference_information);
+	if (bctbx_list_size(participants) == 0) {
+		ms_warning("Cannot send conference information if no participants are added!");
+		return;
+	}
 
+	LinphoneContent *content = linphone_core_create_content(core);
+	linphone_content_set_type(content, "text");
+	linphone_content_set_subtype(content, "calendar");
+	linphone_content_add_content_type_parameter(content, "conference-event", "yes");
+	linphone_content_set_name(content, "conference.ics");
+
+	char *body = linphone_conference_info_get_icalendar_string(conference_information);
+	linphone_content_set_utf8_text(content, body);
+	bctbx_free(body);
+
+	bctbx_list_t *participants_copy = bctbx_list_copy(participants);
 	size_t sent_count = 0;
-	size_t expected_sent_count = bctbx_list_size(participants);
+	size_t expected_sent_count = bctbx_list_size(participants_copy);
 	bctbx_list_t *it;
-	for (it = participants; it != NULL; it = it->next) {
+	for (it = participants_copy; it != NULL; it = it->next) {
 		LinphoneAddress *participant = (LinphoneAddress *) bctbx_list_get_data(it);
 		bctbx_list_t *add_participant = bctbx_list_append(NULL, participant);
 		LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(core);
@@ -8715,16 +8730,6 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 			continue;
 		}
 
-		LinphoneContent *content = linphone_core_create_content(core);
-		linphone_content_set_type(content, "text");
-		linphone_content_set_subtype(content, "calendar");
-		linphone_content_add_content_type_parameter(content, "conference-event", "yes");
-		linphone_content_set_name(content, "conference.ics");
-
-		char *body = linphone_conference_info_get_icalendar_string(conference_information);
-		linphone_content_set_utf8_text(content, body);
-		bctbx_free(body);
-
 		LinphoneChatMessage *msg = linphone_chat_room_create_file_transfer_message(cr, content);
 		if (text) linphone_chat_message_add_utf8_text_content(msg, text);
 
@@ -8734,7 +8739,6 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		linphone_core_notify_conference_info_on_participant_sent(core, conference_information, participant);
 		sent_count += 1;
 
-		linphone_content_unref(content);
 		linphone_chat_message_unref(msg);
 		linphone_chat_room_unref(cr);
 	}
@@ -8743,5 +8747,6 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		linphone_core_notify_conference_info_on_sent(core, conference_information);
 	}
 
-	bctbx_list_free(participants);
+	linphone_content_unref(content);
+	bctbx_list_free(participants_copy);
 }
