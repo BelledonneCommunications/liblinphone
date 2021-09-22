@@ -607,6 +607,14 @@ void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *c
 	cbs->vtable->account_registration_state_changed = cb;
 }
 
+void linphone_core_cbs_set_conference_info_on_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnSentCb cb) {
+	cbs->vtable->conference_info_on_sent = cb;
+}
+
+LinphoneCoreCbsConferenceInfoOnSentCb linphone_core_cbs_get_conference_info_on_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_on_sent;
+}
+
 void linphone_core_cbs_set_conference_info_on_participant_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnParticipantSentCb cb) {
 	cbs->vtable->conference_info_on_participant_sent = cb;
 }
@@ -8686,6 +8694,8 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text) {
 	bctbx_list_t *participants = bctbx_list_copy(linphone_conference_info_get_participants(conference_information));
 
+	size_t sent_count = 0;
+	size_t expected_sent_count = bctbx_list_size(participants);
 	bctbx_list_t *it;
 	for (it = participants; it != NULL; it = it->next) {
 		LinphoneAddress *participant = (LinphoneAddress *) bctbx_list_get_data(it);
@@ -8701,7 +8711,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		bctbx_list_free(add_participant);
 
 		if (!cr) {
-			linphone_core_notify_conference_info_on_participant_error(core, participant, LinphoneConferenceInfoChatRoomError);
+			linphone_core_notify_conference_info_on_participant_error(core, conference_information, participant, LinphoneConferenceInfoChatRoomError);
 			continue;
 		}
 
@@ -8721,11 +8731,16 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		linphone_chat_message_send(msg);
 
 		// TODO: Check that the message is delivered before notifying
-		linphone_core_notify_conference_info_on_participant_sent(core, participant);
+		linphone_core_notify_conference_info_on_participant_sent(core, conference_information, participant);
+		sent_count += 1;
 
 		linphone_content_unref(content);
 		linphone_chat_message_unref(msg);
 		linphone_chat_room_unref(cr);
+	}
+
+	if (sent_count == expected_sent_count) {
+		linphone_core_notify_conference_info_on_sent(core, conference_information);
 	}
 
 	bctbx_list_free(participants);
