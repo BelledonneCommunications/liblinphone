@@ -173,11 +173,32 @@ static void send_conference_invitations(void) {
 
 	LinphoneAddress *conf_uri = linphone_address_new("sip:confvideo@sip.linphone.org");
 	linphone_conference_info_set_uri(conf_info, conf_uri);
-	linphone_address_unref(conf_uri);
 
 	linphone_core_send_conference_information(marie->lc, conf_info, NULL);
 
 	linphone_conference_info_unref(conf_info);
+
+	bctbx_list_t *participants = bctbx_list_append(NULL, laure->identity);
+	LinphoneChatRoom *cr = linphone_core_search_chat_room(marie->lc, NULL, marie->identity, NULL, participants);
+	bctbx_list_free(participants);
+
+	LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
+	linphone_chat_room_unref(cr);
+
+	const bctbx_list_t* original_contents = linphone_chat_message_get_contents(msg);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+	LinphoneContent *original_content = (LinphoneContent *) bctbx_list_get_data(original_contents);
+	linphone_chat_message_unref(msg);
+
+	LinphoneConferenceInfo *conf_info_from_original_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
+	if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
+		BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
+		BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
+		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_conference_info_get_participants(conf_info_from_original_content)), 2, int, "%d");
+		BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_original_content), 120, int, "%d");
+		BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_original_content) == conf_time);
+		linphone_conference_info_unref(conf_info_from_original_content);
+	}
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceived,1));
@@ -203,6 +224,7 @@ static void send_conference_invitations(void) {
 		LinphoneConferenceInfo *conf_info_from_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), content);
 		if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_content)) {
 			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_content)));
+			BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_content)));
 			BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_conference_info_get_participants(conf_info_from_content)), 2, int, "%d");
 			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_content), 120, int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_content) == conf_time);
@@ -214,6 +236,7 @@ static void send_conference_invitations(void) {
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnParticipantError, 0, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnSent, 1, int, "%d");
 
+	linphone_address_unref(conf_uri);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);

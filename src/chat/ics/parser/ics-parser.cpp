@@ -163,12 +163,13 @@ namespace Ics {
 
 		void setXProp (const string &xProp) {
 			if (xProp.empty()) return;
+			string prop = Utils::trim(xProp);
 
 			// Check if the prop is X-CONFURI
-			size_t p = xProp.find(":");
+			size_t p = prop.find(":");
 			if (p != string::npos) {
-				string name = xProp.substr(0, p - 1);
-				string value = xProp.substr(p + 1, xProp.size());
+				string name = prop.substr(0, p);
+				string value = prop.substr(p + 1, prop.size());
 
 				p = name.find(";");
 				if (p != string::npos) {

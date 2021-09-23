@@ -147,21 +147,25 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	auto confInfo = ConferenceInfo::create();
 	const auto &event = mEvents.front(); // It should always be one event
 
-	LinphoneAddress *org = linphone_address_new(event->getOrganizer().c_str());
-	if (org) {
-		confInfo->setOrganizer(org);
-		linphone_address_unref(org);
-	} else {
-		lWarning() << "Could not parse organizer's address:" << event->getOrganizer();
+	if (!event->getOrganizer().empty()) {
+		LinphoneAddress *org = linphone_address_new(event->getOrganizer().c_str());
+		if (org) {
+			confInfo->setOrganizer(org);
+			linphone_address_unref(org);
+		} else {
+			lWarning() << "Could not parse organizer's address:" << event->getOrganizer();
+		}
 	}
 
 	for (const auto &attendee : event->getAttendees()) {
-		LinphoneAddress *addr = linphone_address_new(attendee.c_str());
-		if (addr) {
-			confInfo->addParticipant(addr);
-			linphone_address_unref(addr);
-		} else {
-			lWarning() << "Could not parse attendee's address:" << attendee;
+		if (!attendee.empty()) {
+			LinphoneAddress *addr = linphone_address_new(attendee.c_str());
+			if (addr) {
+				confInfo->addParticipant(addr);
+				linphone_address_unref(addr);
+			} else {
+				lWarning() << "Could not parse attendee's address:" << attendee;
+			}
 		}
 	}
 
@@ -171,12 +175,14 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	tm dur = event->getDuration();
 	confInfo->setDuration(dur.tm_hour*60 + dur.tm_min + dur.tm_sec/60);
 
-	LinphoneAddress *uri = linphone_address_new(event->getXConfUri().c_str());
-	if (uri) {
-		confInfo->setUri(uri);
-		linphone_address_unref(uri);
-	} else {
-		lWarning() << "Could not parse conference's uri address:" << event->getSummary();
+	if (!event->getXConfUri().empty()) {
+		LinphoneAddress *uri = linphone_address_new(event->getXConfUri().c_str());
+		if (uri) {
+			confInfo->setUri(uri);
+			linphone_address_unref(uri);
+		} else {
+			lWarning() << "Could not parse conference's uri address:" << event->getSummary();
+		}
 	}
 
 	tm start = event->getDateTimeStart();
