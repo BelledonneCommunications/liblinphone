@@ -149,7 +149,8 @@ static const char *first_notify = \
 "    </users>"\
 "   </conference-info>";
 
-static const char *first_notifyi_with_ephemeral = \
+/*
+static const char *first_notify_with_ephemeral = \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?> "\
 "   <conference-info"\
 "    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
@@ -269,6 +270,7 @@ static const char *first_notifyi_with_ephemeral = \
 "     </user>"\
 "    </users>"\
 "   </conference-info>";
+*/
 
 static const char *participant_added_notify = \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?> "\

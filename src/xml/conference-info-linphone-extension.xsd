@@ -19,16 +19,16 @@
 	</xs:simpleType>
 	<xs:simpleType name="modeEnum">
 		<xs:restriction base="xs:string">
-			<xs:enumeration value="auto"/>
-			<xs:enumeration value="manual"/>
+			<xs:enumeration value="device-managed"/>
+			<xs:enumeration value="admin-managed"/>
 		</xs:restriction>
 	</xs:simpleType>
 
 	<xs:element name="ephemeral">
-		<xs:complexType>		
+		<xs:complexType>
 			<xs:sequence>
-				<xs:element name="lifetime" type="xs:string" />
 				<xs:element name="mode" type="tns:modeType"/>
+				<xs:element name="lifetime" type="xs:string" />
 				<xs:any namespace="##targetNamespace" processContents="strict" maxOccurs="unbounded" />	
 			</xs:sequence>
 		</xs:complexType>

@@ -80,7 +80,7 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 		Address participantAddress(addrStr);
 		bctbx_free(addrStr);
 
-		shared_ptr<Participant> participant = getConferenceParticipant (participantAddress);
+		shared_ptr<Participant> participant = findParticipant (participantAddress);
 
 		if (participant) {
 			const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
@@ -96,7 +96,7 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 					acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
 				}
 				const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
-				device->supportAdminMode(acceptConferenceInfoLinphoneExtension);
+				device->enableAdminModeSupport(acceptConferenceInfoLinphoneExtension);
 			}
 		}
 	}
