@@ -378,6 +378,8 @@ SalReason linphone_reason_to_sal(LinphoneReason reason){
 			return SalReasonServerTimeout;
 		case LinphoneReasonNotAnswered:
 			return SalReasonRequestTimeout;
+		case LinphoneReasonTransferred:// It is not really used by Sal. This reason coming from managing tones on transferred call.
+			return SalReasonNone;
 		case LinphoneReasonUnknown:
 			return SalReasonUnknown;
 	}
