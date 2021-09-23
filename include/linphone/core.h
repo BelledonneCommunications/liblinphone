@@ -1864,7 +1864,7 @@ LINPHONE_PUBLIC bool_t linphone_core_generic_comfort_noise_enabled(const Linphon
  * @param rate can be #LINPHONE_FIND_PAYLOAD_IGNORE_RATE
  * @param channels  number of channels, can be #LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS
  * @return Returns NULL if not found. If a #LinphonePayloadType is returned, it must be released with
- * linphone_payload_type_unref() after using it. @maybenil @tobefreed
+ * linphone_payload_type_unref() after using it. @maybenil
  * @warning The returned payload type is allocated as a floating reference i.e. the reference counter is initialized to 0.
  */
 LINPHONE_PUBLIC LinphonePayloadType *linphone_core_get_payload_type(LinphoneCore *core, const char *type, int rate, int channels);
