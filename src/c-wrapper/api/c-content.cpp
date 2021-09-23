@@ -348,9 +348,9 @@ const char *linphone_content_get_file_path (const LinphoneContent *content) {
 char *linphone_content_get_plain_file_path (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile()) {
-		return bctbx_strdup(static_cast<const LinphonePrivate::FileContent *>(c)->getPlainFilePath().c_str());
+		return bctbx_strdup(L_STRING_TO_C(static_cast<const LinphonePrivate::FileContent *>(c)->getPlainFilePath()));
 	} else if (c->isFileTransfer()) {
-		return bctbx_strdup(static_cast<const LinphonePrivate::FileTransferContent *>(c)->getPlainFilePath().c_str());
+		return bctbx_strdup(L_STRING_TO_C(static_cast<const LinphonePrivate::FileTransferContent *>(c)->getPlainFilePath()));
 	}
 	return NULL;
 }
