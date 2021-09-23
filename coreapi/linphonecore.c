@@ -1488,6 +1488,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNoResponse, LinphoneToneCallEnd, NULL);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonDeclined, LinphoneToneCallEnd, NULL);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNone, LinphoneToneCallEnd, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonTransferred, LinphoneToneCallEnd, NULL);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonIOError, LinphoneToneCallLost, NULL);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNotAnswered, LinphoneToneCallLost, NULL);
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonServerTimeout, LinphoneToneCallLost, NULL);
