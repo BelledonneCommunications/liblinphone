@@ -1946,13 +1946,13 @@ void MainDb::init () {
 			"CREATE TABLE IF NOT EXISTS sip_address ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-		") ROW_FORMAT=DYNAMIC " + (Mysql ? "DEFAULT CHARSET=ascii" : "");
+		") ROW_FORMAT=DYNAMIC " + (backend == Mysql ? "DEFAULT CHARSET=ascii" : "");
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS content_type ("
 			"  id" + primaryKeyStr("SMALLINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-			") ROW_FORMAT=DYNAMIC "+ (Mysql ? "DEFAULT CHARSET=ascii" :"");
+			") ROW_FORMAT=DYNAMIC "+ (backend == Mysql ? "DEFAULT CHARSET=ascii" :"");
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS event ("
