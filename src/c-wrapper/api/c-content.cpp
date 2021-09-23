@@ -339,10 +339,10 @@ void linphone_content_set_authTag (LinphoneContent *content, const char *tag, co
 const char *linphone_content_get_file_path (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())
-		return static_cast<const LinphonePrivate::FileContent *>(c)->getFilePath().c_str();
+		return L_STRING_TO_C(static_cast<const LinphonePrivate::FileContent *>(c)->getFilePath());
 	else if (c->isFileTransfer())
-		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFilePath().c_str();
-	return content->cache.file_path.c_str();
+		return L_STRING_TO_C(static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFilePath());
+	return L_STRING_TO_C(content->cache.file_path);
 }
 
 char *linphone_content_get_plain_file_path (const LinphoneContent *content) {
