@@ -1921,7 +1921,10 @@ void MainDb::init () {
 
 	Backend backend = getBackend();
 
-	const string charset = backend == Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
+//only sets charset and row_format if backend is Mysql
+	const string charset = backend == Mysql ? "CHARSET=utf8mb4" : "";
+	const string row_format = backend == Mysql ? "ROW_FORMAT=DYNAMIC DEFAULT" : "";;
+
 	soci::session *session = d->dbSession.getBackendSession();
 
 	using namespace placeholders;
@@ -1946,20 +1949,20 @@ void MainDb::init () {
 			"CREATE TABLE IF NOT EXISTS sip_address ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-		") ROW_FORMAT=DYNAMIC " + (backend == Mysql ? "DEFAULT CHARSET=ascii" : "");
+		") " + row_format + (backend == Mysql ? " CHARSET=ascii" : "");
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS content_type ("
 			"  id" + primaryKeyStr("SMALLINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-			") ROW_FORMAT=DYNAMIC "+ (backend == Mysql ? "DEFAULT CHARSET=ascii" :"");
+			") " + row_format + (backend == Mysql ? " CHARSET=ascii" : "");
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS event ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  type TINYINT UNSIGNED NOT NULL,"
 			"  creation_time" + timestampType() + " NOT NULL"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room ("
@@ -1994,7 +1997,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (local_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS one_to_one_chat_room ("
@@ -2012,7 +2015,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_b_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant ("
@@ -2031,7 +2034,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant_device ("
@@ -2046,7 +2049,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_device_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_event ("
@@ -2060,7 +2063,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_room_id)"
 			"    REFERENCES chat_room(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_notified_event ("
@@ -2071,7 +2074,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_participant_event ("
@@ -2085,7 +2088,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_participant_device_event ("
@@ -2099,7 +2102,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (device_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_security_event ("
@@ -2111,7 +2114,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_subject_event ("
@@ -2122,7 +2125,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_notified_event(event_id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_chat_message_event ("
@@ -2149,7 +2152,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (to_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_participant ("
@@ -2165,7 +2168,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_content ("
@@ -2183,7 +2186,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (content_type_id)"
 			"    REFERENCES content_type(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_file_content ("
@@ -2196,7 +2199,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_message_content_id)"
 			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_content_app_data ("
@@ -2209,7 +2212,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_message_content_id)"
 			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_message_crypto_data ("
@@ -2222,7 +2225,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_chat_message_event(event_id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS friends_list ("
@@ -2232,7 +2235,7 @@ void MainDb::init () {
 			"  rls_uri VARCHAR(2047),"
 			"  sync_uri VARCHAR(2047),"
 			"  revision INT UNSIGNED NOT NULL"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS friend ("
@@ -2255,7 +2258,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (friends_list_id)"
 			"    REFERENCES friends_list(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS friend_app_data ("
@@ -2268,13 +2271,13 @@ void MainDb::init () {
 			"  FOREIGN KEY (friend_id)"
 			"    REFERENCES friend(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS db_module_version ("
 			"  name" + varcharPrimaryKeyStr(191) + "," //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 			"  version INT UNSIGNED NOT NULL"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_ephemeral_event ("
@@ -2285,7 +2288,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_ephemeral_message_event ("
@@ -2311,7 +2314,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_room_id)"
 			"    REFERENCES chat_room(id)"
 			"    ON DELETE CASCADE"
-			") ROW_FORMAT=DYNAMIC " + charset;
+			") " + row_format + " " + charset;
 
 		d->updateSchema();
 
