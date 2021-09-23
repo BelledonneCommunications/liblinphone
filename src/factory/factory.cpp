@@ -19,6 +19,7 @@
 
 #include "factory.h"
 
+#include <cstdio>
 #include <fstream>
 #include <sstream>
 
@@ -624,17 +625,29 @@ LinphoneConferenceInfo *Factory::createConferenceInfoFromIcalendarContent(Linpho
 	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
 	if (!contentType.strongEqual(ContentType::Icalendar)) return nullptr;
 
-	std::stringstream buffer;
+	std::string filepath = "";
+	if (linphone_content_is_file_encrypted(content)) {
+		char *tmp = linphone_content_get_plain_file_path(content);
+		filepath = tmp ? tmp : "";
+		if (tmp) bctbx_free(tmp);
+	} else if (linphone_content_get_file_path(content)) {
+		filepath = linphone_content_get_file_path(content);
+	}
 
-	const char *filepath = linphone_content_get_file_path(content);
-	if (filepath) {
+	std::stringstream buffer;
+	if (!filepath.empty()) {
 		std::ifstream contentFile(filepath);
 		if (!contentFile.is_open()) {
-			bctbx_error("Could not open Icalendar content file path: %s", filepath);
+			bctbx_error("Could not open Icalendar content file path: %s", filepath.c_str());
 			return nullptr;
 		}
 
 		buffer << contentFile.rdbuf();
+
+		if (linphone_content_is_file_encrypted(content)) {
+			// Remove the plain copy if file is encrypted
+			std::remove(filepath.c_str());
+		}
 	} else {
 		const char *body = linphone_content_get_utf8_text(content);
 		if (!body) {
