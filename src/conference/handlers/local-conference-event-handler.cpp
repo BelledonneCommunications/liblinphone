@@ -135,7 +135,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 
 		auto & confDescrDOMDoc = confDescr.getDomDocument();
 
-		::xercesc::DOMElement * e (confDescrDOMDoc.createElementNS(::xsd::cxx::xml::string("ephemeral").c_str(), ::xsd::cxx::xml::string("linphone-cie:ephemeral").c_str()));
+		::xercesc::DOMElement * e (confDescrDOMDoc.createElement(::xsd::cxx::xml::string("linphone-cie:ephemeral").c_str()));
 		*e << ephemeral;
 
 		confDescr.getAny().push_back(e);
