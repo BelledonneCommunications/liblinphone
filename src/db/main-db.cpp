@@ -312,7 +312,7 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 	const long long &contentTypeId = insertContentType(content.getContentType().getMediaType());
 	const string &body = content.getBodyAsUtf8String();
 	*session << "INSERT INTO chat_message_content (event_id, content_type_id, body, body_encoding_type) VALUES"
-		" (:chatMessageId, :contentTypeId, :body, 1)", 
+		" (:chatMessageId, :contentTypeId, :body, 1)",
 		soci::use(chatMessageId), soci::use(contentTypeId), soci::use(body);
 
 	const long long &chatMessageContentId = dbSession.getLastInsertId();
@@ -396,15 +396,15 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
 			soci::use(notifyId), soci::use(chatRoomId);
 	} else {
-		
+
 		lInfo() << "Insert new chat room in database: " << conferenceId << ".";
-		
+
 		const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
 		const tm &lastUpdateTime = Utils::getTimeTAsTm(chatRoom->getLastUpdateTime());
-		
+
 		// Remove capabilities like `Proxy`.
 		const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
-		
+
 		const string &subject = chatRoom->getSubject();
 		const int &flags = chatRoom->hasBeenLeft();
 		bool ephemeralEnabled = chatRoom->ephemeralEnabled();
@@ -418,7 +418,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags),
 		soci::use(notifyId), soci::use(ephemeralEnabled ? 1:0);
-		
+
 		chatRoomId = dbSession.getLastInsertId();
 	}
 	// Do not add 'me' when creating a server-group-chat-room.
@@ -768,8 +768,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 		ChatMessage::State messageState = ChatMessage::State(row.get<int>(7));
 		// This is necessary if linphone has crashed while sending a message. It will set the correct state so the user can resend it.
-		if (messageState == ChatMessage::State::Idle 
-			|| messageState == ChatMessage::State::InProgress 
+		if (messageState == ChatMessage::State::Idle
+			|| messageState == ChatMessage::State::InProgress
 			|| messageState == ChatMessage::State::FileTransferInProgress) {
 			messageState = ChatMessage::State::NotDelivered;
 		}
@@ -790,7 +790,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 			dChatMessage->markAsRead();
 		}
 		dChatMessage->setForwardInfo(row.get<string>(19));
-		
+
 		if (row.get_indicator(20) != soci::i_null) {
 			dChatMessage->enableEphemeralWithTime((long)row.get<double>(20));
 			dChatMessage->setEphemeralExpireTime(dbSession.getTime(row, 21));
@@ -1532,11 +1532,11 @@ void MainDbPrivate::updateSchema () {
 		*session << "UPDATE chat_room "
 		"SET capabilities = capabilities | " +  Utils::toString(int(ChatRoom::Capabilities::Encrypted));
 	}
-		
+
 	if (version < makeVersion(1, 0, 7)) {
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN name VARCHAR(255)";
 	}
-		
+
 	if (version < makeVersion(1, 0, 8)) {
 		*session << "ALTER TABLE conference_chat_message_event ADD COLUMN marked_as_read BOOLEAN NOT NULL DEFAULT 1";
 		*session << "DROP VIEW IF EXISTS conference_event_view";
@@ -1929,16 +1929,16 @@ void MainDb::init () {
 	auto primaryKeyStr = bind(&DbSession::primaryKeyStr, &d->dbSession, _1);
 	auto timestampType = bind(&DbSession::timestampType, &d->dbSession);
 	auto varcharPrimaryKeyStr = bind(&DbSession::varcharPrimaryKeyStr, &d->dbSession, _1);
-	
+
 	/* Enable secure delete - so that erased chat messages are really erased and not just marked as unused.
-	 * See https://sqlite.org/pragma.html#pragma_secure_delete 
+	 * See https://sqlite.org/pragma.html#pragma_secure_delete
 	 * This setting is global for the database.
 	 * It is enabled only for sqlite3 backend, which is the one used for liblinphone clients.
 	 * The mysql backend (used server-side) doesn't support this PRAGMA.
 	 */
-	
+
 	session->begin();
-	
+
 	try{
 		if (backend == Sqlite3) *session << string("PRAGMA secure_delete = ON");
 
@@ -1946,20 +1946,20 @@ void MainDb::init () {
 			"CREATE TABLE IF NOT EXISTS sip_address ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-		") " + (Mysql ? "DEFAULT CHARSET=ascii" : "");
+		") ROW_FORMAT=DYNAMIC " + (Mysql ? "DEFAULT CHARSET=ascii" : "");
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS content_type ("
 			"  id" + primaryKeyStr("SMALLINT UNSIGNED") + ","
 			"  value VARCHAR(255) UNIQUE NOT NULL"
-			") "+ (Mysql ? "DEFAULT CHARSET=ascii" :"");
+			") ROW_FORMAT=DYNAMIC "+ (Mysql ? "DEFAULT CHARSET=ascii" :"");
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS event ("
 			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
 			"  type TINYINT UNSIGNED NOT NULL,"
 			"  creation_time" + timestampType() + " NOT NULL"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room ("
@@ -1994,7 +1994,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (local_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS one_to_one_chat_room ("
@@ -2012,7 +2012,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_b_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant ("
@@ -2031,7 +2031,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_room_participant_device ("
@@ -2046,7 +2046,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_device_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_event ("
@@ -2060,7 +2060,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_room_id)"
 			"    REFERENCES chat_room(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_notified_event ("
@@ -2071,7 +2071,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_participant_event ("
@@ -2085,7 +2085,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_participant_device_event ("
@@ -2099,7 +2099,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (device_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_security_event ("
@@ -2111,7 +2111,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_subject_event ("
@@ -2122,7 +2122,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_notified_event(event_id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_chat_message_event ("
@@ -2149,7 +2149,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (to_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_participant ("
@@ -2165,7 +2165,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (participant_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_content ("
@@ -2183,7 +2183,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (content_type_id)"
 			"    REFERENCES content_type(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_file_content ("
@@ -2196,7 +2196,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_message_content_id)"
 			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_content_app_data ("
@@ -2209,7 +2209,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_message_content_id)"
 			"    REFERENCES chat_message_content(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_message_crypto_data ("
@@ -2222,7 +2222,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_chat_message_event(event_id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS friends_list ("
@@ -2232,7 +2232,7 @@ void MainDb::init () {
 			"  rls_uri VARCHAR(2047),"
 			"  sync_uri VARCHAR(2047),"
 			"  revision INT UNSIGNED NOT NULL"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS friend ("
@@ -2255,7 +2255,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (friends_list_id)"
 			"    REFERENCES friends_list(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS friend_app_data ("
@@ -2268,13 +2268,13 @@ void MainDb::init () {
 			"  FOREIGN KEY (friend_id)"
 			"    REFERENCES friend(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS db_module_version ("
 			"  name" + varcharPrimaryKeyStr(191) + "," //191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
 			"  version INT UNSIGNED NOT NULL"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS chat_message_ephemeral_event ("
@@ -2285,7 +2285,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (event_id)"
 			"    REFERENCES conference_event(event_id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		*session <<
 			"CREATE TABLE IF NOT EXISTS conference_ephemeral_message_event ("
@@ -2311,7 +2311,7 @@ void MainDb::init () {
 			"  FOREIGN KEY (chat_room_id)"
 			"    REFERENCES chat_room(id)"
 			"    ON DELETE CASCADE"
-			") " + charset;
+			") ROW_FORMAT=DYNAMIC " + charset;
 
 		d->updateSchema();
 
@@ -2478,7 +2478,7 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 		MainDbPrivate *const d = mainDb.getPrivate();
 		soci::session *session = d->dbSession.getBackendSession();
 		*session << "DELETE FROM event WHERE id = :id", soci::use(dEventKey->storageId);
-		
+
 		if (eventLog->getType() == EventLog::Type::ConferenceChatMessage) {
 			shared_ptr<ChatMessage> chatMessage(static_pointer_cast<const ConferenceChatMessageEvent>(eventLog)->getChatMessage());
 			shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
@@ -3433,7 +3433,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				ConferenceAddress(row.get<string>(1)),
 				ConferenceAddress(row.get<string>(2))
 			);
-			
+
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
 				chatRooms.push_back(chatRoom);
@@ -3602,7 +3602,7 @@ void MainDb::insertNewPreviousConferenceId(const ConferenceId& currentConfId, co
 		L_D();
 
 		lInfo() << "Inserting previous conf ID [" << previousConfId << "] in database for [" << currentConfId << "]";
-		d->insertNewPreviousConferenceId(currentConfId, previousConfId);		
+		d->insertNewPreviousConferenceId(currentConfId, previousConfId);
 		tr.commit();
 	};
 #endif
@@ -3905,7 +3905,7 @@ void MainDb::deleteChatRoomParticipantDevice (
 	d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
 #endif
 }
-	
+
 // -----------------------------------------------------------------------------
 
 bool MainDb::import (Backend, const string &parameters) {
