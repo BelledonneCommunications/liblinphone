@@ -354,8 +354,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				io.input.type = MSResourceItc;
 				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, itcFilter);
 			} else {
-				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
-				usedPt, &io);
+				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 
 				if (videoMixer == nullptr && dir != MediaStreamRecvOnly && (!content || strcmp(content, "thumbnail"))) {
 					link_video_stream_with_itc_sink(mStream);

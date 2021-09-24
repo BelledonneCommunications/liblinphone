@@ -575,9 +575,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 							auto confParams = ConferenceParams::create(getCore()->getCCore());
 							ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
-							if (rmd->findIdxStreamWithSdpAttribute("content", "main") == -1) {
+							const std::vector<std::pair<std::string, std::string>> mainAttributes {std::make_pair("content", "main")};
+							const std::vector<std::pair<std::string, std::string>> speakerAttributes {std::make_pair("content", "speaker")};
+							if (rmd->findIdxStreamWithSdpAttribute(mainAttributes) == -1) {
 								confLayout = ConferenceParams::Layout::None;
-							} else if (rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) {
+							} else if (rmd->findIdxStreamWithSdpAttribute(speakerAttributes) == -1) {
 								confLayout = ConferenceParams::Layout::Grid;
 							} else {
 								confLayout = ConferenceParams::Layout::ActiveSpeaker;
@@ -629,7 +631,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						// It is expected that the core of the remote conference is the participant one
 						std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 						auto confParams = ConferenceParams::create(getCore()->getCCore());
-						confParams->setLayout((rmd->findIdxStreamWithSdpAttribute("content", "speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
+						const std::vector<std::pair<std::string, std::string>> attributes {std::make_pair("content", "speaker")};
+						confParams->setLayout((rmd->findIdxStreamWithSdpAttribute(attributes) == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
 						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
 
