@@ -1364,17 +1364,13 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
 
-	// TODO: DELETE when labels will be implemented
-	const char * conferenceDeviceAttrName = "label";
-
 	SalStreamConfiguration cfg;
 
 	newStream.type = SalVideo;
-	newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, dev->getLabel().c_str());
+	newStream.setLabel(dev->getLabel());
 
 	cfg.proto = getParams()->getMediaProto();
-	const std::vector<std::pair<std::string, std::string>> attributes {std::make_pair(conferenceDeviceAttrName, dev->getLabel())};
-	const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithSdpAttribute(attributes) : Utils::getEmptyConstRefObject<SalStreamDescription>();
+	const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithLabel(dev->getLabel()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 	if (!l.empty()){
 
@@ -1451,7 +1447,6 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 	LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
 
 	// TODO: DELETE when labels will be implemented
-	const char * conferenceDeviceAttrName = "label";
 	const char * layoutAttrName = "content";
 
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
@@ -1468,24 +1463,17 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 		// Add additional video streams if required
 		if (isVideoConferenceEnabled && !isConferenceLayoutNone) {
 			const auto & me = cppConference->getMe();
-			const std::vector<std::pair<std::string, std::string>> baseAttributes {std::make_pair("content", "thumbnail")};
+			const std::vector<std::pair<std::string, std::string>> attributes {std::make_pair("content", "thumbnail")};
 
 			for (const auto & p : cppConference->getParticipants()) {
 				for (const auto & dev : p->getDevices()) {
 					const auto & devLabel = dev->getLabel();
-					std::vector<std::pair<std::string, std::string>> attributes;
-					if (remoteContactAddress == dev->getAddress().asAddress()) {
-						attributes = baseAttributes;
-					}
 					// main stream has the same label as one of the minature streams
-					attributes.push_back(std::make_pair(conferenceDeviceAttrName, devLabel));
-					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(attributes);
-lInfo() << __func__ << " DEBUG DEBUG add participant device address " << dev->getAddress().asAddress().asString() << " remote address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid();
+					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : ((remoteContactAddress == dev->getAddress().asAddress()) ? md->findIdxStreamWithSdpAttribute(attributes) : md->findIdxStreamWithLabel(devLabel));
 					if (foundStreamIdx == -1) {
 						SalStreamDescription & newStream = addStreamToMd(md, -1);
 						fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth);
 						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
-lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress().asAddress().asString() << " remote address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid();
 						if (remoteContactAddress.isValid() && (remoteContactAddress == dev->getAddress().asAddress())) {
 							newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, "content", "thumbnail");
 						}
@@ -1497,12 +1485,7 @@ lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress().asAdd
 				for (const auto & dev : me->getDevices()) {
 					const auto & devLabel = dev->getLabel();
 					std::vector<std::pair<std::string, std::string>> attributes;
-					if (remoteContactAddress == dev->getAddress().asAddress()) {
-						attributes = baseAttributes;
-					}
-					// main stream has the same label as one of the minature streams
-					attributes.push_back(std::make_pair(conferenceDeviceAttrName, devLabel));
-					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : md->findIdxStreamWithSdpAttribute(attributes);
+					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : ((remoteContactAddress == dev->getAddress().asAddress()) ? md->findIdxStreamWithSdpAttribute(attributes) : md->findIdxStreamWithLabel(devLabel));
 					if (foundStreamIdx == -1) {
 						SalStreamDescription & newStream = addStreamToMd(md, -1);
 						fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth);
@@ -1511,8 +1494,8 @@ lInfo() << __func__ << " DEBUG DEBUG device address " << dev->getAddress().asAdd
 				}
 			}
 
-			const std::vector<std::pair<std::string, std::string>> attributes {std::make_pair(layoutAttrName, "speaker")};
-			const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(attributes);
+			const std::vector<std::pair<std::string, std::string>> sattributes {std::make_pair(layoutAttrName, "speaker")};
+			const auto & foundStreamIdx = md->findIdxStreamWithSdpAttribute(sattributes);
 
 			bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
 
@@ -1550,7 +1533,6 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 	L_Q();
 
 	// TODO: DELETE when labels will be implemented
-	const char * conferenceDeviceAttrName = "label";
 	const char * layoutAttrName = "content";
 
 	if (refMd) {
@@ -1573,7 +1555,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 
 		for (const auto & s : refMd->streams) {
 			const std::string layoutAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, layoutAttrName));
-			const std::string participantsAttrValue = L_C_TO_STRING(sal_custom_sdp_attribute_find(s.custom_sdp_attributes, conferenceDeviceAttrName));
+			const std::string participantsAttrValue = s.getLabel();
 
 			// If in a conference, either local or remote
 			if (((conference && isInLocalConference) || remoteContactAddress.hasParam("isfocus")) && ((layoutAttrValue.empty() && !participantsAttrValue.empty()) || (!layoutAttrValue.empty() && (layoutAttrValue.compare("main") != 0)))) {
@@ -1589,7 +1571,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 //				if (!participantsAttrValue.empty() || !layoutAttrValue.empty()) {
 					const auto & previousParticipantStream = (oldMd) ? oldMd->getStreamIdx(static_cast<unsigned int>(streamIdx)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 					if (conference && isInLocalConference && !participantsAttrValue.empty()) {
-						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, conferenceDeviceAttrName, participantsAttrValue.c_str());
+						newStream.setLabel(participantsAttrValue);
 					}
 					if (!layoutAttrValue.empty()) {
 						newStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(newStream.custom_sdp_attributes, layoutAttrName, layoutAttrValue.c_str());
@@ -1864,7 +1846,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
 
 	// TODO: DELETE when labels will be implemented
-	const char * conferenceDeviceAttrName = "label";
 	const char * layoutAttrName = "content";
 
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
@@ -1924,9 +1905,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & dev = cppConference->findParticipantDevice(remoteContactAddress);
 			if (!isConferenceLayoutNone) {
-				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, conferenceDeviceAttrName, L_STRING_TO_C(dev->getLabel()));
+				videoStream.setLabel(dev->getLabel());
 				videoStream.custom_sdp_attributes = sal_custom_sdp_attribute_append(videoStream.custom_sdp_attributes, layoutAttrName, "main");
-lInfo() << __func__ << " DEBUG DEBUG main stream device address " << dev->getAddress().asAddress().asString() << " remote address " << remoteContactAddress.asString() << " is valid " << remoteContactAddress.isValid();
 			}
 		} else if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 			if (op && op->getRemoteContactAddress()) {

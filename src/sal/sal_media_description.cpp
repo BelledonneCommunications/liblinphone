@@ -310,6 +310,52 @@ int SalMediaDescription::findIdxStream(SalMediaProto proto, SalStreamType type) 
 	return -1;
 }
 
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithLabel(const std::string label) const {
+	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&label] (const auto & stream) { 
+		return (stream.enabled() && (stream.getLabel().compare(label)==0));
+	});
+	return streamIt;
+}
+
+const SalStreamDescription & SalMediaDescription::findStreamWithLabel(const std::string label) const {
+	const auto & streamIt = findStreamItWithLabel(label);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+int SalMediaDescription::findIdxStreamWithLabel(const std::string label) const {
+	const auto & streamIt =  findStreamItWithLabel(label);
+	if (streamIt != streams.end()) {
+		return static_cast<int>(std::distance(streams.begin(), streamIt));
+	}
+	return -1;
+}
+
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithContent(const std::string content) const {
+	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&content] (const auto & stream) { 
+		return (stream.enabled() && (stream.getContent().compare(content)==0));
+	});
+	return streamIt;
+}
+
+const SalStreamDescription & SalMediaDescription::findStreamWithContent(const std::string content) const {
+	const auto & streamIt = findStreamItWithContent(content);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+int SalMediaDescription::findIdxStreamWithContent(const std::string content) const {
+	const auto & streamIt =  findStreamItWithContent(content);
+	if (streamIt != streams.end()) {
+		return static_cast<int>(std::distance(streams.begin(), streamIt));
+	}
+	return -1;
+}
+
 unsigned int SalMediaDescription::nbStreamsOfType(SalStreamType type) const {
 	unsigned int nb = 0;
 	for(const auto & stream : streams){

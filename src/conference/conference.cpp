@@ -70,8 +70,7 @@ bool Conference::tryAddMeDevice() {
 			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 
-			// TODO: DELETE when labels will be implemented
-			char label[10];
+			char label[Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
 			meDev->setLabel(label);
 

@@ -68,6 +68,7 @@ class LINPHONE_PUBLIC Conference :
 	friend class ServerGroupChatRoom;
 public:
 
+	static constexpr int labelLength = 10;
 	~Conference();
 
 	std::shared_ptr<Participant> getActiveParticipant () const;
