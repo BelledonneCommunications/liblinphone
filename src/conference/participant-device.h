@@ -101,6 +101,9 @@ public:
 	bool setTextDirection(const LinphoneMediaDirection direction);
 	bool updateMedia();
 
+	bool adminModeSupported() const;
+	void enableAdminModeSupport(bool support);
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
@@ -111,6 +114,7 @@ private:
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
 	uint32_t mSsrc = 0;
+	bool mSupportAdminMode = false;
 
 	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 

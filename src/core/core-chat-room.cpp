@@ -820,4 +820,16 @@ void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	}
 }
 
+const std::string Core::groupChatVersionAsString() {
+	std::ostringstream os;
+	os << CorePrivate::groupChatProtocolVersion;
+	return os.str();
+}
+
+const std::string Core::ephemeralVersionAsString() {
+	std::ostringstream os;
+	os << CorePrivate::ephemeralProtocolVersion;
+	return os.str();
+}
+
 LINPHONE_END_NAMESPACE
