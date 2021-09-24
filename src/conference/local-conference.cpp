@@ -74,6 +74,33 @@ bool LocalConference::isIn() const{
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
+	if (event) {
+		const LinphoneAddress *lAddr = linphone_event_get_from(event);
+		char *addrStr = linphone_address_as_string(lAddr);
+		Address participantAddress(addrStr);
+		bctbx_free(addrStr);
+
+		shared_ptr<Participant> participant = findParticipant (participantAddress);
+
+		if (participant) {
+			const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
+			char *contactAddrStr = linphone_address_as_string(lContactAddr);
+			IdentityAddress contactAddr(contactAddrStr);
+			bctbx_free(contactAddrStr);
+			shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
+
+			if (device) {
+				vector<string> acceptedContents = vector<string>();
+				const auto message = (belle_sip_message_t*)event->op->getRecvCustomHeaders();
+				for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
+					acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+				}
+				const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
+				device->enableAdminModeSupport(acceptConferenceInfoLinphoneExtension);
+			}
+		}
+	}
+
 	eventHandler->subscribeReceived(event);
 #endif
 }

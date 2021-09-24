@@ -8130,7 +8130,7 @@ void linphone_core_chat_room_set_default_ephemeral_mode(LinphoneCore *lc, Linpho
 }
 
 long linphone_core_get_default_ephemeral_lifetime(const LinphoneCore *lc) {
-	return (long)linphone_config_get_int(lc->config, "misc", "ephemeral_lifetime", 86400);
+	return (long)linphone_config_get_int(lc->config, "misc", "ephemeral_lifetime", 0);
 }
 
 void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) {
