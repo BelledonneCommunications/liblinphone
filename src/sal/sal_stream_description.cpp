@@ -83,6 +83,9 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	ice_pwd = other.ice_pwd;
 	ice_mismatch = other.ice_mismatch;
 
+	label = other.label;
+	content = other.content;
+
 	supportedEncryption = other.supportedEncryption;
 
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
@@ -722,6 +725,9 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 
 	cfgIndex = other.cfgIndex;
 
+	label = other.label;
+	content = other.content;
+
 	return *this;
 }
 
@@ -955,6 +961,23 @@ void SalStreamDescription::setCrypto(const size_t & idx, const SalSrtpCryptoAlgo
 	cfgs[getChosenConfigurationIndex()].crypto[idx] = newCrypto;
 }
 
+void SalStreamDescription::setLabel(const std::string newLabel) {
+	label = newLabel;
+}
+
+const std::string & SalStreamDescription::getLabel() const {
+	return label;
+}
+
+void SalStreamDescription::setContent(const std::string newContent) {
+	content = newContent;
+}
+
+const std::string & SalStreamDescription::getContent() const {
+	return content;
+}
+
+
 void SalStreamDescription::setSupportedEncryptions(const std::list<LinphoneMediaEncryption> & encryptionList) {
 	supportedEncryption = encryptionList;
 }
@@ -1134,6 +1157,16 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		} else {
 			belle_sip_object_unref((belle_sip_object_t*)media_attribute);
 		}
+	}
+
+	if (!label.empty()) {
+		belle_sdp_attribute_t *label_attribute = belle_sdp_attribute_create("label", label.c_str());
+		belle_sdp_media_description_add_attribute(media_desc, label_attribute);
+	}
+
+	if (!content.empty()) {
+		belle_sdp_attribute_t *content_attribute = belle_sdp_attribute_create("content", content.c_str());
+		belle_sdp_media_description_add_attribute(media_desc, content_attribute);
 	}
 
 	if (custom_sdp_attributes) {

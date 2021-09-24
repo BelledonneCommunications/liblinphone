@@ -753,8 +753,7 @@ bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call
 		const auto & p = findParticipant(call->getActiveSession());
 
 		if (device && p) {
-			// TODO: DELETE when labels will be implemented
-			char label[10];
+			char label[LinphonePrivate::Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
 			device->setLabel(label);
 

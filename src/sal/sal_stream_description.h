@@ -147,6 +147,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
 		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
 
+		void setLabel(const std::string newLabel);
+		const std::string & getLabel() const;
+
+		void setContent(const std::string newContent);
+		const std::string & getContent() const;
+
 		const cfg_map getAllCfgs() const;
 
 		void setZrtpHash(const uint8_t enable, uint8_t* zrtphash = NULL);
@@ -186,6 +192,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::string ice_ufrag;
 		std::string ice_pwd;
 		bool ice_mismatch = false;
+
+		std::string label;
+		std::string content;
 
 		cfg_map cfgs;
 		acap_map_t acaps;
