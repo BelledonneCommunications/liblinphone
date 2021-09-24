@@ -59,12 +59,12 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription &findSecureStreamOfType(SalStreamType type) const;
 		const SalStreamDescription &findBestStream(SalStreamType type) const;
 		int findIdxBestStream(SalStreamType type) const;
-		const SalStreamDescription & findStreamWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const;
-		const SalStreamDescription & findStreamWithSdpAttribute(const std::string name, const std::string value) const;
+		const SalStreamDescription & findStreamWithSdpAttribute(const SalStreamType type, const std::vector<std::pair<std::string, std::string>> & attributes) const;
+		const SalStreamDescription & findStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> & attributes) const;
 		const SalStreamDescription findFirstStreamOfType(SalStreamType type) const;
 		const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
-		int findIdxStreamWithSdpAttribute(const SalStreamType, const std::string name, const std::string value) const;
-		int findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const;
+		int findIdxStreamWithSdpAttribute(const SalStreamType, const std::vector<std::pair<std::string, std::string>> & attributes) const;
+		int findIdxStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> & attributes) const;
 
 		bool isEmpty() const;
 		bool isAcceptable() const;
@@ -144,8 +144,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		SalStreamDescription::tcap_map_t tcaps;
 
 		mutable bool capabilityNegotiationSupported = false; /* Set to true if the stream allows capability negotiation */
-		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const std::string name, const std::string value) const;
-		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> & attributes) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const SalStreamType type, const std::vector<std::pair<std::string, std::string>> & attributes) const;
 		std::vector<SalStreamDescription>::const_iterator findStreamIt(SalMediaProto proto, SalStreamType type) const;
 
 		/*check for the presence of at least one stream with requested direction */

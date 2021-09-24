@@ -363,57 +363,69 @@ int SalMediaDescription::findIdxBestStream(SalStreamType type) const {
 	return idx;
 }
 
-int SalMediaDescription::findIdxStreamWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const {
-	const auto & streamIt =  findStreamItWithSdpAttribute(type, name, value);
+int SalMediaDescription::findIdxStreamWithSdpAttribute(const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &  attributes) const {
+	const auto & streamIt = findStreamItWithSdpAttribute(type, attributes);
 	if (streamIt != streams.end()) {
 		return static_cast<int>(std::distance(streams.begin(), streamIt));
 	}
 	return -1;
 }
 
-const SalStreamDescription & SalMediaDescription::findStreamWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const {
-	const auto & streamIt =  findStreamItWithSdpAttribute(type, name, value);
+const SalStreamDescription & SalMediaDescription::findStreamWithSdpAttribute(const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &  attributes) const {
+	const auto & streamIt = findStreamItWithSdpAttribute(type, attributes);
 	if (streamIt != streams.end()) {
 		return *streamIt;
 	}
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-int SalMediaDescription::findIdxStreamWithSdpAttribute(const std::string name, const std::string value) const {
-	const auto & streamIt =  findStreamItWithSdpAttribute(name, value);
+int SalMediaDescription::findIdxStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &  attributes) const {
+	const auto & streamIt = findStreamItWithSdpAttribute(attributes);
 	if (streamIt != streams.end()) {
 		return static_cast<int>(std::distance(streams.begin(), streamIt));
 	}
 	return -1;
 }
 
-const SalStreamDescription & SalMediaDescription::findStreamWithSdpAttribute(const std::string name, const std::string value) const {
-	const auto & streamIt =  findStreamItWithSdpAttribute(name, value);
+const SalStreamDescription & SalMediaDescription::findStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &  attributes) const {
+	const auto & streamIt = findStreamItWithSdpAttribute(attributes);
 	if (streamIt != streams.end()) {
 		return *streamIt;
 	}
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(const std::string name, const std::string value) const {
-	return std::find_if(streams.cbegin(), streams.cend(), [&name, &value] (const auto & stream) {
-		const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
-		if (foundAttrVal) {
-			return (strcmp(foundAttrVal, value.c_str()) == 0);
-		} else {
-			return false;
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &  attributes) const {
+	return std::find_if(streams.cbegin(), streams.cend(), [&attributes] (const auto & stream) {
+		bool found = true;
+		for (const auto & attrPair : attributes) {
+			const auto name = attrPair.first;
+			const auto value = attrPair.second;
+			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
+			if (foundAttrVal) {
+				found &= (strcmp(foundAttrVal, value.c_str()) == 0);
+			} else {
+				found = false;
+			}
 		}
+		return found;
 	});
 }
 
-std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(const SalStreamType type, const std::string name, const std::string value) const {
-	return std::find_if(streams.cbegin(), streams.cend(), [&type, &name, &value] (const auto & stream) {
-		const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
-		if (foundAttrVal && (type == stream.getType())) {
-			return (strcmp(foundAttrVal, value.c_str()) == 0);
-		} else {
-			return false;
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithSdpAttribute(const SalStreamType type, const std::vector<std::pair<std::string, std::string>> &  attributes) const {
+	return std::find_if(streams.cbegin(), streams.cend(), [&type, &attributes] (const auto & stream) {
+		bool found = true;
+		for (const auto & attrPair : attributes) {
+			const auto name = attrPair.first;
+			const auto value = attrPair.second;
+			const auto foundAttrVal = sal_custom_sdp_attribute_find(stream.custom_sdp_attributes, name.c_str());
+			if (foundAttrVal && (type == stream.getType())) {
+				found &= (strcmp(foundAttrVal, value.c_str()) == 0);
+			} else {
+				found = false;
+			}
 		}
+		return found;
 	});
 }
 
