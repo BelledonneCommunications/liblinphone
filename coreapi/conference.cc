@@ -932,6 +932,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	CallSession::State sessionState = session->getState();
 
 	std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(session);
+	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
 	if (participant) {
 		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
 		Conference::removeParticipant(participant);
@@ -941,13 +942,6 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 			lError() << "Trying to remove participant " << *session->getRemoteAddress() << " with session " << session << " which is not part of conference " << getConferenceAddress();
 		}
 		return -1;
-	}
-
-	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
-	if (participant) {
-		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
-		Conference::removeParticipant(participant);
-		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 	}
 
 	if (getState() != ConferenceInterface::State::TerminationPending) {
