@@ -4242,6 +4242,24 @@ test_t secure_group_chat_tests[] = {
 #endif
 	TEST_ONE_TAG("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH basic chatrooms", group_chat_lime_x3dh_basic_chat_rooms, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level upgrade", group_chat_lime_x3dh_chatroom_security_level_upgrade, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade adding participant", group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade resetting zrtp", group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level self multidevices", group_chat_lime_x3dh_chatroom_security_level_self_multidevices, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security alert", group_chat_lime_x3dh_chatroom_security_alert, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 1", exhume_group_chat_lime_x3dh_one_to_one_chat_room_1, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 2", exhume_group_chat_lime_x3dh_one_to_one_chat_room_2, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 3", exhume_group_chat_lime_x3dh_one_to_one_chat_room_3, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 4", exhume_group_chat_lime_x3dh_one_to_one_chat_room_4, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH call security alert", group_chat_lime_x3dh_call_security_alert, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
+	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
+	TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH session corrupted", group_chat_lime_x3dh_session_corrupted, "LimeX3DH")
+};
+
+test_t secure_message_tests[] = {
 	TEST_ONE_TAG("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with composing", group_chat_lime_x3dh_send_encrypted_message_with_composing, "LimeX3DH"),
@@ -4261,28 +4279,13 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH message before verify SAS", group_chat_lime_x3dh_message_before_verify_sas, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message before reject SAS", group_chat_lime_x3dh_message_before_reject_sas, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message before verify SAS from a device with ZRTP configured called side only",group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated,"LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH chatroom security level upgrade", group_chat_lime_x3dh_chatroom_security_level_upgrade, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade adding participant", group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade resetting zrtp", group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH chatroom security level self multidevices", group_chat_lime_x3dh_chatroom_security_level_self_multidevices, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH chatroom security alert", group_chat_lime_x3dh_chatroom_security_alert, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 1", exhume_group_chat_lime_x3dh_one_to_one_chat_room_1, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 2", exhume_group_chat_lime_x3dh_one_to_one_chat_room_2, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 3", exhume_group_chat_lime_x3dh_one_to_one_chat_room_3, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH exhumed one-to-one chat room 4", exhume_group_chat_lime_x3dh_one_to_one_chat_room_4, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH call security alert", group_chat_lime_x3dh_call_security_alert, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH multiple successive messages", group_chat_lime_x3dh_send_multiple_successive_encrypted_messages, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH encrypted message to disabled LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH encrypted message to unable to decrypt LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH plain message to enabled LIME X3DH", group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message to multidevice participants", group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH messages while network unreachable 2", group_chat_lime_x3dh_message_while_network_unreachable_2, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
-	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
-	TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH session corrupted", group_chat_lime_x3dh_session_corrupted, "LimeX3DH")
+	TEST_ONE_TAG("LIME X3DH messages while network unreachable 2", group_chat_lime_x3dh_message_while_network_unreachable_2, "LimeX3DH")
 };
 
 test_suite_t secure_group_chat_test_suite = {
@@ -4294,6 +4297,14 @@ test_suite_t secure_group_chat_test_suite = {
 	sizeof(secure_group_chat_tests) / sizeof(secure_group_chat_tests[0]), secure_group_chat_tests
 };
 
+test_suite_t secure_message_test_suite = {
+	"Secure Message",
+	NULL,
+	NULL,
+	liblinphone_tester_before_each,
+	liblinphone_tester_after_each,
+	sizeof(secure_message_tests) / sizeof(secure_message_tests[0]), secure_message_tests
+};
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop
 #endif
