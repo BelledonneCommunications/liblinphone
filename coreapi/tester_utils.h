@@ -220,7 +220,8 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_fetch_local_addresses(void);
 LINPHONE_PUBLIC void linphone_core_reset_shared_core_state(LinphoneCore *lc);
 LINPHONE_PUBLIC char *linphone_core_get_download_path(LinphoneCore *lc);
 
-LINPHONE_PUBLIC const char *linphone_core_get_groupchat_version(void);
+LINPHONE_PUBLIC const char *linphone_core_get_groupchat_version(const LinphoneCore *lc);
+LINPHONE_PUBLIC const char *linphone_core_get_ephemeral_version(const LinphoneCore *lc);
 
 LINPHONE_PUBLIC size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr);
 #ifndef __cplusplus
