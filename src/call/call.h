@@ -238,7 +238,8 @@ public:
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	int getMediaStreamsNb (LinphoneStreamType type) const;
 	MediaStream *getVideoStream (MediaStreamDir dir) const;
-	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir);
+	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir) const;
+	bool checkRtpSession() const;
 	SalCallOp *getOp () const;
 	bool getSpeakerMuted () const;
 	void setSpeakerMuted (bool muted);

@@ -405,6 +405,8 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 		int nb = layout == LinphoneConferenceLayoutActiveSpeaker ? 4 : (layout == LinphoneConferenceLayoutGrid ? 3:1);
 		BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		BC_ASSERT_TRUE(Call::toCpp(call1)->checkRtpSession());
+		BC_ASSERT_TRUE(Call::toCpp(call2)->checkRtpSession());
 		if (layout != LinphoneConferenceLayoutNone) {
 			BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
 			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));

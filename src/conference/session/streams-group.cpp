@@ -352,7 +352,7 @@ VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
 }
 
 
-bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) {
+bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) const {
 	for (auto &stream : mStreams){
 		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
 		if(stream->getType() == SalVideo) {
@@ -366,6 +366,34 @@ bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) {
 		}
 	}
 	return false;
+}
+
+bool StreamsGroup::checkRtpSession() const {
+	for (auto &stream : mStreams){
+		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+		if(stream->getType() == SalVideo) {
+			MediaStream *ms = s->getMediaStream();
+			RtpSession *rtp_session = ms->sessions.rtp_session;
+			if (!rtp_session)
+				return false;
+			const rtp_stats_t *rtps = rtp_session_get_stats(rtp_session);
+			switch (media_stream_get_direction(ms)) {
+				case MediaStreamRecvOnly:
+					if (rtps->packet_recv < 5)
+						return false;
+					break;
+				case MediaStreamSendOnly:
+					if (rtps->packet_sent < 5)
+						return false;
+				case MediaStreamSendRecv:
+					if (rtps->packet_recv < 5 || rtps->packet_sent < 5)
+						return false;
+				default:
+					break;
+			}
+		}
+	}
+	return true;
 }
 
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
