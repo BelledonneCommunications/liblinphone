@@ -422,12 +422,12 @@ void IceService::clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescrip
 		const auto & localStream = localDesc->streams[i];
 		const auto & stream = remoteDesc->streams[i];
 		if ((stream.getChosenConfiguration().rtcp_mux && localStream.getChosenConfiguration().rtcp_mux)
-			|| (!localIsOfferer && stream.getChosenConfiguration().rtcp_mux && localDesc->accept_bundles)
+			|| (!localIsOfferer && stream.getChosenConfiguration().rtcp_mux && !stream.getChosenConfiguration().mid.empty() && localDesc->accept_bundles)
 		) {
 			/* RTCP candidates must be dropped under these two ORd conditions:
 			 * - rtcp_mux is advertised locally and remotely
-			 * - when answering to an offer, when rtcp_mux is advertised remotely and we accept RTP bundle, 
-			 *   because rtcp-mux is mantary with bundles.
+			 * - when answering to an offer, when rtcp_mux is advertised together with RTP bundle remotely and we accept RTP bundle
+			 *  (because rtcp-mux is mandatory with bundles)
 			 */
 			ice_check_list_remove_rtcp_candidates(cl);
 		}
