@@ -346,8 +346,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
+			if (videoMixer == nullptr) {
+				lInfo() << "[mix to all] stream dir " << dir << " content " << content;
+			}
 			if (videoMixer == nullptr && dir == MediaStreamSendOnly && (content.compare("thumbnail") == 0)) {
 				itcStream = getGroup().lookupItcStream(mStream);
+				lInfo() << "[mix to all] this thumbnail stream find itcStream " << itcStream;
 				if (itcStream) {
 					itcFilter = itcStream->itcsink;
 				}
@@ -359,6 +363,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				if (videoMixer == nullptr && dir != MediaStreamRecvOnly && (content.compare("thumbnail") != 0)) {
 					link_video_stream_with_itc_sink(mStream);
 					itcStream = getGroup().lookupItcStream(mStream);
+					lInfo() << "[mix to all] this normal stream find itcStream " << itcStream;
 					if (itcStream){
 						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,itcStream->source);
 					}
