@@ -159,10 +159,9 @@ public:
 
 	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId);
 
-	//TODO: Remove me in the future, a chatroom is identified by a local and peer address now!
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const IdentityAddress &peerAddress);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const IdentityAddress &localAddress, const IdentityAddress &peerAddress);
 
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri (const std::string &uri);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri (const std::string& localAddressUri, const std::string &peerAddressUri);
 
 	static void deleteChatRoom (const std::shared_ptr<const AbstractChatRoom> &chatRoom);
 

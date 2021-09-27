@@ -554,12 +554,7 @@ static void text_message_with_send_error(void) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
-
-void text_message_from_non_default_proxy_config(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_dual_proxy_2_rc", FALSE);
-	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,2));
-
+void text_message_from_non_default_proxy_config_to_core_managers(LinphoneCoreManager * marie, LinphoneCoreManager * pauline) {
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(proxyConfigs), 2, int, "%d");
 	LinphoneProxyConfig *proxyConfig = NULL;
@@ -587,7 +582,15 @@ void text_message_from_non_default_proxy_config(void) {
 
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
+}
 
+void text_message_from_non_default_proxy_config(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_dual_proxy_2_rc", FALSE);
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,2));
+	
+	text_message_from_non_default_proxy_config_to_core_managers(marie, pauline);
+	
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -638,8 +641,8 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but_denied) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but_denied, bool_t test_with_already_another_chat_room) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_dual_proxy_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCall *pauline_call, *marie_call;
 	LinphoneChatRoom *pauline_chat_room, *marie_chat_room;
@@ -648,6 +651,10 @@ static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but
 	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_enable_realtime_text(marie_params, rtt_enabled_in_sender_but_denied);
 	linphone_call_params_enable_realtime_text(pauline_params, FALSE);
+	
+// Send a message from another proxy to create a chat room that is on different proxy
+	if(test_with_already_another_chat_room)
+		text_message_from_non_default_proxy_config_to_core_managers(marie, pauline);
 
 	if (BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params))){
 		pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -663,6 +670,11 @@ static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but
 		marie_chat_room = linphone_call_get_chat_room(marie_call);
 		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 		BC_ASSERT_EQUAL(linphone_chat_room_get_state(marie_chat_room), LinphoneChatRoomStateCreated, int, "%d");
+		
+		const LinphoneProxyConfig * marieProxyConfig = linphone_core_get_default_proxy_config(marie->lc);
+		const LinphoneAddress * marieAddress = linphone_proxy_config_get_identity_address(marieProxyConfig);
+		
+		BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_room_get_local_address(marie_chat_room), marieAddress));
 
 		if (pauline_chat_room && marie_chat_room) {
 			const char *pauline_text_message = "Hello marie!";
@@ -686,7 +698,7 @@ static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but
 			linphone_chat_message_send(marie_message);
 
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 1));
-			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, (test_with_already_another_chat_room ? 2 : 1)));
 			{
 				LinphoneChatMessage * msg = pauline->stat.last_received_chat_message;
 				BC_ASSERT_PTR_NOT_NULL(msg);
@@ -707,11 +719,19 @@ static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but
 }
 
 static void text_message_in_call_chat_room(void) {
-	text_message_in_call_chat_room_base(FALSE);
+	text_message_in_call_chat_room_base(FALSE, FALSE);
 }
 
 static void text_message_in_call_chat_room_from_denied_text_offer(void) {
-	text_message_in_call_chat_room_base(TRUE);
+	text_message_in_call_chat_room_base(TRUE, FALSE);
+}
+
+static void text_message_in_call_chat_room_when_room_exists(void) {
+	text_message_in_call_chat_room_base(FALSE, TRUE);
+}
+
+static void text_message_in_call_chat_room_from_denied_text_offer_when_room_exists(void) {
+	text_message_in_call_chat_room_base(TRUE, TRUE);
 }
 
 void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pauline,
@@ -3719,6 +3739,8 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Text message reply from non default proxy config", text_message_reply_from_non_default_proxy_config),
 	TEST_NO_TAG("Text message in call chat room", text_message_in_call_chat_room),
 	TEST_NO_TAG("Text message in call chat room from denied text offer", text_message_in_call_chat_room_from_denied_text_offer),
+	TEST_NO_TAG("Text message in call chat room when room exists", text_message_in_call_chat_room_when_room_exists),
+	TEST_NO_TAG("Text message in call chat room from denied text offer when room exists", text_message_in_call_chat_room_from_denied_text_offer_when_room_exists),
 	TEST_NO_TAG("Transfer message", transfer_message),
 	TEST_NO_TAG("Transfer message 2", transfer_message_2),
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),

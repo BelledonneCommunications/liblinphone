@@ -1991,7 +1991,7 @@ void one_to_one_keyword () {
 	linphone_address_unref(cBobAddr);
 
 	// Create basic chat room with OneToOne capability to ensure that one to one is added to notify
-	pauline->lc->cppPtr->getOrCreateBasicChatRoom (addr);
+	pauline->lc->cppPtr->getOrCreateBasicChatRoom (addr, addr);
 
 	localConf->addParticipant(bobAddr);
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
