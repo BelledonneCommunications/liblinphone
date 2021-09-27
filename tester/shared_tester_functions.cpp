@@ -402,7 +402,7 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 
 		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
 		
-		int nb = layout == LinphoneConferenceLayoutActiveSpeaker ? 3 : (layout == LinphoneConferenceLayoutGrid ? 2:1);
+		int nb = layout == LinphoneConferenceLayoutActiveSpeaker ? 4 : (layout == LinphoneConferenceLayoutGrid ? 3:1);
 		BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		if (layout != LinphoneConferenceLayoutNone) {
