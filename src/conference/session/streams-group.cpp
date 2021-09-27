@@ -32,6 +32,7 @@
 #include "linphone/core.h"
 #include "mixers.h"
 #include "mediastreamer2/msanalysedisplay.h"
+#include "mediastreamer2/mediastream.h"
 
 #include <iomanip>
 
@@ -349,7 +350,7 @@ VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
 			}
 		}
 	}
-#endif
+#endif // VIDEO_ENABLED
 	return nullptr;
 }
 
