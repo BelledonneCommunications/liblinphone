@@ -809,7 +809,7 @@ static bool_t setup_dtls_srtp(LinphoneCoreManager *marie, LinphoneCoreManager *p
 	return TRUE;
 }
 
-static void dtls_srtp_audio_call_with_rtcp_mux(void) {
+static void _dtls_srtp_audio_call_with_rtcp_mux(bool_t rtcp_mux_not_accepted) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	LinphoneCall *pauline_call, *marie_call;
@@ -818,7 +818,7 @@ static void dtls_srtp_audio_call_with_rtcp_mux(void) {
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
-	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+	if (!rtcp_mux_not_accepted) linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
 	
 	setup_dtls_srtp(marie, pauline);
 	{
@@ -847,6 +847,14 @@ static void dtls_srtp_audio_call_with_rtcp_mux(void) {
 	end_call(marie,pauline);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+}
+
+static void dtls_srtp_audio_call_with_rtcp_mux(void){
+	_dtls_srtp_audio_call_with_rtcp_mux(FALSE);
+}
+
+static void dtls_srtp_audio_call_with_rtcp_mux_not_accepted(void){
+	_dtls_srtp_audio_call_with_rtcp_mux(TRUE);
 }
 
 test_t call_secure_tests[] = {
@@ -878,7 +886,8 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP DTLS mandatory called by non SRTP DTLS", srtp_dtls_mandatory_called_by_non_srtp_dtls),
 	TEST_NO_TAG("ZRTP mandatory called by SRTP", zrtp_mandatory_called_by_srtp),
 	TEST_NO_TAG("Video SRTP call without audio", video_srtp_call_without_audio),
-	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux", dtls_srtp_audio_call_with_rtcp_mux)
+	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux", dtls_srtp_audio_call_with_rtcp_mux),
+	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux not accepted", dtls_srtp_audio_call_with_rtcp_mux_not_accepted)
 };
 
 test_suite_t call_secure_test_suite = {"Secure Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
