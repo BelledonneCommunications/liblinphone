@@ -1136,6 +1136,14 @@ int LocalConference::stopRecording () {
 	return 0;
 }
 
+bool LocalConference::isRecording () const {
+	AudioControlInterface * aci = dynamic_cast<MS2AudioMixer*> (mMixerSession->getMixerByType(SalAudio));
+	if (aci){
+		aci->isRecording();
+	}
+	return false;
+}
+
 bool LocalConference::isIn() const{
 	return mIsIn;
 }
