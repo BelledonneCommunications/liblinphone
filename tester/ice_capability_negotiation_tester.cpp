@@ -183,7 +183,10 @@ static void zrtp_ice_video_call_with_optional_encryption_on_callee(void) {
 	ice_call_from_opt_enc_to_none_base(LinphoneMediaEncryptionZRTP, FALSE, TRUE);
 }
 test_t ice_capability_negotiation_tests[] = {
-	TEST_ONE_TAG("ICE call with update and incompatible encryptions in call params", ice_call_with_update_and_incompatible_encs_in_call_params, "ICE"),
+	TEST_ONE_TAG("ICE call with update and incompatible encryptions in call params", ice_call_with_update_and_incompatible_encs_in_call_params, "ICE")
+};
+
+test_t srtp_ice_capability_negotiation_tests[] = {
 	TEST_ONE_TAG("SRTP ICE call with optional encryption on caller", srtp_ice_call_with_optional_encryption_on_caller, "ICE"),
 	TEST_ONE_TAG("SRTP ICE call with optional encryption on callee", srtp_ice_call_with_optional_encryption_on_callee, "ICE"),
 	TEST_ONE_TAG("SRTP ICE call with optional encryption on both sides", srtp_ice_call_with_optional_encryption_on_both_sides, "ICE"),
@@ -192,16 +195,10 @@ test_t ice_capability_negotiation_tests[] = {
 	TEST_ONE_TAG("SRTP ICE video call with optional encryption on caller", srtp_ice_video_call_with_optional_encryption_on_caller, "ICE"),
 	TEST_ONE_TAG("SRTP ICE video call with optional encryption on callee", srtp_ice_video_call_with_optional_encryption_on_callee, "ICE"),
 	TEST_ONE_TAG("SRTP ICE video call with optional encryption on both sides", srtp_ice_video_call_with_optional_encryption_on_both_sides, "ICE"),
-	TEST_ONE_TAG("SRTP ICE video call with encryption change when adding video", srtp_ice_video_call_with_encryption_change_when_adding_video, "ICE"),
-	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on caller", dtls_srtp_ice_call_with_optional_encryption_on_caller, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on callee", dtls_srtp_ice_call_with_optional_encryption_on_callee, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on both sides", dtls_srtp_ice_call_with_optional_encryption_on_both_sides, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP call with optional encryption (caller with ICE)", dtls_srtp_call_with_optional_encryption_caller_with_ice, "DTLS", "ICE"),
-	TEST_TWO_TAGS("DTLS SRTP call with optional encryption (callee with ICE)", dtls_srtp_call_with_optional_encryption_callee_with_ice, "DTLS", "ICE"),
-	TEST_TWO_TAGS("DTLS SRTP ICE video call with optional encryption on caller", dtls_srtp_ice_video_call_with_optional_encryption_on_caller, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP ICE video call with optional encryption on callee", dtls_srtp_ice_video_call_with_optional_encryption_on_callee, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP ICE video call with optional encryption on both sides", dtls_srtp_ice_video_call_with_optional_encryption_on_both_sides, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP ICE video call with encryption change when adding video", dtls_srtp_ice_video_call_with_encryption_change_when_adding_video, "ICE", "DTLS"),
+	TEST_ONE_TAG("SRTP ICE video call with encryption change when adding video", srtp_ice_video_call_with_encryption_change_when_adding_video, "ICE")
+};
+
+test_t zrtp_ice_capability_negotiation_tests[] = {
 	TEST_ONE_TAG("ZRTP ICE call with optional encryption on caller", zrtp_ice_call_with_optional_encryption_on_caller, "ICE"),
 	TEST_ONE_TAG("ZRTP ICE call with optional encryption on callee", zrtp_ice_call_with_optional_encryption_on_callee, "ICE"),
 	TEST_ONE_TAG("ZRTP ICE call with optional encryption on both sides", zrtp_ice_call_with_optional_encryption_on_both_sides, "ICE"),
@@ -213,5 +210,26 @@ test_t ice_capability_negotiation_tests[] = {
 	TEST_ONE_TAG("ZRTP ICE video call with encryption change when adding video", zrtp_ice_video_call_with_encryption_change_when_adding_video, "ICE")
 };
 
+test_t dtls_srtp_ice_capability_negotiation_tests[] = {
+	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on caller", dtls_srtp_ice_call_with_optional_encryption_on_caller, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on callee", dtls_srtp_ice_call_with_optional_encryption_on_callee, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on both sides", dtls_srtp_ice_call_with_optional_encryption_on_both_sides, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP call with optional encryption (caller with ICE)", dtls_srtp_call_with_optional_encryption_caller_with_ice, "DTLS", "ICE"),
+	TEST_TWO_TAGS("DTLS SRTP call with optional encryption (callee with ICE)", dtls_srtp_call_with_optional_encryption_callee_with_ice, "DTLS", "ICE"),
+	TEST_TWO_TAGS("DTLS SRTP ICE video call with optional encryption on caller", dtls_srtp_ice_video_call_with_optional_encryption_on_caller, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE video call with optional encryption on callee", dtls_srtp_ice_video_call_with_optional_encryption_on_callee, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE video call with optional encryption on both sides", dtls_srtp_ice_video_call_with_optional_encryption_on_both_sides, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE video call with encryption change when adding video", dtls_srtp_ice_video_call_with_encryption_change_when_adding_video, "ICE", "DTLS")
+};
+
 test_suite_t ice_capability_negotiation_test_suite = {"ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(ice_capability_negotiation_tests) / sizeof(ice_capability_negotiation_tests[0]), ice_capability_negotiation_tests};
+
+test_suite_t srtp_ice_capability_negotiation_test_suite = {"SRTP ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(srtp_ice_capability_negotiation_tests) / sizeof(srtp_ice_capability_negotiation_tests[0]), srtp_ice_capability_negotiation_tests};
+
+test_suite_t zrtp_ice_capability_negotiation_test_suite = {"ZRTP ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(zrtp_ice_capability_negotiation_tests) / sizeof(zrtp_ice_capability_negotiation_tests[0]), zrtp_ice_capability_negotiation_tests};
+
+test_suite_t dtls_srtp_ice_capability_negotiation_test_suite = {"DTLS SRTP ICE Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(dtls_srtp_ice_capability_negotiation_tests) / sizeof(dtls_srtp_ice_capability_negotiation_tests[0]), dtls_srtp_ice_capability_negotiation_tests};

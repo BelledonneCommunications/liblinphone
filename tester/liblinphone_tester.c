@@ -409,6 +409,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&group_chat2_test_suite);
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
+	bc_tester_add_suite(&secure_message_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 #endif
@@ -422,10 +423,17 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_with_ice_test_suite);
 	bc_tester_add_suite(&call_secure_test_suite);
 	bc_tester_add_suite(&capability_negotiation_test_suite);
+	bc_tester_add_suite(&capability_negotiation_no_sdp_test_suite);
+	bc_tester_add_suite(&srtp_capability_negotiation_general_test_suite);
 	bc_tester_add_suite(&srtp_capability_negotiation_test_suite);
+	bc_tester_add_suite(&zrtp_capability_negotiation_general_test_suite);
 	bc_tester_add_suite(&zrtp_capability_negotiation_test_suite);
+	bc_tester_add_suite(&dtls_srtp_capability_negotiation_general_test_suite);
 	bc_tester_add_suite(&dtls_srtp_capability_negotiation_test_suite);
 	bc_tester_add_suite(&ice_capability_negotiation_test_suite);
+	bc_tester_add_suite(&srtp_ice_capability_negotiation_test_suite);
+	bc_tester_add_suite(&zrtp_ice_capability_negotiation_test_suite);
+	bc_tester_add_suite(&dtls_srtp_ice_capability_negotiation_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&call_video_test_suite);
 	bc_tester_add_suite(&call_video_msogl_test_suite);// Conditionals are defined in suite
@@ -433,7 +441,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
 	bc_tester_add_suite(&audio_quality_test_suite);
-	bc_tester_add_suite(&audio_video_conference_test_suite);
+	bc_tester_add_suite(&audio_conference_basic_test_suite);
+	bc_tester_add_suite(&audio_conference_advanced_test_suite);
+	bc_tester_add_suite(&video_conference_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);
