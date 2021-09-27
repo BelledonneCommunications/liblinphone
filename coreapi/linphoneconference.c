@@ -402,11 +402,11 @@ time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *p
 }
 
 void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type){
-	ConferenceParams::toCpp(params)->setParticipantListType(type);
+	ConferenceParams::toCpp(params)->setParticipantListType(static_cast<ConferenceParamsInterface::ParticipantListType>(type));
 }
 
 LinphoneConferenceParticipantListType linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params){
-	return ConferenceParams::toCpp(params)->getParticipantListType();
+	return static_cast<LinphoneConferenceParticipantListType>(ConferenceParams::toCpp(params)->getParticipantListType());
 }
 
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {

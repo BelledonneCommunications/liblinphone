@@ -58,11 +58,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 	friend class MediaConference::RemoteConference;
 	public:
 
-		enum class ParticipantListType {
-			Closed = LinphoneConferenceParticipantListTypeClosed,
-			Open = LinphoneConferenceParticipantListTypeOpen
-		};
-
 		ConferenceParams(const ConferenceParams& params) = default;
 		ConferenceParams(const LinphoneCore *core = NULL);
 
@@ -102,6 +97,9 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 
 		virtual void setEndTime (const time_t &end) override { m_endTime = end; };
 		const time_t &getEndTime() const { return m_endTime; };
+
+		virtual void setParticipantListType (const ParticipantListType &type) override { m_participantListType = type; };
+		const ParticipantListType &getParticipantListType() const { return m_participantListType; };
 
 	private:
 		bool m_enableVideo = false;

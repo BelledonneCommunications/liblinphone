@@ -83,7 +83,7 @@ LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConferen
 /**
  * Set the conference start time
  * @param conference The #LinphoneConference object. @notnil
- * @param start the conference start time as the number of seconds between the start time and the 1st of January 1970. It is possible to convert it to the Network Time Protocol (NTP) time by adding 2208988800. In order to program an immediate start of a conference, then program the start time to 0
+ * @param start the conference start time as the number of seconds between the desired start time and the 1st of January 1970. It is possible to convert it to the Network Time Protocol (NTP) time by adding 2208988800. In order to program an immediate start of a conference, then program the start time to 0
  */
 void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start);
 
@@ -97,7 +97,7 @@ time_t linphone_conference_params_get_start_time(const LinphoneConferenceParams 
 /**
  * Set the conference end time
  * @param conference The #LinphoneConference object. @notnil
- * @param end the conference end time as the number of seconds between the end time and the 1st of January 1970. It is possible to convert it to the Network Time Protocol (NTP) time by adding 2208988800. In order to program an undefined end of a conference, then program the end time to 0
+ * @param end the conference end time as the number of seconds between the desired end time and the 1st of January 1970. It is possible to convert it to the Network Time Protocol (NTP) time by adding 2208988800. In order to program an undefined end of a conference, then program the end time to 0
  */
 void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, time_t end);
 
