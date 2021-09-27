@@ -38,4 +38,9 @@ typedef enum _LinphoneConferenceState{
 	LinphoneConferenceStateDeleted = 8, /**< Conference was deleted on the server */
 } LinphoneConferenceState;
 
+typedef enum _LinphoneConferenceParticipantListType{
+	LinphoneConferenceParticipantListTypeClosed = 0, /**< Only participants in the initiating INVITE are allowed to join the conference */
+	LinphoneConferenceParticipantListTypeOpen = 1, /**< All devices calling the conference URI are allowed to join the conference */
+} LinphoneConferenceParticipantListType;
+
 #endif // ifndef _L_CONFERENCE_ENUMS_H_
