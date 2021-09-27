@@ -40,8 +40,10 @@ MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2
 void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail){
 	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
 	if (thumbnail) {
+		lInfo() << "mix to all add endpoint to thumbnail";
 		ms_video_conference_add_member(mConferenceThumbnail, endpoint);
 	} else {
+		lInfo() << "mix to all add endpoint to mConferenceMix";
 		ms_video_conference_add_member(mConferenceMix, endpoint);
 	}
 }
