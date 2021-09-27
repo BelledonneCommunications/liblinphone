@@ -472,6 +472,8 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 				result.rtcp_addr=remote_answer.rtcp_addr;
 				result.rtcp_port=remote_answer.rtcp_port;
 				result.bandwidth=remote_answer.bandwidth;
+				result.setLabel(remote_answer.getLabel());
+				result.setContent(remote_answer.getContent());
 			}else{
 				lInfo() << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
 				result.disable();
@@ -675,6 +677,8 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			result.rtcp_port=0; /* rtcp not supported yet*/
 			result.bandwidth=remote_offer.bandwidth;
 			result.multicast_role = SalMulticastReceiver;
+			result.setLabel(remote_offer.getLabel());
+			result.setContent(remote_offer.getContent());
 		} else {
 			result.rtp_addr=local_cap.rtp_addr;
 			result.rtcp_addr=local_cap.rtcp_addr;
@@ -682,6 +686,8 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			result.rtcp_port=local_cap.rtcp_port;
 			result.rtcp_port=local_cap.rtcp_port;
 			result.bandwidth=local_cap.bandwidth;
+			result.setLabel(local_cap.getLabel());
+			result.setContent(local_cap.getContent());
 		}
 
 		if (resultCfg.bundle_only == true) {
