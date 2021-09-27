@@ -575,11 +575,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 							auto confParams = ConferenceParams::create(getCore()->getCCore());
 							ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
-							const std::vector<std::pair<std::string, std::string>> mainAttributes {std::make_pair("content", "main")};
-							const std::vector<std::pair<std::string, std::string>> speakerAttributes {std::make_pair("content", "speaker")};
-							if (rmd->findIdxStreamWithSdpAttribute(mainAttributes) == -1) {
+							if (rmd->findIdxStreamWithContent("main") == -1) {
 								confLayout = ConferenceParams::Layout::None;
-							} else if (rmd->findIdxStreamWithSdpAttribute(speakerAttributes) == -1) {
+							} else if (rmd->findIdxStreamWithContent("speaker") == -1) {
 								confLayout = ConferenceParams::Layout::Grid;
 							} else {
 								confLayout = ConferenceParams::Layout::ActiveSpeaker;
@@ -631,8 +629,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						// It is expected that the core of the remote conference is the participant one
 						std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 						auto confParams = ConferenceParams::create(getCore()->getCCore());
-						const std::vector<std::pair<std::string, std::string>> attributes {std::make_pair("content", "speaker")};
-						confParams->setLayout((rmd->findIdxStreamWithSdpAttribute(attributes) == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
+						confParams->setLayout((rmd->findIdxStreamWithContent("speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
 						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
 

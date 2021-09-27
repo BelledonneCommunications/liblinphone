@@ -913,9 +913,10 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 			if (video_enabled && conf_to_part_call && (layout != LinphoneConferenceLayoutNone)) {
 				// One stream per participant
-				// One stream for the grid layout
+				// One stream to send the minature picture of the participant
+				// One stream for the active speaker layout
 				// One stream for the local participant
-				nb_video_streams = local_conf_participants + ((layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0) + (linphone_conference_is_in(conference) ? 1 : 0);
+				nb_video_streams = local_conf_participants + 1 + ((layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0) + (linphone_conference_is_in(conference) ? 1 : 0);
 			} else {
 				nb_video_streams = initial_call_video_streams[idx];
 			}

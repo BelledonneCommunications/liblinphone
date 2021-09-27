@@ -199,12 +199,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	const auto & isInLocalConference = getMediaSessionPrivate().isInConference();
 	MS2VideoMixer * videoMixer = getVideoMixer();
-	const auto & sdpAttributes = isInLocalConference ? ctx.getLocalStreamDescription().custom_sdp_attributes : ctx.getRemoteStreamDescription().custom_sdp_attributes;
-	const char * label = sal_custom_sdp_attribute_find(sdpAttributes, "label");
-	const char * content = sal_custom_sdp_attribute_find(sdpAttributes, "content");
+	const auto & stream = isInLocalConference ? ctx.getLocalStreamDescription() : ctx.getRemoteStreamDescription();
+	const auto & label = stream.getLabel();
+	const auto & content = stream.getContent();
 	MSFilter *source = nullptr;
 
-	video_stream_enable_thumbnail(mStream, content && !strcmp(content, "thumbnail"));
+	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
 
 	/* Shutdown preview */
 	if (getCCore()->previewstream) {
@@ -275,7 +275,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	} else if (videoMixer && label && getMediaSession().getParticipantWindowId(label)) {
+	} else if (videoMixer && getMediaSession().getParticipantWindowId(label)) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
@@ -346,7 +346,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			if (videoMixer == nullptr && dir == MediaStreamSendOnly && content && !strcmp(content, "thumbnail")) {
+			if (videoMixer == nullptr && dir == MediaStreamSendOnly && (content.compare("thumbnail") == 0)) {
 				itcStream = getGroup().lookupItcStream(mStream);
 				if (itcStream) {
 					itcFilter = itcStream->itcsink;
@@ -356,7 +356,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 
-				if (videoMixer == nullptr && dir != MediaStreamRecvOnly && (!content || strcmp(content, "thumbnail"))) {
+				if (videoMixer == nullptr && dir != MediaStreamRecvOnly && (content.compare("thumbnail") != 0)) {
 					link_video_stream_with_itc_sink(mStream);
 					itcStream = getGroup().lookupItcStream(mStream);
 					if (itcStream){
@@ -397,11 +397,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		lWarning() << "Video preview (" << source << ") not reused: destroying it";
 		ms_filter_destroy(source);
 	}
-	if (label) {
-		video_stream_set_label(mStream, label);
+	if (!label.empty()) {
+		video_stream_set_label(mStream, label.c_str());
 	}
 	if (videoMixer){
-		const bool_t isRemote = ((!mStream->label && !content) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
+		const bool_t isRemote = ((!mStream->label && content.empty()) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_thumbnail_enabled(mStream));
 	}
