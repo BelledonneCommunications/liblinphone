@@ -2894,8 +2894,6 @@ static void call_with_ack_not_sent(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-
-
 test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with no encryption", call_with_no_encryption),
 	TEST_NO_TAG("Call with ACK not sent", call_with_ack_not_sent),
@@ -2908,18 +2906,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with tcap line merge on caller", call_with_tcap_line_merge_on_caller),
 	TEST_NO_TAG("Call with tcap line merge on callee", call_with_tcap_line_merge_on_callee),
 	TEST_NO_TAG("Call with tcap line merge on both sides", call_with_tcap_line_merge_on_both_sides),
-	TEST_NO_TAG("Call with no SDP and capability negotiations on caller", call_with_no_sdp_cap_neg_on_caller),
-	TEST_NO_TAG("Call with no SDP and capability negotiations on callee", call_with_no_sdp_cap_neg_on_callee),
-	TEST_NO_TAG("Call with no SDP and capability negotiations on both sides", call_with_no_sdp_cap_neg_on_both_sides),
 	TEST_NO_TAG("Call with AVPF and capability negotiations on caller", call_with_avpf_and_cap_neg_on_caller),
 	TEST_NO_TAG("Call with AVPF and capability negotiations on callee", call_with_avpf_and_cap_neg_on_callee),
 	TEST_NO_TAG("Call with AVPF and capability negotiations on both sides", call_with_avpf_and_cap_neg_on_both_sides),
-	TEST_NO_TAG("Call with no SDP on update and capability negotiations on caller", call_with_no_sdp_on_update_cap_neg_caller),
-	TEST_NO_TAG("Call with no SDP on update and capability negotiations on callee", call_with_no_sdp_on_update_cap_neg_callee),
-	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides with reINVITE", call_with_no_sdp_on_update_cap_neg_both_sides_with_reinvite),
-	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides without reINVITE on caller", call_with_no_sdp_on_update_cap_neg_both_sides_without_reinvite_on_caller),
-	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides without reINVITE on callee", call_with_no_sdp_on_update_cap_neg_both_sides_without_reinvite_on_callee),
-	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides without reINVITE", call_with_no_sdp_on_update_cap_neg_both_sides_without_reinvite),
 	TEST_NO_TAG("Call changes encryption with update and capability negotiations on caller", call_changes_enc_on_update_cap_neg_caller),
 	TEST_NO_TAG("Call changes encryption with update and capability negotiations on callee", call_changes_enc_on_update_cap_neg_callee),
 	TEST_NO_TAG("Call changes encryption with update and capability negotiations on both sides with reINVITE", call_changes_enc_on_update_cap_neg_both_sides_with_reinvite),
@@ -2929,5 +2918,20 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Back to back call with capability negotiations on both sides", back_to_back_calls_cap_neg_both_sides)
 };
 
-test_suite_t capability_negotiation_test_suite = {"Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+test_t capability_negotiation_tests_no_sdp[] = {
+	TEST_NO_TAG("Call with no SDP and capability negotiations on caller", call_with_no_sdp_cap_neg_on_caller),
+	TEST_NO_TAG("Call with no SDP and capability negotiations on callee", call_with_no_sdp_cap_neg_on_callee),
+	TEST_NO_TAG("Call with no SDP and capability negotiations on both sides", call_with_no_sdp_cap_neg_on_both_sides),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on caller", call_with_no_sdp_on_update_cap_neg_caller),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on callee", call_with_no_sdp_on_update_cap_neg_callee),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides with reINVITE", call_with_no_sdp_on_update_cap_neg_both_sides_with_reinvite),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides without reINVITE on caller", call_with_no_sdp_on_update_cap_neg_both_sides_without_reinvite_on_caller),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides without reINVITE on callee", call_with_no_sdp_on_update_cap_neg_both_sides_without_reinvite_on_callee),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides without reINVITE", call_with_no_sdp_on_update_cap_neg_both_sides_without_reinvite)
+};
+
+test_suite_t capability_negotiation_test_suite = {"Capability Negotiation (SDP)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(capability_negotiation_tests) / sizeof(capability_negotiation_tests[0]), capability_negotiation_tests};
+
+test_suite_t capability_negotiation_no_sdp_test_suite = {"Capability Negotiation (No SDP)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(capability_negotiation_tests_no_sdp) / sizeof(capability_negotiation_tests_no_sdp[0]), capability_negotiation_tests_no_sdp};
