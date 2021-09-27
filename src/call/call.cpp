@@ -45,7 +45,7 @@ shared_ptr<CallSession> Call::getActiveSession () const {
 
 shared_ptr<AbstractChatRoom> Call::getChatRoom () {
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
-		mChatRoom = getCore()->getOrCreateBasicChatRoom(*getRemoteAddress());
+		mChatRoom = getCore()->getOrCreateBasicChatRoom(getLocalAddress(), *getRemoteAddress());
 		if (mChatRoom) {
 			const char *callId = linphone_call_log_get_call_id(getLog());
 			lInfo() << "Setting call id [" << callId << "] to ChatRoom [" << mChatRoom << "]";
