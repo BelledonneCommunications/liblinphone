@@ -676,14 +676,17 @@ static void ephemeral_group_message_test(void) {
 }
 
 test_t ephemeral_group_chat_tests[] = {
-	TEST_ONE_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test, "Ephemeral"),
-	TEST_ONE_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test, "Ephemeral"),
-	TEST_ONE_TAG("Encrypted group chat room ephemeral messages", ephemeral_group_message_test, "Ephemeral"),
 	TEST_TWO_TAGS("Chat room remaining ephemeral messages", chat_room_remaining_ephemeral_message_test, "Ephemeral", "LeaksMemory"), /*due to core restart*/
 	TEST_TWO_TAGS("Chat room expired ephemeral messages", chat_room_expired_ephemeral_message_test, "Ephemeral", "LeaksMemory"), /*due to core restart*/
 	TEST_ONE_TAG("Mixed ephemeral messages", mixed_ephemeral_message_test, "Ephemeral"),
-	TEST_TWO_TAGS("Chat room ephemeral settings", chat_room_ephemeral_settings, "Ephemeral", "LeaksMemory") /*due to core restart*/,
 	TEST_ONE_TAG("Send non ephemeral message", send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room, "Ephemeral")
+};
+
+test_t ephemeral_group_chat_basic_tests[] = {
+	TEST_ONE_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test, "Ephemeral"),
+	TEST_ONE_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test, "Ephemeral"),
+	TEST_ONE_TAG("Encrypted group chat room ephemeral messages", ephemeral_group_message_test, "Ephemeral"),
+	TEST_TWO_TAGS("Chat room ephemeral settings", chat_room_ephemeral_settings, "Ephemeral", "LeaksMemory") /*due to core restart*/
 };
 
 test_suite_t ephemeral_group_chat_test_suite = {
@@ -694,6 +697,16 @@ test_suite_t ephemeral_group_chat_test_suite = {
 	liblinphone_tester_after_each,
 	sizeof(ephemeral_group_chat_tests) / sizeof(ephemeral_group_chat_tests[0]), ephemeral_group_chat_tests
 };
+
+test_suite_t ephemeral_group_chat_basic_test_suite = {
+	"Ephemeral group chat (Basic)",
+	NULL,
+	NULL,
+	liblinphone_tester_before_each,
+	liblinphone_tester_after_each,
+	sizeof(ephemeral_group_chat_basic_tests) / sizeof(ephemeral_group_chat_basic_tests[0]), ephemeral_group_chat_basic_tests
+};
+
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic pop
