@@ -1378,7 +1378,11 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 		newStream.rtp_port = rtp_port;
 		newStream.rtcp_port = newStream.rtp_port + 1;
 		newStream.name = "Video " + dev->getAddress().asString();
-		cfg.dir = (isInLocalConference && (content.compare("thumbnail") != 0)) ? SalStreamSendOnly : SalStreamRecvOnly;
+		if (content.compare("thumbnail") == 0) {
+			cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
+		} else {
+			cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+		}
 		cfg.replacePayloads(l);
 		newStream.addActualConfiguration(cfg);
 		fillRtpParameters(newStream);
@@ -1627,7 +1631,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 										cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
 										break;
 									case LinphoneMediaDirectionSendRecv:
-										cfg.dir = SalStreamSendOnly;
+										cfg.dir = (contentAttrValue.compare("thumbnail") == 0) ? SalStreamRecvOnly : SalStreamSendOnly;
 										break;
 									case LinphoneMediaDirectionInvalid:
 										cfg.dir = SalStreamInactive;
