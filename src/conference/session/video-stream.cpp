@@ -204,8 +204,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	const auto & content = stream.getContent();
 	MSFilter *source = nullptr;
 
-	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
-
 	/* Shutdown preview */
 	if (getCCore()->previewstream) {
 		if (getCCore()->video_conf.reuse_preview_source)
@@ -322,6 +320,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_set_device_rotation(mStream, getCCore()->device_rotation);
 	video_stream_set_freeze_on_error(mStream, !!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
 	video_stream_use_video_preset(mStream, linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
+
+	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
+	if (!label.empty()) {
+		video_stream_set_label(mStream, label.c_str());
+	}
+
 	if (getCCore()->video_conf.reuse_preview_source && source) {
 		lInfo() << "video_stream_start_with_source kept: " << source;
 		video_stream_start_with_source(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(),
@@ -347,7 +351,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		}
 		if (ok) {
 			if (videoMixer == nullptr) {
-				lInfo() << "[mix to all] stream dir " << dir << " content " << content;
+				lInfo() << "[mix to all] stream dir " << dir << " content " << content << " label " << label;
 			}
 			if (videoMixer == nullptr && dir == MediaStreamSendOnly && (content.compare("thumbnail") == 0)) {
 				itcStream = getGroup().lookupItcStream(mStream);
@@ -402,9 +406,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		lWarning() << "Video preview (" << source << ") not reused: destroying it";
 		ms_filter_destroy(source);
 	}
-	if (!label.empty()) {
-		video_stream_set_label(mStream, label.c_str());
-	}
+
 	if (videoMixer){
 		const bool_t isRemote = ((!mStream->label && content.empty()) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);

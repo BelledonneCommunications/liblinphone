@@ -385,9 +385,11 @@ bool StreamsGroup::checkRtpSession() const {
 				case MediaStreamSendOnly:
 					if (rtps->packet_sent < 5)
 						return false;
+					break;
 				case MediaStreamSendRecv:
 					if (rtps->packet_recv < 5 || rtps->packet_sent < 5)
 						return false;
+					break;
 				default:
 					break;
 			}
