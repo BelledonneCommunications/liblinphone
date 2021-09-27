@@ -872,8 +872,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		ms_message("Processing for stream %zu",i);
 		SalStreamDescription & ls = local_offer->streams[i];
 		const SalStreamDescription & rs = remote_answer->streams[i];
-		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
-		{
+		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
 			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
 			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
@@ -885,7 +884,9 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 			stream.addActualConfiguration(actualCfg);
 			result->streams.push_back(stream);
 		}
-		else ms_warning("No matching stream for %zu",i);
+		else {
+			ms_warning("No matching stream for %zu",i);
+		}
 	}
 	result->bandwidth=remote_answer->bandwidth;
 	result->origin_addr=remote_answer->origin_addr;

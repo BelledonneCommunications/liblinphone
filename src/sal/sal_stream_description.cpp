@@ -153,6 +153,16 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 		bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
 	}
 
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"label");
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		label=value;
+	}
+
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"content");
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		content=value;
+	}
+
 	createActualCfg(salMediaDesc, sdp, media_desc);
 }
 
