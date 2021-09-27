@@ -36,6 +36,8 @@
 #include "local-conference-event-handler.h"
 #include "logger/logger.h"
 
+#include <xsd/cxx/xml/dom/serialization-source.hxx>
+
 // TODO: remove me.
 #include "private.h"
 
@@ -79,8 +81,6 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 			acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
 		}
 	}
-	const bool acceptConferenceInfo = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info+xml") != acceptedContents.end());
-	const bool acceptConferenceInfoLinphoneExtension = acceptedContents.empty() ? false : (find(acceptedContents.begin(), acceptedContents.end(), "application/conference-info-linphone-extension+xml") != acceptedContents.end());
 
 	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
 	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
@@ -92,7 +92,6 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 	string entity = conf->getConferenceAddress().asString();
 	string subject = conf->getSubject();
 	ConferenceType confInfo = ConferenceType(entity);
-	UsersType users;
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	confDescr.setSubject(subject);
 	const auto & confParams = conf->getCurrentParams();
@@ -114,8 +113,24 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		KeywordsType keywords(sizeof(char), keywordList.c_str());
 		confDescr.setKeywords(keywords);
 	}
-	confInfo.setUsers(users);
+
+	if (ephemerable && chatRoom) {
+		const ModeType mode = (chatRoom->getCurrentParams()->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) ? "admin-managed" : "device-managed";
+
+		const auto ephemeral = Ephemeral(mode, std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
+
+		auto & confDescrDOMDoc = confDescr.getDomDocument();
+
+		::xercesc::DOMElement * e (confDescrDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:ephemeral").c_str()));
+		*e << ephemeral;
+
+		confDescr.getAny().push_back(e);
+	}
+
 	confInfo.setConferenceDescription((const ConferenceDescriptionType) confDescr);
+
+	UsersType users;
+	confInfo.setUsers(users);
 
 	std::list<std::shared_ptr<Participant>> participants(conf->getParticipants());
 
@@ -145,10 +160,22 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
 
+			auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
+			for (const auto & protocol : protocols) {
+				std::ostringstream versionStr;
+				versionStr << protocol.second;
+				const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
+				auto & endpointJoiningInfoDOMDoc = endpoint.getJoiningInfo().get().getDomDocument();
+				::xercesc::DOMElement * e (endpointJoiningInfoDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
+				*e << ephemeralService;
+//				endpoint.getJoiningInfo().get().setAnyAttribute(e);
+			}
+
 			// Media capabilities
 			addMediaCapabilities(device, endpoint);
 
 			endpoint.setState(StateType::full);
+
 			user.getEndpoint().push_back(endpoint);
 		}
 
@@ -156,55 +183,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 	}
 
 	const auto conferenceInfoNotify = createNotify(confInfo, true);
-
-	string conferenceInfoLinphoneExtensionNotify = std::string();
-	if (ephemerable && chatRoom) {
-		ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
-		EphemeralType ephemeralType = EphemeralType();
-		ephemeralType.setMode(Utils::toString(chatRoom->getCurrentParams()->getEphemeralMode()));
-		ephemeralType.setLifetime(std::to_string(chatRoom->getCurrentParams()->getEphemeralLifetime()));
-		confInfoLinphoneExtension.setEphemeral(ephemeralType);
-		conferenceInfoLinphoneExtensionNotify = createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension);
-	}
-
-	if (acceptedContents.empty() || (acceptConferenceInfo && !acceptConferenceInfoLinphoneExtension)) {
-		return conferenceInfoNotify;
-	} else if (!acceptConferenceInfo && acceptConferenceInfoLinphoneExtension && (!conferenceInfoLinphoneExtensionNotify.empty())) {
-		return conferenceInfoLinphoneExtensionNotify;
-	} else if (acceptConferenceInfo && acceptConferenceInfoLinphoneExtension) {
-		list<Content> contents;
-		char token[17];
-
-		Content contentConferenceInfo = Content();
-		contentConferenceInfo.setContentType(ContentType::ConferenceInfo);
-		belle_sip_random_token(token, sizeof(token));
-		contentConferenceInfo.addHeader("Content-Id", token);
-		contentConferenceInfo.addHeader("Content-Length", Utils::toString(conferenceInfoNotify.size()));
-		contentConferenceInfo.setBodyFromUtf8(conferenceInfoNotify);
-		contents.push_back(move(contentConferenceInfo));
-
-		if (!conferenceInfoLinphoneExtensionNotify.empty()) {
-			Content contentConferenceInfoLinphoneExtension = Content();
-			belle_sip_random_token(token, sizeof(token));
-			contentConferenceInfoLinphoneExtension.addHeader("Content-Id", token);
-			contentConferenceInfoLinphoneExtension.addHeader("Content-Length", Utils::toString(conferenceInfoLinphoneExtensionNotify.size()));
-
-			contentConferenceInfoLinphoneExtension.setContentType(ContentType::ConferenceInfoLinphoneExtension);
-			contentConferenceInfoLinphoneExtension.setBodyFromUtf8(conferenceInfoLinphoneExtensionNotify);
-			contents.push_back(move(contentConferenceInfoLinphoneExtension));
-		}
-
-		if (contents.empty())
-			return Utils::getEmptyConstRefObject<string>();
-
-		list<Content *> contentPtrs;
-		for (auto &content : contents)
-			contentPtrs.push_back(&content);
-		string multipart = ContentManager::contentListToMultipart(contentPtrs, MultipartBoundary).getBodyAsUtf8String();
-		return multipart;
-	}
-
-	return Utils::getEmptyConstRefObject<string>();
+	return conferenceInfoNotify;
 }
 
 void LocalConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, ConferenceDescriptionType & confDescr) {
@@ -471,6 +450,17 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Ad
 			if (!displayName.empty())
 				endpoint.setDisplayText(displayName);
 
+			auto protocols = Utils::parseCapabilityDescriptor(participantDevice->getCapabilityDescriptor());
+			for (const auto & protocol : protocols) {
+				std::ostringstream versionStr;
+				versionStr << protocol.second;
+				const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
+				auto & endpointJoiningInfoDOMDoc = endpoint.getJoiningInfo().get().getDomDocument();
+				::xercesc::DOMElement * e (endpointJoiningInfoDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
+				*e << ephemeralService;
+//				endpoint.getJoiningInfo().get().setAnyAttribute(e);
+			}
+
 			// Media capabilities
 			addMediaCapabilities(participantDevice, endpoint);
 		}
@@ -580,14 +570,6 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 
 // -----------------------------------------------------------------------------
 
-string LocalConferenceEventHandler::createConferenceInfoLinphoneExtensionNotify (ConferenceTypeLinphoneExtension confInfo) {
-	stringstream notify;
-	Xsd::XmlSchema::NamespaceInfomap map;
-	map[""].name = "linphone:xml:ns:conference-info-linphone-extension";
-	serializeConferenceInfoLinphoneExtension(notify, confInfo, map);
-	return notify.str();
-}
-
 string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool isFullState) {
 	confInfo.setVersion(conf->getLastNotify());
 	confInfo.setState(isFullState ? StateType::full : StateType::partial);
@@ -603,6 +585,7 @@ string LocalConferenceEventHandler::createNotify (ConferenceType confInfo, bool 
 	stringstream notify;
 	Xsd::XmlSchema::NamespaceInfomap map;
 	map[""].name = "urn:ietf:params:xml:ns:conference-info";
+	map["linphone-cie"].name = "linphone:xml:ns:conference-info-linphone-extension";
 	serializeConferenceInfo(notify, confInfo, map);
 	return notify.str();
 }
@@ -618,8 +601,6 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 }
 
 string LocalConferenceEventHandler::createNotifyEphemeralMode (const EventLog::Type & type) {
-	list<Content> contents;
-
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
@@ -629,71 +610,69 @@ string LocalConferenceEventHandler::createNotifyEphemeralMode (const EventLog::T
 		KeywordsType keywords(sizeof(char), keywordList.c_str());
 		confDescr.setKeywords(keywords);
 	}
+
+	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	// Enquire whether this conference belongs to a server group chat room
+	shared_ptr<Core> core = conf->getCore();
+	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+
+	const ModeType mode = (type == EventLog::Type::ConferenceEphemeralMessageManagedByAdmin) ? "admin-managed" : "device-managed";
+	long lifetime = linphone_core_get_default_ephemeral_lifetime(core->getCCore());
+	if (chatRoom) {
+		lifetime = chatRoom->getCurrentParams()->getEphemeralLifetime();
+	}
+
+	const auto ephemeral = Ephemeral(mode, std::to_string(lifetime));
+	auto & confDescrDOMDoc = confDescr.getDomDocument();
+
+	::xercesc::DOMElement * e (confDescrDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:ephemeral").c_str()));
+	*e << ephemeral;
+
+	confDescr.getAny().push_back(e);
+
 	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
 
-	contents.emplace_back(Content());
-	contents.back().setContentType(ContentType::ConferenceInfo);
-	contents.back().setBodyFromUtf8(createNotify(confInfo));
-
-	ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
-	EphemeralType ephemeralType = EphemeralType();
-
-	const auto mode = (type == EventLog::Type::ConferenceEphemeralMessageManagedByAdmin) ? Utils::toString(AbstractChatRoom::EphemeralMode::AdminManaged) : Utils::toString(AbstractChatRoom::EphemeralMode::DeviceManaged);
-	ephemeralType.setMode(mode);
-	confInfoLinphoneExtension.setEphemeral(ephemeralType);
-
-	contents.emplace_back(Content());
-	contents.back().setContentType(ContentType::ConferenceInfoLinphoneExtension);
-	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension));
-
-	if (contents.empty())
-		return Utils::getEmptyConstRefObject<string>();
-
-	list<Content *> contentPtrs;
-	for (auto &content : contents)
-		contentPtrs.push_back(&content);
-	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
-	return multipart;
+	return createNotify(confInfo);
 }
 
 string LocalConferenceEventHandler::createNotifyEphemeralLifetime (const long & lifetime) {
-	list<Content> contents;
-
 	string entity = conf->getConferenceAddress().asString();
+	ConferenceType confInfo = ConferenceType(entity);
+	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	if (lifetime != 0) {
-		ConferenceType confInfo = ConferenceType(entity);
-		ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 		std::string keywordList;
 		keywordList += "ephemeral";
 		if (!keywordList.empty()) {
 			KeywordsType keywords(sizeof(char), keywordList.c_str());
 			confDescr.setKeywords(keywords);
 		}
-		confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
-
-		contents.emplace_back(Content());
-		contents.back().setContentType(ContentType::ConferenceInfo);
-		contents.back().setBodyFromUtf8(createNotify(confInfo));
 	}
 
-	ConferenceTypeLinphoneExtension confInfoLinphoneExtension = ConferenceTypeLinphoneExtension(entity);
-	EphemeralType ephemeralType = EphemeralType();
-	ephemeralType.setLifetime(std::to_string(lifetime));
-	confInfoLinphoneExtension.setEphemeral(ephemeralType);
+	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+	// Enquire whether this conference belongs to a server group chat room
+	shared_ptr<Core> core = conf->getCore();
+	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
 
-	contents.emplace_back(Content());
-	contents.back().setContentType(ContentType::ConferenceInfoLinphoneExtension);
-	contents.back().setBodyFromUtf8(createConferenceInfoLinphoneExtensionNotify(confInfoLinphoneExtension));
+	auto chatRoomMode = static_cast<AbstractChatRoom::EphemeralMode>(linphone_core_chat_room_get_default_ephemeral_mode(core->getCCore()));
+	if (chatRoom) {
+		chatRoomMode = chatRoom->getCurrentParams()->getEphemeralMode();
+	}
 
-	if (contents.empty())
-		return Utils::getEmptyConstRefObject<string>();
+	const ModeType mode = (chatRoomMode == AbstractChatRoom::EphemeralMode::AdminManaged) ? "admin-managed" : "device-managed";
+	const auto ephemeral = Ephemeral(mode, std::to_string(lifetime));
 
-	list<Content *> contentPtrs;
-	for (auto &content : contents)
-		contentPtrs.push_back(&content);
-	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
-	return multipart;
+	auto & confDescrDOMDoc = confDescr.getDomDocument();
 
+	::xercesc::DOMElement * e (confDescrDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:ephemeral").c_str()));
+	*e << ephemeral;
+
+	confDescr.getAny().push_back(e);
+
+	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
+
+	return createNotify(confInfo);
 }
 
 string LocalConferenceEventHandler::createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
@@ -806,6 +785,9 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 		if (evLastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
 			notifyFullState(createNotifyFullState(lev), device);
+
+			// Notify everybody that a participant device has been added and its capabilities after receiving the SUBSCRIBE
+			notifyAllExcept(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()), participant);
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
@@ -972,4 +954,5 @@ shared_ptr<Participant> LocalConferenceEventHandler::getConferenceParticipant (c
 
 	return participant;
 }
+
 LINPHONE_END_NAMESPACE
