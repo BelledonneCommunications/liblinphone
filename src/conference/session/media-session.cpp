@@ -1936,9 +1936,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-
 	copyOldStreams(md, oldMd, refMd, pth);
-
 	addNewConferenceParticipantVideostreams(md, oldMd, pth);
 
 	setupEncryptionKeys(md, forceCryptoKeyGeneration);
