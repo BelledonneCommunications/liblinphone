@@ -65,19 +65,6 @@ const bctbx_list_t *linphone_core_get_chat_rooms (LinphoneCore *lc) {
 	return lc->chat_rooms;
 }
 
-static LinphoneChatRoom *linphone_chat_room_new (LinphoneCore *core, const LinphoneAddress *addr) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getOrCreateBasicChatRoom(
-		*L_GET_CPP_PTR_FROM_C_OBJECT(addr)
-	));
-}
-
-LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call){
-	LinphoneChatRoom *cr = linphone_chat_room_new(linphone_call_get_core(call),
-		linphone_address_clone(linphone_call_get_remote_address(call)));
-	linphone_chat_room_set_call(cr, call);
-	return cr;
-}
-
 LinphoneChatRoom *linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback) {
 	return linphone_core_create_client_group_chat_room_2(lc, subject, fallback, FALSE);
 }

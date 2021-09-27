@@ -82,7 +82,7 @@ public:
 			Core::deleteChatRoom(q->getSharedFromThis());
 
 			LinphoneChatRoom *lcr = L_GET_C_BACK_PTR(q);
-			shared_ptr<AbstractChatRoom> bcr = cgcr->getCore()->getOrCreateBasicChatRoom(invitedAddresses.front());
+			shared_ptr<AbstractChatRoom> bcr = cgcr->getCore()->getOrCreateBasicChatRoom(q->getLocalAddress(), invitedAddresses.front());
 			L_SET_CPP_PTR_FROM_C_OBJECT(lcr, bcr);
 			/* getOrCreateBasicChatRoom will automatically set the state to Instantiated and Created
 			 * but because CPP ptr hasn't been set yet in this case the application's ChatRoom won't be notified
