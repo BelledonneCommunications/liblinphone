@@ -335,6 +335,7 @@ Stream * StreamsGroup::lookupStream(const SalStreamType type, const std::string 
 }
 
 VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
+#ifdef VIDEO_ENABLED
 	for (auto &stream : mStreams){
 		const auto streamLabel = stream->getLabel();
 		if ((stream->getType() == SalVideo) && (refStream->label && strcmp(refStream->label, streamLabel.c_str()) == 0)) {
@@ -348,6 +349,7 @@ VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
 			}
 		}
 	}
+#endif
 	return nullptr;
 }
 
