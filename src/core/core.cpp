@@ -1367,6 +1367,58 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const s
 	return conference;
 }
 
+shared_ptr<MediaConference::Conference> Core::createConference(const shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+	L_Q();
+
+	if (!params) {
+		lWarning() << "Trying to create conference with null parameters";
+		return nullptr;
+	}
+	if (!params->isValid()) {
+		lWarning() << "Trying to create conference with invalid parameters " << params->toString();
+		return nullptr;
+	}
+
+	string conferenceFactoryUri = Core::getConferenceFactoryUri(q->getSharedFromThis(), localAddr);
+	if (conferenceFactoryUri.empty()) {
+		lWarning() << "Not creating group chat room: no conference factory uri for local address [" << localAddr << "]";
+		return nullptr;
+	}
+
+	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
+	if (!localAddr.hasGruu()) {
+		lWarning() << "Local identity address [" << localAddr << "] doesn't have a gruu, let's try to find it";
+		IdentityAddress localAddrWithGruu = getIdentityAddressWithGruu(localAddr);
+		if (localAddrWithGruu.isValid()) {
+			lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
+			conferenceId = ConferenceId(IdentityAddress(), localAddrWithGruu);
+		} else {
+			lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr << "], client group chat room creation will fail!";
+		}
+	}
+
+	conference = createClientGroupChatRoom(params->getSubject(),
+					     IdentityAddress(conferenceFactoryUri),
+					     conferenceId,
+					     Content(),
+					     ChatRoomParams::toCapabilities(params),
+					     params,
+					     false);
+
+	auto conference = std::make_shared<MediaConference::RemoteConference>(this, IdentityAddress(conferenceFactoryUri), conferenceId, nullptr, params);
+
+	if (!conference) {
+		lWarning() << "Cannot create conference with subject [" << params->getSubject() <<"]";
+		return nullptr;
+	}
+	if (!conference->addParticipants(participants)) {
+		lWarning() << "Couldn't add participants to newly created chat room, aborting";
+		return nullptr;
+	}
+
+	return conference;
+}
+
 bool Core::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
 	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
 	return linphone_core_is_media_encryption_mandatory(lc) && linphone_core_get_media_encryption(lc)==LinphoneMediaEncryptionSRTP && !md->hasSrtp();
