@@ -1368,16 +1368,17 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 	newStream.type = SalVideo;
 	newStream.setLabel(dev->getLabel());
 
+	const auto & content = newStream.getContent();
+
 	cfg.proto = getParams()->getMediaProto();
 	const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithLabel(dev->getLabel()) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
 	if (!l.empty()){
-
 		const auto rtp_port = q->getRandomRtpPort(newStream);
 		newStream.rtp_port = rtp_port;
 		newStream.rtcp_port = newStream.rtp_port + 1;
 		newStream.name = "Video " + dev->getAddress().asString();
-		cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+		cfg.dir = (isInLocalConference && (content.compare("thumbnail") != 0)) ? SalStreamSendOnly : SalStreamRecvOnly;
 		cfg.replacePayloads(l);
 		newStream.addActualConfiguration(cfg);
 		fillRtpParameters(newStream);
@@ -1468,11 +1469,11 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 					const auto & foundStreamIdx = dev->getLabel().empty() ? -1 : ((remoteContactAddress == dev->getAddress().asAddress()) ? md->findIdxStreamWithContent(content) : md->findIdxStreamWithLabel(devLabel));
 					if (foundStreamIdx == -1) {
 						SalStreamDescription & newStream = addStreamToMd(md, -1);
-						fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth);
-						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
 						if (remoteContactAddress.isValid() && (remoteContactAddress == dev->getAddress().asAddress())) {
 							newStream.setContent(content);
 						}
+						fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth);
+						if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + dev->getLabel());
 					}
 				}
 			}
