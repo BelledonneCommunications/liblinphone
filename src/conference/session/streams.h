@@ -378,7 +378,8 @@ public:
 	VideoStream *lookupItcStream(VideoStream *refStream) const;
 	Stream * lookupVideoStream (MediaStreamDir dir);
 	Stream * lookupVideoStream ( MSFilterId id);
-	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir);
+	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir) const;
+	bool checkRtpSession() const;
 
 	/*
 	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.
