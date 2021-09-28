@@ -139,7 +139,12 @@ namespace Linphone
 
 		internal OnLinphoneObjectDataDestroyed onLinphoneListenerObjectDestroyed;
 
+#if __IOS__
+		[MonoPInvokeCallback((typeof(OnLinphoneObjectDataDestroyed)))]
+		internal static void on_linphone_cbs_data_destroyed(IntPtr data) {
+#else
 		internal void on_linphone_cbs_data_destroyed(IntPtr data) {
+#endif
 			if (data != IntPtr.Zero)
 			{
 				GCHandle handle = GCHandle.FromIntPtr(data);
@@ -201,6 +206,8 @@ namespace Linphone
 					obj.onLinphoneListenerObjectDestroyed = obj.on_linphone_cbs_data_destroyed;
 					IntPtr cb = Marshal.GetFunctionPointerForDelegate(obj.onLinphoneListenerObjectDestroyed);
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, cb);
+#elif __IOS__
+					belle_sip_object_data_set(ptr, "cs_obj", objPtr, on_linphone_cbs_data_destroyed);
 #else
 					belle_sip_object_data_set(ptr, "cs_obj", objPtr, obj.on_linphone_cbs_data_destroyed);
 #endif
