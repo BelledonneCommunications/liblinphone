@@ -150,9 +150,14 @@ if (ENABLE_SHARED)
 	add_library(linphone-coreapi OBJECT
 		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 	)
-	target_include_directories(linphone-coreapi PRIVATE ${LINPHONE_INCLUDE_DIRS})
-	target_link_libraries(linphone-coreapi PRIVATE ortp mediastreamer bellesip belr)
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
+	target_include_directories(linphone-coreapi PRIVATE
+		${LINPHONE_INCLUDE_DIRS}
+		$<TARGET_PROPERTY:${BELLESIP_TARGETNAME},INTERFACE_INCLUDE_DIRECTORIES>
+		$<TARGET_PROPERTY:belr,INTERFACE_INCLUDE_DIRECTORIES>
+		$<TARGET_PROPERTY:mediastreamer,INTERFACE_INCLUDE_DIRECTORIES>
+		$<TARGET_PROPERTY:ortp,INTERFACE_INCLUDE_DIRECTORIES>
+	)
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
         add_dependencies(linphone-coreapi linphonej)

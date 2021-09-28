@@ -21,9 +21,13 @@
 ############################################################################
 
 
-# CMake 3.13 required for new Flexisip build process.
-# See [CMP077](https://cmake.org/cmake/help/v3.13/policy/CMP0077.html).
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.1)
+
+# CMP0077 policy is required by Flexisip build. Remove it once the CMake required
+# version is higer or equal to 3.13.
+if(NOT CMAKE_VERSION VERSION_LESS 3.13)
+    cmake_policy(SET CMP0077 NEW)
+endif()
 
 project(linphone VERSION 5.2.0 LANGUAGES C CXX)
 
