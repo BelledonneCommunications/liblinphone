@@ -1583,7 +1583,9 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	LinphoneCall *pauline_call, *laure_call;
 	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	bctbx_list_t *lcs = NULL;
+	char *recordfile = bc_tester_file("conference-record.mkv");
 
+	unlink(recordfile);
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
@@ -1664,14 +1666,27 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		for (it = marie_calls; it != NULL; it = it->next){
 			BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(linphone_call_get_current_params((LinphoneCall*)it->data)) == TRUE);
 		}
-		//wait a bit for the conference audio processing to run, despite we do not test it for the moment
-		wait_for_list(lcs,NULL,0,5000);
+		linphone_conference_start_recording(conf, recordfile);
+		wait_for_list(lcs,NULL,0,5500);
+		linphone_conference_stop_recording(conf);
 		
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
 
 		terminate_conference(participants, marie, NULL, NULL);
 	}
+	/* make sure that the recorded file has correct length */
+	{
+		LinphonePlayer * player = linphone_core_create_local_player(marie->lc, NULL, NULL, NULL);
+		if (BC_ASSERT_PTR_NOT_NULL(player)){
+			BC_ASSERT_TRUE(linphone_player_open(player, recordfile) == 0);
+			BC_ASSERT_GREATER(linphone_player_get_duration(player), 5000, int, "%i");
+		}
+		linphone_player_close(player);
+		linphone_player_unref(player);
+	}
+	
+	bc_free(recordfile);
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
