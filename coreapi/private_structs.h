@@ -789,6 +789,8 @@ namespace LinphonePrivate {
 	bool_t zrtp_not_available_simulation; \
 	char *tls_cert; \
 	char *tls_key; \
+	char *ephemeral_version; \
+	char *groupchat_version; \
 	LinphoneAddress *default_rls_addr; \
 	LinphoneImEncryptionEngine *im_encryption_engine; \
 	struct _LinphoneAccountCreatorService *default_ac_service; \

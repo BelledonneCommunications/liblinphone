@@ -1068,10 +1068,17 @@ void Account::onInternationalPrefixChanged () {
 }
 
 void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri) {
+	std::string groupchatSpec("groupchat/"); 
+	groupchatSpec.append(Core::groupChatVersionAsString());
+	std::string ephemeralSpec("ephemeral/");
+	ephemeralSpec.append(Core::ephemeralVersionAsString());
+
+lInfo() << __func__ << " DEBGIU DEBUG group chat " << groupchatSpec;
+
 	if (!conferenceFactoryUri.empty()) {
 		if (mCore) {
-			linphone_core_add_linphone_spec(mCore, "groupchat/1.1");
-			linphone_core_add_linphone_spec(mCore, "ephemeral/1.1");
+			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(groupchatSpec));
+			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(ephemeralSpec));
 		}
 	} else if (mCore) {
 		bool remove = true;
@@ -1086,8 +1093,8 @@ void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactor
 			}
 		}
 		if (remove) {
-			linphone_core_remove_linphone_spec(mCore, "groupchat/1.1");
-			linphone_core_remove_linphone_spec(mCore, "ephemeral/1.1");
+			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(groupchatSpec));
+			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(ephemeralSpec));
 		}
 	}
 }
