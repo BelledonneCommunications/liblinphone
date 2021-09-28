@@ -158,18 +158,7 @@ static void dtls_srtp_call_with_toggling_encryption(void) {
 }
 
 test_t dtls_srtp_capability_negotiation_tests[] = {
-	TEST_ONE_TAG("Call with default DTLS SRTP encryption", call_with_dtls_srtp_default_encryption, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with reINVITE", simple_dtls_srtp_call_with_capability_negotiations_with_reinvite, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations without reINVITE", simple_dtls_srtp_call_with_capability_negotiations_without_reinvite, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations removed after update", simple_dtls_srtp_call_with_capability_negotiations_removed_after_update, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with resume and media change", simple_dtls_srtp_call_with_capability_negotiations_with_resume_and_media_change, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with no encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_no_encryption_after_resume, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with ZRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume, "DTLS"),
-	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with SRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_srtp_encryption_after_resume, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with toggling encryption", dtls_srtp_call_with_toggling_encryption, "DTLS"),
-	TEST_ONE_TAG("DTLS SRTP call with different encryptions in call params", dtls_srtp_call_with_encryption_supported_in_call_params_only, "DTLS"),
-	TEST_ONE_TAG("DTLS SRTP call started with video and capability negotiation", dtls_srtp_call_with_video_and_capability_negotiation, "DTLS"),
-	TEST_ONE_TAG("DTLS SRTP call with potential configuration same as actual one", dtls_srtp_call_with_potential_configuration_same_as_actual_configuration, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with mandatory encryption", dtls_srtp_call_with_mandatory_encryption, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with mandatory encryption and capability negotiation on both sides", dtls_srtp_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with mandatory encryption and capability negotiation on callee side", dtls_srtp_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side, "DTLS"),
@@ -186,5 +175,22 @@ test_t dtls_srtp_capability_negotiation_tests[] = {
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on both sides", dtls_srtp_video_call_with_optional_encryption_on_both_sides, "DTLS")
 };
 
-test_suite_t dtls_srtp_capability_negotiation_test_suite = {"DTLS SRTP Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+test_t dtls_srtp_capability_negotiation_basic_tests[] = {
+	TEST_ONE_TAG("Call with default DTLS SRTP encryption", call_with_dtls_srtp_default_encryption, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with reINVITE", simple_dtls_srtp_call_with_capability_negotiations_with_reinvite, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations without reINVITE", simple_dtls_srtp_call_with_capability_negotiations_without_reinvite, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations removed after update", simple_dtls_srtp_call_with_capability_negotiations_removed_after_update, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with resume and media change", simple_dtls_srtp_call_with_capability_negotiations_with_resume_and_media_change, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with no encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_no_encryption_after_resume, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with ZRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with SRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_srtp_encryption_after_resume, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call with different encryptions in call params", dtls_srtp_call_with_encryption_supported_in_call_params_only, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call started with video and capability negotiation", dtls_srtp_call_with_video_and_capability_negotiation, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call with potential configuration same as actual one", dtls_srtp_call_with_potential_configuration_same_as_actual_configuration, "DTLS")
+};
+
+test_suite_t dtls_srtp_capability_negotiation_test_suite = {"DTLS SRTP Capability Negotiation (Encryption change)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(dtls_srtp_capability_negotiation_tests) / sizeof(dtls_srtp_capability_negotiation_tests[0]), dtls_srtp_capability_negotiation_tests};
+
+test_suite_t dtls_srtp_capability_negotiation_basic_test_suite = {"DTLS SRTP Capability Negotiation (Basic)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(dtls_srtp_capability_negotiation_basic_tests) / sizeof(dtls_srtp_capability_negotiation_basic_tests[0]), dtls_srtp_capability_negotiation_basic_tests};

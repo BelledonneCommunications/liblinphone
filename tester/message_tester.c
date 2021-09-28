@@ -3762,6 +3762,26 @@ test_t message_tests[] = {
 #endif
 	TEST_NO_TAG("Unread message count", unread_message_count),
 	TEST_NO_TAG("Unread message count in callback", unread_message_count_callback),
+//	TEST_ONE_TAG("Lime cache migration", lime_cache_migration, "LIME"),
+	TEST_ONE_TAG("Lime unitary", lime_unit, "LIME"),
+	TEST_NO_TAG("Transfer not sent if invalid url", file_transfer_not_sent_if_invalid_url),
+	TEST_NO_TAG("Transfer not sent if host not found", file_transfer_not_sent_if_host_not_found),
+	TEST_NO_TAG("Transfer not sent if url moved permanently", file_transfer_not_sent_if_url_moved_permanently),
+	TEST_NO_TAG("IM Encryption Engine custom headers", chat_message_custom_headers),
+	TEST_NO_TAG("Text message with custom content-type", text_message_with_custom_content_type),
+	TEST_NO_TAG("Text message with unsupported content-type", text_message_with_unsupported_content_type),
+	TEST_NO_TAG("IM Encryption Engine b64", im_encryption_engine_b64),
+	TEST_NO_TAG("IM Encryption Engine b64 async", im_encryption_engine_b64_async),
+	TEST_NO_TAG("Text message within call dialog", text_message_within_call_dialog),
+	TEST_NO_TAG("Info message", info_message),
+	TEST_NO_TAG("Info message with body", info_message_with_body),
+	TEST_NO_TAG("Crash during file transfer", crash_during_file_transfer),
+	TEST_NO_TAG("Text status after destroying chat room", text_status_after_destroying_chat_room),
+	TEST_NO_TAG("Transfer success after destroying chatroom", file_transfer_success_after_destroying_chatroom),
+	TEST_NO_TAG("Migration from messages db", migration_from_messages_db)
+};
+
+test_t lime_message_tests[] = {
 #ifdef HAVE_ADVANCED_IM
 	TEST_ONE_TAG("IsComposing notification lime", is_composing_notification_with_lime, "LIME"),
 	TEST_ONE_TAG("IMDN notifications with lime", imdn_notifications_with_lime, "LIME"),
@@ -3783,11 +3803,11 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Lime transfer message from history", lime_transfer_message_from_history, "LIME"),
 	TEST_ONE_TAG("Lime transfer message without encryption", lime_transfer_message_without_encryption, "LIME"),
 	TEST_ONE_TAG("Lime transfer message without encryption 2", lime_transfer_message_without_encryption_2, "LIME"),
-//	TEST_ONE_TAG("Lime cache migration", lime_cache_migration, "LIME"),
-	TEST_ONE_TAG("Lime unitary", lime_unit, "LIME"),
-	TEST_NO_TAG("Transfer not sent if invalid url", file_transfer_not_sent_if_invalid_url),
-	TEST_NO_TAG("Transfer not sent if host not found", file_transfer_not_sent_if_host_not_found),
-	TEST_NO_TAG("Transfer not sent if url moved permanently", file_transfer_not_sent_if_url_moved_permanently),
+	TEST_ONE_TAG("Text message with custom content-type and lime", text_message_with_custom_content_type_and_lime, "LIME"),
+	TEST_ONE_TAG("Text message with unsupported content-type and lime", text_message_with_unsupported_content_type_and_lime, "LIME")
+};
+
+test_t rtt_message_tests[] = {
 	TEST_ONE_TAG("Real Time Text message", real_time_text_message, "RTT"),
 	TEST_ONE_TAG("Real Time Text message with existing basic chat room", real_time_text_message_with_existing_basic_chat_room, "RTT"),
 	TEST_ONE_TAG("Real Time Text SQL storage", real_time_text_sql_storage, "RTT"),
@@ -3803,21 +3823,7 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Real Time Text offer answer with different payload numbers (sender side)", real_time_text_message_different_text_codecs_payload_numbers_sender_side, "RTT"),
 	TEST_ONE_TAG("Real Time Text offer answer with different payload numbers (receiver side)", real_time_text_message_different_text_codecs_payload_numbers_receiver_side, "RTT"),
 	TEST_ONE_TAG("Real Time Text copy paste", real_time_text_copy_paste, "RTT"),
-	TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT"),
-	TEST_NO_TAG("IM Encryption Engine custom headers", chat_message_custom_headers),
-	TEST_NO_TAG("Text message with custom content-type", text_message_with_custom_content_type),
-	TEST_NO_TAG("Text message with unsupported content-type", text_message_with_unsupported_content_type),
-	TEST_ONE_TAG("Text message with custom content-type and lime", text_message_with_custom_content_type_and_lime, "LIME"),
-	TEST_ONE_TAG("Text message with unsupported content-type and lime", text_message_with_unsupported_content_type_and_lime, "LIME"),
-	TEST_NO_TAG("IM Encryption Engine b64", im_encryption_engine_b64),
-	TEST_NO_TAG("IM Encryption Engine b64 async", im_encryption_engine_b64_async),
-	TEST_NO_TAG("Text message within call dialog", text_message_within_call_dialog),
-	TEST_NO_TAG("Info message", info_message),
-	TEST_NO_TAG("Info message with body", info_message_with_body),
-	TEST_NO_TAG("Crash during file transfer", crash_during_file_transfer),
-	TEST_NO_TAG("Text status after destroying chat room", text_status_after_destroying_chat_room),
-	TEST_NO_TAG("Transfer success after destroying chatroom", file_transfer_success_after_destroying_chatroom),
-	TEST_NO_TAG("Migration from messages db", migration_from_messages_db)
+	TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT")
 };
 
 static int message_tester_before_suite(void) {
@@ -3859,4 +3865,22 @@ test_suite_t message_test_suite = {
 	liblinphone_tester_before_each,
 	liblinphone_tester_after_each,
 	sizeof(message_tests) / sizeof(message_tests[0]), message_tests
+};
+
+test_suite_t lime_message_test_suite = {
+	"Lime Message",
+	message_tester_before_suite,
+	message_tester_after_suite,
+	liblinphone_tester_before_each,
+	liblinphone_tester_after_each,
+	sizeof(lime_message_tests) / sizeof(lime_message_tests[0]), lime_message_tests
+};
+
+test_suite_t rtt_message_test_suite = {
+	"RTT Message",
+	message_tester_before_suite,
+	message_tester_after_suite,
+	liblinphone_tester_before_each,
+	liblinphone_tester_after_each,
+	sizeof(rtt_message_tests) / sizeof(rtt_message_tests[0]), rtt_message_tests
 };

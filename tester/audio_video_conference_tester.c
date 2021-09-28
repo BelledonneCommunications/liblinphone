@@ -7796,7 +7796,7 @@ static void simple_conference_with_volumes(void) {
 	destroy_mgr_in_conference(laure);
 }
 
-test_t audio_video_conference_tests[] = {
+test_t audio_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
@@ -7807,11 +7807,9 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference with subject change from admin", simple_conference_with_subject_change_from_admin),
 	TEST_NO_TAG("Simple conference with one participant", simple_conference_with_one_participant),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
-	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating conference", simple_4_participants_conference_ended_by_terminating_conference),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating all calls", simple_4_participants_conference_ended_by_terminating_calls),
 //	TEST_NO_TAG("Simple conference with multi device", simple_conference_with_multi_device),
-	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_NO_TAG("Simple conference established from scratch, but attendees do not answer", simple_conference_from_scratch_no_answer),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
@@ -7821,6 +7819,26 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Eject from 4 participants conference (call terminated one by one)", eject_from_4_participants_local_conference_call_terminated_one_by_one),
 	TEST_NO_TAG("Conference without conference event package pauses and terminate call", conference_without_event_pkg_hang_up_call_on_hold),
 	TEST_NO_TAG("Conference with conference event package pauses and terminate call", conference_with_event_pkg_hang_up_call_on_hold),
+	TEST_ONE_TAG("Register again during conference", register_again_during_conference, "LeaksMemory"), /* due to re-registration of cores */
+	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
+	TEST_NO_TAG("Back to back conferences with same core", back_to_back_conferences_same_core),
+	TEST_NO_TAG("Try to create second conference with local participant", try_to_create_second_conference_with_local_participant),
+	TEST_NO_TAG("Interleaved conference creation", interleaved_conference_creation),
+	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
+	TEST_NO_TAG("Multiple conferences in server mode", multiple_conferences_in_server_mode),
+	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
+	TEST_ONE_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice, "ICE"),
+	TEST_NO_TAG("Conference with back to back call accept without ICE", conference_with_back_to_back_call_accept_without_ice),
+	TEST_ONE_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice, "ICE"),
+	TEST_NO_TAG("Conference with back to back call invite and accept without ICE", conference_with_back_to_back_call_invite_accept_without_ice),
+//	TEST_ONE_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice, "ICE"),
+	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
+	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
+	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
+	TEST_NO_TAG("Simple conference with volumes", simple_conference_with_volumes)
+};
+
+test_t audio_conference_advanced_tests[] = {
 	TEST_NO_TAG("Participants exit conference after pausing", participants_exit_conference_after_pausing),
 	TEST_NO_TAG("Add participant after conference started", add_participant_after_conference_started),
 	TEST_NO_TAG("Add paused calls to conference", add_paused_calls_to_conference),
@@ -7851,31 +7869,25 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Quick remote participant leaves conference and add participant", quick_remote_participant_leaves_conference_and_add_participant),
 	TEST_NO_TAG("Quick remote participant leaves conference and call to focus", quick_remote_participant_leaves_conference_and_call_to_focus),
 	TEST_NO_TAG("Everybody leave conference and local enters first", everybody_temporarely_leave_conference_and_local_enters_first),
-	TEST_NO_TAG("Everybody leave conference and local enters last", everybody_temporarely_leave_conference_and_local_enters_last),
-	TEST_ONE_TAG("Register again during conference", register_again_during_conference, "LeaksMemory"), /* due to re-registration of cores */
+	TEST_NO_TAG("Everybody leave conference and local enters last", everybody_temporarely_leave_conference_and_local_enters_last)
+};
+
+test_t video_conference_tests[] = {
+	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
+	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_NO_TAG("Try to update call parameter during conference", try_to_update_call_params_during_conference),
 	TEST_NO_TAG("Update conference parameter during conference", update_conf_params_during_conference),
 	TEST_NO_TAG("Toggle video settings during conference without automatically accept video policy", toggle_video_settings_during_conference_without_automatically_accept_video_policy),
 	TEST_NO_TAG("Toggle video settings during conference with automatically accept video policy", toggle_video_settings_during_conference_with_automatically_accept_video_policy),
 	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
-	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
-	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
-	TEST_NO_TAG("Back to back conferences with same core", back_to_back_conferences_same_core),
-	TEST_NO_TAG("Try to create second conference with local participant", try_to_create_second_conference_with_local_participant),
-	TEST_NO_TAG("Interleaved conference creation", interleaved_conference_creation),
-	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
-	TEST_NO_TAG("Multiple conferences in server mode", multiple_conferences_in_server_mode),
-	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
-	TEST_ONE_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice, "ICE"),
-	TEST_NO_TAG("Conference with back to back call accept without ICE", conference_with_back_to_back_call_accept_without_ice),
-	TEST_ONE_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice, "ICE"),
-	TEST_NO_TAG("Conference with back to back call invite and accept without ICE", conference_with_back_to_back_call_invite_accept_without_ice),
-//	TEST_ONE_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice, "ICE"),
-	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
-	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
-	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
-	TEST_NO_TAG("Simple conference with volumes", simple_conference_with_volumes),
+	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call)
 };
 
-test_suite_t audio_video_conference_test_suite = {"Audio video conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									  sizeof(audio_video_conference_tests) / sizeof(audio_video_conference_tests[0]), audio_video_conference_tests};
+test_suite_t audio_conference_basic_test_suite = {"Audio conference (Basic)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+									  sizeof(audio_conference_basic_tests) / sizeof(audio_conference_basic_tests[0]), audio_conference_basic_tests};
+
+test_suite_t video_conference_test_suite = {"Video conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+									  sizeof(video_conference_tests) / sizeof(video_conference_tests[0]), video_conference_tests};
+
+test_suite_t audio_conference_advanced_test_suite = {"Audio conference (Advanced)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+									  sizeof(audio_conference_advanced_tests) / sizeof(audio_conference_advanced_tests[0]), audio_conference_advanced_tests};

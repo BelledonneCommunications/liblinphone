@@ -525,26 +525,14 @@ static void srtp_call_with_toggling_encryption(void) {
 }
 
 test_t srtp_capability_negotiation_tests[] = {
-	TEST_NO_TAG("Call with default SRTP encryption", call_with_srtp_default_encryption),
-	TEST_NO_TAG("Simple SRTP call with capability negotiations with reINVITE", simple_srtp_call_with_capability_negotiations_with_reinvite),
-	TEST_NO_TAG("Simple SRTP call with capability negotiations without reINVITE", simple_srtp_call_with_capability_negotiations_without_reinvite),
-	TEST_NO_TAG("Simple SRTP call with capability negotiations removed after update", simple_srtp_call_with_capability_negotiations_removed_after_update),
-	TEST_NO_TAG("Simple SRTP call with capability negotiations with resume and media change", simple_srtp_call_with_capability_negotiations_with_resume_and_media_change),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with no encryption after resume", simple_srtp_call_with_capability_negotiations_with_no_encryption_after_resume),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with ZRTP encryption after resume", simple_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with DTLS SRTP encryption after resume", simple_srtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume),
-	TEST_NO_TAG("SRTP unencrypted call and capability negotiations", unencrypted_srtp_call_with_capability_negotiations),
-	TEST_NO_TAG("SRTP call and capability negotiations (caller unencrypted)", srtp_call_with_capability_negotiations_caller_unencrypted),
-	TEST_NO_TAG("SRTP call and capability negotiations (callee unencrypted)", srtp_call_with_capability_negotiations_callee_unencrypted),
-	TEST_NO_TAG("Unencrypted call with capability negotiations and unsupported crypto in SDP", unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
-	TEST_NO_TAG("SRTP call with capability negotiations and unsupported crypto in SDP", srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
-	TEST_NO_TAG("Unencrypted call with capability negotiations and unsupported crypto in SDP update", unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update),
-	TEST_NO_TAG("SRTP call with capability negotiations and unsupported crypto in SDP update", srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update),
+	TEST_NO_TAG("Simple SRTP call with capability negotiations removed after update", simple_srtp_call_with_capability_negotiations_removed_after_update),
+	TEST_NO_TAG("Simple SRTP call with capability negotiations with resume and media change", simple_srtp_call_with_capability_negotiations_with_resume_and_media_change),
 	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations (caller unencrypted)", srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted),
 	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations (callee unencrypted)", srtp_call_with_suite_mismatch_and_capability_negotiations_callee_unencrypted),
 	TEST_NO_TAG("SRTP call with different encryptions in call params", srtp_call_with_encryption_supported_in_call_params_only),
-	TEST_NO_TAG("SRTP call started with video and capability negotiation", srtp_call_with_video_and_capability_negotiation),
-	TEST_NO_TAG("SRTP call with potential configuration same as actual one", srtp_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
 	TEST_NO_TAG("SRTP call with mandatory encryption and capability negotiation on both sides", srtp_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides),
 	TEST_NO_TAG("SRTP call with mandatory encryption and capability negotiation on callee side", srtp_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side),
@@ -562,5 +550,23 @@ test_t srtp_capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call with toggling encryption", srtp_call_with_toggling_encryption)
 };
 
-test_suite_t srtp_capability_negotiation_test_suite = {"SRTP Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+test_t srtp_capability_negotiation_basic_tests[] = {
+	TEST_NO_TAG("Call with default SRTP encryption", call_with_srtp_default_encryption),
+	TEST_NO_TAG("Simple SRTP call with capability negotiations with reINVITE", simple_srtp_call_with_capability_negotiations_with_reinvite),
+	TEST_NO_TAG("Simple SRTP call with capability negotiations without reINVITE", simple_srtp_call_with_capability_negotiations_without_reinvite),
+	TEST_NO_TAG("SRTP unencrypted call and capability negotiations", unencrypted_srtp_call_with_capability_negotiations),
+	TEST_NO_TAG("SRTP call and capability negotiations (caller unencrypted)", srtp_call_with_capability_negotiations_caller_unencrypted),
+	TEST_NO_TAG("SRTP call and capability negotiations (callee unencrypted)", srtp_call_with_capability_negotiations_callee_unencrypted),
+	TEST_NO_TAG("Unencrypted call with capability negotiations and unsupported crypto in SDP", unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
+	TEST_NO_TAG("SRTP call with capability negotiations and unsupported crypto in SDP", srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
+	TEST_NO_TAG("Unencrypted call with capability negotiations and unsupported crypto in SDP update", unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update),
+	TEST_NO_TAG("SRTP call with capability negotiations and unsupported crypto in SDP update", srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update),
+	TEST_NO_TAG("SRTP call with potential configuration same as actual one", srtp_call_with_potential_configuration_same_as_actual_configuration),
+	TEST_NO_TAG("SRTP call started with video and capability negotiation", srtp_call_with_video_and_capability_negotiation)
+};
+
+test_suite_t srtp_capability_negotiation_test_suite = {"SRTP Capability Negotiation (Encryption Change)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(srtp_capability_negotiation_tests) / sizeof(srtp_capability_negotiation_tests[0]), srtp_capability_negotiation_tests};
+
+test_suite_t srtp_capability_negotiation_basic_test_suite = {"SRTP Capability Negotiation (Basic)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(srtp_capability_negotiation_basic_tests) / sizeof(srtp_capability_negotiation_basic_tests[0]), srtp_capability_negotiation_basic_tests};
