@@ -1865,6 +1865,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		}
 		const auto videoStreamIdx = refMd ? ((conference && refMd->findIdxStreamWithContent("main")) ? refMd->findIdxStreamWithContent("main") : refMd->findIdxBestStream(SalVideo)) : -1;
 		SalStreamDescription & videoStream = addStreamToMd(md, videoStreamIdx);
+lInfo() << "DEBUG DEBUG Stream of type SalVideo on local offer for CallSession [" << q << "] settings: enable flag " << enableVideoStream << " number of codecs " << videoCodecs.size() << " isInLocalConference " << isInLocalConference << " video conferencing enabled " <<  isVideoConferenceEnabled;
 		fillLocalStreamDescription(videoStream, md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		if (conference && isInLocalConference) {

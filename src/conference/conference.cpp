@@ -50,7 +50,6 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
-
 }
 
 Conference::~Conference () {
