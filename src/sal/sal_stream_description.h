@@ -121,6 +121,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasSrtp() const;
 		bool hasDtls() const;
 		bool hasZrtp() const;
+		LinphoneMediaEncryption getMediaEncryption() const;
 		bool hasLimeIk() const;
 		const std::string & getRtcpAddress() const;
 		const int & getRtcpPort() const;

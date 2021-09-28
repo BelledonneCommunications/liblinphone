@@ -651,6 +651,9 @@ void video_call_base_2(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 	callee_call=linphone_core_get_current_call(callee->lc);
 	caller_call=linphone_core_get_current_call(caller->lc);
 
+	const LinphoneCallParams *params = linphone_call_get_remote_params(linphone_core_get_current_call(callee->lc));
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , mode, int, "%d");
+
 	linphone_call_params_unref(caller_test_params.base);
 	if (callee_test_params.base) linphone_call_params_unref(callee_test_params.base);
 

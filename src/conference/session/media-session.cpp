@@ -3372,7 +3372,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				size_t audioStreamIndex = static_cast<size_t>(d->mainAudioStreamIndex);
 				const SalStreamDescription & sd = md->streams[audioStreamIndex];
 				params->enableAudio(sd.enabled());
-				params->setMediaEncryption(sd.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
+				params->setMediaEncryption(sd.getMediaEncryption());
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, md->streams[audioStreamIndex].getCustomSdpAttributes());
 			}else params->enableAudio(false);
 
@@ -3380,7 +3380,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				size_t videoStreamIndex = static_cast<size_t>(d->mainVideoStreamIndex);
 				const SalStreamDescription & sd = md->streams[videoStreamIndex];
 				params->enableVideo(sd.enabled());
-				params->setMediaEncryption(sd.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
+				params->setMediaEncryption(sd.getMediaEncryption());
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, md->streams[videoStreamIndex].getCustomSdpAttributes());
 			}else params->enableVideo(false);
 
@@ -3388,7 +3388,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				size_t textStreamIndex = static_cast<size_t>(d->mainTextStreamIndex);
 				const SalStreamDescription & sd = md->streams[textStreamIndex];
 				params->enableRealtimeText(sd.enabled());
-				params->setMediaEncryption(sd.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
+				params->setMediaEncryption(sd.getMediaEncryption());
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeText, md->streams[textStreamIndex].getCustomSdpAttributes());
 			}else params->enableRealtimeText(false);
 
