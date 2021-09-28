@@ -3003,6 +3003,8 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
+		lc->groupchat_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->groupChatVersionAsString()));
+		lc->ephemeral_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->ephemeralVersionAsString()));
 
 		//to give a chance to change uuid before starting
 		const char* uuid=linphone_config_get_string(lc->config,"misc","uuid",NULL);
@@ -7213,6 +7215,15 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
 	lc->call_logs=bctbx_list_free(lc->call_logs);
 
+	if (lc->groupchat_version){
+		ms_free(lc->groupchat_version);
+		lc->groupchat_version = NULL;
+	}
+	if (lc->ephemeral_version){
+		ms_free(lc->ephemeral_version);
+		lc->ephemeral_version = NULL;
+	}
+
 	if(lc->zrtp_secrets_cache != NULL) {
 		ms_free(lc->zrtp_secrets_cache);
 		lc->zrtp_secrets_cache = NULL;
@@ -8130,7 +8141,7 @@ void linphone_core_chat_room_set_default_ephemeral_mode(LinphoneCore *lc, Linpho
 }
 
 long linphone_core_get_default_ephemeral_lifetime(const LinphoneCore *lc) {
-	return (long)linphone_config_get_int(lc->config, "misc", "ephemeral_lifetime", 86400);
+	return (long)linphone_config_get_int(lc->config, "misc", "ephemeral_lifetime", 0);
 }
 
 void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) {

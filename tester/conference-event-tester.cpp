@@ -52,7 +52,7 @@ static const char *first_notify = \
 "   <!--"\
 "     CONFERENCE INFO"\
 "   -->"\
-"    <conference-description>"\
+"    <conference-description xmlns:p1=\"linphone:xml:ns:conference-info-linphone-extension\">"\
 "     <subject>Agenda: This month's goals</subject>"\
 "      <service-uris>"\
 "       <entry>"\
@@ -148,6 +148,129 @@ static const char *first_notify = \
 "     </user>"\
 "    </users>"\
 "   </conference-info>";
+
+/*
+static const char *first_notify_with_ephemeral = \
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?> "\
+"   <conference-info"\
+"    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
+"    entity=\"%s\""\
+"    state=\"full\" version=\"1\">"\
+"   <!--"\
+"     CONFERENCE INFO"\
+"   -->"\
+"    <conference-description xmlns:linphone-cie=\"linphone:xml:ns:conference-info-linphone-extension\">"\
+"     <subject>Agenda: This month's goals</subject>"\
+"      <service-uris>"\
+"       <entry>"\
+"        <uri>http://sharepoint/salesgroup/</uri>"\
+"        <purpose>web-page</purpose>"\
+"       </entry>"\
+"      </service-uris>"\
+"      <linphone-cie:ephemeral>"\
+"			<linphone-cie:mode>auto</linphone-cie:mode>"\
+"		</linphone-cie:ephemeral>"\
+"     </conference-description>"\
+"   <!--"\
+"      CONFERENCE STATE"\
+"   -->"\
+"    <conference-state>"\
+"     <user-count>33</user-count>"\
+"    </conference-state>"\
+"   <!--"\
+"     USERS"\
+"   -->"\
+"    <users>"\
+"     <user entity=\"sip:bob@example.com\" state=\"full\">"\
+"      <display-text>Bob Hoskins</display-text>"\
+"   <!--"\
+"     ENDPOINTS"\
+"   -->"\
+"      <endpoint entity=\"sip:bob@pc33.example.com\">"\
+"       <display-text>Bob's Laptop</display-text>"\
+"       <status>disconnected</status>"\
+"       <disconnection-method>departed</disconnection-method>"\
+"       <disconnection-info>"\
+"        <when>2005-03-04T20:00:00Z</when>"\
+"        <reason>bad voice quality</reason>"\
+"        <by>sip:mike@example.com</by>"\
+"       </disconnection-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>432424</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"     </user>"\
+"   <!--"\
+"     USER"\
+"   -->"\
+"     <user entity=\"sip:alice@example.com\" state=\"full\">"\
+"      <display-text>Alice</display-text>"\
+"      <roles>"\
+"      	<entry>admin</entry>"\
+"      	<entry>participant</entry>"\
+"      </roles>"\
+"   <!--"\
+"     ENDPOINTS"\
+"   -->"\
+"      <endpoint entity=\"sip:4kfk4j392jsu@example.com;grid=433kj4j3u\" xmlns:linphone-cie=\"urn:oma:xml:prs:pidf:oma-pres\">"\
+"       <status>connected</status>"\
+"       <joining-method>dialed-out</joining-method>"\
+"       <joining-info>"\
+"        <when>2005-03-04T20:00:00Z</when>"\
+"        <by>sip:mike@example.com</by>"\
+"       </joining-info>"\
+"		<linphone-cie:service-description>"\
+"			<linphone-cie:service-id>ephemeral</linphone-cie:service-id>"\
+"			<linphone-cie:version>1.0</linphone-cie:version>"\
+"  		</linphone-cie:service-description>"\
+"  		<linphone-cie:service-description>"\
+"			<linphone-cie:service-id>groupchat</linphone-cie:service-id>"\
+"			<linphone-cie:version>1.1</linphone-cie:version>"\
+"  		</linphone-cie:service-description>"\
+"  		<linphone-cie:service-description>"\
+"			<linphone-cie:service-id>lime</linphone-cie:service-id>"\
+"			<linphone-cie:version>1.0</linphone-cie:version>"\
+"  		</linphone-cie:service-description>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>534232</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"      <endpoint entity=\"sip:aliced48ed45@example.com;grid=54def54e8\">"\
+"       <status>connected</status>"\
+"       <joining-method>dialed-out</joining-method>"\
+"       <joining-info>"\
+"        <when>2005-03-04T20:00:00Z</when>"\
+"        <by>sip:mike@example.com</by>"\
+"       </joining-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>534232</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"     </user>"\
+"    </users>"\
+"   </conference-info>";
+*/
 
 static const char *participant_added_notify = \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?> "\
@@ -642,6 +765,53 @@ static void setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, A
 }
 
 void first_notify_parsing() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
+	char *confAddressStr = linphone_address_as_string(confAddress);
+	Address addr(confAddressStr);
+	bctbx_free(confAddressStr);
+	linphone_address_unref(confAddress);
+	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
+	LinphoneAddress *bobAddr = linphone_core_interpret_url(marie->lc, bobUri);
+	LinphoneAddress *aliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
+	size_t size = strlen(first_notify) + strlen(confUri);
+	char *notify = new char[size];
+
+	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+
+	snprintf(notify, size, first_notify, confUri);
+
+	Content content;
+	content.setBodyFromUtf8(notify);
+	content.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content);
+
+	delete[] notify;
+
+	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "Agenda: This month's goals");
+	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
+	char * bobAddrStr = linphone_address_as_string(bobAddr);
+	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+	BC_ASSERT_TRUE(tester->participants.find(bobAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr) != tester->participants.end());
+	BC_ASSERT_TRUE(!tester->participants.find(bobAddrStr)->second);
+	BC_ASSERT_TRUE(tester->participants.find(aliceAddrStr)->second);
+	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddrStr) != tester->participantDevices.end());
+	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddrStr) != tester->participantDevices.end());
+	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddrStr)->second, 1, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.find(aliceAddrStr)->second, 2, int, "%d");
+
+	bctbx_free(bobAddrStr);
+	bctbx_free(aliceAddrStr);
+
+	linphone_address_unref(bobAddr);
+	linphone_address_unref(aliceAddr);
+	tester = nullptr;
+	linphone_core_manager_destroy(marie);
+}
+
+void first_notify_with_extensions_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
 	char *confAddressStr = linphone_address_as_string(confAddress);
@@ -1848,6 +2018,7 @@ void one_to_one_keyword () {
 
 test_t conference_event_tests[] = {
 	TEST_NO_TAG("First notify parsing", first_notify_parsing),
+	TEST_NO_TAG("First notify with extensions parsing", first_notify_with_extensions_parsing),
 	TEST_NO_TAG("First notify parsing wrong conf", first_notify_parsing_wrong_conf),
 	TEST_NO_TAG("Participant added", participant_added_parsing),
 	TEST_NO_TAG("Participant not added", participant_not_added_parsing),
