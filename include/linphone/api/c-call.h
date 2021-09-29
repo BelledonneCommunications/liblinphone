@@ -756,13 +756,6 @@ LINPHONE_PUBLIC void linphone_call_start_recording(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_call_stop_recording(LinphoneCall *call);
 
 /**
- * Returns whether or not the call is currently being recorded
- * @param call #LinphoneCall for which we can to know the recording state @notnil
- * @return TRUE if recording is in progress, FALSE otherwise
-**/
-LINPHONE_PUBLIC bool_t linphone_call_is_recording(LinphoneCall *call);
-
-/**
  * Gets a player associated with the call to play a local file and stream it to the remote peer.
  * @param call #LinphoneCall object. @notnil
  * @return A #LinphonePlayer object @notnil
@@ -957,6 +950,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_zoom_video (LinphoneCall 
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_is_in_conference (const LinphoneCall *call);
+
+/**
+ * Returns whether or not the call is currently being recorded
+ * @param call #LinphoneCall for which we can to know the recording state @notnil
+ * @return TRUE if recording is in progress, FALSE otherwise
+ * @deprecated 15/09/2021 Use linphone_call_params_is_recording() instead.
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_is_recording(LinphoneCall *call);
 
 /**
  * @}
