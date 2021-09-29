@@ -153,13 +153,12 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 		auto & anySequence (confDescription.get().getAny());
 
-		for (auto anyElementIt = anySequence.begin(); anyElementIt != anySequence.end (); ++anyElementIt) {
-			const xercesc_3_1::DOMElement& anyElement (*anyElementIt);
-			string name (xsd::cxx::xml::transcode<char>(anyElement.getLocalName()));
-			string nodeName (xsd::cxx::xml::transcode<char>(anyElement.getNodeName()));
-			string nodeValue (xsd::cxx::xml::transcode<char>(anyElement.getNodeValue()));
-			if (nodeName.compare("linphone-cie:ephemeral") == 0) {
-				Ephemeral ephemeral = Ephemeral(anyElement);
+		for (const auto &anyElement : anySequence) {
+			auto name = xsd::cxx::xml::transcode<char>(anyElement.getLocalName());
+			auto nodeName = xsd::cxx::xml::transcode<char>(anyElement.getNodeName());
+			auto nodeValue = xsd::cxx::xml::transcode<char>(anyElement.getNodeValue());
+			if (nodeName == "linphone-cie:ephemeral") {
+				Ephemeral ephemeral{anyElement};
 				auto ephemeralLifetime = ephemeral.getLifetime();
 				auto ephemeralMode = ephemeral.getMode();
 
