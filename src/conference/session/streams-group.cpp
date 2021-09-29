@@ -69,7 +69,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 		case SalVideo:
 	#ifdef VIDEO_ENABLED
 			// Do not create video stream if no payload is in local media description
-			ret = payloads.empty() ? nullptr : new MS2VideoStream(*this, params);
+			ret = (linphone_core_conference_server_enabled(getCCore()) || payloads.empty()) ? nullptr : new MS2VideoStream(*this, params);
 	#endif
 		break;
 		case SalText:
