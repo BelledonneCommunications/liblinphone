@@ -1406,10 +1406,12 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stream, std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes) {
 	L_Q();
 
+	const auto & dontCheckCodecs = (type == SalAudio) ? q->getCore()->getCCore()->codecs_conf.dont_check_audio_codec_support : ((type == SalVideo) ? q->getCore()->getCCore()->codecs_conf.dont_check_video_codec_support : false);
+
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
 	stream.type = type;
-	if (enabled && !codecs.empty()) {
+	if (enabled && (!codecs.empty() || dontCheckCodecs)) {
 		stream.name = name;
 		cfg.dir = dir;
 		stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
