@@ -1071,7 +1071,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 				if ((!!currentParams->videoEnabled()) != newConfParams.videoEnabled()){
 					lInfo() << "Re-INVITing participant " << participant->getAddress().asString() << " to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
 					currentParams->enableVideo(newConfParams.videoEnabled());
-					session->update(currentParams);
+					session->update(currentParams, CallSession::UpdateMethod::Update);
 				}
 			}
 		}
@@ -1743,7 +1743,7 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			if (getMe()->isAdmin() && (subject.empty() == false)) {
 				session = m_focusCall->getActiveSession();
 				if (session) {
-					session->update(nullptr, subject);
+					session->update(nullptr, CallSession::UpdateMethod::Update, subject);
 				}
 			}
 			break;
@@ -1800,7 +1800,7 @@ void RemoteConference::setSubject (const std::string &subject) {
 
 	shared_ptr<CallSession> session = m_focusCall->getActiveSession();
 	if (session) {
-		session->update(nullptr, subject);
+		session->update(nullptr, CallSession::UpdateMethod::Update, subject);
 	}
 }
 
