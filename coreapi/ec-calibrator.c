@@ -115,11 +115,13 @@ static void ecc_deinit_filters(EcCalibrator *ecc){
 }
 
 static void on_tone_sent(void *data, MSFilter *f, unsigned int event_id, void *arg){
-	MSDtmfGenEvent *ev=(MSDtmfGenEvent*)arg;
-	EcCalibrator *ecc=(EcCalibrator*)data;
-	if (ev->tone_name[0] != '\0'){
-		ecc->acc-=ev->tone_start_time;
-		ms_message("Sent tone at %u",(unsigned int)ev->tone_start_time);
+	if( event_id == MS_DTMF_GEN_EVENT){
+		MSDtmfGenEvent *ev=(MSDtmfGenEvent*)arg;
+		EcCalibrator *ecc=(EcCalibrator*)data;
+		if (ev->tone_name[0] != '\0'){
+			ecc->acc-=ev->tone_start_time;
+			ms_message("Sent tone at %u",(unsigned int)ev->tone_start_time);
+		}
 	}
 }
 
