@@ -651,6 +651,9 @@ void video_call_base_2(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 	callee_call=linphone_core_get_current_call(callee->lc);
 	caller_call=linphone_core_get_current_call(caller->lc);
 
+	const LinphoneCallParams *params = linphone_call_get_remote_params(linphone_core_get_current_call(callee->lc));
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , mode, int, "%d");
+
 	linphone_call_params_unref(caller_test_params.base);
 	if (callee_test_params.base) linphone_call_params_unref(callee_test_params.base);
 
@@ -1401,6 +1404,45 @@ static void srtp_video_ice_call(void) {
 }
 static void zrtp_video_ice_call(void) {
 	call_base(LinphoneMediaEncryptionZRTP,TRUE,FALSE,LinphonePolicyUseIce,FALSE);
+}
+static void zrtp_ice_call_video_added(void) {
+	LinphoneVideoPolicy policy;
+	policy.automatically_initiate = FALSE;
+	policy.automatically_accept = TRUE;
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
+	linphone_core_set_video_policy(marie->lc, &policy);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+	linphone_core_set_video_policy(pauline->lc, &policy);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+
+	bool_t call_ok;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
+	if (!call_ok) goto end;
+
+	BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
+
+	end_call(pauline, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, LinphoneCoreManager *marie, bctbx_list_t *lcs) {
@@ -2545,6 +2587,7 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call without SDP", video_call_no_sdp),
 	TEST_ONE_TAG("SRTP ice video call", srtp_video_ice_call, "ICE"),
 	TEST_ONE_TAG("ZRTP ice video call", zrtp_video_ice_call, "ICE"),
+	TEST_ONE_TAG("ZRTP ice call with video added", zrtp_ice_call_video_added, "ICE"),
 	TEST_NO_TAG("Call with video added", call_with_video_added),
 	TEST_NO_TAG("Call with video added 2", call_with_video_added_2),
 	TEST_NO_TAG("Call with video added (random ports)", call_with_video_added_random_ports),

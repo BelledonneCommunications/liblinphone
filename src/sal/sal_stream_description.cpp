@@ -850,6 +850,10 @@ bool SalStreamDescription::hasZrtp() const {
 	return getChosenConfiguration().hasZrtp();
 }
 
+LinphoneMediaEncryption SalStreamDescription::getMediaEncryption() const {
+	return getChosenConfiguration().getMediaEncryption();
+}
+
 bool SalStreamDescription::hasLimeIk() const {
 	return getChosenConfiguration().hasLimeIk();
 }

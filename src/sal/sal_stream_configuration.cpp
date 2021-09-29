@@ -294,6 +294,10 @@ const uint8_t * SalStreamConfiguration::getZrtpHash() const {
 	return zrtphash;
 }
 
+LinphoneMediaEncryption SalStreamConfiguration::getMediaEncryption() const {
+	return hasSrtp() ? LinphoneMediaEncryptionSRTP : (hasZrtp() ? LinphoneMediaEncryptionZRTP : (hasSrtp() ? LinphoneMediaEncryptionDTLS : LinphoneMediaEncryptionNone));
+}
+
 bool SalStreamConfiguration::hasZrtp() const {
 	if (haveZrtpHash==1) {
 		switch (proto){

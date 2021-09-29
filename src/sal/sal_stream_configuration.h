@@ -100,6 +100,8 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		bool hasZrtpHash() const;
 		const uint8_t * getZrtpHash() const;
 
+		LinphoneMediaEncryption getMediaEncryption() const;
+
 		const std::list<PayloadType*> & getPayloads() const;
 		const int & getMaxRate() const;
 		const std::string & getMid() const;
