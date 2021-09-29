@@ -1743,7 +1743,7 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			if (getMe()->isAdmin() && (subject.empty() == false)) {
 				session = m_focusCall->getActiveSession();
 				if (session) {
-					session->update(nullptr, subject);
+					session->update(nullptr, CallSession::UpdateMethod::Default, subject);
 				}
 			}
 			break;
@@ -1800,7 +1800,7 @@ void RemoteConference::setSubject (const std::string &subject) {
 
 	shared_ptr<CallSession> session = m_focusCall->getActiveSession();
 	if (session) {
-		session->update(nullptr, subject);
+		session->update(nullptr, CallSession::UpdateMethod::Default, subject);
 	}
 }
 

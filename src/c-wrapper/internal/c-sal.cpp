@@ -164,8 +164,9 @@ const char* sal_media_record_to_string(SalMediaRecord record) {
 	case SalMediaRecordOff: return "off";
 	case SalMediaRecordOn: return "on";
 	case SalMediaRecordPaused: return "paused";
-	default: return "unkown";
+	case SalMediaRecordNone: return "none";
 	}
+	return "unknown";
 }
 
 const char* sal_reason_to_string(const SalReason reason) {
