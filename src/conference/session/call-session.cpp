@@ -721,7 +721,7 @@ LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextSta
 	return 0;
 }
 
-LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
+LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod method, const string &subject) {
 	L_Q();
 	string newSubject(subject);
 
@@ -748,7 +748,13 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 		op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
-	return op->update(newSubject.c_str(), q->getParams()->getPrivate()->getNoUserConsent());
+
+	bool noUserConsent = q->getParams()->getPrivate()->getNoUserConsent();
+	if (method != CallSession::UpdateMethod::Default) {
+		noUserConsent = method == CallSession::UpdateMethod::Update;
+	}
+
+	return op->update(newSubject.c_str(), noUserConsent);
 }
 
 void CallSessionPrivate::terminate () {
@@ -917,7 +923,7 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 void CallSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 	L_Q();
 	lInfo() << "CallSession [" << q << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
-	q->update(params);
+	q->update(params, CallSession::UpdateMethod::Invite);
 }
 
 void CallSessionPrivate::repairByInviteWithReplaces () {
@@ -1437,7 +1443,7 @@ LinphoneStatus CallSession::transfer (const string &dest) {
 	return transfer(address);
 }
 
-LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &subject, const Content *content) {
+LinphoneStatus CallSession::update (const CallSessionParams *csp, const UpdateMethod method, const string &subject, const Content *content) {
 	L_D();
 	CallSession::State nextState;
 	CallSession::State initialState = d->state;
@@ -1449,7 +1455,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 		d->setParams(new CallSessionParams(*csp));
 
 	d->op->setLocalBody(content ? *content : Content());
-	LinphoneStatus result = d->startUpdate(subject);
+	LinphoneStatus result = d->startUpdate(method, subject);
 	if (result && (d->state != initialState)) {
 		/* Restore initial state */
 		d->setState(initialState, "Restore initial state");

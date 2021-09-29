@@ -230,6 +230,21 @@ LINPHONE_PUBLIC LinphoneCallCbsAudioDeviceChangedCb linphone_call_cbs_get_audio_
 LINPHONE_PUBLIC void linphone_call_cbs_set_audio_device_changed(LinphoneCallCbs *cbs, LinphoneCallCbsAudioDeviceChangedCb cb);
 
 /**
+ * Set the call remote recording callback.
+ * @param cbs The #LinphoneCallCbs object. @notnil
+ * @param[in] cb The call remote recording callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_remote_recording(LinphoneCallCbs *cbs, LinphoneCallCbsRemoteRecordingCb cb);
+
+/**
+ * Get the call remote recording callback.
+ * @param cbs The #LinphoneCallCbs object. @notnil
+ * @return The call remote recording callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsRemoteRecordingCb linphone_call_cbs_get_remote_recording(LinphoneCallCbs *cbs);
+
+
+/**
  * @}
  */
 
