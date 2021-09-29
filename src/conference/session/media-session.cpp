@@ -2197,6 +2197,11 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const CallSession::UpdateMethod
 		op->setLocalMediaDescription(nullptr);
 	}
 	LinphoneStatus result = CallSessionPrivate::startUpdate(method, subject);
+	op->setRetryFunction( [this, subject, method](){
+		this->setState(CallSession::State::Updating, "Updating call (retry)");
+		this->startUpdate(method, subject);
+	});
+
 	if (doNotAddSdpToInvite) {
 		// We are NOT offering, set local media description after sending the call so that we are ready to
 		// process the remote offer when it will arrive.
@@ -3094,7 +3099,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
-		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
+		// Add capability negotiation attributes if capability negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);

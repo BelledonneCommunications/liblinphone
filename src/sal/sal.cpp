@@ -343,6 +343,9 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 				if (op->processRedirect() == 0)
 					return;
 				break;
+			case 491: /* request pending */
+				op->handleRetry();
+				break;
 		}
 		if ((responseCode >= 180) && (responseCode != 401) && (responseCode != 407) && (responseCode != 403)) // Not an auth request
 			op->mAuthRequests = 0;
