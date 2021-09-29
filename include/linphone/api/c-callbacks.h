@@ -148,6 +148,14 @@ typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char
 typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, LinphoneAudioDevice *audio_device);
 
 /**
+ * Callback to notify that the call is being recorded by the remote.
+ *
+ * @param call LinphoneCall for which the audio is recorded @notnil
+ * @param recording TRUE if the call is being recorded by the remote, FALSE otherwise
+ */
+typedef void (*LinphoneCallCbsRemoteRecordingCb)(LinphoneCall *call, bool_t recording);
+
+/**
  * @}
 **/
 

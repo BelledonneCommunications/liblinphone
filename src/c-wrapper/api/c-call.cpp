@@ -136,6 +136,10 @@ void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudio
 	linphone_core_notify_audio_device_changed(linphone_call_get_core(call), audioDevice);
 }
 
+void linphone_call_notify_remote_recording(LinphoneCall *call, bool_t recording) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_remote_recording, recording);
+}
+
 // =============================================================================
 // Public functions.
 // =============================================================================

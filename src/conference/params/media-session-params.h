@@ -123,8 +123,15 @@ public:
 	void clearCustomSdpMediaAttributes (LinphoneStreamType lst);
 	const char * getCustomSdpMediaAttribute (LinphoneStreamType lst, const std::string &attributeName) const;
 	
-	void enableRtpBundle(bool value);
-	bool rtpBundleEnabled()const;
+	void enableRtpBundle (bool value);
+	bool rtpBundleEnabled () const;
+
+	bool recordAwareEnabled () const;
+	void enableRecordAware (bool value);
+
+	bool isRecording () const;
+	void setRecordingState (SalMediaRecord recordState);
+	SalMediaRecord getRecordingState () const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);

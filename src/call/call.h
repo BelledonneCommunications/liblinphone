@@ -65,6 +65,7 @@ public:
 	LinphoneCallCbsNextVideoFrameDecodedCb nextVideoFrameDecodedCb;
 	LinphoneCallCbsCameraNotWorkingCb cameraNotWorkingCb;
 	LinphoneCallCbsAudioDeviceChangedCb audioDeviceChangedCb;
+	LinphoneCallCbsRemoteRecordingCb remoteRecordingCb;
 };
 
 
@@ -282,6 +283,7 @@ public:
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
 	void onStartRingtone(const std::shared_ptr<CallSession> &session) override;
+	void onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording) override;
 
 	LinphoneConference *getConference () const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
@@ -308,6 +310,7 @@ private:
 	void changeSubjectInLocalConference(SalCallOp *op);
 	void terminateConference();
 	void cleanupSessionAndUnrefCObjectCall();
+	void updateForRecordAware(SalMediaRecord state);
 };
 
 LINPHONE_END_NAMESPACE
