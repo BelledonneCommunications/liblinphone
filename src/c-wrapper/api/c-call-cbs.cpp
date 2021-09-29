@@ -139,3 +139,11 @@ LinphoneCallCbsAudioDeviceChangedCb linphone_call_cbs_get_audio_device_changed(L
 void linphone_call_cbs_set_audio_device_changed(LinphoneCallCbs *cbs, LinphoneCallCbsAudioDeviceChangedCb cb) {
 	CallCbs::toCpp(cbs)->audioDeviceChangedCb = cb;
 }
+
+LinphoneCallCbsRemoteRecordingCb linphone_call_cbs_get_remote_recording(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->remoteRecordingCb;
+}
+
+void linphone_call_cbs_set_remote_recording(LinphoneCallCbs *cbs, LinphoneCallCbsRemoteRecordingCb cb) {
+	CallCbs::toCpp(cbs)->remoteRecordingCb = cb;
+}

@@ -877,6 +877,10 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		ms_error("Remote answerer is proposing bundles, which we did not offer.");
 	}
 
+	if (local_offer->record != SalMediaRecordNone && remote_answer->record != SalMediaRecordNone) {
+		result->record = remote_answer->record;
+	}
+
 	return result;
 }
 
@@ -895,6 +899,10 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
 		result->bundles = remote_offer->bundles;
+	}
+
+	if (remote_offer->record != SalMediaRecordNone && local_capabilities->record != SalMediaRecordNone) {
+		result->record = local_capabilities->record;
 	}
 
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
