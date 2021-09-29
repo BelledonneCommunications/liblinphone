@@ -1779,6 +1779,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.save_auth_info = !!linphone_config_get_int(lc->config, "sip", "save_auth_info", 1);
 	lc->sal->setUnreliableConnectionTimeout(linphone_config_get_int(lc->config, "sip", "unreliable_connection_timeout", 120));
 
+	bool_t record_aware = linphone_config_get_bool(lc->config, "app", "record_aware", FALSE);
+	linphone_core_set_record_aware_enabled(lc, record_aware);
+
 	linphone_core_create_im_notif_policy(lc);
 
 	bodyless_config_read(lc);
@@ -4864,6 +4867,21 @@ bool_t linphone_core_is_sender_name_hidden_in_forward_message(LinphoneCore *lc) 
 void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *lc, bool_t enable) {
 	lc->sender_name_hidden_in_forward_message = enable;
 	linphone_config_set_int(lc->config, "app", "sender_name_hidden_in_forward_message", enable);
+}
+
+bool_t linphone_core_is_record_aware_enabled(LinphoneCore *lc) {
+	return lc->record_aware;
+}
+
+void linphone_core_set_record_aware_enabled(LinphoneCore *lc, bool_t enable) {
+	lc->record_aware = enable;
+	linphone_config_set_bool(lc->config, "app", "record_aware", enable);
+
+	if (enable) {
+		linphone_core_add_supported_tag(lc, "record-aware");
+	} else {
+		linphone_core_remove_supported_tag(lc, "record-aware");
+	}
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {

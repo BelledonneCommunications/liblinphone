@@ -5536,6 +5536,86 @@ static void call_avpf_mismatch(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void on_remote_recording(LinphoneCall *call, bool_t recording) {
+	stats *pauline_stats = (stats *)linphone_call_get_user_data(call);
+	if (recording) {
+		pauline_stats->number_of_LinphoneRemoteRecordingEnabled++;
+	} else {
+		pauline_stats->number_of_LinphoneRemoteRecordingDisabled++;
+	}
+}
+
+static void call_with_record_aware(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");;
+	LinphoneCoreManager* pauline = linphone_core_manager_new((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"));;
+
+	linphone_core_set_record_aware_enabled(marie->lc, TRUE);
+	linphone_core_set_record_aware_enabled(pauline->lc, TRUE);
+
+	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
+
+	const char* name = "record-aware.wav";
+	char *filepath = bc_tester_file(name);
+	remove(filepath);
+	linphone_call_params_set_record_file(marieParams, filepath);
+
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	BC_ASSERT_TRUE(call_with_params(marie, pauline, marieParams, NULL));
+	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	linphone_call_set_user_data(pauline_call, &pauline->stat);
+
+	// Set pauline remote recording callback
+	LinphoneCallCbs *call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
+	linphone_call_cbs_set_remote_recording(call_cbs, on_remote_recording);
+	linphone_call_add_callbacks(pauline_call, call_cbs);
+	linphone_call_cbs_unref(call_cbs);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+
+	linphone_call_start_recording(marie_call);
+
+	// The recording start should trigger and update
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+
+	BC_ASSERT_TRUE(linphone_call_params_is_recording(linphone_call_get_remote_params(pauline_call)));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneRemoteRecordingEnabled, 1, int, "%d");
+
+	linphone_call_stop_recording(marie_call);
+
+	// Same when stopping the recording
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+
+	BC_ASSERT_FALSE(linphone_call_params_is_recording(linphone_call_get_remote_params(pauline_call)));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneRemoteRecordingDisabled, 1, int, "%d");
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	remove(filepath);
+	ms_free(filepath);
+	linphone_call_params_unref(marieParams);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -5613,7 +5693,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with GRUU", simple_call_with_gruu),
 	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
 	TEST_NO_TAG("Async core stop", async_core_stop_after_call),
-	TEST_NO_TAG("Call AVPF mismatch", call_avpf_mismatch)
+	TEST_NO_TAG("Call AVPF mismatch", call_avpf_mismatch),
+	TEST_NO_TAG("Call with record-aware", call_with_record_aware),
 };
 
 test_t call_not_established_tests[] = {
