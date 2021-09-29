@@ -139,8 +139,10 @@ public:
 	int sendInfo (const SalBodyHandler *bodyHandler);
 
 	int replyMessage (SalReason reason);
-
-	belle_sip_source_t *mSessionTimersTimer = nullptr;
+	/* Set a function to be called whenever an operation encouters a "491 request pending" response. 
+	 * The function shall retry the operation, based on the new context. */
+	void setRetryFunction(const std::function<void ()> & retryFunc);
+	void resetRetryFunction();
 
 protected:
 	enum class State {
@@ -188,6 +190,7 @@ protected:
 
 	void setReasonErrorInfo (belle_sip_message_t *message);
 	void setErrorInfoFromResponse (belle_sip_response_t *response);
+	void resetErrorInfo();
 
 	void setReferredBy (belle_sip_header_referred_by_t *referredByHeader);
 	void setReplaces (belle_sip_header_replaces_t *replacesHeader);
@@ -218,6 +221,10 @@ protected:
 
 	void processIncomingMessage (const belle_sip_request_event_t *event);
 	void addMessageAccept (belle_sip_message_t *message);
+	
+	/* Handling of 491 Request pending. */
+	bool runRetryFunc();
+	bool handleRetry();
 
 	static int setCustomBody(belle_sip_message_t *msg, const Content &body);
 
@@ -273,6 +280,8 @@ protected:
 	belle_sip_header_event_t *mEvent = nullptr; // Used by SalOpSubscribe kinds
 	SalOpSDPHandling mSdpHandling = SalOpSDPNormal;
 	int mAuthRequests = 0; // number of auth requested for this op
+	belle_sip_source_t *mSessionTimersTimer = nullptr;
+	std::function<void()> mRetryFunc;
 	bool mCnxIpTo0000IfSendOnlyEnabled = false;
 	bool mAutoAnswerAsked = false;
 	bool mSdpOffering = false;

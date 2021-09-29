@@ -342,7 +342,13 @@ bool CallSessionPrivate::failure () {
 		case CallSession::State::Updating:
 		case CallSession::State::Pausing:
 		case CallSession::State::Resuming:
-			if (ei->reason != SalReasonNoMatch) {
+			if (ei->reason == SalReasonRequestPending){
+				/* there will be a retry. Keep this state. */
+				lInfo() << "Call error on state [" << Utils::toString(state) << "], keeping this state until scheduled retry.";
+				
+				return true;;
+			}
+			if (ei->reason != SalReasonNoMatch ) {
 				lInfo() << "Call error on state [" << Utils::toString(state) << "], restoring previous state [" << Utils::toString(prevState) << "]";
 				setState(prevState, ei->full_string);
 				return true;
@@ -480,7 +486,9 @@ void CallSessionPrivate::updated (bool isUpdate) {
 	deferUpdate = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "defer_update_default", FALSE);
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
-	switch (state) {
+	CallSession::State localState = state; //Member variable "state" may be changed within this function
+	
+	switch (localState) {
 		case CallSession::State::PausedByRemote:
 			updatedByRemote();
 			break;
@@ -503,12 +511,13 @@ void CallSessionPrivate::updated (bool isUpdate) {
 			setState(CallSession::State::UpdatedByRemote, "Call updated by remote (while in Paused)");
 			acceptUpdate(nullptr, CallSession::State::Paused, "Paused");
 			break;
-		case CallSession::State::Updating:
 		case CallSession::State::Pausing:
+		case CallSession::State::Updating:
 		case CallSession::State::Resuming:
-			sal_error_info_set(&sei, SalReasonInternalError, "SIP", 0, nullptr, nullptr);
-			op->declineWithErrorInfo(&sei, nullptr);
-			BCTBX_NO_BREAK; /* no break */
+			/* Notify UpdatedByRemote state, then return to the original state, so that retryable transaction can complete.*/
+			setState(CallSession::State::UpdatedByRemote, "Call updated by remote while in transcient state (Pausing/Updating/Resuming)");
+			acceptUpdate(nullptr, localState, Utils::toString(localState));
+			break;
 		case CallSession::State::Idle:
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::End:

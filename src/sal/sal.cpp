@@ -290,6 +290,7 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 		return;
 	}
 
+	op->resetErrorInfo(); // ErrorInfo is set by derived class upon processing of responses.
 	// Do it all the time, since we can receive provisional responses from a different instance than the final one
 	op->setRemoteUserAgent(BELLE_SIP_MESSAGE(response));
 
@@ -342,6 +343,9 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 				op->mAuthRequests = 0;
 				if (op->processRedirect() == 0)
 					return;
+				break;
+			case 491: /* request pending */
+				op->handleRetry();
 				break;
 		}
 		if ((responseCode >= 180) && (responseCode != 401) && (responseCode != 407) && (responseCode != 403)) // Not an auth request

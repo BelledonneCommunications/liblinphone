@@ -2149,8 +2149,13 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	broken = false;
 	stopStreams();
 	setState(CallSession::State::Pausing, "Pausing call");
-	makeLocalMediaDescription(true, false, true);
-	op->update(subject.c_str(), false);
+	
+	auto retryableAction = [this, subject](){
+		makeLocalMediaDescription(true, false, true);
+		op->update(subject.c_str(), false);
+	};
+	op->setRetryFunction(retryableAction);
+	retryableAction();
 
 	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
 	// Reset current session if we are pausing the current call
@@ -2191,6 +2196,10 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const CallSession::UpdateMethod
 		op->setLocalMediaDescription(nullptr);
 	}
 	LinphoneStatus result = CallSessionPrivate::startUpdate(method, subject);
+	op->setRetryFunction( [this, subject, method](){
+		this->startUpdate(method, subject);
+	});
+
 	if (doNotAddSdpToInvite) {
 		// We are NOT offering, set local media description after sending the call so that we are ready to
 		// process the remote offer when it will arrive.
@@ -2888,17 +2897,11 @@ LinphoneStatus MediaSession::resume () {
 	 * prevents the participants to hear it while the 200OK comes back. */
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
-	d->setState(CallSession::State::Resuming, "Resuming");
-	d->makeLocalMediaDescription(true, false, true);
-	d->localDesc->setDir(SalStreamSendRecv);
-
-	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
-		d->op->setLocalMediaDescription(nullptr);
+	
 	string subject = "Call resuming";
 	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference()) {
 		subject = "Conference";
 	}
-
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
 		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
@@ -2911,17 +2914,32 @@ LinphoneStatus MediaSession::resume () {
 		updateContactAddress(contactAddress);
 		d->op->setContactAddress(contactAddress.getInternalAddress());
 	}
+	
+	d->setState(CallSession::State::Resuming, "Resuming");
+	
+	auto retryableAction = [this, subject]() -> int{
+		L_D();
+		d->makeLocalMediaDescription(true, false, true);
+		d->localDesc->setDir(SalStreamSendRecv);
 
-	if (d->op->update(subject.c_str(), false) != 0)
-		return -1;
+		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
+			d->op->setLocalMediaDescription(nullptr);
 
+		if (d->op->update(subject.c_str(), false) != 0)
+			return -1;
+
+		if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+			/* We are NOT offering, set local media description after sending the call so that we are ready to
+			* process the remote offer when it will arrive. */
+			d->op->setLocalMediaDescription(d->localDesc);
+		}
+		return 0;
+	};
+	d->op->setRetryFunction(retryableAction);
+	if (retryableAction() == -1) return -1;
+	
 	if (!d->getParams()->getPrivate()->getInConference() && d->listener)
 		d->listener->onSetCurrentSession(getSharedFromThis());
-	if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
-		/* We are NOT offering, set local media description after sending the call so that we are ready to
-		 * process the remote offer when it will arrive. */
-		d->op->setLocalMediaDescription(d->localDesc);
-	}
 
 	return 0;
 }
@@ -3066,7 +3084,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
-		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
+		// Add capability negotiation attributes if capability negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);

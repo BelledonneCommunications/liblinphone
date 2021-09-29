@@ -122,6 +122,7 @@ extern test_suite_t vfs_encryption_test_suite;
 extern test_suite_t local_conference_test_suite;
 extern test_suite_t external_domain_test_suite;
 extern test_suite_t potential_configuration_graph_test_suite;
+extern test_suite_t call_race_conditions_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;

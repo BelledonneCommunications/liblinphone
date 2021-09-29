@@ -255,6 +255,7 @@ set(SOURCE_FILES_C
 	audio_video_conference_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
+	call_race_conditions.c
 	call_push_incoming_tester.c
 	call_recovery_tester.c
 	call_secure_tester.c

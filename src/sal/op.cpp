@@ -99,6 +99,10 @@ void *SalOp::unref () {
 	return nullptr;
 }
 
+void SalOp::resetErrorInfo(){
+	sal_error_info_reset(&mErrorInfo);
+}
+
 void SalOp::setContactAddress (const SalAddress *value) {
 	if (mContactAddress)
 		sal_address_unref(mContactAddress);
@@ -1094,6 +1098,68 @@ void SalOp::setServiceRoute(const SalAddress *value) {
 unsigned int SalOp::getRemoteCSeq(){
 	if (mDialog) return belle_sip_dialog_get_remote_seq_number(mDialog);
 	return 0;
+}
+
+void SalOp::setRetryFunction(const std::function<void()> & retryFunc){
+	mRetryFunc = retryFunc;
+}
+
+void SalOp::resetRetryFunction(){
+	mRetryFunc = nullptr;
+}
+
+/* Handle a "491 Pending request" response.
+ * The mRetryFunc function previously set by application layer is automatically invoked after a RFC3261 defined time.
+ * If the retry procedure is started, the function returns true.
+ * If not, returns false meaning that no retry is done, hence the error needs to be reported to the application.
+ */
+bool SalOp::handleRetry(){
+	if (!mRetryFunc){
+		lInfo() << "No retry function set to handle 491 Request pending.";
+		return false;
+	}
+	if (!mDialog){
+		lError() << "No dialog, no way to retry request.";
+		mRetryFunc = nullptr;
+		return false;
+	}
+	if (belle_sip_dialog_get_state(mDialog) != BELLE_SIP_DIALOG_CONFIRMED){
+		lError() << "The dialog is not in confirmed state, no way to retry request.";
+		mRetryFunc = nullptr;
+		return false;
+	}
+	unsigned int retryTimeout = (unsigned)belle_sip_dialog_get_request_retry_timeout(mDialog);
+	lInfo() << "Will retry request in " << retryTimeout << " milliseconds.";
+	ref();
+	belle_sip_source_t *timer = belle_sip_main_loop_create_cpp_timeout_2(belle_sip_stack_get_main_loop(mRoot->mStack), [this]() -> bool{
+		if (this->runRetryFunc()){
+			this->unref();
+			return false; /* no need to repeat the timer */
+		}
+		return true; /* repeat - the retry function decided to postpone again.*/
+		}, retryTimeout, "Retry upon pending request");
+	belle_sip_object_unref(timer);
+	return true;
+}
+
+bool SalOp::runRetryFunc(){
+	if (!mRetryFunc){
+		lInfo() << "Retry function was unset.";
+		return true;
+	}
+	if (!mDialog || belle_sip_dialog_get_state(mDialog) == BELLE_SIP_DIALOG_TERMINATED){
+		lWarning() << "Dialog is terminated, retry can't be done.";
+		mRetryFunc = nullptr;
+		return true;
+	}
+	if (belle_sip_dialog_request_pending(mDialog)){
+		lWarning() << "There is still a pending request, will retry later.";
+		return false;
+	}
+	lInfo() << "Will now retry last request.";
+	mRetryFunc();
+	mRetryFunc = nullptr;
+	return true;
 }
 
 LINPHONE_END_NAMESPACE
