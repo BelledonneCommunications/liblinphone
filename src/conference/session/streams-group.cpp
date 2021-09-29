@@ -64,7 +64,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	SalStreamType type = params.getLocalStreamDescription().type;
 	switch(type){
 		case SalAudio:
-			ret = new MS2AudioStream(*this, params);
+			ret = payloads.empty() ? nullptr : new MS2AudioStream(*this, params);
 		break;
 		case SalVideo:
 	#ifdef VIDEO_ENABLED
