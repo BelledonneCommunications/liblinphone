@@ -233,7 +233,7 @@ private:
 	void setTerminated () override;
 	void startAccept();
 	LinphoneStatus startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo) override;
-	LinphoneStatus startUpdate (const std::string &subject = "") override;
+	LinphoneStatus startUpdate (const CallSession::UpdateMethod method = CallSession::UpdateMethod::Default, const std::string &subject = "") override;
 	void terminate () override;
 	void updateCurrentParams () const override;
 
@@ -312,6 +312,8 @@ private:
 
 	AudioDevice * currentOutputAudioDevice = nullptr;
 	AudioDevice * currentInputAudioDevice = nullptr;
+
+	SalMediaRecord lastRemoteRecordingState = SalMediaRecordOff;
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

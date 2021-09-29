@@ -111,6 +111,9 @@ public:
 
 	bool rtpBundle = false;
 
+	bool recordAware = false;
+	SalMediaRecord recordState = SalMediaRecordNone;
+
 private:
 	bool _implicitRtcpFbEnabled = false;
 	int downBandwidth = 0;
