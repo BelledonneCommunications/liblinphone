@@ -60,15 +60,17 @@ IceService & StreamsGroup::getIceService()const{
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
+	const auto & payloads = params.getLocalStreamDescription().getPayloads();
 	SalStreamType type = params.getLocalStreamDescription().type;
 	switch(type){
 		case SalAudio:
 			ret = new MS2AudioStream(*this, params);
 		break;
 		case SalVideo:
-#ifdef VIDEO_ENABLED
-			ret = new MS2VideoStream(*this, params);
-#endif
+	#ifdef VIDEO_ENABLED
+			// Do not create video stream if no payload is in local media description
+			ret = payloads.empty() ? nullptr : new MS2VideoStream(*this, params);
+	#endif
 		break;
 		case SalText:
 			ret = new MS2RTTStream(*this, params);

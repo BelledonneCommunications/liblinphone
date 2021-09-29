@@ -1408,6 +1408,7 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 
 	const auto & dontCheckCodecs = (type == SalAudio) ? q->getCore()->getCCore()->codecs_conf.dont_check_audio_codec_support : ((type == SalVideo) ? q->getCore()->getCCore()->codecs_conf.dont_check_video_codec_support : false);
 
+
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
 	stream.type = type;
@@ -1424,6 +1425,8 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 
 		stream.addActualConfiguration(cfg);
 		fillRtpParameters(stream);
+
+lInfo() << __func__ << " DEBUG DEBUG stream of type " << sal_stream_type_to_string(type) << " expected codec number " << codecs.size() << " actual codecs " << stream.getPayloads().size() << " do not check codecs " << dontCheckCodecs;
 	} else {
 		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
 		const auto & core = q->getCore()->getCCore();
