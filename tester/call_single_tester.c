@@ -3864,15 +3864,24 @@ static void call_with_in_dialog_update(void) {
 	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
 	if (!call_ok) goto end;
 
+	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
+	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
 	liblinphone_tester_check_rtcp(marie,pauline);
-	params=linphone_core_create_call_params(marie->lc,linphone_core_get_current_call(marie->lc));
+	params=linphone_core_create_call_params(marie->lc,marie_call);
 	linphone_call_params_set_no_user_consent(params, TRUE);
-	linphone_call_update(linphone_core_get_current_call(marie->lc),params);
+	linphone_call_params_add_custom_sdp_attribute(params, "weather", "bad");
+	linphone_call_update(marie_call,params);
 	linphone_call_params_unref(params);
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallUpdating,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
+
+	const LinphoneCallParams *pauline_remote_params = linphone_call_get_remote_params(pauline_call);
+	const char *value = linphone_call_params_get_custom_sdp_attribute(pauline_remote_params, "weather");
+	BC_ASSERT_PTR_NOT_NULL(value);
+	if (value) BC_ASSERT_STRING_EQUAL(value, "bad");
+
 	end_call(marie,pauline);
 
 end:
