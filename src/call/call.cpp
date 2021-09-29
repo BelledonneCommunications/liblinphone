@@ -899,10 +899,13 @@ void Call::sendVfuRequest () {
 void Call::updateForRecordAware(SalMediaRecord state) {
 	if (linphone_core_is_record_aware_enabled(getCore()->getCCore())) {
 		if (getRemoteParams()->recordAwareEnabled()) {
-			MediaSessionParams params(*getParams());
-			params.setRecordingState(state);
-			params.getPrivate()->setNoUserConsent(true);
-			static_pointer_cast<MediaSession>(getActiveSession())->update(&params);
+			if (getState() == CallSession::State::StreamsRunning) {
+				MediaSessionParams params(*getParams());
+				params.setRecordingState(state);
+				static_pointer_cast<MediaSession>(getActiveSession())->update(&params, CallSession::UpdateMethod::Update);
+			} else {
+				lWarning() << "Recording cannot sent an update when the call is not in StreamRunning";
+			}
 		}
 	}
 }
