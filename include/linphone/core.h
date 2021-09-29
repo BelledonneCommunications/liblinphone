@@ -5667,6 +5667,20 @@ LINPHONE_PUBLIC bool_t linphone_core_is_sender_name_hidden_in_forward_message(Li
 LINPHONE_PUBLIC void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *core, bool_t enable);
 
 /**
+ * Enables the record aware feature that will warn other users when recording.
+ * @param core #LinphoneCore object @notnil
+ * @param enable TRUE to activate the record aware feature, FALSE to disable it.
+**/
+LINPHONE_PUBLIC void linphone_core_set_record_aware_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets if the record aware feature is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if the record aware feature is enabled, FALSE otherwise.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_record_aware_enabled(LinphoneCore *core);
+
+/**
  * @}
  */
 

@@ -157,7 +157,15 @@ const char* sal_stream_dir_to_string(SalStreamDir type) {
 	case SalStreamInactive:return "inactive";
 	default: return "unknown";
 	}
+}
 
+const char* sal_media_record_to_string(SalMediaRecord record) {
+	switch(record) {
+	case SalMediaRecordOff: return "off";
+	case SalMediaRecordOn: return "on";
+	case SalMediaRecordPaused: return "paused";
+	default: return "unkown";
+	}
 }
 
 const char* sal_reason_to_string(const SalReason reason) {

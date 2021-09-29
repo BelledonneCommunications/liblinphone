@@ -762,6 +762,10 @@ void Call::onStartRingtone(const shared_ptr<CallSession> &session){
 	getCore()->getPrivate()->getToneManager()->startRingtone(session);
 }
 
+void Call::onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording) {
+	linphone_call_notify_remote_recording(this->toC(), recording);
+}
+
 // =============================================================================
 
 Call::Call (
@@ -892,16 +896,31 @@ void Call::sendVfuRequest () {
 	static_pointer_cast<MediaSession>(getActiveSession())->sendVfuRequest();
 }
 
+void Call::updateForRecordAware(SalMediaRecord state) {
+	if (linphone_core_is_record_aware_enabled(getCore()->getCCore())) {
+		if (getRemoteParams()->recordAwareEnabled()) {
+			MediaSessionParams params(*getParams());
+			params.setRecordingState(state);
+			params.getPrivate()->setNoUserConsent(true);
+			static_pointer_cast<MediaSession>(getActiveSession())->update(&params);
+		}
+	}
+}
+
 void Call::startRecording () {
+	updateForRecordAware(SalMediaRecordOn);
+
 	static_pointer_cast<MediaSession>(getActiveSession())->startRecording();
 }
 
 void Call::stopRecording () {
+	updateForRecordAware(SalMediaRecordOff);
+
 	static_pointer_cast<MediaSession>(getActiveSession())->stopRecording();
 }
 
 bool Call::isRecording () {
-	return static_pointer_cast<MediaSession>(getActiveSession())->isRecording();
+	return static_pointer_cast<MediaSession>(getActiveSession())->getMediaParams()->isRecording();
 }
 
 LinphoneStatus Call::takePreviewSnapshot (const string &file) {

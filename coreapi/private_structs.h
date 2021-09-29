@@ -807,7 +807,8 @@ namespace LinphonePrivate {
 	LinphonePushNotificationConfig *push_config;\
 	bool_t auto_download_incoming_voice_recordings; \
 	bool_t auto_download_incoming_icalendars; \
-	unsigned long iterate_thread_id;
+	unsigned long iterate_thread_id; \
+	bool_t record_aware;
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \

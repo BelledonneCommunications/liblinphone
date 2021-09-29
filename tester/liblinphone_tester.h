@@ -412,6 +412,9 @@ typedef struct _stats {
 	int number_of_LinphoneConferenceInfoOnParticipantSent;
 	int number_of_LinphoneConferenceInfoOnParticipantError;
 	int number_of_LinphoneConferenceInfoOnSent;
+
+	int number_of_LinphoneRemoteRecordingEnabled;
+	int number_of_LinphoneRemoteRecordingDisabled;
 }stats;
 
 typedef struct _LinphoneCoreManager {
