@@ -550,6 +550,8 @@ void MediaSessionPrivate::terminated () {
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
 void MediaSessionPrivate::updated (bool isUpdate) {
+	L_Q();
+
 	const std::shared_ptr<SalMediaDescription> & rmd = op->getRemoteMediaDescription();
 	switch (state) {
 		case CallSession::State::PausedByRemote:
@@ -564,6 +566,10 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 			if (rmd->hasDir(SalStreamSendOnly) || rmd->hasDir(SalStreamInactive)) {
 				pausedByRemote();
 				return;
+			}
+			if (isUpdate && rmd->record != SalMediaRecordNone && lastRemoteRecordingState != rmd->record) {
+				lastRemoteRecordingState = rmd->record;
+				listener->onRemoteRecording(q->getSharedFromThis(), rmd->record == SalMediaRecordOn);
 			}
 			break;
 		default:
@@ -1391,6 +1397,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	md->accept_bundles = getParams()->rtpBundleEnabled() ||
 		linphone_config_get_bool(linphone_core_get_config(core), "rtp", "accept_bundle", TRUE);
+
+	if (getParams()->recordAwareEnabled() || linphone_core_is_record_aware_enabled(core)) {
+		md->record = getParams()->getRecordingState();
+	}
 
 	/* Re-check local ip address each time we make a new offer, because it may change in case of network reconnection */
 	{
@@ -3087,7 +3097,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
-		if (!d->getParams()->getPrivate()->getNoUserConsent())
+		//if (!d->getParams()->getPrivate()->getNoUserConsent())
 			d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
 
 		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
@@ -3400,11 +3410,15 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				params->setSessionName(md->name);
 			params->getPrivate()->setCustomSdpAttributes(md->custom_sdp_attributes);
 			params->enableRtpBundle(!md->bundles.empty());
+			params->setRecordingState(md->record);
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {
 			if (!params) params = new MediaSessionParams();
 			params->getPrivate()->setCustomHeaders(ch);
+
+			const char* supported = params->getCustomHeader("supported");
+			params->enableRecordAware(supported && strstr(supported, "record-aware"));
 		}
 		const list<Content> &additionnalContents = d->op->getAdditionalRemoteBodies();
 		for (auto& content : additionnalContents){

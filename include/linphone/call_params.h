@@ -376,14 +376,19 @@ LINPHONE_PUBLIC void linphone_call_params_set_proxy_config(LinphoneCallParams *p
  **/
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_params_get_proxy_config(const LinphoneCallParams *params);
 
-
-
 /**
  * Set the video stream direction.
  * @param[in] params #LinphoneCallParams object
  * @param[in] enable wether or not AVPF should be enabled for this call
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_avpf(LinphoneCallParams *params, bool_t enable);
+
+/**
+ * Indicates whether the call is being recorded.
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if the call is being recorded, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_is_recording(const LinphoneCallParams *params);
 
 int linphone_call_params_get_audio_bandwidth_limit(const LinphoneCallParams *params);
 bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *params);

@@ -118,6 +118,13 @@ typedef enum {
 	SalMulticastSenderReceiver = 3
 } SalMulticastRole;
 
+typedef enum {
+	SalMediaRecordNone = 0,
+	SalMediaRecordOff = 1,
+	SalMediaRecordOn = 2,
+	SalMediaRecordPaused = 3
+} SalMediaRecord;
+
 #define SAL_MEDIA_DESCRIPTION_UNCHANGED							0x00
 #define SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED					(1)
 #define SAL_MEDIA_DESCRIPTION_CODEC_CHANGED						(1<<1)
@@ -202,6 +209,7 @@ SalMediaProto sal_media_proto_from_string(const char *type);
 SalMediaProto linphone_media_encryption_to_sal_media_proto (const LinphoneMediaEncryption media_enc, const bool_t avpf);
 LinphoneMediaEncryption sal_media_proto_to_linphone_media_encryption (const SalMediaProto proto, const bool_t haveZrtpHash);
 const char* sal_stream_dir_to_string(SalStreamDir type);
+const char* sal_media_record_to_string(SalMediaRecord record);
 
 #ifdef __cplusplus
 }

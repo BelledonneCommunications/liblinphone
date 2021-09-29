@@ -313,6 +313,8 @@ private:
 	AudioDevice * currentOutputAudioDevice = nullptr;
 	AudioDevice * currentInputAudioDevice = nullptr;
 
+	SalMediaRecord lastRemoteRecordingState = SalMediaRecordOff;
+
 	L_DECLARE_PUBLIC(MediaSession);
 };
 
