@@ -350,14 +350,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			if (videoMixer == nullptr) {
-				lInfo() << "[mix to all] stream dir " << dir << " content " << content << " label " << label;
-			}
 			if (videoMixer == nullptr && dir == MediaStreamSendOnly && (content.compare("thumbnail") == 0)) {
 				itcStream = getGroup().lookupItcStream(mStream);
-				lInfo() << "[mix to all] this thumbnail stream find itcStream " << itcStream;
 				if (itcStream) {
 					itcFilter = itcStream->itcsink;
+					lInfo() << "[mix to all] this thumbnail stream " << mStream << " find itcStream " << itcStream << " with label " << label;
 				}
 				io.input.type = MSResourceItc;
 				video_stream_start_from_io_and_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, itcFilter);
@@ -367,7 +364,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				if (videoMixer == nullptr && dir != MediaStreamRecvOnly && (content.compare("thumbnail") != 0)) {
 					link_video_stream_with_itc_sink(mStream);
 					itcStream = getGroup().lookupItcStream(mStream);
-					lInfo() << "[mix to all] this normal stream find itcStream " << itcStream;
+					lInfo() << "[mix to all] this normal stream " << mStream << " find itcStream " << itcStream << " with label " << label;
 					if (itcStream){
 						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,itcStream->source);
 					}

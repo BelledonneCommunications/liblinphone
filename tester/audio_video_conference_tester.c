@@ -3906,7 +3906,7 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, conf, new_participants, FALSE);
+	add_calls_to_local_conference(lcs, marie, conf, new_participants, TRUE);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
@@ -3976,7 +3976,7 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	}
 
 	wait_for_list(lcs ,NULL, 0, 2000);
-
+	check_video_conference_with_local_participant(participants, marie, layout);
 	terminate_conference(participants, marie, NULL, NULL);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));

@@ -145,26 +145,7 @@ void MS2VideoMixer::addLocalParticipant(){
 		video_stream_set_label(mainSt, L_STRING_TO_C(mLocalParticipantLabel));
 	}
 	
-	switch (mSession.getConferenceLayout()) {
-		case ConferenceParams::Layout::None:
-			// todo
-			lInfo() << "[all to one]:  add video endpoint";
-			mLocalParticipantStream = mainSt;
-			mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
-			ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
-			break;
-		case ConferenceParams::Layout::Grid:
-			if (!mainSt->label) {
-				lError() << "[all to all]: Can not add video endpoint with empty label";
-			} else {
-				lInfo() << "[all to all]:  add video endpoint with label " << mainSt->label;
-				mLocalParticipantStream = mainSt;
-				mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
-				ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
-			}
-			break;
-		case ConferenceParams::Layout::ActiveSpeaker:
-			lInfo() << "[mix to all]:  add video endpoint";
+			lInfo() << "[mix to all]:  add local video endpoint";
 			mLocalParticipantStream = mainSt;
 			mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
 			ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
@@ -208,8 +189,8 @@ void MS2VideoMixer::addLocalParticipant(){
 				mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 				ms_video_conference_add_member(mConferenceThumbnail, mLocalEndpoint);
 			}
-			break;
-	}
+			
+	
 	
 }
 

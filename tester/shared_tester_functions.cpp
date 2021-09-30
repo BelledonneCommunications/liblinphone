@@ -416,3 +416,16 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 		}
 	}
 }
+
+void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneConferenceLayout layout) {
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCall *call=linphone_core_get_current_call(m->lc);
+		BC_ASSERT_PTR_NOT_NULL(call);
+		if (call) {
+			int nb = layout == LinphoneConferenceLayoutNone ? 1 : (bctbx_list_size(participants)+2) ;
+			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+			BC_ASSERT_TRUE(Call::toCpp(call)->checkRtpSession());
+		}
+	}
+}
