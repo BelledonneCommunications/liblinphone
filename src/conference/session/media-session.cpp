@@ -1474,29 +1474,33 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 
 		// Add additional video streams if required
 		if (isVideoConferenceEnabled && !isConferenceLayoutNone) {
-
-			const auto & me = cppConference->getMe();
 			const auto & foundStreamIdx = md->findIdxStreamWithContent("speaker");
 
 			if ((foundStreamIdx == -1) && isConferenceLayoutActiveSpeaker) {
+				const auto & dev = cppConference->findParticipantDevice(remoteContactAddress);
 				SalStreamDescription & newStream = addStreamToMd(md, -1);
 				SalStreamConfiguration cfg;
 
 				newStream.type = SalVideo;
 				newStream.setContent("speaker");
 
+				const auto & devLabel = dev->getLabel();
+				if (!devLabel.empty()) {
+					newStream.setLabel(devLabel);
+				}
+
 				cfg.proto = getParams()->getMediaProto();
 
 				std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, emptyList);
 				if (!l.empty()){
 					cfg.replacePayloads(l);
-					newStream.name = "Video " + me->getAddress().asString();
+					newStream.name = "Speaker Video " + dev->getAddress().asString();
 					cfg.dir = SalStreamSendRecv;
 
 					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vslayout");
 
 				} else {
-					lInfo() << "Don't put video stream for device in conference with address " << me->getAddress().asString() << " on local offer for CallSession [" << q << "]";
+					lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
 					cfg.dir = SalStreamInactive;
 				}
 				PayloadTypeHandler::clearPayloadList(l);
@@ -1527,6 +1531,7 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 			}
 
 			if (cppConference->isIn()) {
+				const auto & me = cppConference->getMe();
 				for (const auto & dev : me->getDevices()) {
 					const auto & devLabel = dev->getLabel();
 					std::vector<std::pair<std::string, std::string>> attributes;
@@ -1553,9 +1558,6 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 		emptyList.clear();
 		std::list<OrtpPayloadType*> l;
 
-		// Copy participant video streams from previous local description
-		decltype(refMd->streams)::size_type streamIdx = 0;
-
 		const SalAddress * remoteContactSalAddress = getOp() ? getOp()->getRemoteContactAddress() : NULL;
 		char * remoteContactAddressStr = remoteContactSalAddress ? sal_address_as_string(remoteContactSalAddress) : NULL;
 		const Address remoteContactAddress(L_C_TO_STRING(remoteContactAddressStr));
@@ -1566,12 +1568,17 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 
 		const auto noStreams = md->streams.size();
 
-		for (const auto & s : refMd->streams) {
-			const std::string contentAttrValue = s.getContent();
-			const std::string participantsAttrValue = s.getLabel();
+		const auto refNoStreams = refMd->streams.size();
 
-			// If in a conference, either local or remote and it contains at least 
-			if (((conference && isInLocalConference) || remoteContactAddress.hasParam("isfocus")) && ((contentAttrValue.empty() && !participantsAttrValue.empty()) || (!contentAttrValue.empty() && (contentAttrValue.compare("thumbnail") != 0)))) {
+		if (noStreams <= refNoStreams) {
+
+			// Copy participant video streams from previous local description
+			auto streamIdx = noStreams;
+
+			for (auto sIt = (refMd->streams.cbegin() + noStreams); sIt != refMd->streams.end(); sIt++) {
+				const auto & s = *sIt;
+				const std::string contentAttrValue = s.getContent();
+				const std::string participantsAttrValue = s.getLabel();
 
 				SalStreamDescription & newStream = addStreamToMd(md, -1);
 				newStream.type = s.type;
@@ -1682,7 +1689,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 						newStream.disable();
 					}
 				} else {
-					lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream (index " << streamIndex << ") for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
+					lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream (index " << streamIdx << ") for device in conference with address " << participantsAttrValue << " on local offer for CallSession [" << q << "] because no payload is found";
 					cfg.dir = SalStreamInactive;
 					newStream.disable();
 					PayloadTypeHandler::clearPayloadList(l);
@@ -1701,19 +1708,6 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 					newStream.rtp_port = rtp_port;
 					newStream.rtcp_port = newStream.rtp_port + 1;
 				}
-
-				newStream.addActualConfiguration(cfg);
-				fillRtpParameters(newStream);
-			} else if (streamIdx >= md->streams.size()) {
-
-				lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream (index " << streamIndex << ") on local offer for CallSession [" << q << "] because no payload is found";
-				SalStreamDescription & newStream = addStreamToMd(md, -1);
-				newStream.type = s.type;
-				newStream.name = s.name;
-				newStream.disable();
-				SalStreamConfiguration cfg;
-				cfg.proto = s.getProto();
-				cfg.dir = SalStreamInactive;
 
 				newStream.addActualConfiguration(cfg);
 				fillRtpParameters(newStream);
