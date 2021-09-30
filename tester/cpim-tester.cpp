@@ -283,8 +283,12 @@ static void cpim_chat_message_modifier_base (bool useMultipart) {
 	char *paulineUri = linphone_address_as_string_uri_only(pauline->identity);
 	IdentityAddress paulineAddress(paulineUri);
 	bctbx_free(paulineUri);
+	
+	char *marieUri = linphone_address_as_string_uri_only(marie->identity);
+	IdentityAddress marieAddress(marieUri);
+	bctbx_free(marieUri);
 
-	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(paulineAddress);
+	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(marieAddress, paulineAddress);
 	marieRoom->allowCpim(true);
 
 	shared_ptr<ChatMessage> marieMessage = marieRoom->createChatMessageFromUtf8("Hello CPIM");
