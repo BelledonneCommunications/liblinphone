@@ -73,6 +73,12 @@ if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 		PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 	)
 
+	if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
+	# LinphoneWrapper.swift is attached to multiple targets: linphonesw linphoneswsource
+	# but none of these is a common dependency of the other(s).  This is not
+	# allowed by the Xcode "new build system".
+		add_dependencies(linphonesw linphoneswsource)
+	endif()
 	if(CMAKE_GENERATOR STREQUAL Xcode)
 		set_target_properties(linphonesw PROPERTIES
 					FRAMEWORK TRUE
