@@ -140,6 +140,7 @@ LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call)
 void _linphone_core_stop_async_end(LinphoneCore *lc);
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
+void linphone_core_stop_tone_manager(LinphoneCore *lc);
 const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
 const LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain);
 const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, const char *algorithm, bool_t ignore_realm);
