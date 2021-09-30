@@ -292,12 +292,10 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 			break;
 	}
 
-lInfo() << __func__ << " DEBUG DEBUG codecs of type " << sal_stream_type_to_string(type) << ": " << allCodecs;
 	int nb = 0;
 	std::list<OrtpPayloadType*> result;
 	for (const bctbx_list_t *it = allCodecs; it != nullptr; it = bctbx_list_next(it)) {
 		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
-lInfo() << __func__ << " DEBUG DEBUG codecs of type " << sal_stream_type_to_string(type) << ": name " << pt->mime_type << "/" << pt->clock_rate << " enabled " << payload_type_enabled(pt);
 		if (!payload_type_enabled(pt))
 			continue;
 
