@@ -57,6 +57,7 @@ public:
 	virtual void onTmmbrReceived (const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {}
 	virtual void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) {}
 	virtual void onStartRingtone(const std::shared_ptr<CallSession> &session){}
+	virtual void onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording){}
 
 	virtual void onEncryptionChanged (const std::shared_ptr<CallSession> &session, bool activated, const std::string &authToken) {}
 

@@ -65,6 +65,8 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	accept_bundles = other.accept_bundles;
 	bundles = other.bundles;
 
+	record = other.record;
+
 	set_nortpproxy = other.set_nortpproxy;
 
 	capabilityNegotiationSupported = other.capabilityNegotiationSupported;
@@ -131,6 +133,17 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	/* get ready to parse also lime-Ik */
 	value=belle_sdp_session_description_get_attribute_value(sdp,"lime-Ik");
 	if (value) haveLimeIk = true;
+
+	value=belle_sdp_session_description_get_attribute_value(sdp,"record");
+	if (value) {
+		if (strcmp(value, "on") == 0) {
+			record = SalMediaRecordOn;
+		} else if (strcmp(value, "off") == 0) {
+			record = SalMediaRecordOff;
+		} else if (strcmp(value, "paused") == 0) {
+			record = SalMediaRecordPaused;
+		}
+	}
 
 	/* Get the custom attributes, parse some of them that are relevant */
 	for (custom_attribute_it = belle_sdp_session_description_get_attributes(sdp); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
@@ -597,6 +610,10 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 
 	for (const auto & bundle : bundles){
 		bundle.addToSdp(session_desc);
+	}
+
+	if (record != SalMediaRecordNone) {
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("record", sal_media_record_to_string(record)));
 	}
 
 	if (custom_sdp_attributes) {

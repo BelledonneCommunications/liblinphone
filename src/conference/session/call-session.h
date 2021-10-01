@@ -82,6 +82,12 @@ public:
 	//Here we are comparing two enums serving the same purpose
 	static_assert((int)CallSession::State::EarlyUpdating == (int)LinphoneCallStateEarlyUpdating, "LinphoneCallState and CallSession::State are not synchronized, fix this !");
 
+	enum class UpdateMethod {
+		Default = 0,
+		Invite = 1,
+		Update = 2
+	};
+
 	CallSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
 	void setListener(CallSessionListener *listener);
 	void setStateToEnded();
@@ -114,7 +120,7 @@ public:
 	LinphoneStatus transfer (const std::shared_ptr<CallSession> &dest);
 	LinphoneStatus transfer (const Address &dest);
 	LinphoneStatus transfer (const std::string &dest);
-	LinphoneStatus update (const CallSessionParams *csp, const std::string &subject = "", const Content *content = nullptr);
+	LinphoneStatus update (const CallSessionParams *csp, const UpdateMethod method = UpdateMethod::Default, const std::string &subject = "", const Content *content = nullptr);
 
 	CallSessionParams *getCurrentParams () const;
 	LinphoneCallDir getDirection () const;

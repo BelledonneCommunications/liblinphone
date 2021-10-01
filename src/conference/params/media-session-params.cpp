@@ -75,6 +75,8 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 			customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src->customSdpMediaAttributes[i]);
 	}
 	rtpBundle = src->rtpBundle;
+	recordAware = src->recordAware;
+	recordState = src->recordState;
 	videoDownloadBandwidth = src->videoDownloadBandwidth;
 }
 
@@ -285,6 +287,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphon
 	d->updateCallWhenIceCompletedWithDTLS = linphone_config_get_bool(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed_with_dtls", false);
 	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(cCore);
 	d->rtpBundle = linphone_core_rtp_bundle_enabled(cCore);
+	enableRecordAware(linphone_core_is_record_aware_enabled(cCore));
 }
 
 // -----------------------------------------------------------------------------
@@ -576,6 +579,36 @@ void MediaSessionParams::enableRtpBundle(bool value){
 bool MediaSessionParams::rtpBundleEnabled()const{
 	L_D();
 	return d->rtpBundle;
+}
+
+bool MediaSessionParams::isRecording() const {
+	L_D();
+	return d->recordState == SalMediaRecordOn;
+}
+
+void MediaSessionParams::enableRecordAware(bool value) {
+	L_D();
+	d->recordAware = value;
+
+	if (d->recordAware) {
+		// If activated set to off to offer it in sdp
+		d->recordState = SalMediaRecordOff;
+	}
+}
+
+bool MediaSessionParams::recordAwareEnabled() const {
+	L_D();
+	return d->recordAware;
+}
+
+void MediaSessionParams::setRecordingState (SalMediaRecord recordState) {
+	L_D();
+	d->recordState = recordState;
+}
+
+SalMediaRecord MediaSessionParams::getRecordingState () const {
+	L_D();
+	return d->recordState;
 }
 
 LINPHONE_END_NAMESPACE
