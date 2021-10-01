@@ -705,7 +705,8 @@ bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<C
 				MediaSessionParams *currentParams = params->clone();
 				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its media capabilities.";
 				std::string subject("Participant " + participantAddress->asString() + " updated session");
-				const auto updateResult = devSession->update(currentParams, false, subject);
+// TODO Use UPDATE instead of DEFAULT 
+				const auto updateResult = devSession->update(currentParams, CallSession::UpdateMethod::Default, false, subject);
 				result &= (updateResult == 0);
 				delete currentParams;
 			}
