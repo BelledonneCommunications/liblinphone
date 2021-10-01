@@ -70,6 +70,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		const SalStreamDescription & findStreamWithContent(const std::string content) const;
 		int findIdxStreamWithContent(const std::string content) const;
+		const SalStreamDescription & findStreamWithContent(const std::string content, const SalStreamDir direction) const;
+		int findIdxStreamWithContent(const std::string content, const SalStreamDir direction) const;
 
 		bool isEmpty() const;
 		bool isAcceptable() const;
@@ -156,6 +158,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		std::vector<SalStreamDescription>::const_iterator findStreamIt(SalMediaProto proto, SalStreamType type) const;
 		std::vector<SalStreamDescription>::const_iterator findStreamItWithLabel(const std::string label) const;
 		std::vector<SalStreamDescription>::const_iterator findStreamItWithContent(const std::string content) const;
+		std::vector<SalStreamDescription>::const_iterator findStreamItWithContent(const std::string content, const SalStreamDir direction) const;
 
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 

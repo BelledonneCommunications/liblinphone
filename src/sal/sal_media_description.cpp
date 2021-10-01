@@ -369,6 +369,29 @@ int SalMediaDescription::findIdxStreamWithContent(const std::string content) con
 	return -1;
 }
 
+std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithContent(const std::string content, const SalStreamDir direction) const {
+	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&content, &direction] (const auto & stream) { 
+		return (stream.enabled() && (stream.getContent().compare(content)==0) && (stream.getDirection() == direction));
+	});
+	return streamIt;
+}
+
+const SalStreamDescription & SalMediaDescription::findStreamWithContent(const std::string content, const SalStreamDir direction) const {
+	const auto & streamIt = findStreamItWithContent(content, direction);
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
+}
+
+int SalMediaDescription::findIdxStreamWithContent(const std::string content, const SalStreamDir direction) const {
+	const auto & streamIt =  findStreamItWithContent(content, direction);
+	if (streamIt != streams.end()) {
+		return static_cast<int>(std::distance(streams.begin(), streamIt));
+	}
+	return -1;
+}
+
 unsigned int SalMediaDescription::nbStreamsOfType(SalStreamType type) const {
 	unsigned int nb = 0;
 	for(const auto & stream : streams){

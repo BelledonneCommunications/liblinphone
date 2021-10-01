@@ -581,12 +581,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 							auto confParams = ConferenceParams::create(getCore()->getCCore());
 							ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
-							if (rmd->findIdxStreamWithContent("main") == -1) {
-								confLayout = ConferenceParams::Layout::None;
-							} else if (rmd->findIdxStreamWithContent("speaker") == -1) {
+							if (rmd->findIdxStreamWithContent("main") != -1) {
 								confLayout = ConferenceParams::Layout::Grid;
-							} else {
+							} else if (rmd->findIdxStreamWithContent("speaker") != -1) {
 								confLayout = ConferenceParams::Layout::ActiveSpeaker;
+							} else {
+								confLayout = ConferenceParams::Layout::None;
 							}
 							confParams->setLayout(confLayout);
 							// It is expected that the core of the remote conference is the participant one

@@ -598,6 +598,7 @@ void StreamsGroup::setStreamMain(size_t index, const bool force){
 		Stream *other = lookupMainStream(type);
 		if (other != nullptr && other != s){
 			if (force) {
+lInfo() << __func__ << " DEBUG DEBUG Resetting main stream";
 				other->resetMain();
 			} else {
 				lError() << "StreamsGroup::setStreamMain(): error, the main attribute has already been set on another stream.";
