@@ -1573,7 +1573,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 			// Copy participant video streams from previous local description
 			auto streamIdx = noStreams;
 			auto beginIt = refMd->streams.cbegin();
-			std::advance(beginIt, noStreams);
+			std::advance(beginIt, static_cast<decltype(beginIt)::difference_type>(noStreams));
 
 			for (auto sIt = beginIt; sIt != refMd->streams.end(); sIt++) {
 				const auto & s = *sIt;
