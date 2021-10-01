@@ -119,6 +119,8 @@ class ToneManager : public CoreAccessor {
         LinphoneStatus playFile(const char *audiofile);
         void playTone(const std::shared_ptr<CallSession> &session, MSDtmfGenCustomTone dtmf);
         MSDtmfGenCustomTone generateToneFromId(LinphoneToneID toneId);
+
+        bool mDtmfStreamStarted = false;
 };
 
 LINPHONE_END_NAMESPACE
