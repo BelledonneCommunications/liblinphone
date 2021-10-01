@@ -55,6 +55,7 @@ void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_pa
 void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name);
 void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
+void linphone_call_notify_remote_recording(LinphoneCall *call, bool_t recording);
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);

@@ -91,7 +91,7 @@ public:
 	virtual void setReleased ();
 	virtual void setTerminated ();
 	virtual LinphoneStatus startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo);
-	virtual LinphoneStatus startUpdate (const std::string &subject);
+	virtual LinphoneStatus startUpdate (const CallSession::UpdateMethod method = CallSession::UpdateMethod::Default, const std::string &subject = "");
 	virtual void terminate ();
 	virtual void updateCurrentParams () const;
 	virtual void setDestProxy (LinphoneProxyConfig *proxy);// Set destProxy and update the proxy of currentParams
