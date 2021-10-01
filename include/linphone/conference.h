@@ -205,9 +205,16 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conference);
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference);
 
 /**
- * Get list of all participants of one conference
+ * Get list of all participants of a conference
  * @param conference A #LinphoneConference @notnil
  * @return The list of participants of the conference. \bctbx_list{LinphoneParticipant} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
+
+/**
+ * Get list of all participant devices of a conference
+ * @param conference A #LinphoneConference @notnil
+ * @return The list of participant devices of the conference. \bctbx_list{LinphoneParticipantDevice} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 

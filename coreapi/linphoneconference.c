@@ -235,6 +235,18 @@ bctbx_list_t *linphone_conference_get_participant_list (const LinphoneConference
 	return participants_list;
 }
 
+bctbx_list_t *linphone_conference_get_participant_device_list (const LinphoneConference *conference) {
+	const list<std::shared_ptr<LinphonePrivate::ParticipantDevice>> devices = MediaConference::Conference::toCpp(conference)->getParticipantDevices();
+	bctbx_list_t *devices_list = nullptr;
+	for (auto it = devices.begin(); it != devices.end(); it++) {
+		const std::shared_ptr<LinphonePrivate::ParticipantDevice> device((*it));
+		device->ref();
+		LinphoneParticipantDevice *c_device(device->toC());
+		devices_list = bctbx_list_append(devices_list, c_device);
+	}
+	return devices_list;
+}
+
 int linphone_conference_start_recording (LinphoneConference *conference, const char *path) {
 	return MediaConference::Conference::toCpp(conference)->startRecording(path);
 }

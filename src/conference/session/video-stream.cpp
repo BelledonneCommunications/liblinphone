@@ -326,8 +326,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		video_stream_set_label(mStream, label.c_str());
 	}
 
-lInfo() << __func__ << " DEBUG DEBUG stream dir " << dir << " sendrecv " << MediaStreamSendRecv << " content " << content << " label " << label;
-
 	if (getCCore()->video_conf.reuse_preview_source && source) {
 		lInfo() << "video_stream_start_with_source kept: " << source;
 		video_stream_start_with_source(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(),

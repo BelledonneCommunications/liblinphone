@@ -162,9 +162,8 @@ const list<shared_ptr<Participant>> &Conference::getParticipants () const {
 	return participants;
 }
 
-/*
-const list<shared_ptr<ParticipantDevice>> Conference::getParticipants () const {
-	list<const shared_ptr<ParticipantDevice>> devices;
+const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices () const {
+	list<shared_ptr<ParticipantDevice>> devices;
 	for (const auto & p : participants) {
 		const auto & d = p->getDevices();
 		devices.insert(devices.begin(), d.begin(), d.end());
@@ -175,7 +174,6 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipants () const {
 	}
 	return devices;
 }
-*/
 
 const string &Conference::getSubject () const {
 	return confParams->getSubject();

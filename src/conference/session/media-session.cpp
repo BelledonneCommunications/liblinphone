@@ -1712,9 +1712,8 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 
 				newStream.addActualConfiguration(cfg);
 				fillRtpParameters(newStream);
+				streamIdx++;
 			}
-
-			streamIdx++;
 		}
 	}
 }
