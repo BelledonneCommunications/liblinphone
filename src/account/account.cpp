@@ -1073,6 +1073,8 @@ void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactor
 	std::string ephemeralSpec("ephemeral/");
 	ephemeralSpec.append(Core::ephemeralVersionAsString());
 
+lInfo() << __func__ << " DEBGIU DEBUG group chat " << groupchatSpec;
+
 	if (!conferenceFactoryUri.empty()) {
 		if (mCore) {
 			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(groupchatSpec));

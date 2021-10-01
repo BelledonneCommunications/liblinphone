@@ -164,11 +164,11 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 			for (const auto & protocol : protocols) {
 				std::ostringstream versionStr;
 				versionStr << protocol.second;
-				const auto service = ServiceDescription(protocol.first, versionStr.str());
+				const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
 				auto & endpointJoiningInfoDOMDoc = endpoint.getJoiningInfo().get().getDomDocument();
 				::xercesc::DOMElement * e (endpointJoiningInfoDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
-				*e << service;
-				endpoint.getAny().push_back(e);
+				*e << ephemeralService;
+//				endpoint.getJoiningInfo().get().setAnyAttribute(e);
 			}
 
 			// Media capabilities
@@ -454,11 +454,11 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Ad
 			for (const auto & protocol : protocols) {
 				std::ostringstream versionStr;
 				versionStr << protocol.second;
-				const auto service = ServiceDescription(protocol.first, versionStr.str());
+				const auto ephemeralService = ServiceDescription(protocol.first, versionStr.str());
 				auto & endpointJoiningInfoDOMDoc = endpoint.getJoiningInfo().get().getDomDocument();
 				::xercesc::DOMElement * e (endpointJoiningInfoDOMDoc.createElementNS(::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(), ::xsd::cxx::xml::string("linphone-cie:service-description").c_str()));
-				*e << service;
-				endpoint.getAny().push_back(e);
+				*e << ephemeralService;
+//				endpoint.getJoiningInfo().get().setAnyAttribute(e);
 			}
 
 			// Media capabilities
