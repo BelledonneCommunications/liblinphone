@@ -27,6 +27,7 @@ This changelog file was started on October 2019. Previous changes were more or l
   Using a robust password is anyway highly recommended to avoid brute force attacks.
 
 
+
 ## [5.0.0] 2021-07-08
 
 ### Added
