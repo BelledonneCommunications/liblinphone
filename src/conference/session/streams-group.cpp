@@ -343,7 +343,6 @@ VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
 #ifdef VIDEO_ENABLED
 	for (auto &stream : mStreams){
 		const auto streamLabel = stream->getLabel();
-lInfo() << __func__ << " DEBUG DEBUG stream label " << streamLabel << " ref stream label " << L_C_TO_STRING(refStream->label);
 		if ((stream->getType() == SalVideo) && (refStream->label && strcmp(refStream->label, streamLabel.c_str()) == 0)) {
 			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
 			MediaStream *ms = s->getMediaStream();

@@ -144,54 +144,51 @@ void MS2VideoMixer::addLocalParticipant(){
 	if (!mLocalParticipantLabel.empty()) {
 		video_stream_set_label(mainSt, L_STRING_TO_C(mLocalParticipantLabel));
 	}
-	
-			lInfo() << "[mix to all]:  add local video endpoint";
-			mLocalParticipantStream = mainSt;
-			mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
-			ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
 
-			st = video_stream_new(core->factory, 65000, 65001, FALSE);
-			// Stores the pointer to the newly created video stream to stop it upon local participant removal
-			mLocalParticipantItcStream = st;
-			video_stream_enable_thumbnail(st, TRUE);
-			memset(&io2, 0, sizeof(io2));
-			io2.input.type = MSResourceItc;
-			io2.output.type = MSResourceDefault;
+	lInfo() << "[mix to all]:  add local video endpoint";
+	mLocalParticipantStream = mainSt;
+	mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
+	ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
 
-			// todo set window id
+	st = video_stream_new(core->factory, 65000, 65001, FALSE);
+	// Stores the pointer to the newly created video stream to stop it upon local participant removal
+	mLocalParticipantItcStream = st;
+	video_stream_enable_thumbnail(st, TRUE);
+	memset(&io2, 0, sizeof(io2));
+	io2.input.type = MSResourceItc;
+	io2.output.type = MSResourceDefault;
 
-			media_stream_set_max_network_bitrate(&st->ms, outputBandwidth);
-			video_stream_set_fps(st, linphone_core_get_preferred_framerate(mSession.getCCore()));
-			if (vdef) {
-				// todo set size
-				MSVideoSize vsize;
-				vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
-				vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
-				video_stream_set_sent_video_size(st, vsize);
-			}
+	// todo set window id
 
-			if (video_stream_start_from_io_and_sink(st, mLocalDummyProfile, "127.0.0.1", 65000, "127.0.0.1", 65001, sVP8PayloadTypeNumber, &io2, mainSt->itcsink) != 0){
-				lError() << "Could not start video stream.";
-				video_stream_stop(st);
-				return;
-			}
-			link_video_stream_with_itc_sink(mainSt);
-			ms_filter_call_method(mainSt->itcsink,MS_ITC_SINK_CONNECT,st->source);
+	media_stream_set_max_network_bitrate(&st->ms, outputBandwidth);
+	video_stream_set_fps(st, linphone_core_get_preferred_framerate(mSession.getCCore()));
+	if (vdef) {
+		// todo set size
+		MSVideoSize vsize;
+		vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
+		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
+		video_stream_set_sent_video_size(st, vsize);
+	}
 
-			if (!mLocalParticipantLabel.empty()) {
-				video_stream_set_label(st, L_STRING_TO_C(mLocalParticipantLabel));
-			}
+	if (video_stream_start_from_io_and_sink(st, mLocalDummyProfile, "127.0.0.1", 65000, "127.0.0.1", 65001, sVP8PayloadTypeNumber, &io2, mainSt->itcsink) != 0){
+		lError() << "Could not start video stream.";
+		video_stream_stop(st);
+		return;
+	}
+	link_video_stream_with_itc_sink(mainSt);
+	ms_filter_call_method(mainSt->itcsink,MS_ITC_SINK_CONNECT,st->source);
 
-			if (!st->label) {
-				lError() << "[mix to all]: Can not add video endpoint with empty label";
-			} else {
-				lInfo() << "[mix to all]:  add video endpoint with label" << st->label;
-				mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
-				ms_video_conference_add_member(mConferenceThumbnail, mLocalEndpoint);
-			}
-			
-	
-	
+	if (!mLocalParticipantLabel.empty()) {
+		video_stream_set_label(st, L_STRING_TO_C(mLocalParticipantLabel));
+	}
+
+	if (!st->label) {
+		lError() << "[mix to all]: Can not add video endpoint with empty label";
+	} else {
+		lInfo() << "[mix to all]:  add video endpoint with label" << st->label;
+		mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
+		ms_video_conference_add_member(mConferenceThumbnail, mLocalEndpoint);
+	}
 }
 
 void MS2VideoMixer::removeLocalParticipant(){

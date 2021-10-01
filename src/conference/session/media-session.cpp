@@ -1956,8 +1956,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
 	if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
 	const auto videoStreamIndex = (conference || remoteContactAddress.hasParam("isfocus")) ? mdForMainStream->findIdxStreamWithContent(mainStreamAttrValue) : mdForMainStream->findIdxBestStream(SalVideo);
-lInfo() << __func__ << " DEBUG DEBUG local address " << q->getLocalAddress().asString() << " remote contact address " << remoteContactAddress.asString() << " conference " << conference << " is in conference " << isInLocalConference << " video stream index " << videoStreamIndex;
-	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex), true);
+	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex));
 	const auto textStreamIndex = mdForMainStream->findIdxBestStream(SalText);
 	if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
