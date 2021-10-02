@@ -853,7 +853,11 @@ void CallSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool medi
 }
 
 void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const std::string &message) {
-	repairIfBroken();
+	//might be better to add callbacks on Account, but due to the lake of internal listener, it is dangerous to expose internal listeners to public object.
+	if (cfg == destProxy && cstate == LinphoneRegistrationOk)
+		repairIfBroken();
+	/*else
+		only repair call when the right proxy is in state connected*/
 }
 
 // -----------------------------------------------------------------------------
@@ -930,11 +934,11 @@ void CallSessionPrivate::repairByInviteWithReplaces () {
 	L_Q();
 	lInfo() << "CallSession [" << q << "] is going to have a new INVITE replacing the previous one in order to recover from lost connectivity";
 	string callId = op->getCallId();
-	const char *fromTag = op->getLocalTag();
-	const char *toTag = op->getRemoteTag();
+	string fromTag = op->getLocalTag();
+	string toTag = op->getRemoteTag();
 	op->killDialog();
 	createOp();
-	op->setReplaces(callId.c_str(), fromTag, toTag);
+	op->setReplaces(callId.c_str(), fromTag, toTag.empty()?"0":toTag); // empty tag is set to 0 as defined by rfc3891
 	q->startInvite(nullptr);
 }
 
@@ -989,9 +993,7 @@ void CallSessionPrivate::repairIfBroken () {
 			break;
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::OutgoingProgress:
-			if (op->cancelInvite() == 0){
-				reinviteOnCancelResponseRequested = true;
-			}
+			repairByInviteWithReplaces();
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
