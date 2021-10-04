@@ -119,6 +119,8 @@ public:
 	ConferenceLayout getLayout() const;
 	void setLayout(const ConferenceLayout layout);
 
+	time_t getStartTime() const;
+	int getDuration() const;
 
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
@@ -184,6 +186,7 @@ protected:
 	unsigned int lastNotify = 0;
 
 	std::string mUsername = "";
+	time_t startTime = 0;
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
 

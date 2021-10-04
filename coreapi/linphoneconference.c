@@ -312,6 +312,14 @@ void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConf
 	MediaConference::Conference::toCpp(conference)->setLayout((ConferenceLayout)layout);
 }
 
+int linphone_conference_get_duration (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getDuration();
+}
+
+time_t linphone_conference_get_start_time (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getStartTime();
+}
+
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference){
 	return MediaConference::Conference::toCpp(conference)->getAudioStream();
 }

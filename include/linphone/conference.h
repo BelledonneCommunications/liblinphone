@@ -343,6 +343,20 @@ LINPHONE_PUBLIC LinphoneConferenceLayout linphone_conference_get_layout(const Li
 LINPHONE_PUBLIC void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConferenceLayout layout);
 
 /**
+ * Get the conference duration
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference duration. @maybenil
+ */
+LINPHONE_PUBLIC int linphone_conference_get_duration(const LinphoneConference *conference);
+
+/**
+ * Get the conference start time
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference start time. @maybenil
+ */
+LINPHONE_PUBLIC time_t linphone_conference_get_start_time(const LinphoneConference *conference);
+
+/**
  * Get number of participants without me
  * @param conference The #LinphoneConference object. @notnil
  * @return the number of participants excluding me in a #LinphoneConference

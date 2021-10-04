@@ -50,6 +50,7 @@ Conference::Conference (
 	this->listener = listener;
 	this->update(*params);
 	this->confParams->setMe(myAddress);
+	this->startTime = ms_time(nullptr);
 }
 
 Conference::~Conference () {
@@ -60,7 +61,7 @@ Conference::~Conference () {
 
 bool Conference::tryAddMeDevice() {
 	if (confParams->localParticipantEnabled() &&  me->getDevices().empty() && confParams->getProxyCfg()) {
-		char * devAddrStr = linphone_proxy_config_get_contact(confParams->getProxyCfg()) ? linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg())) : NULL;
+		char * devAddrStr = linphone_proxy_config_get_contact(confParams->getProxyCfg()) ? linphone_address_as_string(linphone_proxy_config_get_contact(confParams->getProxyCfg())) : nullptr;
 		if (devAddrStr) {
 			Address devAddr(devAddrStr);
 			auto meDev = me->addDevice(devAddr);
@@ -80,7 +81,13 @@ bool Conference::tryAddMeDevice() {
 	return false;
 }
 
+time_t Conference::getStartTime() const {
+	return startTime;
+}
 
+int Conference::getDuration() const {
+	return (int)(ms_time(nullptr) - startTime);
+}
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
 	return activeParticipant;
