@@ -29,6 +29,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+
 std::string SysPaths::getDataPath (void *context) {
 	NSString *fullPath;
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
@@ -86,28 +87,43 @@ std::string SysPaths::getConfigPath (void *context) {
 }
 
 std::string SysPaths::getDownloadPath (void *context) {
+	/*
+	 Apple clears Cache when the disk is full. So use "Library/Images/" as the download path.
+	 */
+	NSString *oldFullPath;
 	NSString *fullPath;
+	NSFileManager *fileManager = [NSFileManager defaultManager];
 	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
 		const char* appGroupId = static_cast<const char *>(context);
 		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
 
-		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
+		NSURL *basePath = [fileManager containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+		oldFullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Images/"];
 	} else {
 		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
 		NSString *configPath = [paths objectAtIndex:0];
-		fullPath = [configPath stringByAppendingString:@"/"];
+		oldFullPath = [configPath stringByAppendingString:@"/"];
+		fullPath = [oldFullPath stringByReplacingOccurrencesOfString:@"Caches" withString:@"Images"];
 	}
 
-	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
+	if (![fileManager fileExistsAtPath:fullPath]) {
 		NSError *error;
 		lInfo() << "Download path " << fullPath.UTF8String << " does not exist, creating it.";
-		if (![[NSFileManager defaultManager] createDirectoryAtPath:fullPath
+		if (![fileManager createDirectoryAtPath:fullPath
 									   withIntermediateDirectories:YES
 														attributes:nil
 															 error:&error]) {
 			lError() << "Create download path directory error: " << error.description;
+			return fullPath.UTF8String;
 		}
+
+		NSArray *images = [fileManager contentsOfDirectoryAtPath:oldFullPath error:NULL];
+		for (NSString *image in images)
+		{
+			[fileManager copyItemAtPath:[oldFullPath stringByAppendingPathComponent:image] toPath:[fullPath stringByAppendingPathComponent:image] error:nil];
+		}
+		lInfo() << "Download path migration done.";
 	}
 
 	return fullPath.UTF8String;
