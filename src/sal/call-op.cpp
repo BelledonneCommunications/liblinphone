@@ -1630,8 +1630,17 @@ SalCallOp *SalCallOp::getReplaces () const {
 		belle_sip_header_replaces_get_from_tag(mReplaces)
 	);
 
+	if (!dialog && strcmp(belle_sip_header_replaces_get_to_tag(mReplaces),"0") == 0) {
+		//even if not described in rfc3891, in case of very early network switch at caller side, we might receive a replace header without to-tag. Give a chance to find the early dialog
+		dialog = belle_sip_provider_find_dialog_with_remote_tag(
+			mRoot->mProvider,
+			belle_sip_header_replaces_get_call_id(mReplaces),
+			belle_sip_header_replaces_get_from_tag(mReplaces)
+		);
+	}
 	if (dialog)
 		return reinterpret_cast<SalCallOp *>(belle_sip_dialog_get_application_data(dialog));
+
 	return nullptr;
 }
 
@@ -1813,6 +1822,19 @@ int SalCallOp::notifyReferState (SalCallOp *newCallOp) {
 void SalCallOp::setReplaces (const string &callId, const string &fromTag, const string &toTag) {
 	auto replacesHeader = belle_sip_header_replaces_create(callId.c_str(), fromTag.c_str(), toTag.c_str());
 	SalOp::setReplaces(replacesHeader);
+}
+const char *SalCallOp::getLocalTag () {
+	if (mDialog)
+		return belle_sip_dialog_get_local_tag(mDialog);
+	else if (mState == SalOp::State::Early && mPendingClientTransaction != nullptr){
+		//look for from tag of invite transaction
+		return belle_sip_header_from_get_tag(belle_sip_message_get_header_by_type(belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingClientTransaction)), belle_sip_header_from_t));
+	} else
+		return "";
+	
+}
+const char *SalCallOp::getRemoteTag () {
+	return mDialog?belle_sip_dialog_get_remote_tag(mDialog):"";
 }
 
 void SalCallOp::setSdpHandling (SalOpSDPHandling handling) {

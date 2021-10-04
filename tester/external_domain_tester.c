@@ -29,7 +29,7 @@ static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, Linpho
 
 	stats * recipients_initial_stats = NULL;
 	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
-	char *receiveFilepath = bc_tester_file("receive_file.dump");
+	char *receiveFilepath = bc_tester_file("receive_file_ext_domain.dump");
 	LinphoneChatMessage *senderMessage=NULL;
 	int counter = 1;
 	for (bctbx_list_t *it = recipients; it; it = bctbx_list_next(it)) {
