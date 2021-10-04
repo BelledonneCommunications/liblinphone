@@ -366,6 +366,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-participant-cbs.cpp
 	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-push-notification-config.cpp
 	c-wrapper/api/c-recorder.cpp

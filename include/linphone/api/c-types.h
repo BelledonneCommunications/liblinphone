@@ -171,7 +171,7 @@ typedef struct _LinphoneConferenceInfo LinphoneConferenceInfo;
 
 /**
  * @brief Identifies a member of a #LinphoneConference or #LinphoneChatRoom.
- * 
+ *
  * A participant is identified by it's SIP address.
  * It can have many #LinphoneParticipantDevice.
  * @ingroup conference
@@ -179,11 +179,20 @@ typedef struct _LinphoneConferenceInfo LinphoneConferenceInfo;
 typedef struct _LinphoneParticipant LinphoneParticipant;
 
 /**
+ * @brief An object to handle the callbacks for the handling a #LinphoneParticipant objects.
+ *
+ * Use linphone_factory_create_participant_cbs() to create an instance.
+ * Then pass the object to a #LinphoneParticipant instance through linphone_participant_add_callbacks().
+ * @ingroup conference
+ */
+typedef struct _LinphoneParticipantCbs LinphoneParticipantCbs;
+
+/**
  * @brief This object represents a unique device for a member of a #LinphoneConference or #LinphoneChatRoom.
- * 
+ *
  * Devices are identified by the gruu parameter inside the #LinphoneAddress which can be obtained by linphone_participant_device_get_address().
  * It is specially usefull to know the security level of each device inside an end-to-end encrypted #LinphoneChatRoom.
- * 
+ *
  * You can get a list of all #LinphoneParticipantDevice using linphone_participant_get_devices().
  * @ingroup conference
  */

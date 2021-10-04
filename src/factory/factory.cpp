@@ -238,6 +238,10 @@ LinphoneParticipantDeviceCbs* Factory::createParticipantDeviceCbs() const {
 	return _linphone_participant_device_cbs_new();
 }
 
+LinphoneParticipantCbs* Factory::createParticipantCbs() const {
+	return _linphone_participant_cbs_new();
+}
+
 LinphoneParticipantDeviceIdentity* Factory::createParticipantDeviceIdentity (
 	const LinphoneAddress *address,
 	const char *name

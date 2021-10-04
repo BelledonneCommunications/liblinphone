@@ -253,6 +253,13 @@ LINPHONE_PUBLIC LinphoneConferenceCbs * linphone_factory_create_conference_cbs(c
 LINPHONE_PUBLIC LinphoneParticipantDeviceCbs * linphone_factory_create_participant_device_cbs(const LinphoneFactory *factory);
 
 /**
+ * Create a #LinphoneParticipantCbs object that holds callbacks for events happening on a participant.
+ * @param[in] factory #LinphoneFactory singletion object @notnil
+ * @return A new #LinphoneParticipantCbs object @notnil
+ */
+LINPHONE_PUBLIC LinphoneParticipantCbs * linphone_factory_create_participant_cbs(const LinphoneFactory *factory);
+
+/**
  * Create a LinphoneChatRoomCbs object that holds callbacks for events happening on a chat room.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return A new #LinphoneChatRoomCbs object @notnil

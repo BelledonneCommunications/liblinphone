@@ -43,6 +43,7 @@ extern "C" {
 LinphoneCallCbs *_linphone_call_cbs_new(void);
 LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
 LinphoneParticipantDeviceCbs *_linphone_participant_device_cbs_new(void);
+LinphoneParticipantCbs *_linphone_participant_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);

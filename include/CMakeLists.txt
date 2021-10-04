@@ -109,6 +109,7 @@ set(C_API_HEADER_FILES
 	c-search-result.h
 	c-digest-authentication-policy.h
 	c-types.h
+	c-participant-cbs.h
 )
 
 set(ENUMS_HEADER_FILES

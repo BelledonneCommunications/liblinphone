@@ -132,6 +132,8 @@ public:
 	
   LinphoneParticipantDeviceCbs * createParticipantDeviceCbs() const;
 
+  LinphoneParticipantCbs * createParticipantCbs() const;
+
   LinphoneChatRoomCbs * createChatRoomCbs() const;
 
   LinphoneChatMessageCbs * createChatMessageCbs() const;

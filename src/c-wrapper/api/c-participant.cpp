@@ -80,3 +80,33 @@ LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParti
 time_t linphone_participant_get_creation_time (const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->getCreationTime();
 }
+
+bool_t linphone_participant_is_speaking (const LinphoneParticipant *participant) {
+	return LinphonePrivate::Participant::toCpp(participant)->isSpeaking();
+}
+
+void linphone_participant_add_callbacks (LinphoneParticipant *participant, LinphoneParticipantCbs *cbs) {
+	LinphonePrivate::Participant::toCpp(participant)->addCallbacks(cbs);
+}
+
+void linphone_participant_remove_callbacks (LinphoneParticipant *participant, LinphoneParticipantCbs *cbs) {
+	LinphonePrivate::Participant::toCpp(participant)->removeCallbacks(cbs);
+}
+
+LinphoneParticipantCbs *linphone_participant_get_current_callbacks (const LinphoneParticipant *participant) {
+	return LinphonePrivate::Participant::toCpp(participant)->getCurrentCbs();
+}
+
+const bctbx_list_t *linphone_participant_get_callbacks_list(const LinphoneParticipant *participant) {
+	return LinphonePrivate::Participant::toCpp(participant)->getCallbacksList();
+}
+
+#define NOTIFY_IF_EXIST(cbName, functionName, ...) \
+for (bctbx_list_t *it = LinphonePrivate::Participant::toCpp(participant)->getCallbacksList(); it; it = bctbx_list_next(it)) { \
+LinphonePrivate::Participant::toCpp(participant)->setCurrentCbs(reinterpret_cast<LinphoneParticipantCbs *>(bctbx_list_get_data(it))); \
+	LinphoneParticipantCbs ## cbName ## Cb cb = linphone_participant_cbs_get_ ## functionName (LinphonePrivate::Participant::toCpp(participant)->getCurrentCbs()); \
+	if (cb) \
+		cb(__VA_ARGS__); \
+}
+
+

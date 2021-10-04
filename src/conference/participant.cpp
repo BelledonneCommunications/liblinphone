@@ -184,4 +184,25 @@ void Participant::setUserData (void *ud) {
 	mUserData = ud;
 }
 
+bctbx_list_t *Participant::getCallbacksList () const {
+	return mCallbacks;
+}
+
+LinphoneParticipantCbs *Participant::getCurrentCbs () const{
+	return mCurrentCbs;
+}
+
+void Participant::setCurrentCbs (LinphoneParticipantCbs *cbs) {
+	mCurrentCbs = cbs;
+}
+
+void Participant::addCallbacks (LinphoneParticipantCbs *cbs) {
+	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
+}
+
+void Participant::removeCallbacks (LinphoneParticipantCbs *cbs) {
+	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
+	belle_sip_object_unref(cbs);
+}
+
 LINPHONE_END_NAMESPACE

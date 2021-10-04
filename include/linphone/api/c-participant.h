@@ -23,6 +23,9 @@
 #include "time.h"
 #include "linphone/api/c-types.h"
 
+#include "linphone/api/c-participant-cbs.h"
+#include "linphone/wrapper_utils.h"
+
 // =============================================================================
 
 #ifdef __cplusplus
@@ -110,6 +113,35 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (con
  * @return time of creation of the participant as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant);
+
+/**
+ * Tells whether a conference participant is speaking.
+ * @param participant A #LinphoneParticipant object
+ * @return A boolean value telling whether the participant is speaking
+ */
+LINPHONE_PUBLIC bool_t linphone_participant_is_speaking (const LinphoneParticipant *participant);
+
+/**
+ * Add a listener in order to be notified of #LinphoneParticipant events. Once an event is received, registred #LinphoneParticipantCbs are
+ * invoked sequencially.
+ * @param participant #LinphoneParticipant object. @notnil
+ * @param cbs A #LinphoneParticipantCbs object holding the callbacks you need. A reference is taken by the #LinphoneParticipant until you invoke linphone_participant_remove_callbacks(). @notnil
+ */
+LINPHONE_PUBLIC void linphone_participant_add_callbacks(LinphoneParticipant *participant, LinphoneParticipantCbs *cbs);
+
+/**
+ * Remove a listener from a #LinphoneParticipant
+ * @param participant #LinphoneParticipant object. @notnil
+ * @param cbs #LinphoneParticipantCbs object to remove. @notnil
+ */
+LINPHONE_PUBLIC void linphone_participant_remove_callbacks(LinphoneParticipant *participant, LinphoneParticipantCbs *cbs);
+
+/**
+ * Gets the current LinphoneParticipantCbs.
+ * @param participant #LinphoneParticipant object. @notnil
+ * @return The LinphoneParticipantCbs that has called the last callback. @notnil
+ */
+LINPHONE_PUBLIC LinphoneParticipantCbs *linphone_participant_get_current_callbacks(const LinphoneParticipant *participant);
 
 /**
  * @}
