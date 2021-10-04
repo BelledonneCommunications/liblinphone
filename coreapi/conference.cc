@@ -1966,7 +1966,7 @@ void RemoteConference::setSubject (const std::string &subject) {
 bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
 	// Any remote participant can change the layout of the conference
 	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
-	bool layoutChanged = (getLayout() != newLayout);
+	bool layoutChanged =  confParams && (getLayout() != newLayout);
 	if (getMe()->isAdmin()) {
 		return Conference::update(newParameters);
 	} else if (layoutChanged) {

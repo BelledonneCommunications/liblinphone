@@ -116,7 +116,7 @@ public:
 	const std::string &getUsername () const;
 	void setUsername (const std::string &username);
 
-	const ConferenceLayout & getLayout() const;
+	ConferenceLayout getLayout() const;
 	void setLayout(const ConferenceLayout layout);
 
 
