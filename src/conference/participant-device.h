@@ -118,6 +118,9 @@ public:
 	void setCurrentCbs (LinphoneParticipantDeviceCbs *cbs);
 	void addCallbacks (LinphoneParticipantDeviceCbs *cbs);
 	void removeCallbacks (LinphoneParticipantDeviceCbs *cbs);
+	
+	inline void setSpeaking (bool isSpeaking) { this->isThisSpeaking = isSpeaking; }
+	inline bool isSpeaking () const {return this->isThisSpeaking;};
 
 private:
 	std::weak_ptr<Participant> mParticipant;
@@ -133,6 +136,7 @@ private:
 	uint32_t mSsrc = 0;
 	bool mSupportAdminMode = false;
 	void * mWindowId = NULL;
+	bool isThisSpeaking = false;
 
 	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
 

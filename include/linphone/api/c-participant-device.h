@@ -149,6 +149,13 @@ LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(co
 LINPHONE_PUBLIC LinphoneVideoSize *linphone_participant_device_get_received_video_size(const LinphoneParticipantDevice *participant_device);
 	
 /**
+ * Tells whether a conference participant device is speaking.
+ * @param participant_device A #LinphoneParticipantDevice object
+ * @return A boolean value telling whether the participant device is speaking
+ */
+LINPHONE_PUBLIC bool_t linphone_participant_device_is_speaking (const LinphoneParticipantDevice *participant_device);
+	
+/**
  * Add a listener in order to be notified of #LinphoneParticipantDevice events. Once an event is received, registred #LinphoneParticipantDeviceCbs are
  * invoked sequencially.
  * @param participant_device #LinphoneParticipantDevice object. @notnil

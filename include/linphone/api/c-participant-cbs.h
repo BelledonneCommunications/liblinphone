@@ -62,19 +62,7 @@ LINPHONE_PUBLIC void * linphone_participant_cbs_get_user_data (const LinphonePar
  */
 LINPHONE_PUBLIC void linphone_participant_cbs_set_user_data (LinphoneParticipantCbs *cbs, void *ud);
 
-/**
- * Get the is this participant speaking changed callback.
- * @param[in] cbs The #LinphoneParticipantCbs object @notnil
- * @return The current is this particiapnt speaking changed callback.
- */
-LINPHONE_PUBLIC LinphoneParticipantCbsIsThisSpeakingChangedCb linphone_participant_cbs_get_is_this_speaking_changed (const LinphoneParticipantCbs *cbs);
 
-/**
- * Set the is this participant speaking changed callback.
- * @param[in] cbs The #LinphoneParticipantCbs object @notnil
- * @param[in] cb The is this participant speaking changed callback to be used.
- */
-LINPHONE_PUBLIC void linphone_participant_cbs_set_is_this_speaking_changed (LinphoneParticipantCbs *cbs, LinphoneParticipantCbsIsThisSpeakingChangedCb cb);
 
 /**
  * @}

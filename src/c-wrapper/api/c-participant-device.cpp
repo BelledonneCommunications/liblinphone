@@ -106,6 +106,10 @@ LinphoneVideoSize *linphone_participant_device_get_received_video_size(const Lin
 	return result;
 }
 
+bool_t linphone_participant_device_is_speaking (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->isSpeaking();
+}
+
 void linphone_participant_device_add_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
 	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->addCallbacks(cbs);
 }

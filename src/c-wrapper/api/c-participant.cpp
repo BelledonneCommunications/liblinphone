@@ -81,10 +81,6 @@ time_t linphone_participant_get_creation_time (const LinphoneParticipant *partic
 	return LinphonePrivate::Participant::toCpp(participant)->getCreationTime();
 }
 
-bool_t linphone_participant_is_speaking (const LinphoneParticipant *participant) {
-	return LinphonePrivate::Participant::toCpp(participant)->isSpeaking();
-}
-
 void linphone_participant_add_callbacks (LinphoneParticipant *participant, LinphoneParticipantCbs *cbs) {
 	LinphonePrivate::Participant::toCpp(participant)->addCallbacks(cbs);
 }

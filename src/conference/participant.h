@@ -109,9 +109,6 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
-	inline void setSpeaking (bool isSpeaking) { this->isThisSpeaking = isSpeaking; }
-	inline bool isSpeaking () const {return isThisSpeaking;};
-
 	bctbx_list_t *getCallbacksList () const;
 	LinphoneParticipantCbs *getCurrentCbs () const;
 	void setCurrentCbs (LinphoneParticipantCbs *cbs);
@@ -146,7 +143,6 @@ private:
 	std::list<std::shared_ptr<ParticipantDevice>> devices;
 	time_t creationTime;
 	bool preserveSession = false;
-	bool isThisSpeaking = false;
 
 	void *mUserData = nullptr;
 

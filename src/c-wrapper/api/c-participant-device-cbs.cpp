@@ -27,6 +27,7 @@ struct _LinphoneParticipantDeviceCbs {
 	belle_sip_object_t base;
 	void *userData;
 	LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb captureVideoSizeChangedCb;
+	LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb isThisSpeakingChangedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneParticipantDeviceCbs);
@@ -70,3 +71,12 @@ LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb linphone_participant_devic
 void linphone_participant_device_cbs_set_capture_video_size_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb cb) {
 	cbs->captureVideoSizeChangedCb = cb;
 }
+
+LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb linphone_participant_device_cbs_is_this_speaking_changed (const LinphoneParticipantDeviceCbs *cbs) {
+	return cbs->isThisSpeakingChangedCb;
+}
+
+void linphone_participant_device_cbs_set_is_this_speaking_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb cb) {
+	cbs->isThisSpeakingChangedCb = cb;
+}
+

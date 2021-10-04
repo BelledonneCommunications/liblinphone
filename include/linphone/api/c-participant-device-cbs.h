@@ -77,6 +77,21 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb linphone_p
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_capture_video_size_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsCaptureVideoSizeChangedCb cb);
 
 /**
+ * Get the is this participant device speaking changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current is this particiapnt device speaking changed callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb linphone_participant_device_cbs_get_is_this_speaking_changed (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the is this participant device speaking changed callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The is this participant device speaking changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_is_this_speaking_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb cb);
+	
+	
+/**
  * @}
  */
 

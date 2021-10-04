@@ -115,13 +115,6 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (con
 LINPHONE_PUBLIC time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant);
 
 /**
- * Tells whether a conference participant is speaking.
- * @param participant A #LinphoneParticipant object
- * @return A boolean value telling whether the participant is speaking
- */
-LINPHONE_PUBLIC bool_t linphone_participant_is_speaking (const LinphoneParticipant *participant);
-
-/**
  * Add a listener in order to be notified of #LinphoneParticipant events. Once an event is received, registred #LinphoneParticipantCbs are
  * invoked sequencially.
  * @param participant #LinphoneParticipant object. @notnil

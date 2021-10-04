@@ -26,7 +26,6 @@
 struct _LinphoneParticipantCbs {
 	belle_sip_object_t base;
 	void *userData;
-	LinphoneParticipantCbsIsThisSpeakingChangedCb isThisSpeakingChangedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneParticipantCbs);
@@ -63,10 +62,3 @@ void linphone_participant_cbs_set_user_data (LinphoneParticipantCbs *cbs, void *
 	cbs->userData = ud;
 }
 
-LinphoneParticipantCbsIsThisSpeakingChangedCb linphone_participant_cbs_is_this_speaking_changed (const LinphoneParticipantCbs *cbs) {
-	return cbs->isThisSpeakingChangedCb;
-}
-
-void linphone_participant_cbs_set_is_this_speaking_changed (LinphoneParticipantCbs *cbs, LinphoneParticipantCbsIsThisSpeakingChangedCb cb) {
-	cbs->isThisSpeakingChangedCb = cb;
-}
