@@ -146,7 +146,8 @@ void MS2VideoMixer::addLocalParticipant(){
 	}
 
 	lInfo() << "[mix to all]: add local video endpoint label " << mLocalParticipantLabel;
-	if (mSession.getConferenceLayout() == ConferenceParams::Layout::Grid) {
+	
+	if (linphone_core_get_default_conference_layout(mSession.getCCore()) == LinphoneConferenceLayoutGrid) {
 		media_stream_set_direction(&mainSt->ms, MediaStreamSendOnly);
 	}
 
@@ -190,7 +191,7 @@ void MS2VideoMixer::addLocalParticipant(){
 		lError() << "[mix to all]: Can not add video endpoint with empty label";
 	} else {
 		lInfo() << "[mix to all]:  add video endpoint with label" << st->label;
-		if (mSession.getConferenceLayout() == ConferenceParams::Layout::Grid) {
+		if (linphone_core_get_default_conference_layout(mSession.getCCore()) == LinphoneConferenceLayoutGrid) {
 			media_stream_set_direction(&st->ms, MediaStreamSendOnly);
 		}
 		mLocalParticipantItcStream = st;
