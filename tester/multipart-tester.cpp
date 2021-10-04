@@ -140,7 +140,10 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 	char *paulineUriStr = linphone_address_as_string_uri_only(pauline->identity);
 	IdentityAddress paulineAddress(paulineUriStr);
 	bctbx_free(paulineUriStr);
-	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(paulineAddress);
+	char *marieUri = linphone_address_as_string_uri_only(marie->identity);
+	IdentityAddress marieAddress(marieUri);
+	bctbx_free(marieUri);
+	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(marieAddress, paulineAddress);
 	marieRoom->allowMultipart(true);
 
 	shared_ptr<ChatMessage> marieMessage = marieRoom->createChatMessage();
