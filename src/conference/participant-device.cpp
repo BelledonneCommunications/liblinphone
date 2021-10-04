@@ -45,7 +45,7 @@ ParticipantDevice::ParticipantDevice () {
 	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
 }
 
-ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
+ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
 	mTimeOfJoining = time(nullptr);
 	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
@@ -63,7 +63,20 @@ bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
 }
 
 shared_ptr<Core> ParticipantDevice::getCore () const {
-	return mParticipant ? mParticipant->getCore() : nullptr;
+lInfo() << __func__ << " DEBUG DEBUG participant " << getParticipant() << " core " << (getParticipant() ? getParticipant()->getCore() : nullptr);
+	return getParticipant() ? getParticipant()->getCore() : nullptr;
+}
+
+std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
+	if (mParticipant.expired()) {
+		lWarning() << "The participant owning device " << getAddress().asString() << " has already been deleted";
+	}
+	shared_ptr<Participant> participant = mParticipant.lock();
+	if (!participant) {
+		lWarning() << "Unable to get the participant owning the device";
+		return nullptr;
+	}
+	return participant;
 }
 
 void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {

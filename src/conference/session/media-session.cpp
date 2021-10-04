@@ -3795,33 +3795,34 @@ void MediaSession::setNativeVideoWindowId (void *id) {
 void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 //*************************** START WORKAROUND for active speaker stream - HUGE DIY
 	L_D()
-	auto conference = d->listener->getCallSessionConference(getSharedFromThis());
-	std::string meLabel;
-	if (conference) {
-		auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		// Do not preserve conference after removing the participant
-		auto meParticipant = cppConference->getMe();
-		auto meDevice = meParticipant->getDevices();
-		if (!meDevice.empty()) {
-			meLabel = meDevice.front()->getLabel();
+	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released) && d->listener) {
+		auto conference = d->listener->getCallSessionConference(getSharedFromThis());
+		std::string meLabel;
+		if (conference) {
+			auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			// Do not preserve conference after removing the participant
+			auto meParticipant = cppConference->getMe();
+			auto meDevice = meParticipant->getDevices();
+			if (!meDevice.empty()) {
+				meLabel = meDevice.front()->getLabel();
+			}
 		}
-	}
-	Stream * s = NULL;
-	std::string searchedLabel;
-	if (conference && meLabel.compare(label) != 0) {
-		searchedLabel = label;
-	}
-	s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
+		std::string searchedLabel;
+		if (conference && meLabel.compare(label) != 0) {
+			searchedLabel = label;
+		}
+		auto s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
 //*************************** END WORKAROUND for active speaker
-//	auto s = getStreamsGroup().lookupStream(SalVideo, label);
-	if (s) {
-		VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
-		if (iface == nullptr){
-			lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
-			return;
-		}
-		if (iface) {
-			iface->setNativeWindowId(id);
+//		auto s = getStreamsGroup().lookupStream(SalVideo, label);
+		if (s) {
+			VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
+			if (iface == nullptr){
+				lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
+				return;
+			}
+			if (iface) {
+				iface->setNativeWindowId(id);
+			}
 		}
 	}
 }

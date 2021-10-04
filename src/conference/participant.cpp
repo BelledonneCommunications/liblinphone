@@ -76,7 +76,7 @@ shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gru
 	if (device)
 		return device;
 	lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString() << " to participant " << getAddress().asString();
-	device = ParticipantDevice::create(this, gruu, name);
+	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
 	devices.push_back(device);
 	return device;
 }

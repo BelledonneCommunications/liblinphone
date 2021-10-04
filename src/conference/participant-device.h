@@ -54,7 +54,7 @@ public:
 	};
 
 	ParticipantDevice ();
-	explicit ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const std::string &name = "");
+	explicit ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name = "");
 	virtual ~ParticipantDevice ();
 	// non clonable object
 	ParticipantDevice *clone() const override { return nullptr; }
@@ -68,8 +68,8 @@ public:
 	inline void setLabel (const std::string &label) { mLabel = label; };
 	inline const std::string &getName () const { return mName; }
 	inline void setName (const std::string &name) { mName = name; }
-	Participant *getParticipant () const { return mParticipant; }
 	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
+	std::shared_ptr<Participant> getParticipant () const;
 	void setSession (std::shared_ptr<CallSession> session);
 	inline State getState () const { return mState; }
 	inline void setState (State newState) { mState = newState; }
@@ -117,7 +117,7 @@ public:
 	void removeCallbacks (LinphoneParticipantDeviceCbs *cbs);
 
 private:
-	Participant *mParticipant = nullptr;
+	std::weak_ptr<Participant> mParticipant;
 	IdentityAddress mGruu;
 	std::string mName;
 	std::string mLabel;
