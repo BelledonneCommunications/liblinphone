@@ -213,8 +213,6 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 		const MediaSessionParams * meParams = meSession->getMediaParams();
 		MediaSessionParams *clonedParams = meParams->clone();
 
-		
-
 		std::string subject(std::string("Conference layout changed to ") + newLayout);
 
 // TODO Use UPDATE instead of DEFAULT

@@ -1247,6 +1247,7 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 
 	LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
@@ -1266,13 +1267,19 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	marie_call_laure=linphone_core_get_current_call(marie->lc);
 	laure_called_by_marie=linphone_core_get_current_call(laure->lc);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call_laure)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_called_by_marie)));
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 	marie_call_pauline=linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call_pauline)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_called_by_marie)));
 
 	BC_ASSERT_TRUE(call(marie,michelle));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc))));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(linphone_core_get_current_call(michelle->lc))));
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -1449,11 +1456,11 @@ static void simple_conference_with_layout_change_local_participant(void) {
 	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, TRUE, FALSE);
 
 }
+*/
 
 static void simple_conference_with_layout_change_remote_participant(void) {
 	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, TRUE);
 }
-*/
 
 static void simple_conference_with_one_participant(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -8856,8 +8863,6 @@ test_t audio_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple conference with one participant", simple_conference_with_one_participant),
 	TEST_NO_TAG("Simple conference with active speaker layout", simple_conference_with_active_speaker_layout),
 	TEST_NO_TAG("Simple conference with grid layout", simple_conference_with_grid_layout),
-//	TEST_NO_TAG("Simple conference with layout change of local participant", simple_conference_with_layout_change_local_participant),
-//	TEST_NO_TAG("Simple conference with layout change of remote participant", simple_conference_with_layout_change_remote_participant),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating conference", simple_4_participants_conference_ended_by_terminating_conference),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating all calls", simple_4_participants_conference_ended_by_terminating_calls),
@@ -8929,6 +8934,8 @@ test_t audio_conference_advanced_tests[] = {
 
 test_t video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
+//	TEST_NO_TAG("Simple conference with layout change of local participant", simple_conference_with_layout_change_local_participant),
+	TEST_NO_TAG("Simple conference with layout change of remote participant", simple_conference_with_layout_change_remote_participant),
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Legacy video conference by merging video calls", legacy_video_conference_created_by_merging_video_calls),
