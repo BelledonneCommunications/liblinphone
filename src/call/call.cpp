@@ -580,13 +580,13 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
 							std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 							auto confParams = ConferenceParams::create(getCore()->getCCore());
-							ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
+							ConferenceLayout confLayout = ConferenceLayout::None;
 							if (rmd->findIdxStreamWithContent("main") != -1) {
-								confLayout = ConferenceParams::Layout::Grid;
+								confLayout = ConferenceLayout::Grid;
 							} else if (rmd->findIdxStreamWithContent("speaker") != -1) {
-								confLayout = ConferenceParams::Layout::ActiveSpeaker;
+								confLayout = ConferenceLayout::ActiveSpeaker;
 							} else {
-								confLayout = ConferenceParams::Layout::None;
+								confLayout = ConferenceLayout::None;
 							}
 							confParams->setLayout(confLayout);
 							// It is expected that the core of the remote conference is the participant one
@@ -635,7 +635,15 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						// It is expected that the core of the remote conference is the participant one
 						std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 						auto confParams = ConferenceParams::create(getCore()->getCCore());
-						confParams->setLayout((rmd->findIdxStreamWithContent("speaker") == -1) ? ConferenceParams::Layout::Grid : ConferenceParams::Layout::ActiveSpeaker);
+						ConferenceLayout confLayout = ConferenceLayout::None;
+						if (rmd->findIdxStreamWithContent("main") != -1) {
+							confLayout = ConferenceLayout::Grid;
+						} else if (rmd->findIdxStreamWithContent("speaker") != -1) {
+							confLayout = ConferenceLayout::ActiveSpeaker;
+						} else {
+							confLayout = ConferenceLayout::None;
+						}
+						confParams->setLayout(confLayout);
 						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
 

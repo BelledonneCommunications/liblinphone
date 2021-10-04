@@ -1107,9 +1107,8 @@ void MediaSessionPrivate::runStunTestsIfNeeded () {
 		bool isConferenceLayoutActiveSpeaker = false;
 		if (conference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & currentConfParams = cppConference->getCurrentParams();
-			const auto & confLayout = currentConfParams.getLayout();
-			isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+			const auto & confLayout = cppConference->getLayout();
+			isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 		}
 		const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
 		const auto videoStreamIndex = conference ? md->findIdxStreamWithContent(mainStreamAttrValue) : md->findIdxBestStream(SalVideo);
@@ -1467,9 +1466,9 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
-		const auto & confLayout = currentConfParams.getLayout();
-		bool isConferenceLayoutNone = (confLayout == ConferenceParams::Layout::None);
-		bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+		const auto & confLayout = cppConference->getLayout();
+		bool isConferenceLayoutNone = (confLayout == ConferenceLayout::None);
+		bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 
 		// Add additional video streams if required
 		if (isVideoConferenceEnabled && !isConferenceLayoutNone) {
@@ -1639,8 +1638,8 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 						if (isVideoConferenceEnabled && (dev || !contentAttrValue.empty())) {
 							if (!contentAttrValue.empty() && participantsAttrValue.empty()) {
 
-								const auto & confLayout = currentConfParams.getLayout();
-								bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
+								const auto & confLayout = cppConference->getLayout();
+								bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 								if (isConferenceLayoutActiveSpeaker) {
 									cfg.dir = SalStreamSendRecv;
 								} else {
@@ -1811,14 +1810,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	bool isConferenceLayoutActiveSpeaker = false;
 	bool isConferenceLayoutNone = false;
 	bool isVideoConferenceEnabled = false;
-	ConferenceParams::Layout confLayout = ConferenceParams::Layout::None;
+	ConferenceLayout confLayout = ConferenceLayout::None;
 	if (conference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
-		confLayout = currentConfParams.getLayout();
-		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceParams::Layout::ActiveSpeaker);
-		isConferenceLayoutNone = (confLayout == ConferenceParams::Layout::None);
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
+		confLayout = cppConference->getLayout();
+		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+		isConferenceLayoutNone = (confLayout == ConferenceLayout::None);
 	}
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
@@ -1870,13 +1869,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				videoDir = SalStreamInactive;
 			} else {
 				switch (confLayout) {
-					case ConferenceParams::Layout::ActiveSpeaker:
+					case ConferenceLayout::ActiveSpeaker:
 						videoDir = SalStreamSendRecv;
 						break;
-					case ConferenceParams::Layout::Grid:
+					case ConferenceLayout::Grid:
 						videoDir = SalStreamRecvOnly;
 						break;
-					case ConferenceParams::Layout::None:
+					case ConferenceLayout::None:
 						videoDir = getParams()->getPrivate()->getSalVideoDirection();
 						break;
 				}

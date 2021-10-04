@@ -329,6 +329,20 @@ LINPHONE_PUBLIC const char *linphone_conference_get_username(const LinphoneConfe
 LINPHONE_PUBLIC void linphone_conference_set_username(LinphoneConference *conference, const char *username);
 
 /**
+ * Get the conference layout
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference layout. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConferenceLayout linphone_conference_get_layout(const LinphoneConference *conference);
+
+/**
+ * Set the conference layout
+ * @param conference The #LinphoneConference object. @notnil
+ * @param layout conference layout @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConferenceLayout layout);
+
+/**
  * Get number of participants without me
  * @param conference The #LinphoneConference object. @notnil
  * @return the number of participants excluding me in a #LinphoneConference

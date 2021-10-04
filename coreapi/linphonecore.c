@@ -8170,6 +8170,14 @@ void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) 
 	linphone_config_set_int64(lc->config, "misc", "ephemeral_lifetime", (int64_t)value);
 }
 
+LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc) {
+	return (LinphoneConferenceLayout)linphone_config_get_int(lc->config, "misc", "conference_layout", LinphoneConferenceLayoutNone);
+}
+
+void linphone_core_set_default_conference_layout(LinphoneCore *lc, LinphoneConferenceLayout value) {
+	linphone_config_set_int(lc->config, "misc", "conference_layout", (int)value);
+}
+
 bool_t linphone_core_sdp_200_ack_enabled(const LinphoneCore *lc) {
 	return lc->sip_conf.sdp_200_ack!=0;
 }

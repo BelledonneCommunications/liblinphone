@@ -447,7 +447,6 @@ LocalConference::LocalConference (
 
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
-	mMixerSession->setConferenceLayout(params->getLayout());
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
@@ -1967,7 +1966,7 @@ void RemoteConference::setSubject (const std::string &subject) {
 bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
 	// Any remote participant can change the layout of the conference
 	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
-	bool layoutChanged = (getCurrentParams().getLayout() != newLayout);
+	bool layoutChanged = (getLayout() != newLayout);
 	if (getMe()->isAdmin()) {
 		return Conference::update(newParameters);
 	} else if (layoutChanged) {

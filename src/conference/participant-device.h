@@ -94,6 +94,9 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
+	void setLayout(const ConferenceLayout l) { mLayout = l; };
+	ConferenceLayout getLayout() const { return mLayout; };
+
 	// Media getters and setters
 	LinphoneMediaDirection getAudioDirection() const;
 	LinphoneMediaDirection getVideoDirection() const;
@@ -123,6 +126,7 @@ private:
 	std::string mLabel;
 	std::string mCapabilityDescriptor;
 	std::shared_ptr<CallSession> mSession;
+	ConferenceLayout mLayout = ConferenceLayout::None;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;

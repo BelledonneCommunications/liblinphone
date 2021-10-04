@@ -142,12 +142,20 @@ bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls)
 	return soFarSoGood;
 }
 
+const ConferenceLayout & Conference::getLayout() const {
+	return confParams->getLayout();
+}
+
+void Conference::setLayout(const ConferenceLayout layout) {
+	confParams->setLayout(layout);
+}
+
 const ConferenceAddress & Conference::getConferenceAddress () const {
 	return confParams->getConferenceAddress();
 }
 
 void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
-	return confParams->setConferenceAddress(conferenceAddress);
+	confParams->setConferenceAddress(conferenceAddress);
 }
 
 shared_ptr<Participant> Conference::getMe () const {
@@ -198,7 +206,9 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 		const MediaSessionParams * meParams = meSession->getMediaParams();
 		MediaSessionParams *clonedParams = meParams->clone();
 
-		std::string subject(std::string("Conference layout changed to ") + ((newLayout == ConferenceParams::Layout::ActiveSpeaker) ? "speaker" : "mosaic"));
+		
+
+		std::string subject(std::string("Conference layout changed to ") + newLayout);
 
 // TODO Use UPDATE instead of DEFAULT
 		return meSession->update(clonedParams, CallSession::UpdateMethod::Default, false, subject);

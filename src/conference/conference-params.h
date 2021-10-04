@@ -42,15 +42,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
 	public:
-		/**
-		 * Conference layout
-		 */
-		enum class Layout{
-			None = LinphoneConferenceLayoutNone,                   /**< None - participant who speaks is prominently displayed in the center of the screen */
-			ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
-			Grid = LinphoneConferenceLayoutGrid,                   /**< Grid - each participant is given an equal sized image size */
-		};
-
 		ConferenceParams(const ConferenceParams& params);
 		ConferenceParams(const LinphoneCore *core = NULL);
 
@@ -85,8 +76,8 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
 		const IdentityAddress &getMe() const { return m_me; };
 
-		void setLayout(const Layout l) { m_layout = l; };
-		Layout getLayout() const { return m_layout; };
+		void setLayout(const ConferenceLayout l) { m_layout = l; };
+		const ConferenceLayout & getLayout() const { return m_layout; };
 
 		void setProxyCfg(LinphoneProxyConfig * p) { m_proxyCfg = p; };
 		LinphoneProxyConfig * getProxyCfg() const { return m_proxyCfg; };
@@ -98,27 +89,12 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool m_localParticipantEnabled = true;
 		bool m_allowOneParticipantConference = false;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		Layout m_layout = Layout::Grid;
+		ConferenceLayout m_layout = ConferenceLayout::None;
 		Address m_factoryAddress = Address();
 		std::string m_subject = "";
 		IdentityAddress m_me = IdentityAddress();
 		LinphoneProxyConfig * m_proxyCfg = nullptr;
 };
-
-inline std::ostream & operator << (std::ostream & str, ConferenceParams::Layout layout){
-	switch (layout) {
-		case ConferenceParams::Layout::None:
-			str << "Legacy";
-			break;
-		case ConferenceParams::Layout::Grid:
-			str << "Grid";
-			break;
-		case ConferenceParams::Layout::ActiveSpeaker:
-			str << "ActiveSpeaker";
-			break;
-	}
-	return str;
-}
 
 LINPHONE_END_NAMESPACE
 

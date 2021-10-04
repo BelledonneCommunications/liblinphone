@@ -116,6 +116,10 @@ public:
 	const std::string &getUsername () const;
 	void setUsername (const std::string &username);
 
+	const ConferenceLayout & getLayout() const;
+	void setLayout(const ConferenceLayout layout);
+
+
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
 

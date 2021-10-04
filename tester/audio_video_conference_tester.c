@@ -8802,6 +8802,7 @@ static void conference_mix_created_by_merging_video_calls_base (LinphoneConferen
 				BC_ASSERT_TRUE(linphone_conference_is_in(conference));
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),(no_parts - (linphone_conference_is_in(conf) ? 0 : 1)), int, "%d");
 			}
+			BC_ASSERT_TRUE(linphone_conference_get_layout(conference) == layout);
 
 			const LinphoneConferenceParams * current_remote_conf_params = linphone_conference_get_current_params(conference);
 			BC_ASSERT_PTR_NOT_NULL(current_remote_conf_params);
