@@ -880,6 +880,13 @@ void ChatMessagePrivate::handleAutoDownload() {
 					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
 					|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
 						string filepath = downloadPath + ftc->getFileName();
+						int prefix = 1;
+						while (bctbx_file_exist(filepath.c_str()) == 0) {
+							std::ostringstream sstr;
+							sstr << downloadPath << prefix << "_" << ftc->getFileName();
+							filepath = sstr.str();
+							prefix += 1;
+						}
 						lInfo() << "Automatically downloading file to " << filepath;
 						ftc->setFilePath(filepath);
 						setAutoFileTransferDownloadInProgress(true);

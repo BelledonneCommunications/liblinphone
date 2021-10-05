@@ -1333,6 +1333,75 @@ static void transfer_message_auto_download_3(void) {
 	transfer_message_base(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, 1, FALSE, FALSE);
 }
 
+static void transfer_message_auto_download_existing_file(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
+	LinphoneChatRoom* chat_room;
+	LinphoneChatMessage* msg;
+	const char *filepath = "sounds/sintel_trailer_opus_h264.mkv";
+	const char *first_received_file_name = NULL;
+
+	/* Globally configure an http file transfer server. */
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	/* create a chatroom on pauline's side */
+	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+
+	/* create a file transfer msg */
+	msg = create_file_transfer_message_from_file(chat_room, filepath);
+	linphone_chat_message_send(msg);
+	
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
+	BC_ASSERT_PTR_NULL(first_received_file_name);
+		
+	if (marie->stat.last_received_chat_message) {
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
+		BC_ASSERT_PTR_NOT_NULL(contents);
+		BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
+		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+		BC_ASSERT_PTR_NOT_NULL(content);
+		first_received_file_name = linphone_content_get_file_path(content);
+	}
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+	BC_ASSERT_PTR_NOT_NULL(first_received_file_name);
+	
+	linphone_chat_message_unref(msg);
+	msg = create_file_transfer_message_from_file(chat_room, filepath);
+	linphone_chat_message_send(msg);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000));
+	if (marie->stat.last_received_chat_message) {
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
+		BC_ASSERT_PTR_NOT_NULL(contents);
+		BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
+		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+		BC_ASSERT_PTR_NOT_NULL(content);
+		BC_ASSERT_STRING_NOT_EQUAL(first_received_file_name, linphone_content_get_file_path(content));
+	}
+
+	linphone_chat_message_unref(msg);
+
+	// Give some time for IMDN's 200 OK to be received so it doesn't leak
+	wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void transfer_message_from_history(void) {
 	transfer_message_base(FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, -1, FALSE, FALSE);
 }
@@ -3753,6 +3822,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message auto download", transfer_message_auto_download),
 	TEST_NO_TAG("Transfer message auto download 2", transfer_message_auto_download_2),
 	TEST_NO_TAG("Transfer message auto download enabled but file too large", transfer_message_auto_download_3),
+	TEST_NO_TAG("Transfer message auto download existing file", transfer_message_auto_download_existing_file),
 	TEST_NO_TAG("Transfer message from history", transfer_message_from_history),
 	TEST_NO_TAG("Transfer message with http proxy", file_transfer_with_http_proxy),
 	TEST_NO_TAG("Transfer message with upload io error", transfer_message_with_upload_io_error),
