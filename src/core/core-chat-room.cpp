@@ -771,21 +771,19 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddress &peerAddress) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddress &localAddress, const IdentityAddress &peerAddress) {
 	L_D();
 
-	list<shared_ptr<AbstractChatRoom>> chatRooms = findChatRooms(peerAddress);
-	if (!chatRooms.empty()) {
-		shared_ptr<AbstractChatRoom> ret = chatRooms.front();
-		return ret;
-	}
+	shared_ptr<AbstractChatRoom> chatRoom = findOneToOneChatRoom(localAddress, peerAddress, true, false, false);
+	if(chatRoom)
+		return chatRoom;
 
 	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
 	if (d->basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
-	shared_ptr<AbstractChatRoom> chatRoom = d->createBasicChatRoom(
-	       ConferenceId(peerAddress, d->getDefaultLocalAddress(&peerAddress, false)),
+	chatRoom = d->createBasicChatRoom(
+	       ConferenceId(peerAddress, (localAddress.isValid()?localAddress : d->getDefaultLocalAddress(&peerAddress, false) )),
 	       capabilities,
 	       ChatRoomParams::fromCapabilities(capabilities)
 	);
@@ -795,13 +793,18 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const string &peerAddress) {
-	Address address(interpretUrl(peerAddress));
-	if (!address.isValid()) {
-		lError() << "Cannot make a valid address with: `" << peerAddress << "`.";
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const std::string& localAddressUri, const std::string &peerAddressUri) {
+	Address peerAddress(interpretUrl(peerAddressUri));
+	if (!peerAddress.isValid()) {
+		lError() << "Cannot make a valid address with: `" << peerAddressUri << "`.";
 		return nullptr;
 	}
-	return getOrCreateBasicChatRoom(address);
+	Address localAddress(interpretUrl(localAddressUri));
+	if (!localAddress.isValid()) {
+		lError() << "Cannot make a valid address with: `" << localAddressUri << "`.";
+		return nullptr;
+	}
+	return getOrCreateBasicChatRoom(localAddress, peerAddress);
 }
 
 void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
