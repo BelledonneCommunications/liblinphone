@@ -481,6 +481,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		 peerDeviceStatus = limeManager->decrypt(localDeviceId, recipientUserId, senderDeviceId, decodedCipherHeader, decodedCipherMessage, plainMessage);
 	} catch (const exception &e) {
 		lError() << e.what() << " while decrypting message";
+		peerDeviceStatus = lime::PeerDeviceStatus::fail;
 	}
 
 	if (peerDeviceStatus == lime::PeerDeviceStatus::fail) {
