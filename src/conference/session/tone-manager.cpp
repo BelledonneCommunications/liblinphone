@@ -236,6 +236,8 @@ void ToneManager::linphoneCoreStartDtmfStream() {
 
 	/*make sure ring stream is started*/
 	getAudioResource(ToneGenerator, lc->sound_conf.ring_sndcard, true);
+
+	mDtmfStreamStarted = true;
 }
 
 void ToneManager::linphoneCoreStopRinging() {
@@ -245,7 +247,11 @@ void ToneManager::linphoneCoreStopRinging() {
 
 void ToneManager::linphoneCoreStopDtmfStream() {
 	lInfo() << "[ToneManager] " << __func__;
+	if (!mDtmfStreamStarted) return;
+
 	doStopTone();
+
+	mDtmfStreamStarted = false;
 }
 
 // ---------------------------------------------------
