@@ -73,6 +73,7 @@ bool Conference::tryAddMeDevice() {
 			char label[Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
 			meDev->setLabel(label);
+			meDev->setSession(me->getSession());
 
 			return true;
 		}
@@ -209,7 +210,7 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 	bool layoutChanged = (confParams) && (getLayout() != newLayout);
 	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
 	if (layoutChanged) {
-		const auto & meSession = static_pointer_cast<MediaSession>(getMe()->getSession());
+		const auto & meSession = static_pointer_cast<MediaSession>(getMainSession());
 		const MediaSessionParams * meParams = meSession->getMediaParams();
 		MediaSessionParams *clonedParams = meParams->clone();
 

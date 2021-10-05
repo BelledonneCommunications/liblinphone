@@ -36,6 +36,7 @@ class StreamsGroup;
 
 namespace MediaConference {
 	class Conference;
+	class RemoteConference;
 }
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {

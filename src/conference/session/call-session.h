@@ -51,6 +51,7 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class ParticipantDevice;
 
 	friend class MediaConference::LocalConference;
+	friend class MediaConference::RemoteConference;
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
 
