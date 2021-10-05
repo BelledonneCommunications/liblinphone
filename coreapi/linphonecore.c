@@ -7197,7 +7197,7 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	lc->msevq=NULL;
 
 	linphone_core_stop_ringing(lc);
-	linphone_core_stop_dtmf_stream(lc);
+	linphone_core_stop_tone_manager(lc);
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 #if TARGET_OS_IPHONE
@@ -7666,6 +7666,10 @@ void linphone_core_stop_ringing(LinphoneCore* lc) {
 
 void linphone_core_stop_dtmf_stream(LinphoneCore* lc) {
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStopDtmfStream();
+}
+
+void linphone_core_stop_tone_manager(LinphoneCore* lc) {
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->stop();
 }
 
 int linphone_core_get_max_calls(LinphoneCore *lc) {
