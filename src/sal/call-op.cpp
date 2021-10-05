@@ -1834,7 +1834,10 @@ const char *SalCallOp::getLocalTag () {
 	
 }
 const char *SalCallOp::getRemoteTag () {
-	return mDialog?belle_sip_dialog_get_remote_tag(mDialog):"";
+	if (mDialog && belle_sip_dialog_get_remote_tag(mDialog) != NULL)
+		return belle_sip_dialog_get_remote_tag(mDialog);
+	else
+		return "";
 }
 
 void SalCallOp::setSdpHandling (SalOpSDPHandling handling) {
