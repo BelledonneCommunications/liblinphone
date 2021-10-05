@@ -41,8 +41,10 @@ LINPHONE_BEGIN_NAMESPACE
 // =============================================================================
 
 int CallSessionPrivate::computeDuration () const {
-	if (log->connected_date_time == 0)
-		return 0;
+	if (log->connected_date_time == 0) {
+		if (log->start_date_time == 0) return 0; 
+		return (int)(ms_time(nullptr) - log->start_date_time);
+	}
 	return (int)(ms_time(nullptr) - log->connected_date_time);
 }
 
