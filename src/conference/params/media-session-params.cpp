@@ -590,7 +590,7 @@ void MediaSessionParams::enableRecordAware(bool value) {
 	L_D();
 	d->recordAware = value;
 
-	if (d->recordAware) {
+	if (d->recordAware && d->recordState == SalMediaRecordNone) {
 		// If activated set to off to offer it in sdp
 		d->recordState = SalMediaRecordOff;
 	}

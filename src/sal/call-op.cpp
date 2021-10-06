@@ -1482,6 +1482,9 @@ int SalCallOp::update (const string &subject, bool noUserConsent, bool withSDP, 
 	}
 	if (update) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), belle_sip_header_create("Subject", subject.c_str()));
+		if (mRoot->mSupportedHeader) {
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), mRoot->mSupportedHeader);
+		}
 		fillSessionExpiresHeaders(update, BELLE_SIP_HEADER_SESSION_EXPIRES_UAC, delta);
 		if (withSDP) fillInvite(update);
 		return sendRequestWithContact(update, true);
