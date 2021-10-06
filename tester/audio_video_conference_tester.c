@@ -1229,7 +1229,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 	bctbx_list_free(lcs);
 }
 
-static void simple_conference_with_user_defined_layout(const LinphoneConferenceLayout layout, bool_t local_change_layout, bool_t remote_change_layout) {
+static void simple_conference_with_user_defined_layout(const LinphoneConferenceLayout layout, bool_t local_change_layout, bool_t remote_change_layout, bool_t enable_local_participant) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -1286,8 +1286,9 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	//marie creates the conference
+	//Marie creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_local_participant_enabled(conf_params, enable_local_participant);
 	linphone_conference_params_set_one_participant_conference_enabled(conf_params, TRUE);
 	linphone_conference_params_set_layout(conf_params, layout);
 	linphone_conference_params_set_video_enabled(conf_params, TRUE);
@@ -1295,8 +1296,8 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);
 
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 
 	add_calls_to_local_conference(lcs, marie, NULL, participants, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -1361,6 +1362,7 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 			LinphoneConferenceLayout remote_conf_layout = linphone_conference_params_get_layout(remote_conf_params);
 
 			conf_params = linphone_conference_params_clone (remote_conf_params);
+ms_message("%s -- DEBUG DEBUG remote conference layout %0d - grid %0d active speaker %0d\n", __func__, remote_conf_layout, LinphoneConferenceLayoutGrid, LinphoneConferenceLayoutActiveSpeaker);
 			LinphoneConferenceLayout new_layout = ((remote_conf_layout == LinphoneConferenceLayoutGrid) ? LinphoneConferenceLayoutActiveSpeaker : LinphoneConferenceLayoutGrid);
 			linphone_conference_params_set_layout(conf_params, new_layout);
 			linphone_conference_update_params(conference, conf_params);
@@ -1444,22 +1446,34 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 }
 
 static void simple_conference_with_grid_layout(void) {
-	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, FALSE);
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE);
+}
+
+static void simple_conference_with_grid_layout_and_local_participant_disabled(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE);
 }
 
 static void simple_conference_with_active_speaker_layout(void) {
-	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE);
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, TRUE);
+}
+
+static void simple_conference_with_active_speaker_layout_and_local_participant_disabled(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE);
 }
 
 /*
 static void simple_conference_with_layout_change_local_participant(void) {
-	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, TRUE, FALSE);
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, TRUE, FALSE, TRUE);
 
 }
 */
 
 static void simple_conference_with_layout_change_remote_participant(void) {
-	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, TRUE);
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, TRUE, TRUE);
+}
+
+static void simple_conference_with_layout_change_remote_participant_and_local_participant_disabled(void) {
+	simple_conference_with_user_defined_layout(LinphoneConferenceLayoutGrid, FALSE, TRUE, FALSE);
 }
 
 static void simple_conference_with_one_participant(void) {
@@ -2423,7 +2437,7 @@ static void conference_with_event_pkg_hang_up_call_on_hold(void) {
 	destroy_mgr_in_conference(laure);
 }
 
-static void eject_from_3_participants_conference(LinphoneCoreManager *marie, LinphoneCoreManager *pauline, LinphoneCoreManager *laure, LinphoneCoreManager *focus) {
+static void eject_from_3_participants_conference(LinphoneCoreManager *marie, LinphoneCoreManager *pauline, LinphoneCoreManager *laure, LinphoneCoreManager *focus, const LinphoneConferenceLayout layout) {
 	stats initial_marie_stat;
 	stats initial_pauline_stat;
 	stats initial_laure_stat;
@@ -2432,6 +2446,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall* marie_call_laure;
 	bool_t is_remote_conf;
+	LinphoneConference *conf = NULL;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -2453,6 +2468,17 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	marie_call_laure=linphone_core_get_current_call(marie->lc);
 
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
+
+	//Marie creates the conference
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_layout(conf_params, layout);
+	linphone_conference_params_set_video_enabled(conf_params, (layout != LinphoneConferenceLayoutNone));
+	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
+	BC_ASSERT_PTR_NOT_NULL(conf);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 
 	if(!is_remote_conf) {
 		bctbx_list_t* new_participants=bctbx_list_append(NULL,laure);
@@ -2550,15 +2576,44 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	}
 end:
 	bctbx_list_free(lcs);
+	if (conf) {
+		linphone_conference_unref(conf);
+	}
 }
 
-static void eject_from_3_participants_local_conference(void) {
+static void eject_from_3_participants_local_conference_legacy_layout(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
-	eject_from_3_participants_conference(marie, pauline, laure, NULL);
+	eject_from_3_participants_conference(marie, pauline, laure, NULL, LinphoneConferenceLayoutNone);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+}
+
+static void eject_from_3_participants_local_conference_grid_layout(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+
+	eject_from_3_participants_conference(marie, pauline, laure, NULL, LinphoneConferenceLayoutGrid);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+}
+
+static void eject_from_3_participants_local_conference_active_speaker_layout(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+
+	eject_from_3_participants_conference(marie, pauline, laure, NULL, LinphoneConferenceLayoutActiveSpeaker);
 
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
@@ -2705,7 +2760,7 @@ static void eject_from_4_participants_local_conference_call_terminated_one_by_on
 	destroy_mgr_in_conference(michelle);
 }
 
-static void eject_from_4_participants_conference(void) {
+static void eject_from_4_participants_conference_base(const LinphoneConferenceLayout layout) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -2717,6 +2772,7 @@ static void eject_from_4_participants_conference(void) {
 	LinphoneCall* marie_call_laure;
 	LinphoneCall* marie_call_michelle;
 	LinphoneCall* michelle_called_by_marie;
+	LinphoneConference * conf = NULL;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -2739,6 +2795,17 @@ static void eject_from_4_participants_conference(void) {
 	marie_call_laure=linphone_core_get_current_call(marie->lc);
 
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
+
+	//Marie creates the conference
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_layout(conf_params, layout);
+	linphone_conference_params_set_video_enabled(conf_params, (layout != LinphoneConferenceLayoutNone));
+	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
+	BC_ASSERT_PTR_NOT_NULL(conf);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,laure);
@@ -2792,8 +2859,24 @@ end:
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
 	destroy_mgr_in_conference(marie);
+	if (conf) {
+		linphone_conference_unref(conf);
+	}
 	bctbx_list_free(lcs);
 }
+
+static void eject_from_4_participants_conference_legacy_layout(void) {
+	eject_from_4_participants_conference_base(LinphoneConferenceLayoutNone);
+}
+
+static void eject_from_4_participants_conference_grid_layout(void) {
+	eject_from_4_participants_conference_base(LinphoneConferenceLayoutGrid);
+}
+
+static void eject_from_4_participants_conference_active_speaker_layout(void) {
+	eject_from_4_participants_conference_base(LinphoneConferenceLayoutActiveSpeaker);
+}
+
 
 static void participants_exit_conference_after_pausing(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -7710,7 +7793,7 @@ void eject_from_3_participants_remote_conference(void) {
 	linphone_proxy_config_set_route(laure_proxy_config, laure_proxy_uri);
 	linphone_proxy_config_done(laure_proxy_config);
 
-	eject_from_3_participants_conference(marie, pauline, laure, (LinphoneCoreManager *)focus);
+	eject_from_3_participants_conference(marie, pauline, laure, (LinphoneCoreManager *)focus, LinphoneConferenceLayoutNone);
 
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
@@ -8871,8 +8954,8 @@ test_t audio_conference_basic_tests[] = {
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
 	TEST_NO_TAG("Simple conference with no conversion to call", simple_conference_not_converted_to_call),
-	TEST_NO_TAG("Eject from 3 participants conference", eject_from_3_participants_local_conference),
-	TEST_NO_TAG("Eject from 4 participants conference", eject_from_4_participants_conference),
+	TEST_NO_TAG("Eject from 3 participants conference", eject_from_3_participants_local_conference_legacy_layout),
+	TEST_NO_TAG("Eject from 4 participants conference", eject_from_4_participants_conference_legacy_layout),
 	TEST_NO_TAG("Eject from 4 participants conference (call terminated one by one)", eject_from_4_participants_local_conference_call_terminated_one_by_one),
 	TEST_NO_TAG("Conference without conference event package pauses and terminate call", conference_without_event_pkg_hang_up_call_on_hold),
 	TEST_NO_TAG("Conference with conference event package pauses and terminate call", conference_with_event_pkg_hang_up_call_on_hold),
@@ -8933,11 +9016,13 @@ test_t audio_conference_advanced_tests[] = {
 };
 
 test_t video_conference_tests[] = {
+	TEST_NO_TAG("Simple conference with active speaker layout and local participant disabled", simple_conference_with_active_speaker_layout_and_local_participant_disabled),
+	TEST_NO_TAG("Simple conference with grid layout and local participant disabled", simple_conference_with_grid_layout_and_local_participant_disabled),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 //	TEST_NO_TAG("Simple conference with layout change of local participant", simple_conference_with_layout_change_local_participant),
 	TEST_NO_TAG("Simple conference with layout change of remote participant", simple_conference_with_layout_change_remote_participant),
+	TEST_NO_TAG("Simple conference with layout change of remote participant and local participant disabled", simple_conference_with_layout_change_remote_participant_and_local_participant_disabled),
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
-	TEST_NO_TAG("Audio conference by merging video calls", audio_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Legacy video conference by merging video calls", legacy_video_conference_created_by_merging_video_calls),
 	TEST_NO_TAG("Video conference by merging video calls with none layout", video_conference_created_by_merging_video_calls_with_none_layout),
 	TEST_NO_TAG("Video conference by merging video calls with none layout and local participant disabled", video_conference_created_by_merging_video_calls_with_none_layout_and_local_participant_disabled),
@@ -8951,22 +9036,10 @@ test_t video_conference_tests[] = {
 //	TEST_NO_TAG("Toggle video settings during conference with automatically accept video policy", toggle_video_settings_during_conference_with_automatically_accept_video_policy),
 //	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
 //	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
-	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
-	TEST_NO_TAG("Back to back conferences with same core", back_to_back_conferences_same_core),
-	TEST_NO_TAG("Try to create second conference with local participant", try_to_create_second_conference_with_local_participant),
-	TEST_NO_TAG("Interleaved conference creation", interleaved_conference_creation),
-	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
-	TEST_NO_TAG("Multiple conferences in server mode", multiple_conferences_in_server_mode),
-	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
-	TEST_ONE_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice, "ICE"),
-	TEST_NO_TAG("Conference with back to back call accept without ICE", conference_with_back_to_back_call_accept_without_ice),
-	TEST_ONE_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice, "ICE"),
-	TEST_NO_TAG("Conference with back to back call invite and accept without ICE", conference_with_back_to_back_call_invite_accept_without_ice),
-//	TEST_ONE_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice, "ICE"),
-	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
-	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
-	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
-	TEST_NO_TAG("Simple conference with volumes", simple_conference_with_volumes)
+	TEST_NO_TAG("Eject from 3 participants conference with grid layout", eject_from_3_participants_local_conference_grid_layout),
+	TEST_NO_TAG("Eject from 4 participants conference with grid layout", eject_from_4_participants_conference_grid_layout),
+	TEST_NO_TAG("Eject from 3 participants conference with active speaker layout", eject_from_3_participants_local_conference_active_speaker_layout),
+	TEST_NO_TAG("Eject from 4 participants conference with active speaker layout", eject_from_4_participants_conference_active_speaker_layout)
 };
 
 test_suite_t audio_conference_basic_test_suite = {"Audio conference (Basic)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

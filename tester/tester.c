@@ -1344,6 +1344,7 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(conf_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 				}
 
+ms_message("%s -- DEBUG DEBUG manager %s\n", __func__, linphone_core_get_identity(m->lc));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateTerminationPending,(participants_initial_stats[idx].number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateTerminated,(participants_initial_stats[idx].number_of_LinphoneConferenceStateTerminated + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateDeleted,(participants_initial_stats[idx].number_of_LinphoneConferenceStateDeleted + 1),5000));
