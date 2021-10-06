@@ -48,6 +48,8 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 
 	friend class MediaConference::LocalConference;
 public:
+	static ConferenceLayout computeConferenceLayout(const std::shared_ptr<SalMediaDescription> & md);
+
 	MediaSession (const std::shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener);
 	~MediaSession ();
 

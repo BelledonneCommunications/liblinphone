@@ -74,8 +74,6 @@ const string MediaSessionPrivate::ecStateStore = ".linphone.ecstate";
 const int MediaSessionPrivate::ecStateMaxLen = 1048576; /* 1Mo */
 
 // =============================================================================
-
-
 void MediaSessionPrivate::setDtlsFingerprint(const std::string &fingerPrint){
 	dtlsCertificateFingerprint = fingerPrint;
 }
@@ -1814,8 +1812,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if (conference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
+		const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
+		if (participantDevice && !localIsOfferer) {
+			participantDevice->setLayout(MediaSession::computeConferenceLayout(op->getRemoteMediaDescription()));
+		}
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
-		confLayout = cppConference->getLayout();
+		confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 		isConferenceLayoutNone = (confLayout == ConferenceLayout::None);
 	}
@@ -1858,8 +1860,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
-		// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
-		const auto remoteContactAddress = q->getRemoteContactAddress();
 		SalStreamDir videoDir = SalStreamInactive;
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
@@ -1887,6 +1887,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto videoStreamIdx = refMd ? ((conference && refMd->findIdxStreamWithContent(mainStreamAttrValue)) ? refMd->findIdxStreamWithContent(mainStreamAttrValue) : refMd->findIdxBestStream(SalVideo)) : -1;
 		SalStreamDescription & videoStream = addStreamToMd(md, videoStreamIdx);
 		fillLocalStreamDescription(videoStream, md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+
+		// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
+		const auto remoteContactAddress = q->getRemoteContactAddress();
+
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & dev = cppConference->findParticipantDevice(*remoteContactAddress);
@@ -3102,6 +3106,19 @@ MediaSession::~MediaSession () {
 }
 
 // -----------------------------------------------------------------------------
+
+ConferenceLayout MediaSession::computeConferenceLayout(const std::shared_ptr<SalMediaDescription> & md) {
+	ConferenceLayout layout = ConferenceLayout::None;
+	if (md->findIdxStreamWithContent("main") != -1) {
+		layout = ConferenceLayout::Grid;
+	} else if (md->findIdxStreamWithContent("speaker") != -1) {
+		layout = ConferenceLayout::ActiveSpeaker;
+	} else {
+		layout = ConferenceLayout::None;
+	}
+lInfo() << __func__ << " DEBUG DEBUG layout " << layout;
+	return layout;
+}
 
 void MediaSession::acceptDefault(){
 	accept();

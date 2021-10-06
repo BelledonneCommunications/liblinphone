@@ -239,6 +239,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				call->setConference(toC());
 				device->setSession(call->getActiveSession());
+				device->setLayout(getLayout());
 				device->setAudioDirection((confParams->audioEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 				device->setVideoDirection((confParams->videoEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 				device->setTextDirection((confParams->chatEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);

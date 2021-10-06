@@ -635,16 +635,9 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	const auto & conference = getCore()->findAudioVideoConference(conferenceId, false);
 
 	if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
-		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 		auto confParams = ConferenceParams::create(getCore()->getCCore());
-		ConferenceLayout confLayout = ConferenceLayout::None;
-		if (rmd->findIdxStreamWithContent("main") != -1) {
-			confLayout = ConferenceLayout::Grid;
-		} else if (rmd->findIdxStreamWithContent("speaker") != -1) {
-			confLayout = ConferenceLayout::ActiveSpeaker;
-		} else {
-			confLayout = ConferenceLayout::None;
-		}
+		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+		const auto confLayout = MediaSession::computeConferenceLayout(rmd);
 		confParams->setLayout(confLayout);
 		// It is expected that the core of the remote conference is the participant one
 		auto remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
