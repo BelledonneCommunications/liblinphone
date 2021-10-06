@@ -578,6 +578,8 @@ void StreamsGroup::computeAndReportBandwidth(){
 		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | cpu: " << stream->getCpuUsage() << "% |" << " RTP : [d="
 			<< linphone_call_stats_get_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
 			<< "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
+		ostr << "\n test   rtp " << stream->getPortConfig().rtpPort << " rtcp " << stream->getPortConfig().rtcpPort;
+		
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
 		if (est_bw > 0.0) ostr << "Est max d=" << est_bw;
 		ostr << " (kbits/sec)" << endl;
