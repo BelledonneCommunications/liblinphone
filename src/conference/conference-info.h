@@ -60,6 +60,8 @@ public:
 
 	const std::string toIcsString () const;
 
+	// Used only by the tester
+	void setCreationTime(time_t time);
 private:
 	LinphoneAddress *mOrganizer = nullptr;
 	bctbx_list_t *mParticipants = nullptr;
@@ -68,6 +70,8 @@ private:
 	int mDuration = 0;
 	std::string mSubject = "";
 	std::string mDescription = "";
+
+	time_t mCreationTime = (time_t) -1;
 };
 
 LINPHONE_END_NAMESPACE

@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 namespace Ics {
 	class ParserPrivate;
 
-	class Parser : public Singleton<Parser> {
+	class LINPHONE_PUBLIC Parser : public Singleton<Parser> {
 		friend class Singleton<Parser>;
 
 	public:
