@@ -896,30 +896,32 @@ void Call::sendVfuRequest () {
 	static_pointer_cast<MediaSession>(getActiveSession())->sendVfuRequest();
 }
 
-void Call::updateForRecordAware(SalMediaRecord state) {
-	if (linphone_core_is_record_aware_enabled(getCore()->getCCore())) {
-		if (getRemoteParams()->recordAwareEnabled()) {
-			if (getState() == CallSession::State::StreamsRunning) {
-				MediaSessionParams params(*getParams());
-				params.setRecordingState(state);
-				static_pointer_cast<MediaSession>(getActiveSession())->update(&params, CallSession::UpdateMethod::Update);
-			} else {
-				lWarning() << "Recording cannot sent an update when the call is not in StreamRunning";
-			}
+void Call::updateRecordState(SalMediaRecord state) {
+	if (linphone_core_is_record_aware_enabled(getCore()->getCCore())
+		&& getRemoteParams()->recordAwareEnabled()) {
+		if (getState() == CallSession::State::StreamsRunning) {
+			MediaSessionParams params(*getParams());
+			params.setRecordingState(state);
+			static_pointer_cast<MediaSession>(getActiveSession())->update(&params, CallSession::UpdateMethod::Update);
+		} else {
+			lWarning() << "Recording cannot sent an update when the call is not in StreamRunning";
 		}
+	} else {
+		MediaSessionParams *params = new MediaSessionParams(*getParams());
+		params->setRecordingState(state);
+		static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setParams(params);
 	}
 }
 
 void Call::startRecording () {
-	updateForRecordAware(SalMediaRecordOn);
-
-	static_pointer_cast<MediaSession>(getActiveSession())->startRecording();
+	if (static_pointer_cast<MediaSession>(getActiveSession())->startRecording()) {
+		updateRecordState(SalMediaRecordOn);
+	}
 }
 
 void Call::stopRecording () {
-	updateForRecordAware(SalMediaRecordOff);
-
 	static_pointer_cast<MediaSession>(getActiveSession())->stopRecording();
+	updateRecordState(SalMediaRecordOff);
 }
 
 bool Call::isRecording () {

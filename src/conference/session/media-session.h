@@ -68,7 +68,7 @@ public:
 	void sendVfuRequest ();
 	void startIncomingNotification (bool notifyRinging = true) override;
 	int startInvite (const Address *destination, const std::string &subject = "", const Content *content = nullptr) override;
-	void startRecording ();
+	bool startRecording ();
 	void stopRecording ();
 	bool isRecording ();
 	void terminateBecauseOfLostMedia ();

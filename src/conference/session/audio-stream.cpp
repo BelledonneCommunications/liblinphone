@@ -717,17 +717,23 @@ void MS2AudioStream::sendDtmf(int dtmf){
 	audio_stream_send_dtmf(mStream, (char)dtmf);
 }
 
-void MS2AudioStream::startRecording(){
+bool MS2AudioStream::startRecording(){
 	if (getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		lError() << "MS2AudioStream::startRecording(): no output file specified. Use MediaSessionParams::setRecordFilePath()";
-		return;
+		return false;
 	}
 	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()){
 		lWarning() << "MS2AudioStream::startRecording(): not supported in conference.";
-		return;
+		return false;
 	}
-	if (media_stream_get_state(&mStream->ms) == MSStreamStarted) audio_stream_mixed_record_start(mStream);
-	mRecordActive = true;
+	if (media_stream_get_state(&mStream->ms) == MSStreamStarted) {
+		if (audio_stream_mixed_record_start(mStream) != -1) {
+			mRecordActive = true;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 void MS2AudioStream::stopRecording(){

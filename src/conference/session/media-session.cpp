@@ -3034,14 +3034,16 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 	return result;
 }
 
-void MediaSession::startRecording () {
+bool MediaSession::startRecording () {
 	L_D();
 	if (d->getParams()->getRecordFilePath().empty()) {
 		lError() << "MediaSession::startRecording(): no output file specified. Use MediaSessionParams::setRecordFilePath()";
-		return;
+		return false;
 	}
 	AudioControlInterface * i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	if (i != nullptr) i->startRecording();
+	if (i != nullptr) return i->startRecording();
+
+	return false;
 }
 
 void MediaSession::stopRecording () {

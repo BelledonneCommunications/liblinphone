@@ -5569,13 +5569,15 @@ static void on_remote_recording(LinphoneCall *call, bool_t recording) {
 	}
 }
 
-static void call_with_record_aware_base(bool_t both_recording) {
+static void call_recording_with_record_aware_base(bool_t record_aware, bool_t both_recording) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"));
 	char *filepath_pauline = NULL;
 
-	linphone_core_set_record_aware_enabled(marie->lc, TRUE);
-	linphone_core_set_record_aware_enabled(pauline->lc, TRUE);
+	if (record_aware) {
+		linphone_core_set_record_aware_enabled(marie->lc, TRUE);
+		linphone_core_set_record_aware_enabled(pauline->lc, TRUE);
+	}
 
 	LinphoneCallParams *marieParams = linphone_core_create_call_params(marie->lc, NULL);
 	LinphoneCallParams *paulineParams = NULL;
@@ -5612,7 +5614,7 @@ static void call_with_record_aware_base(bool_t both_recording) {
 	linphone_call_cbs_unref(call_cbs);
 
 	if (both_recording) {
-		// Set pauline remote recording callback
+		// Set marie remote recording callback
 		call_cbs = linphone_factory_create_call_cbs(linphone_factory_get());
 		linphone_call_cbs_set_remote_recording(call_cbs, on_remote_recording);
 		linphone_call_add_callbacks(marie_call, call_cbs);
@@ -5630,45 +5632,55 @@ static void call_with_record_aware_base(bool_t both_recording) {
 	linphone_call_start_recording(marie_call);
 	BC_ASSERT_TRUE(linphone_call_is_recording(marie_call));
 
-	// The recording start should trigger and update
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+	if (record_aware) {
+		// The recording start should trigger and update
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 
-	BC_ASSERT_TRUE(linphone_call_params_is_recording(linphone_call_get_remote_params(pauline_call)));
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneRemoteRecordingEnabled, 1, int, "%d");
+		BC_ASSERT_TRUE(linphone_call_params_is_recording(linphone_call_get_remote_params(pauline_call)));
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneRemoteRecordingEnabled, 1, int, "%d");
+	}
 
 	linphone_call_stop_recording(marie_call);
+	BC_ASSERT_FALSE(linphone_call_is_recording(marie_call));
 
-	// Same when stopping the recording
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
-	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+	if (record_aware) {
+		// Same when stopping the recording
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
 
-	BC_ASSERT_FALSE(linphone_call_params_is_recording(linphone_call_get_remote_params(pauline_call)));
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneRemoteRecordingDisabled, 1, int, "%d");
+		BC_ASSERT_FALSE(linphone_call_params_is_recording(linphone_call_get_remote_params(pauline_call)));
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneRemoteRecordingDisabled, 1, int, "%d");
+	}
 
 	if (both_recording) {
 		linphone_call_start_recording(pauline_call);
 		BC_ASSERT_TRUE(linphone_call_is_recording(pauline_call));
 
-		// The recording start should trigger and update
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 4));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
+		if (record_aware) {
+			// The recording start should trigger and update
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 4));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
 
-		BC_ASSERT_TRUE(linphone_call_params_is_recording(linphone_call_get_remote_params(marie_call)));
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRemoteRecordingEnabled, 1, int, "%d");
+			BC_ASSERT_TRUE(linphone_call_params_is_recording(linphone_call_get_remote_params(marie_call)));
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRemoteRecordingEnabled, 1, int, "%d");
+		}
 
 		linphone_call_stop_recording(pauline_call);
+		BC_ASSERT_FALSE(linphone_call_is_recording(pauline_call));
 
-		// Same when stopping the recording
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 2));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 5));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 5));
+		if (record_aware) {
+			// Same when stopping the recording
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 5));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 5));
 
-		BC_ASSERT_FALSE(linphone_call_params_is_recording(linphone_call_get_remote_params(marie_call)));
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRemoteRecordingDisabled, 1, int, "%d");
+			BC_ASSERT_FALSE(linphone_call_params_is_recording(linphone_call_get_remote_params(marie_call)));
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRemoteRecordingDisabled, 1, int, "%d");
+		}
 
 		end_call(marie, pauline);
 
@@ -5687,12 +5699,16 @@ static void call_with_record_aware_base(bool_t both_recording) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_with_record_aware(void) {
-	call_with_record_aware_base(FALSE);
+static void call_recording_with_record_aware(void) {
+	call_recording_with_record_aware_base(TRUE, FALSE);
 }
 
-static void call_with_record_aware_both_recording(void) {
-	call_with_record_aware_base(TRUE);
+static void call_recording_with_record_aware_both_recording(void) {
+	call_recording_with_record_aware_base(TRUE, TRUE);
+}
+
+static void call_recording_without_record_aware(void) {
+	call_recording_with_record_aware_base(FALSE, FALSE);
 }
 
 test_t call_tests[] = {
@@ -5773,8 +5789,9 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
 	TEST_NO_TAG("Async core stop", async_core_stop_after_call),
 	TEST_NO_TAG("Call AVPF mismatch", call_avpf_mismatch),
-	TEST_NO_TAG("Call with record-aware", call_with_record_aware),
-	TEST_NO_TAG("Call with record-aware both recording", call_with_record_aware_both_recording),
+	TEST_NO_TAG("Call recording without record-aware", call_recording_without_record_aware),
+	TEST_NO_TAG("Call recording with record-aware", call_recording_with_record_aware),
+	TEST_NO_TAG("Call recording with record-aware both recording", call_recording_with_record_aware_both_recording),
 };
 
 test_t call_not_established_tests[] = {

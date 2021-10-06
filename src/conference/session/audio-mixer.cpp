@@ -173,16 +173,16 @@ bool MS2AudioMixer::speakerEnabled()const{
 	return false;
 }
 
-void MS2AudioMixer::startRecording(){
+bool MS2AudioMixer::startRecording(){
 	if (mRecordPath.empty()){
 		lError() << "MS2AudioMixer:startRecording(): no path set.";
-		return;
+		return false;
 	}
 	if (!mRecordEndpoint) {
 		mRecordEndpoint = ms_audio_endpoint_new_recorder(getSession().getCCore()->factory, mRecordPath.c_str());
 		ms_audio_conference_add_member(mConference, mRecordEndpoint);
 	}
-	ms_audio_recorder_endpoint_start(mRecordEndpoint);
+	return ms_audio_recorder_endpoint_start(mRecordEndpoint) != -1;
 }
 
 void MS2AudioMixer::stopRecording(){
