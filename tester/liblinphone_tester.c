@@ -37,7 +37,8 @@ static const char* liblinphone_helper =
 		"\t\t\t--auth-domain <test auth domain>	(deprecated)\n"
 		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names or 'none' for no overriding (default: tester_hosts)> (deprecated)\n"
 		"\t\t\t--max-failed  max number of failed tests until program exit with return code 1. Current default is 2"
-		;
+		"\t\t\t--max-cpucount max number of cpu declared at mediastremaer2 level Current default is 2"
+;
 
 typedef struct _MireData{
 	MSVideoSize vsize;
@@ -143,6 +144,9 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "--max-failed")==0) {
 			CHECK_ARG("--max-failed", ++i, argc);
 			liblinphone_max_failed_tests_threshold=atoi(argv[i]);
+		} else if (strcmp(argv[i], "--max-cpucount")==0) {
+			CHECK_ARG("--max-cpucount", ++i, argc);
+			liblinphone_tester_max_cpu_count=atoi(argv[i]);
 		} else {
 			int bret = bc_tester_parse_args(argc, argv, i);
 			if (bret>0) {
