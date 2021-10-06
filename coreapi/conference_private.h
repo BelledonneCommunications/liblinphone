@@ -335,6 +335,8 @@ public:
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 private:
+	std::shared_ptr<CallSession> focusSession;
+
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();
@@ -345,8 +347,6 @@ private:
 
 	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
-
-	void addMeDevice(const std::shared_ptr<Call> & call);
 
 	LinphoneCoreCbs *m_coreCbs;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;

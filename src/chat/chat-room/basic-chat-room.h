@@ -51,6 +51,7 @@ public:
 	std::shared_ptr<Participant> getMe () const override;
 	int getParticipantCount () const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
+	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 

@@ -168,7 +168,13 @@ public:
 	* @return \std::list<std::shared_ptr<Participant>>
 	*/
 	virtual const std::list<std::shared_ptr<Participant>> &getParticipants () const = 0;
-	
+
+	/*
+	* Get the list of participant devices in this conference including ourself if in conference.
+	* @return \std::list<std::shared_ptr<ParticipantDevice>>
+	*/
+	virtual const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const = 0;
+
 	/*
 	* Get the participant representing myself in this Conference (I.E local participant).<br>
 	*Local participant behavior depends on weither the focus is local or remote. <br>

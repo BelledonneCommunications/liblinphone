@@ -54,6 +54,10 @@ LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (co
 	return (LinphoneChatRoomSecurityLevel)(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
 }
 
+LinphoneConferenceLayout linphone_participant_device_get_layout (const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneConferenceLayout)(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getLayout());
+}
+
 const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getName().c_str();
 }

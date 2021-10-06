@@ -1887,7 +1887,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto videoStreamIdx = refMd ? ((conference && refMd->findIdxStreamWithContent(mainStreamAttrValue)) ? refMd->findIdxStreamWithContent(mainStreamAttrValue) : refMd->findIdxBestStream(SalVideo)) : -1;
 		SalStreamDescription & videoStream = addStreamToMd(md, videoStreamIdx);
 		fillLocalStreamDescription(videoStream, md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
-
 		if (conference && isInLocalConference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			const auto & dev = cppConference->findParticipantDevice(*remoteContactAddress);
@@ -1899,10 +1898,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			if (op && remoteContactAddress) {
 				// Check if the request was sent by the focus
 				if (remoteContactAddress->hasParam("isfocus")) {
-					const std::string contentAttrValue = oldVideoStream.getContent();
-					if (!contentAttrValue.empty()) {
-						videoStream.setContent(contentAttrValue);
-					}
+					videoStream.setContent(mainStreamAttrValue);
 				}
 			}
 		}

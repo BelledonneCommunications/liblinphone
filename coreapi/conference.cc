@@ -1407,7 +1407,7 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
-	addMeDevice(focusCall);
+	focusSession = focusCall->getActiveSession();
 
 	setConferenceId(conferenceId);
 
@@ -1427,17 +1427,6 @@ RemoteConference::~RemoteConference () {
 	linphone_core_cbs_unref(m_coreCbs);
 }
 
-void RemoteConference::addMeDevice(const std::shared_ptr<Call> & call) {
-	const auto & session = call->getActiveSession();
-	const auto & remoteAddress = session->getRemoteContactAddress();
-	shared_ptr<ParticipantDevice> device = me->addDevice(*remoteAddress);
-	call->setConference(toC());
-	device->setSession(session);
-	device->setAudioDirection((confParams->audioEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-	device->setVideoDirection((confParams->videoEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-	device->setTextDirection((confParams->chatEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-}
-
 void RemoteConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
 
@@ -1455,7 +1444,7 @@ void RemoteConference::finalizeCreation() {
 }
 
 const std::shared_ptr<CallSession> RemoteConference::getMainSession() const {
-	return (getMe()->getDevices().size() == 0) ? nullptr : getMe()->getDevices().front()->getSession();
+	return focusSession;
 }
 
 void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
@@ -1547,7 +1536,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				linphone_call_params_enable_video(params, confParams->videoEnabled());
 				auto focusCall = Call::toCpp(linphone_core_invite_address_with_params(getCore()->getCCore(), addr, params))->getSharedFromThis();
 				focusCall->setConference(toC());
-				addMeDevice(focusCall);
+				focusSession = focusCall->getActiveSession();
 				m_pendingCalls.push_back(call);
 				callLog = focusCall->getLog();
 				callLog->was_conference = TRUE;

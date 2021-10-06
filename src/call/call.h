@@ -315,7 +315,9 @@ private:
 	void changeSubjectInLocalConference(SalCallOp *op);
 	void terminateConference();
 	void cleanupSessionAndUnrefCObjectCall();
+
 	void updateRecordState(SalMediaRecord state);
+	void createRemoteConference(const std::shared_ptr<CallSession> &session);
 };
 
 LINPHONE_END_NAMESPACE

@@ -212,6 +212,13 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_partic
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 
 /**
+ * Get list of all participant devices of a conference including me if it is in
+ * @param conference A #LinphoneConference @notnil
+ * @return The list of participant devices of the conference. \bctbx_list{LinphoneParticipantDevice} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_device_list(const LinphoneConference *conference);
+
+/**
  * Get list of all participant devices of a conference
  * @param conference A #LinphoneConference @notnil
  * @return The list of participant devices of the conference. \bctbx_list{LinphoneParticipantDevice} @maybenil @tobefreed

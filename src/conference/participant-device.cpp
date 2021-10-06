@@ -63,7 +63,6 @@ bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
 }
 
 shared_ptr<Core> ParticipantDevice::getCore () const {
-lInfo() << __func__ << " DEBUG DEBUG participant " << getParticipant() << " core " << (getParticipant() ? getParticipant()->getCore() : nullptr);
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
 }
 
