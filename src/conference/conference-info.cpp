@@ -145,7 +145,15 @@ const string ConferenceInfo::toIcsString () const {
 
 	cal.addEvent(event);
 
+	if (mCreationTime != (time_t) -1) {
+		cal.setCreationTime(mCreationTime);
+	}
+
 	return cal.asString();
+}
+
+void ConferenceInfo::setCreationTime(time_t time) {
+	mCreationTime = time;
 }
 
 LINPHONE_END_NAMESPACE
