@@ -125,6 +125,8 @@ bool_t liblinphonetester_ipv6 = TRUE;
 const char * liblinphone_tester_ipv6_probing_address = "2a01:e00::2";
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;
+unsigned int liblinphone_tester_max_cpu_count = 2;
+
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with our Freebox v6 when connecting to Ipv6 addresses.
 			It was found that the freebox sometimes block SYN-ACK packets, which prevents connection to be succesful.
 			Thanks to the timeout, it will fallback to IPv4*/
@@ -511,6 +513,8 @@ void linphone_core_manager_configure(LinphoneCoreManager *mgr) {
 	linphone_core_set_user_certificates_path(mgr->lc,bc_tester_get_writable_dir_prefix());
 	/*for now, we need the periodical updates facility to compute bandwidth measurements correctly during tests*/
 	linphone_core_enable_send_call_stats_periodical_updates(mgr->lc, TRUE);
+	//limit cpu core to 2 to facilitate parallel runs.
+	ms_factory_set_cpu_count(linphone_core_get_ms_factory(mgr->lc), liblinphone_tester_max_cpu_count);
 
 	// clean
 	if (filepath) bctbx_free(filepath);
