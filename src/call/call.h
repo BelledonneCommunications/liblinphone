@@ -310,7 +310,7 @@ private:
 	void changeSubjectInLocalConference(SalCallOp *op);
 	void terminateConference();
 	void cleanupSessionAndUnrefCObjectCall();
-	void updateForRecordAware(SalMediaRecord state);
+	void updateRecordState(SalMediaRecord state);
 };
 
 LINPHONE_END_NAMESPACE
