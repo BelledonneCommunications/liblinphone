@@ -551,6 +551,10 @@ void liblinphone_tester_simulate_mire_defunct(MSFilter * filter, bool_t defunct)
 	}
 }
 
+void liblinphone_tester_set_dns_engine_by_default(LinphoneCore * lc) {
+	belle_sip_stack_set_dns_engine(sal_get_stack_impl(linphone_core_get_sal(lc)), BELLE_SIP_DNS_DNS_C); // Make sure we are not using Apple DNS Service during liblinphone tests
+}
+
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
 #if defined(__APPLE__)
 int apple_main (int argc, char *argv[])
