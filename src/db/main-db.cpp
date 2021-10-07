@@ -408,16 +408,17 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		const string &subject = chatRoom->getSubject();
 		const int &flags = chatRoom->hasBeenLeft();
 		bool ephemeralEnabled = chatRoom->ephemeralEnabled();
+		long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
 		*dbSession.getBackendSession() << "INSERT INTO chat_room ("
 		"  peer_sip_address_id, local_sip_address_id, creation_time,"
-		"  last_update_time, capabilities, subject, flags, last_notify_id, ephemeral_enabled"
+		"  last_update_time, capabilities, subject, flags, last_notify_id, ephemeral_enabled, ephemeral_messages_lifetime"
 		") VALUES ("
 		"  :peerSipAddressId, :localSipAddressId, :creationTime,"
-		"  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, :ephemeralEnabled"
+		"  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, :ephemeralEnabled, :ephemeralLifeTime"
 		")",
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags),
-		soci::use(notifyId), soci::use(ephemeralEnabled ? 1:0);
+		soci::use(notifyId), soci::use(ephemeralEnabled ? 1:0), soci::use(ephemeralLifeTime);
 		
 		chatRoomId = dbSession.getLastInsertId();
 	}
