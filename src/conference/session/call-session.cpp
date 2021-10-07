@@ -699,8 +699,6 @@ void CallSessionPrivate::setReleased () {
 		pendingActions.pop();
 	}
 
-	q->getCore()->getPrivate()->getToneManager()->removeSession(q->getSharedFromThis());
-
 	if (listener)
 		listener->onCallSessionSetReleased(q->getSharedFromThis());
 }

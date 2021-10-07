@@ -232,7 +232,6 @@ void Call::terminateBecauseOfLostMedia () {
 	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
-	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
 }
 
 bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
@@ -259,21 +258,12 @@ bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 		return false;
 	}
 	bool ret = static_pointer_cast<MediaSession>(getActiveSession())->setOutputAudioDevice(audioDevice);
-	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::Pausing:
 		case CallSession::State::Paused:
-			ringStream = getCore()->getCCore()->ringstream;
-			if (ringStream) {
-				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
-			}
-			break;
 		case CallSession::State::IncomingReceived:
-			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
-			if (ringStream) {
-				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
-			}
+			getCore()->getPrivate()->getToneManager().setOutputDevice(getActiveSession(), audioDevice);
 			break;
 		default:
 			break;
@@ -447,7 +437,6 @@ bool Call::attachedToLocalConference(const std::shared_ptr<CallSession> &session
 }
 
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
-	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
 
 	switch(state) {
@@ -759,7 +748,7 @@ void Call::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *f
 }
 
 void Call::onStartRingtone(const shared_ptr<CallSession> &session){
-	getCore()->getPrivate()->getToneManager()->startRingtone(session);
+	//Already handled by tone manager.
 }
 
 void Call::onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording) {
@@ -1249,33 +1238,22 @@ AudioDevice* Call::getInputAudioDevice() const {
 }
 
 AudioDevice* Call::getOutputAudioDevice() const {
-	RingStream *ringStream = nullptr;
 	switch (getState()) {
+		case CallSession::State::Paused:
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::Pausing:
-		case CallSession::State::Paused:
-			ringStream = getCore()->getCCore()->ringstream;
-			if (ringStream) {
-				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
-				if (card) {
-					return getCore()->findAudioDeviceMatchingMsSoundCard(card);
-				}
-			}
-			break;
 		case CallSession::State::IncomingReceived:
-			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
-			if (ringStream) {
-				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
-				if (card) {
-					return getCore()->findAudioDeviceMatchingMsSoundCard(card);
-				}
-			}
-			break;
+		{
+			/* In these states, the AudioDevice may be used by the ToneManager, transciently, to play a waiting
+			* tone indication. */
+			AudioDevice *toneManagerDevice = getCore()->getPrivate()->getToneManager().getOutputDevice(getActiveSession());
+			if (toneManagerDevice) return toneManagerDevice; 
+		}
 		default:
-			return static_pointer_cast<MediaSession>(getActiveSession())->getOutputAudioDevice();
+		break;
 	}
 
-	return nullptr;
+	return static_pointer_cast<MediaSession>(getActiveSession())->getOutputAudioDevice();
 }
 
 const std::list<LinphoneMediaEncryption> Call::getSupportedEncryptions() const {

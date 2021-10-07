@@ -59,7 +59,6 @@ void BandwithControllerService::destroy(){
 
 MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Stream(sg, params){
 	memset(&mSessions, 0, sizeof(mSessions));
-	initMulticast(params);
 	mStats = _linphone_call_stats_new();
 	_linphone_call_stats_set_type(mStats, (LinphoneStreamType)getType());
 	_linphone_call_stats_set_received_rtcp(mStats, nullptr);
@@ -207,8 +206,13 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 			localDesc.rtp_port = 0;
 			localDesc.rtcp_port = 0;
 		} else {
-			localDesc.rtp_port = mPortConfig.rtpPort;
-			localDesc.rtcp_port = mPortConfig.rtcpPort;
+			if (mPortConfig.multicastRole == SalMulticastSender){
+				localDesc.rtp_port = mPortConfig.multicastRtpPort;
+				localDesc.rtcp_port = 0;
+			}else{
+				localDesc.rtp_port = mPortConfig.rtpPort;
+				localDesc.rtcp_port = mPortConfig.rtcpPort;
+			}
 		}
 	}
 	if (!isTransportOwner()){
@@ -399,18 +403,6 @@ void MS2Stream::refreshSockets(){
 	rtp_session_refresh_sockets(mSessions.rtp_session);
 }
 
-void MS2Stream::initMulticast(const OfferAnswerContext &params) {
-	mPortConfig.multicastRole = params.getLocalStreamDescription().multicast_role;
-	
-	if (mPortConfig.multicastRole == SalMulticastReceiver){
-		mPortConfig.multicastIp = params.getRemoteStreamDescription().rtp_addr;
-		mPortConfig.rtpPort = params.getRemoteStreamDescription().rtp_port;
-		mPortConfig.rtcpPort = 0; /*RTCP deactivated in multicast*/
-	}
-	
-	lInfo() << *this << ": multicast role is ["
-		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
-}
 
 void MS2Stream::configureRtpSessionForRtcpFb (const OfferAnswerContext &params) {
 	if (getType() != SalAudio && getType() != SalVideo) return; //No AVPF for other than audio/video

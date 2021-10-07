@@ -124,6 +124,7 @@ public:
 	AudioDevice* getOutputAudioDevice() const;
 	
 	StreamsGroup & getStreamsGroup()const;
+	bool pausedByApp()const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

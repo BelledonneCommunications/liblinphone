@@ -90,7 +90,7 @@ public:
 	void insertChatRoomWithDb (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ConferenceId &conferenceId, AbstractChatRoom::CapabilitiesMask capabilities, const std::shared_ptr<ChatRoomParams> &params);
 
-	std::shared_ptr<ToneManager> getToneManager();
+	ToneManager & getToneManager();
 
 	//Base
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
@@ -185,7 +185,7 @@ private:
 
 	std::list<std::string> specs;
 
-	std::shared_ptr<ToneManager> toneManager;
+	std::unique_ptr<ToneManager> toneManager;
 
 	// This is to keep a ref on a clientGroupChatRoom while it is being created
 	// Otherwise the chatRoom will be freed() before it is inserted

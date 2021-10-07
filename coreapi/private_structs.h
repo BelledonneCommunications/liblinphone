@@ -718,7 +718,6 @@ namespace LinphonePrivate {
 	LinphoneAccount * default_account; \
 	MSList *friends_lists; \
 	MSList *auth_info; \
-	struct _RingStream *ringstream; \
 	LCCallbackObj preview_finished_cb; \
 	MSList *queued_calls; \
 	MSList *call_logs; \

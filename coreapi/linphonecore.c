@@ -1483,16 +1483,6 @@ static void sound_config_read(LinphoneCore *lc) {
 	/*just parse requested stream feature once at start to print out eventual errors*/
 	linphone_core_get_audio_features(lc);
 
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonBusy, LinphoneToneBusy, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonGone, LinphoneToneCallEnd, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNoResponse, LinphoneToneCallEnd, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonDeclined, LinphoneToneCallEnd, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNone, LinphoneToneCallEnd, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonTransferred, LinphoneToneCallEnd, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonIOError, LinphoneToneCallLost, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNotAnswered, LinphoneToneCallLost, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonServerTimeout, LinphoneToneCallLost, NULL);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonUnknown, LinphoneToneCallLost, NULL);
 }
 
 static int _linphone_core_tls_postcheck_callback(void *data, const bctbx_x509_certificate_t *peer_cert){
@@ -6816,15 +6806,15 @@ void linphone_core_set_record_file(LinphoneCore *lc, const char *file){
 }
 
 void linphone_core_play_dtmf(LinphoneCore *lc, char dtmf, int duration_ms){
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCorePlayDtmf(dtmf, duration_ms);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playDtmf(dtmf, duration_ms);
 }
 
 LinphoneStatus linphone_core_play_local(LinphoneCore *lc, const char *audiofile) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCorePlayLocal(audiofile);
+	return L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().playLocal(audiofile);
 }
 
 void linphone_core_stop_dtmf(LinphoneCore *lc){
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStopDtmf();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().stopDtmf();
 }
 
 void *linphone_core_get_user_data(const LinphoneCore *lc){
@@ -7195,9 +7185,6 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 #endif
 
 	lc->msevq=NULL;
-
-	linphone_core_stop_ringing(lc);
-	linphone_core_stop_tone_manager(lc);
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 #if TARGET_OS_IPHONE
@@ -7661,19 +7648,19 @@ bool_t linphone_core_keep_alive_enabled(LinphoneCore* lc) {
 
 void linphone_core_start_dtmf_stream(LinphoneCore* lc) {
 	if (linphone_core_get_global_state(lc) != LinphoneGlobalShutdown)
-		L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStartDtmfStream();
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().startDtmfStream();
 }
 
 void linphone_core_stop_ringing(LinphoneCore* lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStopRinging();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().freeAudioResources();
 }
 
 void linphone_core_stop_dtmf_stream(LinphoneCore* lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStopDtmfStream();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().stopDtmfStream();
 }
 
 void linphone_core_stop_tone_manager(LinphoneCore* lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->stop();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().freeAudioResources();
 }
 
 int linphone_core_get_max_calls(LinphoneCore *lc) {

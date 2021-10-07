@@ -4678,7 +4678,7 @@ static void remote_participant_takes_call_after_conference_started_and_conferenc
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
 
-	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	const LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
 	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
 
 	BC_ASSERT_TRUE(call(chloe,laure));
@@ -5117,7 +5117,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	stats laure_initial_stats = laure->stat;
 	stats chloe_initial_stats = chloe->stat;
 
-	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	const LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
 	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
 
 	BC_ASSERT_TRUE(call(chloe,laure));
@@ -5307,7 +5307,7 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 	stats chloe_initial_stats = chloe->stat;
 	stats michelle_initial_stats = michelle->stat;
 
-	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	const LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
 	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
 
 	BC_ASSERT_TRUE(call(chloe,laure));
@@ -5505,7 +5505,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	stats michelle_initial_stats = michelle->stat;
 	stats chloe_initial_stats = chloe->stat;
 
-	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	const LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
 	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
 
 	BC_ASSERT_TRUE(call(chloe,laure));

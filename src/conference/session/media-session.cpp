@@ -378,10 +378,12 @@ void MediaSessionPrivate::dtmfReceived (char dtmf) {
 bool MediaSessionPrivate::failure () {
 	L_Q();
 	const SalErrorInfo *ei = op->getErrorInfo();
+	
+	if (CallSession::isEarlyState(state) && getStreamsGroup().isStarted()){
+		stopStreams();
+	}
+	
 	switch (ei->reason) {
-		case SalReasonRedirect:
-			stopStreams();
-			break;
 		case SalReasonUnsupportedContent: /* This is for compatibility: linphone sent 415 because of SDP offer answer failure */
 		case SalReasonNotAcceptable:
 			if ((state == CallSession::State::OutgoingInit) 
@@ -485,21 +487,13 @@ void MediaSessionPrivate::remoteRinging () {
 		}
 
 		setState(CallSession::State::OutgoingEarlyMedia, "Early media");
-		q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 		lInfo() << "Doing early media...";
 		updateStreams(md, state);
-
-		if ((q->getCurrentParams()->getAudioDirection() == LinphoneMediaDirectionInactive)) {
-			q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
-		}
 	} else {
 		if (state == CallSession::State::OutgoingEarlyMedia) {
 			/* Already doing early media */
 			return;
 		}
-
-		// Start ringback tone before moving to next state as we need to retrieve the output device of the state we are currently in
-		q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
 		setState(CallSession::State::OutgoingRinging, "Remote ringing");
 	}
 }
@@ -800,6 +794,7 @@ shared_ptr<Participant> MediaSessionPrivate::getMe () const {
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
 
+ 	q->getCore()->getPrivate()->getToneManager().notifyState(q->getSharedFromThis(), newState);
 	// Take a ref on the session otherwise it might get destroyed during the call to setState
 	shared_ptr<CallSession> sessionRef = q->getSharedFromThis();
 	if ((newState != state) && (newState != CallSession::State::StreamsRunning))
@@ -1922,11 +1917,6 @@ void MediaSessionPrivate::updateFrozenPayloads (std::shared_ptr<SalMediaDescript
 void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & newMd, CallSession::State targetState) {
 	L_Q();
 
-	if (state == CallSession::State::Connected || state == CallSession::State::Resuming ||
-		(state == CallSession::State::IncomingEarlyMedia && !linphone_core_get_ring_during_incoming_early_media(q->getCore()->getCCore()))) {
-		q->getCore()->getPrivate()->getToneManager()->goToCall(q->getSharedFromThis());
-	}
-
 	if (!newMd) {
 		lError() << "updateStreams() called with null media description";
 		return;
@@ -1942,6 +1932,11 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 		negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
 		lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
 	}
+	
+	/* Notify the tone manager that we're about to transition to a future state.
+	 * This is important so that it can take stop pending tones, so that there is no audio resource conflict
+	 * with the audio stream that is about to be started. */
+	q->getCore()->getPrivate()->getToneManager().prepareForNextState(q->getSharedFromThis(), targetState);
 
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
@@ -1949,11 +1944,6 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	ctx.resultMediaDescription = resultDesc;
 	ctx.localIsOfferer = localIsOfferer;
 	getStreamsGroup().render(ctx, targetState);
-
-	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1) && !isInLocalConference) {
-		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
-	}
 
 	updateFrozenPayloads(newMd);
 	upBandwidth = linphone_core_get_upload_bandwidth(q->getCore()->getCCore());
@@ -2068,11 +2058,8 @@ void MediaSessionPrivate::lossOfMediaDetected() {
 // -----------------------------------------------------------------------------
 
 void MediaSessionPrivate::abort (const string &errorMsg) {
-	L_Q();
 	stopStreams();
 	CallSessionPrivate::abort(errorMsg);
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
-	q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallEnd);
 }
 
 void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
@@ -2152,6 +2139,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		return -1;
 	}
 	broken = false;
+	stopStreams();
 	setState(CallSession::State::Pausing, "Pausing call");
 	makeLocalMediaDescription(true, false, true);
 	op->update(subject.c_str(), false);
@@ -2161,8 +2149,6 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	if (listener && (!currentCall || (currentCall->getActiveSession() == q->getSharedFromThis())))
 		listener->onResetCurrentSession(q->getSharedFromThis());
 
-	stopStreams();
-	pausedByApp = false;
 	return 0;
 }
 
@@ -2859,9 +2845,10 @@ LinphoneStatus MediaSession::pauseFromConference () {
 
 LinphoneStatus MediaSession::pause () {
 	L_D();
+	d->pausedByApp = true;
 	LinphoneStatus result = d->pause();
-	if (result == 0)
-		d->pausedByApp = true;
+	if (result != 0)
+		d->pausedByApp = false;
 	return result;
 }
 
@@ -2886,7 +2873,7 @@ LinphoneStatus MediaSession::resume () {
 	}
 
 	lInfo() << "Resuming MediaSession " << this;
-
+	d->pausedByApp = false;
 	d->automaticallyPaused = false;
 	d->broken = false;
 	/* Stop playing music immediately. If remote side is a conference it
@@ -2991,36 +2978,11 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 int MediaSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
-	if (!getCore()->getCCore()->ringstream && getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
+	if (getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
 		/* Give a chance to set card prefered sampling frequency */
 		if (d->localDesc && (d->localDesc->streams.size() > 0) && (d->localDesc->streams[0].getMaxRate() > 0))
 			ms_snd_card_set_preferred_sample_rate(getCore()->getCCore()->sound_conf.play_sndcard, d->localDesc->streams[0].getMaxRate());
 		d->getStreamsGroup().prepare();
-	}
-
-	if (d->localDesc) {
-		for (auto & stream : d->localDesc->streams) {
-			// In case of multicasting, choose a random port to send with the invite
-			if (ms_is_multicast(L_STRING_TO_C(stream.rtp_addr))){
-				pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), stream.type);
-				if (portRange.first <= 0) {
-					portRange.first = 1024;
-					lInfo() << "Setting minimum value of port range to " << portRange.first;
-				}
-				if (portRange.second <= 0) {
-					// 2^16 - 1
-					portRange.second = 65535;
-					lInfo() << "Setting maximum value of port range to " << portRange.second;
-				}
-				if (portRange.second < portRange.first) {
-					lError() << "Invalid port range provided for stream type " << Utils::toString(stream.type) << ": min=" << portRange.first << " max=" << portRange.second;
-					continue;
-				}
-				int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
-				stream.rtp_port = rtp_port;
-				stream.rtcp_port = stream.rtp_port + 1;
-			}
-		}
 	}
 
 	d->op->setLocalMediaDescription(d->localDesc);
@@ -3582,6 +3544,11 @@ AudioDevice* MediaSession::getOutputAudioDevice() const {
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (i) return i->getOutputDevice();
 	return nullptr;
+}
+
+bool MediaSession::pausedByApp()const{
+	L_D();
+	return d->pausedByApp;
 }
 
 LINPHONE_END_NAMESPACE
