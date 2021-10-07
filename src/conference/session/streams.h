@@ -169,6 +169,7 @@ protected:
 	int mStartCount = 0; /* The number of time of the underlying stream has been started (or restarted). To be maintained by implementations. */
 private:
 	void setMain();
+	void initMulticast(const OfferAnswerContext &params);
 	void setPortConfig(std::pair<int, int> portRange);
 	int selectFixedPort(std::pair<int, int> portRange);
 	int selectRandomPort(std::pair<int, int> portRange);
