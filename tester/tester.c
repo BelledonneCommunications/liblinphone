@@ -591,10 +591,48 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 	}
 }
 
+static void conference_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_admin_statuses_changed++;
+}
+
+static void conference_subject_changed(LinphoneConference *conference, const char *subject) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_subject_changed++;
+}
+static void conference_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participants_added++;
+}
+static void conference_participant_removed(LinphoneConference *conference, const LinphoneParticipant *participant) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participants_removed++;
+}
+static void conference_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_devices_added++;
+}
+static void conference_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_devices_removed++;
+}
+
 void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneConferenceState state) {
 	if (state == LinphoneConferenceStateInstantiated) {
 		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
 		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
+		linphone_conference_cbs_set_subject_changed(cbs, conference_subject_changed);
+		linphone_conference_cbs_set_participant_admin_status_changed(cbs, conference_participant_admin_status_changed);
+		linphone_conference_cbs_set_participant_added(cbs, conference_participant_added);
+		linphone_conference_cbs_set_participant_device_added(cbs, conference_participant_device_added);
+		linphone_conference_cbs_set_participant_removed(cbs, conference_participant_removed);
+		linphone_conference_cbs_set_participant_device_removed(cbs, conference_participant_device_removed);
 
 		linphone_conference_add_callbacks(conference, cbs);
 		linphone_conference_cbs_unref(cbs);
