@@ -1542,7 +1542,7 @@ bool RemoteConference::isIn () const {
 
 bool RemoteConference::focusIsReady () const {
 	LinphoneCallState focusState;
-	if (!m_focusCall)
+	if (!m_focusCall || m_focusContact == nullptr)
 		return false;
 	focusState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	return (focusState == LinphoneCallStreamsRunning) || (focusState == LinphoneCallPaused);

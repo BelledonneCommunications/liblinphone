@@ -80,9 +80,10 @@ static void linphone_version_test(void){
 	BC_ASSERT_PTR_NOT_NULL(version);
 	BC_ASSERT_PTR_NULL(strstr(version,"unknown"));
 	linphone_logging_service_set_domain(linphone_logging_service_get(),"test");
+	unsigned int old = linphone_logging_service_get_log_level_mask(linphone_logging_service_get());
 	linphone_logging_service_set_log_level_mask(linphone_logging_service_get(), LinphoneLogLevelTrace);
 	linphone_logging_service_trace(linphone_logging_service_get(),"httpd_username=test-stefano%40nopmail.com");
-
+	linphone_logging_service_set_log_level_mask(linphone_logging_service_get(), old);
 }
 
 void version_update_check_cb(LinphoneCore *core, LinphoneVersionUpdateCheckResult result, const char *version, const char *url) {
