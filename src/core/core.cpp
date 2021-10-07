@@ -82,6 +82,7 @@ void CorePrivate::init () {
 	L_Q();
 
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
+	toneManager = makeUnique<ToneManager>(*getPublic());
 #ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
@@ -244,7 +245,7 @@ void CorePrivate::shutdown() {
 	}
 	audioDevices.clear();
 
-	if (toneManager) toneManager->deleteTimer();
+	if (toneManager) toneManager->freeAudioResources();
 
 	stopEphemeralMessageTimer();
 	ephemeralMessages.clear();
@@ -321,6 +322,7 @@ void CorePrivate::uninit() {
 	if (mainDb != nullptr) {
 		mainDb->disconnect();
 	}
+	/* The toneManager is kept until destructor, we may need it because of calls ended during linphone_core_destroy(). */
 }
 
 // -----------------------------------------------------------------------------
@@ -438,12 +440,8 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 CorePrivate::CorePrivate() : authStack(*this), pushReceivedBackgroundTaskId(0) {
 }
 
-std::shared_ptr<ToneManager> CorePrivate::getToneManager() {
-	L_Q();
-	if (!toneManager) {
-		toneManager = make_shared<ToneManager>(q->getSharedFromThis());
-	}
-	return toneManager;
+ToneManager & CorePrivate::getToneManager() {
+	return *toneManager.get();
 }
 
 int CorePrivate::ephemeralMessageTimerExpired (void *data, unsigned int revents) {
