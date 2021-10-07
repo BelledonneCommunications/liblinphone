@@ -1129,6 +1129,34 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 	getConference()->clearParticipants ();
 }
 
+void ClientGroupChatRoom::onEphemeralModeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {
+	L_D();
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+}
+
+void ClientGroupChatRoom::onEphemeralMessageEnabled (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {
+	L_D();
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+}
+
+void ClientGroupChatRoom::onEphemeralLifetimeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {
+	L_D();
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+}
+
+
 void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
 	L_D();
 
@@ -1188,7 +1216,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	L_D();
 
 	if (d->isEphemeral == ephem) {
-		lWarning() << "Ephemeral messages are already " << (ephem ? "enabled" : "disabled");
+		lWarning() << "Ephemeral messages of chat room " << getConferenceId() << " are already " << (ephem ? "enabled" : "disabled");
 		return;
 	}
 
@@ -1196,6 +1224,10 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	if (!linphone_im_notif_policy_get_send_imdn_displayed(policy) && ephem) {
 		lWarning() << "Ephemeral messages may not work correctly because IMDN messages are disabled";
 	}
+
+	d->enableEphemeral(ephem);
+	const string active = ephem ? "enabled" : "disabled";
+	lDebug() << "Ephemeral message is " << active << " in chat room [" << getConferenceId() << "]";
 
 	auto lifetime = d->params->getEphemeralLifetime();
 	if (d->params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
@@ -1209,7 +1241,7 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 				lifetime = linphone_core_get_default_ephemeral_lifetime(getCore()->getCCore());
 				d->params->setEphemeralLifetime(lifetime);
 				if (updateDb) {
-					lInfo() << "Reset ephemeral lifetime to the default value of " << lifetime << " because ephemeral messages were enabled with a time equal to 0.";
+					lInfo() << "Reset ephemeral lifetime of chat room " << getConferenceId() << " to the default value of " << lifetime << " because ephemeral messages were enabled with a time equal to 0.";
 					getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(getConferenceId(), lifetime);
 
 					shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), getConferenceId(), lifetime);
@@ -1217,21 +1249,12 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 
 				}
 			}
-			shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
-			auto csp = session->getParams()->clone();
-			csp->removeCustomHeader("Ephemeral-Life-Time");
-			csp->addCustomHeader("Ephemeral-Life-Time", (ephem ? to_string(lifetime) : "0"));
-			session->update(csp, CallSession::UpdateMethod::Default, getSubject());
-			delete csp;
+			sendEphemeralUpdate();
 		} else {
 			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
 		}
 
 	}
-
-	d->enableEphemeral(ephem);
-	const string active = ephem ? "enabled" : "disabled";
-	lDebug() << "Ephemeral message is " << active << " in chat room [" << getConferenceId() << "]";
 
 	if (updateDb) {
 		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(getConferenceId(), ephem);
@@ -1257,12 +1280,13 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 
 	if (lifetime == d->params->getEphemeralLifetime()) {
 		if (updateDb)
-			lWarning() << "Ephemeral lifetime will not be changed! Trying to set the same ephemaral lifetime as before : " << lifetime;
+			lWarning() << "Ephemeral lifetime of chat room " << getConferenceId() << " will not be changed! Trying to set the same ephemaral lifetime as before : " << lifetime;
 		return;
 	}
 	
 	if (getState() == ConferenceInterface::State::Instantiated) {
-		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->params->getEphemeralLifetime() << ".";
+		// Do not print this log when creating chat room from DB
+		if (updateDb) lInfo() << "Set new ephemeral lifetime " << lifetime << " of chat room " << getConferenceId() << ", used to be " << d->params->getEphemeralLifetime() << ".";
 		d->params->setEphemeralLifetime(lifetime);
 		return;
 	}
@@ -1274,27 +1298,20 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 		}
 
 		if (getState() == ConferenceInterface::State::Created) {
-			lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->params->getEphemeralLifetime() << ".";
+			if (updateDb) lInfo() << "Set new ephemeral lifetime " << lifetime << " of chat room " << getConferenceId() << ", used to be " << d->params->getEphemeralLifetime() << ".";
 			d->params->setEphemeralLifetime(lifetime);
 			const bool enable = (lifetime != 0);
 			// If only changing the value of the message lifetime
 			if (ephemeralEnabled() == enable) {
-				shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
-				auto csp = session->getParams()->clone();
-
-				csp->removeCustomHeader("Ephemeral-Life-Time");
-				csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
-
-				session->update(csp, CallSession::UpdateMethod::Default, getSubject());
-				delete csp;
+				sendEphemeralUpdate();
 			} else {
-				enableEphemeral(enable, true);
+				enableEphemeral(enable, updateDb);
 			}
 		} else {
-			lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
+			lError() << "Cannot change the ephemeral lifetime of chat room " << getConferenceId() << " in a state other than Created";
 		}
 	} else {
-		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->params->getEphemeralLifetime() << ".";
+		if (updateDb) lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->params->getEphemeralLifetime() << ".";
 		d->params->setEphemeralLifetime(lifetime);
 	}
 
@@ -1314,6 +1331,25 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 long ClientGroupChatRoom::getEphemeralLifetime () const {
 	L_D();
 	return d->params->getEphemeralLifetime();
+}
+
+void ClientGroupChatRoom::sendEphemeralUpdate () {
+	L_D();
+	shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
+	if (session) {
+		auto csp = session->getParams()->clone();
+		csp->removeCustomHeader("Ephemeral-Life-Time");
+		csp->addCustomHeader("Ephemeral-Life-Time", (ephemeralEnabled() ? to_string(getEphemeralLifetime()) : "0"));
+		session->update(csp, CallSession::UpdateMethod::Default, getSubject());
+		delete csp;
+	} else {
+		session = d->createSession();
+
+		const IdentityAddress& remoteParticipant = getParticipants().front()->getAddress();
+		lInfo() << "Re-INVITing " << remoteParticipant << " because ephemeral settings of chat room [" << conference->getConferenceId() << "] have changed";
+
+		session->startInvite(nullptr, getSubject(), nullptr);
+	}
 }
 
 bool ClientGroupChatRoom::ephemeralSupportedByAllParticipants () const {

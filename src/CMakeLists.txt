@@ -228,7 +228,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/conference/conference-event.h
 	event-log/conference/conference-notified-event-p.h
 	event-log/conference/conference-notified-event.h
-	event-log/conference/conference-ephemeral-event.h
 	event-log/conference/conference-ephemeral-message-event.h
 	event-log/conference/conference-participant-device-event.h
 	event-log/conference/conference-participant-event-p.h
@@ -451,7 +450,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-subject-event.cpp
 	event-log/conference/conference-available-media-event.cpp
 	event-log/conference/conference-ephemeral-message-event.cpp
-	event-log/conference/conference-ephemeral-event.cpp
 	event-log/event-log.cpp
 	factory/factory.cpp
 	hacks/hacks.cpp

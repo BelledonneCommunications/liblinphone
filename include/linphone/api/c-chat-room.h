@@ -161,7 +161,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_ephemeral_enabled(const LinphoneChatRo
  * After the message is read, it will be deleted after "time" seconds.
  * @see linphone_chat_room_ephemeral_enabled()
  * @param chat_room #LinphoneChatRoom object @notnil
- * @param time The ephemeral lifetime, default 24h, 86400s
+ * @param time The ephemeral lifetime, default is 0 (disabled)
  * @warning A value of "time" equal to 0 disables ephemeral messages
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_ephemeral_lifetime (LinphoneChatRoom *chat_room, long time);
