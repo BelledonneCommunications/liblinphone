@@ -140,16 +140,22 @@ shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t
 	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
 }
 
-shared_ptr<ConferenceEphemeralEvent> LocalConference::notifyEphemeralModeChanged (time_t creationTime, const bool isFullState, const EventLog::Type type, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceEphemeralMessageEvent> LocalConference::notifyEphemeralModeChanged (time_t creationTime, const bool isFullState, const EventLog::Type type) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyEphemeralModeChanged (creationTime, isFullState, type, participantDevice);
+	return Conference::notifyEphemeralModeChanged (creationTime, isFullState, type);
 }
 
-shared_ptr<ConferenceEphemeralEvent> LocalConference::notifyEphemeralChanged (time_t creationTime, const bool isFullState, long lifetime, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceEphemeralMessageEvent> LocalConference::notifyEphemeralMessageEnabled (time_t creationTime, const bool isFullState, const bool enable) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyEphemeralChanged (creationTime, isFullState, lifetime, participantDevice);
+	return Conference::notifyEphemeralMessageEnabled (creationTime, isFullState, enable);
+}
+
+shared_ptr<ConferenceEphemeralMessageEvent> LocalConference::notifyEphemeralLifetimeChanged (time_t creationTime, const bool isFullState, const long lifetime) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyEphemeralLifetimeChanged (creationTime, isFullState, lifetime);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
