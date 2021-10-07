@@ -175,8 +175,9 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin);
 	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject);
 	virtual std::shared_ptr<ConferenceAvailableMediaEvent> notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
-	virtual std::shared_ptr<ConferenceEphemeralEvent> notifyEphemeralModeChanged (time_t creationTime,  const bool isFullState, const EventLog::Type type, const std::shared_ptr<ParticipantDevice> &participantDevice);
-	virtual std::shared_ptr<ConferenceEphemeralEvent> notifyEphemeralChanged (time_t creationTime,  const bool isFullState, long lifetime, const std::shared_ptr<ParticipantDevice> &participantDevice);
+	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralModeChanged (time_t creationTime,  const bool isFullState, const EventLog::Type type);
+	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralMessageEnabled (time_t creationTime, const bool isFullState, const bool enable);
+	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralLifetimeChanged (time_t creationTime,  const bool isFullState, const long lifetime);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaChanged (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);

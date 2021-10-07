@@ -352,7 +352,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_ephemeral(const LinphoneChatMess
  * The lifetime is the duration after which the ephemeral message will disappear once viewed.
  * @see linphone_chat_message_is_ephemeral()
  * @param message #LinphoneChatMessage object. @notnil
- * @return the lifetime of an ephemeral message, by default 86400s.
+ * @return the lifetime of an ephemeral message, by default 0 (disabled).
  */
 LINPHONE_PUBLIC long linphone_chat_message_get_ephemeral_lifetime (const LinphoneChatMessage *message);
 
