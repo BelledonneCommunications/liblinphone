@@ -2930,8 +2930,8 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	LinphoneCall *callee_call=NULL;
 	LinphoneCall *caller_call=NULL;
 	
-	LinphoneCoreToneManagerStats *callee_stats = linphone_core_get_tone_manager_stats(callee_mgr->lc);
-	LinphoneCoreToneManagerStats *caller_stats = linphone_core_get_tone_manager_stats(caller_mgr->lc);
+	const LinphoneCoreToneManagerStats *callee_stats = linphone_core_get_tone_manager_stats(callee_mgr->lc);
+	const LinphoneCoreToneManagerStats *caller_stats = linphone_core_get_tone_manager_stats(caller_mgr->lc);
 
 	/* TODO: This should be handled correctly inside the liblinphone library but meanwhile handle this here. */
 	linphone_core_manager_wait_for_stun_resolution(caller_mgr);
@@ -2998,12 +2998,12 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 	
 	if (callee_stats->number_of_startRingbackTone == callee_stats->number_of_stopRingbackTone) {
-		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived));
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,(int*)&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived));
 	} else {
 		// in this case, the call is currently in RingbackTone so the Ringtone should not start
-		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived-1));
+		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,(int*)&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived-1));
 	}
-	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_stats->number_of_startRingbackTone,caller_mgr->stat.number_of_LinphoneCallOutgoingRinging));
+	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,(int*)&caller_stats->number_of_startRingbackTone,caller_mgr->stat.number_of_LinphoneCallOutgoingRinging));
 
 	// Local call parameters are available after moving to OutgoingRinging
 	if (!caller_params && caller_call){
