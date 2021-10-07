@@ -101,7 +101,7 @@ private:
 	bool mRtt = false; //Real Time Text
 	std::string mSubject;
 	AbstractChatRoom::EphemeralMode mEphemeralMode = AbstractChatRoom::EphemeralMode::DeviceManaged;
-	long mEphemeralLifetime = 86400;  //24 hours = 86400s
+	long mEphemeralLifetime = 0;
 };
 
 LINPHONE_END_NAMESPACE
