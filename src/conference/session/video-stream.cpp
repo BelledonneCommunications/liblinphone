@@ -405,7 +405,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	if (videoMixer){
-		const bool_t isRemote = ((!mStream->label && content.empty()) || !videoMixer->getVideoStream()) ? TRUE : (videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
+		const bool_t isRemote = ((!mStream->label && content.empty()) || !videoMixer->getVideoStream()) ? TRUE : (dir == MediaStreamSendOnly || videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_thumbnail_enabled(mStream));
 	}

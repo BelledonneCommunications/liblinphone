@@ -147,13 +147,15 @@ void MS2VideoMixer::addLocalParticipant(){
 
 	lInfo() << "[mix to all]: add local video endpoint label " << mLocalParticipantLabel;
 	
-	if (linphone_core_get_default_conference_layout(mSession.getCCore()) == LinphoneConferenceLayoutGrid) {
+	//if (linphone_core_get_default_conference_layout(mSession.getCCore()) == LinphoneConferenceLayoutGrid) {
 		media_stream_set_direction(&mainSt->ms, MediaStreamSendOnly);
-	}
+	//}
 
 	mLocalParticipantStream = mainSt;
 	mMainLocalEndpoint = ms_video_endpoint_get_from_stream(mainSt, FALSE);
 	ms_video_conference_add_member(mConferenceMix, mMainLocalEndpoint);
+	
+	// mini
 
 	st = video_stream_new(core->factory, 65000, 65001, FALSE);
 	// Stores the pointer to the newly created video stream to stop it upon local participant removal
@@ -190,10 +192,10 @@ void MS2VideoMixer::addLocalParticipant(){
 	if (!st->label) {
 		lError() << "[mix to all]: Can not add video endpoint with empty label";
 	} else {
-		lInfo() << "[mix to all]:  add video endpoint with label" << st->label;
-		if (linphone_core_get_default_conference_layout(mSession.getCCore()) == LinphoneConferenceLayoutGrid) {
+		lInfo() << "[mix to all]:  add local video endpoint with label" << st->label;
+	//	if (linphone_core_get_default_conference_layout(mSession.getCCore()) == LinphoneConferenceLayoutGrid) {
 			media_stream_set_direction(&st->ms, MediaStreamSendOnly);
-		}
+	//	}
 		mLocalParticipantItcStream = st;
 		mLocalEndpoint = ms_video_endpoint_get_from_stream(st, FALSE);
 		ms_video_conference_add_member(mConferenceThumbnail, mLocalEndpoint);
@@ -204,11 +206,9 @@ void MS2VideoMixer::removeLocalParticipant(){
 	if (mMainLocalEndpoint){
 		ms_message("Conference: removing video local endpoint");
 		ms_video_conference_remove_member(mConferenceMix, mMainLocalEndpoint);
-		ms_video_conference_remove_member(mConferenceThumbnail, mMainLocalEndpoint);
 		ms_video_endpoint_release_from_stream(mMainLocalEndpoint);
 		mMainLocalEndpoint = nullptr;
 		if (mLocalEndpoint) {
-			ms_video_conference_remove_member(mConferenceMix, mLocalEndpoint);
 			ms_video_conference_remove_member(mConferenceThumbnail, mLocalEndpoint);
 			ms_video_endpoint_release_from_stream(mLocalEndpoint);
 			mLocalEndpoint = nullptr;
