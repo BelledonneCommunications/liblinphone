@@ -5047,11 +5047,8 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 			LinphoneChatMessage *post_exhume_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "Sarah Connor ?");
 			linphone_chat_message_send(post_exhume_message);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 3, 5000));
-			if (core_restart) {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
-			} else {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 3, 5000));
-			}
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, (core_restart ? 2 : 3), 5000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, 3, 5000));
 			linphone_chat_message_unref(post_exhume_message);
 
 			pauline2_messages = linphone_chat_room_get_history_size(pauline2OneToOneCr);
