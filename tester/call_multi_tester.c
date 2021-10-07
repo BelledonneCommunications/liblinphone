@@ -234,7 +234,7 @@ static void incoming_call_accepted_when_outgoing_call_in_state(LinphoneCallState
 									,pauline->lc
 									,state==LinphoneCallOutgoingEarlyMedia?&marie->stat.number_of_LinphoneCallOutgoingEarlyMedia:&marie->stat.number_of_LinphoneCallOutgoingRinging
 									,1));
-       BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, (int*)&linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1));
 	} else if (state==LinphoneCallOutgoingProgress) {
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address(marie->lc,pauline->identity));
 	} else {
@@ -653,7 +653,7 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 
 	BC_ASSERT_TRUE(wait_for_list(core_list, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
 	pauline_called_by_laure=linphone_core_get_current_call(pauline->lc);
-	LinphoneCoreToneManagerStats * paulineToneManagerStats = linphone_core_get_tone_manager_stats(pauline->lc);
+	const LinphoneCoreToneManagerStats * paulineToneManagerStats = linphone_core_get_tone_manager_stats(pauline->lc);
 	BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_startRingtone, 1, int, "%d");
 // Marie call Pauline
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params));
@@ -670,9 +670,9 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallReleased,1, 10000));
 
 	// check that ringtone player restart
-	BC_ASSERT_TRUE(wait_for_list(core_list,&paulineToneManagerStats->number_of_stopRingtone,1, 2000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,(int*)&paulineToneManagerStats->number_of_stopRingtone,1, 2000));
 	BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_stopRingtone, 1, int, "%d");
-	BC_ASSERT_TRUE(wait_for_list(core_list,&paulineToneManagerStats->number_of_startRingtone,2, 2000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,(int*)&paulineToneManagerStats->number_of_startRingtone,2, 2000));
 
 	BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
 	linphone_call_terminate(pauline_called_by_marie);
@@ -719,7 +719,7 @@ void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice)
 	}
 	
 
-// Marie call Pauline
+// Marie calls Pauline
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params));
 	linphone_call_params_unref(marie_params);
 
@@ -730,7 +730,7 @@ void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice)
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
 	
 
-// Laure call Marie
+// Laure calls Marie
 	laure_call = linphone_core_invite_address_with_params(laure->lc,marie->identity,laure_params);
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
 	LinphoneCallLog * laure_call_log = linphone_call_get_call_log(laure_call);
@@ -744,21 +744,23 @@ void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice)
 	BC_ASSERT_TRUE(wait_for_list(core_list, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(core_list, &laure->stat.number_of_LinphoneCallOutgoingRinging, 1, 10000));
 	
-	LinphoneCoreToneManagerStats * marieToneStats = linphone_core_get_tone_manager_stats(marie->lc);
+	const LinphoneCoreToneManagerStats * marieToneStats = linphone_core_get_tone_manager_stats(marie->lc);
 	
 	wait_for_list(core_list, 0, 1, 2000);// Let some time ringing
 	
 // Pauline accept Marie
 	linphone_call_accept(pauline_called_by_marie);
-	BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_stopRingbackTone,1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,(int*)&marieToneStats->number_of_stopRingbackTone,1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallStreamsRunning,1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(core_list,&marie->stat.number_of_LinphoneCallStreamsRunning,1, 10000));
-	BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_startRingtone,1, 5000));
+	
+	/* the call from laure should ring as a waiting tone */
+	BC_ASSERT_TRUE(wait_for_list(core_list,(int*)&marieToneStats->number_of_startNamedTone,1, 5000));
 	
 // Marie accept Laure	
 	linphone_call_accept(marie_called_by_laure);
 
-	BC_ASSERT_TRUE(wait_for_list(core_list,&marieToneStats->number_of_startRingtone,1, 5000));	// End of named tone
+	BC_ASSERT_TRUE(wait_for_list(core_list,(int*)&marieToneStats->number_of_stopTone,1, 5000));	// End of named tone
 	
 	linphone_call_terminate(marie_called_by_laure);
 	linphone_call_terminate(pauline_called_by_marie);
