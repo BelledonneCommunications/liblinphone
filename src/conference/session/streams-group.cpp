@@ -381,21 +381,29 @@ bool StreamsGroup::checkRtpSession() const {
 		if(stream->getType() == SalVideo) {
 			MediaStream *ms = s->getMediaStream();
 			RtpSession *rtp_session = ms->sessions.rtp_session;
-			if (!rtp_session)
+			if (!rtp_session) {
+				lInfo() << "session empty";
 				return false;
+			}
 			const rtp_stats_t *rtps = rtp_session_get_stats(rtp_session);
 			switch (media_stream_get_direction(ms)) {
 				case MediaStreamRecvOnly:
-					if (rtps->packet_recv < 5)
-						return false;
+					// Can be 0 if it's not attached with filter
+					lInfo() << "session recv true";
 					break;
 				case MediaStreamSendOnly:
-					if (rtps->packet_sent < 5)
+					if (rtps->packet_sent < 5) {
+						lInfo() << "session send false";
 						return false;
+					}
+					lInfo() << "session send true";
 					break;
 				case MediaStreamSendRecv:
-					if (rtps->packet_recv < 5 || rtps->packet_sent < 5)
+					if (rtps->packet_recv < 5 || rtps->packet_sent < 5) {
+						lInfo() << "session send recv false";
 						return false;
+					}
+					lInfo() << "session send recv true";
 					break;
 				default:
 					break;
