@@ -18,6 +18,7 @@ realm=sip.example.org
 
 
 [proxy_0]
+realm=sip.example.org
 reg_proxy=sip.example.org;transport=tcp
 reg_route=sip.example.org;transport=tcp
 reg_identity=sip:pauline@sip.example.org
