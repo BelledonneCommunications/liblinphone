@@ -3514,6 +3514,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					chatRoom = clientGroupChatRoom;
 					conference = clientGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->enableEphemeral(!!row.get<int>(10, 0), false);
+					chatRoom->setEphemeralLifetime((long)row.get<double>(11), false);
 					chatRoom->setState(hasBeenLeft
 						? ConferenceInterface::State::Terminated
 						: ConferenceInterface::State::Created
@@ -3547,6 +3549,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					chatRoom = serverGroupChatRoom;
 					conference = serverGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->enableEphemeral(!!row.get<int>(10, 0), false);
+					chatRoom->setEphemeralLifetime((long)row.get<double>(11), false);
 					chatRoom->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : chatRoom->getParticipants())
@@ -3563,8 +3567,6 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			dChatRoom->setCreationTime(creationTime);
 			dChatRoom->setLastUpdateTime(lastUpdateTime);
 			dChatRoom->setIsEmpty(lastMessageId == 0);
-			chatRoom->enableEphemeral(!!row.get<int>(10, 0), false);
-			chatRoom->setEphemeralLifetime((long)row.get<double>(11), false);
 
 			lDebug() << "Found chat room in DB: (peer=" <<
 				conferenceId.getPeerAddress().asString() << ", local=" << conferenceId.getLocalAddress().asString() << ").";
