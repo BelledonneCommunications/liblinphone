@@ -304,8 +304,9 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
 			 * that will later populate the chatroom*/
 		}else{
-			/* after creation, only subject change is allowed*/
+			/* after creation, only changes to the subject and ephemeral settings are allowed*/
 			handleSubjectChange(op);
+			handleEphemeralSettingsChange(session);
 			acceptSession(session);
  		}
  	} else {
@@ -420,9 +421,9 @@ void ServerGroupChatRoomPrivate::handleSubjectChange(SalCallOp *op){
 }
 
 void ServerGroupChatRoomPrivate::handleEphemeralSettingsChange(const shared_ptr<CallSession> &session){
-	const auto op = session->getPrivate()->getOp();
-	string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
 	if (capabilities & ServerGroupChatRoom::Capabilities::Ephemeral) {
+		const auto op = session->getPrivate()->getOp();
+		string ephemeralLifeTime = L_C_TO_STRING(sal_custom_header_find(op->getRecvCustomHeaders(), "Ephemeral-Life-Time"));
 		if (ephemeralLifeTime.empty()) {
 			setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged, session);
 		} else {
