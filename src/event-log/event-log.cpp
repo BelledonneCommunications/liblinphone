@@ -105,8 +105,6 @@ std::ostream& operator<<(std::ostream& lhs, EventLog::Type e) {
 		 lhs << "ConferenceEphemeralMessageManagedByAdmin"; break;
 		case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
 		 lhs << "ConferenceEphemeralMessageManagedByParticipants"; break;
-		case EventLog::Type::ConferenceEphemeralLifetimeChanged:
-		 lhs << "ConferenceEphemeralLifetimeChanged"; break;
 	}
 	return lhs;
 }

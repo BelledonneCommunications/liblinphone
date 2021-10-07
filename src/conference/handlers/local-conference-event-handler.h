@@ -135,16 +135,14 @@ public:
 	/*
 	* This fonction is called each time a participant device changes the ephemeral settings
 	* @param[in] event informations related to the device's participant.
-	* @param[in] device participant device that changed the ephemeral settings
 	*/
-	virtual void onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	virtual void onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 
 	/*
 	* This fonction is called each time a participant device changes the ephemeral mode
 	* @param[in] event informations related to the device's participant.
-	* @param[in] device participant device that changed the ephemeral settings
 	*/
-	virtual void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	virtual void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 
 	/*
 	 * This fonction is called each time the conference transitions to a new state

@@ -155,6 +155,24 @@ static void chat_room_conference_joined (LinphoneChatRoom *cr, const LinphoneEve
 	manager->stat.number_of_LinphoneChatRoomConferenceJoined++;
 }
 
+static void chat_room_message_ephemeral (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	LinphoneCore *core = linphone_chat_room_get_core(cr);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	switch (linphone_event_log_get_type(event_log)) {
+		case LinphoneEventLogTypeConferenceEphemeralMessageLifetimeChanged:
+			manager->stat.number_of_LinphoneChatRoomEphemeralLifetimeChanged++;
+			break;
+		case LinphoneEventLogTypeConferenceEphemeralMessageEnabled:
+			manager->stat.number_of_LinphoneChatRoomEphemeralMessageEnabled++;
+			break;
+		case LinphoneEventLogTypeConferenceEphemeralMessageDisabled:
+			manager->stat.number_of_LinphoneChatRoomEphemeralMessageDisabled++;
+			break;
+		default:
+			break;
+	}
+}
+
 static void chat_room_message_ephemeral_started (LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
@@ -181,6 +199,7 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 		linphone_chat_room_cbs_set_participant_device_removed(cbs, chat_room_participant_device_removed);
 		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
 		linphone_chat_room_cbs_set_conference_joined(cbs, chat_room_conference_joined);
+		linphone_chat_room_cbs_set_ephemeral_event(cbs, chat_room_message_ephemeral);
 		linphone_chat_room_cbs_set_ephemeral_message_timer_started(cbs, chat_room_message_ephemeral_started);
 		linphone_chat_room_cbs_set_ephemeral_message_deleted(cbs, chat_room_message_ephemeral_deleted);
 
@@ -518,7 +537,6 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 
 	return chatRoom;
 }
-
 
 LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params) {
 	int participantsAddressesSize = (int)bctbx_list_size(participantsAddresses);
