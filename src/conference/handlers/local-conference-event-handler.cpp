@@ -911,21 +911,21 @@ void LocalConferenceEventHandler::onParticipantDeviceMediaChanged (const std::sh
 	}
 }
 
-void LocalConferenceEventHandler::onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void LocalConferenceEventHandler::onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAll(createNotifyEphemeralMode(event->getType()));
 	} else {
-		lWarning() << __func__ << ": Not sending notification of device " << device->getAddress() << " having changed ephemeral mode to " << event->getType();
+		lWarning() << __func__ << ": Not sending notification of ephemeral mode changed to " << event->getType();
 	}
 }
 
-void LocalConferenceEventHandler::onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void LocalConferenceEventHandler::onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyEphemeralLifetime(event->getEphemeralLifetime()));
+		notifyAll(createNotifyEphemeralLifetime(event->getEphemeralMessageLifetime()));
 	} else {
-		lWarning() << __func__ << ": Not sending notification of device " << device->getAddress() << " having changed ephemeral lifetime to " << event->getEphemeralLifetime();
+		lWarning() << __func__ << ": Not sending notification of ephemeral lifetime changed to " << event->getEphemeralMessageLifetime();
 	}
 }
 

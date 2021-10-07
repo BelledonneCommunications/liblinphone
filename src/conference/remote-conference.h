@@ -59,6 +59,9 @@ protected:
 	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	void onFullStateReceived () override;
 
+	void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralMessageEnabled (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 
 private:
 	L_DISABLE_COPY(RemoteConference);

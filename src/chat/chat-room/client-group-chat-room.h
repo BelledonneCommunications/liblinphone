@@ -136,6 +136,7 @@ private:
 
 	void sendInvite (std::shared_ptr<CallSession> &session, const std::list<IdentityAddress> & addressList);
 	void setConferenceId (const ConferenceId &conferenceId);
+	void sendEphemeralUpdate();
 
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.
@@ -153,6 +154,10 @@ private:
 	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
 
 	void onParticipantsCleared () override;
+
+	void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralMessageEnabled (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
 
 	L_DECLARE_PRIVATE(ClientGroupChatRoom);
 	L_DISABLE_COPY(ClientGroupChatRoom);

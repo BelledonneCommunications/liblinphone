@@ -263,16 +263,20 @@ public:
 	/*
 	* This fonction is called each time a participant device changes the ephemeral mode
 	* @param[in] event informations related to the device's participant.
-	* @param[in] device participant device that changed the ephemeral settings
 	*/
-	virtual void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+	virtual void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {};
 
 	/*
-	* This fonction is called each time a participant device changes the ephemeral settings
+	* This fonction is called each time a participant device enables or disables ephemeral messages when they are managed by admins
 	* @param[in] event informations related to the device's participant.
-	* @param[in] device participant device that changed the ephemeral settings
 	*/
-	virtual void onEphemeralChanged (const std::shared_ptr<ConferenceEphemeralEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+	virtual void onEphemeralMessageEnabled (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {};
+
+	/*
+	* This fonction is called each time a participant device changes the ephemeral lifetime when ephemeral messages are managed by admins
+	* @param[in] event informations related to the device's participant.
+	*/
+	virtual void onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {};
 
 	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.

@@ -86,6 +86,12 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 
 void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
 
+void RemoteConference::onEphemeralModeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
+
+void RemoteConference::onEphemeralMessageEnabled (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
+
+void RemoteConference::onEphemeralLifetimeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
+
 void RemoteConference::onFullStateReceived() {
 
 	time_t creationTime = time(nullptr);
