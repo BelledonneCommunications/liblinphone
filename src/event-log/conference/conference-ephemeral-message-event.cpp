@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "conference-notified-event-p.h"
 #include "conference-ephemeral-message-event.h"
 
 // =============================================================================
@@ -27,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class ConferenceEphemeralMessageEventPrivate : public ConferenceEventPrivate {
+class ConferenceEphemeralMessageEventPrivate : public ConferenceNotifiedEventPrivate {
 public:
 	long ephemeralLifetime;
 };
@@ -39,7 +40,7 @@ Type type,
 time_t creationTime,
 const ConferenceId &conferenceId,
 long ephemeralLifetime
-) : ConferenceEvent(
+) : ConferenceNotifiedEvent(
 	*new ConferenceEphemeralMessageEventPrivate,
 	type,
 	creationTime,

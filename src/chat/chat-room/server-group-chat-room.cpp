@@ -441,7 +441,7 @@ void ServerGroupChatRoomPrivate::setEphemeralMode(AbstractChatRoom::EphemeralMod
 	if (device) {
 		time_t creationTime = time(nullptr);
 		const auto eventType = (mode == AbstractChatRoom::EphemeralMode::AdminManaged) ? EventLog::Type::ConferenceEphemeralMessageManagedByAdmin : EventLog::Type::ConferenceEphemeralMessageManagedByParticipants;
-		q->getConference()->notifyEphemeralModeChanged(creationTime, false, eventType, device);
+		q->getConference()->notifyEphemeralModeChanged(creationTime, false, eventType);
 	} else {
 		lWarning() << "Unable to find device among those of the participants that changed ephemeral message mode to " << mode;
 	}
@@ -455,7 +455,7 @@ void ServerGroupChatRoomPrivate::setEphemeralLifetime(long lifetime, const share
 	const auto device = q->getConference()->findParticipantDevice(session);
 	if (device) {
 		time_t creationTime = time(nullptr);
-		q->getConference()->notifyEphemeralChanged(creationTime, false, lifetime, device);
+		q->getConference()->notifyEphemeralLifetimeChanged(creationTime, false, lifetime);
 	} else {
 		lWarning() << "Unable to find device among those of the participants that changed ephemeral message lifetime to " << lifetime;
 	}

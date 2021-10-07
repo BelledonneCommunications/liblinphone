@@ -438,9 +438,9 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	return event;
 }
 
-shared_ptr<ConferenceEphemeralEvent> Conference::notifyEphemeralModeChanged (time_t creationTime,  const bool isFullState, const EventLog::Type type, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceEphemeralMessageEvent> Conference::notifyEphemeralModeChanged (time_t creationTime,  const bool isFullState, const EventLog::Type type) {
 	L_ASSERT((type == EventLog::Type::ConferenceEphemeralMessageManagedByAdmin) || (type == EventLog::Type::ConferenceEphemeralMessageManagedByParticipants));
-	shared_ptr<ConferenceEphemeralEvent> event = make_shared<ConferenceEphemeralEvent>(
+	shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(
 		type,
 		creationTime,
 		conferenceId,
@@ -450,14 +450,32 @@ shared_ptr<ConferenceEphemeralEvent> Conference::notifyEphemeralModeChanged (tim
 	event->setNotifyId(lastNotify);
 
 	for (const auto &l : confListeners) {
-		l->onEphemeralModeChanged(event, participantDevice);
+		l->onEphemeralModeChanged(event);
 	}
 	return event;
 }
 
-shared_ptr<ConferenceEphemeralEvent> Conference::notifyEphemeralChanged (time_t creationTime,  const bool isFullState, long lifetime, const std::shared_ptr<ParticipantDevice> &participantDevice) {
-	shared_ptr<ConferenceEphemeralEvent> event = make_shared<ConferenceEphemeralEvent>(
-		EventLog::Type::ConferenceEphemeralLifetimeChanged,
+shared_ptr<ConferenceEphemeralMessageEvent> Conference::notifyEphemeralMessageEnabled (time_t creationTime,  const bool isFullState, const bool enable) {
+
+	shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(
+		(enable) ? EventLog::Type::ConferenceEphemeralMessageEnabled : EventLog::Type::ConferenceEphemeralMessageDisabled,
+		creationTime,
+		getConferenceId(),
+		0
+	);
+
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onEphemeralMessageEnabled(event);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceEphemeralMessageEvent> Conference::notifyEphemeralLifetimeChanged (time_t creationTime,  const bool isFullState, const long lifetime) {
+	shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(
+		EventLog::Type::ConferenceEphemeralMessageLifetimeChanged,
 		creationTime,
 		conferenceId,
 		lifetime
@@ -466,7 +484,7 @@ shared_ptr<ConferenceEphemeralEvent> Conference::notifyEphemeralChanged (time_t 
 	event->setNotifyId(lastNotify);
 
 	for (const auto &l : confListeners) {
-		l->onEphemeralChanged(event, participantDevice);
+		l->onEphemeralLifetimeChanged(event);
 	}
 	return event;
 }

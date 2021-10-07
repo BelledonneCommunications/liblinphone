@@ -1129,6 +1129,34 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 	getConference()->clearParticipants ();
 }
 
+void ClientGroupChatRoom::onEphemeralModeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {
+	L_D();
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+}
+
+void ClientGroupChatRoom::onEphemeralMessageEnabled (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {
+	L_D();
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+}
+
+void ClientGroupChatRoom::onEphemeralLifetimeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {
+	L_D();
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_ephemeral_event(cr, L_GET_C_BACK_PTR(event));
+}
+
+
 void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode, bool updateDb) {
 	L_D();
 
@@ -1277,7 +1305,7 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 			if (ephemeralEnabled() == enable) {
 				sendEphemeralUpdate();
 			} else {
-				enableEphemeral(enable, true);
+				enableEphemeral(enable, updateDb);
 			}
 		} else {
 			lError() << "Cannot change the ephemeral lifetime of chat room " << getConferenceId() << " in a state other than Created";

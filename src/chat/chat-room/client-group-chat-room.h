@@ -155,6 +155,10 @@ private:
 
 	void onParticipantsCleared () override;
 
+	void onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralMessageEnabled (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+	void onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) override;
+
 	L_DECLARE_PRIVATE(ClientGroupChatRoom);
 	L_DISABLE_COPY(ClientGroupChatRoom);
 };

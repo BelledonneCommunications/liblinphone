@@ -175,6 +175,21 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							const auto lifetime = std::stol(ephemeralLifetime);
 							cgcr->getCurrentParams()->setEphemeralLifetime(lifetime);
 							cgcr->getPrivate()->enableEphemeral((lifetime != 0));
+							if (!isFullState) {
+								conf->notifyEphemeralLifetimeChanged(
+									creationTime,
+									isFullState,
+									lifetime
+								);
+
+								conf->notifyEphemeralMessageEnabled(
+									creationTime,
+									isFullState,
+									(lifetime != 0)
+								);
+							}
+
+
 						}
 					} else if (ephemeralMode.compare("device-managed") == 0) {
 						cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);

@@ -28,7 +28,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceEphemeralMessageEventPrivate;
 
-class LINPHONE_PUBLIC ConferenceEphemeralMessageEvent : public ConferenceEvent {
+class LINPHONE_PUBLIC ConferenceEphemeralMessageEvent : public ConferenceNotifiedEvent {
+	friend class Conference;
 public:
 	ConferenceEphemeralMessageEvent (
 							Type type,
