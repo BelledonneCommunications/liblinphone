@@ -393,7 +393,28 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
+	int available_cpu = 0;
+	#ifdef _WIN32 /*fixme to be tested*/
+	SYSTEM_INFO sysinfo;
+	GetNativeSystemInfo( &sysinfo );
+	available_cpu = sysinfo.dwNumberOfProcessors;
+	#elif __APPLE__ || __linux__
+	available_cpu = sysconf( _SC_NPROCESSORS_CONF); /*check the number of processors configured, not just the one that are currently active.*/
+	#else
+	#warning "There is no code that detects the number of CPU for this platform."
+	available_cpu = (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc));
+	#endif
 
+	if (width*height >= 1280*720 && strcasecmp("vp8",video_codec) == 0) {
+		/*required cpu for this test is 8 https://gitlab.linphone.org/BC/public/mediastreamer2/-/blob/master/src/videofilters/vp8.c#L61 */
+		if (available_cpu >= 8) {
+			ms_factory_set_cpu_count(linphone_core_get_ms_factory(marie->lc),8);
+		} else {
+			bctbx_error("Cannot execute this test with only [%i], requires 8",available_cpu);
+			BC_PASS("Test requires at least an octo core");
+		}
+	}
+		
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
 		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
 			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
