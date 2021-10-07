@@ -275,7 +275,7 @@ private:
 	IdentityAddress replyingToMessageSender;
 
 	bool isEphemeral = false;
-	long ephemeralLifetime = 86400; // 24h
+	long ephemeralLifetime = 0;
 	time_t ephemeralExpireTime = 0;
 
 	std::list<Content *> contents;
