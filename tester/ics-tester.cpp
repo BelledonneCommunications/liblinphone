@@ -22,6 +22,7 @@
 #include "address/address.h"
 #include "belr/grammarbuilder.h"
 #include "chat/ics/ics.h"
+#include "chat/ics/parser/ics-parser.h"
 #include "conference/conference-info.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -41,16 +42,20 @@ using namespace LinphonePrivate;
 
 static void parse_minimal_ics () {
 	const string str = "BEGIN:VCALENDAR\r\n"
+		"METHOD:REQUEST\r\n"
 		"PRODID:-//Linphone//Conference calendar//EN\r\n"
 		"VERSION:2.0\r\n"
 		"BEGIN:VEVENT\r\n"
 		"DTSTART:00000100T000000Z\r\n"
+		"DTSTAMP:19700101T000000Z\r\n"
+		"UID:19700101T000000Z@sip.linphone.org\r\n"
 		"END:VEVENT\r\n"
 		"END:VCALENDAR\r\n";
 
-	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
+	shared_ptr<Ics::Icalendar> ics = Ics::Parser::getInstance()->parseIcs(str);
 	if (!BC_ASSERT_PTR_NOT_NULL(ics)) return;
 
+	ics->setCreationTime(0);
 	const string str2 = ics->asString();
 	BC_ASSERT_STRING_EQUAL(str2.c_str(), str.c_str());
 }
@@ -101,9 +106,11 @@ static void build_ics () {
 	event->setDuration(duration);
 
 	calendar.addEvent(event);
+	calendar.setCreationTime(0);
 
 	const string strIcs = calendar.asString();
 	const string expectedIcs= "BEGIN:VCALENDAR\r\n"
+		"METHOD:REQUEST\r\n"
 		"PRODID:-//Linphone//Conference calendar//EN\r\n"
 		"VERSION:2.0\r\n"
 		"BEGIN:VEVENT\r\n"
@@ -115,6 +122,8 @@ static void build_ics () {
 		"X-CONFURI:sip:videoconf1@sip.linphone.org\r\n"
 		"SUMMARY:Conf chat vidéo\r\n"
 		"DESCRIPTION:Parler de la vidéo conférence et répartir les tâches.\r\n"
+		"DTSTAMP:19700101T000000Z\r\n"
+		"UID:19700101T000000Z@sip.linphone.org\r\n"
 		"END:VEVENT\r\n"
 		"END:VCALENDAR\r\n";
 

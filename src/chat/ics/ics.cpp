@@ -95,7 +95,7 @@ std::string Ics::Event::asString () const {
 		<< setw(4) << (mDateTimeStart.tm_year + 1900)
 		<< setw(2) << (mDateTimeStart.tm_mon + 1)
 		<< setw(2) << mDateTimeStart.tm_mday
-		<< "T" 
+		<< "T"
 		<< setw(2) << mDateTimeStart.tm_hour
 		<< setw(2) << mDateTimeStart.tm_min
 		<< setw(2) << mDateTimeStart.tm_sec
@@ -118,6 +118,39 @@ std::string Ics::Event::asString () const {
 	if (!mXConfUri.empty()) output << "X-CONFURI:" << mXConfUri << "\r\n";
 	if (!mSummary.empty()) output << "SUMMARY:" << mSummary << "\r\n";
 	if (!mDescription.empty()) output << "DESCRIPTION:" << mDescription << "\r\n";
+
+	// An EVENT needs two mandatory attributes DTSTAMP AND UID
+	time_t usedTime = mCreationTime != (time_t) -1 ? mCreationTime : ms_time(NULL);
+	tm stamp = Utils::getTimeTAsTm(usedTime);
+	output << setfill('0') << "DTSTAMP:"
+		<< setw(4) << (stamp.tm_year + 1900)
+		<< setw(2) << (stamp.tm_mon + 1)
+		<< setw(2) << stamp.tm_mday
+		<< "T"
+		<< setw(2) << stamp.tm_hour
+		<< setw(2) << stamp.tm_min
+		<< setw(2) << stamp.tm_sec
+		<< "Z\r\n";
+
+	// For UID RFC recommends to use a DATE-TIME [some unique value] @ domain
+	output << setfill('0') << "UID:"
+		<< setw(4) << (stamp.tm_year + 1900)
+		<< setw(2) << (stamp.tm_mon + 1)
+		<< setw(2) << stamp.tm_mday
+		<< "T"
+		<< setw(2) << stamp.tm_hour
+		<< setw(2) << stamp.tm_min
+		<< setw(2) << stamp.tm_sec
+		<< "Z";
+
+	size_t p;
+	if (!mOrganizer.empty() && (p = mOrganizer.find("@")) != string::npos) {
+		string domain = mOrganizer.substr(p + 1, mOrganizer.size());
+		output << "@" << domain << "\r\n";
+	} else {
+		output << "@sip.linphone.org\r\n";
+	}
+
 	output << "END:VEVENT\r\n";
 
 	return output.str();
@@ -131,6 +164,7 @@ std::string Ics::Icalendar::asString () const {
 	ostringstream output;
 
 	output << "BEGIN:VCALENDAR\r\n";
+	output << "METHOD:REQUEST\r\n";
 	output << "PRODID:-//Linphone//Conference calendar//EN\r\n";
 	output << "VERSION:2.0\r\n";
 	for (const auto &event : mEvents) {
@@ -188,11 +222,21 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	tm start = event->getDateTimeStart();
 	confInfo->setDateTime(Utils::getTmAsTimeT(start));
 
+	if (event->mCreationTime != (time_t) -1) {
+		confInfo->setCreationTime(event->mCreationTime);
+	}
+
 	return confInfo;
 }
 
 shared_ptr<const Ics::Icalendar> Ics::Icalendar::createFromString (const string &str) {
 	return Ics::Parser::getInstance()->parseIcs(str);
+}
+
+void Ics::Icalendar::setCreationTime(time_t time) {
+	for (auto &event : mEvents) {
+		event->mCreationTime = time;
+	}
 }
 
 LINPHONE_END_NAMESPACE

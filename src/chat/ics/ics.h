@@ -33,6 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 namespace Ics {
 	class LINPHONE_PUBLIC Event {
+		friend class Icalendar;
 	public:
 		Event () = default;
 		~Event () = default;
@@ -68,6 +69,8 @@ namespace Ics {
 		std::string mSummary;
 		std::string mDescription;
 		std::string mXConfUri;
+
+		time_t mCreationTime = (time_t) -1; // Used by tester
 	};
 
 	class LINPHONE_PUBLIC Icalendar {
@@ -83,6 +86,8 @@ namespace Ics {
 
 		static std::shared_ptr<const Icalendar> createFromString (const std::string &str);
 
+		// Used by the tester
+		void setCreationTime(time_t time);
 	private:
 		std::list<std::shared_ptr<Event>> mEvents;
 	};
