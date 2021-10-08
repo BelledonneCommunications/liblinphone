@@ -1021,7 +1021,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 	int idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_participants_stats[idx].number_of_NotifyReceived + 1),10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_subject_changed,(initial_participants_stats[idx].number_of_subject_changed + 1),10000));
 		idx++;
 	}
 	ms_free(initial_participants_stats);
@@ -1038,7 +1038,7 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 		linphone_address_unref(uri);
 
 		if (conference) {
-			BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
+			BC_ASSERT_STRING_EQUAL(original_subject, linphone_conference_get_subject(conference));
 		}
 	}
 
@@ -1317,7 +1317,7 @@ static void simple_conference_with_subject_change_from_admin(void) {
 	int idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_participants_stats[idx].number_of_NotifyReceived + 1),10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_subject_changed,(initial_participants_stats[idx].number_of_subject_changed + 1),10000));
 		idx++;
 	}
 	ms_free(initial_participants_stats);
