@@ -63,7 +63,6 @@ LINPHONE_PUBLIC void linphone_factory_clean(void);
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
  * @return a #LinphoneCore object @notnil
- * @see linphone_core_new_with_config_3()
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
 	const LinphoneFactory *factory,
