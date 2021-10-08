@@ -4252,7 +4252,7 @@ LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, c
 	}
 	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
 	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-	if (!found_cfg && default_cfg && linphone_address_weak_equal(uri, linphone_proxy_config_get_identity_address(default_cfg))) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config if the uri match. Return NULL if no match*/
+	if (!found_cfg) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
 	return found_cfg;
 }
 
@@ -4282,7 +4282,7 @@ LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, con
 	}
 	if (!found_acc && found_reg_acc)    found_acc = found_reg_acc;
 	else if (!found_acc && found_noreg_acc) found_acc = found_noreg_acc;
-	if (!found_acc && default_acc && linphone_address_weak_equal(uri, linphone_account_params_get_identity_address(linphone_account_get_params(default_acc))) ) found_acc=default_acc; /*when no matching account is found, use the default account if the uri match. Return NULL if no match*/
+	if (!found_acc) found_acc=default_acc; /*when no matching account is found, use the default account*/
 	return found_acc;
 }
 
