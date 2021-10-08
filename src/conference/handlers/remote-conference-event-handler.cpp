@@ -330,7 +330,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 				if (state != StateType::deleted) {
 /*
-					auto & deviceAnySequence (endpoint.getJoiningInfo().get().getAny());
+					auto & deviceAnySequence (endpoint.get().getAny());
 
 					for (auto anyElementIt = deviceAnySequence.begin(); anyElementIt != deviceAnySequence.end (); ++anyElementIt) {
 						const xercesc_3_1::DOMElement& anyElement (*anyElementIt);

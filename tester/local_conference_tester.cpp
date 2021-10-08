@@ -259,7 +259,9 @@ private:
 				auto participantRange = focus->mParticipantDevices.equal_range(participant);
 				for (auto participantIt = participantRange.first; participantIt != participantRange.second; participantIt++ ) {
 					LinphoneAddress *deviceAddr = linphone_address_new(participantIt->second.asString().c_str());
-					devices = bctbx_list_append(devices, linphone_factory_create_participant_device_identity(linphone_factory_get(),deviceAddr,""));
+					LinphoneParticipantDeviceIdentity * identity = linphone_factory_create_participant_device_identity(linphone_factory_get(),deviceAddr,"");
+					linphone_participant_device_identity_set_capability_descriptor(identity, linphone_core_get_linphone_specs(linphone_chat_room_get_core(cr)));
+					devices = bctbx_list_append(devices, identity);
 					linphone_address_unref(deviceAddr);
 				}
 				Address participantAddress(participant.asAddress().asString());
