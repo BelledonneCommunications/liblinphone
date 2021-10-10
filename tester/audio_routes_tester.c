@@ -191,8 +191,10 @@ static void call_with_unreliable_device(void) {
 	// This should be the device the core falls back when the current is unregistered
 	register_device(marie, &dummy3_test_snd_card_desc);
 
+	
 	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 1 done");
+	
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
@@ -211,10 +213,12 @@ static void call_with_unreliable_device(void) {
 
 	// Ringback
 	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 2 done");
+	
 	// Ringtone
 	emulate_unreliable_device(pauline, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 3 done");
+	
 	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	linphone_call_ref(pauline_call);
@@ -230,10 +234,10 @@ static void call_with_unreliable_device(void) {
 
 	// Call
 	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 4 done");
 	// Call
 	emulate_unreliable_device(pauline, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 5 done");
 	linphone_call_pause(pauline_call);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallPausing, 1));
@@ -241,11 +245,12 @@ static void call_with_unreliable_device(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallPaused, 1));
 
 	// Paused call
-	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
-	// Paused call
 	emulate_unreliable_device(pauline, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 6 done");
+	// PausedByRemote call
+	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
+	ms_message("emulate_unreliable_device 7 done");
+	
 	linphone_call_resume(pauline_call);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
@@ -253,10 +258,10 @@ static void call_with_unreliable_device(void) {
 
 	// Resumed Call
 	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 8 done");
 	// Resumed Call
 	emulate_unreliable_device(pauline, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
-
+	ms_message("emulate_unreliable_device 9 done");
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 

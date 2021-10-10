@@ -155,7 +155,7 @@ LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, co
 
 LINPHONE_PUBLIC char *linphone_core_get_device_identity(LinphoneCore *lc);
 
-LINPHONE_PUBLIC LinphoneCoreToneManagerStats *linphone_core_get_tone_manager_stats(LinphoneCore *lc);
+LINPHONE_PUBLIC const LinphoneCoreToneManagerStats *linphone_core_get_tone_manager_stats(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_reset_tone_manager_stats(LinphoneCore *lc);
 LINPHONE_PUBLIC const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id);
 

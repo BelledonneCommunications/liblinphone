@@ -592,11 +592,11 @@ void linphone_tone_description_destroy(LinphoneToneDescription *obj){
 }
 
 void linphone_core_set_call_error_tone(LinphoneCore *lc, LinphoneReason reason, const char *audiofile){
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(reason, LinphoneToneUndefined, audiofile);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().setTone(reason, LinphoneToneUndefined, audiofile);
 }
 
 void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile){
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNone, id, audiofile);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager().setTone(LinphoneReasonNone, id, audiofile);
 }
 
 const MSCryptoSuite * linphone_core_generate_srtp_crypto_suites_array_from_string(LinphoneCore *lc, const char *config){
