@@ -141,3 +141,7 @@ LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setCurrentCbs(rei
 void _linphone_participant_device_notify_capture_video_size_changed(LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size) {
 	NOTIFY_IF_EXIST(CaptureVideoSizeChanged, capture_video_size_changed, participant_device, size)
 }
+
+void _linphone_participant_device_notify_is_this_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
+	NOTIFY_IF_EXIST(IsThisSpeakingChanged, is_this_speaking_changed, participant_device, is_speaking)
+}

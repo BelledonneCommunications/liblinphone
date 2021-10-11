@@ -116,6 +116,8 @@ public:
 	const std::string &getUsername () const;
 	void setUsername (const std::string &username);
 
+	void notifySpeakingDevice (uint32_t ssrc) ;
+
 	ConferenceLayout getLayout() const;
 	void setLayout(const ConferenceLayout layout);
 
@@ -187,6 +189,8 @@ protected:
 
 	std::string mUsername = "";
 	time_t startTime = 0;
+		
+	uint32_t current_ssrc = 0;
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
 

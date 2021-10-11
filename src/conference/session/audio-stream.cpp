@@ -50,12 +50,24 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	isOfferer = params.localIsOfferer;
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
-	
+	audio_stream_set_event_callback(mStream, sAudioStreamEventCb, this);
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
 	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
 		initZrtp();
 	}
 	initializeSessions((MediaStream*)mStream);
+}
+
+void MS2AudioStream::sAudioStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args) {
+	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
+	zis->audioStreamEventCb(f, eventId, args);
+}
+
+void MS2AudioStream::audioStreamEventCb (const MSFilter *f, const unsigned int eventId, const void *args) {
+	if (eventId == MS_AUDIO_SPEAKING_DEVICE_CHANGED) {
+		uint32_t ssrc = *(uint32_t *)args;
+		getMediaSession().notifySpeakingDevice(ssrc);
+	}
 }
 
 void MS2AudioStream::initZrtp() {

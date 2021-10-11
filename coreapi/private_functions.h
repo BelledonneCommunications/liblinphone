@@ -334,7 +334,7 @@ void _linphone_conference_notify_state_changed(LinphoneConference *conference, L
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
 
 void _linphone_participant_device_notify_capture_video_size_changed(LinphoneParticipantDevice *participant_device, LinphoneVideoSize *size);
-
+void _linphone_participant_device_notify_is_this_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);

@@ -27,6 +27,7 @@
 #include "core/core.h"
 #include "logger/logger.h"
 #include "participant.h"
+#include "private_functions.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
@@ -254,6 +255,22 @@ void Conference::setSubject (const string &subject) {
 
 void Conference::setUsername (const string &username) {
 	mUsername = username;
+}
+
+void Conference::notifySpeakingDevice (uint32_t ssrc) {
+	if (current_ssrc != ssrc) {
+		for (const auto &participant : participants) {
+			for (const auto &device : participant->getDevices()) {
+				if (device->getSsrc() == ssrc) {
+					_linphone_participant_device_notify_is_this_speaking_changed(device->toC(), TRUE);
+				}
+				if (device->getSsrc() == current_ssrc) {
+					_linphone_participant_device_notify_is_this_speaking_changed(device->toC(), FALSE);
+				}
+			}
+		}
+		current_ssrc = ssrc;
+	}
 }
 
 // -----------------------------------------------------------------------------
