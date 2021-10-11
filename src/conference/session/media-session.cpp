@@ -151,6 +151,10 @@ bool MediaSessionPrivate::tryEnterConference() {
 				} else {
 					// Send update to notify that the call enters conference
 					MediaSessionParams *newParams = q->getMediaParams()->clone();
+					const auto & videoEnabled = conference->getCurrentParams().videoEnabled();
+					if (videoEnabled) {
+						newParams->enableRtpBundle(true);
+					}
 					lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") was added to conference " << conference->getConferenceAddress() << " while the call was establishing. Sending update to notify remote participant.";
 					q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
 					delete newParams;

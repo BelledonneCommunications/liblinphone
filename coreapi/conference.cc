@@ -703,6 +703,7 @@ bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<C
 				const MediaSessionParams * params = devSession->getMediaParams();
 
 				MediaSessionParams *currentParams = params->clone();
+				currentParams->enableRtpBundle(true);
 				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its media capabilities.";
 				std::string subject("Participant " + participantAddress->asString() + " updated session");
 // TODO Use UPDATE instead of DEFAULT 
@@ -837,10 +838,11 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			case LinphoneCallOutgoingRinging:
 			case LinphoneCallIncomingReceived:
 			case LinphoneCallPausing:
-				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(call->getParams()))->setInConference(true);
-				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setInConference(true);
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
+				if (getCurrentParams().videoEnabled()) {
+					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
+				}
 			break;
 			case LinphoneCallPaused:
 			{
@@ -848,14 +850,13 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				 * Modifying the MediaSession's params directly is a bit hacky.
 				 * However, the resume() method doesn't accept parameters.
 				 */
-				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(call->getParams()))->setInConference(true);
-				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setInConference(true);
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
 				// If conference doesn't support video capabilities, then disable video
 				if (!getCurrentParams().videoEnabled()) {
-					const_cast<LinphonePrivate::MediaSessionParams*>(
-						call->getParams())->enableVideo(false);
+					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(false);
+				} else {
+					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
 				}
 				// Conference resumes call that previously paused in order to add the participant
 				call->resume();
@@ -870,6 +871,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				// If conference doesn't support video capabilities, then disable video
 				if (!getCurrentParams().videoEnabled()) {
 					linphone_call_params_enable_video(params, FALSE);
+				} else {
+					linphone_call_params_enable_rtp_bundle(params, TRUE);
 				}
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -1201,6 +1204,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 
 				if ((!!params->videoEnabled()) != newConfParams.videoEnabled()){
 					MediaSessionParams *currentParams = params->clone();
+					currentParams->enableRtpBundle(true);
 					lInfo() << "Re-INVITing participant " << participant->getAddress().asString() << " to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
 					currentParams->enableVideo(newConfParams.videoEnabled());
 					session->update(currentParams);
