@@ -1494,7 +1494,7 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 					newStream.name = "Thumbnail Video " + dev->getAddress().asString();
 					cfg.dir = SalStreamRecvOnly;
 
-					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, newStream.cfgs[newStream.getActualConfigurationIndex()], "vs" + devLabel);
+					if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, cfg, "vs" + devLabel);
 
 				} else {
 					lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
@@ -1960,7 +1960,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	/* Get the transport addresses filled in to the media description. */
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
-//		transferAlreadyAssignedPayloadTypes(oldMd, md);
 		localDescChanged = md->equal(*oldMd);
 		if (getParams()->getPrivate()->getInternalCallUpdate()) {
 			/*
@@ -3116,7 +3115,6 @@ ConferenceLayout MediaSession::computeConferenceLayout(const std::shared_ptr<Sal
 	} else {
 		layout = ConferenceLayout::None;
 	}
-lInfo() << __func__ << " DEBUG DEBUG layout " << layout;
 	return layout;
 }
 
