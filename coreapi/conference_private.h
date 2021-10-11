@@ -143,6 +143,9 @@ public:
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
 
+	bool isConferenceEnded() const;
+	bool isConferenceStarted() const;
+
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice *getInputAudioDevice() const;
@@ -341,6 +344,7 @@ private:
 	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
 
+	std::shared_ptr<Participant> focus;
 	char *m_focusContact;
 	std::shared_ptr<LinphonePrivate::Call> m_focusCall;
 	LinphoneCoreCbs *m_coreCbs;
