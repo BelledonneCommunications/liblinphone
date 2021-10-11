@@ -155,6 +155,7 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 	if ((getState() == ConferenceInterface::State::Instantiated) || (getState() == ConferenceInterface::State::CreationPending)) {
 
 		if (!conferenceAddress.isValid()) {
+			lError() << "Cannot set the conference address to " << conferenceAddress;
 			shared_ptr<CallSession> session = getMe()->getSession();
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
