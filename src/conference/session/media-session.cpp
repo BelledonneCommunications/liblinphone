@@ -1413,7 +1413,6 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 	SalStreamConfiguration cfg;
 	cfg.proto = proto;
 	stream.type = type;
-lInfo() << __func__ << " DEBUG DEBUG enabled " << enabled << " codecs " << codecs.size() << " dontCheckCodecs " << dontCheckCodecs;
 	if (enabled && (!codecs.empty() || dontCheckCodecs)) {
 		stream.name = name;
 		cfg.dir = dir;
