@@ -37,6 +37,7 @@
 #include "logger/logger.h"
 #include "sal/refer-op.h"
 #include "server-group-chat-room-p.h"
+#include "sip-tools/sip-headers.h"
 
 #include "linphone/wrapper_utils.h"
 
@@ -828,16 +829,23 @@ void ServerGroupChatRoomPrivate::designateAdmin () {
 	}
 }
 
-void ServerGroupChatRoomPrivate::sendMessage (const shared_ptr<Message> &message, const IdentityAddress &deviceAddr){
+void ServerGroupChatRoomPrivate::sendMessage(const shared_ptr<Message> &message, const IdentityAddress &deviceAddr) {
 	L_Q();
 
 	shared_ptr<ChatMessage> msg = q->createChatMessage();
 	copyMessageHeaders(message, msg);
-	msg->getPrivate()->addSalCustomHeader("Session-mode", "true"); // Special custom header to identify MESSAGE that belong to server group chatroom
+	// Special custom header to identify MESSAGE that belong to server group chatroom
+	msg->getPrivate()->addSalCustomHeader("Session-mode", "true");
 	msg->setInternalContent(message->content);
 	msg->getPrivate()->forceFromAddress(q->getConferenceAddress());
 	msg->getPrivate()->forceToAddress(deviceAddr);
 	msg->getPrivate()->setApplyModifiers(false);
+	if (message->fromAddr.getUsername() == msg->getToAddress().getUsername() &&
+		message->fromAddr.getDomain() == msg->getToAddress().getDomain()) {
+		// If FROM and TO are the same user (with a different device for example, gruu is not checked), set the
+		// Non-Urgent header to disable push notification for this message.
+		msg->getPrivate()->addSalCustomHeader(PriorityHeader::HeaderName, PriorityHeader::NonUrgent);
+	}
 	msg->send();
 }
 
