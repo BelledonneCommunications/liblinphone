@@ -748,3 +748,27 @@ LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConfe
 	}
 	return LinphoneChatRoomStateNone;
 }
+
+const char* linphone_chat_room_state_to_string(const LinphoneChatRoomState state) {
+	switch (state) {
+		case LinphoneChatRoomStateNone:
+			return "LinphoneChatRoomStateNone";
+		case LinphoneChatRoomStateInstantiated:
+			return "LinphoneChatRoomStateInstantiated";
+		case LinphoneChatRoomStateCreationPending:
+			return "LinphoneChatRoomStateCreationPending";
+		case LinphoneChatRoomStateCreated:
+			return "LinphoneChatRoomStateCreated";
+		case LinphoneChatRoomStateCreationFailed:
+			return "LinphoneChatRoomStateCreationFailed";
+		case LinphoneChatRoomStateTerminationPending:
+			return "LinphoneChatRoomStateTerminationPending";
+		case LinphoneChatRoomStateTerminated:
+			return "LinphoneChatRoomStateTerminated";
+		case LinphoneChatRoomStateTerminationFailed:
+			return "LinphoneChatRoomStateTerminationFailed";
+		case LinphoneChatRoomStateDeleted:
+			return "LinphoneChatRoomStateDeleted";
+	}
+	return "Unknown state";
+}
