@@ -61,6 +61,12 @@ public:
 	virtual std::string getSoundResource (const std::string &filename) const = 0;
 	virtual void * getPathContext () = 0;
 
+	enum NetworkType{
+		Unknown,
+		Wifi,
+		MobileData
+	};
+	virtual NetworkType getNetworkType() const = 0;
 	virtual std::string getWifiSSID() = 0;
 	virtual void setWifiSSID(const std::string &ssid) = 0;
 
@@ -127,6 +133,7 @@ public:
 	std::string getSoundResource (const std::string &filename) const override;
 	void * getPathContext () override;
 
+	NetworkType getNetworkType() const override;
 	std::string getWifiSSID() override;
 	void setWifiSSID(const std::string &ssid) override;
 

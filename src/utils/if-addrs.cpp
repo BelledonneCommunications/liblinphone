@@ -189,22 +189,22 @@ list<string> IfAddrs::fetchLocalAddresses(){
 	 * are also added to the list, which may not be the case if the system has dozens of IPv6 addresses per interface.
 	 * In this case it is hard to guess the one that will be used, but the address returned by this raw method
 	 * has a good probability to be the good one.
+	 * Ensure that the addresses that have the default route are present first in the list, this is important
+	 * for the local network permission check (iOS specific).
 	 */
 	lInfo() << "Fetching local ip addresses using the connect() method.";
 	char localAddr[LINPHONE_IPADDR_SIZE];
 	
 	if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) == 0) {
-		if (find(ret.begin(), ret.end(), string(localAddr)) == ret.end()){
-			ret.push_back(localAddr);
-		}
+		ret.remove(localAddr);
+		ret.push_front(localAddr);
 	}else{
 		lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv6";
 	}
 	
 	if (linphone_core_get_local_ip_for(AF_INET, nullptr, localAddr) == 0){
-		if (find(ret.begin(), ret.end(), string(localAddr)) == ret.end()){
-			ret.push_back(localAddr);
-		}
+		ret.remove(localAddr);
+		ret.push_front(localAddr);
 	}else{
 		lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv4";
 	}

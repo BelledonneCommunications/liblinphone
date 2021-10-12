@@ -71,6 +71,7 @@ public:
 	string getSoundResource (const string &filename) const override;
 	void * getPathContext () override;
 
+	NetworkType getNetworkType()const override;
 	string getWifiSSID() override;
 	void setWifiSSID(const string &ssid) override;
 
@@ -690,6 +691,10 @@ void IosPlatformHelpers::kickOffConnectivity() {
 			CFRelease(writeStream);
 			in_progress = false;
 		});
+}
+
+PlatformHelpers::NetworkType IosPlatformHelpers::getNetworkType()const{
+	return (mCurrentFlags & kSCNetworkReachabilityFlagsIsWWAN) ? NetworkType::MobileData : NetworkType::Wifi;
 }
 
 void IosPlatformHelpers::setWifiSSID(const string &ssid) {

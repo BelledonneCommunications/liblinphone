@@ -116,6 +116,7 @@ public:
 	static bool hasLocalNetworkPermission(const std::list<std::string> & localAddrs);
 	static bool hasLocalNetworkPermission();
 private:
+	static bool checkLocalNetworkPermission(const std::string &localAddr);
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	bool iceFoundInMediaDescription (const std::shared_ptr<SalMediaDescription> &md);

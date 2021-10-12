@@ -7541,6 +7541,10 @@ bool_t linphone_core_callkit_enabled (const LinphoneCore *core) {
 }
 
 bool_t linphone_core_local_permission_enabled (const LinphoneCore *core){
+	if (getPlatformHelpers(core)->getNetworkType() != PlatformHelpers::NetworkType::Wifi){
+		lInfo() << "IceService::hasLocalNetworkPermission() assuming true when network is not wifi";
+		return TRUE;
+	}
 	return (bool_t)IceService::hasLocalNetworkPermission();
 }
 

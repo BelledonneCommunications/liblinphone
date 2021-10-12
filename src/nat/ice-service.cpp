@@ -25,6 +25,10 @@
 #include "conference/session/media-session-p.h"
 #include "utils/if-addrs.h"
 
+#if defined(__APPLE__)
+	#include "TargetConditionals.h"
+#endif
+
 using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -204,8 +208,11 @@ int IceService::gatherLocalCandidates(){
 	list<string> localAddrs = IfAddrs::fetchLocalAddresses();
 	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
 	
-	if (!hasLocalNetworkPermission(localAddrs)) return -1;
-	
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+	if (getPlatformHelpers(getCCore())->getNetworkType() == PlatformHelpers::NetworkType::Wifi 
+		&& !hasLocalNetworkPermission(localAddrs)) return -1;
+#endif
+
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
 		size_t index = stream->getIndex();
@@ -791,36 +798,17 @@ bool IceService::hasLocalNetworkPermission(){
 	return hasLocalNetworkPermission(IfAddrs::fetchLocalAddresses());
 }
 
-/* 
- * The local network permission check is done by simply sending a packet to itself.
- */
-bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localAddrs){
+bool IceService::checkLocalNetworkPermission(const string &localAddr){
 	ssize_t error;
 	struct addrinfo *res = nullptr;
 	struct addrinfo hints = {0};
-	string localAddr;
 	bctbx_socket_t sock = (ortp_socket_t)-1;
 	struct sockaddr_storage selfAddr;
 	socklen_t selfAddrLen = sizeof(selfAddr);
-	static const int timeout = 100; /*ms*/
+	static const int timeout = 200; /*ms*/
 	string message("coucou");
 	uint64_t begin;
 	bool result = false;
-	
-	if (localAddrs.empty()){
-		lError() << "Cannot check the local network permission because the local network addresses are unknown.";
-		return false;
-	}
-	/* Select the first one that is IPv4. Indeed IPv6 address are usually global scope, then
-	 * not subject to the local network permission. */
-	for (auto addr : localAddrs){
-		if (localAddr.empty()) localAddr = addr;
-		if (addr.find(':') == string::npos){
-			/* not an IPv6 address */
-			localAddr = addr;
-			break;
-		}
-	}
 	
 	lInfo() << "Checking local network permission with address " << localAddr;
 	
@@ -850,16 +838,18 @@ bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localA
 		goto end;
 	}
 	
-	error = bctbx_sendto(sock, message.c_str(), message.size(), 0, (struct sockaddr *)&selfAddr, selfAddrLen);
-	if (error == -1){
-		lError() << "Cannot sendto():" << getSocketError();
-		goto end;
-	}
 	begin = ms_get_cur_time_ms();
 	do{
 		uint8_t buffer[128];
 		struct sockaddr_storage ss;
 		socklen_t slen = sizeof(ss);
+		
+		error = bctbx_sendto(sock, message.c_str(), message.size(), 0, (struct sockaddr *)&selfAddr, selfAddrLen);
+		if (error == -1){
+			lError() << "Cannot sendto():" << getSocketError();
+			goto end;
+		}
+		ms_usleep(1000);
 		error = bctbx_recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss, &slen);
 		if (error > 0){
 			result = true;
@@ -868,13 +858,43 @@ bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localA
 			lError() << "recvfrom() failed: " << getSocketError();
 			break;
 		}
-		ms_usleep(1000);
+		
 	}while (ms_get_cur_time_ms() - begin < timeout);
-	lInfo() << "IceService::hasLocalNetworkPermission(): local permission is apparently " << (result ? "granted" : "denied");
 end:
 	if (sock != 1) bctbx_socket_close(sock);
 	if (res) bctbx_freeaddrinfo(res);
 	return result;
+}
+
+/* 
+ * The local network permission check is done by simply sending a packet to itself.
+ */
+bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localAddrs){
+	string localAddr4, localAddr6;
+	
+	if (localAddrs.empty()){
+		lError() << "Cannot check the local network permission because the local network addresses are unknown.";
+		return false;
+	}
+	/* Select the first IPv4 and IPv6 addresses */
+	for (auto addr : localAddrs){
+		if (addr.find(':') == string::npos && localAddr4.empty()){
+			/* not an IPv6 address */
+			localAddr4 = addr;
+		}else if (addr.find(":") != string::npos && localAddr6.empty()){
+			localAddr6 = addr;
+		}
+	}
+	if (checkLocalNetworkPermission(localAddr4)){
+		lInfo() << "Local network permission is apparently granted (checked with " << localAddr4 << " )";
+		return true;
+	}
+	if (checkLocalNetworkPermission(localAddr6)){
+		lInfo() << "Local network permission is apparently granted (checked with " << localAddr4 << " )";
+		return true;
+	}
+	lInfo() << "Local network permission seems not granted.";
+	return false;
 }
 
 
