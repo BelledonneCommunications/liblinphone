@@ -138,7 +138,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		content = message->getContents().front();
 	}
 
-	const string contentBody = content->getBodyAsString();
+	const string contentBody = content->getBodyAsUtf8String();
 	if (content->getContentDisposition().isValid()) {
 		cpimMessage.addContentHeader(
 			Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().asString())
@@ -154,7 +154,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 
 	Content newContent;
 	newContent.setContentType(ContentType::Cpim);
-	newContent.setBodyFromLocale(cpimMessage.asString());
+	newContent.setBodyFromUtf8(cpimMessage.asString());
 	message->setInternalContent(newContent);
 
 	return ChatMessageModifier::Result::Done;
@@ -178,7 +178,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		return ChatMessageModifier::Result::Skipped;
 	}
 
-	const string contentBody = content->getBodyAsString();
+	const string contentBody = content->getBodyAsUtf8String();
 	const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
 	if (!cpimMessage || !cpimMessage->getMessageHeader("From") || !cpimMessage->getMessageHeader("To")) {
 		lError() << "[CPIM] Message is invalid: " << contentBody;
@@ -197,7 +197,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	auto contentDispositionHeader = cpimMessage->getContentHeader("Content-Disposition");
 	if (contentDispositionHeader)
 		newContent.setContentDisposition(ContentDisposition(contentDispositionHeader->getValue()));
-	newContent.setBodyFromLocale(cpimMessage->getContent());
+	newContent.setBodyFromUtf8(cpimMessage->getContent());
 
 	message->getPrivate()->setPositiveDeliveryNotificationRequired(false);
 	message->getPrivate()->setNegativeDeliveryNotificationRequired(false);
