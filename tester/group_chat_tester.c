@@ -4775,7 +4775,8 @@ end:
 	if (confAddr) linphone_address_unref(confAddr);
 	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
 	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
-
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
+	
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
@@ -4880,6 +4881,7 @@ end:
 	if (confAddr) linphone_address_unref(confAddr);
 	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
 	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -5097,6 +5099,7 @@ end:
 	if (confAddr) linphone_address_unref(confAddr);
 	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
 	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -5209,6 +5212,7 @@ end:
 	if (confAddr) linphone_address_unref(confAddr);
 	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
 	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);

@@ -25,6 +25,7 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
+realm=sip.example.org
 
 [friend_0]
 url="Paupoche" <sip:pauline@sip.example.org>
