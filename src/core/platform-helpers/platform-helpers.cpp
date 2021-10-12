@@ -117,6 +117,10 @@ void GenericPlatformHelpers::setDnsServers () {}
 
 void GenericPlatformHelpers::setHttpProxy (const string &host, int port) {}
 
+PlatformHelpers::NetworkType GenericPlatformHelpers::getNetworkType()const{
+	return NetworkType::Unknown;
+}
+
 string GenericPlatformHelpers::getWifiSSID() { return mCurrentSSID; }
 
 void GenericPlatformHelpers::setWifiSSID(const string &ssid) { mCurrentSSID = ssid; }
