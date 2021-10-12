@@ -802,7 +802,7 @@ bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localA
 	bctbx_socket_t sock = (ortp_socket_t)-1;
 	struct sockaddr_storage selfAddr;
 	socklen_t selfAddrLen = sizeof(selfAddr);
-	static const int timeout = 100; /*ms*/
+	static const int timeout = 1000; /*ms*/
 	string message("coucou");
 	uint64_t begin;
 	bool result = false;
@@ -850,16 +850,18 @@ bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localA
 		goto end;
 	}
 	
-	error = bctbx_sendto(sock, message.c_str(), message.size(), 0, (struct sockaddr *)&selfAddr, selfAddrLen);
-	if (error == -1){
-		lError() << "Cannot sendto():" << getSocketError();
-		goto end;
-	}
 	begin = ms_get_cur_time_ms();
 	do{
 		uint8_t buffer[128];
 		struct sockaddr_storage ss;
 		socklen_t slen = sizeof(ss);
+		
+		error = bctbx_sendto(sock, message.c_str(), message.size(), 0, (struct sockaddr *)&selfAddr, selfAddrLen);
+		if (error == -1){
+			lError() << "Cannot sendto():" << getSocketError();
+			goto end;
+		}
+		ms_usleep(1000);
 		error = bctbx_recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss, &slen);
 		if (error > 0){
 			result = true;
@@ -868,7 +870,7 @@ bool IceService::hasLocalNetworkPermission(const std::list<std::string> & localA
 			lError() << "recvfrom() failed: " << getSocketError();
 			break;
 		}
-		ms_usleep(1000);
+		
 	}while (ms_get_cur_time_ms() - begin < timeout);
 	lInfo() << "IceService::hasLocalNetworkPermission(): local permission is apparently " << (result ? "granted" : "denied");
 end:
