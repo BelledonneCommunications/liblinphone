@@ -16,6 +16,7 @@ realm=sip.example.org
 
 
 [proxy_0]
+realm=sip.example.org
 reg_proxy=<sip:sipv4.example.org;transport=tcp>
 reg_route=<sip:sipv4.example.org;transport=tcp>
 reg_identity="Super Marie" <sip:marie@sip.example.org>

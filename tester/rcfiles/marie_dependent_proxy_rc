@@ -14,6 +14,7 @@ passwd=secret
 realm=sip.example.org
 
 [proxy_0]
+realm=sip.example.org
 reg_proxy=<sip:sipopen.example.org;transport=tls>
 reg_identity="Super Marie" <sip:marie@sipopen.example.org>
 reg_expires=3600
