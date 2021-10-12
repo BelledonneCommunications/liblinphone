@@ -3600,12 +3600,8 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 			return 0;
 		} else if (getStreamsGroup().getIceService().isRunning()) {
 			// ICE negotiations are ongoing hence the update cannot be send right now
-			if (!d->isUpdateSentWhenIceCompleted()) {
-				lInfo() << "Queue ice completition task to defer CallSession update to complete ICE negotiations as update will not be sent when ICE negotiations complete";
-				d->queueIceCompletionTask(updateCompletionTask);
-			} else {
-				lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession update.";
-			}
+			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession update until ICE negotiations are completed.";
+			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}
 		result = updateCompletionTask();
