@@ -44,7 +44,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription().type), mIndex(params.streamIndex){
 	setPortConfig();
-	fillMulticastMediaAddresses();
+	initMulticast(params);
 }
 
 void Stream::setMain(){
@@ -203,17 +203,37 @@ void Stream::setPortConfig(){
 	setPortConfig(Stream::getPortRange(getCCore(), getType()));
 }
 
-void Stream::fillMulticastMediaAddresses () {
-	mPortConfig.multicastIp.clear();
-	if (getType() == SalAudio && getMediaSession().getPrivate()->getParams()->audioMulticastEnabled()){
-		mPortConfig.multicastIp = linphone_core_get_audio_multicast_addr(getCCore());
-	} else if (getType() == SalVideo && getMediaSession().getPrivate()->getParams()->videoMulticastEnabled()){
-		mPortConfig.multicastIp = linphone_core_get_video_multicast_addr(getCCore());
+void Stream::initMulticast(const OfferAnswerContext &params) {
+	mPortConfig.multicastRole = params.getLocalStreamDescription().multicast_role;
+	lInfo() << *this << ": multicast role is ["
+		<< sal_multicast_role_to_string(mPortConfig.multicastRole) << "]";
+	
+	if (mPortConfig.multicastRole == SalMulticastReceiver){
+		mPortConfig.multicastIp = params.getRemoteStreamDescription().rtp_addr;
+		mPortConfig.rtpPort = params.getRemoteStreamDescription().rtp_port;
+		mPortConfig.rtcpPort = 0; /* RTCP is disabled for multicast */
+	}else if (mPortConfig.multicastRole == SalMulticastSender){
+		if (getType() == SalAudio && getMediaSession().getPrivate()->getParams()->audioMulticastEnabled()){
+			mPortConfig.multicastIp = linphone_core_get_audio_multicast_addr(getCCore());
+		} else if (getType() == SalVideo && getMediaSession().getPrivate()->getParams()->videoMulticastEnabled()){
+			mPortConfig.multicastIp = linphone_core_get_video_multicast_addr(getCCore());
+		}
+		/* multicastRtpPort is the one that will be advertised.
+		 * However, the socket that will send to the multicast address/port does need need to bind on this port.
+		 * It should not to avoid port conflicts with multicast receivers that may run on the same host.
+		 * The bind() will be done on a random port instead.
+		 */
+		mPortConfig.multicastRtpPort = mPortConfig.rtpPort;
+		if (mPortConfig.multicastRtpPort == -1) {
+			/* we have to choose the multicast port now and the system can't choose it for us.*/
+			mPortConfig.multicastRtpPort = selectRandomPort(make_pair(1024,65535));
+		}
+		setRandomPortConfig();
 	}
 }
 
 bool Stream::isPortUsed(int port)const{
-	return port == mPortConfig.rtpPort || port == mPortConfig.rtcpPort;
+	return port == mPortConfig.rtpPort || port == mPortConfig.rtcpPort || port == mPortConfig.multicastRtpPort;
 }
 
 IceService & Stream::getIceService()const{
@@ -226,6 +246,7 @@ const string & Stream::getPublicIp() const{
 	}
 	return getMediaSessionPrivate().getMediaLocalIp();
 }
+
 
 void Stream::finish(){
 }

@@ -122,27 +122,27 @@ public:
 		return currentInputAudioDevice;
 	}
 	void setCurrentInputAudioDevice(AudioDevice * audioDevice) {
+		if (audioDevice) {
+			audioDevice->ref();
+		}
 		if (currentInputAudioDevice) {
 			currentInputAudioDevice->unref();
 		}
 		currentInputAudioDevice = audioDevice;
-		if (currentInputAudioDevice) {
-			currentInputAudioDevice->ref();
-		}
 	}
 
 	AudioDevice * getCurrentOutputAudioDevice()const {
 		return currentOutputAudioDevice;
 	}
 	void setCurrentOutputAudioDevice(AudioDevice * audioDevice) {
+		if (audioDevice) {
+			audioDevice->ref();
+		}
 		if (currentOutputAudioDevice) {
 			currentOutputAudioDevice->unref();
 			currentOutputAudioDevice = nullptr;
 		}
 		currentOutputAudioDevice = audioDevice;
-		if (currentOutputAudioDevice) {
-			currentOutputAudioDevice->ref();
-		}
 	}
 	std::shared_ptr<Participant> getMe () const;
 	void setDtlsFingerprint(const std::string &fingerPrint);
