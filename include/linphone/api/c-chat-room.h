@@ -635,6 +635,13 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(Li
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
 
 /**
+ * Converts a #LinphoneChatRoomState enum to a  string.
+ * @param state a #LinphoneChatRoomState to convert to string
+ * @return the string representation of the #LinphoneChatRoomState @notnil
+*/
+LINPHONE_PUBLIC const char* linphone_chat_room_state_to_string(const LinphoneChatRoomState state);
+
+/**
  * @}
  */
 
