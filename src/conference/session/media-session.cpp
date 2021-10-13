@@ -3801,12 +3801,6 @@ void MediaSession::setNativeVideoWindowId (void *id) {
 	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
 		iface->setNativeWindowId(id);
-		MSVideoDisplayMode mode = MSVideoDisplayHybrid;
-		if (iface->output) {
-			ms_filter_call_method(iface->output, MS_VIDEO_DISPLAY_SET_MODE, &mode);
-		} else {
-			lError() << "There is no display filter to set display mode";
-		}
 	}
 }
 
@@ -3840,6 +3834,14 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 			}
 			if (iface) {
 				iface->setNativeWindowId(id);
+			}
+			MS2Stream *ms  =  dynamic_cast<MS2Stream *>(s);
+			VideoStream *vs = (VideoStream *)(ms->getMediaStream());
+			MSVideoDisplayMode mode = MSVideoDisplayHybrid;
+			if (vs->output) {
+				ms_filter_call_method(vs->output, MS_VIDEO_DISPLAY_SET_MODE, &mode);
+			} else {
+				lError() << "There is no display filter to set display mode";
 			}
 		}
 	}
