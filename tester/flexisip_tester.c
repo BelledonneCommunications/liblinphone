@@ -1074,7 +1074,11 @@ static void dos_module_trigger(void) {
 
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
-
+	
+	/* This is to activate dos module on Flexisip server*/
+	linphone_core_set_user_agent(marie->lc,"Dos module enabled",NULL);
+	linphone_core_set_user_agent(pauline->lc,"Dos module enabled",NULL);
+	
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 
 	time_begin = bctbx_get_cur_time_ms();

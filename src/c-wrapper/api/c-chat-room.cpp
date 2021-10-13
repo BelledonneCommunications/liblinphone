@@ -720,7 +720,6 @@ LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneCha
 		case LinphoneChatRoomStateDeleted:
 			return LinphoneConferenceStateDeleted;
 	}
-	return LinphoneConferenceStateNone;
 }
 
 // Convert conference state enum to chat room state enum
@@ -746,5 +745,27 @@ LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConfe
 		case LinphoneConferenceStateDeleted:
 			return LinphoneChatRoomStateDeleted;
 	}
-	return LinphoneChatRoomStateNone;
+}
+
+const char* linphone_chat_room_state_to_string(const LinphoneChatRoomState state) {
+	switch (state) {
+		case LinphoneChatRoomStateNone:
+			return "LinphoneChatRoomStateNone";
+		case LinphoneChatRoomStateInstantiated:
+			return "LinphoneChatRoomStateInstantiated";
+		case LinphoneChatRoomStateCreationPending:
+			return "LinphoneChatRoomStateCreationPending";
+		case LinphoneChatRoomStateCreated:
+			return "LinphoneChatRoomStateCreated";
+		case LinphoneChatRoomStateCreationFailed:
+			return "LinphoneChatRoomStateCreationFailed";
+		case LinphoneChatRoomStateTerminationPending:
+			return "LinphoneChatRoomStateTerminationPending";
+		case LinphoneChatRoomStateTerminated:
+			return "LinphoneChatRoomStateTerminated";
+		case LinphoneChatRoomStateTerminationFailed:
+			return "LinphoneChatRoomStateTerminationFailed";
+		case LinphoneChatRoomStateDeleted:
+			return "LinphoneChatRoomStateDeleted";
+	}
 }
