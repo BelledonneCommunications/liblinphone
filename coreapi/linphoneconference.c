@@ -344,7 +344,7 @@ void linphone_conference_preview_ogl_render(LinphoneConference *conference) {
 				ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
 			}
 			if (stream && stream->output2) {
-				MSVideoDisplayMode mode = MSVideoDisplayOccupyAllSpace;
+				MSVideoDisplayMode mode = MSVideoDisplayHybrid;
 				ms_filter_call_method(stream->output2, MS_VIDEO_DISPLAY_SET_MODE, &mode);
 			}
 		}
@@ -363,7 +363,7 @@ void linphone_conference_ogl_render(LinphoneConference *conference) {
 				ms_filter_call_method(stream->output, MS_OGL_RENDER, NULL);
 			}
 			if (stream && stream->output) {
-				MSVideoDisplayMode mode = MSVideoDisplayOccupyAllSpace;
+				MSVideoDisplayMode mode = MSVideoDisplayHybrid;
 				ms_filter_call_method(stream->output, MS_VIDEO_DISPLAY_SET_MODE, &mode);
 			}
 		}
