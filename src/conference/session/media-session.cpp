@@ -3578,6 +3578,8 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
+		auto isIceRunning = getStreamsGroup().getIceService().isRunning();
+lWarning() << __func__ << " MediaSession::update() DEBUG DEBUG is ICE running " << getStreamsGroup().getIceService().isRunning() << " has completed " << getStreamsGroup().getIceService().hasCompleted();
 		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
@@ -3598,7 +3600,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 			lInfo() << "Defer CallSession update to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);
 			return 0;
-		} else if (getStreamsGroup().getIceService().isRunning()) {
+		} else if (isIceRunning) {
 			// ICE negotiations are ongoing hence the update cannot be send right now
 			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession update until ICE negotiations are completed.";
 			d->queueIceCompletionTask(updateCompletionTask);
