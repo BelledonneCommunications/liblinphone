@@ -72,7 +72,7 @@ void linphone_participant_device_cbs_set_capture_video_size_changed (LinphonePar
 	cbs->captureVideoSizeChangedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb linphone_participant_device_cbs_is_this_speaking_changed (const LinphoneParticipantDeviceCbs *cbs) {
+LinphoneParticipantDeviceCbsIsThisSpeakingChangedCb linphone_participant_device_cbs_get_is_this_speaking_changed (const LinphoneParticipantDeviceCbs *cbs) {
 	return cbs->isThisSpeakingChangedCb;
 }
 

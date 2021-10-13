@@ -179,6 +179,9 @@ public:
 	
 	virtual MediaStream *getMediaStream()const override;
 	virtual ~MS2AudioStream();
+
+	void audioStreamEventCb(const MSFilter *f, const unsigned int eventId, const void *args);
+	static void sAudioStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	
 	/* Yeah quite ugly: this function is used externally to configure raw mediastreamer2 AudioStreams.*/
 	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
