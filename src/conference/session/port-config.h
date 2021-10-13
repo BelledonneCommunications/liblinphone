@@ -32,6 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 struct PortConfig {
 	SalMulticastRole multicastRole = SalMulticastInactive;
 	std::string multicastIp;
+	int multicastRtpPort = 0; /* Used by multicast sender */
 	std::string multicastBindIp;
 	int rtpPort = -1;
 	int rtcpPort = -1;
