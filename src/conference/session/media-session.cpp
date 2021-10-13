@@ -3988,9 +3988,11 @@ LinphoneCallStats * MediaSession::getVideoStats () const {
 bool MediaSession::mediaInProgress () const {
 	L_D();
 	for(auto &stream : d->getStreamsGroup().getStreams()){
-		LinphoneCallStats *stats = stream->getStats();
-		if (stats && linphone_call_stats_get_ice_state(stats) == LinphoneIceStateInProgress){
-			return true;
+		if (stream) {
+			LinphoneCallStats *stats = stream->getStats();
+			if (stats && linphone_call_stats_get_ice_state(stats) == LinphoneIceStateInProgress){
+				return true;
+			}
 		}
 	}
 	return false;
