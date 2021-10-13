@@ -321,6 +321,15 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_set_freeze_on_error(mStream, !!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
 	video_stream_use_video_preset(mStream, linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
 
+	if (listener && listener->getCallSessionConference(getMediaSession().getSharedFromThis())) {
+		MSVideoDisplayMode mode = MSVideoDisplayHybrid;
+		if (mStream->output2) {
+			ms_filter_call_method(mStream->output2, MS_VIDEO_DISPLAY_SET_MODE, &mode);
+		}
+		if (mStream->output) {
+			ms_filter_call_method(mStream->output, MS_VIDEO_DISPLAY_SET_MODE, &mode);
+		}
+	}
 	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
 	if (!label.empty()) {
 		video_stream_set_label(mStream, label.c_str());
