@@ -2766,27 +2766,34 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			getCurrentParams()->enableAudio(false);
 		}
 
-		const SalStreamDescription &videoStream = md->findBestStream(SalVideo);
+		LinphoneConference * conference = listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()));
+		bool isInLocalConference = getParams()->getPrivate()->getInConference();
+		//const auto mainVideoStreamIdx = conference ? md->findIdxStreamWithContent("main") : -1;
+		auto mainVideoStreamIdx = -1;
+		if (conference && op) {
+			if (isInLocalConference) {
+				mainVideoStreamIdx = md->findIdxStreamWithContent("main");
+			} else {
+				const auto & rmd = op->getRemoteMediaDescription();
+				if (rmd) {
+					mainVideoStreamIdx = rmd->findIdxStreamWithContent("main");
+				}
+			}
+		}
+lInfo() << __func__ << " DEBUG DEBUG core " << linphone_core_get_identity(q->getCore()->getCCore()) << " main video stream idx " << mainVideoStreamIdx;
+		const auto &videoStream = (mainVideoStreamIdx == -1) ? md->findBestStream(SalVideo) : md->getStreamIdx(static_cast<unsigned int>(mainVideoStreamIdx));
 		if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(videoStream.hasImplicitAvpf());
 
 			SalStreamDir streamDir = SalStreamInactive;
-			LinphoneConference * conference = listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()));
-			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			if (conference && isInLocalConference) {
-				if (isInLocalConference) {
-					const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-					const auto & currentConfParams = cppConference->getCurrentParams();
-					if (currentConfParams.videoEnabled()) {
-						// At least receive the video streams of other participants if video is disabled in the call params
-						streamDir = (getParams()->videoEnabled()) ? SalStreamSendRecv : SalStreamRecvOnly;
-					} else {
-						streamDir = SalStreamInactive;
-					}
-				} else {
-					// Don't check conference parameters for remote conferences because the NOTIFY full state may have not been received yet
+				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+				const auto & currentConfParams = cppConference->getCurrentParams();
+				if (currentConfParams.videoEnabled()) {
 					// At least receive the video streams of other participants if video is disabled in the call params
 					streamDir = (getParams()->videoEnabled()) ? SalStreamSendRecv : SalStreamRecvOnly;
+				} else {
+					streamDir = SalStreamInactive;
 				}
 			} else {
 				streamDir = videoStream.getDirection();
@@ -3579,7 +3586,6 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
 		auto isIceRunning = getStreamsGroup().getIceService().isRunning();
-lWarning() << __func__ << " MediaSession::update() DEBUG DEBUG is ICE running " << getStreamsGroup().getIceService().isRunning() << " has completed " << getStreamsGroup().getIceService().hasCompleted();
 		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;

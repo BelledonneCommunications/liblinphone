@@ -66,7 +66,10 @@ bool Conference::tryAddMeDevice() {
 		if (devAddrStr) {
 			Address devAddr(devAddrStr);
 			auto meDev = me->addDevice(devAddr);
+			const auto & meSession = me->getSession();
 			ms_free(devAddrStr);
+
+			// Initialize media directions
 			meDev->setAudioDirection(confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
 			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
@@ -74,7 +77,7 @@ bool Conference::tryAddMeDevice() {
 			char label[Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
 			meDev->setLabel(label);
-			meDev->setSession(me->getSession());
+			meDev->setSession(meSession);
 
 			return true;
 		}

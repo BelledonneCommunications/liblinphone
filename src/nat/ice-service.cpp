@@ -136,6 +136,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
+		if (!stream) continue;
 		size_t index = stream->getIndex();
 		params.scopeStreamToIndex(index);
 		bool streamActive = params.getLocalStreamDescription().enabled();

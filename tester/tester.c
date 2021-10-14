@@ -753,8 +753,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 					} else if (_linphone_participant_device_get_audio_enabled(d) == TRUE) {
 						audio_direction = LinphoneMediaDirectionSendRecv;
 					} else {
-						//audio_direction = LinphoneMediaDirectionRecvOnly;
-						audio_direction = LinphoneMediaDirectionInactive;
+						audio_direction = LinphoneMediaDirectionRecvOnly;
 					}
 
 					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_is_video_enabled(remote_params)) == FALSE)) {
@@ -762,8 +761,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 					} else if (_linphone_participant_device_get_video_enabled(d) == TRUE) {
 						video_direction = LinphoneMediaDirectionSendRecv;
 					} else {
-						//video_direction = LinphoneMediaDirectionRecvOnly;
-						video_direction = LinphoneMediaDirectionInactive;
+						video_direction = LinphoneMediaDirectionRecvOnly;
 					}
 
 					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_chat_enabled(remote_params) == FALSE)) {
@@ -771,8 +769,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 					} else if (_linphone_participant_device_get_real_time_text_enabled(d) == TRUE) {
 						text_direction = LinphoneMediaDirectionSendRecv;
 					} else {
-						//text_direction = LinphoneMediaDirectionRecvOnly;
-						text_direction = LinphoneMediaDirectionInactive;
+						text_direction = LinphoneMediaDirectionRecvOnly;
 					}
 
 					BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), audio_direction, int, "%0d");

@@ -230,22 +230,24 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 }
 
 bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
-	auto p = findParticipant(call->getActiveSession());
+	const auto & session = call->getActiveSession();
+	auto p = findParticipant(session);
 	if (p) {
-		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
+		const auto & mediaSession = static_pointer_cast<MediaSession>(session);
+		const Address * remoteContact = mediaSession->getRemoteContactAddress();
 		if (remoteContact) {
 			// If device is not found, then add it
 			if (p->findDevice(*remoteContact, false) == nullptr) {
-				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress() << " in conference " << getConferenceAddress().asString();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				call->setConference(toC());
-				device->setSession(call->getActiveSession());
+				device->setSession(session);
+				const auto & callParams = call->getParams();
 				device->setLayout(getLayout());
-				device->setAudioDirection((confParams->audioEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-				device->setVideoDirection((confParams->videoEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-				device->setTextDirection((confParams->chatEnabled()) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-
+				device->setAudioDirection(ParticipantDevice::computeDeviceMediaDirection(confParams->audioEnabled(), callParams->audioEnabled()));
+				device->setVideoDirection(ParticipantDevice::computeDeviceMediaDirection(confParams->videoEnabled(), callParams->videoEnabled()));
+				device->setTextDirection(ParticipantDevice::computeDeviceMediaDirection(confParams->chatEnabled(), callParams->realtimeTextEnabled()));
 				lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device " << remoteContact->asString() << " to conference " << getConferenceAddress();
+lInfo() << __func__ << " DEBUG DEBUG device " << remoteContact->asString() << " audio " << device->getAudioDirection() << " audio " << device->getVideoDirection() << " audio " << device->getTextDirection();
 				return true;
 			}
 		} else {

@@ -62,6 +62,10 @@ bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
 	return (mGruu == device.getAddress());
 }
 
+Conference* ParticipantDevice::getConference () const {
+	return getParticipant() ? getParticipant()->getConference() : nullptr;
+}
+
 shared_ptr<Core> ParticipantDevice::getCore () const {
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
 }
@@ -192,24 +196,37 @@ bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction)
 	return setMediaDirection(direction, ConferenceMediaCapabilities::Text);
 }
 
+LinphoneMediaDirection ParticipantDevice::computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable) {
+	if (conferenceEnable) {
+		if (callEnable) {
+			return LinphoneMediaDirectionSendRecv;
+		} else {
+			return LinphoneMediaDirectionRecvOnly;
+		}
+	}
+
+	return LinphoneMediaDirectionInactive;
+}
+
 bool ParticipantDevice::updateMedia() {
 	bool mediaChanged = false;
-	if (mSession) {
-		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getRemoteParams());
+	auto conference = getConference();
+	if (mSession && conference) {
+		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getCurrentParams());
+		const auto & conferenceParams = conference->getCurrentParams();
 
 		if (currentParams) {
 			const auto & audioEnabled = currentParams->audioEnabled();
-			//const auto & audioDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalAudioDirection());
-			//mediaChanged |= setAudioDirection((audioEnabled) ? audioDir : LinphoneMediaDirectionInactive);
-			mediaChanged |= setAudioDirection((audioEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			const auto & conferenceAudioEnabled = conferenceParams.audioEnabled();
+			mediaChanged |= setAudioDirection(ParticipantDevice::computeDeviceMediaDirection(audioEnabled, conferenceAudioEnabled));
 
 			const auto & videoEnabled = currentParams->videoEnabled();
-			//const auto & videoDir = MediaSessionParamsPrivate::salStreamDirToMediaDirection(currentParams->getPrivate()->getSalVideoDirection());
-			//mediaChanged |= setVideoDirection((videoEnabled) ? videoDir : LinphoneMediaDirectionInactive);
-			mediaChanged |= setVideoDirection((videoEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			const auto & conferenceVideoEnabled = conferenceParams.videoEnabled();
+			mediaChanged |= setVideoDirection(ParticipantDevice::computeDeviceMediaDirection(videoEnabled, conferenceVideoEnabled));
 
 			const auto & textEnabled = currentParams->realtimeTextEnabled();
-			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			const auto & conferenceTextEnabled = conferenceParams.chatEnabled();
+			mediaChanged |= setTextDirection(ParticipantDevice::computeDeviceMediaDirection(textEnabled, conferenceTextEnabled));
 		} else {
 			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
 		}

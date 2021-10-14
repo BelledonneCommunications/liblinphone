@@ -59,6 +59,8 @@ public:
 	// non clonable object
 	ParticipantDevice *clone() const override { return nullptr; }
 
+	static LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable);
+
 	bool operator== (const ParticipantDevice &device) const;
 
 	std::shared_ptr<Core> getCore () const;
@@ -121,6 +123,9 @@ public:
 	
 	inline void setSpeaking (bool isSpeaking) { this->isThisSpeaking = isSpeaking; }
 	inline bool isSpeaking () const {return this->isThisSpeaking;};
+
+protected:
+	Conference *getConference () const;
 
 private:
 	std::weak_ptr<Participant> mParticipant;

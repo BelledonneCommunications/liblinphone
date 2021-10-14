@@ -352,7 +352,13 @@ SalStreamDir OfferAnswerEngine::computeConferenceStreamDir(SalStreamDir dir){
 
 SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const bool allowCapabilityNegotiation){
 
+lInfo() << __func__ << " DEBUG DEBUG START local offer: label " << local_offer.label << " content " << local_offer.content;
+lInfo() << __func__ << " DEBUG DEBUG START  remote answer: label " << remote_answer.label << " content " << remote_answer.content;
+
 	SalStreamDescription result;
+	result.setLabel(local_offer.getLabel());
+	result.setContent(local_offer.getContent());
+lInfo() << __func__ << " DEBUG DEBUG START result: label " << result.label << " content " << result.content;
 
 	result.type=local_offer.getType();
 
@@ -472,8 +478,10 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 				result.rtcp_addr=remote_answer.rtcp_addr;
 				result.rtcp_port=remote_answer.rtcp_port;
 				result.bandwidth=remote_answer.bandwidth;
-				result.setLabel(remote_answer.getLabel());
-				result.setContent(remote_answer.getContent());
+
+lInfo() << __func__ << " DEBUG DEBUG result: label " << result.label << " content " << result.content;
+lInfo() << __func__ << " DEBUG DEBUG local offer: label " << local_offer.label << " content " << local_offer.content;
+lInfo() << __func__ << " DEBUG DEBUG remote answer: label " << remote_answer.label << " content " << remote_answer.content;
 			}else{
 				lInfo() << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
 				result.disable();
@@ -690,6 +698,10 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			result.setContent(local_cap.getContent());
 		}
 
+lInfo() << __func__ << " DEBUG DEBUG result: label " << result.label << " content " << result.content;
+lInfo() << __func__ << " DEBUG DEBUG local cap: label " << local_cap.label << " content " << local_cap.content;
+lInfo() << __func__ << " DEBUG DEBUG remote offer: label " << remote_offer.label << " content " << remote_offer.content;
+
 		if (resultCfg.bundle_only == true) {
 			/* The stream is a secondary one part of a bundle.
 			* In this case it must set the bundle-only attribute, and set port to zero.*/
@@ -880,6 +892,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 		const SalStreamDescription & rs = remote_answer->streams[i];
 		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
 			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
+lInfo() << __func__ << " DEBUG DEBUG CHECK result: label " << stream.label << " content " << stream.content;
 			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
 			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {

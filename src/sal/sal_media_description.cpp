@@ -348,7 +348,7 @@ int SalMediaDescription::findIdxStreamWithLabel(const std::string label) const {
 
 std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStreamItWithContent(const std::string content) const {
 	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&content] (const auto & stream) { 
-		return (stream.enabled() && (stream.getContent().compare(content)==0));
+		return (stream.getContent().compare(content)==0);
 	});
 	return streamIt;
 }
