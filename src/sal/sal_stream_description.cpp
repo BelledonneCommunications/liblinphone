@@ -795,8 +795,13 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 
 	if (type != other.type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
+	lInfo() << __func__ << " DEBUG DEBUG network change STREAM DESC type this -> " << type << " other -> " << other.type << " content this -> " << content  << " other -> " << other.content << " label this -> " << label  << " other -> " << other.label << " RTP address this -> " << rtp_addr << " other -> " << other.rtp_addr;
+	lInfo() << __func__ << " DEBUG DEBUG network change STREAM DESC  type this -> " << type << " other -> " << other.type << " content this -> " << content  << " other -> " << other.content << " label this -> " << label  << " other -> " << other.label << "RTP port this -> " << rtp_port << " other -> " << other.rtp_port;
+	lInfo() << __func__ << " DEBUG DEBUG network change STREAM DESC type this -> " << type << " other -> " << other.type << " content this -> " << content  << " other -> " << other.content << " label this -> " << label  << " other -> " << other.label << " RTCP address this -> " << rtcp_addr << " other -> " << other.rtcp_addr;
+	lInfo() << __func__ << " DEBUG DEBUG network change STREAM DESC type this -> " << type << " other -> " << other.type << " content this -> " << content  << " other -> " << other.content << " label this -> " << label  << " other -> " << other.label << " RTCP port this -> " << rtcp_port << " other -> " << other.rtcp_port;
+
 	// RTP
-	if (rtp_addr.compare(other.rtp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if ((rtp_addr.compare(other.rtp_addr) != 0) && ((rtp_port != 0) || (other.rtp_port != 0))) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	if ((rtp_addr.empty()==false) && (other.rtp_addr.empty()==false) && ms_is_multicast(L_STRING_TO_C(rtp_addr)) != ms_is_multicast(L_STRING_TO_C(other.rtp_addr)))
 			result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (rtp_port != other.rtp_port) {
@@ -805,8 +810,14 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 	}
 
 	// RTCP
-	if (rtcp_addr.compare(other.rtcp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if (rtcp_port != other.rtcp_port) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if ((rtcp_addr.compare(other.rtcp_addr) != 0) && (rtcp_port != 0) && (other.rtcp_port != 0)) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if ((rtcp_addr.empty()==false) && (other.rtcp_addr.empty()==false) && ms_is_multicast(L_STRING_TO_C(rtcp_addr)) != ms_is_multicast(L_STRING_TO_C(other.rtcp_addr)))
+			result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
+	if (rtcp_port != other.rtcp_port) {
+		if ((rtcp_port == 0) || (other.rtcp_port == 0)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+		else result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	}
+
 
 	if (multicast_role != other.multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 
