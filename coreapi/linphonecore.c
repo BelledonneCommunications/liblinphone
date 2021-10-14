@@ -2363,7 +2363,7 @@ static void misc_config_read (LinphoneCore *lc) {
 	lc->max_calls = linphone_config_get_int(config,"misc","max_calls",NB_MAX_CALLS);
 
 	if (lc->user_certificates_path) bctbx_free(lc->user_certificates_path);
-		lc->user_certificates_path = bctbx_strdup(linphone_config_get_string(config, "misc", "user_certificates_path", "."));
+	lc->user_certificates_path = bctbx_strdup(linphone_config_get_string(config, "misc", "user_certificates_path", linphone_factory_get_data_dir(linphone_factory_get(), lc->system_context)));
 
 	lc->send_call_stats_periodical_updates = !!linphone_config_get_int(config, "misc", "send_call_stats_periodical_updates", 0);
 }
