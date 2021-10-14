@@ -29,99 +29,99 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ToneManager : public CoreAccessor {
+/*
+ * The ToneManager is in charge of scheduling rings, ringbacks, and various tones that come along with the life
+ * of calls.
+ */
+class ToneManager {
     public:
-        ToneManager(std::shared_ptr<Core> core);
-        ~ToneManager();
+	ToneManager(Core &core);
+	ToneManager(const ToneManager &other) = delete;
+	~ToneManager();
 
-        // public entrypoints for tones
-        void startRingbackTone(const std::shared_ptr<CallSession> &session);
-        void startRingtone(const std::shared_ptr<CallSession> &session);
-        void startErrorTone(const std::shared_ptr<CallSession> &session, LinphoneReason reason);
-        void startNamedTone(const std::shared_ptr<CallSession> &session, LinphoneToneID toneId);
-        void goToCall(const std::shared_ptr<CallSession> &session);
-        void stop(const std::shared_ptr<CallSession> &session);
-        void removeSession(const std::shared_ptr<CallSession> &session);
-        void update(const std::shared_ptr<CallSession> &session);
+	/* 
+	 * The CallSession's state change notification are sufficient to trigger rings and tones.
+	 * The ToneManager also needs to be informed about a transition to a future state, that's why
+	 * there are to entry points:
+	 * - prepareForNextState()
+	 * - notifyState();
+	 * They are driven by the MediaSession.
+	 */
+	void prepareForNextState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
+	void notifyState(const std::shared_ptr<CallSession> &session, CallSession::State nextState);
+	
+	
+	/* Below are a few accessors required by other parts of liblinphone.*/
+	void playDtmf(char dtmf, int duration);
+	void stopDtmf();
+	LinphoneStatus playLocal(const char *audiofile);
+	void startDtmfStream();
+	void stopDtmfStream();
+	
+	/* Used to temporarily override the audio output device. */
+	void setOutputDevice(const std::shared_ptr<CallSession> &session, AudioDevice *audioDevice);
+	AudioDevice *getOutputDevice(const std::shared_ptr<CallSession> &session) const;
+	
+	/* Request the tone manager to immediately abandon any sound card usage. All running rings or tones are dropped. */
+	void freeAudioResources();
 
-        // linphone core public API entrypoints
-        void linphoneCorePlayDtmf(char dtmf, int duration);
-        void linphoneCoreStopDtmf();
-        LinphoneStatus linphoneCorePlayLocal(const char *audiofile);
-        void linphoneCoreStartDtmfStream();
-        void linphoneCoreStopRinging();
-        void linphoneCoreStopDtmfStream();
-        void stop();
+	// tester
+	const LinphoneCoreToneManagerStats *getStats()const;
+	void resetStats();
 
-        // callback file player
-        void onFilePlayerEnd(unsigned int eventId);
-        void onPlayToneEnd(unsigned int eventId);
-        
-
-        // tester
-        LinphoneCoreToneManagerStats *getStats();
-        void resetStats();
-
-        // timer
-        void deleteTimer();
-
-        //tones setup
-        LinphoneToneDescription *getToneFromReason(LinphoneReason reason);
-        LinphoneToneDescription *getToneFromId(LinphoneToneID id);
-        void setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
+	// Tone configuration.
+	LinphoneToneDescription *getToneFromReason(LinphoneReason reason);
+	LinphoneToneDescription *getToneFromId(LinphoneToneID id);
+	void setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile);
 
     private:
         using AudioResourceType = enum {
             ToneGenerator = 0,
             LocalPlayer = 1
         };
-
-        using State = enum {
-            None = 0,     // No tone played, not in call (the session just started or will end soon)
-            Call = 1,     // Running call
-            Ringback = 2, // Play Ringback tone
-            Ringtone = 3, // Play Ringtone or play a tone over the current call
-            Tone = 4      // Play a DTMF tone or a tone file
-        };
-        std::string stateToString(ToneManager::State state);
-        void printDebugInfo(const std::shared_ptr<CallSession> &session);
-
-        std::map<std::shared_ptr<CallSession>, ToneManager::State> mSessions;
-        belle_sip_source_t *mTimer = nullptr;
-        LinphoneCoreToneManagerStats *mStats;
-
-        // timer
-        void createTimerToCleanTonePlayer(unsigned int delay);
-
-        //sessions
-        void setState(const std::shared_ptr<CallSession> &session, ToneManager::State newState);
-        ToneManager::State getState(const std::shared_ptr<CallSession> &session);
-        bool isAnotherSessionInState(const std::shared_ptr<CallSession> &me, ToneManager::State state);
-        bool getSessionInState(ToneManager::State state, std::shared_ptr<CallSession> &session);
-        bool isThereACall();
+	
+        LinphoneCoreToneManagerStats mStats;
+	
+	void notifyIncomingCall(const std::shared_ptr<CallSession> &session);
+	void notifyOutgoingCallRinging(const std::shared_ptr<CallSession> &session);
+	void notifyToneIndication(LinphoneReason reason);
+	void destroyRingStream();
 
         // start
-        void doStartRingbackTone(const std::shared_ptr<CallSession> &session);
-        void doStartRingtone(const std::shared_ptr<CallSession> &session);
-        void doStartErrorTone(const std::shared_ptr<CallSession> &session, LinphoneReason reason);
-        void doStartNamedTone(const std::shared_ptr<CallSession> &session, LinphoneToneID toneId);
+	void startRingbackTone();
+	void startRingtone();
+	void startErrorTone(LinphoneReason reason);
+	void startNamedTone(LinphoneToneID toneId);
 
-        // stop
-        void doStopRingbackTone();
-        void doStopTone();
-        void doStopAllTones();
-        void doStopRingtone(const std::shared_ptr<CallSession> &session);
-        void doStop(const std::shared_ptr<CallSession> &session, ToneManager::State newState);
-        
-        void updateRings();// UpdateRings is call after a tone end, or when updating call state
+	// stop
+	void stopRingbackTone();
+	void stopTone();
+	void stopRingtone();
 
-        // sound
-        MSFilter *getAudioResource(AudioResourceType rtype, MSSndCard *card, bool create);
-        LinphoneStatus playFile(const char *audiofile);
-        void playTone(const std::shared_ptr<CallSession> &session, MSDtmfGenCustomTone dtmf);
-        MSDtmfGenCustomTone generateToneFromId(LinphoneToneID toneId);
+	void scheduleRingStreamDestruction();
+	void updateRingingSessions(const std::shared_ptr<CallSession> &callSession, CallSession::State state);
+	
+	Core & getCore()const{
+		return mCore;
+	}
 
-        bool mDtmfStreamStarted = false;
+	// sound
+	MSFilter *getAudioResource(AudioResourceType rtype, MSSndCard *card, bool create);
+	LinphoneStatus playFile(const char *audiofile);
+	void playTone(const MSDtmfGenCustomTone & tone);
+	MSDtmfGenCustomTone generateToneFromId(LinphoneToneID toneId);
+	void cleanPauseTone();
+	bool inCallOrConference()const;
+	bool shouldPlayWaitingTone(const std::shared_ptr<CallSession> &session);
+	std::shared_ptr<CallSession> lookupRingingSession() const;
+	Core & mCore;
+	RingStream *mRingStream = nullptr;
+	std::shared_ptr<CallSession> mSessionRinging;
+	std::function< void() > mSessionRingingStopFunction;
+	std::shared_ptr<CallSession> mSessionRingingBack;
+	std::shared_ptr<CallSession> mSessionPaused;
+	belle_sip_source_t *mRingStreamTimer = nullptr;
+	bool mDtmfStreamStarted = false;
 };
 
 LINPHONE_END_NAMESPACE
