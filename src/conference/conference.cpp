@@ -260,19 +260,13 @@ void Conference::setUsername (const string &username) {
 	mUsername = username;
 }
 
-void Conference::notifySpeakingDevice (uint32_t ssrc) {
-	if (current_ssrc != ssrc) {
-		for (const auto &participant : participants) {
-			for (const auto &device : participant->getDevices()) {
-				if (device->getSsrc() == ssrc) {
-					_linphone_participant_device_notify_is_this_speaking_changed(device->toC(), TRUE);
-				}
-				if (device->getSsrc() == current_ssrc) {
-					_linphone_participant_device_notify_is_this_speaking_changed(device->toC(), FALSE);
-				}
+void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getSsrc() == ssrc) {
+				_linphone_participant_device_notify_is_this_speaking_changed(device->toC(), isSpeaking);
 			}
 		}
-		current_ssrc = ssrc;
 	}
 }
 

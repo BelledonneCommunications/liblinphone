@@ -66,10 +66,16 @@ void MS2AudioStream::sAudioStreamEventCb (void *userData, const MSFilter *f, con
 
 void MS2AudioStream::audioStreamEventCb (const MSFilter *f, const unsigned int eventId, const void *args) {
 	lInfo() << "IsSpeaking: audioStreamEventCb";
-	if (eventId == MS_AUDIO_SPEAKING_DEVICE_CHANGED) {
-		uint32_t ssrc = *(uint32_t *)args;
-		lInfo() << "IsSpeaking: audioStreamEventCb MS_AUDIO_SPEAKING_DEVICE_CHANGED " << ssrc;
-		getMediaSession().notifySpeakingDevice(ssrc);
+	uint32_t ssrc = *(uint32_t *)args;
+	switch (eventId) {
+		case MS_AUDIO_DEVICE_START_SPEAKING:
+			getMediaSession().notifySpeakingDevice(ssrc, true);
+			break;
+		case MS_AUDIO_DEVICE_STOP_SPEAKING:
+			getMediaSession().notifySpeakingDevice(ssrc, false);
+			break;
+		default:
+			break;
 	}
 }
 

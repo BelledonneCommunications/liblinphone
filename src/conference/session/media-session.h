@@ -132,7 +132,7 @@ public:
 	void * getParticipantWindowId(const std::string label);
 
 	StreamsGroup & getStreamsGroup()const;
-	void notifySpeakingDevice(uint32_t ssrc) ;
+	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) ;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

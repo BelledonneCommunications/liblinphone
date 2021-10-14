@@ -4128,14 +4128,14 @@ shared_ptr<ParticipantDevice> MediaSession::getParticipantDevice(const std::stri
 	return nullptr;
 }
 
-void MediaSession::notifySpeakingDevice(uint32_t ssrc) {
+void MediaSession::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 	L_D();
 	LinphoneConference * conference = nullptr;
 	if (d->listener) {
 		conference = d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			cppConference->notifySpeakingDevice(ssrc);
+			cppConference->notifySpeakingDevice(ssrc, isSpeaking);
 		}
 	}
 }
