@@ -6913,7 +6913,7 @@ void sip_config_uninit(LinphoneCore *lc)
 			if (policy) linphone_nat_policy_release(policy);
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
-			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc))) {
+			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc)) && !linphone_account_params_get_remote_push_notification_allowed(linphone_account_get_params(acc))) {
 				Account::toCpp(acc)->unregister(); /* to unregister without changing the stored flag enable_register */
 				need_to_unregister = TRUE;
 			}
@@ -6927,7 +6927,7 @@ void sip_config_uninit(LinphoneCore *lc)
 				lc->sal->iterate();
 				for (elem = config->accounts; elem != NULL; elem = bctbx_list_next(elem)) {
 					LinphoneAccount *acc = (LinphoneAccount *)(elem->data);
-					if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc))) {
+					if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc)) && !linphone_account_params_get_remote_push_notification_allowed(linphone_account_get_params(acc))) {
 						LinphoneRegistrationState state = linphone_account_get_state(acc);
 						still_registered = (state == LinphoneRegistrationOk || state == LinphoneRegistrationProgress);
 					}
