@@ -22,6 +22,7 @@
 
 #include "ics.h"
 
+#include "bctoolbox/utils.hh"
 #include "chat/ics/parser/ics-parser.h"
 
 // =============================================================================
@@ -67,7 +68,7 @@ const std::string &Ics::Event::getSummary () const {
 }
 
 void Ics::Event::setSummary (const std::string &summary) {
-	mSummary = summary;
+	mSummary = Utils::trim(summary);
 }
 
 const std::string &Ics::Event::getDescription () const {
@@ -75,7 +76,7 @@ const std::string &Ics::Event::getDescription () const {
 }
 
 void Ics::Event::setDescription (const std::string &description) {
-	mDescription = description;
+	mDescription = Utils::trim(description);
 }
 
 const std::string &Ics::Event::getXConfUri () const {
@@ -172,7 +173,7 @@ std::string Ics::Icalendar::asString () const {
 	}
 	output << "END:VCALENDAR\r\n";
 
-	return output.str();
+	return bctoolbox::Utils::fold(output.str());
 }
 
 std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
@@ -230,7 +231,7 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 }
 
 shared_ptr<const Ics::Icalendar> Ics::Icalendar::createFromString (const string &str) {
-	return Ics::Parser::getInstance()->parseIcs(str);
+	return Ics::Parser::getInstance()->parseIcs(bctoolbox::Utils::unfold(str));
 }
 
 void Ics::Icalendar::setCreationTime(time_t time) {

@@ -98,7 +98,7 @@ const std::string &ConferenceInfo::getSubject () const {
 }
 
 void ConferenceInfo::setSubject (const std::string &subject) {
-	mSubject = subject;
+	mSubject = Utils::trim(subject);
 }
 
 const string &ConferenceInfo::getDescription () const {
@@ -106,7 +106,7 @@ const string &ConferenceInfo::getDescription () const {
 }
 
 void ConferenceInfo::setDescription (const string &description) {
-	mDescription = description;
+	mDescription = Utils::trim(description);
 }
 
 const string ConferenceInfo::toIcsString () const {
