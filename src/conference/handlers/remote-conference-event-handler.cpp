@@ -354,12 +354,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
-						// If on the local conference side the media is send-only, then on the remote conference side it is recv-ony and viceversa
-						if (mediaDirection == LinphoneMediaDirectionSendOnly) {
-							mediaDirection = LinphoneMediaDirectionRecvOnly;
-						} else if (mediaDirection == LinphoneMediaDirectionRecvOnly) {
-							mediaDirection = LinphoneMediaDirectionSendOnly;
-						}
 						if (mediaType.compare("audio") == 0) {
 							device->setAudioDirection(mediaDirection);
 
