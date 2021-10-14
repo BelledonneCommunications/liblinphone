@@ -23,7 +23,7 @@
 # Cmake 3.15 is required for swift wrapper compilation, otherwise you have immediate build time errors.
 # However, cmake-1.15 swift support is not mature yet.
 # For example, creating a swift framework doesn't work with Ninja backend (only Xcode).
-# Fortunately, creating a swift shared library works. 
+# Fortunately, creating a swift shared library works.
 # As a result, I had to create my own script to create a framework from a shared library, called make-framework.sh.
 # For xcode, create a swift framework directly.
 
@@ -54,6 +54,12 @@ if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
 		DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonesw/")
 endif()
 
+if (ENABLE_JAZZY_DOC)
+	# Remove everything after the last point in LINPHONE_VERSION (4.5.0 --> 4.5) to create STRIPPED_LINPHONE_VERSION
+	string(REGEX REPLACE "\\.[^.]*$" "" STRIPPED_LINPHONE_VERSION ${LINPHONE_VERSION})
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README.cmake ${CMAKE_CURRENT_BINARY_DIR}/README)
+endif()
+
 if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 	cmake_minimum_required(VERSION 3.15)
 	set(CMAKE_Swift_LANGUAGE_VERSION 4.0)
@@ -67,6 +73,12 @@ if (ENABLE_JAZZY_DOC OR ENABLE_SWIFT_WRAPPER_COMPILATION)
 		PRIVATE ${BCTOOLBOX_CORE_LIBRARIES} ${BELLESIP_LIBRARIES} linphone
 	)
 
+	if (NOT ENABLE_SWIFT_WRAPPER_COMPILATION)
+	# LinphoneWrapper.swift is attached to multiple targets: linphonesw linphoneswsource
+	# but none of these is a common dependency of the other(s).  This is not
+	# allowed by the Xcode "new build system".
+		add_dependencies(linphonesw linphoneswsource)
+	endif()
 	if(CMAKE_GENERATOR STREQUAL Xcode)
 		set_target_properties(linphonesw PROPERTIES
 					FRAMEWORK TRUE
