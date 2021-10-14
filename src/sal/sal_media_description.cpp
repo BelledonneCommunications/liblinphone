@@ -680,8 +680,6 @@ int SalMediaDescription::equal(const SalMediaDescription & otherMd) const {
 int SalMediaDescription::globalEqual(const SalMediaDescription & otherMd) const {
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
-	lInfo() << __func__ << " DEBUG DEBUG network change MEDIA DESC RTP address this -> " << addr << " other " << otherMd.addr;
-
 	if (addr.compare(otherMd.addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	if (addr.empty() == false && otherMd.addr.empty() == false && ms_is_multicast(L_STRING_TO_C(addr)) != ms_is_multicast(L_STRING_TO_C(otherMd.addr)))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
