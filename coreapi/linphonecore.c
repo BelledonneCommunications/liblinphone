@@ -6030,6 +6030,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 				vsize.width = (int)linphone_video_definition_get_width(vdef);
 				vsize.height = (int)linphone_video_definition_get_height(vdef);
 			}
+
 			lc->previewstream = video_preview_new(lc->factory);
 			video_preview_set_size(lc->previewstream, vsize);
 			video_stream_set_device_rotation(lc->previewstream, lc->device_rotation);
