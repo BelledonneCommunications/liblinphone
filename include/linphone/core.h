@@ -5681,6 +5681,20 @@ LINPHONE_PUBLIC void linphone_core_set_record_aware_enabled(LinphoneCore *core, 
 LINPHONE_PUBLIC bool_t linphone_core_is_record_aware_enabled(LinphoneCore *core);
 
 /**
+ * Enables the automatic sending of 180 Ringing when receiving a call.
+ * @param core #LinphoneCore object @notnil
+ * @param enable TRUE to activate the automatic 180 Ringing, FALSE to disable it.
+**/
+LINPHONE_PUBLIC void linphone_core_enable_auto_send_ringing(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets if the automatic sending of 180 Ringing is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if the automatic sending of 180 Ringing is enabled, FALSE otherwise.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_auto_send_ringing_enabled(LinphoneCore *core);
+
+/**
  * @}
  */
 

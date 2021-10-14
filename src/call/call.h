@@ -218,6 +218,7 @@ public:
 	void initiateIncoming ();
 	bool initiateOutgoing ();
 	void iterate (time_t currentRealTime, bool oneSecondElapsed);
+	void notifyRinging ();
 	void startIncomingNotification ();
 	void startPushIncomingNotification ();
 	void startBasicIncomingNotification ();

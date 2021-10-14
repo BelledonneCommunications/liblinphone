@@ -185,6 +185,16 @@ void CallSessionPrivate::setTransferState (CallSession::State newState) {
 		listener->onCallSessionTransferStateChanged(q->getSharedFromThis(), newState);
 }
 
+void CallSessionPrivate::handleIncoming (bool tryStartRingtone) {
+	L_Q();
+
+	if (tryStartRingtone) { // The state is still in IncomingReceived state. Start ringing if it was needed
+		listener->onStartRingtone(q->getSharedFromThis());
+	}
+
+	handleIncomingReceivedStateInIncomingNotification();
+}
+
 void CallSessionPrivate::startIncomingNotification () {
 	L_Q();
 	bool_t tryStartRingtone = TRUE;// Try to start a tone if this notification is not a PushIncomingReceived and have listener
@@ -200,11 +210,9 @@ void CallSessionPrivate::startIncomingNotification () {
 	if (listener)
 		listener->onBackgroundTaskToBeStopped(q->getSharedFromThis());
 
-	if (state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia) { // If early media was accepted during setState callback above
-		if (tryStartRingtone) { // The state is still in IncomingReceived state. Start ringing if it was needed
-			listener->onStartRingtone(q->getSharedFromThis());
-		}
-		handleIncomingReceivedStateInIncomingNotification();
+	if ((state == CallSession::State::IncomingReceived && linphone_core_auto_send_ringing_enabled(q->getCore()->getCCore()))
+		|| state == CallSession::State::IncomingEarlyMedia) { // If early media was accepted during setState callback above
+		handleIncoming(tryStartRingtone);
 	}
 
 	if (q->mIsAccepting && listener) {

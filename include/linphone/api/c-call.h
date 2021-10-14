@@ -888,6 +888,16 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_input_audio_device(
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call);
 
+/**
+ * Starts the process of replying 180 Ringing.
+ *
+ * This function is used in conjonction with linphone_core_enable_auto_send_ringing().
+ * If the automatic sending of the 180 Ringing is disabled, this function needs to be called manually before the call timeouts.
+ *
+ * @param call The #LinphoneCall @notnil
+ */
+LINPHONE_PUBLIC void linphone_call_notify_ringing(LinphoneCall *call);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

@@ -5730,6 +5730,60 @@ static void call_recording_without_record_aware(void) {
 	call_recording_with_record_aware_base(FALSE, FALSE);
 }
 
+static void call_without_automatic_180_ringing(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_core_enable_auto_send_ringing(pauline->lc, FALSE);
+
+	linphone_core_invite_address(marie->lc,pauline->identity);
+
+	BC_ASSERT_FALSE(wait_for_until(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallOutgoingRinging,1, 1000));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallIncomingReceived,1));
+
+	int dummy = 0;
+	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 2000);
+
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_notify_ringing(pauline_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallOutgoingRinging,1));
+
+	linphone_call_accept(pauline_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
+
+	liblinphone_tester_check_rtcp(marie,pauline);
+	end_call(marie,pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_without_automatic_180_ringing_but_early_media(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_early_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bool_t call_ok;
+
+	linphone_core_enable_auto_send_ringing(pauline->lc, FALSE);
+
+	// The 183 early media should be sent
+	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
+
+	if (!call_ok) goto end;
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallIncomingEarlyMedia,1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia,1, int, "%d");
+
+	wait_for_until(pauline->lc,marie->lc,NULL,0,1000);
+
+	/*added because a bug related to early-media caused the Connected state to be reached two times*/
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallConnected,1, int, "%d");
+
+	end_call(pauline, marie);
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -5811,6 +5865,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call recording without record-aware", call_recording_without_record_aware),
 	TEST_NO_TAG("Call recording with record-aware", call_recording_with_record_aware),
 	TEST_NO_TAG("Call recording with record-aware both recording", call_recording_with_record_aware_both_recording),
+	TEST_NO_TAG("Call without automatic 180 ringing", call_without_automatic_180_ringing),
+	TEST_NO_TAG("Call without automatic 180 ringing but early media", call_without_automatic_180_ringing_but_early_media),
 };
 
 test_t call_not_established_tests[] = {

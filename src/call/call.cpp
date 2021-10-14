@@ -177,6 +177,12 @@ void Call::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	getActiveSession()->iterate(currentRealTime, oneSecondElapsed);
 }
 
+void Call::notifyRinging () {
+	if (getState() == CallSession::State::IncomingReceived) {
+		getActiveSession()->getPrivate()->handleIncoming(true);
+	}
+}
+
 void Call::startIncomingNotification () {
 	getActiveSession()->startIncomingNotification();
 }

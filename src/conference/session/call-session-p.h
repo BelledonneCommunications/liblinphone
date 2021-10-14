@@ -35,6 +35,7 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_INTERNAL_PUBLIC CallSessionPrivate : public ObjectPrivate, public CoreListener {
 public:
 	int computeDuration () const;
+	void handleIncoming (bool tryStartRingtone);
 	virtual void initializeParamsAccordingToIncomingCallParams ();
 	void notifyReferState ();
 	virtual void setState (CallSession::State newState, const std::string &message);

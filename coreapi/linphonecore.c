@@ -1693,6 +1693,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=linphone_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
 	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
 
+	bool_t auto_send_ringing = linphone_config_get_bool(lc->config, "sip", "auto_send_ringing", TRUE);
+	linphone_core_enable_auto_send_ringing(lc, auto_send_ringing);
+
 	bool_t auto_download_voice_recordings = linphone_config_get_bool(lc->config, "app", "auto_download_incoming_voice_recordings", TRUE);
 	linphone_core_set_auto_download_voice_recordings_enabled(lc, auto_download_voice_recordings);
 
@@ -4872,6 +4875,15 @@ void linphone_core_set_record_aware_enabled(LinphoneCore *lc, bool_t enable) {
 	} else {
 		linphone_core_remove_supported_tag(lc, "record-aware");
 	}
+}
+
+bool_t linphone_core_auto_send_ringing_enabled(LinphoneCore *lc) {
+	return lc->auto_send_ringing;
+}
+
+void linphone_core_enable_auto_send_ringing(LinphoneCore *lc, bool_t enable) {
+	lc->auto_send_ringing = enable;
+	linphone_config_set_bool(lc->config, "sip", "auto_send_ringing", enable);
 }
 
 void linphone_core_set_presence_info(LinphoneCore *lc, int minutes_away, const char *contact, LinphoneOnlineStatus os) {

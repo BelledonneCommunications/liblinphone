@@ -807,7 +807,8 @@ namespace LinphonePrivate {
 	bool_t auto_download_incoming_voice_recordings; \
 	bool_t auto_download_incoming_icalendars; \
 	unsigned long iterate_thread_id; \
-	bool_t record_aware;
+	bool_t record_aware; \
+	bool_t auto_send_ringing;
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \

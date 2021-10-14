@@ -616,6 +616,10 @@ LinphoneCall *linphone_call_new_incoming_with_callid (LinphoneCore *lc, const ch
 	return lcall;
 }
 
+void linphone_call_notify_ringing(LinphoneCall *call) {
+	Call::toCpp(call)->notifyRinging();
+}
+
 void linphone_call_start_push_incoming_notification(LinphoneCall *call) {
 	Call::toCpp(call)->startPushIncomingNotification();
 }
