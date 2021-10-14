@@ -1059,6 +1059,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 	}
 }
 
+#if 0
 static void dos_module_trigger(void) {
 	LinphoneChatRoom *chat_room;
 	int dummy = 0;
@@ -1119,6 +1120,7 @@ static void dos_module_trigger(void) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+#endif
 
 #if HAVE_SIPP
 static void test_subscribe_notify_with_sipp_publisher(void) {
@@ -2221,7 +2223,9 @@ test_t flexisip_tests[] = {
 	TEST_NO_TAG("List subscribe", test_list_subscribe),
 	TEST_NO_TAG("List subscribe without body", test_list_subscribe_wrong_body),
 	TEST_NO_TAG("File transfer message rcs to external body client", file_transfer_message_rcs_to_external_body_client),
+#if 0
 	TEST_NO_TAG("DoS module trigger by sending a lot of chat messages", dos_module_trigger),
+#endif
 #if HAVE_SIPP
 	TEST_NO_TAG("Subscribe on wrong dialog", test_subscribe_on_wrong_dialog),
 #endif
