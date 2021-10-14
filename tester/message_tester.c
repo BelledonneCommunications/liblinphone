@@ -971,7 +971,14 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
 		else
 			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+		if (linphone_im_notif_policy_get_recv_imdn_displayed(linphone_core_get_im_notif_policy(pauline->lc))
+			&& linphone_im_notif_policy_get_send_imdn_delivered(linphone_core_get_im_notif_policy(marie->lc))) {
+			//In case imdn arrives before 200ok, state Delivered is never be notified
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDeliveredToUser, 1, int, "%d");
+		} else {
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
+
+		}
 	}
 end:
 	linphone_chat_message_unref(msg);

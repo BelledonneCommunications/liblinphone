@@ -2660,6 +2660,8 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 	stats *counters = get_stats(lc);
 	if(liblinphone_tester_chat_message_msg_update_stats(counters, state))
 		ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+	else
+		ms_message("New state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 }
 
 bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats) {	// Return all LinphoneChatMessage and count states
