@@ -247,7 +247,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				device->setVideoDirection(ParticipantDevice::computeDeviceMediaDirection(confParams->videoEnabled(), callParams->videoEnabled()));
 				device->setTextDirection(ParticipantDevice::computeDeviceMediaDirection(confParams->chatEnabled(), callParams->realtimeTextEnabled()));
 				lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device " << remoteContact->asString() << " to conference " << getConferenceAddress();
-lInfo() << __func__ << " DEBUG DEBUG device " << remoteContact->asString() << " audio " << device->getAudioDirection() << " audio " << device->getVideoDirection() << " audio " << device->getTextDirection();
 				return true;
 			}
 		} else {

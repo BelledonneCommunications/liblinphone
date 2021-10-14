@@ -2768,19 +2768,22 @@ void MediaSessionPrivate::updateCurrentParams () const {
 
 		LinphoneConference * conference = listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis()));
 		bool isInLocalConference = getParams()->getPrivate()->getInConference();
-		//const auto mainVideoStreamIdx = conference ? md->findIdxStreamWithContent("main") : -1;
 		auto mainVideoStreamIdx = -1;
 		if (conference && op) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
+			const auto & confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
+			const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
 			if (isInLocalConference) {
-				mainVideoStreamIdx = md->findIdxStreamWithContent("main");
+				mainVideoStreamIdx = md->findIdxStreamWithContent(mainStreamAttrValue);
 			} else {
 				const auto & rmd = op->getRemoteMediaDescription();
 				if (rmd) {
-					mainVideoStreamIdx = rmd->findIdxStreamWithContent("main");
+					mainVideoStreamIdx = rmd->findIdxStreamWithContent(mainStreamAttrValue);
 				}
 			}
 		}
-lInfo() << __func__ << " DEBUG DEBUG core " << linphone_core_get_identity(q->getCore()->getCCore()) << " main video stream idx " << mainVideoStreamIdx;
 		const auto &videoStream = (mainVideoStreamIdx == -1) ? md->findBestStream(SalVideo) : md->getStreamIdx(static_cast<unsigned int>(mainVideoStreamIdx));
 		if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(videoStream.hasImplicitAvpf());
@@ -3913,7 +3916,24 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, audioStream.custom_sdp_attributes);
 			}else params->enableAudio(false);
 
-			const SalStreamDescription &videoStream = md->findBestStream(SalVideo);
+			auto conference = d->listener->getCallSessionConference(getSharedFromThis());
+			auto mainVideoStreamIdx = -1;
+			if (conference) {
+				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+				const auto & participantDevice = cppConference->findParticipantDevice(getSharedFromThis());
+				bool isInLocalConference = d->getParams()->getPrivate()->getInConference();
+				const auto & confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
+				const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+				const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
+				if (isInLocalConference) {
+					if (d->localDesc) {
+						mainVideoStreamIdx = d->localDesc->findIdxStreamWithContent(mainStreamAttrValue);
+					}
+				} else {
+					mainVideoStreamIdx = md->findIdxStreamWithContent(mainStreamAttrValue);
+				}
+			}
+			const auto &videoStream = (mainVideoStreamIdx == -1) ? md->findBestStream(SalVideo) : md->getStreamIdx(static_cast<unsigned int>(mainVideoStreamIdx));
 			if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 				params->enableVideo(videoStream.enabled());
 				params->setVideoDirection(videoStream.getDirection());

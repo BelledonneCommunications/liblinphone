@@ -210,26 +210,32 @@ LinphoneMediaDirection ParticipantDevice::computeDeviceMediaDirection(const bool
 
 bool ParticipantDevice::updateMedia() {
 	bool mediaChanged = false;
-	auto conference = getConference();
-	if (mSession && conference) {
-		const auto currentParams = dynamic_cast<const MediaSessionParams*>(mSession->getCurrentParams());
+	const auto & conference = getConference();
+	const auto & isMe = conference->isMe(getAddress());
+	if (conference && (isMe || mSession)) {
 		const auto & conferenceParams = conference->getCurrentParams();
-
-		if (currentParams) {
-			const auto & audioEnabled = currentParams->audioEnabled();
-			const auto & conferenceAudioEnabled = conferenceParams.audioEnabled();
-			mediaChanged |= setAudioDirection(ParticipantDevice::computeDeviceMediaDirection(audioEnabled, conferenceAudioEnabled));
-
-			const auto & videoEnabled = currentParams->videoEnabled();
-			const auto & conferenceVideoEnabled = conferenceParams.videoEnabled();
-			mediaChanged |= setVideoDirection(ParticipantDevice::computeDeviceMediaDirection(videoEnabled, conferenceVideoEnabled));
-
-			const auto & textEnabled = currentParams->realtimeTextEnabled();
-			const auto & conferenceTextEnabled = conferenceParams.chatEnabled();
-			mediaChanged |= setTextDirection(ParticipantDevice::computeDeviceMediaDirection(textEnabled, conferenceTextEnabled));
-		} else {
-			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
+		const auto & conferenceAudioEnabled = conferenceParams.audioEnabled();
+		const auto & conferenceVideoEnabled = conferenceParams.videoEnabled();
+		const auto & conferenceTextEnabled = conferenceParams.chatEnabled();
+		auto audioEnabled = false;
+		auto videoEnabled = false;
+		auto textEnabled = false;
+		const MediaSessionParams* participantParams = nullptr;
+		if (mSession) {
+			participantParams = dynamic_cast<const MediaSessionParams*>(mSession->getRemoteParams());
+			if (participantParams) {
+				audioEnabled = participantParams->audioEnabled();
+				videoEnabled = participantParams->videoEnabled();
+				textEnabled = participantParams->realtimeTextEnabled();
+			}
+		} else if (isMe) {
+			audioEnabled = true;
+			videoEnabled = linphone_core_video_enabled(getCore()->getCCore());
+			textEnabled = true;
 		}
+		mediaChanged |= setAudioDirection(ParticipantDevice::computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled));
+		mediaChanged |= setVideoDirection(ParticipantDevice::computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled));
+		mediaChanged |= setTextDirection(ParticipantDevice::computeDeviceMediaDirection(conferenceTextEnabled, textEnabled));
 	} else {
 			mediaChanged |= setAudioDirection(LinphoneMediaDirectionInactive);
 			mediaChanged |= setVideoDirection(LinphoneMediaDirectionInactive);
