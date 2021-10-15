@@ -487,7 +487,7 @@ void MagicSearch::mergeResults (const std::string& filter, const std::string wit
 			if (lsr.getAddress() && rsr.getAddress()) {
 				int usernameComp = compareStringItems(linphone_address_get_username(lsr.getAddress()), linphone_address_get_username(rsr.getAddress()));
 				if (usernameComp == 0) {
-					int domainComp = strcmp(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
+					int domainComp = compareStringItems(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
 					if (domainComp == 0) {
 						if (!lsr.getPhoneNumber().empty() && !rsr.getPhoneNumber().empty()) {
 							int phoneComp = strcmp(lsr.getPhoneNumber().c_str(), rsr.getPhoneNumber().c_str());
@@ -554,7 +554,7 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 			if (lsr.getAddress() && rsr.getAddress()) {
 				int usernameComp = compareStringItems(linphone_address_get_username(lsr.getAddress()), linphone_address_get_username(rsr.getAddress()));
 				if (usernameComp == 0) {
-					int domainComp = strcmp(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
+					int domainComp = compareStringItems(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
 					if (domainComp == 0) {
 						if (!lsr.getPhoneNumber().empty() && !rsr.getPhoneNumber().empty()) {
 							int phoneComp = strcmp(lsr.getPhoneNumber().c_str(), rsr.getPhoneNumber().c_str());
@@ -667,7 +667,7 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 			if (contact) {
 				LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), contact);
 				if (tmpAdd) {
-					if (withDomain.empty() || withDomain == "*" || strcmp(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) {
+					if (withDomain.empty() || withDomain == "*" || compareStringItems(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) {
 						weightNumber += getWeight(contact, filter) * 2;
 						if ((weightNumber + weight) > getMinWeight()) {
 							friendResult.push_back(SearchResult(weight + weightNumber, tmpAdd, phoneNumber, lFriend));
@@ -762,8 +762,8 @@ bool MagicSearch::checkDomain (const LinphoneFriend *lFriend, const LinphoneAddr
 		// If we don't want Sip URI only or Address or Presence model
 		(lAddress || presenceModel) &&
 		// And If we don't want Sip URI only or Address match or Address presence match
-		((lAddress && withDomain == linphone_address_get_domain(lAddress)) ||
-			(addrPresence && withDomain == linphone_address_get_domain(addrPresence)))
+		((lAddress && (compareStringItems(withDomain.c_str(), linphone_address_get_domain(lAddress)) == 0)) ||
+			(addrPresence && (compareStringItems(withDomain.c_str(), linphone_address_get_domain(addrPresence)) == 0)) )
 		);
 
 	if (addrPresence) linphone_address_unref(addrPresence);
