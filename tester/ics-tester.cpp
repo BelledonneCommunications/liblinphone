@@ -81,12 +81,35 @@ static void parse_rfc_example () {
 	BC_ASSERT_PTR_NOT_NULL(ics);
 }
 
+static void parse_folded_example () {
+	const string str = "BEGIN:VCALENDAR\r\n"
+		"PRODID:-//xyz Corp//NONSGML PDA Calendar Version 1.0//EN\r\n"
+		"VERSION:2.0\r\n"
+		"BEGIN:VEVENT\r\n"
+		"DTSTAMP:19960704T120000Z\r\n"
+		"UID:uid1@example.com\r\n"
+		"ORGANIZER:mailto:jsmith@example.com\r\n"
+		"DTSTART:19960918T143000Z\r\n"
+		"DTEND:19960920T220000Z\r\n"
+		"STATUS:CONFIRMED\r\n"
+		"CATEGORIES:CONFERENCE\r\n"
+		"SUMMARY:Networld+Interop Conference\r\n"
+		"DESCRIPTION:Networld+Interop Conference\r\n"
+		"  and Exhibit\\nAtlanta World Congress Center\\n\r\n"
+		" Atlanta\\, Georgia\r\n"
+		"END:VEVENT\r\n"
+		"END:VCALENDAR\r\n";
+
+	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
+	BC_ASSERT_PTR_NOT_NULL(ics);
+}
+
 static void build_ics () {
 	Ics::Icalendar calendar;
 	auto event = make_shared<Ics::Event>();
 
-	event->setSummary("Conf chat vidéo");
-	event->setDescription("Parler de la vidéo conférence et répartir les tâches.");
+	event->setSummary("\n\n    Conf chat vidéo");
+	event->setDescription("Parler de la vidéo conférence et répartir les tâches.\n\n\n    ");
 	event->setOrganizer("sip:marie@sip.linphone.org");
 	event->addAttendee("sip:pauline@sip.linphone.org");
 	event->addAttendee("sip:laure@sip.linphone.org");
@@ -254,6 +277,7 @@ static void send_conference_invitations(void) {
 test_t ics_tests[] = {
 	TEST_NO_TAG("Parse minimal Ics", parse_minimal_ics),
 	TEST_NO_TAG("Parse RFC example", parse_rfc_example),
+	TEST_NO_TAG("Parse folded example", parse_folded_example),
 	TEST_NO_TAG("Build Ics", build_ics),
 	TEST_NO_TAG("Send conference invitations", send_conference_invitations),
 };
