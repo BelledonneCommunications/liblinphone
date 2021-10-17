@@ -5823,7 +5823,6 @@ LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core)
 /**
  * Enable vibration will incoming call is ringing (Android only).
  * @param core The #LinphoneCore @notnil
- * @return TRUE if the device should vibrate while an incoming call is ringing, FALSE otherwise
  * @ingroup misc
  */
 LINPHONE_PUBLIC void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable);

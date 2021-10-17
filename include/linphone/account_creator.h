@@ -203,7 +203,6 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_username(const Linphon
  * Set the pn_provider.
  * @param creator #LinphoneAccountCreator object @notnil
  * @param pn_provider The pn_provider to set @notnil
- * @return void
 **/
 LINPHONE_PUBLIC void linphone_account_creator_set_pn_provider(LinphoneAccountCreator *creator, const char* pn_provider);
 
@@ -211,7 +210,6 @@ LINPHONE_PUBLIC void linphone_account_creator_set_pn_provider(LinphoneAccountCre
  * Set the pn_param.
  * @param creator #LinphoneAccountCreator object @notnil
  * @param pn_param The pn_param to set @notnil
- * @return void
 **/
 LINPHONE_PUBLIC void linphone_account_creator_set_pn_param(LinphoneAccountCreator *creator, const char* pn_param);
 
@@ -219,7 +217,6 @@ LINPHONE_PUBLIC void linphone_account_creator_set_pn_param(LinphoneAccountCreato
  * Set the pn_prid.
  * @param creator #LinphoneAccountCreator object @notnil
  * @param pn_prid The pn_prid to set @notnil
- * @return void
 **/
 LINPHONE_PUBLIC void linphone_account_creator_set_pn_prid(LinphoneAccountCreator *creator, const char* pn_prid);
 
@@ -227,7 +224,6 @@ LINPHONE_PUBLIC void linphone_account_creator_set_pn_prid(LinphoneAccountCreator
  * Set the token.
  * @param creator #LinphoneAccountCreator object @notnil
  * @param token The pn_prid to set @notnil
- * @return void
 **/
 LINPHONE_PUBLIC void linphone_account_creator_set_token(LinphoneAccountCreator *creator, const char* token);
 
