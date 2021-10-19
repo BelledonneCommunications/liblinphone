@@ -4441,7 +4441,6 @@ static void aggregated_imdn_for_group_chat_room_base (bool_t read_while_offline)
 // Messages have been read
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 3, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe2->stat.number_of_LinphoneMessageDisplayed, initialChloe2Stats.number_of_LinphoneMessageDisplayed + 3, 5000));
-	BC_ASSERT_EQUAL(chloe->stat.number_of_LinphoneMessageDeliveredToUser, 3, int, "%d");	// 3 for sending to chloe2
 	
 	if (read_while_offline) {
 		wait_for_list(coresList, 0, 1, 2000); // To prevent memory leak

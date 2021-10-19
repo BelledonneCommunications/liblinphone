@@ -1433,19 +1433,20 @@ void MainDbPrivate::setChatMessageParticipantState (
 	const EventLogPrivate *dEventLog = eventLog->getPrivate();
 	MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
 	const long long &eventId = dEventKey->storageId;
+	const long long &participantSipAddressId = selectSipAddressId(participantAddress.asString());
 
 	/* setChatMessageParticipantState can be called by updateConferenceChatMessageEvent, which try to update participant state
 	 by message state. However, we can not change state Displayed/DeliveredToUser to Delivered/NotDelivered. */
 	int intState;
-	*dbSession.getBackendSession() << "SELECT state FROM chat_message_participant WHERE event_id = :eventId",
-		soci::into(intState),  soci::use(eventId);
+	*dbSession.getBackendSession() << "SELECT state FROM chat_message_participant WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
+		soci::into(intState),  soci::use(eventId), soci::use(participantSipAddressId);
 	ChatMessage::State dbState = ChatMessage::State(intState);
 	if (int(state) < intState && (dbState == ChatMessage::State::Displayed || dbState == ChatMessage::State::DeliveredToUser)) {
 		lInfo() << "setChatMessageParticipantState: can not change state from " << dbState << " to " << state;
 		return;
 	}
 
-	const long long &participantSipAddressId = selectSipAddressId(participantAddress.asString());
+	
 	int stateInt = int(state);
 	const tm &stateChangeTm = Utils::getTimeTAsTm(stateChangeTime);
 

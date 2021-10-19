@@ -181,7 +181,10 @@ static void audio_video_call(const params_t *params) {
 		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)) == LinphoneMediaEncryptionDTLS);
 		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marie_call)) == LinphoneMediaEncryptionDTLS);
 	}
-
+	
+	//make sure receive frame rate computation is done with a significant number of frame
+	wait_for_until(marie->lc,pauline->lc,NULL,0,2000);
+	
 	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(pauline_call)), 8.0, float, "%f");
 	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(marie_call)), 8.0, float, "%f");
 
