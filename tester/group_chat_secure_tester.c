@@ -347,6 +347,7 @@ static void group_chat_lime_x3dh_stop_start_core_curve(const int curveId) {
 	linphone_auth_info_ref(auth_info);
 	// Stop/start Core
 	linphone_core_stop(marie->lc);
+	initialMarieStats = marie->stat;
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalShutdown, initialMarieStats.number_of_LinphoneGlobalShutdown + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalOff, initialMarieStats.number_of_LinphoneGlobalOff + 1, 5000));
 	linphone_core_start(marie->lc);
@@ -362,7 +363,8 @@ static void group_chat_lime_x3dh_stop_start_core_curve(const int curveId) {
 
 	// Check if Marie's encryption is still active after restart
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
-
+	
+	BC_ASSERT_TRUE(wait_for(marie->lc, marie->lc, &marie->stat.number_of_LinphoneRegistrationOk, initialMarieStats.number_of_LinphoneRegistrationOk + 1));
 	// Wait for update callback
 	wait_for_list(coresList, &dummy, 1, 2000);
 
