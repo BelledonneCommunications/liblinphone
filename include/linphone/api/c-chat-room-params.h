@@ -169,7 +169,7 @@ LINPHONE_PUBLIC void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams
  * @param params The #LinphoneChatRoomParams object. @notnil
  * @return The subject. @maybenil
 **/
-LINPHONE_PUBLIC const char * linphone_chat_room_params_get_subject(LinphoneChatRoomParams *params);
+LINPHONE_PUBLIC const char * linphone_chat_room_params_get_subject(const LinphoneChatRoomParams *params);
 
 /**
  * Set the subject of the chat room.

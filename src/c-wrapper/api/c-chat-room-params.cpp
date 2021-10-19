@@ -110,7 +110,7 @@ void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams *params, bool_t
 	ChatRoomParams::toCpp(params)->setRealTimeText(!!rtt);
 }
 
-const char * linphone_chat_room_params_get_subject(LinphoneChatRoomParams *params) {
+const char * linphone_chat_room_params_get_subject(const LinphoneChatRoomParams *params) {
 	return L_STRING_TO_C(ChatRoomParams::toCpp(params)->getSubject());
 }
 
