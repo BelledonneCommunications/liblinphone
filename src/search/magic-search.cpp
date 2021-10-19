@@ -371,18 +371,21 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 			}
 			bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 		} else if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesBasic) {
-			LinphoneAddress *addr = linphone_address_clone(linphone_chat_room_get_peer_address(room));
-			if (filter.empty()) {
-				if (findAddress(currentList, addr)) continue;
-				resultList.push_back(SearchResult(0, addr, "", nullptr));
-			} else {
-				unsigned int weight = searchInAddress(addr, filter, withDomain);
-				if (weight > getMinWeight()) {
+			const LinphoneAddress* peerAddress = linphone_chat_room_get_peer_address(room);// Can return NULL if getPeerAddress() is not valid
+			if( peerAddress){
+				LinphoneAddress *addr = linphone_address_clone(peerAddress);
+				if (filter.empty()) {
 					if (findAddress(currentList, addr)) continue;
-					resultList.push_back(SearchResult(weight, addr, "", nullptr));
+					resultList.push_back(SearchResult(0, addr, "", nullptr));
+				} else {
+					unsigned int weight = searchInAddress(addr, filter, withDomain);
+					if (weight > getMinWeight()) {
+						if (findAddress(currentList, addr)) continue;
+						resultList.push_back(SearchResult(weight, addr, "", nullptr));
+					}
 				}
+				linphone_address_unref(addr);
 			}
-			linphone_address_unref(addr);
 		}
 	}
 
