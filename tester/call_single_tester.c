@@ -4325,6 +4325,8 @@ static void call_with_transport_change_base(bool_t succesfull_call) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	int bind_attempts;
+	
 	linphone_core_cbs_set_call_state_changed(cbs, call_state_changed_2);
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -4335,10 +4337,26 @@ static void call_with_transport_change_base(bool_t succesfull_call) {
 	linphone_core_add_callbacks(marie->lc, cbs);
 	linphone_core_cbs_unref(cbs);
 
-	sip_tr.udp_port = 0;
-	sip_tr.tcp_port = 45875;
-	sip_tr.tls_port = 0;
-	linphone_core_set_sip_transports(marie->lc,&sip_tr);
+	
+	for(bind_attempts = 0 ; bind_attempts < 5 ; bind_attempts++){
+		LinphoneSipTransports used_tr;
+		memset(&used_tr, 0 , sizeof(used_tr));
+		sip_tr.udp_port = 0;
+		sip_tr.tcp_port = 1024 + (bctbx_random() % 64000);
+		sip_tr.tls_port = 0;
+		linphone_core_set_sip_transports(marie->lc,&sip_tr);
+		
+		linphone_core_get_sip_transports_used(marie->lc, &used_tr);
+		if (used_tr.tcp_port != sip_tr.tcp_port){
+			ms_error("Bind() apparently failed, retrying...");
+		}else{
+			ms_message("Bind successful.");
+			break;
+		}
+	}
+	
+	
+	
 	if (succesfull_call) {
 		BC_ASSERT_TRUE(call(marie,pauline));
 		end_call(marie, pauline);
@@ -4356,6 +4374,7 @@ static void call_with_transport_change_base(bool_t succesfull_call) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
 static void call_with_transport_change_after_released(void) {
 	call_with_transport_change_base(TRUE);
 }
@@ -5804,7 +5823,7 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
 	TEST_NO_TAG("Call cancelled without response", call_called_without_any_response),
-    TEST_NO_TAG("Call cancelled without response and network switch", call_called_without_any_response_with_network_switch),
+	TEST_NO_TAG("Call cancelled without response and network switch", call_called_without_any_response_with_network_switch),
 	TEST_NO_TAG("Early cancelled call", early_cancelled_call),
 	TEST_NO_TAG("Call with DNS timeout", call_with_dns_time_out),
 	TEST_NO_TAG("Cancelled ringing call", cancelled_ringing_call),
