@@ -357,9 +357,14 @@ if(STRICT_OPTIONS_C)
 endif()
 
 set(GETTEXT_PACKAGE "liblinphone")
-if(ENABLE_RELATIVE_PREFIX)
-	set(LINPHONE_DATA_DIR ".")
+
+if (APPLE AND NOT IOS)
+	# See cmake/macos/Lipo.cmake. All data files will be moved to linphone-sdk/desktop.
+	set(LINPHONE_DATA_DIR "linphone-sdk/desktop")
 else()
+	set(LINPHONE_DATA_DIR ".")
+endif()
+if(NOT ENABLE_RELATIVE_PREFIX)
 	set(LINPHONE_DATA_DIR "${CMAKE_INSTALL_PREFIX}")
 endif()
 set(LINPHONE_PLUGINS_DIR "${LINPHONE_DATA_DIR}/${CMAKE_INSTALL_LIBDIR}/liblinphone/plugins")
