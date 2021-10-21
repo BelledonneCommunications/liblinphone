@@ -188,9 +188,13 @@ public class AudioHelper implements OnAudioFocusChangeListener {
 
     public void releaseRingingAudioFocus() {
         if (mRingingRequest != null) {
-            AudioManagerCompat.abandonAudioFocusRequest(mAudioManager, mRingingRequest);
-            Log.i("[Audio Helper] Ringing audio focus request abandonned");
-            mRingingRequest = null;
+            int result = AudioManagerCompat.abandonAudioFocusRequest(mAudioManager, mRingingRequest);
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.i("[Audio Helper] Ringing audio focus request abandonned");
+                mRingingRequest = null;
+            } else {
+                Log.e("[Audio Helper] Ringing audio focus abandon request failed");
+            }
         }
     }
 
@@ -220,18 +224,26 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             Log.i("[Audio Helper] Call audio focus request granted");
             setAudioManagerInCommunicationMode();
-        } else if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
-            Log.w("[Audio Helper] Call audio focus request failed");
-        } else if (result == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
-            Log.w("[Audio Helper] Call audio focus request delayed");
+        } else {
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_FAILED) {
+                Log.w("[Audio Helper] Call audio focus request failed");
+            } else if (result == AudioManager.AUDIOFOCUS_REQUEST_DELAYED) {
+                Log.w("[Audio Helper] Call audio focus request delayed");
+            }
+
+            releaseCallAudioFocus();
         }
     }
 
     public void releaseCallAudioFocus() {
         if (mCallRequest != null) {
-            AudioManagerCompat.abandonAudioFocusRequest(mAudioManager, mCallRequest);
-            Log.i("[Audio Helper] Call audio focus request abandonned");
-            mCallRequest = null;
+            int result = AudioManagerCompat.abandonAudioFocusRequest(mAudioManager, mCallRequest);
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                Log.i("[Audio Helper] Call audio focus request abandonned");
+                mCallRequest = null;
+            } else {
+                Log.e("[Audio Helper] Call audio focus abandon request failed");
+            }
             setAudioManagerInNormalMode();
         } else {
             Log.i("[Audio Helper] Call audio focus request was already abandonned");
@@ -259,15 +271,15 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         }
     }
 
-	public void setAudioManagerInCommunicationMode() {
-		Log.i("[Audio Helper] Setting audio manager in communication mode");
-		mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-	}
+    public void setAudioManagerInCommunicationMode() {
+        Log.i("[Audio Helper] Setting audio manager in communication mode");
+        mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+    }
 
-	public void setAudioManagerInNormalMode() {
-		Log.i("[Audio Helper] Setting audio manager in normal mode");
-		mAudioManager.setMode(AudioManager.MODE_NORMAL);
-	}
+    public void setAudioManagerInNormalMode() {
+        Log.i("[Audio Helper] Setting audio manager in normal mode");
+        mAudioManager.setMode(AudioManager.MODE_NORMAL);
+    }
 
     private void routeAudioToEarpiece() {
         // Let's restore the default output device before the echo calibration or test
