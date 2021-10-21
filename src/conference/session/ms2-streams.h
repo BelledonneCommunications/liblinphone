@@ -199,6 +199,7 @@ private:
 	void setupRingbackPlayer();
 	void telephoneEventReceived (int event);
 	void configureAudioStream();
+	void setSoundCardType(MSSndCard *soundcard);
 	MS2AudioMixer *getAudioMixer();
 	AudioStream *mStream = nullptr;
 	struct _MSAudioEndpoint *mConferenceEndpoint = nullptr;

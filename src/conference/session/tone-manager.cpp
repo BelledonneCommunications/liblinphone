@@ -314,6 +314,7 @@ void ToneManager::destroyRingStream(){
 		ring_stop(mRingStream);
 		mRingStream = nullptr;
 	}
+	
 	if (mRingStreamTimer){
 		getCore().destroyTimer(mRingStreamTimer);
 		mRingStreamTimer = nullptr;

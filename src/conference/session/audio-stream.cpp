@@ -224,18 +224,34 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 
+	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	MSSndCard *playcard = nullptr;
+	// try to get currently used playcard if it was already set
+	if (outputAudioDevice) {
+		playcard = outputAudioDevice->getSoundCard();
+	}
+
+	auto expectedStreamType = (targetState == CallSession::State::IncomingEarlyMedia) ? MS_SND_CARD_STREAM_RING : MS_SND_CARD_STREAM_VOICE;
+
 	if (basicChangesHandled) {
 		if (getState() == Running) {
-			if(mRestartStreamRequired) {
+
+			bool muted = mMuted;
+			MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
+			if (muted && !mMuted) {
+				lInfo() << "Early media finished, unmuting audio input...";
+				enableMic(micEnabled());
+			}
+
+			if (playcard) {
+				auto streamType = ms_snd_card_get_stream_type(playcard);
+				mRestartStreamRequired |= (streamType != expectedStreamType);
+			}
+
+			if (mRestartStreamRequired) {
 				stop();
 				mRestartStreamRequired = false;
-			}else{
-				bool muted = mMuted;
-				MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
-				if (muted && !mMuted) {
-					lInfo() << "Early media finished, unmuting audio input...";
-					enableMic(micEnabled());
-				}
+			} else {
 				return;
 			}
 		}else{
@@ -265,14 +281,6 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
 	else if (stream.getDirection() == SalStreamSendRecv)
 		media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
-
-	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
-	MSSndCard *playcard = nullptr;
-
-	// try to get currently used playcard if it was already set
-	if (outputAudioDevice) {
-		playcard = outputAudioDevice->getSoundCard();
-	}
 
 	// If stream doesn't have a playcard associated with it, then use the default values
 	if (!playcard)
@@ -332,12 +340,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 
 	if (playcard) {
-		if (targetState == CallSession::State::IncomingEarlyMedia) {
-			lInfo() << "Incoming early-media call state, using ring stream";
-			ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_RING);
-		} else {
-			ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
-		}
+		lInfo() << "Call state " << targetState << ", using " << ((expectedStreamType == MS_SND_CARD_STREAM_RING) ? "ring" : "voice") << " stream";
+		ms_snd_card_set_stream_type(playcard, expectedStreamType);
 	}
 
 	configureAudioStream();
@@ -801,11 +805,31 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 	ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_BYPASS_MODE, &val);
 	return !val;
 }
-	
+
+void MS2AudioStream::setSoundCardType(MSSndCard *soundcard) {
+	if (soundcard) {
+		auto expectedStreamType = MS_SND_CARD_STREAM_VOICE;
+		switch (getMediaSession().getState()){
+			case CallSession::State::IncomingReceived:
+			case CallSession::State::IncomingEarlyMedia:
+				expectedStreamType = MS_SND_CARD_STREAM_RING;
+			break;
+			default:
+				expectedStreamType = MS_SND_CARD_STREAM_VOICE;
+			break;
+		}
+		lInfo() << "[MS2AudioStream] setting type of soundcard " << soundcard << " to " << ((expectedStreamType == MS_SND_CARD_STREAM_RING) ? "ring" : "voice");
+		ms_snd_card_set_stream_type(soundcard, expectedStreamType);
+	}
+}
+
 void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 	if(!mStream) return;
-	if(audio_stream_set_input_ms_snd_card(mStream, (audioDevice?audioDevice->getSoundCard():NULL)) < 0 ){
+	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
+	setSoundCardType(soundcard);
+	if(audio_stream_set_input_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
 		if(getState() == Running){// New device couldn't update the stream, request to stop it
+			// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID 
 			mRestartStreamRequired = true;
 			lInfo() << "[MS2AudioStream] restart stream required for updating input";
 		}
@@ -814,8 +838,11 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
 	if(!mStream) return;
-	if(audio_stream_set_output_ms_snd_card(mStream, (audioDevice?audioDevice->getSoundCard():NULL)) < 0 ){
+	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
+	setSoundCardType(soundcard);
+	if(audio_stream_set_output_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
 		if(getState() == Running){// New device couldn't update the stream, request to stop it
+			// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID 
 			mRestartStreamRequired = true;
 			lInfo() << "[MS2AudioStream] restart stream required for updating output";
 		}
