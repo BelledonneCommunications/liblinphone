@@ -68,6 +68,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     public void destroy(Context context) {
+        Log.i("[Audio Helper] Destroying");
         if (mHeadsetReceiver != null) {
             context.unregisterReceiver(mHeadsetReceiver);
             mHeadsetReceiver = null;
@@ -76,6 +77,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         stopRinging();
         releaseRingingAudioFocus();
         releaseCallAudioFocus();
+        Log.i("[Audio Helper] Destroyed");
     }
 
     public void startAudioForEchoTestOrCalibration() {
@@ -296,6 +298,11 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     private void routeAudioToEarpiece() {
+        if (!CoreManager.isReady()) {
+            Log.e("[Audio Helper] CoreManager has been destroyed already!");
+            return;
+        }
+
         // Let's restore the default output device before the echo calibration or test
         Core core = CoreManager.instance().getCore();
         core.setDefaultOutputAudioDevice(mPreviousDefaultOutputAudioDevice);
@@ -304,6 +311,11 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     private void routeAudioToSpeaker() {
+        if (!CoreManager.isReady()) {
+            Log.e("[Audio Helper] CoreManager has been destroyed already!");
+            return;
+        }
+
         // For echo canceller calibration & echo tester, we can't change the soundcard dynamically as the stream isn't created yet...
         Core core = CoreManager.instance().getCore();
         mPreviousDefaultOutputAudioDevice = core.getDefaultOutputAudioDevice();
@@ -350,6 +362,10 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     private boolean isAudioFocusDisabled() {
+        if (!CoreManager.isReady()) {
+            Log.e("[Audio Helper] CoreManager has been destroyed already!");
+            return false;
+        }
         return CoreManager.instance().getCore().getConfig().getBool("audio", "android_disable_audio_focus_requests", false);
     }
 }

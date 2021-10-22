@@ -64,7 +64,7 @@ public class CoreManager {
 
     public static CoreManager instance() {
         if (isReady()) return sInstance;
-
+        Log.e("[Core Manager] Trying to access instance that doesn't exists!");
         throw new RuntimeException("CoreManager not instantiated yet");
     }
 
@@ -159,6 +159,7 @@ public class CoreManager {
         mServiceClass = null;
         mContext = null;
         sInstance = null;
+        Log.i("[Core Manager] Destroyed");
     }
 
     public Core getCore() {
