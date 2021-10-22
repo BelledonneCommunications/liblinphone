@@ -146,13 +146,9 @@ void IdentityAddress::setGruu (const string &gruu) {
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
-	if (isValid()) {
-		Address address(*this);
-		address.removeUriParam("gr");
-		return address;
-	} else {
-		return Address();
-	}
+	Address address(asString());
+	address.removeUriParam("gr");
+	return address;
 }
 
 string IdentityAddress::asString () const {

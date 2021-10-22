@@ -1396,7 +1396,10 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				return true;
 			case ConferenceInterface::State::Created:
 				Conference::addParticipant(call);
-				transferToFocus(call);
+				if(focusIsReady())
+					transferToFocus(call);
+				else
+					m_pendingCalls.push_back(call);
 				return true;
 			default:
 				lError() << "Could not add call " << call << " to the conference. Bad conference state (" << Utils::toString(state) << ")";
@@ -1542,22 +1545,21 @@ bool RemoteConference::isIn () const {
 
 bool RemoteConference::focusIsReady () const {
 	LinphoneCallState focusState;
-	if (!m_focusCall || m_focusContact == nullptr)
+	if (!m_focusCall || m_focusCall->getRemoteContact().empty())
 		return false;
 	focusState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	return (focusState == LinphoneCallStreamsRunning) || (focusState == LinphoneCallPaused);
 }
 
 bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> call) {
-	Address referToAddr(m_focusContact);
-	//std::string referToAddr(m_focusCall->getRemoteContact());
+	Address referToAddr(m_focusCall->getRemoteContact());
 	std::shared_ptr<Participant> participant = findParticipant(call->getActiveSession());
 	referToAddr.setParam("admin", Utils::toString(participant->isAdmin()));
 	if (call->transfer(referToAddr.asString()) == 0) {
 		m_transferingCalls.push_back(call);
 		return true;
 	} else {
-		lError() << "Conference: could not transfer call " << call << " to " << m_focusContact;
+		lError() << "Conference: could not transfer call " << call << " to " << referToAddr;
 		return false;
 	}
 	return false;
