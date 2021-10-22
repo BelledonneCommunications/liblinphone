@@ -89,6 +89,7 @@ class PushNotificationConfig: public bellesip::HybridObject<LinphonePushNotifica
 	string mBundleIdentifer;
 	string mVoipToken;
 	string mRemoteToken;
+	bool mTokensHaveChanged = false;
 	
 	map<string, string> mPushParams;
 	
