@@ -329,12 +329,9 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	for (const auto &addr : Conference::parseResourceLists(content))
 		getConference()->participants.push_back(Participant::create(getConference().get(),addr));
 
-	d->isEphemeral = (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged);
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
-		if (params->getEphemeralLifetime() > 0) {
-			d->isEphemeral = true;
-		}
+		d->enableEphemeral(params->getEphemeralLifetime() > 0);
 	}
 
 	setConferenceId(conferenceId);
@@ -379,9 +376,9 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 ) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, params, make_shared<RemoteConference>(core, me->getAddress(), nullptr, ConferenceParams::create(core->getCCore()))) {
 	L_D();
 
-	d->isEphemeral = (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged);
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Ephemeral;
+		d->enableEphemeral(params->getEphemeralLifetime() > 0);
 	}
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler = std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
