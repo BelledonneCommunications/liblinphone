@@ -48,6 +48,7 @@ PushNotificationConfig::PushNotificationConfig(const PushNotificationConfig &oth
 	mBundleIdentifer = other.mBundleIdentifer;
 	mVoipToken = other.mVoipToken;
 	mRemoteToken = other.mRemoteToken;
+	mTokensHaveChanged = other.mTokensHaveChanged;
 }
 
 PushNotificationConfig* PushNotificationConfig::clone () const {
@@ -62,6 +63,7 @@ PushNotificationConfig& PushNotificationConfig::operator=(const PushNotification
 		 mBundleIdentifer = other.mBundleIdentifer;
 		 mVoipToken = other.mVoipToken;
 		 mRemoteToken = other.mRemoteToken;
+		 mTokensHaveChanged = other.mTokensHaveChanged;
 	 }
 	 return *this;
  }
@@ -143,14 +145,20 @@ const string &PushNotificationConfig::getVoipToken() const {
 	return mVoipToken;
 }
 void PushNotificationConfig::setVoipToken(const string &voipToken) {
-	mVoipToken = voipToken;
+	if (mVoipToken != voipToken) {
+		mTokensHaveChanged = true;
+		mVoipToken = voipToken;
+	}
 }
 
 const string &PushNotificationConfig::getRemoteToken() const {
 	return mRemoteToken;
 }
 void PushNotificationConfig::setRemoteToken(const string &remoteToken) {
-	mRemoteToken = remoteToken;
+	if (mVoipToken != remoteToken) {
+		mTokensHaveChanged = true;
+		mRemoteToken = remoteToken;
+	}
 }
 
 const string &PushNotificationConfig::getTeamId() const {
@@ -183,7 +191,8 @@ void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remot
 		mPushParams[PushConfigParamKey] = mTeamId + "." + mBundleIdentifer + "." + services;
 	}
 
-	if (mPushParams[PushConfigPridKey].empty()) {
+	if (mPushParams[PushConfigPridKey].empty()
+		|| (mTokensHaveChanged && (!mVoipToken.empty() || !mRemoteToken.empty()) )) {
 		string newPrid;
 		if (voipPushAllowed) {
 			newPrid += mVoipToken;
@@ -194,6 +203,7 @@ void PushNotificationConfig::generatePushParams(bool voipPushAllowed, bool remot
 			newPrid += mRemoteToken;
 		mPushParams[PushConfigPridKey] = newPrid;
 	}
+	mTokensHaveChanged = false;
 }
 
 map<string, string> const& PushNotificationConfig::getPushParamsMap() {
