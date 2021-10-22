@@ -81,15 +81,15 @@ public class CoreManager {
     private BluetoothHelper mBluetoothHelper;
     private ShutdownReceiver mShutdownReceiver;
 
-	// These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
+    // These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
-	private native void stopCore(long ptr);
-	private native void leaveConference(long ptr);
-	private native void pauseAllCalls(long ptr);
-	private native void reloadSoundDevices(long ptr);
-	private native void enterBackground(long ptr);
-	private native void enterForeground(long ptr);
-	private native void ensureRegistered(long ptr);
+    private native void stopCore(long ptr);
+    private native void leaveConference(long ptr);
+    private native void pauseAllCalls(long ptr);
+    private native void reloadSoundDevices(long ptr);
+    private native void enterBackground(long ptr);
+    private native void enterForeground(long ptr);
+    private native void ensureRegistered(long ptr);
 
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
@@ -165,9 +165,9 @@ public class CoreManager {
         return mCore;
     }
 
-	public void ensureRegistered() {
-		ensureRegistered(mCore.getNativePointer());
-	}
+    public void ensureRegistered() {
+        ensureRegistered(mCore.getNativePointer());
+    }
 
     public void onLinphoneCoreStart() {
         if (mCore.isAutoIterateEnabled()) {
@@ -411,13 +411,13 @@ public class CoreManager {
         }
     }
 
-	public void setAudioManagerInCommunicationMode() {
-		if (mAudioHelper != null) mAudioHelper.setAudioManagerInCommunicationMode();
-	}
+    public void setAudioManagerInCommunicationMode() {
+        if (mAudioHelper != null) mAudioHelper.setAudioManagerInCommunicationMode();
+    }
 
-	public void setAudioManagerInNormalMode() {
-		if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
-	}
+    public void setAudioManagerInNormalMode() {
+        if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
+    }
 
     private Class getServiceClass() {
         // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one
@@ -476,7 +476,7 @@ public class CoreManager {
         Log.i("MODEL=" + Build.MODEL);
         Log.i("MANUFACTURER=" + Build.MANUFACTURER);
         Log.i("ANDROID SDK=" + Build.VERSION.SDK_INT);
-		Log.i("PERFORMANCE CLASS=" + DeviceUtils.getPerformanceClass());
+        Log.i("PERFORMANCE CLASS=" + DeviceUtils.getPerformanceClass());
         StringBuilder sb = new StringBuilder();
         sb.append("ABIs=");
         for (String abi : Version.getCpuAbis()) {

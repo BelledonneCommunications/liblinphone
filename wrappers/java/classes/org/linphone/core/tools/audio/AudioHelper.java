@@ -160,6 +160,11 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     public void requestRingingAudioFocus() {
+        if (isAudioFocusDisabled()) {
+            Log.i("[Audio Helper] We were asked not to require audio focus, skipping");
+            return;
+        }
+
         if (mRingingRequest != null) {
             Log.w("[Audio Helper] Ringing audio focus request still active, skipping");
             return;
@@ -193,12 +198,19 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 Log.i("[Audio Helper] Ringing audio focus request abandonned");
                 mRingingRequest = null;
             } else {
-                Log.e("[Audio Helper] Ringing audio focus abandon request failed");
+                if (!isAudioFocusDisabled()) { 
+                    Log.e("[Audio Helper] Ringing audio focus abandon request failed");
+                }
             }
         }
     }
 
     public void requestCallAudioFocus() {
+        if (isAudioFocusDisabled()) {
+            Log.i("[Audio Helper] We were asked not to require audio focus, skipping");
+            return;
+        }
+        
         if (mRingingRequest != null) {
             Log.w("[Audio Helper] Ringing audio focus request not abandonned, let's do it");
             releaseRingingAudioFocus();
@@ -246,7 +258,9 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             }
             setAudioManagerInNormalMode();
         } else {
-            Log.i("[Audio Helper] Call audio focus request was already abandonned");
+            if (!isAudioFocusDisabled()) {
+                Log.i("[Audio Helper] Call audio focus request was already abandonned");
+            }
         }
     }
 
@@ -333,5 +347,9 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         } catch (SecurityException se) {
             Log.e("[Audio Helper] Cannot play ringtone [", ringtone, "]: ", se);
         }
+    }
+
+    private boolean isAudioFocusDisabled() {
+        return CoreManager.instance().getCore().getConfig().getBool("audio", "android_disable_audio_focus_requests", false);
     }
 }
