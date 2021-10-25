@@ -157,6 +157,7 @@ public:
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
+	void notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) ;
 
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);

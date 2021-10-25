@@ -87,6 +87,22 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const 
 LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConference *conference);
 
 /**
+ * Gets the list of listener in the participant device.
+ * @param[in] participant_device #LinphoneParticipantDevice object
+ * @return The attached listeners. \bctbx_list{LinphoneParticipantDeviceCbs}
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Sets the current LinphoneParticipantDeviceCbs.
+ * @param participant_device #LinphoneParticipantDevice object. @notnil
+ * @param cbs The #LinphoneParticipantDeviceCbs object. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_participant_device_set_current_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs);
+
+/**
  * Sets the current LinphoneChatRoomCbs.
  * @param chat_room LinphoneChatRoom object
  * @param cbs LinphoneChatRoomCbs object

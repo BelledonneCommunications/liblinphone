@@ -26,6 +26,7 @@
 #include "core/core.h"
 #include "logger/logger.h"
 #include "participant.h"
+#include "private_functions.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
@@ -179,6 +180,24 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 
 void Conference::setSubject (const string &subject) {
 	confParams->setSubject(subject);
+}
+
+void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getSsrc() == ssrc) {
+				_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
+				return;
+			}
+		}
+	}
+	for (const auto &device : getMe()->getDevices()) {
+		if (device->getSsrc() == ssrc) {
+			_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
+			return;
+		}
+	}
+	lDebug() << "IsSpeaking: unable to notify speaking device because there is no device found.";
 }
 
 // -----------------------------------------------------------------------------

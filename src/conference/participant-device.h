@@ -34,6 +34,10 @@
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
 
+#include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-sal.h"
+#include "linphone/api/c-types.h"
+
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
@@ -41,8 +45,9 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 class Core;
 class Participant;
+class ParticipantDeviceCbs;
 
-class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice> {
+class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>, public UserDataAccessor, public CallbacksHolder<ParticipantDeviceCbs> {
 public:
 	enum class State {
 		Joining, //an INVITE has been sent
@@ -127,6 +132,14 @@ private:
 };
 
 std::ostream &operator<< (std::ostream &stream, ParticipantDevice::State state);
+
+class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDeviceCbs, ParticipantDeviceCbs>, public Callbacks {
+	public:
+		LinphoneParticipantDeviceCbsIsSpeakingChangedCb getIsSpeakingChanged()const;
+		void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
+	private:
+	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
+};
 
 LINPHONE_END_NAMESPACE
 

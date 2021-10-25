@@ -46,6 +46,7 @@
 #include "linphone/api/c-participant-imdn-state.h"
 #include "linphone/api/c-participant.h"
 #include "linphone/api/c-participant-device.h"
+#include "linphone/api/c-participant-device-cbs.h"
 #include "linphone/api/c-participant-device-identity.h"
 #include "linphone/api/c-push-notification-message.h"
 #include "linphone/api/c-push-notification-config.h"

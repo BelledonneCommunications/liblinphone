@@ -26,6 +26,7 @@
 // =============================================================================
 
 using namespace std;
+using namespace LinphonePrivate;
 
 LinphoneParticipantDevice *linphone_participant_device_ref (LinphoneParticipantDevice *participant_device) {
 	belle_sip_object_ref(participant_device);
@@ -37,46 +38,71 @@ void linphone_participant_device_unref (LinphoneParticipantDevice *participant_d
 }
 
 void *linphone_participant_device_get_user_data(const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getUserData();
+	return ParticipantDevice::toCpp(participant_device)->getUserData();
 }
 
 void linphone_participant_device_set_user_data(LinphoneParticipantDevice *participant_device, void *ud) {
-	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setUserData(ud);
+	ParticipantDevice::toCpp(participant_device)->setUserData(ud);
 }
 
 const LinphoneAddress *linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device) {
-	const LinphonePrivate::Address & addr = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getAddress().asAddress();
+	const LinphonePrivate::Address & addr = ParticipantDevice::toCpp(participant_device)->getAddress().asAddress();
 	return L_GET_C_BACK_PTR(&addr);
 }
 
 LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
-	return (LinphoneChatRoomSecurityLevel)(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
+	return (LinphoneChatRoomSecurityLevel)(ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
 }
 
 const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getName().c_str();
+	return ParticipantDevice::toCpp(participant_device)->getName().c_str();
 }
 
 bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->isInConference();
+	return ParticipantDevice::toCpp(participant_device)->isInConference();
 }
 
 time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
+	return ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
 }
 
 LinphoneMediaDirection linphone_participant_device_get_audio_direction (const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getAudioDirection();
+	return ParticipantDevice::toCpp(participant_device)->getAudioDirection();
 }
 
 LinphoneMediaDirection linphone_participant_device_get_video_direction (const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getVideoDirection();
+	return ParticipantDevice::toCpp(participant_device)->getVideoDirection();
 }
 
 LinphoneMediaDirection linphone_participant_device_get_text_direction (const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTextDirection();
+	return ParticipantDevice::toCpp(participant_device)->getTextDirection();
 }
 
 uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device) {
-	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSsrc();
+	return ParticipantDevice::toCpp(participant_device)->getSsrc();
 }
+
+void linphone_participant_device_add_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	ParticipantDevice::toCpp(participant_device)->addCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
+}
+
+void linphone_participant_device_remove_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	ParticipantDevice::toCpp(participant_device)->removeCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
+}
+
+LinphoneParticipantDeviceCbs *linphone_participant_device_get_current_callbacks (const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getCurrentCallbacks()->toC();
+}
+
+void linphone_participant_device_set_current_callbacks(LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
+	ParticipantDevice::toCpp(participant_device)->setCurrentCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
+}
+
+const bctbx_list_t *linphone_participant_device_get_callbacks_list(const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getCCallbacksList();
+}
+
+void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
+}
+

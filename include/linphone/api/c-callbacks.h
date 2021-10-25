@@ -493,6 +493,13 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConferenc
 typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Callback used to notify that is this participant device speaking has changed.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] is_speaking  is this participant device speaking
+ */
+typedef void (*LinphoneParticipantDeviceCbsIsSpeakingChangedCb) (LinphoneParticipantDevice *participant_device, bool_t is_speaking);
+
+/**
  * @}
 **/
 

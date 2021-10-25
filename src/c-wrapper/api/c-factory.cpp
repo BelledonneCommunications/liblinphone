@@ -184,6 +184,10 @@ LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFac
   return Factory::toCpp(factory)->createConferenceCbs();
 }
 
+LinphoneParticipantDeviceCbs * linphone_factory_create_participant_device_cbs(const LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createParticipantDeviceCbs();
+}
+
 LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
   return Factory::toCpp(factory)->createChatRoomCbs();
 }

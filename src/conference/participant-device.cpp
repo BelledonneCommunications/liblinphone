@@ -214,4 +214,13 @@ void ParticipantDevice::enableAdminModeSupport(bool support) {
 	mSupportAdminMode = support;
 
 }
+
+LinphoneParticipantDeviceCbsIsSpeakingChangedCb ParticipantDeviceCbs::getIsSpeakingChanged()const{
+	return mIsSpeakingChangedCb;
+}
+
+void ParticipantDeviceCbs::setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb){
+	mIsSpeakingChangedCb = cb;
+}
+
 LINPHONE_END_NAMESPACE

@@ -99,6 +99,7 @@ set(C_API_HEADER_FILES
 	c-magic-search-cbs.h
 	c-participant.h
 	c-participant-device.h
+	c-participant-device-cbs.h
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
 	c-push-notification-message.h

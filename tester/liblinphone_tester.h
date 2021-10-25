@@ -419,6 +419,9 @@ typedef struct _stats {
 
 	int number_of_LinphoneRemoteRecordingEnabled;
 	int number_of_LinphoneRemoteRecordingDisabled;
+	
+	int number_of_LinphoneParticipantDeviceStartSpeaking;
+	int number_of_LinphoneParticipantDeviceStopSpeaking;
 }stats;
 
 typedef struct _LinphoneCoreManager {

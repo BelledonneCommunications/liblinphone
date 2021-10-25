@@ -58,6 +58,11 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	initializeSessions((MediaStream*)mStream);
 }
 
+static void audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
+	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
+	zis->getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
+}
+
 void MS2AudioStream::initZrtp() {
 	LinphoneCallLog *log = getMediaSession().getLog();
 	const LinphoneAddress *peerAddr = linphone_call_log_get_remote_address(log);
@@ -415,6 +420,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			audio_stream_set_client_to_mixer_extension_id(mStream, streamCfg.getClientToMixerExtensionId());
 		}
 
+		audio_stream_set_is_speaking_callback(mStream, audioStreamIsSpeakingCb, this);
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();

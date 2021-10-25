@@ -3551,4 +3551,18 @@ bool MediaSession::pausedByApp()const{
 	return d->pausedByApp;
 }
 
+void MediaSession::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
+	L_D();
+	LinphoneConference * conference = nullptr;
+	if (d->listener) {
+		conference = d->listener->getCallSessionConference(getSharedFromThis());
+		if (conference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			cppConference->notifySpeakingDevice(ssrc, isSpeaking);
+		} else {
+			lDebug() << "IsSpeaking: unable to notify speaking device because there is no conference.";
+		}
+	}
+}
+
 LINPHONE_END_NAMESPACE
