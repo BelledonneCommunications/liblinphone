@@ -698,9 +698,16 @@ void Account::notifyPublishStateChanged (LinphonePublishState state) {
 				linphone_event_unref(mPresencePublishEvent);
 				mPresencePublishEvent = NULL;
 				break;
-			case LinphonePublishOk:
-				setSipEtag(linphone_event_get_custom_header(mPresencePublishEvent, "SIP-ETag"));
-				break;
+			case LinphonePublishOk:{
+					const char * etag = linphone_event_get_custom_header(mPresencePublishEvent, "SIP-ETag");
+					if(etag)
+						setSipEtag(etag);
+					else{
+						lWarning() << "SIP-Etag is missing in custom header. The server must provide it for PUBLISH.";
+						setSipEtag("");
+					}
+					break;
+				}
 			default:
 				break;
 		}
