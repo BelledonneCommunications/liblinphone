@@ -134,7 +134,7 @@ static FILE *sip_start_recv(const char *senario,int *local_port) {
 	return file;
 }
 
-static LinphoneCoreManager * mgr_init(void) {
+static LinphoneCoreManager * mgr_init_2(const char *name) {
 	char *identity_char;
 	/*currently we use direct connection because sipp do not properly set ACK request uri*/
 	LinphoneCoreManager *mgr= linphone_core_manager_create( "empty_rc");
@@ -143,12 +143,19 @@ static LinphoneCoreManager * mgr_init(void) {
 	tr.udp_port = LC_SIP_TRANSPORT_RANDOM;
 	linphone_core_set_sip_transports (mgr->lc, &tr);
 	mgr->identity= linphone_core_get_primary_contact_parsed(mgr->lc);
-	linphone_address_set_username(mgr->identity,"marie");
+	linphone_address_set_username(mgr->identity,name);
 	identity_char=linphone_address_as_string(mgr->identity);
 	linphone_core_set_primary_contact(mgr->lc,identity_char);
 	linphone_core_manager_start(mgr, FALSE);
 	linphone_core_iterate(mgr->lc);
+	
+	linphone_address_unref(mgr->identity);
+	mgr->identity= linphone_core_get_primary_contact_parsed(mgr->lc);
 	return mgr;
+}
+
+static LinphoneCoreManager * mgr_init(void) {
+	return mgr_init_2("marie");
 }
 
 static void sip_update_within_icoming_reinvite_with_no_sdp(void) {
@@ -169,6 +176,27 @@ static void sip_update_within_icoming_reinvite_with_no_sdp(void) {
 		pclose(sipp_out);
 	}
 	linphone_core_manager_destroy(mgr);
+}
+
+static void call_with_transfer_incoming_ringing_call(void) {
+	char *scen;
+	FILE * sipp_out;
+	LinphoneCoreManager *mgr = mgr_init();
+	LinphoneCoreManager *mgr2 = mgr_init_2("laure");
+
+	scen = bc_tester_res("sipp/call_with_transfer_incoming_ringing_call.xml");
+	sipp_out = sip_start(scen, linphone_address_get_username(mgr->identity),NULL, mgr->identity);
+
+	if (sipp_out) {
+		BC_ASSERT_TRUE(wait_for_until(mgr->lc, mgr->lc, &mgr->stat.number_of_LinphoneCallIncomingReceived, 1,5000));
+		if (linphone_core_get_current_call(mgr->lc)) {
+			linphone_call_transfer_to(linphone_core_get_current_call(mgr->lc), mgr2->identity);
+			BC_ASSERT_TRUE(wait_for_until(mgr->lc, mgr2->lc, &mgr->stat.number_of_LinphoneCallEnd, 1, 3000));
+		}
+		pclose(sipp_out);
+	}
+	linphone_core_manager_destroy(mgr);
+	linphone_core_manager_destroy(mgr2);
 }
 
 static void call_with_audio_mline_before_video_in_sdp(void) {
@@ -398,7 +426,8 @@ static test_t tests[] = {
 	TEST_NO_TAG("Call with multiple video mline in sdp", call_with_multiple_video_mline_in_sdp),
 	TEST_NO_TAG("Call invite 200ok without contact header", call_invite_200ok_without_contact_header),
 	TEST_NO_TAG("Call invite 180rel PRACK with 180 retransmition", call_invite_180rel_prack_with_180_retransmition),
-	TEST_NO_TAG("Call invite 180rel PRACK with auth", call_invite_180rel_prack_with_auth)
+	TEST_NO_TAG("Call invite 180rel PRACK with auth", call_invite_180rel_prack_with_auth),
+	TEST_NO_TAG("Call with transfer incoming ringing call", call_with_transfer_incoming_ringing_call)
 };
 #endif
 

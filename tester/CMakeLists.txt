@@ -82,6 +82,7 @@ set(SIPP_FILES
 	sipp/call_with_multiple_video_mline_in_sdp.xml
 	sipp/call_with_video_mline_before_audio_in_sdp.xml
 	sipp/sip_update_within_icoming_reinvite_with_no_sdp.xml
+	sipp/call_with_transfer_incoming_ringing_call.xml
 )
 
 set(CERTIFICATE_ALT_FILES
