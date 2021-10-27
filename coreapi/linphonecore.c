@@ -2124,8 +2124,8 @@ static void video_config_read(LinphoneCore *lc){
 	build_video_devices_table(lc);
 
 	str = linphone_config_get_string(lc->config, "video", "device", NULL);
-	if (str && str[0] != 0) str = NULL;
 	linphone_core_set_video_device(lc, str);
+	
 
 	str = linphone_config_get_string(lc->config, "video", "size", "vga");
 	if (str && str[0] != 0) linphone_core_set_preferred_video_definition_by_name(lc, str);
