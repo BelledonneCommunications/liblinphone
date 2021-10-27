@@ -316,7 +316,15 @@ void MediaSessionPrivate::accepted () {
 			if (!capabilityNegotiationReInviteSent) {
 				// Add to conference if it was added after last INVITE message sequence started
 				// It occurs if the local participant calls the remote participant and the call is added to the conference when it is in state OutgoingInit, OutgoingProgress or OutgoingRinging
-				tryEnterConference();
+				q->getCore()->doLater( [this](){
+					/* This has to be done outside of the accepted callback, because after the callback the SIP ACK is going to be sent.
+					 * Despite it is not forbidden by RFC3261, it is preferable for the sake of clarity that the ACK for the current
+					 * transaction is sent before the new INVITE that will be sent by tryEnterConference().
+					 * Some implementations (eg FreeSwitch) reply "500 Overlapped request" otherwise ( which is 
+					 * in fact a misunderstanding of RFC3261).
+					 */
+					tryEnterConference();
+				});
 			}
 
 		}
