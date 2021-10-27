@@ -31,21 +31,28 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceCallEventPrivate : public EventLogPrivate {
 public:
 	shared_ptr<Call> call;
+	shared_ptr<const ConferenceInfo> conferenceInfo;
 };
 
 // -----------------------------------------------------------------------------
 
-ConferenceCallEvent::ConferenceCallEvent (Type type, time_t creationTime, const shared_ptr<Call> &call) :
+ConferenceCallEvent::ConferenceCallEvent (Type type, time_t creationTime, const shared_ptr<Call> &call, const std::shared_ptr<const ConferenceInfo> &conferenceInfo) :
 	EventLog(*new ConferenceCallEventPrivate, type, creationTime) {
 	L_D();
 	L_ASSERT(call);
-	L_ASSERT(type == Type::ConferenceCallStart || type == Type::ConferenceCallEnd);
+	L_ASSERT(type == Type::ConferenceCallStart || type == Type::ConferenceCallConnected || type == Type::ConferenceCallEnd);
 	d->call = call;
+	d->conferenceInfo = conferenceInfo;
 }
 
 shared_ptr<Call> ConferenceCallEvent::getCall () const {
 	L_D();
 	return d->call;
+}
+
+std::shared_ptr<const ConferenceInfo> ConferenceCallEvent::getConferenceInfo () const {
+	L_D();
+	return d->conferenceInfo;
 }
 
 LINPHONE_END_NAMESPACE

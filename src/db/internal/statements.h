@@ -34,6 +34,8 @@ namespace Statements {
 		SelectOneToOneChatRoomId,
 		SelectConferenceEvent,
 		SelectConferenceEvents,
+		SelectConferenceInfoId,
+		SelectConferenceInfoParticipantId,
 		SelectCount
 	};
 

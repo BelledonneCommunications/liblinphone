@@ -74,6 +74,7 @@
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "conference/conference-info.h"
 #include "conference/session/media-session.h"
 #include "conference/session/media-session-p.h"
 
@@ -8728,7 +8729,7 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
 }
 
-void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text) {
+void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_information, const char *text) {
 	const bctbx_list_t *participants = linphone_conference_info_get_participants(conference_information);
 	if (bctbx_list_size(participants) == 0) {
 		ms_warning("Cannot send conference information if no participants are added!");
@@ -8772,7 +8773,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 
 		linphone_chat_message_send(msg);
 
-		// TODO: Check that the message is delivered before notifying
+		// TODO: Check that the message is delivered before notifying and inserting into db
 		linphone_core_notify_conference_info_on_participant_sent(core, conference_information, participant);
 		sent_count += 1;
 
@@ -8784,6 +8785,27 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		linphone_core_notify_conference_info_on_sent(core, conference_information);
 	}
 
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	if (mainDb) mainDb->insertConferenceInfo(ConferenceInfo::toCpp(conference_information)->getSharedFromThis());
+#endif
+
 	linphone_content_unref(content);
 	bctbx_list_free(participants_copy);
+}
+
+bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core, bool_t only_future) {
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	auto list = mainDb->getConferenceInfos(only_future);
+
+	bctbx_list_t *results = NULL;
+	for (auto &conf : list) {
+		results = bctbx_list_append(results, linphone_conference_info_ref(conf->toC()));
+	}
+
+	return results;
+#else
+	return NULL;
+#endif
 }

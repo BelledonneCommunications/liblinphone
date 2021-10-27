@@ -27,6 +27,7 @@
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/static-string.h"
 
+#include "c-wrapper/internal/c-tools.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #ifdef HAVE_ADVANCED_IM
@@ -506,6 +507,82 @@ void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long 
 #endif
 }
 
+long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+#ifdef HAVE_DB_STORAGE
+	if (conferenceInfo->getOrganizer() == nullptr || conferenceInfo->getUri() == nullptr) {
+		lError() << "Trying to insert a Conference Info without organizer or URI!";
+		return -1;
+	}
+
+	const long long &organizerSipAddressId = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(conferenceInfo->getOrganizer())->asString());
+	const long long &uriSipAddressid = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(conferenceInfo->getUri())->asString());
+	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
+	int duration = conferenceInfo->getDuration();
+	const string &subject = conferenceInfo->getSubject();
+	const string &description = conferenceInfo->getDescription();
+
+	long long conferenceInfoId = selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), subject);
+	if (conferenceInfoId >= 0) {
+		// The conference info is already stored in DB, but still update it some information might have changed
+		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
+
+		*dbSession.getBackendSession() << "UPDATE conference_info SET"
+			"  organizer_sip_address_id = :organizerSipAddressId,"
+			"  uri_sip_address_id = :uriSipAddressid,"
+			"  start_time = :startTime,"
+			"  duration = :duration,"
+			"  subject = :subject,"
+			"  description = :description"
+			" WHERE id = :conferenceInfoId",
+			soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime),
+			soci::use(duration), soci::use(subject), soci::use(description), soci::use(conferenceInfoId);
+	} else {
+		lInfo() << "Insert new conference info in database.";
+
+		*dbSession.getBackendSession() << "INSERT INTO conference_info ("
+		"  organizer_sip_address_id, uri_sip_address_id, start_time, duration, subject, description"
+		") VALUES ("
+		"  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, :subject, :description"
+		")",
+		soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime),
+		soci::use(duration), soci::use(subject), soci::use(description);
+
+		conferenceInfoId = dbSession.getLastInsertId();
+	}
+
+	const bctbx_list_t *iter;
+	for (iter = conferenceInfo->getParticipants(); iter != NULL; iter = bctbx_list_next(iter)) {
+		insertConferenceInfoParticipant(
+			conferenceInfoId,
+			insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT((LinphoneAddress *) bctbx_list_get_data(iter))->asString())
+		);
+	}
+
+	cache(conferenceInfo, conferenceInfoId);
+
+	return conferenceInfoId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId) {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceInfoParticipantId = selectConferenceInfoParticipantId(conferenceInfoId, participantSipAddressId);
+	if (conferenceInfoParticipantId >= 0) {
+		return conferenceInfoParticipantId;
+	}
+
+	*dbSession.getBackendSession() << "INSERT INTO conference_info_participant (conference_info_id, participant_sip_address_id)"
+		" VALUES (:conferenceInfoId, :participantSipAddressId)",
+		soci::use(conferenceInfoId), soci::use(participantSipAddressId);
+
+	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::selectSipAddressId (const string &sipAddress) const {
@@ -613,6 +690,36 @@ long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long
 #endif
 }
 
+long long MainDbPrivate::selectConferenceInfoId (long long organizerSipAddressId, time_t startTime, const std::string &subject) {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceInfoId;
+
+	const tm &startTimeTm = Utils::getTimeTAsTm(startTime);
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << Statements::get(Statements::SelectConferenceInfoId),
+		soci::use(organizerSipAddressId), soci::use(startTimeTm), soci::use(subject), soci::into(conferenceInfoId);
+
+	return session->got_data() ? conferenceInfoId : -1;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::selectConferenceInfoParticipantId (long long conferenceInfoId, long long participantSipAddressId) const {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceInfoParticipantId;
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << Statements::get(Statements::SelectConferenceInfoParticipantId),
+		soci::use(conferenceInfoId), soci::use(participantSipAddressId), soci::into(conferenceInfoParticipantId);
+
+	return session->got_data() ? conferenceInfoParticipantId : -1;
+#else
+	return -1;
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 void MainDbPrivate::deleteContents (long long chatMessageId) {
@@ -687,6 +794,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 			break;
 
 		case EventLog::Type::ConferenceCallStart:
+		case EventLog::Type::ConferenceCallConnected:
 		case EventLog::Type::ConferenceCallEnd:
 			eventLog = selectConferenceCallEvent(conferenceId, type, row);
 			break;
@@ -1348,6 +1456,52 @@ void MainDbPrivate::setChatMessageParticipantState (
 #endif
 }
 
+// ---------------------------------------------------------------------------
+// Conference Info API.
+// ---------------------------------------------------------------------------
+
+#ifdef HAVE_DB_STORAGE
+shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row &row) const {
+	const long long &dbConferenceInfoId = dbSession.resolveId(row, 0);
+
+	auto confFromCache = getConferenceInfoFromCache(dbConferenceInfoId);
+	if (confFromCache) return confFromCache;
+
+	auto conferenceInfo = ConferenceInfo::create();
+
+	LinphoneAddress* address = linphone_address_new(row.get<string>(1).c_str());
+	conferenceInfo->setOrganizer(address);
+	linphone_address_unref(address);
+
+	address = linphone_address_new(row.get<string>(2).c_str());
+	conferenceInfo->setUri(address);
+	linphone_address_unref(address);
+
+	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
+	conferenceInfo->setDuration(row.get<int>(4));
+	conferenceInfo->setSubject(row.get<string>(5));
+	conferenceInfo->setDescription(row.get<string>(6));
+
+	static const string query = "SELECT sip_address.value"
+		" FROM sip_address, conference_info, conference_info_participant"
+		" WHERE conference_info.id = :conferenceInfoId"
+		" AND sip_address.id = conference_info_participant.participant_sip_address_id"
+		" AND conference_info_participant.conference_info_id = conference_info.id";
+
+	soci::session *session = dbSession.getBackendSession();
+	soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(dbConferenceInfoId));
+	for (const auto &participantRow : participantRows) {
+		LinphoneAddress* address = linphone_address_new(participantRow.get<string>(0).c_str());
+		conferenceInfo->addParticipant(address);
+		linphone_address_unref(address);
+	}
+
+	cache(conferenceInfo, dbConferenceInfoId);
+
+	return conferenceInfo;
+}
+#endif
+
 // -----------------------------------------------------------------------------
 // Cache API.
 // -----------------------------------------------------------------------------
@@ -1393,6 +1547,19 @@ ConferenceId MainDbPrivate::getConferenceIdFromCache(long long storageId) const 
 #endif
 }
 
+shared_ptr<ConferenceInfo> MainDbPrivate::getConferenceInfoFromCache (long long storageId) const {
+#ifdef HAVE_DB_STORAGE
+	auto it = storageIdToConferenceInfo.find(storageId);
+	if (it == storageIdToConferenceInfo.cend())
+		return nullptr;
+
+	shared_ptr<ConferenceInfo> conferenceInfo = it->second.lock();
+	return conferenceInfo;
+#else
+	return nullptr;
+#endif
+}
+
 void MainDbPrivate::cache (const shared_ptr<EventLog> &eventLog, long long storageId) const {
 #ifdef HAVE_DB_STORAGE
 	L_Q();
@@ -1419,6 +1586,12 @@ void MainDbPrivate::cache (const ConferenceId &conferenceId, long long storageId
 #ifdef HAVE_DB_STORAGE
 	L_ASSERT(conferenceId.isValid());
 	storageIdToConferenceId[storageId] = conferenceId;
+#endif
+}
+
+void MainDbPrivate::cache (const std::shared_ptr<ConferenceInfo> &conferenceInfo, long long storageId) const {
+#ifdef HAVE_DB_STORAGE
+	storageIdToConferenceInfo[storageId] = conferenceInfo;
 #endif
 }
 
@@ -2313,6 +2486,42 @@ void MainDb::init () {
 			"    ON DELETE CASCADE"
 			") " + charset;
 
+		*session <<
+			"CREATE TABLE IF NOT EXISTS conference_info ("
+			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+			"  organizer_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  uri_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  start_time" + timestampType() + ","
+			"  duration INT UNSIGNED,"
+			"  subject VARCHAR(256) NOT NULL,"
+			"  description VARCHAR(2048),"
+
+			"  FOREIGN KEY (organizer_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (uri_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
+
+		*session <<
+			"CREATE TABLE IF NOT EXISTS conference_info_participant ("
+			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+			"  conference_info_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  participant_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+
+			"  UNIQUE (conference_info_id, participant_sip_address_id),"
+
+			"  FOREIGN KEY (conference_info_id)"
+			"    REFERENCES conference_info(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (participant_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
+
 		d->updateSchema();
 
 		d->updateModuleVersion("events", ModuleVersionEvents);
@@ -2350,6 +2559,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				break;
 
 			case EventLog::Type::ConferenceCallStart:
+			case EventLog::Type::ConferenceCallConnected:
 			case EventLog::Type::ConferenceCallEnd:
 				eventId = d->insertConferenceCallEvent(eventLog);
 				break;
@@ -2430,6 +2640,7 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceCreated:
 			case EventLog::Type::ConferenceTerminated:
 			case EventLog::Type::ConferenceCallStart:
+			case EventLog::Type::ConferenceCallConnected:
 			case EventLog::Type::ConferenceCallEnd:
 			case EventLog::Type::ConferenceParticipantAdded:
 			case EventLog::Type::ConferenceParticipantRemoved:
@@ -3961,7 +4172,81 @@ void MainDb::deleteChatRoomParticipantDevice (
 	d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
 #endif
 }
-	
+
+// -----------------------------------------------------------------------------
+
+std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (bool onlyFutureConferenceInfos) const {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+		" start_time, duration, subject, description"
+		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id";
+	if (onlyFutureConferenceInfos) query += " AND start_time >= :startTime";
+	query += " ORDER BY start_time DESC";
+
+	DurationLogger durationLogger("Get conference infos.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		list<shared_ptr<ConferenceInfo>> conferenceInfos;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		// We cannot create an empty rowset so each "if" will make one
+		if (onlyFutureConferenceInfos) {
+			const tm &startTime = Utils::getTimeTAsTm(ms_time(NULL));
+			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(startTime));
+
+			for (const auto &row : rows) {
+				auto confInfo = d->selectConferenceInfo(row);
+				conferenceInfos.push_back(confInfo);
+			}
+		} else {
+			soci::rowset<soci::row> rows = (session->prepare << query);
+
+			for (const auto &row : rows) {
+				auto confInfo = d->selectConferenceInfo(row);
+				conferenceInfos.push_back(confInfo);
+			}
+		}
+
+		tr.commit();
+
+		return conferenceInfos;
+	};
+#else
+	return list<shared_ptr<ConferenceInfo>>();
+#endif
+}
+
+void MainDb::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		d->insertConferenceInfo(conferenceInfo);
+		tr.commit();
+	};
+#endif
+}
+
+void MainDb::deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		const long long &organizerSipAddressId = d->selectSipAddressId(L_GET_CPP_PTR_FROM_C_OBJECT(conferenceInfo->getOrganizer())->asString());
+		const long long &dbConferenceId = d->selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), conferenceInfo->getSubject());
+
+		*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId", soci::use(dbConferenceId);
+		d->storageIdToConferenceInfo.erase(dbConferenceId);
+
+		tr.commit();
+	};
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 bool MainDb::import (Backend, const string &parameters) {

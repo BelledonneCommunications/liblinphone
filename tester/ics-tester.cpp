@@ -193,7 +193,7 @@ static void send_conference_invitations(void) {
 
 	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
 
-	time_t conf_time = ms_time(NULL);
+	time_t conf_time = ms_time(NULL) - (time_t)3600;
 	LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
 	linphone_conference_info_set_organizer(conf_info, marie->identity);
 	linphone_conference_info_add_participant(conf_info, pauline->identity);
@@ -262,6 +262,15 @@ static void send_conference_invitations(void) {
 			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_content) == conf_time);
 			linphone_conference_info_unref(conf_info_from_content);
 		}
+
+		// Check that the core can retrieve the conference info list on DB
+		bctbx_list_t *conf_info_list = linphone_core_get_conference_information_list(laure->lc, FALSE);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(conf_info_list), 1, int, "%d");
+		bctbx_list_free_with_data(conf_info_list, (bctbx_list_free_func)linphone_conference_info_unref);
+
+		// Check that specifying the future parameter to TRUE returns no conference info
+		bctbx_list_t *conf_info_list_future = linphone_core_get_conference_information_list(laure->lc, TRUE);
+		BC_ASSERT_PTR_NULL(conf_info_list_future);
 	}
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoOnParticipantSent, 2, int, "%d");

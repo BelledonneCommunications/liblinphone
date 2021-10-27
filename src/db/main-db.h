@@ -28,6 +28,7 @@
 #include "abstract/abstract-db.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
+#include "conference/conference-info.h"
 #include "core/core-accessor.h"
 
 // =============================================================================
@@ -218,6 +219,14 @@ public:
 
 	void insertNewPreviousConferenceId(const ConferenceId& currentConfId, const ConferenceId& previousConfId);
 	void removePreviousConferenceId(const ConferenceId& confId);
+
+	// ---------------------------------------------------------------------------
+	// Conference Info.
+	// ---------------------------------------------------------------------------
+
+	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos (bool onlyFutureConferenceInfos = true) const;
+	void insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
+	void deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 
 	// ---------------------------------------------------------------------------
 	// Other.

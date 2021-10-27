@@ -916,6 +916,24 @@ void ChatMessagePrivate::handleAutoDownload() {
 	setAutoFileTransferDownloadInProgress(false);
 	setState(ChatMessage::State::Delivered);
 	q->getChatRoom()->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
+
+	for (Content *c : contents) {
+		ContentType contentType = c->getContentType();
+
+		if (contentType.strongEqual(ContentType::Icalendar)) {
+			LinphoneConferenceInfo *confInfo = linphone_factory_create_conference_info_from_icalendar_content(
+				linphone_factory_get(),
+				L_GET_C_BACK_PTR(c)
+			);
+
+			if (confInfo != nullptr) {
+				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+				mainDb->insertConferenceInfo(ConferenceInfo::toCpp(confInfo)->getSharedFromThis());
+				linphone_conference_info_unref(confInfo);
+			}
+		}
+	}
+
 	return;
 }
 

@@ -109,6 +109,18 @@ namespace Statements {
 			LEFT JOIN sip_address AS participant_sip_address ON participant_sip_address.id = participant_sip_address_id
 			LEFT JOIN sip_address AS reply_sender_address ON reply_sender_address.id = reply_sender_address_id
 			WHERE chat_room_id = :1
+		)",
+
+		/* SelectConferenceInfoId */ R"(
+			SELECT id
+			FROM conference_info
+			WHERE organizer_sip_address_id = :1 AND start_time = :2 AND subject = :3
+		)",
+
+		/* SelectConferenceInfoParticipantId */ R"(
+			SELECT id
+			FROM conference_info_participant
+			WHERE conference_info_id = :1 AND participant_sip_address_id = :2
 		)"
 	};
 

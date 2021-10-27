@@ -35,6 +35,7 @@ typedef enum _EventLogType{
 	LinphoneEventLogTypeConferenceCreated = 1, /**< Conference (created) event */
 	LinphoneEventLogTypeConferenceTerminated = 2, /**< Conference (terminated) event */
 	LinphoneEventLogTypeConferenceCallStart = 3, /**< Conference call (start) event */
+	LinphoneEventLogTypeConferenceConnected = 21, /**< Conference call (connected) event */
 	LinphoneEventLogTypeConferenceCallEnd = 4, /**< Conference call (end) event */
 	LinphoneEventLogTypeConferenceChatMessage = 5, /**< Conference chat message event */
 	LinphoneEventLogTypeConferenceParticipantAdded = 6, /**< Conference participant (added) event */

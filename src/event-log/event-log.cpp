@@ -71,40 +71,42 @@ std::ostream& operator<<(std::ostream& lhs, EventLog::Type e) {
 			lhs << "ConferenceTerminated"; break;
 		case EventLog::Type::ConferenceCallStart:
 			lhs << "ConferenceCallStart"; break;
+		case EventLog::Type::ConferenceCallConnected:
+			lhs << "ConferenceCallConnected"; break;
 		case EventLog::Type::ConferenceCallEnd:
-		 lhs << "ConferenceCallEnd"; break;
+			lhs << "ConferenceCallEnd"; break;
 		case EventLog::Type::ConferenceChatMessage:
-		 lhs << "ConferenceChatMessage"; break;
+			lhs << "ConferenceChatMessage"; break;
 		case EventLog::Type::ConferenceParticipantAdded:
-		 lhs << "ConferenceParticipantAdded"; break;
+			lhs << "ConferenceParticipantAdded"; break;
 		case EventLog::Type::ConferenceParticipantRemoved:
-		 lhs << "ConferenceParticipantRemoved"; break;
+			lhs << "ConferenceParticipantRemoved"; break;
 		case EventLog::Type::ConferenceParticipantSetAdmin:
-		 lhs << "ConferenceParticipantSetAdmin"; break;
+			lhs << "ConferenceParticipantSetAdmin"; break;
 		case EventLog::Type::ConferenceParticipantUnsetAdmin:
-		 lhs << "ConferenceParticipantUnsetAdmin"; break;
+			lhs << "ConferenceParticipantUnsetAdmin"; break;
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
-		 lhs << "ConferenceParticipantDeviceAdded"; break;
+			lhs << "ConferenceParticipantDeviceAdded"; break;
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
-		 lhs << "ConferenceParticipantDeviceRemoved"; break;
+			lhs << "ConferenceParticipantDeviceRemoved"; break;
 		case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
-		 lhs << "ConferenceParticipantDeviceMediaChanged"; break;
+			lhs << "ConferenceParticipantDeviceMediaChanged"; break;
 		case EventLog::Type::ConferenceAvailableMediaChanged:
-		 lhs << "ConferenceAvailableMediaChanged"; break;
+			lhs << "ConferenceAvailableMediaChanged"; break;
 		case EventLog::Type::ConferenceSubjectChanged:
-		 lhs << "ConferenceSubjectChanged"; break;
+			lhs << "ConferenceSubjectChanged"; break;
 		case EventLog::Type::ConferenceSecurityEvent:
-		 lhs << "ConferenceSecurityEvent"; break;
+			lhs << "ConferenceSecurityEvent"; break;
 		case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
-		 lhs << "ConferenceEphemeralMessageLifetimeChanged"; break;
+			lhs << "ConferenceEphemeralMessageLifetimeChanged"; break;
 		case EventLog::Type::ConferenceEphemeralMessageEnabled:
-		 lhs << "ConferenceEphemeralMessageEnabled"; break;
+			lhs << "ConferenceEphemeralMessageEnabled"; break;
 		case EventLog::Type::ConferenceEphemeralMessageDisabled:
-		 lhs << "ConferenceEphemeralMessageDisabled"; break;
+			lhs << "ConferenceEphemeralMessageDisabled"; break;
 		case EventLog::Type::ConferenceEphemeralMessageManagedByAdmin:
-		 lhs << "ConferenceEphemeralMessageManagedByAdmin"; break;
+			lhs << "ConferenceEphemeralMessageManagedByAdmin"; break;
 		case EventLog::Type::ConferenceEphemeralMessageManagedByParticipants:
-		 lhs << "ConferenceEphemeralMessageManagedByParticipants"; break;
+			lhs << "ConferenceEphemeralMessageManagedByParticipants"; break;
 	}
 	return lhs;
 }

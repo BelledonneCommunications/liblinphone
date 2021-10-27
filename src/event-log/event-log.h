@@ -43,6 +43,7 @@ public:
 		ConferenceCreated = LinphoneEventLogTypeConferenceCreated,
 		ConferenceTerminated = LinphoneEventLogTypeConferenceTerminated,
 		ConferenceCallStart = LinphoneEventLogTypeConferenceCallStart,
+		ConferenceCallConnected = LinphoneEventLogTypeConferenceConnected,
 		ConferenceCallEnd = LinphoneEventLogTypeConferenceCallEnd,
 		ConferenceChatMessage = LinphoneEventLogTypeConferenceChatMessage,
 		ConferenceParticipantAdded = LinphoneEventLogTypeConferenceParticipantAdded,
