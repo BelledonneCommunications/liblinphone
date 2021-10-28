@@ -74,6 +74,7 @@ public:
 	std::shared_ptr<ImdnMessage> createImdnMessage (const std::shared_ptr<ImdnMessage> &message);
 	std::shared_ptr<IsComposingMessage> createIsComposingMessage ();
 	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::string &messageId) const;
+	std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::list<std::string> &messageIds) const;
 
 	void sendDeliveryErrorNotification (const std::shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason);
 	void sendDeliveryNotification (const std::shared_ptr<ChatMessage> &chatMessage);

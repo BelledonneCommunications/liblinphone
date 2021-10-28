@@ -219,6 +219,11 @@ list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages (const string &m
 	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageId);
 }
 
+list<shared_ptr<ChatMessage>> ChatRoomPrivate::findChatMessages (const list<string> &messageIds) const {
+	L_Q();
+	return q->getCore()->getPrivate()->mainDb->findChatMessages(q->getConferenceId(), messageIds);
+}
+
 // -----------------------------------------------------------------------------
 
 void ChatRoomPrivate::sendDeliveryErrorNotification (const shared_ptr<ChatMessage> &chatMessage, LinphoneReason reason) {
@@ -362,7 +367,12 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	}else{
 		messageId << op->getCallId();
 	}
-	msg->getPrivate()->setImdnMessageId(messageId.str());
+
+	// Don't do it for flexisip backend chat rooms, we need to know if the real message id from CPIM was retrieved or not
+	// Based on that we will send IMDNs or not
+	if (q->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
+		msg->getPrivate()->setImdnMessageId(messageId.str());
+	}
 	msg->getPrivate()->setCallId(op->getCallId());
 
 	const SalCustomHeader *ch = op->getRecvCustomHeaders();
@@ -652,6 +662,12 @@ shared_ptr<ChatMessage> ChatRoom::createReplyMessage (const shared_ptr<ChatMessa
 }
 
 // -----------------------------------------------------------------------------
+
+list<shared_ptr<ChatMessage>> ChatRoom::findChatMessages (const list<string> &messageIds) const {
+	L_D();
+	list<shared_ptr<ChatMessage>> chatMessages = d->findChatMessages(messageIds);
+	return chatMessages;
+}
 
 shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId) const {
 	L_D();

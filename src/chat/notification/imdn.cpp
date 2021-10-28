@@ -187,6 +187,9 @@ string Imdn::createXml (const string &id, time_t timestamp, Imdn::Type imdnType,
 void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 #ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> cr = chatMessage->getChatRoom();
+	list<string> messagesIds;
+	list<unique_ptr<Xsd::Imdn::Imdn>> imdns;
+
 	for (const auto &content : chatMessage->getPrivate()->getContents()) {
 		istringstream data(content->getBodyAsString());
 		unique_ptr<Xsd::Imdn::Imdn> imdn;
@@ -198,10 +201,27 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 		if (!imdn)
 			continue;
 		
-		shared_ptr<ChatMessage> cm = cr->findChatMessage(imdn->getMessageId());
+		messagesIds.push_back(imdn->getMessageId());
+		imdns.push_back(move(imdn));
+	}
+
+	// It seems to be more efficient to only make one database request to get all chat messages from their IMDN message ID
+	list<shared_ptr<ChatMessage>> chatMessages = cr->findChatMessages(messagesIds);
+
+	for (const auto& imdn: imdns)  {
+		shared_ptr<ChatMessage> cm = nullptr;
+		for (const auto &chatMessage : chatMessages) {
+			if (chatMessage->getImdnMessageId() == imdn->getMessageId()) {
+				cm = chatMessage;
+				break;
+			}
+		}
+
 		if (!cm) {
 			lWarning() << "Received IMDN for unknown message " << imdn->getMessageId();
 		} else {
+			chatMessages.remove(cm);
+
 			auto policy = linphone_core_get_im_notif_policy(cr->getCore()->getCCore());
 			time_t imdnTime = chatMessage->getTime();
 			const IdentityAddress &participantAddress = chatMessage->getFromAddress().getAddressWithoutGruu();
@@ -318,8 +338,12 @@ void Imdn::send () {
 	if (!deliveredMessages.empty() || !displayedMessages.empty()) {
 		if (aggregationEnabled()) {
 			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(deliveredMessages, displayedMessages);
-			sentImdnMessages.push_back(imdnMessage);
-			imdnMessage->getPrivate()->send();
+			if (imdnMessage->getPrivate()->getContents().empty()) {
+				lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
+			} else {
+				sentImdnMessages.push_back(imdnMessage);
+				imdnMessage->getPrivate()->send();
+			}
 		} else {
 			list<shared_ptr<ImdnMessage>> imdnMessages;
 			for (const auto &message : deliveredMessages) {
@@ -333,8 +357,12 @@ void Imdn::send () {
 				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(list<shared_ptr<ChatMessage>>(), l));
 			}
 			for (const auto &message : imdnMessages) {
-				sentImdnMessages.push_back(message);
-				message->getPrivate()->send();
+				if (message->getPrivate()->getContents().empty()) {
+					lWarning() << "Not sending IMDN delivery/displayed message as it contains no content";
+				} else {
+					sentImdnMessages.push_back(message);
+					message->getPrivate()->send();
+				}
 			}
 			deliveredMessages.clear();
 			displayedMessages.clear();
@@ -343,8 +371,12 @@ void Imdn::send () {
 	if (!nonDeliveredMessages.empty()) {
 		if (aggregationEnabled()) {
 			auto imdnMessage = chatRoom->getPrivate()->createImdnMessage(nonDeliveredMessages);
-			sentImdnMessages.push_back(imdnMessage);
-			imdnMessage->getPrivate()->send();
+			if (imdnMessage->getPrivate()->getContents().empty()) {
+				lWarning() << "Not sending IMDN not delivered message as it contains no content";
+			} else {
+				sentImdnMessages.push_back(imdnMessage);
+				imdnMessage->getPrivate()->send();
+			}
 		} else {
 			list<shared_ptr<ImdnMessage>> imdnMessages;
 			for (const auto &message : nonDeliveredMessages) {
@@ -353,8 +385,12 @@ void Imdn::send () {
 				imdnMessages.push_back(chatRoom->getPrivate()->createImdnMessage(l));
 			}
 			for (const auto &message : imdnMessages) {
-				sentImdnMessages.push_back(message);
-				message->getPrivate()->send();
+				if (message->getPrivate()->getContents().empty()) {
+					lWarning() << "Not sending IMDN not delivered message as it contains no content";
+				} else {
+					sentImdnMessages.push_back(message);
+					message->getPrivate()->send();
+				}
 			}
 			nonDeliveredMessages.clear();
 		}

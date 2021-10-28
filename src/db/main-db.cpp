@@ -3056,6 +3056,63 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 #endif
 }
 
+list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
+	const ConferenceId &conferenceId,
+	const list<string> &imdnMessageIds
+) const {
+#ifdef HAVE_DB_STORAGE
+	// TODO: Optimize.
+	static const string query = Statements::get(Statements::SelectConferenceEvents) +
+		string(" AND ( imdn_message_id = ");
+
+	/*
+	DurationLogger durationLogger(
+		"Find chat messages: (peer=" + conferenceId.getPeerAddress().asString() +
+		", local=" + conferenceId.getLocalAddress().asString() + ")."
+	);
+	*/
+	return L_DB_TRANSACTION {
+		L_D();
+
+		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
+		list<shared_ptr<ChatMessage>> chatMessages;
+		if (!chatRoom)
+			return chatMessages;
+
+		ostringstream ostr;
+		ostr << query;
+		size_t index = 0;
+		size_t listSize = imdnMessageIds.size();
+		for (const auto& id : imdnMessageIds) {
+			ostr << "'" << id << "'";
+			if (index < listSize - 1) {
+				ostr << " OR imdn_message_id = ";
+			} else {
+				ostr << " ) ";
+			}
+			index += 1;
+		}
+		string computedQuery = ostr.str();
+
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		soci::rowset<soci::row> rows = (
+			d->dbSession.getBackendSession()->prepare << computedQuery, soci::use(dbChatRoomId)
+		);
+		for (const auto &row : rows) {
+			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+			if (event) {
+				L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
+				chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
+			}
+		}
+
+		return chatMessages;
+	};
+#else
+	return list<shared_ptr<ChatMessage>>();
+#endif
+}
+
 list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromCallId (const std::string &callId) const {
 #ifdef HAVE_DB_STORAGE
 	// Keep chat_room_id at the end of the query !!!

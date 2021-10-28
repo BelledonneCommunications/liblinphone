@@ -224,6 +224,11 @@ shared_ptr<ChatMessage> ProxyChatRoom::createReplyMessage (const shared_ptr<Chat
 }
 // -----------------------------------------------------------------------------
 
+list<shared_ptr<ChatMessage>> ProxyChatRoom::findChatMessages (const list<string> &messageIds) const {
+	L_D();
+	return d->chatRoom->findChatMessages(messageIds);
+}
+
 shared_ptr<ChatMessage> ProxyChatRoom::findChatMessage (const string &messageId) const {
 	L_D();
 	return d->chatRoom->findChatMessage(messageId);

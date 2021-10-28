@@ -137,6 +137,7 @@ public:
 		const std::string &messageId,
 		ChatMessage::Direction direction
 	) const = 0;
+	virtual std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::list<std::string> &messageIds) const = 0;
 
 	virtual void markAsRead () = 0;
 	virtual void enableEphemeral (bool ephem, bool updateDb) = 0;

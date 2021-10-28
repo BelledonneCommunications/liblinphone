@@ -80,6 +80,7 @@ public:
 		const std::string &messageId,
 		ChatMessage::Direction direction
 	) const override;
+	virtual std::list<std::shared_ptr<ChatMessage>> findChatMessages (const std::list<std::string> &messageIds) const override;
 
 	void markAsRead () override;
 	void enableEphemeral (bool ephem, bool updateDb) override;

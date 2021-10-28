@@ -65,24 +65,45 @@ ImdnMessage::ImdnMessage (const Context &context) : NotificationMessage(*new Imd
 	L_D();
 
 	for (const auto &message : d->context.deliveredMessages) {
+		// Don't send IMDN if the message we send it for has no Message-ID
+		const string& imdnMessageId = message->getImdnMessageId();
+		if (imdnMessageId.empty()) {
+			lWarning() << "Skipping delivery IMDN as message doesn't have a Message-ID";
+			continue;
+		}
+
 		Content *content = new Content();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
-		content->setBodyFromUtf8(Imdn::createXml(message->getImdnMessageId(), message->getTime(), Imdn::Type::Delivery, LinphoneReasonNone));
+		content->setBodyFromUtf8(Imdn::createXml(imdnMessageId, message->getTime(), Imdn::Type::Delivery, LinphoneReasonNone));
 		addContent(content);
 	}
 	for (const auto &message : d->context.displayedMessages) {
+		// Don't send IMDN if the message we send it for has no Message-ID
+		const string& imdnMessageId = message->getImdnMessageId();
+		if (imdnMessageId.empty()) {
+			lWarning() << "Skipping displayed IMDN as message doesn't have a Message-ID";
+			continue;
+		}
+
 		Content *content = new Content();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
-		content->setBodyFromUtf8(Imdn::createXml(message->getImdnMessageId(), message->getTime(), Imdn::Type::Display, LinphoneReasonNone));
+		content->setBodyFromUtf8(Imdn::createXml(imdnMessageId, message->getTime(), Imdn::Type::Display, LinphoneReasonNone));
 		addContent(content);
 	}
 	for (const auto &mr : d->context.nonDeliveredMessages) {
+		// Don't send IMDN if the message we send it for has no Message-ID
+		const string& imdnMessageId = mr.message->getImdnMessageId();
+		if (imdnMessageId.empty()) {
+			lWarning() << "Skipping not delivered IMDN as message doesn't have a Message-ID";
+			continue;
+		}
+
 		Content *content = new Content();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
-		content->setBodyFromUtf8(Imdn::createXml(mr.message->getImdnMessageId(), mr.message->getTime(), Imdn::Type::Delivery, mr.reason));
+		content->setBodyFromUtf8(Imdn::createXml(imdnMessageId, mr.message->getTime(), Imdn::Type::Delivery, mr.reason));
 		addContent(content);
 	}
 
