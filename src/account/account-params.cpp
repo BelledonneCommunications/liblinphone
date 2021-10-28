@@ -726,8 +726,7 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	
 	string pushParams;
 	if (mPushNotificationAllowed || mRemotePushNotificationAllowed) {
-		bool isLegacyPush = !!linphone_config_get_int(config, "net", "use_legacy_push_notification_params", FALSE);
-		pushParams = mPushNotificationConfig->asString(mRemotePushNotificationAllowed, isLegacyPush);
+		pushParams = mPushNotificationConfig->asString(mRemotePushNotificationAllowed);
 	}
 	linphone_config_set_string(config, key, "push_parameters", pushParams.c_str());
 	linphone_config_set_int(config, key, "quality_reporting_enabled", mQualityReportingEnabled);

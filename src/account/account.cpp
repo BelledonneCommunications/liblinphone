@@ -512,16 +512,6 @@ LinphoneAddress *Account::guessContactForRegister () {
 		
 		bool successfullyPreparedPushParameters = false;
 		auto newParams = mParams->clone()->toSharedPtr();
-		bool_t use_legacy_params = !!linphone_config_get_int(mCore->config, "net", "use_legacy_push_notification_params", FALSE);
-		auto convertParamNameToLegacyIfNeeded = [&](string const& paramName) -> string {
-			if (use_legacy_params) {
-				if (paramName == PushConfigPridKey) return string("pn-tok");
-				if (paramName == PushConfigParamKey) return string("app-id");
-				if (paramName == PushConfigProviderKey) return string("pn-type");
-			}
-			
-			return paramName;
-		};
 		
 		if (mCore && mCore->push_notification_enabled) {
 			if (!newParams->isPushNotificationAvailable()) {
@@ -530,9 +520,7 @@ LinphoneAddress *Account::guessContactForRegister () {
 				if (newParams->mPushNotificationConfig->getProvider().empty()) {
 					bool tester_env = !!linphone_config_get_int(mCore->config, "tester", "test_env", FALSE);
 					if (tester_env) newParams->mPushNotificationConfig->setProvider("liblinphone_tester");
-				#ifdef __ANDROID__
-					if (use_legacy_params) newParams->mPushNotificationConfig->setProvider("firebase");
-				#elif TARGET_OS_IPHONE
+				#if TARGET_OS_IPHONE
 					if (tester_env) newParams->mPushNotificationConfig->setProvider("apns.dev");
 				#endif
 				}
@@ -547,7 +535,7 @@ LinphoneAddress *Account::guessContactForRegister () {
 				Address contactParamsWrapper(string("sip:dummy;" + newParams->mContactUriParameters));
 				bool didRemoveParams = false;
 				for (auto pushParam : newParams->mPushNotificationConfig->getPushParamsMap()) {
-					string paramName = convertParamNameToLegacyIfNeeded(pushParam.first);
+					string paramName = pushParam.first;
 					if (!contactParamsWrapper.getUriParamValue(paramName).empty()) {
 						contactParamsWrapper.removeUriParam(paramName);
 						didRemoveParams = true;
@@ -581,9 +569,9 @@ LinphoneAddress *Account::guessContactForRegister () {
 		}
 		
 		if (successfullyPreparedPushParameters) {
-			linphone_address_set_uri_param(result, convertParamNameToLegacyIfNeeded(PushConfigPridKey).c_str(), newParams->getPushNotificationConfig()->getPrid().c_str());
-			linphone_address_set_uri_param(result, convertParamNameToLegacyIfNeeded(PushConfigProviderKey).c_str(), newParams->getPushNotificationConfig()->getProvider().c_str());
-			linphone_address_set_uri_param(result, convertParamNameToLegacyIfNeeded(PushConfigParamKey).c_str(), newParams->getPushNotificationConfig()->getParam().c_str());
+			linphone_address_set_uri_param(result, PushConfigPridKey.c_str(), newParams->getPushNotificationConfig()->getPrid().c_str());
+			linphone_address_set_uri_param(result, PushConfigProviderKey.c_str(), newParams->getPushNotificationConfig()->getProvider().c_str());
+			linphone_address_set_uri_param(result, PushConfigParamKey.c_str(), newParams->getPushNotificationConfig()->getParam().c_str());
 			
 			auto &pushParams = newParams->getPushNotificationConfig()->getPushParamsMap();
 			linphone_address_set_uri_param(result, PushConfigSilentKey.c_str(), pushParams.at(PushConfigSilentKey).c_str());

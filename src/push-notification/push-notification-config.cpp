@@ -210,21 +210,12 @@ map<string, string> const& PushNotificationConfig::getPushParamsMap() {
 	return mPushParams;
 }
 
-string PushNotificationConfig::asString(bool withRemoteSpecificParams, bool isLegacy) const {
+string PushNotificationConfig::asString(bool withRemoteSpecificParams) const {
 	string serializedConfig;
-	auto convertParamNameToLegacyIfNeeded = [&](string const& paramName) -> string {
-		if (isLegacy) {
-			if (paramName == PushConfigPridKey) return string("pn-tok");
-			if (paramName == PushConfigParamKey) return string("app-id");
-			if (paramName == PushConfigProviderKey) return string("pn-type");
-		}
-		
-		return paramName;
-	};
 	
 	auto appendParam = [&](string const& paramName) {
 		if (!mPushParams.at(paramName).empty())
-			serializedConfig += convertParamNameToLegacyIfNeeded(paramName) + "=" + mPushParams.at(paramName) + ";";
+			serializedConfig += paramName + "=" + mPushParams.at(paramName) + ";";
 	};
 	
 	appendParam(PushConfigPridKey);
@@ -248,12 +239,6 @@ void PushNotificationConfig::readPushParamsFromString(string const& serializedCo
 	Address pushParamsWrapper("sip:dummy;" + serializedConfig);
 	for (auto &param : mPushParams) {
 		string paramValue = pushParamsWrapper.getUriParamValue(param.first);
-		if (paramValue.empty()) {
-			// Check for legacy parameters
-			if (param.first == PushConfigPridKey) paramValue = pushParamsWrapper.getUriParamValue("pn-tok");
-			if (param.first == PushConfigParamKey) paramValue = pushParamsWrapper.getUriParamValue("app-id");
-			if (param.first == PushConfigProviderKey) paramValue = pushParamsWrapper.getUriParamValue("pn-type");
-		}
 		if (!paramValue.empty())
 			param.second = paramValue;
 	}

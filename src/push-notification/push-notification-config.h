@@ -81,7 +81,7 @@ class PushNotificationConfig: public bellesip::HybridObject<LinphonePushNotifica
 	/* Write the mPushParams map in the form : "param1=param1value;param2=param2value;"                         *
 	 * MsgStr, CallStr, GroupChatStr, CallSnd and MsgSnd will only be saved if withRemoteSpecificParams == true *
 	 * /!\ TeamId, BundleId, VoipToken and RemoteToken will not be saved /!\                                    */
-	string asString(bool withRemoteSpecificParams=true, bool isLegacy=false) const;
+	string asString(bool withRemoteSpecificParams=true) const;
 	void readPushParamsFromString(string const& serializedConfig);
 	
   private:
