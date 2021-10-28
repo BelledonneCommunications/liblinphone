@@ -531,7 +531,7 @@ LinphoneAddress *Account::guessContactForRegister () {
 					bool tester_env = !!linphone_config_get_int(mCore->config, "tester", "test_env", FALSE);
 					if (tester_env) newParams->mPushNotificationConfig->setProvider("liblinphone_tester");
 				#ifdef __ANDROID__
-					if (use_legacy_params) newParams->mPushNotificationConfig->setProvider("firebase");
+					newParams->mPushNotificationConfig->setProvider(use_legacy_params ? "firebase" : "fcm");
 				#elif TARGET_OS_IPHONE
 					if (tester_env) newParams->mPushNotificationConfig->setProvider("apns.dev");
 				#endif
