@@ -36,7 +36,7 @@ namespace Utils{
 	}
 
 	Version::Version(const std::string &version){
-		std::regex semver(SEMVER);
+		const static std::regex semver{SEMVER};
 		std::smatch matches;
 
 		if (std::regex_search(version, matches, semver)) {

@@ -406,7 +406,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		
 		const string &subject = chatRoom->getSubject();
 		const int &flags = chatRoom->hasBeenLeft();
-		bool ephemeralEnabled = chatRoom->ephemeralEnabled();
+		int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
 		long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
 		*dbSession.getBackendSession() << "INSERT INTO chat_room ("
 		"  peer_sip_address_id, local_sip_address_id, creation_time,"
@@ -417,7 +417,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		")",
 		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
 		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags),
-		soci::use(notifyId), soci::use(ephemeralEnabled ? 1:0), soci::use(ephemeralLifeTime);
+		soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
 		
 		chatRoomId = dbSession.getLastInsertId();
 	}
@@ -457,16 +457,17 @@ long long MainDbPrivate::insertChatRoomParticipant (
 #ifdef HAVE_DB_STORAGE
 	soci::session *session = dbSession.getBackendSession();
 	long long chatRoomParticipantId = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
+	auto isAdminInt = static_cast<int>(isAdmin);
 	if (chatRoomParticipantId >= 0) {
 		// See: https://stackoverflow.com/a/15299655 (cast to reference)
 		*session << "UPDATE chat_room_participant SET is_admin = :isAdmin WHERE id = :chatRoomParticipantId",
-			soci::use(static_cast<const int &>(isAdmin)), soci::use(chatRoomParticipantId);
+			soci::use(isAdminInt), soci::use(chatRoomParticipantId);
 		return chatRoomParticipantId;
 	}
 
 	*session << "INSERT INTO chat_room_participant (chat_room_id, participant_sip_address_id, is_admin)"
 		" VALUES (:chatRoomId, :participantSipAddressId, :isAdmin)",
-		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::use(static_cast<const int &>(isAdmin));
+		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::use(isAdminInt);
 
 	return dbSession.getLastInsertId();
 #else
