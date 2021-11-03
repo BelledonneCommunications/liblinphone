@@ -596,7 +596,7 @@ LinphoneAddress *Account::guessContactForRegister () {
 				linphone_address_set_uri_param(result, PushConfigCallSoundKey.c_str(), newParams->getPushNotificationConfig()->getCallSnd().c_str());
 				linphone_address_set_uri_param(result, PushConfigMsgSoundKey.c_str(), newParams->getPushNotificationConfig()->getMsgSnd().c_str());
 			}
-			lInfo() << "Added push notification informations '" << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed) << "' added to account [" << this << "]";
+			lInfo() << "Added push notification informations '" << newParams->getPushNotificationConfig()->asString(mParams->mRemotePushNotificationAllowed, use_legacy_params) << "' added to account [" << this << "]";
 			setAccountParams(newParams);
 		}
 	}
