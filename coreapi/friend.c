@@ -471,7 +471,7 @@ bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *lf) {
 bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *phoneNumber) {
 	if (!lf || !phoneNumber) return FALSE;
 
-	LinphoneAccount *account = linphone_core_get_default_account(lf->lc); 
+	LinphoneAccount *account = linphone_core_get_default_account(lf->lc);
 	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can handle it
 	if (phoneNumber == NULL || !linphone_account_is_phone_number(account, phoneNumber)) {
 		ms_warning("Phone number [%s] isn't valid", phoneNumber);

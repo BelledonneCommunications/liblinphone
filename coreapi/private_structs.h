@@ -128,6 +128,7 @@ struct _LinphoneFriendList {
 	LinphoneFriendListCbs *currentCbs;
 	bool_t enable_subscriptions;
 	bool_t bodyless_subscription;
+	LinphoneFriendListType type;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendList);
@@ -330,7 +331,7 @@ struct _LinphoneEvent{
 	LinphoneAddress *to_address;
 	LinphoneAddress *from_address;
 	LinphoneAddress *remote_contact_address;
-	
+
 	int expires;
 	bool_t terminating;
 	bool_t is_out_of_dialog_op; /*used for out of dialog notify*/
@@ -743,6 +744,8 @@ namespace LinphonePrivate {
 	belle_http_provider_t *http_provider; \
 	belle_tls_crypto_config_t *http_crypto_config; \
 	belle_http_request_listener_t *provisioning_http_listener; \
+	belle_http_request_listener_t *base_contacts_list_http_listener; \
+	LinphoneFriendList *base_contacts_list_for_synchronization; \
 	MSList *tones; \
 	LinphoneReason chat_deny_code; \
 	char *file_transfer_server; \

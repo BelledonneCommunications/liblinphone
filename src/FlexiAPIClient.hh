@@ -116,6 +116,11 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *adminAccountDelete(int id);
 	FlexiAPIClient *adminAccountActivate(int id);
 	FlexiAPIClient *adminAccountDeactivate(int id);
+	FlexiAPIClient *adminAccountSearch(string sip);
+
+	FlexiAPIClient *adminAccountContacts(int id);
+	FlexiAPIClient *adminAccountContactAdd(int id, int contactId);
+	FlexiAPIClient *adminAccountContactDelete(int id, int contactId);
 
 	// Authentication
 	FlexiAPIClient *setApiKey(const char *key);

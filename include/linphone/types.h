@@ -324,6 +324,15 @@ typedef enum _LinphoneFriendCapability {
 typedef struct _LinphoneFriendList LinphoneFriendList;
 
 /**
+ * @brief The types of FriendList
+ * @ingroup buddy_list
+ */
+typedef enum _LinphoneFriendListType {
+	LinphoneFriendListTypeCardDAV = 0,
+	LinphoneFriendListTypeVCard4 = 1
+} LinphoneFriendListType;
+
+/**
  * @brief An object to handle the callbacks for #LinphoneFriend synchronization.
  * @ingroup buddy_list
 **/

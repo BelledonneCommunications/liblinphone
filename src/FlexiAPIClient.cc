@@ -31,9 +31,9 @@
 
 #include "private.h"
 
+#include <algorithm>
 #include <functional>
 #include <json/json.h>
-#include <algorithm>
 #include <string>
 
 using namespace LinphonePrivate;
@@ -193,7 +193,7 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
-								   bool activated) {
+												   bool activated) {
 	return adminAccountCreate(username, password, algorithm, domain, activated, "");
 }
 
@@ -228,6 +228,11 @@ FlexiAPIClient *FlexiAPIClient::adminAccounts() {
 	return this;
 }
 
+FlexiAPIClient *FlexiAPIClient::adminAccountSearch(string sip) {
+	prepareRequest(string("accounts/").append(urlEncode(sip).substr(6)).append("/search"));
+	return this;
+}
+
 FlexiAPIClient *FlexiAPIClient::adminAccount(int id) {
 	prepareRequest(string("accounts/").append(to_string(id)));
 	return this;
@@ -245,6 +250,22 @@ FlexiAPIClient *FlexiAPIClient::adminAccountActivate(int id) {
 
 FlexiAPIClient *FlexiAPIClient::adminAccountDeactivate(int id) {
 	prepareRequest(string("accounts/").append(to_string(id)).append("/deactivate"));
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::adminAccountContacts(int id) {
+	prepareRequest(string("accounts/").append(to_string(id)).append("/contacts"));
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::adminAccountContactAdd(int id, int contactId) {
+	prepareRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)), "POST");
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::adminAccountContactDelete(int id, int contactId) {
+	prepareRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
+				   "DELETE");
 	return this;
 }
 
@@ -305,7 +326,8 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
 
 		ms_free(addr);
 	} else if (mTest) {
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", "sip:admin_test@sip.example.org"));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+									 belle_http_header_create("From", "sip:admin_test@sip.example.org"));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", "no_secret_at_all"));
 	}
 
