@@ -25,7 +25,7 @@
 # See [CMP077](https://cmake.org/cmake/help/v3.13/policy/CMP0077.html).
 cmake_minimum_required(VERSION 3.13)
 
-project(linphone VERSION 5.1.0 LANGUAGES C CXX)
+project(linphone VERSION 5.2.0 LANGUAGES C CXX)
 
 
 set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
