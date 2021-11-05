@@ -83,7 +83,7 @@ void CorePrivate::init () {
 	L_Q();
 
 	mainDb.reset(new MainDb(q->getSharedFromThis()));
-	toneManager = makeUnique<ToneManager>(*getPublic());
+	getToneManager(); // Forces instanciation of the ToneManager.
 #ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler = makeUnique<RemoteConferenceListEventHandler>(q->getSharedFromThis());
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
@@ -442,6 +442,7 @@ CorePrivate::CorePrivate() : authStack(*this), pushReceivedBackgroundTaskId(0) {
 }
 
 ToneManager & CorePrivate::getToneManager() {
+	if (!toneManager) toneManager = makeUnique<ToneManager>(*getPublic());
 	return *toneManager.get();
 }
 

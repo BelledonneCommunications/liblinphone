@@ -714,6 +714,37 @@ static void custom_tones_setup(void){
 	linphone_core_manager_destroy(mgr);
 }
 
+static void custom_tones_setup_before_start(void){
+	LinphoneCore *lc;
+	const char *tone;
+	
+	lc = linphone_factory_create_core_3(linphone_factory_get(),NULL,liblinphone_tester_get_empty_rc(), system_context);
+	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
+	
+	BC_ASSERT_TRUE(linphone_core_get_global_state(lc) == LinphoneGlobalReady);
+
+	linphone_core_set_tone(lc, LinphoneToneCallOnHold, "callonhold.wav");
+	tone = linphone_core_get_tone_file(lc, LinphoneToneCallOnHold);
+	BC_ASSERT_PTR_NOT_NULL(tone);
+	if (tone){
+		BC_ASSERT_STRING_EQUAL(tone, "callonhold.wav");
+	}
+	linphone_core_set_tone(lc, LinphoneToneCallOnHold, "callonhold2.wav");
+	tone = linphone_core_get_tone_file(lc, LinphoneToneCallOnHold);
+	BC_ASSERT_PTR_NOT_NULL(tone);
+	if (tone){
+		BC_ASSERT_STRING_EQUAL(tone, "callonhold2.wav");
+	}
+	linphone_core_start(lc);
+	BC_ASSERT_TRUE(linphone_core_get_global_state(lc) == LinphoneGlobalOn);
+	tone = linphone_core_get_tone_file(lc, LinphoneToneCallOnHold);
+	BC_ASSERT_PTR_NOT_NULL(tone);
+	if (tone){
+		BC_ASSERT_STRING_EQUAL(tone, "callonhold2.wav");
+	}
+	linphone_core_unref(lc);
+}
+
 static void lime_x3dh_setup(void) {
 	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	char* xml_path = bc_tester_res("rcfiles/lime_x3dh_xml_rc");
@@ -2347,6 +2378,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Codec usability", codec_usability_test),
 	TEST_NO_TAG("Codec setup", codec_setup),
 	TEST_NO_TAG("Custom tones setup", custom_tones_setup),
+	TEST_NO_TAG("Custom tones setup before start", custom_tones_setup_before_start),
 	TEST_NO_TAG("Lime X3DH setup", lime_x3dh_setup),
 	TEST_NO_TAG("Appropriate software echo canceller check", echo_canceller_check),
 	TEST_ONE_TAG("Return friend list in alphabetical order", search_friend_in_alphabetical_order, "MagicSearch"),
