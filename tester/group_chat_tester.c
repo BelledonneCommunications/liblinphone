@@ -4618,6 +4618,7 @@ static void find_one_to_one_chat_room (void) {
 	// Only to be used in linphone_core_find_one_to_one_chatroom(...);
 	const LinphoneAddress *marieAddr = linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc));
 	const LinphoneAddress *paulineAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
+	LinphoneChatMessage *basicMessage = NULL;
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
@@ -4654,30 +4655,46 @@ static void find_one_to_one_chat_room (void) {
 	confAddr = linphone_chat_room_get_conference_address(marieOneToOneCr);
 	LinphoneChatRoom *paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, FALSE);
 
-	// Check it's the same chat room
+	// Marie creates a basic chat room with Pauline
+	participantsAddresses = NULL;
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie->lc);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_enable_group(params, FALSE);
+	LinphoneChatRoom *basicCR = linphone_core_create_chat_room_6(marie->lc, params, marieAddr, participantsAddresses);
+	linphone_chat_room_params_unref(params);
+
+	// Check it returns the One-To-One chat room (flexisip based)
 	oneToOneChatRoom = linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr);
 	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
 	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, marieOneToOneCr);
+
+	// Check it returns the Basic chat room
+	oneToOneChatRoom = linphone_core_search_chat_room(marie->lc, NULL, marieAddr, paulineAddr, NULL);
+	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
+	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, basicCR);
+
+	// Check it returns the Basic chat room
+	oneToOneChatRoom = linphone_core_search_chat_room(marie->lc, NULL, marieAddr, NULL, participantsAddresses);
+	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
+	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, basicCR);
+	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
+	participantsAddresses = NULL;
 
 	// Clean the db
 	linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
+	marieOneToOneCr = NULL;
+	paulineOneToOneCr = NULL;
 
 	// Check cleaning went well
 	oneToOneChatRoom = linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr);
-	BC_ASSERT_PTR_NULL(oneToOneChatRoom);
-
-	// Create a basic chat room
-	marieOneToOneCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
-	BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr);
-
-	// Check it's the same chat room
-	oneToOneChatRoom = linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr);
 	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
-	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, marieOneToOneCr);
+	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, basicCR);
 
 end:
 	// Clean db from chat room
+	if (basicMessage) linphone_chat_message_unref(basicMessage);
 	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 	if (marieCr) linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	if (chloeCr) linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);

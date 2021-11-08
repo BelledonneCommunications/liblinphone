@@ -242,6 +242,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatR
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
 
 		if (params) {
+			if (params->getChatRoomBackend() != chatRoom->getCurrentParams()->getChatRoomBackend())
+				continue;
+
 			if (!params->isGroup() && !(capabilities & ChatRoom::Capabilities::OneToOne))
 				continue;
 
