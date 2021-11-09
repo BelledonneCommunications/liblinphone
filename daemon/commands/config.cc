@@ -35,7 +35,7 @@ ConfigResponse::ConfigResponse(const string& value) : Response() {
 ConfigGetCommand::ConfigGetCommand() :
 		DaemonCommand("config-get", "config-get <section> <key>",
 				"Reads a configuration value from linphone's configuration database.") {
-	addExample(new DaemonCommandExample("config-get rtp symmetric",
+	addExample(make_unique<DaemonCommandExample>("config-get rtp symmetric",
 						"Status: Ok\n\n"
 						"Value: <unset>"));
 }
@@ -56,10 +56,10 @@ void ConfigGetCommand::exec(Daemon *app, const string& args) {
 ConfigSetCommand::ConfigSetCommand() :
 		DaemonCommand("config-set", "config-set <section> <key> <value>",
 				"Sets a configuration value into linphone's configuration database.") {
-	addExample(new DaemonCommandExample("config-set rtp symmetric 1",
+	addExample(make_unique<DaemonCommandExample>("config-set rtp symmetric 1",
 						"Status: Ok\n\n"
 						"Value: 2"));
-	addExample(new DaemonCommandExample("config-set rtp symmetric",
+	addExample(make_unique<DaemonCommandExample>("config-set rtp symmetric",
 						"Status: Ok\n\n"
 						"Value: <unset>"));
 }

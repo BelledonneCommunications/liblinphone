@@ -23,14 +23,14 @@ using namespace std;
 
 TerminateCommand::TerminateCommand() :
 		DaemonCommand("terminate", "terminate [<call_id>]", "Terminate a call.") {
-	addExample(new DaemonCommandExample("terminate 2",
+	addExample(make_unique<DaemonCommandExample>("terminate 2",
 						"Status: Error\n"
 						"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("terminate 1",
+	addExample(make_unique<DaemonCommandExample>("terminate 1",
 						"Status: Ok\n"));
-	addExample(new DaemonCommandExample("terminate",
+	addExample(make_unique<DaemonCommandExample>("terminate",
 						"Status: Ok\n"));
-	addExample(new DaemonCommandExample("terminate",
+	addExample(make_unique<DaemonCommandExample>("terminate",
 						"Status: Error\n"
 						"Reason: No active call."));
 }

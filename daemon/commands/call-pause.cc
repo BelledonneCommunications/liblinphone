@@ -26,15 +26,15 @@ CallPauseCommand::CallPauseCommand() :
 				  "call-pause [<call_id>]",
 				  "Pause a call (pause current if no id is specified).")
 {
-	addExample(new DaemonCommandExample("call-pause 1",
+	addExample(make_unique<DaemonCommandExample>("call-pause 1",
 										"Status: Ok\n\n"
 										"Call was paused"));
 
-	addExample(new DaemonCommandExample("call-pause 2",
+	addExample(make_unique<DaemonCommandExample>("call-pause 2",
 										"Status: Error\n"
 										"Reason: No call with such id."));
 
-	addExample(new DaemonCommandExample("call-pause",
+	addExample(make_unique<DaemonCommandExample>("call-pause",
 										"Status: Error\n"
 										"Reason: No current call available."));
 }

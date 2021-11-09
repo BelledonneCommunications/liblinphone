@@ -24,16 +24,16 @@ using namespace std;
 CallMuteCommand::CallMuteCommand() :
 	DaemonCommand("call-mute", "call-mute 0|1", "Mute/unmute the microphone (1 to mute, 0 to unmute). No argument means MUTE.")
 {
-	addExample(new DaemonCommandExample("call-mute 1",
+	addExample(make_unique<DaemonCommandExample>("call-mute 1",
 										"Status: Ok\n\n"
 										"Microphone Muted"));
-	addExample(new DaemonCommandExample("call-mute",
+	addExample(make_unique<DaemonCommandExample>("call-mute",
 										"Status: Ok\n\n"
 										"Microphone Muted"));
-	addExample(new DaemonCommandExample("call-mute 0",
+	addExample(make_unique<DaemonCommandExample>("call-mute 0",
 										"Status: Ok\n\n"
 										"Microphone Unmuted"));
-	addExample(new DaemonCommandExample("call-mute 1",
+	addExample(make_unique<DaemonCommandExample>("call-mute 1",
 										"Status: Error\n\n"
 										"Reason: No call in progress. Can't mute."));
 }

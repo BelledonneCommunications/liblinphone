@@ -24,15 +24,15 @@ using namespace std;
 CallResumeCommand::CallResumeCommand():
 	DaemonCommand("call-resume", "call-resume [<call_id>]", "Pause a call (pause current if no id is specified).")
 {
-	addExample(new DaemonCommandExample("call-resume 1",
+	addExample(make_unique<DaemonCommandExample>("call-resume 1",
 										"Status: Ok\n\n"
 										"Call was resumed"));
 
-	addExample(new DaemonCommandExample("call-resume 2",
+	addExample(make_unique<DaemonCommandExample>("call-resume 2",
 										"Status: Error\n"
 										"Reason: No call with such id."));
 
-	addExample(new DaemonCommandExample("call-resume",
+	addExample(make_unique<DaemonCommandExample>("call-resume",
 										"Status: Error\n"
 										"Reason: No current call available."));
 }

@@ -28,7 +28,7 @@ using namespace std;
 
 RegisterCommand::RegisterCommand() :
 		DaemonCommand("register", "register <identity> <proxy_address> [<password>] [<userid>] [<realm>] [<parameter>]", "Register the daemon to a SIP proxy. If one of the parameters <password>, <userid> and <realm> is not needed, send the string \"NULL\"") {
-	addExample(new DaemonCommandExample("register sip:daemon-test@sip.linphone.org sip.linphone.org password bob linphone.org",
+	addExample(make_unique<DaemonCommandExample>("register sip:daemon-test@sip.linphone.org sip.linphone.org password bob linphone.org",
 						"Status: Ok\n\n"
 						"Id: 1"));
 }

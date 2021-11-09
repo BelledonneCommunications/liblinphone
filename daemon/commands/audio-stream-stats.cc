@@ -23,7 +23,7 @@ using namespace std;
 
 AudioStreamStatsCommand::AudioStreamStatsCommand() :
 		DaemonCommand("audio-stream-stats", "audio-stream-stats <stream_id>", "Return stats of a given audio stream.") {
-	addExample(new DaemonCommandExample("audio-stream-stats 1",
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stats 1",
 						"Status: Ok\n\n"
 						"Audio-ICE state: Not activated\n"
 						"Audio-RoundTripDelay: 0.0859833\n"
@@ -40,7 +40,7 @@ AudioStreamStatsCommand::AudioStreamStatsCommand() :
 						"Audio-Channels: 1\n"
 						"Audio-Recv-fmtp: vbr=on\n"
 						"Audio-Send-fmtp: vbr=on"));
-	addExample(new DaemonCommandExample("audio-stream-stats 2",
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stats 2",
 						"Status: Error\n"
 						"Reason: No audio stream with such id."));
 }

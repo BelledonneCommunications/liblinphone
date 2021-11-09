@@ -43,11 +43,11 @@ JitterBufferCommand::JitterBufferCommand() : DaemonCommand("jitter-buffer",
 	"jitter-buffer [audio|video] size <milliseconds>: sets the nominal jitter buffer size in milliseconds. Has no effect in a running call.\n"
 	"jitter-buffer [audio|video]: gets the nominal jitter buffer size."
 	){
-	addExample(new DaemonCommandExample("jitter-buffer","Status: Ok\n\n"
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer","Status: Ok\n\n"
 				"audio-jitter-buffer-size: 60\nvideo-jitter-buffer-size: 60\n"));
-	addExample(new DaemonCommandExample("jitter-buffer audio","Status: Ok\n\n"
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer audio","Status: Ok\n\n"
 				"audio-jitter-buffer-size: 60\n"));
-	addExample(new DaemonCommandExample("jitter-buffer audio size 80","Status: Ok\n\n"
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer audio size 80","Status: Ok\n\n"
 				"audio-jitter-buffer-size: 80\n"));
 }
 
@@ -89,9 +89,9 @@ JitterBufferResetCommand::JitterBufferResetCommand() : DaemonCommand("jitter-buf
 	"jitter-buffer-reset call|stream <id> [audio|video]" ,
 	"Reset the RTP jitter buffer for a given call or stream id and stream type."
 	){
-	addExample(new DaemonCommandExample("jitter-buffer-reset call 3 audio",
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer-reset call 3 audio",
 		"Status: Ok\n"));
-	addExample(new DaemonCommandExample("jitter-buffer-reset stream 12",
+	addExample(make_unique<DaemonCommandExample>("jitter-buffer-reset stream 12",
 		"Status: Ok\n"));
 }
 

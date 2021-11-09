@@ -24,7 +24,7 @@
 using namespace std;
 
 MessageCommand::MessageCommand() : DaemonCommand("message", "message <sip_address> <text>", "Send a SIP MESSAGE request with specified text."){
-	addExample(new DaemonCommandExample("message sip:userxxx@sip.linphone.org Hi man !",
+	addExample(make_unique<DaemonCommandExample>("message sip:userxxx@sip.linphone.org Hi man !",
 						"Status: Ok\n"));
 }
 

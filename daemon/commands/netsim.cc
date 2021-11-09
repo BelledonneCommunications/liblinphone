@@ -57,13 +57,13 @@ NetsimCommand::NetsimCommand(): DaemonCommand("netsim","netsim [enable|disable|p
 	"\tjitter_strength (percentage of max_bandwidth artifically consumed during bursts events)\n"
 	"\tmode (inbound, outbound, outbound-controlled)\n")
 {
-	addExample(new DaemonCommandExample("netsim",
+	addExample(make_unique<DaemonCommandExample>("netsim",
 						"Status: Ok\n\n"
 						"State: disabled\nmax_bandwidth: 384000\nmax_buffer_size: 384000\nloss_rate: 2"));
-	addExample(new DaemonCommandExample("netsim enable",
+	addExample(make_unique<DaemonCommandExample>("netsim enable",
 						"Status: Ok\n\n"
 						"State: enabled\nmax_bandwidth: 384000\nmax_buffer_size: 384000\nloss_rate: 2"));
-	addExample(new DaemonCommandExample("netsim parameters loss_rate=5;consecutive_loss_probability=0.5",
+	addExample(make_unique<DaemonCommandExample>("netsim parameters loss_rate=5;consecutive_loss_probability=0.5",
 						"Status: Ok\n\n"
 						"State: enabled\nmax_bandwidth: 384000\nmax_buffer_size: 384000\nloss_rate: 2"));
 }

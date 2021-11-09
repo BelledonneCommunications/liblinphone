@@ -70,17 +70,17 @@ AdaptiveBufferCompensationCommand::AdaptiveBufferCompensationCommand() :
 		DaemonCommand("adaptive-jitter-compensation", "adaptive-jitter-compensation [audio|video] [enable|disable]",
 			"Enable or disable adaptive buffer compensation respectively with the 'enable' and 'disable' parameters for the specified stream, "
 			"return the status of the use of adaptive buffer compensation without parameter.") {
-	addExample(new DaemonCommandExample("adaptive-jitter-compensation audio",
+	addExample(make_unique<DaemonCommandExample>("adaptive-jitter-compensation audio",
 						"Status: Ok\n\n"
 						"Audio: enabled"));
-	addExample(new DaemonCommandExample("adaptive-jitter-compensation video",
+	addExample(make_unique<DaemonCommandExample>("adaptive-jitter-compensation video",
 						"Status: Ok\n\n"
 						"Video: disabled"));
-	addExample(new DaemonCommandExample("adaptive-jitter-compensation",
+	addExample(make_unique<DaemonCommandExample>("adaptive-jitter-compensation",
 						"Status: Ok\n\n"
 						"Audio: enabled\n"
 						"Video: disabled"));
-	addExample(new DaemonCommandExample("adaptive-jitter-compensation video enable",
+	addExample(make_unique<DaemonCommandExample>("adaptive-jitter-compensation video enable",
 						"Status: Ok\n\n"
 						"Video: enabled"));
 }
