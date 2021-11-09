@@ -102,6 +102,8 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 		// up in the list and the user won't know why
 	} else {
 		setLastUpdateTime(eventLog->getCreationTime());
+		q->getCore()->getPrivate()->mainDb->updateChatRoomLastUpdatedTime(q->getConferenceId(), lastUpdateTime);
+		
 		if (type == EventLog::Type::ConferenceChatMessage) {
 			setIsEmpty(false);
 		}
