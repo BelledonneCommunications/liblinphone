@@ -4675,11 +4675,21 @@ static void find_one_to_one_chat_room (void) {
 	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, basicCR);
 
 	// Check it returns the Basic chat room
-	oneToOneChatRoom = linphone_core_search_chat_room(marie->lc, NULL, marieAddr, NULL, participantsAddresses);
+	params = linphone_core_create_default_chat_room_params(marie->lc);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	oneToOneChatRoom = linphone_core_search_chat_room(marie->lc, params, marieAddr, NULL, participantsAddresses);
 	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
 	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, basicCR);
+
+	// Check it returns the One-To-One chat room (flexisip based)
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
+	oneToOneChatRoom = linphone_core_search_chat_room(marie->lc, params, marieAddr, NULL, participantsAddresses);
+	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
+	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, marieOneToOneCr);
+
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	participantsAddresses = NULL;
+	linphone_chat_room_params_unref(params);
 
 	// Clean the db
 	linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
