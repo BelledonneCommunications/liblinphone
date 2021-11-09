@@ -58,14 +58,14 @@ FirewallPolicyCommand::FirewallPolicyCommand() :
 				"Set the firewall policy if type is set, otherwise return the used firewall policy.\n"
 				"<address> must be specified for the 'nat' and 'stun' types. "
 				"It represents the public address of the gateway for the 'nat' type and the STUN server address for the 'stun' and 'ice' types.") {
-	addExample(new DaemonCommandExample("firewall-policy stun stun.linphone.org",
+	addExample(make_unique<DaemonCommandExample>("firewall-policy stun stun.linphone.org",
 						"Status: Ok\n\n"
 						"Type: stun\n"
 						"Address: stun.linphone.org"));
-	addExample(new DaemonCommandExample("firewall-policy none",
+	addExample(make_unique<DaemonCommandExample>("firewall-policy none",
 						"Status: Ok\n\n"
 						"Type: none"));
-	addExample(new DaemonCommandExample("firewall-policy",
+	addExample(make_unique<DaemonCommandExample>("firewall-policy",
 						"Status: Ok\n\n"
 						"Type: none"));
 }

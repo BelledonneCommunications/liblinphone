@@ -23,9 +23,9 @@ using namespace std;
 
 AudioStreamStopCommand::AudioStreamStopCommand() :
 		DaemonCommand("audio-stream-stop", "audio-stream-stop <stream_id>", "Stop an audio stream.") {
-	addExample(new DaemonCommandExample("audio-stream-stop 1",
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stop 1",
 						"Status: Ok"));
-	addExample(new DaemonCommandExample("audio-stream-stop 2",
+	addExample(make_unique<DaemonCommandExample>("audio-stream-stop 2",
 						"Status: Error\n"
 						"Reason: No Audio Stream with such id."));
 }

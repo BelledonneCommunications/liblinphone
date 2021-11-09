@@ -23,17 +23,17 @@ using namespace std;
 
 AnswerCommand::AnswerCommand() :
 		DaemonCommand("answer", "answer <call_id>", "Answer an incoming call.") {
-	addExample(new DaemonCommandExample("answer 3",
+	addExample(make_unique<DaemonCommandExample>("answer 3",
 						"Status: Error\n"
 						"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("answer 2",
+	addExample(make_unique<DaemonCommandExample>("answer 2",
 						"Status: Error\n"
 						"Reason: Can't accept this call."));
-	addExample(new DaemonCommandExample("answer 1",
+	addExample(make_unique<DaemonCommandExample>("answer 1",
 						"Status: Ok"));
-	addExample(new DaemonCommandExample("answer",
+	addExample(make_unique<DaemonCommandExample>("answer",
 						"Status: Ok"));
-	addExample(new DaemonCommandExample("answer",
+	addExample(make_unique<DaemonCommandExample>("answer",
 						"Status: Error\n"
 						"Reason: No call to accept."));
 }

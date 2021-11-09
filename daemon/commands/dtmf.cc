@@ -23,11 +23,11 @@ using namespace std;
 
 DtmfCommand::DtmfCommand() :
 		DaemonCommand("dtmf", "dtmf <digit>", "Generate a DTMF (one of 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, *, #).") {
-	addExample(new DaemonCommandExample("dtmf 4",
+	addExample(make_unique<DaemonCommandExample>("dtmf 4",
 						"Status: Ok"));
-	addExample(new DaemonCommandExample("dtmf B",
+	addExample(make_unique<DaemonCommandExample>("dtmf B",
 						"Status: Ok"));
-	addExample(new DaemonCommandExample("dtmf #",
+	addExample(make_unique<DaemonCommandExample>("dtmf #",
 						"Status: Ok"));
 }
 

@@ -90,25 +90,25 @@ PortCommand::PortCommand() :
 		DaemonCommand("port", "port [sip|audio|video] [<port>] [udp|tcp|tls]",
 				"Set the port to use for type if port is set, otherwise return the port used for type if specified or all the used ports if no type is specified.\n"
 				"The protocol should be defined only for sip port and have one of these values: udp, tcp, tls.") {
-	addExample(new DaemonCommandExample("port sip 5060 tls",
+	addExample(make_unique<DaemonCommandExample>("port sip 5060 tls",
 						"Status: Ok\n\n"
 						"SIP: 5060 TLS"));
-	addExample(new DaemonCommandExample("port sip 5060 udp",
+	addExample(make_unique<DaemonCommandExample>("port sip 5060 udp",
 						"Status: Ok\n\n"
 						"SIP: 5060 UDP"));
-	addExample(new DaemonCommandExample("port audio 7078",
+	addExample(make_unique<DaemonCommandExample>("port audio 7078",
 						"Status: Ok\n\n"
 						"Audio RTP: 7078"));
-	addExample(new DaemonCommandExample("port video 9078",
+	addExample(make_unique<DaemonCommandExample>("port video 9078",
 						"Status: Ok\n\n"
 						"Video RTP: 9078"));
-	addExample(new DaemonCommandExample("port sip",
+	addExample(make_unique<DaemonCommandExample>("port sip",
 						"Status: Ok\n\n"
 						"SIP: 5060 UDP"));
-	addExample(new DaemonCommandExample("port audio",
+	addExample(make_unique<DaemonCommandExample>("port audio",
 						"Status: Ok\n\n"
 						"Audio RTP: 7078"));
-	addExample(new DaemonCommandExample("port",
+	addExample(make_unique<DaemonCommandExample>("port",
 						"Status: Ok\n\n"
 						"SIP: 5060 UDP\n"
 						"Audio RTP: 7078\n"

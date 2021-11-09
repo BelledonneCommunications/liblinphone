@@ -31,7 +31,7 @@ AudioCodecSetCommand::AudioCodecSetCommand() :
 		DaemonCommand("audio-codec-set", "audio-codec-set <payload_type_number>|<mime_type> <property> <value>",
 				"Set a property (number, clock_rate, recv_fmtp, send_fmtp, bitrate (in kbps/s)) of a codec. Numbering of payload type is automatically performed at startup, any change will be lost after restart.\n"
 				"<mime_type> is of the form mime/rate/channels, eg. speex/16000/1") {
-	addExample(new DaemonCommandExample("audio-codec-set 9 number 18",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-set 9 number 18",
 						"Status: Ok\n\n"
 						"Index: 10\n"
 						"Payload-type-number: 18\n"
@@ -42,7 +42,7 @@ AudioCodecSetCommand::AudioCodecSetCommand() :
 						"Recv-fmtp: \n"
 						"Send-fmtp: \n"
 						"Enabled: false"));
-	addExample(new DaemonCommandExample("audio-codec-set G722/8000/1 number 9",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-set G722/8000/1 number 9",
 						"Status: Ok\n\n"
 						"Index: 10\n"
 						"Payload-type-number: 9\n"
@@ -53,7 +53,7 @@ AudioCodecSetCommand::AudioCodecSetCommand() :
 						"Recv-fmtp: \n"
 						"Send-fmtp: \n"
 						"Enabled: false"));
-	addExample(new DaemonCommandExample("audio-codec-set 9 clock_rate 16000",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-set 9 clock_rate 16000",
 						"Status: Ok\n\n"
 						"Index: 10\n"
 						"Payload-type-number: 9\n"

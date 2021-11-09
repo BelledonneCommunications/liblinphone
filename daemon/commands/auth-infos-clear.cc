@@ -23,13 +23,13 @@ using namespace std;
 
 AuthInfosClearCommand::AuthInfosClearCommand() :
 		DaemonCommand("auth-infos-clear", "auth-infos-clear <auth_infos_id>|ALL", "Remove auth infos context for the given id, or all.") {
-	addExample(new DaemonCommandExample("auth-infos-clear 1",
+	addExample(make_unique<DaemonCommandExample>("auth-infos-clear 1",
 						"Status: Ok\n"
 						"Reason: Successfully cleared auth info 1."));
-	addExample(new DaemonCommandExample("auth-infos-clear ALL",
+	addExample(make_unique<DaemonCommandExample>("auth-infos-clear ALL",
 						"Status: Ok\n"
 						"Reason: Successfully cleared 5 auth infos."));
-	addExample(new DaemonCommandExample("auth-infos-clear 3",
+	addExample(make_unique<DaemonCommandExample>("auth-infos-clear 3",
 						"Status: Error\n"
 						"Reason: No auth info with such id."));
 }

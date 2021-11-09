@@ -23,16 +23,16 @@ using namespace std;
 
 CallStatusCommand::CallStatusCommand() :
 		DaemonCommand("call-status", "call-status [<call_id>]", "Return status of a call.") {
-	addExample(new DaemonCommandExample("call-status 1",
+	addExample(make_unique<DaemonCommandExample>("call-status 1",
 						"Status: Ok\n\n"
 						"State: LinphoneCallStreamsRunning\n"
 						"From: <sip:daemon-test@sip.linphone.org>\n"
 						"Direction: out\n"
 						"Duration: 6"));
-	addExample(new DaemonCommandExample("call-status 2",
+	addExample(make_unique<DaemonCommandExample>("call-status 2",
 						"Status: Error\n"
 						"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("call-status",
+	addExample(make_unique<DaemonCommandExample>("call-status",
 						"Status: Error\n"
 						"Reason: No current call available."));
 }

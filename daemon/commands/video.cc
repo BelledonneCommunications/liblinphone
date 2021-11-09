@@ -27,19 +27,19 @@ Video::Video() :
 		"Toggles camera on current call."
 		"If no call is specified, the current call is taken.")
 {
-	addExample(new DaemonCommandExample("video 1",
+	addExample(make_unique<DaemonCommandExample>("video 1",
 										"Status: Ok\n\n"
 										"Camera activated."));
 
-	addExample(new DaemonCommandExample("video 1",
+	addExample(make_unique<DaemonCommandExample>("video 1",
 										"Status: Ok\n\n"
 										"Camera deactivated."));
 
-	addExample(new DaemonCommandExample("video",
+	addExample(make_unique<DaemonCommandExample>("video",
 										"Status: Error\n\n"
 										"Reason: No current call available."));
 
-	addExample(new DaemonCommandExample("video 2",
+	addExample(make_unique<DaemonCommandExample>("video 2",
 										"Status: Error\n\n"
 										"Reason: No call with such id."));
 }
@@ -88,19 +88,19 @@ VideoSource::VideoSource():
 				  "Toggles camera source for specified call."
 				  "If no call is specified, the current call is taken.")
 {
-	addExample(new DaemonCommandExample("videosource cam 1",
+	addExample(make_unique<DaemonCommandExample>("videosource cam 1",
 										"Status: Ok\n\n"
 										"Webcam source selected."));
 
-	addExample(new DaemonCommandExample("videosource dummy 1",
+	addExample(make_unique<DaemonCommandExample>("videosource dummy 1",
 										"Status: Ok\n\n"
 										"Dummy source selected."));
 
-	addExample(new DaemonCommandExample("videosource cam",
+	addExample(make_unique<DaemonCommandExample>("videosource cam",
 										"Status: Error\n\n"
 										"Reason: No current call available."));
 
-	addExample(new DaemonCommandExample("videosource cam 2",
+	addExample(make_unique<DaemonCommandExample>("videosource cam 2",
 										"Status: Error\n\n"
 										"Reason: No call with such id."));
 }
@@ -152,11 +152,11 @@ AutoVideo::AutoVideo():
 				  "autovideo on|off",
 				  "Enables/disables automatic video setup when a call is issued.")
 {
-	addExample(new DaemonCommandExample("autovideo on",
+	addExample(make_unique<DaemonCommandExample>("autovideo on",
 										"Status: Ok\n\n"
 										"Auto video ON"));
 
-	addExample(new DaemonCommandExample("autovideo off",
+	addExample(make_unique<DaemonCommandExample>("autovideo off",
 										"Status: Ok\n\n"
 										"Auto video OFF"));
 }
@@ -180,7 +180,7 @@ VideoSourceGet::VideoSourceGet():
 				  "videosource-get",
 				  "Get the current video source.")
 {
-	addExample(new DaemonCommandExample("videosource-get",
+	addExample(make_unique<DaemonCommandExample>("videosource-get",
 										"Status: Ok\n\n"
 										"V4L2: /dev/video2"));
 }
@@ -197,10 +197,10 @@ VideoSourceList::VideoSourceList():
 				  "videosource-list",
 				  "Get the list of all available video source.")
 {
-	addExample(new DaemonCommandExample("videosource-list",
+	addExample(make_unique<DaemonCommandExample>("videosource-list",
 										"Status: Ok\n\n"
 										"V4L2: /dev/video2"));
-	addExample(new DaemonCommandExample("videosource-list",
+	addExample(make_unique<DaemonCommandExample>("videosource-list",
 										"Status: Error\n\n"
 										"No video source found."));
 }
@@ -224,10 +224,10 @@ VideoSourceSet::VideoSourceSet():
 				  "videosource-set",
 				  "Set the current video source.")
 {
-	addExample(new DaemonCommandExample("videosource-set V4L2: /dev/video2",
+	addExample(make_unique<DaemonCommandExample>("videosource-set V4L2: /dev/video2",
 										"Status: Ok\n\n"
 										"V4L2: /dev/video2"));
-	addExample(new DaemonCommandExample("videosource-set V4L: /dev/video42",
+	addExample(make_unique<DaemonCommandExample>("videosource-set V4L: /dev/video42",
 										"Status: Error\n\n"
 										"No video source found."));
 }
@@ -253,7 +253,7 @@ VideoSourceReload::VideoSourceReload():
 				  "videosource-reload",
 				  "Update detection of camera devices and get the list")
 {
-	addExample(new DaemonCommandExample("videosource-reload",
+	addExample(make_unique<DaemonCommandExample>("videosource-reload",
 										"Status: Ok\n\n"
 										"V4L2: /dev/video2"));
 }
@@ -279,7 +279,7 @@ VideoDisplayGet::VideoDisplayGet():
 				  "videodisplay-get",
 				  "Get the current video display filter")
 {
-	addExample(new DaemonCommandExample("videodisplay-get",
+	addExample(make_unique<DaemonCommandExample>("videodisplay-get",
 										"Status: Ok\n\n"
 										"MSOGL"));
 }
@@ -301,7 +301,7 @@ VideoDisplaySet::VideoDisplaySet():
 				  "videodisplay-set",
 				  "Set the video display filter")
 {
-	addExample(new DaemonCommandExample("videodisplay-set MSOGL",
+	addExample(make_unique<DaemonCommandExample>("videodisplay-set MSOGL",
 										"Status: Ok\n\n"
 										"MSOGL"));
 }
@@ -321,10 +321,10 @@ Video::Preview::Preview():
 				  "videopreview",
 				  "Show/hide video preview")
 {
-	addExample(new DaemonCommandExample("videopreview on",
+	addExample(make_unique<DaemonCommandExample>("videopreview on",
 										"Status: Ok\n\n"
 										"Enabled"));
-	addExample(new DaemonCommandExample("videopreview off",
+	addExample(make_unique<DaemonCommandExample>("videopreview off",
 										"Status: Ok\n\n"
 										"Desabled"));
 }

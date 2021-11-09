@@ -38,14 +38,14 @@ IncallPlayerStartCommand::IncallPlayerStartCommand() :
 				"Play a WAV audio file or a MKV audio/video file. The played media stream will be sent through \n"
 				"the RTP session of the given call.\n"
 				"<filename> is the file to be played.\n") {
-	addExample(new DaemonCommandExample("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav 1",
 						"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav 1",
 						"Status: Error\n"
 						"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav",
+	addExample(make_unique<DaemonCommandExample>("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav",
 						"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav",
+	addExample(make_unique<DaemonCommandExample>("incall-player-start /usr/local/share/sounds/linphone/hello8000.wav",
 						"Status: Error\n"
 						"Reason: No active call."));
 }
@@ -103,14 +103,14 @@ void IncallPlayerStartCommand::exec(Daemon *app, const string& args) {
 
 IncallPlayerStopCommand::IncallPlayerStopCommand() :
 	DaemonCommand("incall-player-stop", "incall-player-stop [<call_id>]","Close the opened file.\n") {
-	addExample(new DaemonCommandExample("incall-player-stop 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-stop 1",
 										"Status: Error\n"
 										"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("incall-player-stop 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-stop 1",
 										"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-stop",
+	addExample(make_unique<DaemonCommandExample>("incall-player-stop",
 										"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-stop",
+	addExample(make_unique<DaemonCommandExample>("incall-player-stop",
 										"Status: Error\n"
 										"Reason: No active call."));
 }
@@ -149,14 +149,14 @@ void IncallPlayerStopCommand::exec(Daemon *app, const string& args) {
 IncallPlayerPauseCommand::IncallPlayerPauseCommand() :
 	DaemonCommand("incall-player-pause", "incall-player-pause [<call_id>]",
 			  "Pause the playing of a file.\n") {
-	addExample(new DaemonCommandExample("incall-player-pause 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-pause 1",
 										"Status: Error\n"
 										"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("incall-player-pause 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-pause 1",
 										"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-pause",
+	addExample(make_unique<DaemonCommandExample>("incall-player-pause",
 										"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-pause",
+	addExample(make_unique<DaemonCommandExample>("incall-player-pause",
 										"Status: Error\n"
 										"Reason: No active call."));
 }
@@ -192,14 +192,14 @@ void IncallPlayerPauseCommand::exec(Daemon *app, const string& args) {
 IncallPlayerResumeCommand::IncallPlayerResumeCommand() :
 	DaemonCommand("incall-player-resume", "incall-player-resume [<call_id>]",
 	"Unpause the playing of a file.\n") {
-	addExample(new DaemonCommandExample("incall-player-resume 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-resume 1",
 										"Status: Error\n"
 										"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("incall-player-resume 1",
+	addExample(make_unique<DaemonCommandExample>("incall-player-resume 1",
 										"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-resume",
+	addExample(make_unique<DaemonCommandExample>("incall-player-resume",
 										"Status: Ok\n"));
-	addExample(new DaemonCommandExample("incall-player-resume",
+	addExample(make_unique<DaemonCommandExample>("incall-player-resume",
 										"Status: Error\n"
 										"Reason: No active call."));
 }

@@ -23,7 +23,7 @@ using namespace std;
 
 ContactCommand::ContactCommand() :
 		DaemonCommand("contact", "contact <sip_address> or contact <username> <hostname>", "Set a contact name.") {
-	addExample(new DaemonCommandExample("contact sip:root@unknown-host",
+	addExample(make_unique<DaemonCommandExample>("contact sip:root@unknown-host",
 						"Status: Ok\n\n"));
 }
 

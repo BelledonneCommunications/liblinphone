@@ -26,16 +26,16 @@ CallTransferCommand::CallTransferCommand() :
 				  "call-transfer <call_to_transfer_id> <call_to_transfer_to_id>|<sip_url_to_transfer_to>",
 				  "Transfer a call that you aswered to another party")
 {
-	addExample(new DaemonCommandExample("call-transfer 1 sip:john",
+	addExample(make_unique<DaemonCommandExample>("call-transfer 1 sip:john",
 										"Status: Ok\n\n"
 										"Call ID: 1\n"
 										"Transfer to: sip:john"));
 
-	addExample(new DaemonCommandExample("call-transfer 2 sip:john",
+	addExample(make_unique<DaemonCommandExample>("call-transfer 2 sip:john",
 										"Status: Error\n"
 										"Reason: No call with such id."));
 
-	addExample(new DaemonCommandExample("call-transfer 1 2",
+	addExample(make_unique<DaemonCommandExample>("call-transfer 1 2",
 										"Status: Ok\n\n"
 										"Call ID: 1\n"
 										"Transfer to: 2"));
