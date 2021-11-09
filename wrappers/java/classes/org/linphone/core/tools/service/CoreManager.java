@@ -116,6 +116,10 @@ public class CoreManager {
             mAudioHelper = new AudioHelper(mContext);
         } else {
             Log.w("[Core Manager] Do you have a dependency on androidx.media:media:1.2.0 or newer?");
+            if (core.isNativeRingingEnabled()) {
+                Log.e("[Core Manager] Native ringing was enabled but condition isn't met (androidx.media:media dependency), disabling it.");
+                core.setNativeRingingEnabled(false);
+            }
         }
         mBluetoothHelper = new BluetoothHelper(mContext);
 
