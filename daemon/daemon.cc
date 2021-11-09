@@ -277,20 +277,19 @@ DaemonCommand::DaemonCommand(const string& name, const string& proto, const stri
 		mName(name), mProto(proto), mDescription(description) {
 }
 
-void DaemonCommand::addExample(const DaemonCommandExample *example) {
-	mExamples.push_back(example);
+void DaemonCommand::addExample(std::unique_ptr<const DaemonCommandExample>&& example) {
+	mExamples.emplace_back(move(example));
 }
 
 const string DaemonCommand::getHelp() const {
 	ostringstream ost;
 	ost << getProto() << endl << endl;
 	ost << "Description:" << endl << getDescription() << endl << endl;
-	list<const DaemonCommandExample*> examples = getExamples();
 	int c = 1;
-	for (list<const DaemonCommandExample*>::iterator it = examples.begin(); it != examples.end(); ++it, ++c) {
-		ost << "Example " << c << ":" << endl;
-		ost << ">" << (*it)->getCommand() << endl;
-		ost << (*it)->getOutput() << endl;
+	for (const auto& example : getExamples()) {
+		ost << "Example " << c++ << ":" << endl;
+		ost << ">" << example->getCommand() << endl;
+		ost << example->getOutput() << endl;
 		ost << endl;
 	}
 	return ost.str();
@@ -775,16 +774,16 @@ void Daemon::dumpCommandsHelpHtml(){
 	cout << endl;
 	cout << "<!DOCTYPE html><html><body>"<<endl;
 	cout << "<h1>List of linphone-daemon commands.</h1>"<<endl;
-	for (list<DaemonCommand*>::iterator it = mCommands.begin(); it != mCommands.end(); ++it) {
-		cout<<"<h2>"<<htmlEscape((*it)->getProto())<<"</h2>"<<endl;
+	for (const auto& cmd : mCommands) {
+		cout<<"<h2>"<<htmlEscape(cmd->getProto())<<"</h2>"<<endl;
 		cout<<"<h3>"<<"Description"<<"</h3>"<<endl;
-		cout<<"<p>"<<htmlEscape((*it)->getDescription())<<"</p>"<<endl;
+		cout<<"<p>"<<htmlEscape(cmd->getDescription())<<"</p>"<<endl;
 		cout<<"<h3>"<<"Examples"<<"</h3>"<<endl;
-		const list<const DaemonCommandExample*> &examples=(*it)->getExamples();
+		const auto& examples = cmd->getExamples();
 		cout<<"<p><i>";
-		for(list<const DaemonCommandExample*>::const_iterator ex_it=examples.begin();ex_it!=examples.end();++ex_it){
-			cout<<"<b>"<<htmlEscape("Linphone-daemon>")<<htmlEscape((*ex_it)->getCommand())<<"</b><br>"<<endl;
-			cout<<htmlEscape((*ex_it)->getOutput())<<"<br>"<<endl;
+		for(const auto& example : examples) {
+			cout<<"<b>"<<htmlEscape("Linphone-daemon>")<<htmlEscape(example->getCommand())<<"</b><br>"<<endl;
+			cout<<htmlEscape(example->getOutput())<<"<br>"<<endl;
 			cout<<"<br><br>";
 		}
 		cout<<"</i></p>"<<endl;

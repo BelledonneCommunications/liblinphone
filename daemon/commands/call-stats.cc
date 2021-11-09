@@ -23,7 +23,7 @@ using namespace std;
 
 CallStatsCommand::CallStatsCommand() :
 		DaemonCommand("call-stats", "call-stats [<call_id>]", "Return all stats of a call.") {
-	addExample(new DaemonCommandExample("call-stats 1",
+	addExample(make_unique<DaemonCommandExample>("call-stats 1",
 						"Status: Ok\n\n"
 						"Audio-ICE state: Not activated\n"
 						"Audio-RoundTripDelay: 0.0859833\n"
@@ -44,10 +44,10 @@ CallStatsCommand::CallStatsCommand() :
 						"Video-RoundTripDelay: 0\n"
 						"Video-Jitter: 0\n"
 						"Video-JitterBufferSizeMs: 0State: disabled"));
-	addExample(new DaemonCommandExample("call-stats 2",
+	addExample(make_unique<DaemonCommandExample>("call-stats 2",
 						"Status: Error\n"
 						"Reason: No call with such id."));
-	addExample(new DaemonCommandExample("call-stats",
+	addExample(make_unique<DaemonCommandExample>("call-stats",
 						"Status: Error\n"
 						"Reason: No current call available."));
 }

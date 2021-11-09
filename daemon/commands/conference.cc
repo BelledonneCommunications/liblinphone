@@ -30,18 +30,18 @@ ConferenceCommand::ConferenceCommand() :
 				  "- leave : temporarily leave the current conference.\n"
 				  "- enter : re-join the conference after leaving it.")
 {
-	addExample(new DaemonCommandExample("conference add 1",
+	addExample(make_unique<DaemonCommandExample>("conference add 1",
 										"Status: Ok\n\n"
 										"Call Id: 1\n"
 										"Conference: add OK"));
-	addExample(new DaemonCommandExample("conference leave 1",
+	addExample(make_unique<DaemonCommandExample>("conference leave 1",
 										"Status: Ok\n\n"
 										"Call Id: 1\n"
 										"Conference: leave OK"));
-	addExample(new DaemonCommandExample("conference azerty 1",
+	addExample(make_unique<DaemonCommandExample>("conference azerty 1",
 										"Status: Error\n\n"
 										"Reason: Invalid command format"));
-	addExample(new DaemonCommandExample("conference leave 2",
+	addExample(make_unique<DaemonCommandExample>("conference leave 2",
 										"Status: Error\n\n"
 										"Reason: No call with such id."));
 }

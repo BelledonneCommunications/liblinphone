@@ -69,7 +69,7 @@ AudioCodecEnableCommand::AudioCodecEnableCommand() :
 		AudioCodecToggleCommand("audio-codec-enable", "audio-codec-enable <payload_type_number>|<mime_type>|ALL",
 					"Enable an audio codec.\n"
 					"<mime_type> is of the form mime/rate/channels, eg. speex/16000/1", true) {
-	addExample(new DaemonCommandExample("audio-codec-enable G722/8000/1",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-enable G722/8000/1",
 						"Status: Ok\n\n"
 						"Index: 9\n"
 						"Payload-type-number: 9\n"
@@ -80,7 +80,7 @@ AudioCodecEnableCommand::AudioCodecEnableCommand() :
 						"Recv-fmtp: \n"
 						"Send-fmtp: \n"
 						"Enabled: true"));
-	addExample(new DaemonCommandExample("audio-codec-enable 9",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-enable 9",
 						"Status: Ok\n\n"
 						"Index: 9\n"
 						"Payload-type-number: 9\n"
@@ -97,7 +97,7 @@ AudioCodecDisableCommand::AudioCodecDisableCommand() :
 		AudioCodecToggleCommand("audio-codec-disable", "audio-codec-disable <payload_type_number>|<mime_type>|ALL",
 					"Disable an audio codec.\n"
 					"<mime_type> is of the form mime/rate/channels, eg. speex/16000/1", false) {
-	addExample(new DaemonCommandExample("audio-codec-disable G722/8000/1",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-disable G722/8000/1",
 						"Status: Ok\n\n"
 						"Index: 9\n"
 						"Payload-type-number: 9\n"
@@ -108,7 +108,7 @@ AudioCodecDisableCommand::AudioCodecDisableCommand() :
 						"Recv-fmtp: \n"
 						"Send-fmtp: \n"
 						"Enabled: false"));
-	addExample(new DaemonCommandExample("audio-codec-disable 9",
+	addExample(make_unique<DaemonCommandExample>("audio-codec-disable 9",
 						"Status: Ok\n\n"
 						"Index: 9\n"
 						"Payload-type-number: 9\n"

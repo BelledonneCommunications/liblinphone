@@ -42,13 +42,13 @@ CNResponse::CNResponse(LinphoneCore *core) : Response() {
 CNCommand::CNCommand() :
 		DaemonCommand("cn", "cn [enable|disable]",
 				"Enable or disable generic comfort noice (CN payload type) with the 'enable' and 'disable' parameters, return the status of the use of comfort noise without parameter.") {
-	addExample(new DaemonCommandExample("cn enable",
+	addExample(make_unique<DaemonCommandExample>("cn enable",
 						"Status: Ok\n\n"
 						"State: enabled"));
-	addExample(new DaemonCommandExample("cn disable",
+	addExample(make_unique<DaemonCommandExample>("cn disable",
 						"Status: Ok\n\n"
 						"State: disabled"));
-	addExample(new DaemonCommandExample("cn",
+	addExample(make_unique<DaemonCommandExample>("cn",
 						"Status: Ok\n\n"
 						"State: disabled"));
 }

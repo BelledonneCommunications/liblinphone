@@ -25,7 +25,7 @@ PlayWavCommand::PlayWavCommand() :
 		DaemonCommand("play-wav", "play-wav <filename>",
 				"Play an WAV audio file (needs to have enabled the linphone sound daemon (LSD).\n"
 				"<filename> is the WAV file to be played.") {
-	addExample(new DaemonCommandExample("play-wav /usr/local/share/sounds/linphone/hello8000.wav",
+	addExample(make_unique<DaemonCommandExample>("play-wav /usr/local/share/sounds/linphone/hello8000.wav",
 						"Status: Ok"));
 }
 

@@ -23,14 +23,14 @@ using namespace std;
 
 CallCommand::CallCommand() :
 		DaemonCommand("call", "call <sip_address> [--early-media]", "Place a call.") {
-	addExample(new DaemonCommandExample("call daemon-test@sip.linphone.org",
+	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org",
 						"Status: Ok\n\n"
 						"Id: 1"));
-	addExample(new DaemonCommandExample("call daemon-test@sip.linphone.org --early-media",
+	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org --early-media",
 						"Status: Ok\n\n"
 						"Early media: Ok\n"
 						"Id: 1"));
-	addExample(new DaemonCommandExample("call daemon-test@sip.linphone.org",
+	addExample(make_unique<DaemonCommandExample>("call daemon-test@sip.linphone.org",
 						"Status: Error\n"
 						"Reason: Call creation failed."));
 }

@@ -51,14 +51,14 @@ RegisterInfoCommand::RegisterInfoCommand():
 	DaemonCommand("register-info", "register-info <register_id>|ALL",
 		"Get informations about one or more registrations.")
 {
-	addExample(new DaemonCommandExample("register-info 1",
+	addExample(make_unique<DaemonCommandExample>("register-info 1",
 						"Status: Ok\n\n"
 						"Id: 1\n"
 						"Identity: sip:toto@sip.linphone.org\n"
 						"Proxy: <sip:sip.linphone.org;transport=tls>\n"
 						"Route: <sip:sip.linphone.org;transport=tls>\n"
 						"State: LinphoneRegistrationOk"));
-	addExample(new DaemonCommandExample("register-info ALL",
+	addExample(make_unique<DaemonCommandExample>("register-info ALL",
 						"Status: Ok\n\n"
 						"Id: 1\n"
 						"Identity: sip:toto@sip.linphone.org\n"
@@ -69,7 +69,7 @@ RegisterInfoCommand::RegisterInfoCommand():
 						"Identity: sip:toto2@sip.linphone.org\n"
 						"Proxy: <sip:sip.linphone.org;transport=udp>\n"
 						"State: LinphoneRegistrationFailed"));
-	addExample(new DaemonCommandExample("register-info 3",
+	addExample(make_unique<DaemonCommandExample>("register-info 3",
 						"Status: Error\n"
 						"Reason: No register with such id."));
 }

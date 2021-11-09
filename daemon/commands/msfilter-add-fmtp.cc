@@ -25,12 +25,12 @@ using namespace std;
 
 MSFilterAddFmtpCommand::MSFilterAddFmtpCommand() :
 	DaemonCommand("msfilter-add-fmtp", "msfilter-add-fmtp call|stream <id> <fmtp>", "Add fmtp to the encoder of a call or a stream") {
-	addExample(new DaemonCommandExample("msfilter-add-fmtp call 1 vbr=on",
+	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp call 1 vbr=on",
 						"Status: Ok"));
-	addExample(new DaemonCommandExample("msfilter-add-fmtp call 2 vbr=on",
+	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp call 2 vbr=on",
 						"Status: Error\n"
 						"Reason: No Call with such id."));
-	addExample(new DaemonCommandExample("msfilter-add-fmtp stream 7 vbr=on",
+	addExample(make_unique<DaemonCommandExample>("msfilter-add-fmtp stream 7 vbr=on",
 						"Status: Error\n"
 						"Reason: No Audio Stream with such id."));
 }

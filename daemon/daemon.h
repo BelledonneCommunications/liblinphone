@@ -73,7 +73,7 @@ private:
 
 class DaemonCommand {
 public:
-	virtual ~DaemonCommand() {}
+	virtual ~DaemonCommand() = default;
 	virtual void exec(Daemon *app, const std::string& args)=0;
 	bool matches(const std::string& name) const;
 	const std::string getHelp() const;
@@ -83,16 +83,18 @@ public:
 	const std::string &getDescription() const {
 		return mDescription;
 	}
-	const std::list<const DaemonCommandExample*> &getExamples() const {
+	const std::vector<std::unique_ptr<const DaemonCommandExample>> &getExamples() const {
 		return mExamples;
 	}
-	void addExample(const DaemonCommandExample *example);
+	void addExample(std::unique_ptr<const DaemonCommandExample>&& example);
+
 protected:
 	DaemonCommand(const std::string& name, const std::string& proto, const std::string& description);
+
 	const std::string mName;
 	const std::string mProto;
 	const std::string mDescription;
-	std::list<const DaemonCommandExample*> mExamples;
+	std::vector<std::unique_ptr<const DaemonCommandExample>> mExamples;
 };
 
 /*Base class for all kind of responses to commands*/
