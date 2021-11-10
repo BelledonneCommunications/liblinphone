@@ -966,12 +966,14 @@ void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
 	if (card) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
 		if (audioDevice) {
+			lInfo() << "[ " << __func__ << " ] on device: " << audioDevice->getDeviceName();
 			d->setOutputAudioDevice(audioDevice);
 			return;
 		}
 	}
 	AudioDevice * defaultAudioDevice = getDefaultOutputAudioDevice();
 	if (defaultAudioDevice) {
+		lInfo() << "[ " << __func__ << " ] on default device: " << defaultAudioDevice->getDeviceName();
 		d->setOutputAudioDevice(defaultAudioDevice);
 		return;
 	}
@@ -980,11 +982,14 @@ void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
 	if (defaultCard) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
 		if (audioDevice) {
+			lInfo() << "[ " << __func__ << " ] on device matching playback capture card: " << audioDevice->getDeviceName();
 			d->setOutputAudioDevice(audioDevice);
 			return;
 		}
-	} else // No cards available : remove the device. This will allow to restart it if a new one is detected.
+	} else { // No cards available : remove the device. This will allow to restart it if a new one is detected.
+		lInfo() << "[ " << __func__ << " ] remove output device";
 		d->setOutputAudioDevice(nullptr);
+	}
 	if(card)// Having no device when a card is requested is an error
 		lError() << "[ " << __func__ << " ] Unable to find suitable output audio device";
 }
@@ -995,12 +1000,14 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 	if (card) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
 		if (audioDevice) {
+			lInfo() << "[ " << __func__ << " ] on device: " << audioDevice->getDeviceName();
 			d->setInputAudioDevice(audioDevice);
 			return;
 		}
 	}
 	AudioDevice * defaultAudioDevice = getDefaultInputAudioDevice();
 	if (defaultAudioDevice) {
+		lInfo() << "[ " << __func__ << " ] on default device: " << defaultAudioDevice->getDeviceName();
 		d->setInputAudioDevice(defaultAudioDevice);
 		return;
 	}
@@ -1009,11 +1016,14 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 	if (defaultCard) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
 		if (audioDevice) {
+			lInfo() << "[ " << __func__ << " ] on device matching default capture card: " << audioDevice->getDeviceName();
 			d->setInputAudioDevice(audioDevice);
 			return;
 		}
-	}else// No cards available : remove the device. This will allow to restart it if a new one is detected.
+	}else {// No cards available : remove the device. This will allow to restart it if a new one is detected.
+		lInfo() << "[ " << __func__ << " ] remove input device";
 		d->setInputAudioDevice(nullptr);
+	}
 	if (card) // Having no device when a card is requested is an error
 		lError() << "[ " << __func__ << " ] Unable to find suitable input audio device";
 }
