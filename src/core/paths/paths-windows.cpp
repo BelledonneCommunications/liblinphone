@@ -25,6 +25,7 @@
 #include "paths-windows.h"
 #include "config.h"
 #include "linphone/utils/utils.h"
+#include "linphone/api/c-factory.h"
 #include <ppltasks.h>
 
 #include "private.h"// To get LINPHONE_WINDOWS_UWP
@@ -75,23 +76,32 @@ static string getPath (const GUID &id) {
 }
 
 
-string SysPaths::getDataPath (void *) {
+string SysPaths::getDataPath (void *context) {
+	static std::string dataPath;
+	if( linphone_factory_is_data_dir_set(linphone_factory_get()) )
+		dataPath = linphone_factory_get_data_dir(linphone_factory_get(), context);
+	else {
 #if defined (LINPHONE_WINDOWS_UWP)    
-	static string dataPath = getPath(GUID_NULL);
+		dataPath = getPath(GUID_NULL);
 #else
-	static string dataPath = getPath(FOLDERID_LocalAppData);//FOLDERID_LocalAppData);
+		dataPath = getPath(FOLDERID_LocalAppData);//FOLDERID_LocalAppData);
 #endif
+	}
 	return dataPath;
 }
 
-string SysPaths::getConfigPath (void *) {
-	// Yes, same path.
-	return getDataPath(NULL);
+string SysPaths::getConfigPath (void *context) {
+	if( linphone_factory_is_config_dir_set(linphone_factory_get()) )
+		return linphone_factory_get_config_dir(linphone_factory_get(), context);
+	else
+		return getDataPath(NULL);
 }
 
-string SysPaths::getDownloadPath (void *) {
-	// TODO
-	return getDataPath(NULL);
+string SysPaths::getDownloadPath (void *context) {
+	if( linphone_factory_is_download_dir_set(linphone_factory_get()) )
+		return linphone_factory_get_download_dir(linphone_factory_get(), context);
+	else
+		return getDataPath(NULL);
 }
 
 LINPHONE_END_NAMESPACE

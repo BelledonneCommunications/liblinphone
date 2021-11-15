@@ -301,7 +301,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_supported_video_defini
 /**
  * Get the top directory where the resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @return The path to the top directory where the resources are located @notnil
+ * @return The path to the top directory where the resources are located @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_factory_get_top_resources_dir(const LinphoneFactory *factory);
 
@@ -309,63 +309,63 @@ LINPHONE_PUBLIC const char * linphone_factory_get_top_resources_dir(const Linpho
  * Set the top directory where the resources are located.
  * If you only define this top directory, the other resources directory will automatically be derived form this one.
  * @param factory #LinphoneFactory object @notnil
- * @param path The path to the top directory where the resources are located @notnil
+ * @param path The path to the top directory where the resources are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char *path);
 
 /**
  * Get the directory where the data resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @return The path to the directory where the data resources are located @notnil
+ * @return The path to the directory where the data resources are located @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_factory_get_data_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the data resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @param path The path where the data resources are located @notnil
+ * @param path The path where the data resources are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const char *path);
 
 /**
  * Get the directory where the sound resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @return The path to the directory where the sound resources are located @notnil
+ * @return The path to the directory where the sound resources are located @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_factory_get_sound_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the sound resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @param path The path where the sound resources are located @notnil
+ * @param path The path where the sound resources are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_sound_resources_dir(LinphoneFactory *factory, const char *path);
 
 /**
  * Get the directory where the ring resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @return The path to the directory where the ring resources are located @notnil
+ * @return The path to the directory where the ring resources are located @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_factory_get_ring_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the ring resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @param path The path where the ring resources are located @notnil
+ * @param path The path where the ring resources are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_ring_resources_dir(LinphoneFactory *factory, const char *path);
 
 /**
  * Get the directory where the image resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @return The path to the directory where the image resources are located @notnil
+ * @return The path to the directory where the image resources are located @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_factory_get_image_resources_dir(LinphoneFactory *factory);
 
 /**
  * Set the directory where the image resources are located.
  * @param factory #LinphoneFactory object @notnil
- * @param path The path where the image resources are located @notnil
+ * @param path The path where the image resources are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const char *path);
 
@@ -382,6 +382,81 @@ LINPHONE_PUBLIC const char * linphone_factory_get_msplugins_dir(LinphoneFactory 
  * @param path The path to the directory where the mediastreamer2 plugins are located @maybenil
  */
 LINPHONE_PUBLIC void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path);
+
+/**
+ * Get the config path
+ * @param factory the #LinphoneFactory @notnil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @return The config path @maybenil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context);
+
+/**
+ * Test if config dir has been set.
+ * @param factory the #LinphoneFactory @notnil
+ * @return TRUE if config dir has been set.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_factory_is_config_dir_set(const LinphoneFactory *factory);
+
+/**
+ * Set the directory where the configurations are located.
+ * If the path is empty (default value), the path will be computed when calling linphone_factory_get_config_dir()
+ * @param factory #LinphoneFactory object @notnil
+ * @param path The path to the directory where the configurations are located @maybenil
+ */
+LINPHONE_PUBLIC void linphone_factory_set_config_dir(LinphoneFactory *factory, const char *path);
+
+/**
+ * Get the data path
+ * @param factory the #LinphoneFactory @notnil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @return The data path @maybenil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context);
+
+/**
+ * Test if data dir has been set.
+ * @param factory the #LinphoneFactory @notnil
+ * @return TRUE if data dir has been set.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_factory_is_data_dir_set(const LinphoneFactory *factory);
+
+/**
+ * Set the directory where the application local data are located.
+ * If the path is empty (default value), the path will be computed when calling linphone_factory_get_data_dir()
+ * @param factory #LinphoneFactory object @notnil
+ * @param path The path to the directory where the application local data are located @maybenil
+ */
+LINPHONE_PUBLIC void linphone_factory_set_data_dir(LinphoneFactory *factory, const char *path);
+
+/**
+ * Get the download path
+ * @param factory the #LinphoneFactory @notnil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @return The download path @maybenil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
+
+/**
+ * Test if download dir has been set.
+ * @param factory the #LinphoneFactory @notnil
+ * @return TRUE if download dir has been set.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_factory_is_download_dir_set(const LinphoneFactory *factory);
+
+/**
+ * Set the directory where downloads are located.
+ * If the path is empty (default value), the path will be computed when calling linphone_factory_get_download_dir()
+ * @param factory #LinphoneFactory object @notnil
+ * @param path The path to the directory where downloads are located @maybenil
+ */
+LINPHONE_PUBLIC void linphone_factory_set_download_dir(LinphoneFactory *factory, const char *path);
 
 /**
  * Creates an object LinphoneErrorInfo.
@@ -579,33 +654,6 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_database_storage_available(LinphoneFa
  * @return TRUE if IDMN are available
  */
 LINPHONE_PUBLIC bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory);
-
-/**
- * Get the config path
- * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
- * @return The config path @notnil
- * @ingroup misc
-**/
-LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context);
-
-/**
- * Get the data path
- * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
- * @return The data path @notnil
- * @ingroup misc
-**/
-LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context);
-
-/**
- * Get the download path
- * @param factory the #LinphoneFactory @notnil
- * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
- * @return The download path @notnil
- * @ingroup misc
-**/
-LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
 
 /************ */
 /* DEPRECATED */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -45,18 +45,18 @@ std::shared_ptr<Factory> Factory::instance;
 
 Factory::Factory(){
 	mTopResourcesDir = PACKAGE_DATA_DIR;
-
+	
 	/*used to avoid crash when using bctbx_list_append in ADD_SUPPORTED_VIDEO_DEFINITION
 	since the element is null, bctbx_list_append return the added element directly*/
 	mSupportedVideoDefinitions = nullptr;
 	initializeSupportedVideoDefinitions(this);
-
+	
 	mUserData = nullptr;
-
+	
 	mPackageSoundDir = PACKAGE_SOUND_DIR;
 	mPackageRingDir = PACKAGE_RING_DIR;
 	mPackageDataDir = PACKAGE_DATA_DIR;
-
+	
 	/* register the bctbx sqlite vfs. It is not used by default */
 	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
 	sqlite3_bctbx_vfs_register(0);
@@ -71,7 +71,7 @@ void Factory::_DestroyingCb(void) {
 
 #define ADD_SUPPORTED_VIDEO_DEFINITION(factory, width, height, name) \
 	(factory)->mSupportedVideoDefinitions = bctbx_list_append((factory)->mSupportedVideoDefinitions, \
-		linphone_video_definition_new(width, height, name))
+	linphone_video_definition_new(width, height, name))
 
 void  Factory::initializeSupportedVideoDefinitions(Factory *factory) {
 #if !defined(__ANDROID__) && !TARGET_OS_IPHONE
@@ -119,133 +119,133 @@ void Factory::clean(void){
 }
 
 LinphoneCore *Factory::_createCore (
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context,
-	bool_t automatically_start
-) const {
-		bctbx_init_logger(FALSE);
-		LpConfig *config = linphone_config_new_with_factory(config_path, factory_config_path);
-		LinphoneCore *lc = _linphone_core_new_with_config(cbs, config, user_data, system_context, automatically_start);
-		linphone_config_unref(config);
-		bctbx_uninit_logger();
-		return lc;
+		LinphoneCoreCbs *cbs,
+		const std::string& config_path,
+		const std::string& factory_config_path,
+		void *user_data,
+		void *system_context,
+		bool_t automatically_start
+		) const {
+	bctbx_init_logger(FALSE);
+	LpConfig *config = linphone_config_new_with_factory(config_path.c_str(), factory_config_path.c_str());
+	LinphoneCore *lc = _linphone_core_new_with_config(cbs, config, user_data, system_context, automatically_start);
+	linphone_config_unref(config);
+	bctbx_uninit_logger();
+	return lc;
 }
 
 LinphoneCore *Factory::_createSharedCore (
-	LinphoneCoreCbs *cbs,
-	const char *config_filename,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context,
-	bool_t automatically_start,
-	const char *app_group_id,
-	bool_t main_core
-) const{
-		bctbx_init_logger(FALSE);
-		LpConfig *config = linphone_config_new_for_shared_core(app_group_id, config_filename, factory_config_path);
-		LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group_id, main_core);
-		linphone_config_unref(config);
-		bctbx_uninit_logger();
-		return lc;
+		LinphoneCoreCbs *cbs,
+		const std::string& config_filename,
+		const std::string& factory_config_path,
+		void *user_data,
+		void *system_context,
+		bool_t automatically_start,
+		const std::string& app_group_id,
+		bool_t main_core
+		) const{
+	bctbx_init_logger(FALSE);
+	LpConfig *config = linphone_config_new_for_shared_core(app_group_id.c_str(), config_filename.c_str(), factory_config_path.c_str());
+	LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group_id.c_str(), main_core);
+	linphone_config_unref(config);
+	bctbx_uninit_logger();
+	return lc;
 }
 
 LinphoneCore* Factory::createCore (
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path
-) const {
-		return _createCore(cbs, config_path, factory_config_path, NULL, NULL, TRUE);
+		LinphoneCoreCbs *cbs,
+		const std::string& config_path,
+		const std::string& factory_config_path
+		) const {
+	return _createCore(cbs, config_path.c_str(), factory_config_path.c_str(), NULL, NULL, TRUE);
 }
 
 LinphoneCore* Factory::createCore (
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context
-) const {
-		return _createCore(cbs, config_path, factory_config_path, user_data, system_context, TRUE);
+		LinphoneCoreCbs *cbs,
+		const std::string& config_path,
+		const std::string& factory_config_path,
+		void *user_data,
+		void *system_context
+		) const {
+	return _createCore(cbs, config_path, factory_config_path, user_data, system_context, TRUE);
 }
 
 LinphoneCore* Factory::createCore (
-	const char *config_path,
-	const char *factory_config_path,
-	void *system_context
-) const {
-		return _createCore(NULL, config_path, factory_config_path, NULL, system_context, FALSE);
+		const std::string& config_path,
+		const std::string& factory_config_path,
+		void *system_context
+		) const {
+	return _createCore(NULL, config_path, factory_config_path, NULL, system_context, FALSE);
 }
 
 LinphoneCore* Factory::createSharedCore (
-	const char *config_filename,
-	const char *factory_config_path,
-	void *system_context,
-	const char *app_group_id,
-	bool_t main_core
-) const {
-		return _createSharedCore(NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group_id, main_core);
+		const std::string& config_filename,
+		const std::string& factory_config_path,
+		void *system_context,
+		const std::string& app_group_id,
+		bool_t main_core
+		) const {
+	return _createSharedCore(NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group_id, main_core);
 }
 
 LinphoneCore* Factory::createCoreWithConfig (
-	LinphoneCoreCbs *cbs,
-	LinphoneConfig *config
-) const {
-		return _linphone_core_new_with_config(cbs, config, NULL, NULL, TRUE);
+		LinphoneCoreCbs *cbs,
+		LinphoneConfig *config
+		) const {
+	return _linphone_core_new_with_config(cbs, config, NULL, NULL, TRUE);
 }
 
 LinphoneCore* Factory::createCoreWithConfig (
-	LinphoneCoreCbs *cbs,
-	LinphoneConfig *config,
-	void *user_data,
-	void *system_context
-) const {
-		return _linphone_core_new_with_config(cbs, config, user_data, system_context, TRUE);
+		LinphoneCoreCbs *cbs,
+		LinphoneConfig *config,
+		void *user_data,
+		void *system_context
+		) const {
+	return _linphone_core_new_with_config(cbs, config, user_data, system_context, TRUE);
 }
 
 LinphoneCore* Factory::createCoreWithConfig (
-	LinphoneConfig *config,
-	void *system_context
-) const {
-		return _linphone_core_new_with_config(NULL, config, NULL, system_context, FALSE);
+		LinphoneConfig *config,
+		void *system_context
+		) const {
+	return _linphone_core_new_with_config(NULL, config, NULL, system_context, FALSE);
 }
 
 LinphoneCore* Factory::createSharedCoreWithConfig (
-	LinphoneConfig *config,
-	void *system_context,
-	const char *app_group_id,
-	bool_t main_core
-) const {
-		return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group_id, main_core);
+		LinphoneConfig *config,
+		void *system_context,
+		const std::string& app_group_id,
+		bool_t main_core
+		) const {
+	return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group_id.c_str(), main_core);
 }
 
 LinphoneCoreCbs* Factory::createCoreCbs() const {
 	return _linphone_core_cbs_new();
 }
 
-LinphoneAddress* Factory::createAddress (const char *addr) const {
-	return linphone_address_new(addr);
+LinphoneAddress* Factory::createAddress (const std::string& addr) const {
+	return linphone_address_new(addr.c_str());
 }
 
 LinphoneParticipantDeviceIdentity* Factory::createParticipantDeviceIdentity (
-	const LinphoneAddress *address,
-	const char *name
-) const {
-		#ifdef HAVE_ADVANCED_IM
-			return linphone_participant_device_identity_new(address, name);
-		#else
-			ms_warning("Advanced IM such as group chat is disabled");
-			return NULL;
-		#endif
+		const LinphoneAddress *address,
+		const std::string& name
+		) const {
+#ifdef HAVE_ADVANCED_IM
+	return linphone_participant_device_identity_new(address, name.c_str());
+#else
+	ms_warning("Advanced IM such as group chat is disabled");
+	return NULL;
+#endif
 }
 
-LinphoneAuthInfo* Factory::createAuthInfo (const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) const {
-	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
+LinphoneAuthInfo* Factory::createAuthInfo (const std::string& username, const std::string& userid, const std::string& passwd, const std::string& ha1, const std::string& realm, const std::string& domain) const {
+	return linphone_auth_info_new(username.c_str(), userid.c_str(), passwd.c_str(), ha1.c_str(), realm.c_str(), domain.c_str());
 }
 
-LinphoneAuthInfo* Factory::createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) const {
-	return linphone_auth_info_new_for_algorithm(username, userid, passwd, ha1, realm, domain, algorithm);
+LinphoneAuthInfo* Factory::createAuthInfo(const std::string& username, const std::string& userid, const std::string& passwd, const std::string& ha1, const std::string& realm, const std::string& domain, const std::string& algorithm) const {
+	return linphone_auth_info_new_for_algorithm(username.c_str(), userid.c_str(), passwd.c_str(), ha1.c_str(), realm.c_str(), domain.c_str(), algorithm.c_str());
 }
 
 LinphoneCallCbs* Factory::createCallCbs() const {
@@ -279,12 +279,12 @@ LinphoneVideoDefinition*  Factory::createVideoDefinition(unsigned int width, uns
 	return supported ? linphone_video_definition_clone(supported) : linphone_video_definition_new(width, height, NULL);
 }
 
-LinphoneVideoDefinition*  Factory::createVideoDefinitionFromName(const char *name) const {
+LinphoneVideoDefinition*  Factory::createVideoDefinitionFromName(const std::string& name) const {
 	unsigned int width = 0;
 	unsigned int height = 0;
 	LinphoneVideoDefinition *vdef = findSupportedVideoDefinitionByName(name);
 	if (vdef != NULL) return linphone_video_definition_clone(vdef);
-	if (sscanf(name, "%ux%u", &width, &height) == 2) {
+	if (sscanf(name.c_str(), "%ux%u", &width, &height) == 2) {
 		return linphone_video_definition_new(width, height, NULL);
 	}
 	return linphone_video_definition_new(0, 0, NULL);
@@ -299,7 +299,7 @@ LinphoneVideoDefinition*  Factory::findSupportedVideoDefinition(unsigned int wid
 	const bctbx_list_t *supported = getSupportedVideoDefinitions();
 	LinphoneVideoDefinition *searched_vdef = linphone_video_definition_new(width, height, NULL);
 	LinphoneVideoDefinition *found = NULL;
-
+	
 	for (item = supported; item != NULL; item = bctbx_list_next(item)) {
 		LinphoneVideoDefinition *svdef = (LinphoneVideoDefinition *)bctbx_list_get_data(item);
 		if (linphone_video_definition_equals(svdef, searched_vdef)) {
@@ -308,25 +308,25 @@ LinphoneVideoDefinition*  Factory::findSupportedVideoDefinition(unsigned int wid
 		}
 	}
 	linphone_video_definition_unref(searched_vdef);
-
+	
 	if (!found) {
 		ms_warning("Couldn't find supported video definition for %ux%u", width, height);
 	}
 	return found;
 }
 
-LinphoneVideoDefinition*  Factory::findSupportedVideoDefinitionByName(const char *name) const {
+LinphoneVideoDefinition*  Factory::findSupportedVideoDefinitionByName(const std::string& name) const {
 	const bctbx_list_t *item;
 	const bctbx_list_t *supported = getSupportedVideoDefinitions();
-
+	
 	for (item = supported; item != NULL; item = bctbx_list_next(item)) {
 		LinphoneVideoDefinition *svdef = (LinphoneVideoDefinition *)bctbx_list_get_data(item);
-		if (strcmp(linphone_video_definition_get_name(svdef), name) == 0) {
+		if (linphone_video_definition_get_name(svdef) == name ) {
 			return svdef;
 		}
 	}
-
-	ms_error("Couldn't find a supported video definition for name [%s]", name);
+	
+	ms_error("Couldn't find a supported video definition for name [%s]", name.c_str());
 	return NULL;
 }
 
@@ -334,7 +334,7 @@ const std::string & Factory::getTopResourcesDir() const {
 	return mTopResourcesDir;
 }
 
-void Factory::setTopResourcesDir(const char *path) {
+void Factory::setTopResourcesDir(const std::string& path) {
 	mTopResourcesDir = path;
 }
 
@@ -349,7 +349,7 @@ const std::string & Factory::getDataResourcesDir() {
 	return mCachedDataResourcesDir;
 }
 
-void Factory::setDataResourcesDir(const char *path) {
+void Factory::setDataResourcesDir(const std::string& path) {
 	mDataResourcesDir = path;
 }
 
@@ -363,7 +363,7 @@ const std::string & Factory::getSoundResourcesDir() {
 	return mPackageSoundDir;
 }
 
-void Factory::setSoundResourcesDir(const char *path) {
+void Factory::setSoundResourcesDir(const std::string& path) {
 	mSoundResourcesDir = path;
 }
 
@@ -382,7 +382,7 @@ const std::string & Factory::getRingResourcesDir() {
 	return mPackageRingDir;
 }
 
-void Factory::setRingResourcesDir(const char *path) {
+void Factory::setRingResourcesDir(const std::string& path) {
 	mRingResourcesDir = path;
 }
 
@@ -398,7 +398,7 @@ const std::string & Factory::getImageResourcesDir() {
 	return mCachedImageResourcesDir;
 }
 
-void Factory::setImageResourcesDir(const char *path) {
+void Factory::setImageResourcesDir(const std::string& path) {
 	mImageResourcesDir = path;
 }
 
@@ -406,7 +406,7 @@ const std::string & Factory::getMspluginsDir() const {
 	return mMspluginsDir;
 }
 
-void Factory::setMspluginsDir(const char *path) {
+void Factory::setMspluginsDir(const std::string& path) {
 	mMspluginsDir = path;
 }
 
@@ -438,20 +438,20 @@ LinphoneBuffer* Factory::createBufferFromData(const uint8_t *data, size_t size) 
 	return linphone_buffer_new_from_data(data, size);
 }
 
-LinphoneBuffer* Factory::createBufferFromString(const char *data) const {
-	return linphone_buffer_new_from_string(data);
+LinphoneBuffer* Factory::createBufferFromString(const std::string& data) const {
+	return linphone_buffer_new_from_string(data.c_str());
 }
 
-LinphoneConfig* Factory::createConfig(const char *path) const {
-	return linphone_config_new(path);
+LinphoneConfig* Factory::createConfig(const std::string& path) const {
+	return linphone_config_new(path.c_str());
 }
 
-LinphoneConfig* Factory::createConfigWithFactory(const char *path, const char *factory_path) const {
-	return linphone_config_new_with_factory(path, factory_path);
+LinphoneConfig* Factory::createConfigWithFactory(const std::string& path, const std::string& factory_path) const {
+	return linphone_config_new_with_factory(path.c_str(), factory_path.c_str());
 }
 
-LinphoneConfig* Factory::createConfigFromString(const char *data) const {
-	return linphone_config_new_from_buffer(data);
+LinphoneConfig* Factory::createConfigFromString(const std::string& data) const {
+	return linphone_config_new_from_buffer(data.c_str());
 }
 
 const bctbx_list_t* Factory::getDialPlans() const {
@@ -466,8 +466,8 @@ void Factory::setUserData(void *data) {
 	mUserData = data;
 }
 
-void Factory::setLogCollectionPath(const char *path) const {
-	linphone_core_set_log_collection_path(path);
+void Factory::setLogCollectionPath(const std::string& path) const {
+	linphone_core_set_log_collection_path(path.c_str());
 }
 
 void Factory::enableLogCollection(LinphoneLogCollectionState state) const {
@@ -507,46 +507,76 @@ LinphoneXmlRpcRequestCbs* Factory::createXmlRpcRequestCbs() const {
 }
 
 bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend) const {
-	#ifdef HAVE_ADVANCED_IM
-		return TRUE;
-	#else
-		return (chatroom_backend != LinphoneChatRoomBackendFlexisipChat);
-	#endif
+#ifdef HAVE_ADVANCED_IM
+	return TRUE;
+#else
+	return (chatroom_backend != LinphoneChatRoomBackendFlexisipChat);
+#endif
 }
 
 bool_t Factory::isDatabaseStorageAvailable() const {
-	#ifdef HAVE_DB_STORAGE
-		return TRUE;
-	#else
-		return FALSE;
-	#endif
+#ifdef HAVE_DB_STORAGE
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 bool_t Factory::isImdnAvailable() const {
-	#ifdef HAVE_ADVANCED_IM
-		return TRUE;
-	#else
-		return FALSE;
-	#endif
+#ifdef HAVE_ADVANCED_IM
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }
 
 const std::string & Factory::getConfigDir(void *context) {
+	if(!mConfigDir.empty())
+		return mConfigDir;
 	mCachedConfigDir = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
 	return mCachedConfigDir;
 }
 
+bool_t Factory::isConfigDirSet() const{
+	return !mConfigDir.empty();
+}
+
+void Factory::setConfigDir(const std::string& path) {
+	mConfigDir = path;
+}
+
 const std::string & Factory::getDataDir(void *context) {
+	if(!mDataDir.empty())
+		return mDataDir;
 	mCachedDataDir = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
 	return mCachedDataDir;
 }
 
+bool_t Factory::isDataDirSet() const{
+	return !mDataDir.empty();
+}
+
+void Factory::setDataDir(const std::string& path) {
+	mDataDir = path;
+}
+
 const std::string & Factory::getDownloadDir(void *context) {
+	if(!mDownloadDir.empty())
+		return mDownloadDir;
 	mCachedDownloadDir = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
 	return mCachedDownloadDir;
 }
 
-void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
+bool_t Factory::isDownloadDirSet() const{
+	return !mDownloadDir.empty();
+}
 
+void Factory::setDownloadDir(const std::string& path) {
+	mDownloadDir = path;
+}
+
+void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
+	
 	/* Check encryptionMpdule is valid */
 	auto module = bctoolbox::EncryptionSuite::unset;
 	switch (encryptionModule) {
@@ -568,20 +598,20 @@ void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *s
 			bctbx_error("linphone_factory_set_vfs_encryption : encryptionModule %04x unknown", encryptionModule);
 			return;
 	}
-
+	
 	/* save the key */
 	if (mEvfsMasterKey != nullptr) {
 		bctbx_clean(mEvfsMasterKey->data(), mEvfsMasterKey->size());
 	}
 	mEvfsMasterKey = std::make_shared<std::vector<uint8_t>>(secret, secret+secretSize);
-
+	
 	// Set the default bctbx vfs to the encrypted one
 	bctbx_vfs_set_default(&bctoolbox::bcEncryptedVfs);
-
+	
 	// Associate the VfsEncryption class callback
 	bctoolbox::VfsEncryption::openCallbackSet([module, this](bctoolbox::VfsEncryption &settings) {
 		bctbx_debug("Encrypted VFS: Open file %s, encryption is set to %s file. Current file's encryption module is %s", settings.filenameGet().data(), encryptionSuiteString(module).data(), encryptionSuiteString(settings.encryptionSuiteGet()).data());
-
+		
 		settings.encryptionSuiteSet(module); // This call will migrate plain files to encrypted ones if needed
 		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
 			//settings.secretMaterialSet(*(mEvfsMasterKey));
@@ -596,10 +626,10 @@ LinphoneDigestAuthenticationPolicy * Factory::createDigestAuthenticationPolicy()
 
 Factory::~Factory (){
 	bctbx_list_free_with_data(mSupportedVideoDefinitions, (bctbx_list_free_func)linphone_video_definition_unref);
-
+	
 	// sqlite3 vfs is registered at factory creation, so unregister it when destroying it
 	sqlite3_bctbx_vfs_unregister();
-
+	
 	// proper cleaning of EVFS master key if any is set
 	if (mEvfsMasterKey != nullptr) {
 		bctbx_clean(mEvfsMasterKey->data(), mEvfsMasterKey->size());
