@@ -1088,6 +1088,8 @@ LINPHONE_PUBLIC const char * linphone_core_get_log_collection_path(void);
 
 /**
  * Set the path of a directory where the log files will be written for log collection.
+ * When the log collection is enable, the function will close the file with the current prefix in the old path and it will open the new file with current prefix in the new path.
+ * If you need to change the path and the file at the same time, then you should deactivate log collection with linphone_core_enable_log_collection() before doing modifications.
  * @param path The path where the log files will be written. @notnil
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_path(const char *path);
@@ -1100,6 +1102,8 @@ LINPHONE_PUBLIC const char * linphone_core_get_log_collection_prefix(void);
 
 /**
  * Set the prefix of the filenames that will be used for log collection.
+ * When the log collection is enable, the function will close the old file and it will open the new one in the current path.
+ * If you need to change the path and the file at the same time, then you should deactivate log collection with linphone_core_enable_log_collection() before doing modifications.
  * @param prefix The prefix to use for the filenames for log collection. @notnil
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_prefix(const char *prefix);
