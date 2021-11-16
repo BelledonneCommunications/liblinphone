@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include "paths-linux.h"
+#include "linphone/api/c-factory.h"
 
 // =============================================================================
 
@@ -44,19 +45,29 @@ static string getBaseDirectory () {
 	return base;
 }
 
-string SysPaths::getDataPath (void *) {
-	static string dataPath = getBaseDirectory() + "/.local/share/linphone/";
+string SysPaths::getDataPath (void * context) {
+	static std::string dataPath;
+	if( linphone_factory_is_data_dir_set(linphone_factory_get()) )
+		dataPath = linphone_factory_get_data_dir(linphone_factory_get(), context);
+	else
+		dataPath = getBaseDirectory() + "/.local/share/linphone/";
 	return dataPath;
 }
 
-string SysPaths::getConfigPath (void *) {
-	static string configPath = getBaseDirectory() + "/.config/linphone/";
+string SysPaths::getConfigPath (void *context) {
+	static std::string configPath;
+	if( linphone_factory_is_config_dir_set(linphone_factory_get()) )
+		configPath = linphone_factory_get_config_dir(linphone_factory_get(), context);
+	else
+		configPath = getBaseDirectory() + "/.config/linphone/";
 	return configPath;
 }
 
-string SysPaths::getDownloadPath (void *) {
-	static string downloadPath = getBaseDirectory() + "/.local/share/linphone/";
-	return downloadPath;
+string SysPaths::getDownloadPath (void *context) {
+	if( linphone_factory_is_download_dir_set(linphone_factory_get()) )
+		return linphone_factory_get_download_dir(linphone_factory_get(), context);
+	else
+		return getDataPath(NULL);
 }
 
 LINPHONE_END_NAMESPACE

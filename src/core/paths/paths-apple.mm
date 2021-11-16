@@ -20,6 +20,7 @@
 #import <Foundation/Foundation.h>
 
 #import "logger/logger.h"
+#import "linphone/api/c-factory.h"
 
 #import "paths-apple.h"
 
@@ -32,54 +33,61 @@ LINPHONE_BEGIN_NAMESPACE
 
 std::string SysPaths::getDataPath (void *context) {
 	NSString *fullPath;
-	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
-		const char* appGroupId = static_cast<const char *>(context);
-		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
-
-		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingString:@"/Library/Application Support/linphone/"];
-	} else {
-		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-		NSString *writablePath = [paths objectAtIndex:0];
-		fullPath = [writablePath stringByAppendingString:@"/linphone/"];
-	}
-
-	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
-		NSError *error;
-		lInfo() << "Data path " << fullPath.UTF8String << " does not exist, creating it.";
-		if (![[NSFileManager defaultManager] createDirectoryAtPath:fullPath
-									   withIntermediateDirectories:YES
-														attributes:nil
-															 error:&error]) {
-			lError() << "Create data path directory error: " << error.description;
+	if(linphone_factory_is_data_dir_set(linphone_factory_get()))
+		fullPath = [NSString stringWithUTF8String:linphone_factory_get_data_dir(linphone_factory_get(), context)];
+	else{
+		if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
+			const char* appGroupId = static_cast<const char *>(context);
+			NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
+	
+			NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+			fullPath = [[basePath path] stringByAppendingString:@"/Library/Application Support/linphone/"];
+		} else {
+			NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+			NSString *writablePath = [paths objectAtIndex:0];
+			fullPath = [writablePath stringByAppendingString:@"/linphone/"];
+		}
+	
+		if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
+			NSError *error;
+			lInfo() << "Data path " << fullPath.UTF8String << " does not exist, creating it.";
+			if (![[NSFileManager defaultManager] createDirectoryAtPath:fullPath
+										   withIntermediateDirectories:YES
+															attributes:nil
+																 error:&error]) {
+				lError() << "Create data path directory error: " << error.description;
+			}
 		}
 	}
-
 	return fullPath.UTF8String;
 }
 
 std::string SysPaths::getConfigPath (void *context) {
 	NSString *fullPath;
-	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
-		const char* appGroupId = static_cast<const char *>(context);
-		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
-
-		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		fullPath = [[basePath path] stringByAppendingString:@"/Library/Preferences/linphone/"];
-	} else {
-		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-		NSString *configPath = [paths objectAtIndex:0];
-		fullPath = [configPath stringByAppendingString:@"/Preferences/linphone/"];
-	}
-
-	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
-		NSError *error;
-		lInfo() << "Config path " << fullPath.UTF8String << " does not exist, creating it.";
-		if (![[NSFileManager defaultManager] createDirectoryAtPath:fullPath
-									   withIntermediateDirectories:YES
-														attributes:nil
-															 error:&error]) {
-			lError() << "Create config path directory error: " << error.description;
+	if(linphone_factory_is_config_dir_set(linphone_factory_get()))
+		fullPath = [NSString stringWithUTF8String:linphone_factory_get_config_dir(linphone_factory_get(), context)];
+	else{
+		if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
+			const char* appGroupId = static_cast<const char *>(context);
+			NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
+	
+			NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+			fullPath = [[basePath path] stringByAppendingString:@"/Library/Preferences/linphone/"];
+		} else {
+			NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+			NSString *configPath = [paths objectAtIndex:0];
+			fullPath = [configPath stringByAppendingString:@"/Preferences/linphone/"];
+		}
+	
+		if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
+			NSError *error;
+			lInfo() << "Config path " << fullPath.UTF8String << " does not exist, creating it.";
+			if (![[NSFileManager defaultManager] createDirectoryAtPath:fullPath
+										   withIntermediateDirectories:YES
+															attributes:nil
+																 error:&error]) {
+				lError() << "Create config path directory error: " << error.description;
+			}
 		}
 	}
 
@@ -87,43 +95,47 @@ std::string SysPaths::getConfigPath (void *context) {
 }
 
 std::string SysPaths::getDownloadPath (void *context) {
-	/*
-	 Apple clears Cache when the disk is full. So use "Library/Images/" as the download path.
-	 */
-	NSString *oldFullPath;
 	NSString *fullPath;
-	NSFileManager *fileManager = [NSFileManager defaultManager];
-	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
-		const char* appGroupId = static_cast<const char *>(context);
-		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
-
-		NSURL *basePath = [fileManager containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
-		oldFullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
-		fullPath = [[basePath path] stringByAppendingString:@"/Library/Images/"];
-	} else {
-		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-		NSString *configPath = [paths objectAtIndex:0];
-		oldFullPath = [configPath stringByAppendingString:@"/"];
-		fullPath = [oldFullPath stringByReplacingOccurrencesOfString:@"Caches" withString:@"Images"];
-	}
-
-	if (![fileManager fileExistsAtPath:fullPath]) {
-		NSError *error;
-		lInfo() << "Download path " << fullPath.UTF8String << " does not exist, creating it.";
-		if (![fileManager createDirectoryAtPath:fullPath
-									   withIntermediateDirectories:YES
-														attributes:nil
-															 error:&error]) {
-			lError() << "Create download path directory error: " << error.description;
-			return fullPath.UTF8String;
+	if(linphone_factory_is_download_dir_set(linphone_factory_get()))
+		fullPath = [NSString stringWithUTF8String:linphone_factory_get_download_dir(linphone_factory_get(), context)];
+	else{
+/*
+ Apple clears Cache when the disk is full. So use "Library/Images/" as the download path.
+ */
+		NSString *oldFullPath;
+		NSFileManager *fileManager = [NSFileManager defaultManager];
+		if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
+			const char* appGroupId = static_cast<const char *>(context);
+			NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
+	
+			NSURL *basePath = [fileManager containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+			oldFullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
+			fullPath = [[basePath path] stringByAppendingString:@"/Library/Images/"];
+		} else {
+			NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+			NSString *configPath = [paths objectAtIndex:0];
+			oldFullPath = [configPath stringByAppendingString:@"/"];
+			fullPath = [oldFullPath stringByReplacingOccurrencesOfString:@"Caches" withString:@"Images"];
 		}
 
-		NSArray *images = [fileManager contentsOfDirectoryAtPath:oldFullPath error:NULL];
-		for (NSString *image in images)
-		{
-			[fileManager copyItemAtPath:[oldFullPath stringByAppendingPathComponent:image] toPath:[fullPath stringByAppendingPathComponent:image] error:nil];
+		if (![fileManager fileExistsAtPath:fullPath]) {
+			NSError *error;
+			lInfo() << "Download path " << fullPath.UTF8String << " does not exist, creating it.";
+			if (![fileManager createDirectoryAtPath:fullPath
+										   withIntermediateDirectories:YES
+															attributes:nil
+																 error:&error]) {
+				lError() << "Create download path directory error: " << error.description;
+				return fullPath.UTF8String;
+			}
+	
+			NSArray *images = [fileManager contentsOfDirectoryAtPath:oldFullPath error:NULL];
+			for (NSString *image in images)
+			{
+				[fileManager copyItemAtPath:[oldFullPath stringByAppendingPathComponent:image] toPath:[fullPath stringByAppendingPathComponent:image] error:nil];
+			}
+			lInfo() << "Download path migration done.";
 		}
-		lInfo() << "Download path migration done.";
 	}
 
 	return fullPath.UTF8String;
