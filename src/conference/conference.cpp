@@ -84,7 +84,7 @@ bool Conference::addParticipant (std::shared_ptr<Call> call) {
 bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
-		lInfo() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the Conference";
+		lWarning() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the Conference";
 		return false;
 	}
 	participant = Participant::create(this,participantAddress);
@@ -212,7 +212,7 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 		}
 	}
 
-	lInfo() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with address " << addr.asString();
+	lWarning() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with address " << addr.asString();
 	return nullptr;
 }
 
@@ -222,7 +222,7 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 		if (participant->getSession() == session)
 			return participant;
 	}
-	lInfo() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with call session " << session;
+	lWarning() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with call session " << session;
 
 	return nullptr;
 }
@@ -236,7 +236,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << this << " with call session " << session;
+	lWarning() << "Unable to find participant device in conference " << this << " with call session " << session;
 
 	return nullptr;
 }

@@ -873,18 +873,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		if (call) {
 			call->setConference(nullptr);
 		}
-	}
 
-	// If conference is in termination pending state, terminate method is already taking care of state kicking participants out of the conference
-	// No need to kick out last remainign participant as it will be done soon
-	if ((getState() != ConferenceInterface::State::TerminationPending) && (!preserveSession)) {
 		/*
 		 * Handle the case where only the local participant and a unique remote participant are remaining.
 		 * In this case, if the session linked to the participant has to be preserved after the conference, then destroy the conference and let these two participants to connect directly thanks to a simple call.
 		 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 		 */
-
-		if (!confParams->oneParticipantConferenceEnabled() && (getParticipantCount() == 1)) {
+		if (!confParams->oneParticipantConferenceEnabled() && (getParticipantCount() == 1) && (!preserveSession)) {
 			std::shared_ptr<LinphonePrivate::Participant> remainingParticipant = participants.front();
 			if (remainingParticipant->isAdmin()) setParticipantAdminStatus(remainingParticipant, false);
 			const bool lastParticipantPreserveSession = remainingParticipant->getPreserveSession();
@@ -1476,28 +1471,31 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 }
 
 int RemoteConference::terminate () {
-	switch (state) {
+	auto savedState = state;
+	auto savedFocusCall = m_focusCall;
+
+	auto participantIt = participants.begin();
+	while (participantIt != participants.end()) {
+		auto participant = *participantIt;
+		participantIt++;
+		removeParticipant(participant);
+	}
+
+	switch (savedState) {
 		case ConferenceInterface::State::Created:
 		case ConferenceInterface::State::CreationPending:
 		case ConferenceInterface::State::CreationFailed:
-			if (m_focusCall) {
-				m_focusCall->setConference(nullptr);
-				m_focusCall->terminate();
+			if (savedFocusCall) {
+				savedFocusCall->setConference(nullptr);
+				savedFocusCall->terminate();
 			}
-			setState(ConferenceInterface::State::TerminationPending);
-			break;
-		case ConferenceInterface::State::TerminationPending:
-			if (m_focusCall) {
-				m_focusCall->setConference(nullptr);
-				// Do not terminate focus call when terminating the remote conference
-				// This is required because the local conference creates a remote conference for every participant and the call from the participant to the local conference is the focus call
-				m_focusCall = nullptr;
-			}
-			Conference::terminate();
-			setState(ConferenceInterface::State::Terminated);
 			break;
 		default:
 			break;
+	}
+
+	if ((state != ConferenceInterface::State::Terminated) && (state != ConferenceInterface::State::Deleted)) {
+		setState(ConferenceInterface::State::TerminationPending);
 	}
 	return 0;
 }
@@ -1763,7 +1761,14 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			}
 			#endif // HAVE_ADVANCED_IM
 			resetLastNotify();
-			terminate();
+			if (m_focusCall) {
+				m_focusCall->setConference(nullptr);
+				// Do not terminate focus call when terminating the remote conference
+				// This is required because the local conference creates a remote conference for every participant and the call from the participant to the local conference is the focus call
+				m_focusCall = nullptr;
+			}
+			Conference::terminate();
+			setState(ConferenceInterface::State::Terminated);
 			break;
 			break;
 		case ConferenceInterface::State::Deleted:
