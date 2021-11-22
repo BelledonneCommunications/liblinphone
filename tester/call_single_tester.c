@@ -3676,9 +3676,11 @@ static void call_rejected_because_wrong_credentials_with_params(const char* user
 
 	BC_ASSERT_TRUE(wait_for(marie->lc,marie->lc,&marie->stat.number_of_LinphoneCallError,1));
 
+	result = wait_for(marie->lc, marie->lc, &marie->stat.number_of_auth_info_requested, 2);
 	if (enable_auth_req_cb) {
-		BC_ASSERT_EQUAL(marie->stat.number_of_auth_info_requested, 2, int, "%d");
+		BC_ASSERT_TRUE(result);
 	}
+
 	/*to make sure unregister will work*/
 	linphone_core_clear_all_auth_info(marie->lc);
 	linphone_core_add_auth_info(marie->lc,good_auth_info);
