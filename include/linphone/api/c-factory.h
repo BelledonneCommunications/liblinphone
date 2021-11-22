@@ -306,6 +306,14 @@ LINPHONE_PUBLIC LinphoneVideoDefinition * linphone_factory_create_video_definiti
 LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory);
 
 /**
+ * Get the recommended list of standard video definitions.
+ * This list is suitable for a widest set of hardware for all video codec implementations, and thus excludes some very high definition formats that are unlikely to work unless specific hardware or codecs are used.
+ * @param factory #LinphoneFactory singleton object @notnil
+ * @return A list of video definitions. \bctbx_list{LinphoneVideoDefinition} @maybenil
+ */
+LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_recommended_video_definitions(const LinphoneFactory *factory);
+
+/**
  * Get the top directory where the resources are located.
  * @param factory #LinphoneFactory object @notnil
  * @return The path to the top directory where the resources are located @maybenil

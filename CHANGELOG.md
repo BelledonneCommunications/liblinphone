@@ -12,6 +12,8 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ### Added
 - LinphoneRecorder API added to record voice messages, that can later be sent in a LinphoneChatMessage.
+- A recommended video definitions list that filter the supported video definitions list.
+- 1080p is added to the list of supported definitions for Android and iOS targets.
 
 ### Changed
 - Java wrapper no longer catches app exceptions that happen in listener

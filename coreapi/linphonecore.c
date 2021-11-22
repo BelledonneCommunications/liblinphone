@@ -2146,7 +2146,7 @@ static void video_config_read(LinphoneCore *lc){
 	if (str && str[0] != 0) linphone_core_set_preferred_video_definition_by_name(lc, str);
 
 	str = linphone_config_get_string(lc->config, "video", "preview_size", NULL);
-	if (str && str[0] != 0) linphone_core_set_preview_video_size_by_name(lc, str);
+	if (str && str[0] != 0) linphone_core_set_preview_video_definition_by_name(lc, str);
 
 	linphone_core_set_preferred_framerate(lc,linphone_config_get_float(lc->config,"video","framerate",0));
 

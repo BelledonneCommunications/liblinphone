@@ -219,6 +219,10 @@ const bctbx_list_t * linphone_factory_get_supported_video_definitions(const Linp
 	return Factory::toCpp(factory)->getSupportedVideoDefinitions();
 }
 
+const bctbx_list_t * linphone_factory_get_recommended_video_definitions(const LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->getRecommendedVideoDefinitions();
+}
+
 LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
 	return Factory::toCpp(factory)->findSupportedVideoDefinition(width, height);
 }

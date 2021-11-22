@@ -58,7 +58,7 @@ static void _video_call_with_explicit_bandwidth_limit(bool_t bandwidth_is_specif
 
 	/*set the video preset to custom so the video quality controller won't update the video size*/
 	linphone_core_set_video_preset(marie->lc, "custom");
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); /*It would result in approxy 350kbit/s VP8 output without the bandwidth limit.*/
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga"); /*It would result in approxy 350kbit/s VP8 output without the bandwidth limit.*/
 
 	linphone_core_invite_address(marie->lc, pauline->identity);
 	
@@ -138,7 +138,7 @@ static void video_call_with_thin_congestion(void){
 	/*set the video preset to custom so the video quality controller won't update the video size*/
 	linphone_core_set_video_preset(marie->lc, "custom");
 	linphone_core_set_preferred_framerate(marie->lc, 15);
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga");
 	linphone_core_set_upload_bandwidth(marie->lc, 430); /*It will result in approxy 350kbit/s VP8 output*/
 
 	simparams.mode = OrtpNetworkSimulatorOutbound;
@@ -252,7 +252,7 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int f
 		linphone_core_set_video_policy(marie->lc, &pol);
 		linphone_core_set_video_policy(pauline->lc, &pol);
 
-		linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+		linphone_core_set_preferred_video_definition_by_name(marie->lc, resolution);
 		simparams.mode = OrtpNetworkSimulatorOutbound;
 		simparams.enabled = TRUE;
 		simparams.max_bandwidth = (float)bandwidth;
@@ -356,7 +356,7 @@ static void video_call_expected_size_for_specified_bandwidth_with_congestion(int
 			linphone_core_set_video_policy(marie->lc, &pol);
 			linphone_core_set_video_policy(pauline->lc, &pol);
 
-			linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+			linphone_core_set_preferred_video_definition_by_name(marie->lc, resolution);
 
 			simparams.mode = OrtpNetworkSimulatorOutbound;
 			simparams.enabled = TRUE;
@@ -430,7 +430,7 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 			linphone_core_set_video_policy(marie->lc, &pol);
 			linphone_core_set_video_policy(pauline->lc, &pol);
 
-			linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
+			linphone_core_set_preferred_video_definition_by_name(marie->lc, resolution);
 
 			simparams.mode = OrtpNetworkSimulatorOutbound;
 			simparams.enabled = TRUE;
@@ -579,7 +579,7 @@ static void call_with_retransmissions_on_nack(void) {
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
 	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga"); 
 	linphone_core_set_download_bandwidth(marie->lc, 350); /*to make enough room for rapid avpf feedback*/
 	
 	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
@@ -649,7 +649,7 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 	linphone_core_set_video_policy(pauline->lc, &pol);
 
 	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga");
 	linphone_core_set_download_bandwidth(marie->lc, 350); /*to make enough room for rapid avpf feedback*/
 	
 	
@@ -720,7 +720,7 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	simparams.loss_rate = 70;
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
 	
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga");
 	linphone_core_set_download_bandwidth(marie->lc, 350); /*to make enough room for rapid avpf feedback*/
 	
 
