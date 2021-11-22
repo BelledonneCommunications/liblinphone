@@ -735,8 +735,8 @@ void video_call_base_3(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
 	}
 
-	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
-	linphone_core_set_preferred_video_size_by_name(callee->lc, "QVGA");
+	linphone_core_set_preferred_video_definition_by_name(caller->lc, "QVGA");
+	linphone_core_set_preferred_video_definition_by_name(callee->lc, "QVGA");
 
 	linphone_core_set_video_device(caller->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_set_video_device(callee->lc, "Mire: Mire (synthetic moving picture)");
@@ -2295,8 +2295,8 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
 	}
 
-	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
-	linphone_core_set_preferred_video_size_by_name(callee->lc, "QVGA");
+	linphone_core_set_preferred_video_definition_by_name(caller->lc, "QVGA");
+	linphone_core_set_preferred_video_definition_by_name(callee->lc, "QVGA");
 
 	linphone_core_set_video_device(caller->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_set_video_device(callee->lc, "Mire: Mire (synthetic moving picture)");

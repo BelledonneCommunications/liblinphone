@@ -3403,6 +3403,16 @@ LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition_by_name(Linpho
 LINPHONE_PUBLIC void linphone_core_set_preview_video_definition(LinphoneCore *core, LinphoneVideoDefinition *video_definition);
 
 /**
+ * * Set the video definition for the captured (preview) video by its name.
+ * Call #linphone_factory_get_supported_video_definitions() to have a list of supported video definitions.
+ * Video resolution names are: qcif, svga, cif, vga, 4cif, svga ...
+ * @ingroup media_parameters
+ * @param core The #LinphoneCore object @notnil
+ * @param name The name of the definition to set @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_set_preview_video_definition_by_name(LinphoneCore *core, const char *name);
+
+/**
  * Get the definition of the captured video.
  * @param core #LinphoneCore object @notnil
  * @return The captured #LinphoneVideoDefinition if it was previously set by linphone_core_set_preview_video_definition(), otherwise a 0x0 LinphoneVideoDefinition. @maybenil
@@ -7044,7 +7054,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_preview_video_size(Li
  *
  * Video resolution names are: qcif, svga, cif, vga, 4cif, svga ...
  * @ingroup media_parameters
- * @deprecated 28/03/2017 Use linphone_factory_create_video_definition_from_name() and linphone_core_set_preview_video_definition() instead
+ * @deprecated 28/03/2017 Use linphone_core_set_preview_video_definition_by_name() instead
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_preview_video_size_by_name(LinphoneCore *core, const char *name);

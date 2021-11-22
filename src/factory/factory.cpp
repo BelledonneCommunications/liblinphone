@@ -80,9 +80,7 @@ void Factory::_DestroyingCb(void) {
 	linphone_video_definition_new(width, height, name))
 
 void  Factory::initializeSupportedVideoDefinitions(Factory *factory) {
-#if !defined(__ANDROID__) && !TARGET_OS_IPHONE
 	ADD_SUPPORTED_VIDEO_DEFINITION(factory, MS_VIDEO_SIZE_1080P_W, MS_VIDEO_SIZE_1080P_H, "1080p");
-#endif
 #if !defined(__ANDROID__) && !TARGET_OS_MAC /*limit to most common sizes because mac video API cannot list supported resolutions*/
 	ADD_SUPPORTED_VIDEO_DEFINITION(factory, MS_VIDEO_SIZE_UXGA_W, MS_VIDEO_SIZE_UXGA_H, "uxga");
 	ADD_SUPPORTED_VIDEO_DEFINITION(factory, MS_VIDEO_SIZE_SXGA_MINUS_W, MS_VIDEO_SIZE_SXGA_MINUS_H, "sxga-");
@@ -302,6 +300,18 @@ LinphoneVideoDefinition*  Factory::createVideoDefinitionFromName(const std::stri
 
 const bctbx_list_t* Factory::getSupportedVideoDefinitions() const {
 	return mSupportedVideoDefinitions;
+}
+
+const bctbx_list_t* Factory::getRecommendedVideoDefinitions() const {
+	bctbx_list_t * recommended = NULL;
+	for(const bctbx_list_t *supported = getSupportedVideoDefinitions(); supported ; supported = bctbx_list_next(supported)){
+		LinphoneVideoDefinition* def = static_cast<LinphoneVideoDefinition*>(supported->data);
+#if defined(__ANDROID__) || TARGET_OS_IPHONE	// On mobile, we recommend a format of max 720p
+		if( def->width*def->height <= MS_VIDEO_SIZE_720P_W * MS_VIDEO_SIZE_720P_H)
+#endif
+			recommended = bctbx_list_append(recommended, linphone_video_definition_ref(def));
+	}
+	return recommended;
 }
 
 LinphoneVideoDefinition*  Factory::findSupportedVideoDefinition(unsigned int width, unsigned int height) const {

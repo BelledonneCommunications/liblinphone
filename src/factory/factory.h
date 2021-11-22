@@ -137,6 +137,7 @@ public:
 	LinphoneVideoDefinition * createVideoDefinitionFromName(const std::string& name) const;
 	
 	const bctbx_list_t * getSupportedVideoDefinitions() const;
+	const bctbx_list_t* getRecommendedVideoDefinitions()const;	// Return a list of ref on supported video definition as this list is not updatable.
 	
 	LinphoneVideoDefinition * findSupportedVideoDefinition(unsigned int width, unsigned int height) const;
 	
