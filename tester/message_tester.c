@@ -1358,7 +1358,7 @@ static void transfer_message_auto_download_existing_file(void) {
 	LinphoneChatRoom* chat_room;
 	LinphoneChatMessage* msg;
 	const char *filepath = "sounds/sintel_trailer_opus_h264.mkv";
-	const char *first_received_file_name = NULL;
+	char *first_received_file_name = NULL;
 
 	/* Globally configure an http file transfer server. */
 	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
@@ -1374,12 +1374,13 @@ static void transfer_message_auto_download_existing_file(void) {
 	BC_ASSERT_PTR_NULL(first_received_file_name);
 		
 	if (marie->stat.last_received_chat_message) {
-		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie->stat.last_received_chat_message);
 		BC_ASSERT_PTR_NOT_NULL(contents);
 		BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 		BC_ASSERT_PTR_NOT_NULL(content);
-		first_received_file_name = linphone_content_get_file_path(content);
+		BC_ASSERT_TRUE(linphone_content_is_file(content));
+		first_received_file_name = bctbx_strdup(linphone_content_get_file_path(content));
 	}
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
@@ -1393,11 +1394,12 @@ static void transfer_message_auto_download_existing_file(void) {
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000));
 	if (marie->stat.last_received_chat_message) {
-		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie->stat.last_received_chat_message);
 		BC_ASSERT_PTR_NOT_NULL(contents);
 		BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 		BC_ASSERT_PTR_NOT_NULL(content);
+		BC_ASSERT_TRUE(linphone_content_is_file(content));
 		BC_ASSERT_STRING_NOT_EQUAL(first_received_file_name, linphone_content_get_file_path(content));
 	}
 
@@ -1405,6 +1407,7 @@ static void transfer_message_auto_download_existing_file(void) {
 
 	// Give some time for IMDN's 200 OK to be received so it doesn't leak
 	wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+	bctbx_free(first_received_file_name);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }

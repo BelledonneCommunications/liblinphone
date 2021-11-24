@@ -338,10 +338,11 @@ void linphone_content_set_authTag (LinphoneContent *content, const char *tag, co
 
 const char *linphone_content_get_file_path (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
-	if (c->isFile())
+	if (c->isFile()) {
 		return L_STRING_TO_C(static_cast<const LinphonePrivate::FileContent *>(c)->getFilePath());
-	else if (c->isFileTransfer())
+	} else if (c->isFileTransfer()) {
 		return L_STRING_TO_C(static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFilePath());
+	}
 	return L_STRING_TO_C(content->cache.file_path);
 }
 
@@ -357,10 +358,12 @@ char *linphone_content_get_plain_file_path (const LinphoneContent *content) {
 
 void linphone_content_set_file_path (LinphoneContent *content, const char *file_path) {
 	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
-	if (c->isFile())
+	if (c->isFile()) {
 		static_cast<LinphonePrivate::FileContent *>(c)->setFilePath(L_C_TO_STRING(file_path));
-	else if (c->isFileTransfer())
+	}
+	else if (c->isFileTransfer()) {
 		static_cast<LinphonePrivate::FileTransferContent *>(c)->setFilePath(L_C_TO_STRING(file_path));
+	}
 	content->cache.file_path = L_C_TO_STRING(file_path);
 }
 
@@ -400,12 +403,12 @@ bool_t linphone_content_is_icalendar (const LinphoneContent *content) {
 
 bool_t linphone_content_is_file (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
-	return c->isFile(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list
+	return c->isFile();
 }
 
 bool_t linphone_content_is_file_transfer (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
-	return c->isFileTransfer(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list
+	return c->isFileTransfer();
 }
 
 bool_t linphone_content_is_file_encrypted (const LinphoneContent *content) {
