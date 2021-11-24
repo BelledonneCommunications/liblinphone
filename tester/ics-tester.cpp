@@ -264,12 +264,12 @@ static void send_conference_invitations(void) {
 		}
 
 		// Check that the core can retrieve the conference info list on DB
-		bctbx_list_t *conf_info_list = linphone_core_get_conference_information_list(laure->lc, FALSE);
+		bctbx_list_t *conf_info_list = linphone_core_get_conference_information_list(laure->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(conf_info_list), 1, int, "%d");
 		bctbx_list_free_with_data(conf_info_list, (bctbx_list_free_func)linphone_conference_info_unref);
 
 		// Check that specifying the future parameter to TRUE returns no conference info
-		bctbx_list_t *conf_info_list_future = linphone_core_get_conference_information_list(laure->lc, TRUE);
+		bctbx_list_t *conf_info_list_future = linphone_core_get_future_conference_information_list(laure->lc);
 		BC_ASSERT_PTR_NULL(conf_info_list_future);
 	}
 

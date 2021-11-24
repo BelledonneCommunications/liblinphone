@@ -8794,7 +8794,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConfe
 	bctbx_list_free(participants_copy);
 }
 
-bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core, bool_t only_future) {
+static bctbx_list_t *get_conference_information_list(LinphoneCore *core, bool_t only_future) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	auto list = mainDb->getConferenceInfos(only_future);
@@ -8808,4 +8808,12 @@ bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core, 
 #else
 	return NULL;
 #endif
+}
+
+bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core) {
+	return get_conference_information_list(core, FALSE);
+}
+
+bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core) {
+	return get_conference_information_list(core, TRUE);
 }

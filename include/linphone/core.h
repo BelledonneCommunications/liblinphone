@@ -5972,13 +5972,20 @@ LINPHONE_PUBLIC long linphone_core_get_default_ephemeral_lifetime(const Linphone
 LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_information, const char *text);
 
 /**
- * Retrieve the list of conference information on DB
+ * Retrieve the list of conference information on DB.
  * @param core #LinphoneCore object. @notnil
- * @param only_future TRUE to retrieve the list of conference information only happening in the future, FALSE to retrieve them all
  * @return The list of conference infos \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
  * @ingroup conference
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core, bool_t only_future);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core);
+
+/**
+ * Retrieve the list of future conference information on DB.
+ * @param core #LinphoneCore object. @notnil
+ * @return The list of future conference infos \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core);
 
 /************ */
 /* DEPRECATED */
