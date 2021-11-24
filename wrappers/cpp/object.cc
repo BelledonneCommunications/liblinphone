@@ -44,13 +44,12 @@ Object::~Object() {
 }
 
 void Object::unsetData(const std::string &key) {
-	map<string,void *> userData = getUserData();
-	map<string,void *>::iterator it = userData.find(key);
-	if (it != userData.end()) userData.erase(it);
+	map<string,void *> &userData = getUserData();
+	userData.erase(key);
 }
 
 bool Object::dataExists(const std::string &key) {
-	map<string,void *> userData = getUserData();
+	map<string,void *> &userData = getUserData();
 	return userData.find(key) != userData.end();
 }
 
