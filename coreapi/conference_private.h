@@ -368,6 +368,8 @@ public:
 
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
+	void setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> & session);
+
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM

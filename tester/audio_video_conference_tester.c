@@ -361,8 +361,10 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	LinphoneConference* l_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(l_conference);
-	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),2, int, "%d");
+	if (l_conference) {
+		BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),2, int, "%d");
+	}
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
@@ -2207,9 +2209,9 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 			BC_ASSERT_TRUE(strcmp(new_subject, linphone_conference_get_subject(conference)) == 0);
 		}
 	}
-    bctbx_list_free(all_manangers_in_conf);
-    
-    // need time to finish all communications
+	bctbx_list_free(all_manangers_in_conf);
+
+	// need time to finish all communications
 	wait_for_list(lcs, NULL,1, 5000);
 
 	terminate_conference(participants, marie, NULL, (LinphoneCoreManager*)focus);
@@ -10050,7 +10052,7 @@ static void video_conference_created_by_merging_video_calls_with_active_speaker_
 test_t audio_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference notify speaking device", simple_conference_notify_speaking_device),
-	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
+	TEST_NO_TAG("Simple conference established before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 	TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),
 	TEST_NO_TAG("Simple conference with participant removal from not admin", simple_conference_with_participant_removal_from_not_admin),

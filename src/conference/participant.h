@@ -117,7 +117,7 @@ protected:
 	std::shared_ptr<CallSession> createSession (const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
 
 	// TODO: Delete
-	// Temporary method to unify audio video conference and conference coded for group chats
+	// Temporary method to unify audio video conference and conference codes for group chats
 	std::shared_ptr<CallSession> createSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
 	inline void setSession (std::shared_ptr<CallSession> callSession) { session = callSession; }
 	inline std::shared_ptr<CallSession> getSession () const { return session; }

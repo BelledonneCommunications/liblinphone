@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2019 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -9,9 +9,7 @@
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY{
-}
- without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -258,7 +256,7 @@ void Account::setErrorInfo (LinphoneErrorInfo *errorInfo) {
 	mErrorInfo = errorInfo;
 }
 
-void Account::setContactAddress (LinphoneAddress *contact) {
+void Account::setContactAddress (const LinphoneAddress *contact) {
 	if (mContactAddress) {
 		linphone_address_unref(mContactAddress);
 		mContactAddress = nullptr;
@@ -269,7 +267,7 @@ void Account::setContactAddress (LinphoneAddress *contact) {
 	setContactAddressWithoutParams(contact);
 }
 
-void Account::setContactAddressWithoutParams (LinphoneAddress *contact) {
+void Account::setContactAddressWithoutParams (const LinphoneAddress *contact) {
 	if (mContactAddressWithoutParams) {
 		linphone_address_unref(mContactAddressWithoutParams);
 		mContactAddressWithoutParams = nullptr;

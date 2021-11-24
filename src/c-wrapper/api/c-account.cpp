@@ -102,6 +102,10 @@ LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account) 
 	return Account::toCpp(account)->getContactAddress();
 }
 
+void linphone_account_set_contact_address(LinphoneAccount *account, const LinphoneAddress *addr) {
+	return Account::toCpp(account)->setContactAddress(addr);
+}
+
 LinphoneRegistrationState linphone_account_get_state(LinphoneAccount *account) {
 	return Account::toCpp(account)->getState();
 }

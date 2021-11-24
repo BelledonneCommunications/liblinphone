@@ -161,6 +161,16 @@ LINPHONE_PUBLIC LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccou
 **/
 LINPHONE_PUBLIC LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account);
 
+
+/**
+ * Set the contact address for the account.
+ * A client application should not use this function, as the Contact address is provided by the registrar
+ * in the 200 Ok. This function is mainly intended for server applications.
+ * @param account The #LinphoneAccount object. @notnil
+ * @param addr a #LinphoneAddress to use as contact. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_set_contact_address(LinphoneAccount *account, const LinphoneAddress *addr);
+
 /**
  * Get the registration state of the given account.
  * @param account The #LinphoneAccount object. @notnil

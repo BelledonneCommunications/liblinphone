@@ -563,6 +563,10 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				} else if (remoteContactAddress.hasParam("isfocus")) {
 					// Check if the request was sent by the focus (remote conference)
 					createRemoteConference(session);
+					auto conference = getConference() ? MediaConference::Conference::toCpp(getConference()) : nullptr;
+					if (conference && conference->getState() == ConferenceInterface::State::CreationPending) {
+						conference->finalizeCreation();
+					}
 				}
 			}
 		}
@@ -599,26 +603,51 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					time_t creationTime = time(nullptr);
 					conference->notifyParticipantAdded(creationTime, false, conference->getMe());
 				}
-			} else if (op && op->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-				Address remoteContactAddress(remoteContactAddressStr);
-				ms_free(remoteContactAddressStr);
+			} else if (op) {
 
-				// Check if the request was sent by the focus
-				if (remoteContactAddress.hasParam("isfocus")) {
-					createRemoteConference(session);
-				} else if (!confId.empty()) {
-					auto localAddress = session->getContactAddress();
-					if (localAddress.isValid()) {
-						ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
-						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
-						if (conference) {
-							setConference(conference->toC());
-							reenterLocalConference(session);
-							conference->addParticipantDevice(getSharedFromThis());
+				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
+				if (!op->getTo().empty() && conference) {
+					// If the call is for a conference stored in the core, then add call to conference once ICE negotiations are terminated
+					if (conference) {
+						bool iceNegotiationOngoing = false;
+						const auto & remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
+						if (remoteParams->audioEnabled()) {
+							auto audioStats = static_pointer_cast<MediaSession>(session)->getAudioStats();
+							auto iceState = linphone_call_stats_get_ice_state(audioStats);
+							iceNegotiationOngoing |= (iceState == LinphoneIceStateInProgress);
+							linphone_call_stats_unref(audioStats);
 						}
-					} else {
-						lError() << "Call " << this << " cannot be added to conference with ID " << confId << " because the contact address has not been retrieved";
+						if (remoteParams->videoEnabled()) {
+							auto videoStats = static_pointer_cast<MediaSession>(session)->getVideoStats();
+							auto iceState = linphone_call_stats_get_ice_state(videoStats);
+							iceNegotiationOngoing |= (iceState == LinphoneIceStateInProgress);
+							linphone_call_stats_unref(videoStats);
+						}
+						if (!iceNegotiationOngoing || !!!linphone_config_get_int(linphone_core_get_config(lc), "sip", "update_call_when_ice_completed", true)){
+							conference->addParticipant(getSharedFromThis());
+						}
+					}
+				} else if (op->getRemoteContactAddress()) {
+					char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
+					Address remoteContactAddress(remoteContactAddressStr);
+					ms_free(remoteContactAddressStr);
+
+					// Check if the request was sent by the focus
+					if (remoteContactAddress.hasParam("isfocus")) {
+						createRemoteConference(session);
+					} else if (!confId.empty()) {
+						auto localAddress = session->getContactAddress();
+						if (localAddress.isValid()) {
+							ConferenceId localConferenceId = ConferenceId(localAddress, localAddress);
+							conference = getCore()->findAudioVideoConference(localConferenceId, false);
+							if (conference) {
+								setConference(conference->toC());
+								reenterLocalConference(session);
+								conference->addParticipantDevice(getSharedFromThis());
+							}
+						} else {
+							lError() << "Call " << this << " cannot be added to conference with ID " << confId << " because the contact address has not been retrieved";
+						}
 					}
 				}
 			}
@@ -639,7 +668,15 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 
 	const auto & conference = getCore()->findAudioVideoConference(conferenceId, false);
 
-	if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
+	if (conference) {
+		lInfo() << "Attaching call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") to conference " << conference->getConferenceAddress() << " ID " << conferenceId;
+		setConference(conference->toC());
+
+		std::shared_ptr<MediaConference::RemoteConference> remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+		if (remoteConference) {
+			remoteConference->setMainSession(session);
+		}
+	} else {
 		auto confParams = ConferenceParams::create(getCore()->getCCore());
 		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 		const auto confLayout = MediaSession::computeConferenceLayout(rmd);
@@ -649,6 +686,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 		confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
 
 		// It is expected that the core of the remote conference is the participant one
+		lInfo() << "Creating conference with ID " << conferenceId << " and attaching call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ")";
 		auto remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 		setConference(remoteConf->toC());
 

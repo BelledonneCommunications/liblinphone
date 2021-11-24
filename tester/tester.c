@@ -3478,6 +3478,7 @@ void end_call(LinphoneCoreManager *m1, LinphoneCoreManager *m2){
 static void linphone_conference_server_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
 	LinphoneCoreCbs *cbs = linphone_core_get_current_callbacks(lc);
 	LinphoneConferenceServer *conf_srv = (LinphoneConferenceServer *)linphone_core_cbs_get_user_data(cbs);
+	LinphoneConference *conference = linphone_core_get_conference(lc);
 
 	switch(cstate) {
 		case LinphoneCallIncomingReceived:
@@ -3486,7 +3487,6 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 
 		case LinphoneCallStreamsRunning:
 			if(linphone_call_get_conference(call) == NULL) {
-				LinphoneConference *conference = linphone_core_get_conference(lc);
 				if(conference == NULL) {
 					LinphoneConferenceParams *params = linphone_conference_params_new(lc);
 					// When local participant is disabled, the conference is not attached to the core (lc->conf_ctx)
@@ -3496,13 +3496,13 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 					conference = linphone_core_create_conference_with_params(lc, params);
 					linphone_conference_params_unref(params);
 					linphone_conference_unref(conference); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */
-				}
-				if(conference) {
 					linphone_conference_add_participant(conference, call);
-					// local participant should never be in
-					linphone_conference_leave(conference);
 				}
 				if(conf_srv->first_call == NULL) conf_srv->first_call = call;
+			}
+			if(conference) {
+				// local participant should never be in
+				linphone_conference_leave(conference);
 			}
 			break;
 

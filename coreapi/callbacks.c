@@ -305,9 +305,23 @@ static void call_received(SalCallOp *h) {
 		}
 		call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
 	}
+
+	LinphonePrivate::Call::toCpp(call)->startIncomingNotification();
+
+	if (linphone_address_has_uri_param(toAddr, "conf-id")) {
+		shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(h->getTo())), ConferenceAddress(Address(h->getTo()))));
+		// If the call is for a conference stored in the core, then accept it automatically without video
+		if (conference) {
+			auto call_params = linphone_core_create_call_params(lc, call);
+			linphone_call_params_enable_audio(call_params, TRUE);
+			linphone_call_params_enable_video(call_params, FALSE);
+			linphone_call_accept_with_params(call, call_params);
+			linphone_call_params_unref(call_params);
+		}
+	}
+
 	linphone_address_unref(fromAddr);
 	linphone_address_unref(toAddr);
-	LinphonePrivate::Call::toCpp(call)->startIncomingNotification();
 }
 
 static void call_rejected(SalCallOp *h){

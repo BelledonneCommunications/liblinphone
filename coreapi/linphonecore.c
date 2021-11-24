@@ -5830,7 +5830,7 @@ void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatPolicy *policy) {
 	}
 
 	lc->sal->enableNatHelper(!!linphone_config_get_int(lc->config, "net", "enable_nat_helper", 1));
-	lc->sal->enableAutoContacts(TRUE);
+	lc->sal->enableAutoContacts(!!linphone_config_get_int(lc->config, "net", "enable_nat_helper", 1));
 	lc->sal->useRport(!!linphone_config_get_int(lc->config, "sip", "use_rport", 1));
 	if (lc->sip_conf.contact) update_primary_contact(lc);
 }

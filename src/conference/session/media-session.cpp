@@ -1225,7 +1225,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 			getCurrentParams()->setAudioDirection(sd.getDirection());
 		} else if (sd.getType() == SalVideo) {
 			SalStreamDir streamDir = SalStreamInactive;
-			LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+			LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			if (conference) {
 				if (isInLocalConference) {
@@ -3457,7 +3457,7 @@ LinphoneStatus MediaSession::pauseFromConference () {
 			/* Give a chance to update the contact address if connectivity has changed */
 			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
 		} else if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
-			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_identity_address(d->destProxy));
+			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->destProxy));
 		}
 	} else if (d->op && d->op->getContactAddress()) {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
