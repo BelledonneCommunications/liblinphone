@@ -5583,18 +5583,6 @@ bool_t linphone_core_echo_limiter_enabled(const LinphoneCore *lc){
 	return lc->sound_conf.ea;
 }
 
-static void linphone_core_mute_audio_stream(LinphoneCore *lc, AudioStream *st, bool_t val) {
-	if (val) {
-		audio_stream_set_mic_gain(st, 0);
-	} else {
-		audio_stream_set_mic_gain_db(st, lc->sound_conf.soft_mic_lev);
-	}
-
-	if ( linphone_core_get_rtp_no_xmit_on_audio_mute(lc) ){
-		audio_stream_mute_rtp(st,val);
-	}
-}
-
 void linphone_core_mute_mic(LinphoneCore *lc, bool_t val){
 	linphone_core_enable_mic(lc, !val);
 }
@@ -5608,28 +5596,20 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	const bctbx_list_t *list;
 	const bctbx_list_t *elem;
 
+	lc->sound_conf.mic_enabled = enable; /* this is a global switch read everywhere the microphone is used. */
+	/* apply to conference and calls */
 	if (linphone_core_is_in_conference(lc)){
-		linphone_conference_mute_microphone(lc->conf_ctx, !enable);
+		linphone_conference_mute_microphone(lc->conf_ctx, linphone_conference_microphone_is_muted(lc->conf_ctx));
 	}
 	list = linphone_core_get_calls(lc);
 	for (elem = list; elem != NULL; elem = elem->next) {
 		call = (LinphoneCall *)elem->data;
-		linphone_call_set_microphone_muted(call, !enable);
-		AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-		if (astream)
-			linphone_core_mute_audio_stream(lc, astream, linphone_call_get_microphone_muted(call));
+		linphone_call_set_microphone_muted(call, linphone_call_get_microphone_muted(call));
 	}
 }
 
 bool_t linphone_core_mic_enabled(LinphoneCore *lc) {
-	LinphoneCall *call=linphone_core_get_current_call(lc);
-	if (linphone_core_is_in_conference(lc)){
-		return !linphone_conference_microphone_is_muted(lc->conf_ctx);
-	}else if (call==NULL){
-		ms_warning("%s(): No current call!", __FUNCTION__);
-		return TRUE;
-	}
-	return !linphone_call_get_microphone_muted(call);
+	return lc->sound_conf.mic_enabled;
 }
 
 bool_t linphone_core_is_rtp_muted(LinphoneCore *lc){

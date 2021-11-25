@@ -700,6 +700,8 @@ LINPHONE_PUBLIC void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t
 
 /**
  * Get microphone muted state.
+ * Note that the microphone may be disabled globally if FALSE was given to
+ * linphone_core_enable_mic().
  * @param call The #LinphoneCall object. @notnil
  * @return The microphone muted state.
  **/
@@ -707,6 +709,8 @@ LINPHONE_PUBLIC bool_t linphone_call_get_microphone_muted (const LinphoneCall *c
 
 /**
  * Set microphone muted state.
+ * The boolean value given is applied logical-and with the value given to
+ * linphone_core_enable_mic().
  * @param call The #LinphoneCall object. @notnil
  * @param muted The microphone muted state.
  **/

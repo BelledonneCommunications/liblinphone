@@ -2647,6 +2647,8 @@ static void call_paused_resumed_from_callee(void) {
 	if (!call_ok) goto end;
 	call_marie = linphone_core_get_current_call(marie->lc);
 
+	linphone_core_enable_mic(marie->lc, FALSE);
+	BC_ASSERT_FALSE(linphone_core_mic_enabled(marie->lc));
 	linphone_call_pause(call_marie);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausing,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausedByRemote,1));
@@ -2654,8 +2656,12 @@ static void call_paused_resumed_from_callee(void) {
 
 	/*stay in pause a little while in order to generate traffic*/
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
-
+	
+	BC_ASSERT_FALSE(linphone_core_mic_enabled(marie->lc));
 	linphone_call_resume(call_marie);
+	
+	linphone_core_enable_mic(marie->lc, TRUE);
+	BC_ASSERT_TRUE(linphone_core_mic_enabled(marie->lc));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
 	/*same here: wait a while for a bit of a traffic, we need to receive a RTCP packet*/

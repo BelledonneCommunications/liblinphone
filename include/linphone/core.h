@@ -3055,6 +3055,8 @@ bool_t linphone_core_agc_enabled(const LinphoneCore *core);
 
 /**
  * Enable or disable the microphone.
+ * This effectively enable or disable microphone (mute) for currently the running call or conference if any,
+ * as well as it applies to future currently running calls or conferences.
  * @param core #LinphoneCore object @notnil
  * @param enable TRUE to enable the microphone, FALSE to disable it.
  * @ingroup media_parameters

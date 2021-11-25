@@ -260,6 +260,7 @@ struct sound_config
 	bool_t ea;
 	bool_t agc;
 	bool_t disable_record_on_mute;
+	bool_t mic_enabled;
 };
 
 struct codecs_config

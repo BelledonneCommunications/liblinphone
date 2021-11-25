@@ -605,8 +605,14 @@ void MS2AudioStream::configureFlowControl(AudioStream *as, LinphoneCore *lc){
 	}
 }
 
+void MS2AudioStream::enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, bool enabled){
+	enabled = enabled && linphone_core_mic_enabled(lc);
+	if (!enabled) bctbx_message("AudioStream[%p]: mic is muted.", as);
+	audio_stream_enable_mic(as, enabled);
+}
+
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
-	audio_stream_enable_mic(as, !muted);
+	enableMicOnAudioStream(as, lc, !muted);
 	
 	float recvGain = lc->sound_conf.soft_play_lev;
 	if (static_cast<int>(recvGain)){
@@ -707,7 +713,7 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 
 void MS2AudioStream::enableMic(bool value){
 	mMicMuted = !value;
-	audio_stream_enable_mic(mStream, value);
+	enableMicOnAudioStream(mStream, getCCore(), value);
 }
 
 bool MS2AudioStream::micEnabled()const{
