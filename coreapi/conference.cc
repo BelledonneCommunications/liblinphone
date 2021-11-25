@@ -706,12 +706,23 @@ int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<Linphone
 
 int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
+	const auto audioDirection = device->getAudioDirection();
+	const auto videoDirection = device->getVideoDirection();
+	const auto textDirection = device->getTextDirection();
 	if (device->updateMedia() && ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created))) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
-		const auto & updatedParticipantSession = device->getSession();
-		lInfo() << "Re-INVITing participants because participant device " << device->getAddress().asString() << " (label " << device->getLabel() << ") changed media directions.";
-		updateAllParticipantSessionsExcept(updatedParticipantSession);
+		const auto newAudioDirection = device->getAudioDirection();
+		const bool audioToggled = ((audioDirection == LinphoneMediaDirectionInactive) && (newAudioDirection != LinphoneMediaDirectionInactive)) || ((audioDirection != LinphoneMediaDirectionInactive) && (newAudioDirection == LinphoneMediaDirectionInactive));
+		const auto newVideoDirection = device->getVideoDirection();
+		const bool videoToggled = ((videoDirection == LinphoneMediaDirectionInactive) && (newVideoDirection != LinphoneMediaDirectionInactive)) || ((videoDirection != LinphoneMediaDirectionInactive) && (newVideoDirection == LinphoneMediaDirectionInactive));
+		const auto newTextDirection = device->getTextDirection();
+		const bool textToggled = ((textDirection == LinphoneMediaDirectionInactive) && (newTextDirection != LinphoneMediaDirectionInactive)) || ((textDirection != LinphoneMediaDirectionInactive) && (newTextDirection == LinphoneMediaDirectionInactive));
+		if (audioToggled || videoToggled || textToggled) {
+			const auto & updatedParticipantSession = device->getSession();
+			lInfo() << "Re-INVITing participants because participant device " << device->getAddress().asString() << " (label " << device->getLabel() << ") toggled at least one media stream type.";
+			updateAllParticipantSessionsExcept(updatedParticipantSession);
+		}
 		return 0;
 	}
 	return success;

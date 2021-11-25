@@ -5792,6 +5792,10 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 		participants_initial_stats[counter - 1] = m->stat;
 		// Increment counter
 		counter++;
+	}
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		// Participant rejoins the conference
@@ -7507,9 +7511,6 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallResuming,laure_initial_stats.number_of_LinphoneCallResuming + 1));
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,laure_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,marie_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
-
-		BC_ASSERT_TRUE(wait_for(chloe->lc,marie->lc,&chloe->stat.number_of_LinphoneCallPaused,chloe_initial_stats.number_of_LinphoneCallPaused + 1));
-		BC_ASSERT_TRUE(wait_for(chloe->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_media_changed,laure_initial_stats.number_of_participant_device_media_changed+1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_participant_device_media_changed,chloe_initial_stats.number_of_participant_device_media_changed+1,3000));
