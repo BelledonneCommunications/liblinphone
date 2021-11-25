@@ -232,21 +232,17 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 	const auto & session = call->getActiveSession();
 	auto p = findParticipant(session);
 	if (p) {
-		const auto & mediaSession = static_pointer_cast<MediaSession>(session);
-		const Address * remoteContact = mediaSession->getRemoteContactAddress();
-		if (remoteContact) {
-			// If device is not found, then add it
-			if (p->findDevice(*remoteContact, false) == nullptr) {
-				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
-				device->setSession(session);
-				device->setLayout(getLayout());
-				device->setState(ParticipantDevice::State::Present);
-				notifyParticipantDeviceJoinedConference(device);
-				lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device " << remoteContact->asString() << " to conference " << getConferenceAddress();
-				return true;
-			}
+		// If device is not found, then add it
+		if (p->findDevice(session, false) == nullptr) {
+			shared_ptr<ParticipantDevice> device = p->addDevice(session);
+			device->setSession(session);
+			device->setLayout(getLayout());
+			device->setState(ParticipantDevice::State::Present);
+			notifyParticipantDeviceJoinedConference(device);
+			lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device with session " << session << " to conference " << getConferenceAddress();
+			return true;
 		} else {
-			lError() << "Unable to add device to participant with address " << call->getRemoteAddress()->asString() << " to conference " << getConferenceAddress();
+			lDebug() << "Participant with address " << call->getRemoteAddress()->asString() << " to conference " << getConferenceAddress() << " has already a device with session " << session;
 		}
 	}
 
@@ -745,17 +741,24 @@ bool LocalConference::updateAllParticipantSessionsExcept(const std::shared_ptr<C
 	for (const auto & p : participants) {
 		for (const auto & dev : p->getDevices()) {
 			const auto & devSession = static_pointer_cast<MediaSession>(dev->getSession());
+			const auto & devSessionState = devSession->getState();
+			// Do not allow updates if session is not established yet
 			if (devSession != session) {
-				const MediaSessionParams * params = devSession->getMediaParams();
+				const auto allowUpdate = (devSessionState != LinphonePrivate::CallSession::State::Idle) && (devSessionState != LinphonePrivate::CallSession::State::IncomingReceived) && (devSessionState != LinphonePrivate::CallSession::State::OutgoingInit) && (devSessionState != LinphonePrivate::CallSession::State::OutgoingProgress) && (devSessionState != LinphonePrivate::CallSession::State::OutgoingRinging);
+				if (allowUpdate) {
+					const MediaSessionParams * params = devSession->getMediaParams();
 
-				MediaSessionParams *currentParams = params->clone();
-				currentParams->enableRtpBundle(true);
-				lInfo() << "Re-INVITing participant " << dev->getAddress().asString() << " because participant device " << participantAddress->asString() << " updated its media capabilities.";
-				std::string subject("Participant " + participantAddress->asString() + " updated session");
-// TODO Use UPDATE instead of DEFAULT 
-				const auto updateResult = devSession->update(currentParams, CallSession::UpdateMethod::Default, false, subject);
-				result &= (updateResult == 0);
-				delete currentParams;
+					MediaSessionParams *currentParams = params->clone();
+					currentParams->enableRtpBundle(true);
+					lInfo() << "Re-INVITing participant with session " << session << " address (" << (dev->getAddress().isValid() ? dev->getAddress().asString() : std::string("<unknown>")) << ") because participant device " << participantAddress->asString() << " updated its media capabilities.";
+					std::string subject("Participant " + participantAddress->asString() + " updated session");
+	// TODO Use UPDATE instead of DEFAULT 
+					const auto updateResult = devSession->update(currentParams, CallSession::UpdateMethod::Default, false, subject);
+					result &= (updateResult == 0);
+					delete currentParams;
+				} else {
+					lDebug() << "Unable to re-INVITing participant with session " << session << " address (" << (dev->getAddress().isValid() ? dev->getAddress().asString() : std::string("<unknown>")) << ") because its session is in state " << devSessionState;
+				}
 			}
 		}
 	}

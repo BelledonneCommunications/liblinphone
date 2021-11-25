@@ -46,7 +46,16 @@ ParticipantDevice::ParticipantDevice () {
 	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
 }
 
-ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const string &name)
+ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name)
+	: mParticipant(participant), mGruu(IdentityAddress()), mName(name), mSession(session) {
+	mTimeOfJoining = time(nullptr);
+	if (mSession && mSession->getRemoteContactAddress()) {
+		mGruu = IdentityAddress(*mSession->getRemoteContactAddress());
+	}
+	updateMedia();
+}
+
+ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
 	mTimeOfJoining = time(nullptr);
 	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
@@ -60,7 +69,7 @@ ParticipantDevice::~ParticipantDevice () {
 }
 
 bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
-	return (mGruu == device.getAddress());
+	return (getAddress() == device.getAddress());
 }
 
 Conference* ParticipantDevice::getConference () const {
@@ -69,6 +78,13 @@ Conference* ParticipantDevice::getConference () const {
 
 shared_ptr<Core> ParticipantDevice::getCore () const {
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
+}
+
+const IdentityAddress & ParticipantDevice::getAddress() const {
+	if (!mGruu.isValid() && mSession && mSession->getRemoteContactAddress()) {
+		mGruu = IdentityAddress(*mSession->getRemoteContactAddress());
+	}
+	return  mGruu;
 }
 
 std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
@@ -95,7 +111,7 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine)
-		return encryptionEngine->getSecurityLevel(mGruu.asString());
+		return encryptionEngine->getSecurityLevel(getAddress().asString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }

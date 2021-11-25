@@ -331,14 +331,18 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					}
 				} else {
 					device = participant->findDevice(gruu);
-					conf->notifyParticipantDeviceMediaChanged(
-						creationTime,
-						isFullState,
-						participant,
-						device);
+					if (device) {
+						conf->notifyParticipantDeviceMediaChanged(
+							creationTime,
+							isFullState,
+							participant,
+							device);
+					} else {
+						lError() << "Unable to update media direction of device " << gruu << " because it has not been found in conference " << conf->getConferenceAddress();
+					}
 				}
 
-				if (state != StateType::deleted) {
+				if ((state != StateType::deleted) && (device)) {
 /*
 					auto & deviceAnySequence (endpoint.get().getAny());
 

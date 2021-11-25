@@ -93,7 +93,7 @@ public:
 
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
 	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu, const bool logFailure = true) const;
-	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session, const bool logFailure = true);
+	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session, const bool logFailure = true) const;
 
 	inline void setAdmin (bool isAdmin) { this->isThisAdmin = isAdmin; }
 	bool isAdmin () const;
@@ -123,6 +123,7 @@ protected:
 	inline void removeSession () { session.reset(); }
 	inline void setAddress (const IdentityAddress &addr) { this->addr = addr; }
 
+	std::shared_ptr<ParticipantDevice> addDevice (const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name = "");
 	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu, const std::string &name = "");
 	void clearDevices ();
 	void removeDevice (const IdentityAddress &gruu);

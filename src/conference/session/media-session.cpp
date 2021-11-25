@@ -1976,11 +1976,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto remoteContactAddress = q->getRemoteContactAddress();
 
 		if (conference && isInLocalConference) {
-			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			const auto & dev = cppConference->findParticipantDevice(*remoteContactAddress);
-			if (!isConferenceLayoutNone) {
-				videoStream.setLabel(dev->getLabel());
-				videoStream.setContent(mainStreamAttrValue);
+			if (remoteContactAddress) {
+				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+				const auto & dev = cppConference->findParticipantDevice(*remoteContactAddress);
+				if (!isConferenceLayoutNone) {
+					videoStream.setLabel(dev->getLabel());
+					videoStream.setContent(mainStreamAttrValue);
+				}
 			}
 		} else if (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 			if (op && remoteContactAddress) {

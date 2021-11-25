@@ -1118,14 +1118,18 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		conf_to_focus_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, focus_mgr->identity);
 	}
 	BC_ASSERT_PTR_NOT_NULL(conf_to_focus_call);
-	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(conf_to_focus_call));
-	BC_ASSERT_FALSE(linphone_call_is_in_conference(conf_to_focus_call));
+	if (conf_to_focus_call) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(conf_to_focus_call));
+		BC_ASSERT_FALSE(linphone_call_is_in_conference(conf_to_focus_call));
+	}
 
 	// Local conference
 	LinphoneCall * focus_to_conf_call = linphone_core_get_call_by_remote_address2(focus_mgr->lc, conf_mgr->identity);
 	BC_ASSERT_PTR_NOT_NULL(focus_to_conf_call);
-	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(focus_to_conf_call));
-	BC_ASSERT_TRUE(linphone_call_is_in_conference(focus_to_conf_call));
+	if (focus_to_conf_call) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(focus_to_conf_call));
+		BC_ASSERT_TRUE(linphone_call_is_in_conference(focus_to_conf_call));
+	}
 
 	return 0;
 

@@ -59,6 +59,7 @@ public:
 	};
 
 	ParticipantDevice ();
+	explicit ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name = "");
 	explicit ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name = "");
 	virtual ~ParticipantDevice ();
 	// non clonable object
@@ -68,7 +69,7 @@ public:
 
 	std::shared_ptr<Core> getCore () const;
 
-	inline const IdentityAddress &getAddress () const { return mGruu; }
+	const IdentityAddress & getAddress () const;
 	inline const std::string &getLabel () const { return mLabel; }
 	inline void setLabel (const std::string &label) { mLabel = label; };
 	inline const std::string &getName () const { return mName; }
@@ -84,7 +85,7 @@ public:
 	LinphoneEvent *getConferenceSubscribeEvent () const { return mConferenceSubscribeEvent; }
 	void setConferenceSubscribeEvent (LinphoneEvent *ev);
 
-	bool isValid () const { return mGruu.isValid(); }
+	bool isValid () const { return getAddress().isValid(); }
 	bool isInConference () const;
 
 	time_t getTimeOfJoining() const;
@@ -122,11 +123,11 @@ protected:
 
 private:
 	std::weak_ptr<Participant> mParticipant;
-	IdentityAddress mGruu;
+	mutable IdentityAddress mGruu;
 	std::string mName;
 	std::string mLabel;
-	std::string mCapabilityDescriptor;
 	std::shared_ptr<CallSession> mSession;
+	std::string mCapabilityDescriptor;
 	ConferenceLayout mLayout = ConferenceLayout::None;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;

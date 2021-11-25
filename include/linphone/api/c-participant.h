@@ -99,6 +99,14 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphonePa
 /**
  * Find a device in the list of devices from a chat room's participant.
  * @param participant A #LinphoneParticipant object @notnil
+ * @param call A #LinphoneCall object @notnil
+ * @return a #LinphoneParticipantDevice or NULL if not found. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device_2 (const LinphoneParticipant *participant, const LinphoneCall *call);
+
+/**
+ * Find a device in the list of devices from a chat room's participant.
+ * @param participant A #LinphoneParticipant object @notnil
  * @param address A #LinphoneAddress object @notnil
  * @return a #LinphoneParticipantDevice or NULL if not found. @maybenil
  */

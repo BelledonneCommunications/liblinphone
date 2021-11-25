@@ -71,7 +71,17 @@ shared_ptr<CallSession> Participant::createSession (
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gruu, const string &name) {
+std::shared_ptr<ParticipantDevice> Participant::addDevice (const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name) {
+	shared_ptr<ParticipantDevice> device = findDevice(session, false);
+	if (device)
+		return device;
+	lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session << " to participant " << getAddress().asString();
+	device = ParticipantDevice::create(getSharedFromThis(), session, name);
+	devices.push_back(device);
+	return device;
+}
+
+std::shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gruu, const string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
 	if (device)
 		return device;
@@ -96,7 +106,7 @@ shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gr
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const CallSession> &session, const bool logFailure) {
+shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const CallSession> &session, const bool logFailure) const {
 	for (const auto &device : devices) {
 		if (device->getSession() == session)
 			return device;

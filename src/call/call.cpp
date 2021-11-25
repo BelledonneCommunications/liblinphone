@@ -562,6 +562,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			}
 		}
 		break;
+		case CallSession::State::Connected:
+			if (attachedToLocalConference()) {
+				reenterLocalConference(session);
+			}
+		break;
 		case CallSession::State::StreamsRunning:
 		{
 			const auto op = session->getPrivate()->getOp();

@@ -19,6 +19,7 @@
 
 #include "linphone/api/c-participant.h"
 
+#include "call/call.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/participant.h"
@@ -64,6 +65,14 @@ LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const Lin
 
 bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant) {
 	return LinphonePrivate::ParticipantDevice::getCListFromCppList(LinphonePrivate::Participant::toCpp(participant)->getDevices());
+}
+
+LinphoneParticipantDevice *linphone_participant_find_device_2 (const LinphoneParticipant *participant, const LinphoneCall *call) {
+	std::shared_ptr<LinphonePrivate::ParticipantDevice> device = LinphonePrivate::Participant::toCpp(participant)->findDevice(LinphonePrivate::Call::toCpp(call)->getActiveSession());
+	if (device) {
+		return device->toC();
+	}
+	return NULL;
 }
 
 LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address) {

@@ -3916,6 +3916,11 @@ static void add_call_not_accepted_to_conference_remote(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
+	LinphoneConference* l_conference = linphone_core_get_conference(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(l_conference);
+	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
+	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),1, int, "%d");
+
 	participants=bctbx_list_append(participants,michelle);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallOutgoingRinging,1,5000));
@@ -3926,9 +3931,8 @@ static void add_call_not_accepted_to_conference_remote(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 
-	LinphoneConference* l_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(l_conference);
-	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
+	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),1, int, "%d");
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneSubscriptionActive, 1,5000));
@@ -3945,9 +3949,7 @@ static void add_call_not_accepted_to_conference_remote(void) {
 		linphone_address_unref(uri);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (!conference) goto end;
-
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),0, int, "%d");
-
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),1, int, "%d");
 	}
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
@@ -3975,7 +3977,7 @@ static void add_call_not_accepted_to_conference_remote(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,2,5000));
 
-	BC_ASSERT_FALSE(linphone_conference_is_in(l_conference));
+	BC_ASSERT_TRUE(linphone_conference_is_in(l_conference));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(l_conference),2, int, "%d");
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive, 1,5000));
@@ -3991,7 +3993,7 @@ static void add_call_not_accepted_to_conference_remote(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (!conference) goto end;
 
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),1, int, "%d");
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),2, int, "%d");
 
 	}
 
