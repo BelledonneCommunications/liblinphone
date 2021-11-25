@@ -181,6 +181,7 @@ public:
 	
 	/* Yeah quite ugly: this function is used externally to configure raw mediastreamer2 AudioStreams.*/
 	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
+	static void enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, bool enabled);
 	MSSndCard *getCurrentPlaybackCard()const{ return mCurrentPlaybackCard; }
 	MSSndCard *getCurrentCaptureCard()const{ return mCurrentCaptureCard; }
 	

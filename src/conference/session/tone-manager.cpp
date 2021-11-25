@@ -660,6 +660,9 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 			cleanPauseTone();
 			notifyIncomingCall(session);
 		break;
+		case CallSession::State::OutgoingProgress:
+			cleanPauseTone();
+		break;
 		case CallSession::State::OutgoingRinging:
 			cleanPauseTone();
 			notifyOutgoingCallRinging(session);

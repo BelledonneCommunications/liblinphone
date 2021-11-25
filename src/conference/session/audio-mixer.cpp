@@ -123,7 +123,7 @@ void MS2AudioMixer::addLocalParticipant(){
 				captcard,
 				linphone_core_echo_cancellation_enabled(core)
 				);
-	_post_configure_audio_stream(st, core, FALSE);
+	MS2AudioStream::postConfigureAudioStream(st, core, !mLocalMicEnabled);
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_audio_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding local endpoint");

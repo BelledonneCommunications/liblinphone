@@ -1322,6 +1322,58 @@ end:
 	bctbx_list_free(lcs);
 }
 
+
+static void second_call_with_early_media(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	bctbx_list_t* lcs;
+	LinphoneCallParams *laure_params=linphone_core_create_call_params(laure->lc, NULL);
+	LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
+
+	lcs=bctbx_list_append(NULL,marie->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
+	lcs=bctbx_list_append(lcs,laure->lc);
+
+	/* Marie makes a first call to pauline, who accepts it. */
+	if (!BC_ASSERT_TRUE(call(marie, pauline))){
+		goto end;
+	}
+	/* Marie pauses this call and makes a second call to laure, who answers with early-media first */
+	linphone_call_pause(linphone_core_get_current_call(marie->lc));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused,1, 10000));
+	
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,laure->identity,marie_params));
+
+	if (BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived,1, 10000))){
+	
+		linphone_call_accept_early_media(linphone_core_get_current_call(laure->lc));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingEarlyMedia,1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1, 10000));
+		
+		/* The OutgoingEarlyMedia state should stop the "waiting" tone that was started for the first call being paused. */
+		BC_ASSERT_TRUE(wait_for_list(lcs, (int*)&linphone_core_get_tone_manager_stats(marie->lc)->number_of_stopTone, 1, 5000));
+	} 
+
+	linphone_core_terminate_all_calls(marie->lc);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,2,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,10000));
+
+end:
+	linphone_call_params_unref(laure_params);
+	linphone_call_params_unref(marie_params);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+	bctbx_list_free(lcs);
+}
+
+
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
 	TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
@@ -1346,7 +1398,7 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Resuming on inactive stream", resuming_inactive_stream),
 	TEST_NO_TAG("Stop ringing when accepting call while holding another with ICE", stop_ringing_when_accepting_call_while_holding_another_with_ice),
 	TEST_NO_TAG("Stop ringing when accepting call while holding another without ICE", stop_ringing_when_accepting_call_while_holding_another_without_ice),
-	
+	TEST_NO_TAG("Stop paused tone when second call is accepted with early media", second_call_with_early_media)
 };
 
 test_suite_t multi_call_test_suite = {"Multi call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
