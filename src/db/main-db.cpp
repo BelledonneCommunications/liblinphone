@@ -4182,7 +4182,7 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (bool only
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id";
 	if (onlyFutureConferenceInfos) query += " AND start_time >= :startTime";
-	query += " ORDER BY start_time DESC";
+	query += " ORDER BY start_time";
 
 	DurationLogger durationLogger("Get conference infos.");
 
