@@ -187,6 +187,7 @@ private:
 	bool mLocalMicEnabled = true;
 };
 
+#ifdef VIDEO_ENABLED
 /**
  * A video mixer based on mediastreamer2.
  * It inherits from MS2VideoControl (which is in fact a VideoControlInterface) to let control the local participant, if any.
@@ -223,6 +224,7 @@ private:
 	RtpProfile *mLocalDummyProfile = nullptr;
 	static constexpr int sVP8PayloadTypeNumber = 95;
 };
+#endif // VIDEO_ENABLED
 
 LINPHONE_END_NAMESPACE
 

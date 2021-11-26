@@ -83,7 +83,7 @@ LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_se
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return The #LinphoneConferenceLayout of the device
 */
-LinphoneConferenceLayout linphone_participant_device_get_layout (const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC LinphoneConferenceLayout linphone_participant_device_get_layout (const LinphoneParticipantDevice *participant_device);
 
 /**
  * Return the name of the device or NULL.

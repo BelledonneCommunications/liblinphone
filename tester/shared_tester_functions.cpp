@@ -423,7 +423,7 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants, L
 		LinphoneCall *call=linphone_core_get_current_call(m->lc);
 		BC_ASSERT_PTR_NOT_NULL(call);
 		if (call) {
-			int nb = layout == LinphoneConferenceLayoutNone ? 1 : (bctbx_list_size(participants)+2) ;
+			int nb = (layout == LinphoneConferenceLayoutNone) ? 1 : static_cast<int>((bctbx_list_size(participants)+2));
 			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 			BC_ASSERT_TRUE(Call::toCpp(call)->checkRtpSession());
 		}
