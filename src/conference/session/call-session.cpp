@@ -743,7 +743,14 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 	string newSubject(subject);
 
 	if (newSubject.empty()) {
-		if (isInConference())
+
+		LinphoneConference * conference = nullptr;
+		if (listener) {
+			conference = listener->getCallSessionConference(q->getSharedFromThis());
+		}
+		if (conference) {
+			newSubject = MediaConference::Conference::toCpp(conference)->getSubject();
+		} else if (isInConference())
 			newSubject = "Conference";
 		else if (q->getParams()->getPrivate()->getInternalCallUpdate())
 			newSubject = "ICE processing concluded";
@@ -778,7 +785,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 		noUserConsent = method == CallSession::UpdateMethod::Update;
 	}
 
-	return op->update(newSubject.c_str(), noUserConsent);
+	return op->update(newSubject, noUserConsent);
 }
 
 void CallSessionPrivate::terminate () {

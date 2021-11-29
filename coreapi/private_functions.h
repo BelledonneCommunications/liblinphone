@@ -333,6 +333,8 @@ void _linphone_conference_notify_participant_device_added(LinphoneConference *co
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_device_media_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_participant_device_joined(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_participant_device_left(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
 

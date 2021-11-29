@@ -132,6 +132,34 @@ LINPHONE_PUBLIC LinphoneConferenceCbsParticipantAdminStatusChangedCb linphone_co
 LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_admin_status_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantAdminStatusChangedCb cb);
 
 /**
+ * Get the participant device left callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device left callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceLeftCb linphone_conference_cbs_get_participant_device_left (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device left callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device left callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_left (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceLeftCb cb);
+
+/**
+ * Get the participant device joined callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device joined callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceJoinedCb linphone_conference_cbs_get_participant_device_joined (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device joined callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device joined callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_joined (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceJoinedCb cb);
+
+/**
  * Get the participant device media changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current participant device media changed callback.

@@ -1543,6 +1543,9 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 					std::vector<std::pair<std::string, std::string>> attributes;
 					const auto & foundStreamIdx = devLabel.empty() ? -1 : ((remoteContactAddress == dev->getAddress().asAddress()) ? md->findIdxStreamWithContent(content, devLabel) : md->findIdxStreamWithLabel(devLabel));
 					SalStreamDescription & newStream = addStreamToMd(md, foundStreamIdx);
+					if (isConferenceLayoutActiveSpeaker) {
+						newStream.setContent(content);
+					}
 					fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth);
 				}
 			}
@@ -1676,7 +1679,6 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 
 						if (isVideoConferenceEnabled && (dev || !contentAttrValue.empty())) {
 							if (!contentAttrValue.empty() && participantsAttrValue.empty()) {
-
 								const auto & confLayout = cppConference->getLayout();
 								bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 								if (isConferenceLayoutActiveSpeaker) {
@@ -1686,18 +1688,23 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 								}
 							} else if (dev) {
 								const auto & devAddress = dev->getAddress().asAddress();
-								switch (dev->getVideoDirection()) {
-									case LinphoneMediaDirectionSendOnly:
-									case LinphoneMediaDirectionRecvOnly:
-									case LinphoneMediaDirectionInactive:
-										cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
-										break;
-									case LinphoneMediaDirectionSendRecv:
-										cfg.dir = ((remoteContactAddress == devAddress) && (contentAttrValue.compare("thumbnail") == 0)) ? SalStreamRecvOnly : SalStreamSendOnly;
-										break;
-									case LinphoneMediaDirectionInvalid:
-										cfg.dir = SalStreamInactive;
-										break;
+								const auto isMe = cppConference->isMe(dev->getAddress());
+								if (isMe && !mediaEnabled) {
+									cfg.dir = SalStreamInactive;
+								} else {
+									switch (dev->getVideoDirection()) {
+										case LinphoneMediaDirectionSendOnly:
+										case LinphoneMediaDirectionRecvOnly:
+										case LinphoneMediaDirectionInactive:
+											cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
+											break;
+										case LinphoneMediaDirectionSendRecv:
+											cfg.dir = ((remoteContactAddress == devAddress) && (contentAttrValue.compare("thumbnail") == 0)) ? SalStreamRecvOnly : SalStreamSendOnly;
+											break;
+										case LinphoneMediaDirectionInvalid:
+											cfg.dir = SalStreamInactive;
+											break;
+									}
 								}
 							}
 
@@ -1709,20 +1716,24 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 					} else if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
 						// If the call is in a remote conference
 						if (!meLabel.empty() && (meLabel.compare(participantsAttrValue) == 0) && !mediaEnabled) {
-							switch (s.getDirection()) {
-								case SalStreamSendOnly:
-									cfg.dir = (isInLocalConference) ? SalStreamInactive : SalStreamRecvOnly;
-									break;
-								case SalStreamSendRecv:
-									cfg.dir = (isInLocalConference) ? SalStreamInactive : SalStreamRecvOnly;
-									break;
-								case SalStreamRecvOnly:
-									cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamInactive;
-									break;
-								case SalStreamInactive:
-									cfg.dir = SalStreamInactive;
-									break;
-								}
+							if (localIsOfferer) {
+								cfg.dir = SalStreamInactive;
+							} else {
+								switch (s.getDirection()) {
+									case SalStreamSendOnly:
+										cfg.dir = (isInLocalConference) ? SalStreamInactive : SalStreamRecvOnly;
+										break;
+									case SalStreamSendRecv:
+										cfg.dir = (isInLocalConference) ? SalStreamInactive : SalStreamRecvOnly;
+										break;
+									case SalStreamRecvOnly:
+										cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamInactive;
+										break;
+									case SalStreamInactive:
+										cfg.dir = SalStreamInactive;
+										break;
+									}
+							}
 
 						} else {
 							switch (s.getDirection()) {
@@ -1800,9 +1811,16 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool offerNegotiatedMediaProtocolOnly, const bool forceCryptoKeyGeneration) {
 	L_Q();
 	const auto & core = q->getCore()->getCCore();
+
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
+
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
-	const std::shared_ptr<SalMediaDescription> & refMd = (localIsOfferer) ? oldMd : op->getRemoteMediaDescription();
+	const std::shared_ptr<SalMediaDescription> & refMd = (conference) ? 
+			(isInLocalConference) ? oldMd : op->getRemoteMediaDescription() :
+			(localIsOfferer) ? oldMd : op->getRemoteMediaDescription()
+	;
 
 	this->localIsOfferer = localIsOfferer;
 
@@ -1887,8 +1905,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	encList.push_back(getParams()->getMediaEncryption());
 
-	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	bool isConferenceLayoutActiveSpeaker = false;
 	bool isConferenceLayoutNone = false;
 	bool isVideoConferenceEnabled = false;
@@ -1968,7 +1984,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			}
 		} else {
 			videoDir = getParams()->getPrivate()->getSalVideoDirection();
-			enableVideoStream = callVideoEnabled;
+			switch (confLayout) {
+				case ConferenceLayout::ActiveSpeaker:
+					enableVideoStream = true;
+					break;
+				case ConferenceLayout::None:
+				case ConferenceLayout::Grid:
+					enableVideoStream = callVideoEnabled;
+					break;
+			}
 		}
 		const auto videoStreamIdx = refMd ? ((conference && refMd->findIdxStreamWithContent(mainStreamAttrValue)) ? refMd->findIdxStreamWithContent(mainStreamAttrValue) : refMd->findIdxBestStream(SalVideo)) : -1;
 		SalStreamDescription & videoStream = addStreamToMd(md, videoStreamIdx);
@@ -2639,19 +2663,28 @@ LinphoneStatus MediaSessionPrivate::pause () {
 			auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
 			if (callConference) {
 				auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
+				lInfo() << "Removing participant with session " << q << " from conference " << conference->getConferenceAddress();
 				// Do not preserve conference after removing the participant
 				conference->removeParticipant(q->getSharedFromThis(), false);
+				return 0;
 			}
 		}
 	}
 
 	string subject;
-	if (resultDesc->hasDir(SalStreamSendRecv))
+
+	LinphoneConference * conference = nullptr;
+	if (listener) {
+		conference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+	if (conference) {
+		subject = MediaConference::Conference::toCpp(conference)->getSubject();
+	} else if (resultDesc->hasDir(SalStreamSendRecv)) {
 		subject = "Call on hold";
-	else if (resultDesc->hasDir(SalStreamRecvOnly)
-				 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote))	// Stream is inactive from Remote
+	} else if (resultDesc->hasDir(SalStreamRecvOnly)
+				 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote)) {	// Stream is inactive from Remote
 		subject = "Call on hold for me too";
-	else {
+	} else {
 		lError() << "No reason to pause this call, it is already paused or inactive";
 		return -1;
 	}
@@ -2765,16 +2798,19 @@ int MediaSessionPrivate::getThumbnailStreamIdx() const {
 		const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
 		const auto & confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
 		const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-		const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
 		const auto & md = (isInLocalConference) ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
 		SalStreamDescription mainVideoStream;
 		if (md) {
+			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
 			mainVideoStream = md->findStreamWithContent(mainStreamAttrValue);
 		}
-		const auto content = "thumbnail";
-		const auto label = mainVideoStream.getLabel();
+		const auto meDevices = cppConference->getMe()->getDevices();
+		const bool conferenceEventPackageEnabled = linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE);
+		// Devices don't have labels if conference event package is not enabled
+		const auto label = (!conferenceEventPackageEnabled || isInLocalConference || (meDevices.size() == 0)) ? mainVideoStream.getLabel() : meDevices.front()->getLabel();
 		if (!label.empty()) {
 			if (md) {
+				const auto content = "thumbnail";
 				streamIdx = md->findIdxStreamWithContent(content, label);
 			}
 		}

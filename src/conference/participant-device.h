@@ -52,6 +52,7 @@ public:
 	enum class State {
 		Joining, //an INVITE has been sent
 		Present, //the SIP session has been concluded, participant is part of the conference
+		OnHold, //the SIP session has been concluded, participant is not media mixed
 		Leaving, //A BYE is pending
 		Left, //The Session is terminated
 		ScheduledForJoining, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.

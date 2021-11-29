@@ -121,6 +121,15 @@ const list<shared_ptr<ParticipantDevice>> &Participant::getDevices () const {
 	return devices;
 }
 
+void Participant::removeDevice (const shared_ptr<const CallSession> &session) {
+	for (auto it = devices.begin(); it != devices.end(); it++) {
+		if ((*it)->getSession() == session) {
+			devices.erase(it);
+			return;
+		}
+	}
+}
+
 void Participant::removeDevice (const IdentityAddress &gruu) {
 	for (auto it = devices.begin(); it != devices.end(); it++) {
 		if ((*it)->getAddress() == gruu) {

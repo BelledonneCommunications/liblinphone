@@ -72,6 +72,7 @@ public:
 	std::string createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceMediaChanged (const Address & pAddress, const Address & dAddress);
+	std::string createNotifyParticipantDeviceStatusChanged (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
 	std::string createNotifySubjectChanged ();
 
@@ -121,18 +122,35 @@ public:
 	* @param[in] device participant device added to the conference or chat room.
 	*/
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
 	/*
 	* This fonction is called each time a new participant device is removed by the focus after full state notification.
 	* @param[in] event informations related to the removed device's participant.
 	* @param[in] device participant device removed from the conference or chat room.
 	*/
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
 	/*
 	* This fonction is called each time a participant device changes its available media
 	* @param[in] event informations related to the device's participant.
 	* @param[in] device participant device that changed its media capabilities
 	*/
 	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
+	* This fonction is called each time a new participant device rejoins the conference after full state notification.
+	* @param[in] event informations related to the device's participant who rejoined. @notnil
+	* @param[in] device participant device who rejoined. @notnil
+	*/
+	virtual void onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
+	* This fonction is called each time a new participant device temporarely leaves the conference after full state notification.
+	* @param[in] event informations related to the device's participant who temporarely left. @notnil
+	* @param[in] device participant device who temporarely left. @notnil
+	*/
+	virtual void onParticipantDeviceLeft (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
 	/*
 	* This fonction is called each time a participant device changes the ephemeral settings
 	* @param[in] event informations related to the device's participant.
@@ -168,6 +186,7 @@ private:
 	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
 
 	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
+	void addEndpointStatus(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
 	void addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, Xsd::ConferenceInfo::ConferenceDescriptionType & confDescr);
 
 	L_DISABLE_COPY(LocalConferenceEventHandler);

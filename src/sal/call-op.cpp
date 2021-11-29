@@ -1509,7 +1509,9 @@ int SalCallOp::update (const string &subject, bool noUserConsent, bool withSDP, 
 		return -1;
 	}
 	if (update) {
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), belle_sip_header_create("Subject", subject.c_str()));
+		if (!subject.empty()) {
+			belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), belle_sip_header_create("Subject", subject.c_str()));
+		}
 		if (mRoot->mSupportedHeader) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), mRoot->mSupportedHeader);
 		}

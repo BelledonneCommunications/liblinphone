@@ -163,6 +163,8 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 			return stream << "Joining";
 		case ParticipantDevice::State::Present:
 			return stream << "Present";
+		case ParticipantDevice::State::OnHold:
+			return stream << "OnHold";
 		case ParticipantDevice::State::ScheduledForLeaving:
 			return stream << "ScheduledForLeaving";
 		case ParticipantDevice::State::Leaving:

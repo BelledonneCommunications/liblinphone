@@ -1598,6 +1598,9 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	BC_ASSERT_TRUE(linphone_conference_params_is_one_participant_conference_enabled(actual_conf_params));
 	BC_ASSERT_TRUE(linphone_conference_is_in(conf) == enable_local_participant);
 
+	// Generate traffic to compute volumes correctly
+	wait_for_list(lcs ,NULL, 0, 1000);
+
 	bctbx_list_t* all_manangers_in_conf=bctbx_list_copy(participants);
 	all_manangers_in_conf = bctbx_list_append(all_manangers_in_conf, marie);
 	const LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(conf);
@@ -1629,9 +1632,6 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 			check_conference_volumes(call);
 		}
 	}
-
-	//wait a bit for the conference audio processing to run, despite we do not test it for the moment
-	wait_for_list(lcs,NULL,0,5000);
 
 	bctbx_list_t* lcs2=bctbx_list_copy(lcs);
 	remove_participant_from_local_conference(lcs2, marie, pauline, conf);
@@ -2908,8 +2908,10 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
 
 	//Marie creates the conference
+	const char * subject = "Coffee break";
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_set_layout(conf_params, layout);
+	linphone_conference_params_set_subject(conf_params, subject);
 	linphone_conference_params_set_video_enabled(conf_params, (layout != LinphoneConferenceLayoutNone));
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
@@ -2947,7 +2949,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		const LinphoneAddress *current_conference_address = linphone_conference_get_conference_address(conf);
 		char * current_conference_address_str = linphone_address_as_string(current_conference_address);
 		// Change of conference address after creation is not allowed.
-		BC_ASSERT_NOT_EQUAL(strcmp(current_conference_address_str,new_conference_address_str), 0, int, "%d");
+		BC_ASSERT_STRING_NOT_EQUAL(current_conference_address_str, new_conference_address_str);
 		ms_free(current_conference_address_str);
 	}
 
@@ -2970,6 +2972,16 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	BC_ASSERT_TRUE(linphone_conference_is_in(conf));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conf),2, int, "%d");
+
+	const LinphoneAddress *conference_address = linphone_conference_get_conference_address(conf);
+	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+		LinphoneCore * lc = (LinphoneCore *)bctbx_list_get_data(it);
+		LinphoneConference * pconference = linphone_core_search_conference(lc, NULL, NULL, conference_address, NULL);
+		BC_ASSERT_PTR_NOT_NULL(pconference);
+		if (pconference) {
+			BC_ASSERT_STRING_EQUAL(linphone_conference_get_subject(pconference), subject);
+		}
+	}
 
 	if(!is_remote_conf) BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
@@ -3668,7 +3680,8 @@ static void add_participant_after_conference_started_base(bool_t pause_all_calls
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_devices_added,pauline_stats.number_of_participant_devices_added+1,3000));
 	}
 
-	wait_for_list(lcs ,NULL, 0, 2000);
+	// Generate traffic to compute volumes correctly
+	wait_for_list(lcs ,NULL, 0, 1000);
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * lc = (LinphoneCore *)bctbx_list_get_data(it);
@@ -4539,7 +4552,9 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 		check_ice(marie, laure, LinphoneIceStateHostConnection);
 	}
 
+	const char * subject = "Weekly team meeting";
 	conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_subject(conf_params, subject);
 	linphone_conference_params_set_layout(conf_params, layout);
 	linphone_conference_params_set_video_enabled(conf_params, enable_video);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -4573,23 +4588,78 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	current_conf_params = linphone_conference_get_current_params(l_conference);
 	BC_ASSERT_PTR_NOT_NULL(current_conf_params);
 	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(current_conf_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 
 	// Check that video is still on
 	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_laure), l_conference);
 	negotiated_call_params = linphone_call_get_current_params(marie_call_laure);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 	negotiated_call_params = linphone_call_get_current_params(laure_called_by_marie);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_pauline), l_conference);
 	negotiated_call_params = linphone_call_get_current_params(marie_call_pauline);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 	negotiated_call_params = linphone_call_get_current_params(pauline_called_by_marie);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_michelle), l_conference);
 	negotiated_call_params = linphone_call_get_current_params(marie_call_michelle);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 	negotiated_call_params = linphone_call_get_current_params(michelle_called_by_marie);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
+
+	if (enable_video) {
+		stats pauline_stats = pauline->stat;
+		stats michelle_stats = michelle->stat;
+		stats laure_stats = laure->stat;
+		stats marie_stats = marie->stat;
+
+		const LinphoneCallParams *old_params = linphone_call_get_params(michelle_called_by_marie);
+		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
+		linphone_call_params_enable_video (new_params, !enable_video);
+		linphone_call_update(michelle_called_by_marie, new_params);
+		linphone_call_params_unref (new_params);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallUpdating, michelle_stats.number_of_LinphoneCallUpdating + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &michelle->stat.number_of_LinphoneCallStreamsRunning, michelle_stats.number_of_LinphoneCallStreamsRunning + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdatedByRemote, marie_stats.number_of_LinphoneCallUpdatedByRemote + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, marie_stats.number_of_LinphoneCallStreamsRunning + 1, 5000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_stats.number_of_participant_device_media_changed+1,3000));
+		if (event_package_enabled) {
+			BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_media_changed,laure_stats.number_of_participant_device_media_changed+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_device_media_changed,pauline_stats.number_of_participant_device_media_changed+1,3000));
+		}
+	}
+
+	// Check that video is still on
+	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_laure), l_conference);
+	negotiated_call_params = linphone_call_get_current_params(marie_call_laure);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
+	negotiated_call_params = linphone_call_get_current_params(laure_called_by_marie);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
+	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_pauline), l_conference);
+	negotiated_call_params = linphone_call_get_current_params(marie_call_pauline);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
+	negotiated_call_params = linphone_call_get_current_params(pauline_called_by_marie);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
+	BC_ASSERT_PTR_EQUAL(linphone_call_get_conference(marie_call_michelle), l_conference);
+	negotiated_call_params = linphone_call_get_current_params(marie_call_michelle);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(negotiated_call_params));
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
+	negotiated_call_params = linphone_call_get_current_params(michelle_called_by_marie);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(negotiated_call_params));
+	BC_ASSERT_STRING_EQUAL(subject, linphone_conference_get_subject(l_conference));
 
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
@@ -5161,7 +5231,8 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 
 			BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
 
-			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_stats.number_of_participant_device_media_changed+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_left,marie_stats.number_of_participant_device_left+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_left,michelle_stats.number_of_participant_device_left+1,3000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+1,3000));
 
 			if (marie_conference) {
@@ -5209,7 +5280,8 @@ static void simple_participant_leaves_conference_base(bool_t remote_participant_
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stats.number_of_LinphoneCallStreamsRunning + 1), 5000));
 
-			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_stats.number_of_participant_device_media_changed+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_joined,marie_stats.number_of_participant_device_joined+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_joined,michelle_stats.number_of_participant_device_joined+1,3000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+1,3000));
 
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), 2, int, "%d");
@@ -5353,7 +5425,7 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 				BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + 1,1000));
 				BC_ASSERT_FALSE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,pauline_stats.number_of_LinphoneSubscriptionTerminated + 1,1000));
 				BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_stats.number_of_participant_device_media_changed+1,3000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_left,marie_stats.number_of_participant_device_left+1,3000));
 			}
 		}
 
@@ -5545,12 +5617,14 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), conf_parts_no, int, "%d");
 
 		// NOTIFY to resend list of conference participants
-		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_device_joined,marie_stats.number_of_participant_device_joined+1,3000));
 
 		// Notify that Pauline media capabilities changed
-		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_joined,michelle_stats.number_of_participant_device_joined+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+1,3000));
 		if (add_participant) {
-			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_joined,laure_stats.number_of_participant_device_joined+1,3000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_media_changed,laure_stats.number_of_participant_device_media_changed+1,3000));
 		}
 	}
 
@@ -5748,10 +5822,14 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallPaused,(michelle_stats.number_of_LinphoneCallPaused + 1), 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_stats.number_of_LinphoneCallPausedByRemote + 3),5000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_stats.number_of_participant_device_media_changed+3,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+3,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_device_media_changed,pauline_stats.number_of_participant_device_media_changed+3,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_media_changed,laure_stats.number_of_participant_device_media_changed+3,3000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_left,marie_stats.number_of_participant_device_left+4,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_left,michelle_stats.number_of_participant_device_left+4,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_device_left,pauline_stats.number_of_participant_device_left+4,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_left,laure_stats.number_of_participant_device_left+4,3000));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participants_removed,pauline_stats.number_of_participants_removed+1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_devices_removed,pauline_stats.number_of_participant_devices_removed+1,3000));
@@ -5805,7 +5883,9 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallResuming,(participants_initial_stats[counter].number_of_LinphoneCallResuming + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[counter].number_of_LinphoneCallStreamsRunning + 1),5000));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_device_media_changed,participants_initial_stats[counter].number_of_participant_device_media_changed+3,3000));
+		int participants_joined = (local_enters_first) ? 4 : 3;
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_device_media_changed,participants_initial_stats[counter].number_of_participant_device_media_changed+2,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_device_joined,participants_initial_stats[counter].number_of_participant_device_joined+participants_joined,3000));
 
 		if (local_enters_first) {
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participants_added,participants_initial_stats[counter].number_of_participants_added+1,3000));
@@ -6079,7 +6159,7 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 
 		BC_ASSERT_FALSE(linphone_conference_is_in(pauline_conference));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_stats.number_of_participant_device_media_changed+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_left,marie_stats.number_of_participant_device_left+1,3000));
 
 		if (marie_conference) {
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),2, int, "%d");
@@ -6088,6 +6168,7 @@ static void remote_participant_leaves_and_conference_ends_base(bool_t local_ends
 	}
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_left,michelle_stats.number_of_participant_device_left+1,3000));
 	if (michelle_conference) {
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(michelle_conference),2, int, "%d");
 		BC_ASSERT_TRUE(linphone_conference_is_in(michelle_conference));
@@ -7505,9 +7586,10 @@ static void participants_take_call_after_conference_started_and_rejoins_conferen
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneCallStreamsRunning,laure_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,marie_initial_stats.number_of_LinphoneCallStreamsRunning + 1));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_media_changed,laure_initial_stats.number_of_participant_device_media_changed+1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_participant_device_media_changed,chloe_initial_stats.number_of_participant_device_media_changed+1,3000));
-		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_media_changed,marie_initial_stats.number_of_participant_device_media_changed+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_joined,laure_initial_stats.number_of_participant_device_joined+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_joined,marie_initial_stats.number_of_participant_device_joined+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&chloe->stat.number_of_participant_device_joined,chloe_initial_stats.number_of_participant_device_joined+1,3000));
 
 		// Remote  conference
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));

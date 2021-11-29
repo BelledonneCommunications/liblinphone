@@ -450,6 +450,20 @@ typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *con
 typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
+ * Callback used to notify a conference that the media of a participant device has temporarely left
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] device #LinphoneParticipantDevice who temporarely left the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceLeftCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+
+/**
+ * Callback used to notify a conference that the media of a participant device has rejoined
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] device #LinphoneParticipantDevice who rejoined the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceJoinedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+
+/**
  * Callback used to notify a conference that the media of a participant device has been changed.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] device #LinphoneParticipantDevice whose media changed has changed @notnil

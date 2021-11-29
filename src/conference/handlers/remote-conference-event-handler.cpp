@@ -306,7 +306,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							participant,
 							device
 						);
-						conf->notifyParticipantDeviceLeftConference(device);
 					}
 
 				} else if (state == StateType::full) {
@@ -329,7 +328,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							participant,
 							device
 						);
-						conf->notifyParticipantDeviceJoinedConference(device);
 					}
 				} else {
 					device = participant->findDevice(gruu);
@@ -339,6 +337,24 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							isFullState,
 							participant,
 							device);
+
+						if (endpoint.getStatus().present()) {
+							const auto & status = endpoint.getStatus().get();
+							if ((status == EndpointStatusType::on_hold) && (device->getState() != ParticipantDevice::State::OnHold)) {
+								conf->notifyParticipantDeviceLeft(
+									creationTime,
+									isFullState,
+									participant,
+									device);
+							} else if ((status == EndpointStatusType::connected) && (device->getState() != ParticipantDevice::State::Present)) {
+								conf->notifyParticipantDeviceJoined(
+									creationTime,
+									isFullState,
+									participant,
+									device);
+							}
+						}
+
 					} else {
 						lError() << "Unable to update media direction of device " << gruu << " because it has not been found in conference " << conf->getConferenceAddress();
 					}
@@ -387,6 +403,21 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							device->setTextDirection(mediaDirection);
 						} else {
 							lError() << "Unrecognized media type " << mediaType;
+						}
+					}
+
+					if (endpoint.getStatus().present()) {
+						const auto & status = endpoint.getStatus().get();
+						if (status == EndpointStatusType::pending) {
+							device->setState(ParticipantDevice::State::Joining);
+						} else if (status == EndpointStatusType::connected) {
+							device->setState(ParticipantDevice::State::Present);
+						} else if (status == EndpointStatusType::on_hold) {
+							device->setState(ParticipantDevice::State::OnHold);
+						} else if (status == EndpointStatusType::disconnecting) {
+							device->setState(ParticipantDevice::State::Leaving);
+						} else if (status == EndpointStatusType::disconnected) {
+							device->setState(ParticipantDevice::State::Left);
 						}
 					}
 				}

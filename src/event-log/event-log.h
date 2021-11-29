@@ -53,6 +53,7 @@ public:
 		ConferenceParticipantDeviceAdded = LinphoneEventLogTypeConferenceParticipantDeviceAdded,
 		ConferenceParticipantDeviceRemoved = LinphoneEventLogTypeConferenceParticipantDeviceRemoved,
 		ConferenceParticipantDeviceMediaChanged = LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged,
+		ConferenceParticipantDeviceStatusChanged = LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged,
 		ConferenceSubjectChanged = LinphoneEventLogTypeConferenceSubjectChanged,
 		ConferenceAvailableMediaChanged = LinphoneEventLogTypeConferenceAvailableMediaChanged,
 		ConferenceSecurityEvent = LinphoneEventLogTypeConferenceSecurityEvent,

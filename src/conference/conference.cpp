@@ -256,16 +256,46 @@ void Conference::setSubject (const string &subject) {
 	confParams->setSubject(subject);
 }
 
-void Conference::notifyParticipantDeviceJoinedConference (const std::shared_ptr<ParticipantDevice> & device) const {
-	if (device) {
-		_linphone_participant_device_notify_conference_joined(device->toC());
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceLeft (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceStatusChanged,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceLeft(event, participantDevice);
 	}
+	if (participantDevice) {
+		_linphone_participant_device_notify_conference_left(participantDevice->toC());
+	}
+	return event;
 }
 
-void Conference::notifyParticipantDeviceLeftConference (const std::shared_ptr<ParticipantDevice> & device) const {
-	if (device) {
-		_linphone_participant_device_notify_conference_left(device->toC());
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceJoined (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceStatusChanged,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceJoined(event, participantDevice);
 	}
+	if (participantDevice) {
+		_linphone_participant_device_notify_conference_joined(participantDevice->toC());
+	}
+	return event;
 }
 
 void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {

@@ -56,6 +56,7 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	L_ASSERT(
 		type == Type::ConferenceParticipantDeviceAdded ||
 		type == Type::ConferenceParticipantDeviceRemoved ||
+		type == Type::ConferenceParticipantDeviceStatusChanged ||
 		type == Type::ConferenceParticipantDeviceMediaChanged
 	);
 	d->deviceAddress = deviceAddress;

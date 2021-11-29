@@ -90,6 +90,20 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(Linphon
 LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_clone(const LinphoneConferenceParams *params);
 
 /**
+ * Set the conference subject
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param subject conference subject @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char *subject);
+
+/**
+ * Get the conference subject
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return conference subject. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_params_get_subject(const LinphoneConferenceParams *params);
+
+/**
  * Enable audio capabilities
  * @param params A #LinphoneConferenceParams @notnil
  * @param enable If TRUE, audio will be enabled during conference

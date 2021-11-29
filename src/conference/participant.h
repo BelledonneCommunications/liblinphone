@@ -128,6 +128,7 @@ protected:
 	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu, const std::string &name = "");
 	void clearDevices ();
 	void removeDevice (const IdentityAddress &gruu);
+	void removeDevice (const std::shared_ptr<const CallSession> &session);
 
 private:
 

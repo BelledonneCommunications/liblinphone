@@ -85,6 +85,19 @@ public:
 	*/
 	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
+	/*
+	* This fonction is called each time a new participant device rejoins the conference after full state notification.
+	* @param[in] event informations related to the device's participant who rejoined. @notnil
+	* @param[in] device participant device who rejoined. @notnil
+	*/
+	virtual void onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
+	* This fonction is called each time a new participant device temporarely leaves the conference after full state notification.
+	* @param[in] event informations related to the device's participant who temporarely left. @notnil
+	* @param[in] device participant device who temporarely left. @notnil
+	*/
+	virtual void onParticipantDeviceLeft (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	 * Notify Conference state changes.

@@ -423,9 +423,23 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants, L
 		LinphoneCall *call=linphone_core_get_current_call(m->lc);
 		BC_ASSERT_PTR_NOT_NULL(call);
 		if (call) {
-			int nb = (layout == LinphoneConferenceLayoutNone) ? 1 : static_cast<int>((bctbx_list_size(participants)+2));
+			const LinphoneCallParams * call_params = linphone_call_get_current_params(call);
+			const bool_t video_enabled = linphone_call_params_video_enabled(call_params);
+
+			int nb = ((layout == LinphoneConferenceLayoutNone) ? 1 : static_cast<int>((bctbx_list_size(participants)+2)));
+			if (!video_enabled) {
+				if ((layout == LinphoneConferenceLayoutNone) || (layout == LinphoneConferenceLayoutActiveSpeaker)) {
+					// Only thumbnail corresponding to the participant is going to be inactivated
+					nb--;
+				} else if (layout == LinphoneConferenceLayoutGrid) {
+					// main and thumbnail corresponding to the participant are going to be inactivated
+					nb-=2;
+				}
+			}
 			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
-			BC_ASSERT_TRUE(Call::toCpp(call)->checkRtpSession());
+			if (video_enabled) {
+				BC_ASSERT_TRUE(Call::toCpp(call)->checkRtpSession());
+			}
 		}
 	}
 }

@@ -746,6 +746,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDeviceSession(const shared_ptr
 		case ParticipantDevice::State::Leaving:
 			if (freshlyRegistered) byeDevice(device);
 		break;
+		case ParticipantDevice::State::OnHold:
 		case ParticipantDevice::State::Present:
 			//nothing to do
 		break;
@@ -1539,6 +1540,7 @@ void ServerGroupChatRoom::setState (ConferenceInterface::State state) {
 						case ParticipantDevice::State::Joining:
 							atLeastOneDeviceJoining = true;
 							break;
+						case ParticipantDevice::State::OnHold:
 						case ParticipantDevice::State::Present:
 							atLeastOneDevicePresent = true;
 							break;

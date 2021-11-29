@@ -145,10 +145,10 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaChanged (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceLeft (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceJoined (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 
-	void notifyParticipantDeviceJoinedConference (const std::shared_ptr<ParticipantDevice> & device) const;
-	void notifyParticipantDeviceLeftConference (const std::shared_ptr<ParticipantDevice> & device) const;
-	void notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) ;
+	void notifySpeakingDevice (uint32_t ssrc, bool isSpeaking);
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);

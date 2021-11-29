@@ -3192,7 +3192,8 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 
 		// Pauline leaves conference2
 		// Pauline and Marie enter conference1
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_changed, focus_stat.number_of_participant_device_media_changed + 3, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_left, focus_stat.number_of_participant_device_left + 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_joined, focus_stat.number_of_participant_device_joined + 2, 10000));
 
 		for (auto mgr : {focus.getCMgr(), pauline.getCMgr()}) {
 			LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(mgr->lc));
@@ -3286,7 +3287,7 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 
 
 		// Pauline enters conference2
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_changed, focus_stat.number_of_participant_device_media_changed + 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_joined, focus_stat.number_of_participant_device_joined + 1, 10000));
 
 		for (auto mgr : {focus.getCMgr(), pauline.getCMgr()}) {
 			LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(mgr->lc));

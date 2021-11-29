@@ -393,6 +393,8 @@ typedef struct _stats {
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
 	int number_of_participant_device_media_changed;
+	int number_of_participant_device_left;
+	int number_of_participant_device_joined;
 	int number_of_participant_state_changed;
 
 	int number_of_SecurityLevelDowngraded;

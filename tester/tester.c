@@ -591,8 +591,22 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 	}
 }
 
+static void conference_participant_device_joined(LinphoneConference *conference, const LinphoneParticipantDevice *device) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_device_joined++;
+}
+
+static void conference_participant_device_left(LinphoneConference *conference, const LinphoneParticipantDevice *device) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+ms_message("%s - DEBUG DEBUG device left %s", __func__, linphone_core_get_identity(core));
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	manager->stat.number_of_participant_device_left++;
+}
+
 static void conference_participant_device_media_changed(LinphoneConference *conference, const LinphoneParticipantDevice *device) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
+ms_message("%s - DEBUG DEBUG device media changed %s", __func__, linphone_core_get_identity(core));
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_device_media_changed++;
 }
@@ -636,6 +650,8 @@ void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conf
 		linphone_conference_cbs_set_subject_changed(cbs, conference_subject_changed);
 		linphone_conference_cbs_set_participant_admin_status_changed(cbs, conference_participant_admin_status_changed);
 		linphone_conference_cbs_set_participant_device_media_changed(cbs, conference_participant_device_media_changed);
+		linphone_conference_cbs_set_participant_device_left(cbs, conference_participant_device_left);
+		linphone_conference_cbs_set_participant_device_joined(cbs, conference_participant_device_joined);
 		linphone_conference_cbs_set_participant_added(cbs, conference_participant_added);
 		linphone_conference_cbs_set_participant_device_added(cbs, conference_participant_device_added);
 		linphone_conference_cbs_set_participant_removed(cbs, conference_participant_removed);

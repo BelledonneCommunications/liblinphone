@@ -90,6 +90,8 @@ public:
 	LinphoneConferenceCbsParticipantDeviceRemovedCb participantDeviceRemovedCb;
 	LinphoneConferenceCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
 	LinphoneConferenceCbsParticipantDeviceMediaChangedCb participantDeviceMediaChangedCb;
+	LinphoneConferenceCbsParticipantDeviceJoinedCb participantDeviceJoinedCb;
+	LinphoneConferenceCbsParticipantDeviceLeftCb participantDeviceLeftCb;
 	LinphoneConferenceCbsStateChangedCb stateChangedCb;
 	LinphoneConferenceCbsSubjectChangedCb subjectChangedCb;
 	LinphoneConferenceCbsAudioDeviceChangedCb audioDeviceChangedCb;
@@ -134,6 +136,11 @@ public:
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) = 0;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
 	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) = 0;
+
+	virtual int participantDeviceJoined (const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
+	virtual int participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
+	virtual int participantDeviceLeft (const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
+	virtual int participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) = 0;
 
@@ -247,6 +254,11 @@ public:
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
 	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
 
+	virtual int participantDeviceJoined (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
+	virtual int participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+	virtual int participantDeviceLeft (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
+	virtual int participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
 
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
@@ -257,6 +269,8 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceJoined (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceLeft (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
 	virtual void notifyFullState () override;
 
@@ -336,6 +350,11 @@ public:
 	virtual int participantDeviceMediaChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
 	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
+
+	virtual int participantDeviceJoined (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
+	virtual int participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
+	virtual int participantDeviceLeft (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
+	virtual int participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
 

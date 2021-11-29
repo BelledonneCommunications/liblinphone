@@ -47,6 +47,8 @@ static bool isConferenceType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 		case LinphoneEventLogTypeConferenceParticipantRemoved:
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
 		case LinphoneEventLogTypeConferenceParticipantUnsetAdmin:
@@ -95,6 +97,8 @@ static bool isConferenceNotifiedType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 		case LinphoneEventLogTypeConferenceParticipantRemoved:
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
 		case LinphoneEventLogTypeConferenceParticipantUnsetAdmin:
@@ -113,6 +117,8 @@ static bool isConferenceParticipantType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 		case LinphoneEventLogTypeConferenceParticipantRemoved:
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
 		case LinphoneEventLogTypeConferenceParticipantUnsetAdmin:
@@ -129,6 +135,8 @@ static bool isConferenceParticipantDeviceType (LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 			return true;
 
 		default:

@@ -663,6 +663,14 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	const auto & resultCfg = resultCfgPair.first;
 	result.addActualConfiguration(resultCfg);
 
+	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
+		result.setLabel(remote_offer.getLabel());
+		result.setContent(remote_offer.getContent());
+	} else {
+		result.setLabel(local_cap.getLabel());
+		result.setContent(local_cap.getContent());
+	}
+
 	const auto success = resultCfgPair.second;
 	if (success) {
 		remote_offer.cfgIndex = remoteCfgIdx;
@@ -676,16 +684,12 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			result.rtcp_port=0; /* rtcp not supported yet*/
 			result.bandwidth=remote_offer.bandwidth;
 			result.multicast_role = SalMulticastReceiver;
-			result.setLabel(remote_offer.getLabel());
-			result.setContent(remote_offer.getContent());
 		} else {
 			result.rtp_addr=local_cap.rtp_addr;
 			result.rtcp_addr=local_cap.rtcp_addr;
 			result.rtp_port=local_cap.rtp_port;
 			result.rtcp_port=local_cap.rtcp_port;
 			result.bandwidth=local_cap.bandwidth;
-			result.setLabel(local_cap.getLabel());
-			result.setContent(local_cap.getContent());
 		}
 
 		if (resultCfg.bundle_only == true) {
