@@ -14,7 +14,11 @@ This changelog file was started on October 2019. Previous changes were more or l
 - LinphoneRecorder API added to record voice messages, that can later be sent in a LinphoneChatMessage.
 
 ### Changed
-- Java wrapper no longer catches app exceptions that happens in listener
+- Java wrapper no longer catches app exceptions that happen in listener
+- linphone_core_enable_mic() is changed to be persistent accross calls and conference. It no longer
+  resets after each call or conference. To avoid clarify with linphone_call_set_microphone_muted() and 
+  linphone_conference_set_microphone_muted(), an AND operation between the two levels is made to determine
+  the actual microphone state.
 
 ### Security fixes
 - To protect against "SIP digest leak", MD5 and digestion without qop=auth can be disabled by configuration
