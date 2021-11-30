@@ -4578,7 +4578,11 @@ LinphoneCall * linphone_core_invite_address_with_params_2(LinphoneCore *lc, cons
 		}
 	}
 
-	if (proxy != NULL) from = linphone_proxy_config_get_identity(proxy);
+	// first check if the call params holds a from
+	from = linphone_call_params_get_from_header(params);
+	if (strlen(from)==0) from = NULL; // it might be an empty string
+
+	if ((from == NULL) && (proxy != NULL)) from = linphone_proxy_config_get_identity(proxy);
 	/* if no proxy or no identity defined for this proxy, default to primary contact*/
 	if (from == NULL) from = linphone_core_get_primary_contact(lc);
 

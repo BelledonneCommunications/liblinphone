@@ -63,6 +63,8 @@ public:
 	void setPrivacy (LinphonePrivacyMask privacy);
 
 	void addCustomHeader (const std::string &headerName, const std::string &headerValue);
+	void setFromHeader (const std::string &fromValue);
+	const char * getFromHeader () const;
 	void removeCustomHeader (const std::string &headerName);
 	void clearCustomHeaders ();
 	const char * getCustomHeader (const std::string &headerName) const;

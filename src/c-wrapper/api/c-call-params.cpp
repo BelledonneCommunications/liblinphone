@@ -150,6 +150,14 @@ void linphone_call_params_add_custom_header (LinphoneCallParams *params, const c
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomHeader(header_name, L_C_TO_STRING(header_value));
 }
 
+void linphone_call_params_set_from_header (LinphoneCallParams *params, const char *from_value) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setFromHeader(L_C_TO_STRING(from_value));
+}
+
+const char *linphone_call_params_get_from_header (const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getFromHeader();
+}
+
 void linphone_call_params_add_custom_sdp_attribute (LinphoneCallParams *params, const char *attribute_name, const char *attribute_value) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomSdpAttribute(attribute_name, L_C_TO_STRING(attribute_value));
 }
