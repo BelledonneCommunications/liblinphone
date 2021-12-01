@@ -105,6 +105,10 @@ public:
 	void didRegisterForRemotePushWithStringifiedToken(const char *token) override;
 	void enableAutoIterate (bool autoIterateEnabled) override;
 
+	void onRecordingStarted () const override;
+	void onRecordingPaused () const override;
+	void stopRinging () const override;
+
 private:
 	string toUTF8String(CFStringRef str);
 	void kickOffConnectivity();
@@ -212,6 +216,18 @@ void IosPlatformHelpers::enableAutoIterate(bool autoIterateEnabled) {
 			}
 		}
 	}
+}
+
+void IosPlatformHelpers::onRecordingStarted() const {
+
+}
+
+void IosPlatformHelpers::onRecordingPaused() const {
+
+}
+
+void IosPlatformHelpers::stopRinging () const {
+	
 }
 
 //Safely get an UTF-8 string from the given CFStringRef

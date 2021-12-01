@@ -271,6 +271,16 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         }
     }
 
+    public void setAudioManagerInCommunicationMode() {
+        Log.i("[Audio Helper] Setting audio manager in communication mode");
+        mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+    }
+
+    public void setAudioManagerInNormalMode() {
+        Log.i("[Audio Helper] Setting audio manager in normal mode");
+        mAudioManager.setMode(AudioManager.MODE_NORMAL);
+    }
+
     private void routeAudioToEarpiece() {
         // Let's restore the default output device before the echo calibration or test
         Core core = CoreManager.instance().getCore();
