@@ -381,7 +381,7 @@ void ToneManager::freeAudioResources(){
 		linphone_ringtoneplayer_stop(lc->ringtoneplayer);
 	}
 	destroyRingStream();
-	
+	getPlatformHelpers(lc)->stopRinging();
 }
 
 

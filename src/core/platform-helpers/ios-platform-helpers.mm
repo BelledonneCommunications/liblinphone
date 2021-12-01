@@ -107,6 +107,7 @@ public:
 
 	void onRecordingStarted () const override;
 	void onRecordingPaused () const override;
+	void stopRinging () const override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -229,6 +230,10 @@ void IosPlatformHelpers::onRecordingStarted() const {
 
 void IosPlatformHelpers::onRecordingPaused() const {
 
+}
+
+void IosPlatformHelpers::stopRinging () const {
+	
 }
 
 //Safely get an UTF-8 string from the given CFStringRef

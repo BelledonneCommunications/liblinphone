@@ -75,6 +75,7 @@ public:
 
 	void onRecordingStarted () const override;
 	void onRecordingPaused () const override;
+	void stopRinging () const override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -122,6 +123,7 @@ private:
 	jmethodID mStopAutoIterateId = nullptr;
 	jmethodID mSetAudioManagerCommunicationMode = nullptr;
 	jmethodID mSetAudioManagerNormalMode = nullptr;
+	jmethodID mStopRingingId = nullptr;
 
 	bool mNetworkReachable = false;
 };
@@ -174,6 +176,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
 	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
 	mSetAudioManagerNormalMode = getMethodId(env, klass, "setAudioManagerInNormalMode", "()V");
+	mStopRingingId = getMethodId(env, klass, "stopRinging", "()V");
 
 	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
 }
@@ -500,6 +503,18 @@ void AndroidPlatformHelpers::onRecordingStarted() const {
 
 void AndroidPlatformHelpers::onRecordingPaused() const {
 	
+}
+
+void AndroidPlatformHelpers::stopRinging () const {
+	LinphoneCore *lc = getCore()->getCCore();
+	if (linphone_core_is_native_ringing_enabled(lc) == TRUE) {
+		JNIEnv *env = ms_get_jni_env();
+		if (env) {
+			if (mJavaCoreManager) {
+				env->CallVoidMethod(mJavaCoreManager, mStopRingingId);
+			}
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------

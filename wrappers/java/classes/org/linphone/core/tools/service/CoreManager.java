@@ -424,6 +424,10 @@ public class CoreManager {
         if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
     }
 
+	public void stopRinging() {
+		if (mAudioHelper != null) mAudioHelper.stopRinging();
+	}
+
     private Class getServiceClass() {
         // Inspect services in package to get the class name of the Service that extends LinphoneService, assume first one
         try {
