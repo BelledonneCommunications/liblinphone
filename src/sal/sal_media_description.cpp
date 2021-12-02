@@ -136,8 +136,8 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		long long startTime = belle_sdp_time_get_start(sdp_time);
 		long long stopTime = belle_sdp_time_get_stop(sdp_time);
 		std::pair<time_t, time_t> timePair = std::make_pair<time_t, time_t>(
-			(startTime == 0) ? (time_t)-1 : startTime - SalMediaDescription::ntpToUnix,
-			(stopTime == 0) ? (time_t)-1 : stopTime - SalMediaDescription::ntpToUnix
+			(startTime == 0) ? (time_t)-1 : static_cast<time_t>(startTime - SalMediaDescription::ntpToUnix),
+			(stopTime == 0) ? (time_t)-1 : static_cast<time_t>(stopTime - SalMediaDescription::ntpToUnix)
 		);
 		times.push_back(timePair);
 	}
