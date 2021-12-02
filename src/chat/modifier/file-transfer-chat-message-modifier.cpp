@@ -1094,9 +1094,11 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
 							xmlChar *content_type = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							ContentType contentType((char*)content_type);
-							fileTransferContent->setFileContentType(contentType);
-							ms_free(content_type);
+							if (content_type) {
+								ContentType contentType((char*)content_type);
+								fileTransferContent->setFileContentType(contentType);
+								ms_free(content_type);
+							}
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"playing-length")) {
 							xmlChar *fileDuration = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
