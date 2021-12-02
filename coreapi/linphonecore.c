@@ -1490,6 +1490,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	linphone_core_enable_agc(lc, !!linphone_config_get_int(lc->config,"sound","agc",0));
 
 	linphone_core_set_playback_gain_db (lc,linphone_config_get_float(lc->config,"sound","playback_gain_db",0));
+	linphone_core_enable_mic(lc, TRUE);
 	linphone_core_set_mic_gain_db (lc,linphone_config_get_float(lc->config,"sound","mic_gain_db",0));
 	linphone_core_set_disable_record_on_mute(lc, linphone_config_get_bool(lc->config,"sound","disable_record_on_mute", FALSE));
 	linphone_core_set_remote_ringback_tone (lc,linphone_config_get_string(lc->config,"sound","ringback_tone",NULL));
