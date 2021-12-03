@@ -341,7 +341,7 @@ LinphoneVideoDefinition*  Factory::findSupportedVideoDefinitionByName(const std:
 	
 	for (item = supported; item != NULL; item = bctbx_list_next(item)) {
 		LinphoneVideoDefinition *svdef = (LinphoneVideoDefinition *)bctbx_list_get_data(item);
-		if (linphone_video_definition_get_name(svdef) == name ) {
+		if (strcasecmp(linphone_video_definition_get_name(svdef), name.c_str()) == 0 ) {
 			return svdef;
 		}
 	}
