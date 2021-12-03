@@ -566,6 +566,9 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceAdded(event, participantDevice);
 	}
+	if (participantDevice) {
+		_linphone_participant_device_notify_conference_joined(participantDevice->toC());
+	}
 	return event;
 }
 
@@ -583,6 +586,9 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceRemoved(event, participantDevice);
+	}
+	if (participantDevice) {
+		_linphone_participant_device_notify_conference_left(participantDevice->toC());
 	}
 	return event;
 }

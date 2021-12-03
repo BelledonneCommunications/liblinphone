@@ -599,14 +599,12 @@ static void conference_participant_device_joined(LinphoneConference *conference,
 
 static void conference_participant_device_left(LinphoneConference *conference, const LinphoneParticipantDevice *device) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
-ms_message("%s - DEBUG DEBUG device left %s", __func__, linphone_core_get_identity(core));
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_device_left++;
 }
 
 static void conference_participant_device_media_changed(LinphoneConference *conference, const LinphoneParticipantDevice *device) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
-ms_message("%s - DEBUG DEBUG device media changed %s", __func__, linphone_core_get_identity(core));
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	manager->stat.number_of_participant_device_media_changed++;
 }

@@ -376,7 +376,9 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	if (!participant)
 		return false;
 	// Delete all devices of a participant
-	std::for_each(participant->getDevices().cbegin(), participant->getDevices().cend(), [&] (const std::shared_ptr<ParticipantDevice> & device) {
+	auto deviceIt = participant->getDevices().begin();
+	while (deviceIt != participant->getDevices().end()) {
+		auto device = (*deviceIt);
 		LinphoneEvent * event = device->getConferenceSubscribeEvent();
 		if (event) {
 			//try to terminate subscription if any, but do not wait for answer.
@@ -386,9 +388,15 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 			linphone_event_terminate(event);
 		}
 
+		auto session = device->getSession();
+		deviceIt++;
+		participant->removeDevice(session);
+
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceRemoved(creationTime, false, participant, device);
-	});
+	}
+
+
 	participant->clearDevices();
 	participants.remove(participant);
 	time_t creationTime = time(nullptr);
@@ -1646,23 +1654,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
-
-	bool preserveSession = true;
-	auto participantIt = std::find_if(participants.cbegin(), participants.cend(), [&] (const std::shared_ptr<Participant> & p) {
-		return (p->getSession() != participant->getSession());
-	});
-	if (participantIt != participants.cend()) {
-		const std::shared_ptr<Participant> & p = *participantIt;
-		preserveSession = p->getPreserveSession();
-	}
-
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	if ((getState() != ConferenceInterface::State::TerminationPending) && ((getParticipantCount() > 2) || ((getParticipantCount() == 2) && ((participant->getDevices().empty() == false) || !preserveSession)))) {
+	if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() >= 2)) {
 		++lastNotify;
 		// Send notify only if it is not in state TerminationPending and:
-		// - there are more than two participants in the conference
-		// - there are two participants and the list of devices of the current participant is not empty
-		// - there are two participants and the remaining participant didn't have a session towards the conference manager preexisting conference
+		// - there are two or more participants in the conference
 		return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
 	}
 	return nullptr;

@@ -1008,7 +1008,8 @@ void LocalConferenceEventHandler::onParticipantDeviceLeft (const std::shared_ptr
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
-		notifyAll(createNotifyParticipantDeviceStatusChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+		notifyAllExceptDevice(createNotifyParticipantDeviceStatusChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
+//		notifyAll(createNotifyParticipantDeviceStatusChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
@@ -1018,7 +1019,8 @@ void LocalConferenceEventHandler::onParticipantDeviceJoined (const std::shared_p
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
-		notifyAll(createNotifyParticipantDeviceStatusChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+		notifyAllExceptDevice(createNotifyParticipantDeviceStatusChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
+//		notifyAll(createNotifyParticipantDeviceStatusChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}

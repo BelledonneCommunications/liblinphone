@@ -126,14 +126,8 @@ bool ParticipantDevice::isInConference() const {
 		const auto & isMe = conference->isMe(getAddress());
 		if (isMe) {
 			return conference->isIn();
-		} else if (mSession) {
-			const auto & callState = mSession->getState();
-			if (mSession->getPrivate()->isInConference()) {
-				// If it is in local conference
-				return (callState != CallSession::State::PausedByRemote);
-			} else {
-				return (callState != CallSession::State::Paused);
-			}
+		} else {
+			return (getState() == ParticipantDevice::State::Present);
 		}
 	}
 	return false;
