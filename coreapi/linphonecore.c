@@ -5430,13 +5430,13 @@ void linphone_core_reload_sound_devices(LinphoneCore* lc) {
 			input_dev_id_copy = ms_strdup(input_dev_id);
 		}
 	}
-
-// Reload
+	
+	// Reload
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
-
-// Set selection
-
+	
+	// Set selection
+	
 	linphone_core_set_ringer_device(lc, ringer_copy);
 	if (ringer_copy != NULL)
 		ms_free(ringer_copy);

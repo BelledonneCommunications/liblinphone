@@ -216,6 +216,8 @@ private:
 	bool mRestartStreamRequired = false;	// Set to true if the stream need to stop on render().
 	static constexpr const int ecStateMaxLen = 1048576; /* 1Mo */
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
+	
+	static void audioRouteChangeCb(void* userData, bool_t needReloadSoundDevices, char* newInputDevice, char* newOutputDevice);
 };
 
 class MS2VideoControl : public VideoControlInterface{
