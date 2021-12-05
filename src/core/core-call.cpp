@@ -267,28 +267,28 @@ LinphoneStatus Core::pauseAllCalls () {
 }
 
 void Core::soundcardActivateAudioSession (bool actived) {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
 	if (card) {
 		ms_snd_card_notify_audio_session_activated(card, actived);
 	}
 }
 
 void Core::soundcardConfigureAudioSession () {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
 	if (card) {
 		ms_snd_card_configure_audio_session(card);
 	}
 }
 
 void Core::soundcardEnableCallkit (bool enabled) {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
 	if (card) {
 		ms_snd_card_app_notifies_activation(card, enabled);
 	}
 }
 
 void Core::soundcardAudioRouteChanged () {
-	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
 	if (card) {
 		ms_snd_card_notify_audio_route_changed(card);
 	}
