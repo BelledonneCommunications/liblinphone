@@ -557,9 +557,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 				&& */capabilities & ChatRoom::Capabilities::Conference
 				&& capabilities & ChatRoom::Capabilities::OneToOne
 				&& encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
-			if (localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
-					&& participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress().getAddressWithoutGruu()) {
-				return chatRoom;
+			if (localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()) {
+				if (chatRoom->getParticipants().empty()) {
+					lWarning() << "Empty participants list of chat room [" << it->first << "]";
+				} else if (participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress().getAddressWithoutGruu()) {
+					return chatRoom;
+				}
 			}
 		}
 	}
