@@ -69,12 +69,12 @@ std::ostream& operator<<(std::ostream& lhs, EventLog::Type e) {
 			lhs << "ConferenceCreated"; break;
 		case EventLog::Type::ConferenceTerminated:
 			lhs << "ConferenceTerminated"; break;
-		case EventLog::Type::ConferenceCallStart:
-			lhs << "ConferenceCallStart"; break;
+		case EventLog::Type::ConferenceCallStarted:
+			lhs << "ConferenceCallStarted"; break;
 		case EventLog::Type::ConferenceCallConnected:
 			lhs << "ConferenceCallConnected"; break;
-		case EventLog::Type::ConferenceCallEnd:
-			lhs << "ConferenceCallEnd"; break;
+		case EventLog::Type::ConferenceCallEnded:
+			lhs << "ConferenceCallEnded"; break;
 		case EventLog::Type::ConferenceChatMessage:
 			lhs << "ConferenceChatMessage"; break;
 		case EventLog::Type::ConferenceParticipantAdded:

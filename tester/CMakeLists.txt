@@ -120,6 +120,7 @@ set(CERTIFICATE_CLIENT_FILES
 set(CERTIFICATE_FILES ${CERTIFICATE_ALT_FILES} ${CERTIFICATE_CN_FILES} ${CERTIFICATE_CLIENT_FILES})
 
 set(DB_FILES
+	db/call-history.db
 	db/friends.db
 	db/linphone.db
 	db/messages.db

@@ -2186,9 +2186,9 @@ static void ui_config_read(LinphoneCore *lc) {
 	if (!lc->friends_db) {
 		read_friends_from_rc(lc);
 	}
-	if (!lc->logs_db) {
-		lc->call_logs = linphone_core_read_call_logs_from_config_file(lc);
-	}
+#ifndef HAVE_DB_STORAGE
+	lc->call_logs = linphone_core_read_call_logs_from_config_file(lc);
+#endif
 }
 
 bool_t linphone_core_tunnel_available(void){
@@ -5845,45 +5845,35 @@ LinphoneNatPolicy * linphone_core_get_nat_policy(const LinphoneCore *lc) {
  ******************************************************************************/
 
 void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *path) {
-	if (lc->logs_db_file){
-		ms_free(lc->logs_db_file);
-		lc->logs_db_file = NULL;
-		linphone_core_call_log_storage_close(lc);
-	}
-	if (lc->call_logs) {
-		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);
-		lc->call_logs = NULL;
-	}
-	if (path) {
-		lc->logs_db_file = ms_strdup(path);
-		linphone_core_call_log_storage_init(lc);
-		linphone_core_migrate_logs_from_rc_to_db(lc);
+	if (!linphone_core_conference_server_enabled(lc)) {
+		auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
+		if (mainDb) {
+			mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
+			linphone_core_migrate_logs_from_rc_to_db(lc);
+		} else {
+			ms_warning("linphone_core_set_call_logs_database_path() needs to be called once linphone_core_start() has been called");
+		}
 	}
 }
 
 const char * linphone_core_get_call_logs_database_path(LinphoneCore *lc) {
-	return lc->logs_db_file;
+	lError() << "Do not use `linphone_core_get_call_logs_database_path`. Not necessary.";
+	return "";
 }
 
+
 const bctbx_list_t* linphone_core_get_call_logs(LinphoneCore *lc) {
-	if (lc->logs_db) {
-		linphone_core_get_call_history(lc);
-	}
-	return lc->call_logs;
+	return linphone_core_get_call_history(lc);
 }
 
 void linphone_core_clear_call_logs(LinphoneCore *lc) {
-	bool_t call_logs_sqlite_db_found = FALSE;
-	lc->missed_calls=0;
-	if (lc->logs_db) {
-		call_logs_sqlite_db_found = TRUE;
-		linphone_core_delete_call_history(lc);
-	}
+#ifdef HAVE_DB_STORAGE
+	linphone_core_delete_call_history(lc);
+#else
 	bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
 	lc->call_logs = bctbx_list_free(lc->call_logs);
-	if (!call_logs_sqlite_db_found) {
-		call_logs_write_to_config_file(lc);
-	}
+	call_logs_write_to_config_file(lc);
+#endif
 }
 
 int linphone_core_get_missed_calls_count(LinphoneCore *lc) {
@@ -5895,16 +5885,13 @@ void linphone_core_reset_missed_calls_count(LinphoneCore *lc) {
 }
 
 void linphone_core_remove_call_log(LinphoneCore *lc, LinphoneCallLog *cl) {
-	bool_t call_logs_sqlite_db_found = FALSE;
-	if (lc->logs_db) {
-		call_logs_sqlite_db_found = TRUE;
-		linphone_core_delete_call_log(lc, cl);
-	}
+#ifdef HAVE_DB_STORAGE
+	linphone_core_delete_call_log(lc, cl);
+#else
 	lc->call_logs = bctbx_list_remove(lc->call_logs, cl);
-	if (!call_logs_sqlite_db_found) {
-		call_logs_write_to_config_file(lc);
-		linphone_call_log_unref(cl);
-	}
+	call_logs_write_to_config_file(lc);
+	linphone_call_log_unref(cl);
+#endif
 }
 
 void linphone_core_migrate_logs_from_rc_to_db(LinphoneCore *lc) {
@@ -7283,10 +7270,6 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		ms_free(lc->rec_file);
 		lc->rec_file = NULL;
 	}
-	if (lc->logs_db_file) {
-		ms_free(lc->logs_db_file);
-		lc->logs_db_file = NULL;
-	}
 	if (lc->friends_db_file) {
 		ms_free(lc->friends_db_file);
 		lc->friends_db_file = NULL;
@@ -7315,7 +7298,6 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	linphone_core_free_payload_types(lc);
 	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
 	lc->supported_formats = NULL;
-	linphone_core_call_log_storage_close(lc);
 	linphone_core_friends_storage_close(lc);
 	linphone_core_zrtp_cache_close(lc);
 	ms_bandwidth_controller_destroy(lc->bw_controller);
@@ -8868,10 +8850,10 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 	bctbx_list_free(participants_copy);
 }
 
-static bctbx_list_t *get_conference_information_list(LinphoneCore *core, bool_t only_future) {
+static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	auto list = mainDb->getConferenceInfos(only_future);
+	auto list = mainDb->getConferenceInfos(t);
 
 	bctbx_list_t *results = NULL;
 	for (auto &conf : list) {
@@ -8885,9 +8867,13 @@ static bctbx_list_t *get_conference_information_list(LinphoneCore *core, bool_t 
 }
 
 bctbx_list_t *linphone_core_get_conference_information_list(LinphoneCore *core) {
-	return get_conference_information_list(core, FALSE);
+	return get_conference_information_list(core, -1);
 }
 
 bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core) {
-	return get_conference_information_list(core, TRUE);
+	return get_conference_information_list(core, ms_time(NULL));
+}
+
+bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time) {
+	return get_conference_information_list(core, time);
 }

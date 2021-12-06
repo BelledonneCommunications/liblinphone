@@ -42,6 +42,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "call/call-log.h"
 #include "conference/session/media-session-p.h"
 
 #define STR_REASSIGN(dest, src) {\
@@ -173,7 +174,7 @@ static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
 		return FALSE;
 
 	if (stats_type == LINPHONE_CALL_STATS_VIDEO){
-		if (!(Call::toCpp(call)->getLog()->reporting.was_video_running
+		if (!(Call::toCpp(call)->getLog()->getQualityReporting()->was_video_running
 			|| linphone_call_params_video_enabled(linphone_call_get_current_params(call))) )
 			return FALSE;
 	}
@@ -181,7 +182,7 @@ static bool_t media_report_enabled(LinphoneCall * call, int stats_type){
 	if (stats_type == LINPHONE_CALL_STATS_TEXT && !linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call)))
 		return FALSE;
 
-	return (Call::toCpp(call)->getLog()->reporting.reports[stats_type] != NULL);
+	return (Call::toCpp(call)->getLog()->getQualityReporting()->reports[stats_type] != NULL);
 }
 
 static void append_metrics_to_buffer(char ** buffer, size_t * size, size_t * offset, const reporting_content_metrics_t *rm) {
@@ -365,9 +366,9 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 	linphone_content_set_buffer(content, (uint8_t *)buffer, strlen(buffer));
 	ms_free(buffer);
 
-	if (linphone_call_get_call_log(call)->reporting.on_report_sent != NULL) {
-		SalStreamType type = report == linphone_call_get_call_log(call)->reporting.reports[0] ? SalAudio : report == linphone_call_get_call_log(call)->reporting.reports[1] ? SalVideo : SalText;
-		linphone_call_get_call_log(call)->reporting.on_report_sent(call, type, content);
+	if (Call::toCpp(call)->getLog()->getQualityReporting()->on_report_sent != NULL) {
+		SalStreamType type = report == Call::toCpp(call)->getLog()->getQualityReporting()->reports[0] ? SalAudio : report == Call::toCpp(call)->getLog()->getQualityReporting()->reports[1] ? SalVideo : SalText;
+		Call::toCpp(call)->getLog()->getQualityReporting()->on_report_sent(call, type, content);
 	}
 
 
@@ -429,26 +430,27 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 	SalStreamType sal_stream_type = stats_type == LINPHONE_CALL_STATS_AUDIO ? SalAudio : stats_type == LINPHONE_CALL_STATS_VIDEO ? SalVideo : SalText;
 	const LinphonePrivate::SalStreamDescription * local_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getLocalMediaDescription(), sal_stream_type);
 	const LinphonePrivate::SalStreamDescription * remote_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getRemoteMediaDescription(), sal_stream_type);
-	LinphoneCallLog *log = Call::toCpp(call)->getLog();
+	std::shared_ptr<CallLog> log = Call::toCpp(call)->getLog();
+	LinphoneQualityReporting *log_reporting = log->getQualityReporting();
 
 	if (local_desc != NULL) {
 		/*since this function might be called for video stream AFTER it has been uninitialized, local description might
 		be invalid. In any other case, IP/port should be always filled and valid*/
 		if (local_desc->rtp_addr.empty() == false) {
-			log->reporting.reports[stats_type]->info.local_addr.port = local_desc->rtp_port;
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.local_addr.ip, ms_strdup(L_STRING_TO_C(local_desc->rtp_addr)));
+			log_reporting->reports[stats_type]->info.local_addr.port = local_desc->rtp_port;
+			STR_REASSIGN(log_reporting->reports[stats_type]->info.local_addr.ip, ms_strdup(L_STRING_TO_C(local_desc->rtp_addr)));
 		}
 	}
 
 	if (remote_desc != NULL) {
 		/*port is always stored in stream description struct*/
-		log->reporting.reports[stats_type]->info.remote_addr.port = remote_desc->rtp_port;
+		log_reporting->reports[stats_type]->info.remote_addr.port = remote_desc->rtp_port;
 
 		/*for IP it can be not set if we are using a direct route*/
 		if (remote_desc->rtp_addr.empty() == false) {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(L_STRING_TO_C(remote_desc->rtp_addr)));
+			STR_REASSIGN(log_reporting->reports[stats_type]->info.remote_addr.ip, ms_strdup(L_STRING_TO_C(remote_desc->rtp_addr)));
 		} else {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(L_STRING_TO_C(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr)));
+			STR_REASSIGN(log_reporting->reports[stats_type]->info.remote_addr.ip, ms_strdup(L_STRING_TO_C(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr)));
 		}
 	}
 }
@@ -507,8 +509,8 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 	const PayloadType * local_payload = NULL;
 	const PayloadType * remote_payload = NULL;
 	const LinphoneCallParams * current_params = linphone_call_get_current_params(call);
-	LinphoneCallLog *log = Call::toCpp(call)->getLog();
-	reporting_session_report_t * report = log->reporting.reports[stats_type];
+	std::shared_ptr<CallLog> log = Call::toCpp(call)->getLog();
+	reporting_session_report_t * report = log->getQualityReporting()->reports[stats_type];
 
 	// call->op might be already released if hanging up in state LinphoneCallOutgoingInit
 	if (!media_report_enabled(call, stats_type) || !Call::toCpp(call)->getOp())
@@ -516,7 +518,7 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 
 	std::string dialogId = Call::toCpp(call)->getOp()->getDialogId();
 
-	STR_REASSIGN(report->info.call_id, ms_strdup(log->call_id));
+	STR_REASSIGN(report->info.call_id, ms_strdup(log->getCallId().c_str()));
 
 	STR_REASSIGN(report->local_metrics.user_agent, ms_strdup(linphone_core_get_user_agent(linphone_call_get_core(call))));
 	STR_REASSIGN(report->remote_metrics.user_agent, ms_strdup(linphone_call_get_remote_user_agent(call)));
@@ -538,22 +540,22 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 
 
 	if (Call::toCpp(call)->getDirection() == LinphoneCallIncoming) {
-		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->from));
-		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->to));
+		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->getFromAddress()));
+		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->getToAddress()));
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.remote_addr.id));
 	} else {
-		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->to));
-		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->from));
+		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->getToAddress()));
+		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->getFromAddress()));
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.local_addr.id));
 	}
 
 
-	report->local_metrics.timestamps.start = log->start_date_time;
-	report->local_metrics.timestamps.stop = log->start_date_time + linphone_call_get_duration(call);
+	report->local_metrics.timestamps.start = log->getStartTime();
+	report->local_metrics.timestamps.stop = log->getStartTime() + linphone_call_get_duration(call);
 
 	/*we use same timestamps for remote too*/
-	report->remote_metrics.timestamps.start = log->start_date_time;
-	report->remote_metrics.timestamps.stop = log->start_date_time + linphone_call_get_duration(call);
+	report->remote_metrics.timestamps.start = log->getStartTime();
+	report->remote_metrics.timestamps.stop = log->getStartTime() + linphone_call_get_duration(call);
 
 
 	/*yet we use the same payload config for local and remote, since this is the largest use case*/
@@ -608,7 +610,7 @@ static float reporting_rand(float t){
 }
 
 void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_type) {
-	reporting_session_report_t * report = Call::toCpp(call)->getLog()->reporting.reports[stats_type];
+	reporting_session_report_t * report = Call::toCpp(call)->getLog()->getQualityReporting()->reports[stats_type];
 	reporting_content_metrics_t * metrics = NULL;
 	LinphoneCallStats *stats = NULL;
 	mblk_t *block = NULL;
@@ -688,7 +690,7 @@ static int publish_report(LinphoneCall *call, const char *event_type){
 		if (media_report_enabled(call, stream_index)) {
 			int sndret;
 			linphone_reporting_update_media_info(call, stream_index);
-			sndret=send_report(call, Call::toCpp(call)->getLog()->reporting.reports[stream_index], event_type);
+			sndret=send_report(call, Call::toCpp(call)->getLog()->getQualityReporting()->reports[stream_index], event_type);
 			if (sndret>0){
 				ret += 10+(idx+1)*sndret;
 			}
@@ -723,7 +725,7 @@ static bool_t set_on_action_suggested_cb(MediaStream *stream,void (*on_action_su
 
 void linphone_reporting_call_state_updated(LinphoneCall *call){
 	LinphoneCallState state=linphone_call_get_state(call);
-	LinphoneCallLog *log = Call::toCpp(call)->getLog();
+	std::shared_ptr<CallLog> log = Call::toCpp(call)->getLog();
 	if (state == LinphoneCallReleased||!quality_reporting_enabled(call)){
 		return;
 	}
@@ -736,22 +738,22 @@ void linphone_reporting_call_state_updated(LinphoneCall *call){
 			};
 			for (const auto & stream_index : { LINPHONE_CALL_STATS_AUDIO, LINPHONE_CALL_STATS_VIDEO, LINPHONE_CALL_STATS_TEXT }) {
 				bool_t enabled = media_report_enabled(call, stream_index);
-				if (enabled && set_on_action_suggested_cb(streams[stream_index], qos_analyzer_on_action_suggested, log->reporting.reports[stream_index])) {
-					log->reporting.reports[stream_index]->call=call;
-					STR_REASSIGN(log->reporting.reports[stream_index]->qos_analyzer.name, ms_strdup(ms_qos_analyzer_get_name(ms_bitrate_controller_get_qos_analyzer(streams[stream_index]->rc))));
+				if (enabled && set_on_action_suggested_cb(streams[stream_index], qos_analyzer_on_action_suggested, log->getQualityReporting()->reports[stream_index])) {
+					log->getQualityReporting()->reports[stream_index]->call=call;
+					STR_REASSIGN(log->getQualityReporting()->reports[stream_index]->qos_analyzer.name, ms_strdup(ms_qos_analyzer_get_name(ms_bitrate_controller_get_qos_analyzer(streams[stream_index]->rc))));
 				}
 			}
 			linphone_reporting_update_ip(call);
-			if (media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO) && log->reporting.was_video_running){
-				send_report(call, log->reporting.reports[LINPHONE_CALL_STATS_VIDEO], "VQSessionReport");
+			if (media_report_enabled(call, LINPHONE_CALL_STATS_VIDEO) && log->getQualityReporting()->was_video_running){
+				send_report(call, log->getQualityReporting()->reports[LINPHONE_CALL_STATS_VIDEO], "VQSessionReport");
 			}
-			log->reporting.was_video_running = linphone_call_params_video_enabled(linphone_call_get_current_params(call));
+			log->getQualityReporting()->was_video_running = linphone_call_params_video_enabled(linphone_call_get_current_params(call));
 			break;
 		}
 		case LinphoneCallEnd:{
 			set_on_action_suggested_cb(Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio), NULL, NULL);
 			set_on_action_suggested_cb(Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo), NULL, NULL);
-			if (log->status==LinphoneCallSuccess || log->status==LinphoneCallAborted){
+			if (log->getStatus()==LinphoneCallSuccess || log->getStatus()==LinphoneCallAborted){
 				linphone_reporting_publish_session_report(call, TRUE);
 			}
 			break;
@@ -824,5 +826,5 @@ void linphone_reporting_destroy(reporting_session_report_t * report) {
 
 
 void linphone_reporting_set_on_report_send(LinphoneCall *call, LinphoneQualityReportingReportSendCb cb){
-	linphone_call_get_call_log(call)->reporting.on_report_sent = cb;
+	Call::toCpp(call)->getLog()->getQualityReporting()->on_report_sent = cb;
 }

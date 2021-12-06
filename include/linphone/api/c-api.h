@@ -29,6 +29,7 @@
 #include "linphone/api/c-auth-info.h"
 #include "linphone/api/c-address.h"
 #include "linphone/api/c-call-cbs.h"
+#include "linphone/api/c-call-log.h"
 #include "linphone/api/c-call-stats.h"
 #include "linphone/api/c-call.h"
 #include "linphone/api/c-callbacks.h"

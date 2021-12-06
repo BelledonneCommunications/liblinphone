@@ -27,8 +27,10 @@
 #include "object/object.h"
 
 #include "conference/conference-id.h"
+#include "event-log/event-log.h"
 #include "linphone/types.h"
 #include "call/audio-device/audio-device.h"
+#include "call/call-log.h"
 
 // =============================================================================
 
@@ -54,7 +56,6 @@ class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
 class SalMediaDescription;
-class EventLog;
 
 namespace MediaConference {
 	class RemoteConference;
@@ -130,6 +131,13 @@ public:
 	void soundcardEnableCallkit (bool enabled);
 	void soundcardAudioRouteChanged ();
 	LinphoneStatus terminateAllCalls ();
+
+	// ---------------------------------------------------------------------------
+	// Conference Call Event.
+	// ---------------------------------------------------------------------------
+
+	void reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallLog> &callLog, std::shared_ptr<ConferenceInfo> confInfo);
+	void reportEarlyCallFailed (LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const std::string callId);
 
 	// ---------------------------------------------------------------------------
 	// ChatRoom.

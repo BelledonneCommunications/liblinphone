@@ -44,7 +44,6 @@ set(LINPHONE_SOURCE_FILES_C
 	bellesip_sal/sal_sdp.c
 	buffer.c
 	callbacks.c
-	call_log.c
 	carddav.c
 	chat.c
 	contactprovider.c

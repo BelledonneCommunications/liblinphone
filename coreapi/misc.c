@@ -62,6 +62,7 @@
 
 #include "conference/session/media-session-p.h"
 #include "call/call.h"
+#include "call/call-log.h"
 
 void linphone_core_update_allocated_audio_bandwidth(LinphoneCore *lc){
 	const bctbx_list_t *elem;
@@ -924,67 +925,6 @@ void linphone_task_list_run(LinphoneTaskList *t){
 
 void linphone_task_list_free(LinphoneTaskList *t){
 	t->hooks = bctbx_list_free_with_data(t->hooks, (void (*)(void*))ms_free);
-}
-
-void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log){
-	bool_t call_logs_sqlite_db_found = FALSE;
-
-	// TODO: This is a workaround that has to be removed ASAP
-	// Do not add calls made to the conference factory in the history
-	const char *conference_factory_uri = nullptr;
-	LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(lc, call_log->to);
-	if (proxy)
-		conference_factory_uri = linphone_proxy_config_get_conference_factory_uri(proxy);
-	if (conference_factory_uri) {
-		LinphoneAddress *conference_factory_addr = linphone_address_new(conference_factory_uri);
-		if (conference_factory_addr) {
-			if (linphone_address_weak_equal(call_log->to, conference_factory_addr)) {
-				linphone_address_unref(conference_factory_addr);
-				return;
-			}
-			linphone_address_unref(conference_factory_addr);
-		}
-	}
-
-	// For PushIncomingState call, from and to address are unknow.
-	const char *usernameFrom = call_log->from ? linphone_address_get_username(call_log->from) : nullptr;
-	const char *usernameTo = call_log->to ? linphone_address_get_username(call_log->to) : nullptr;
-	if ((usernameFrom && (strstr(usernameFrom, "chatroom-") == usernameFrom))
-		|| (usernameTo && (strstr(usernameTo, "chatroom-") == usernameTo))
-	)
-		return;
-	// End of workaround
-
-	if (lc->logs_db) {
-		call_logs_sqlite_db_found = TRUE;
-		linphone_core_store_call_log(lc, call_log);
-	}
-
-	if (!call_logs_sqlite_db_found) {
-		lc->call_logs=bctbx_list_prepend(lc->call_logs,linphone_call_log_ref(call_log));
-		if (bctbx_list_size(lc->call_logs)>(size_t)lc->max_call_logs){
-			bctbx_list_t *elem,*prevelem=NULL;
-			/*find the last element*/
-			for(elem=lc->call_logs;elem!=NULL;elem=elem->next){
-				prevelem = elem;
-			}
-			elem = prevelem;
-			linphone_call_log_unref((LinphoneCallLog*)elem->data);
-			lc->call_logs = bctbx_list_erase_link(lc->call_logs,elem);
-		}
-		call_logs_write_to_config_file(lc);
-	}
-
-	linphone_core_notify_call_log_updated(lc,call_log);
-}
-
-void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const char *cid){
-	LinphoneCallLog *l = linphone_call_log_new(dir, from, to);
-	l->error_info = ei;
-	l->call_id = cid? bctbx_strdup(cid) : NULL;
-	l->status = LinphoneCallEarlyAborted;
-	linphone_core_report_call_log(lc, l);
-	linphone_call_log_unref(l);
 }
 
 /* Functions to mainpulate the LinphoneRange structure */

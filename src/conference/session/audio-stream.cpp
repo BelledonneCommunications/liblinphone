@@ -64,9 +64,9 @@ static void audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_
 }
 
 void MS2AudioStream::initZrtp() {
-	LinphoneCallLog *log = getMediaSession().getLog();
-	const LinphoneAddress *peerAddr = linphone_call_log_get_remote_address(log);
-	const LinphoneAddress *selfAddr = linphone_call_log_get_local_address(log);
+	shared_ptr<CallLog> log = getMediaSession().getLog();
+	const LinphoneAddress *peerAddr = log->getRemoteAddress();
+	const LinphoneAddress *selfAddr = log->getLocalAddress();
 	char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
 												, linphone_address_get_username(peerAddr)
 												, linphone_address_get_domain(peerAddr));

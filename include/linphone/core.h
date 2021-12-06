@@ -38,7 +38,6 @@
 
 #include "linphone/buffer.h"
 #include "linphone/call.h"
-#include "linphone/call_log.h"
 #include "linphone/call_params.h"
 #include "linphone/call_stats.h"
 #include "linphone/chat.h"
@@ -3119,6 +3118,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *c
 /**
  * Get the list of call logs (past calls).
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
+ * Requires ENABLE_DB_STORAGE to work.
  * @param core #LinphoneCore object. @notnil
  * @param peer_address The remote #LinphoneAddress object. @notnil
  * @param local_address The local #LinphoneAddress object @notnil
@@ -3132,6 +3132,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
 
 /**
  * Get the latest outgoing call log.
+ * Requires ENABLE_DB_STORAGE to work.
  * @param core #LinphoneCore object @notnil
  * @return The last outgoing call log if any. @maybenil
 **/
@@ -3181,23 +3182,6 @@ LINPHONE_PUBLIC void linphone_core_reset_missed_calls_count(LinphoneCore *core);
  * @param call_log #LinphoneCallLog object to remove. @notnil
 **/
 LINPHONE_PUBLIC void linphone_core_remove_call_log(LinphoneCore *core, LinphoneCallLog *call_log);
-
-/**
- * Sets the database filename where call logs will be stored.
- * If the file does not exist, it will be created.
- * @ingroup initializing
- * @param core the linphone core @notnil
- * @param path filesystem path @maybenil
-**/
-LINPHONE_PUBLIC void linphone_core_set_call_logs_database_path(LinphoneCore *core, const char *path);
-
-/**
- * Gets the database filename where call logs will be stored.
- * @ingroup initializing
- * @param core the linphone core @notnil
- * @return filesystem path. @maybenil
-**/
-LINPHONE_PUBLIC const char * linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
 /**
  * Migrates the call logs from the linphonerc to the database if not done yet
@@ -6058,6 +6042,16 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list(Linp
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore *core);
 
 /**
+ * Retrieve the list of conference information on DB after a certain time.
+ * @param core #LinphoneCore object. @notnil
+ * @param time Time to retrieve conference info.
+ * @return The list of conference infos \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time);
+
+/**
+
  * Create conference on a server by inviting participants
  * @param core The #LinphoneCore @notnil
  * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
@@ -6967,6 +6961,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_mic_muted(LinphoneCo
 /**
  * Get the list of call logs (past calls) that matches the given #LinphoneAddress.
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
+ * Requires ENABLE_DB_STORAGE to work.
  * @param core #LinphoneCore object @notnil
  * @param address #LinphoneAddress object @notnil
  * @return A list of #LinphoneCallLog. \bctbx_list{LinphoneCallLog} @tobefreed @maybenil
@@ -7442,6 +7437,27 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriend *linphone_core_get_friend_by_
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneOnlineStatus linphone_core_get_presence_info(const LinphoneCore *core);
+
+/**
+ * Sets the database filename where call logs will be stored.
+ * If the file does not exist, it will be created.
+ * @ingroup initializing
+ * @param core the linphone core @notnil
+ * @param path filesystem path @maybenil
+ * @deprecated 07/12/2021: Use only for migration purposes
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_path(LinphoneCore *core, const char *path);
+
+/**
+ * Gets the database filename where call logs will be stored.
+ * @ingroup initializing
+ * @param core the linphone core @notnil
+ * @return filesystem path. @maybenil
+ * @deprecated 07/12/2021
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char * linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
 #ifdef __cplusplus
 }

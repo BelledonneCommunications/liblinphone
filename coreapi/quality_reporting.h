@@ -144,6 +144,15 @@ typedef struct reporting_session_report {
 
 typedef void (*LinphoneQualityReportingReportSendCb)(const LinphoneCall *call, SalStreamType stream_type, const LinphoneContent *content);
 
+struct _LinphoneQualityReporting{
+	reporting_session_report_t * reports[3]; /**Store information on audio and video media streams (RFC 6035) */
+	LinphoneQualityReportingReportSendCb on_report_sent;
+	bool_t was_video_running; /*Keep video state since last check in order to detect its (de)activation*/
+};
+
+typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
+
+
 reporting_session_report_t * linphone_reporting_new(void);
 void linphone_reporting_destroy(reporting_session_report_t * report);
 

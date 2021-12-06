@@ -35,6 +35,8 @@
 #include "utils/background-task.h"
 #include "mediastreamer2/msmire.h"
 
+#include "call/call-log.h"
+
 // TODO: Remove me later.
 #include "private.h"
 
@@ -163,7 +165,7 @@ public:
 	int getDuration () const;
 	const LinphoneErrorInfo *getErrorInfo () const;
 	const Address &getLocalAddress () const;
-	LinphoneCallLog *getLog () const;
+	std::shared_ptr<CallLog> getLog () const;
 	RtpTransport *getMetaRtcpTransport (int streamIndex) const;
 	RtpTransport *getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;

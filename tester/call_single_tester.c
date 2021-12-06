@@ -1300,9 +1300,6 @@ static void cancelled_ringing_call(void) {
 	const bctbx_list_t * call_history;
 	LinphoneCall* out_call;
 
-	char * db_path= bctbx_strdup_printf("%s/%s",bc_tester_get_writable_dir_prefix(),"tmp_call_log.db");
-	linphone_core_set_call_logs_database_path(marie->lc,db_path);
-
 
 	out_call = linphone_core_invite_address(pauline->lc,marie->identity);
 	linphone_call_ref(out_call);
@@ -1323,8 +1320,6 @@ static void cancelled_ringing_call(void) {
 	linphone_call_unref(out_call);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	unlink(db_path);
-	bctbx_free(db_path);
 
 }
 
@@ -4961,10 +4956,10 @@ static void call_record_with_custom_rtp_modifier(void) {
 
 
 static void call_logs_if_no_db_set(void) {
+#ifndef HAVE_DB_STORAGE
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
 
-	linphone_core_set_call_logs_database_path(laure->lc, NULL);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 0, int, "%d");
 
 	BC_ASSERT_TRUE(call(marie, laure));
@@ -4974,15 +4969,16 @@ static void call_logs_if_no_db_set(void) {
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 1, int, "%d");
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
+#else
+	BC_PASS("This test needs no database to run");
+#endif
 }
 
 static void call_logs_migrate(void) {
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
-	char *logs_db = bc_tester_file("call_logs.db");
 	size_t i = 0;
 	int incoming_count = 0, outgoing_count = 0, missed_count = 0, aborted_count = 0, decline_count = 0, video_enabled_count = 0;
 	bctbx_list_t **call_logs_attr = NULL;
-	unlink(logs_db);
 
 	// Need to reset migration flag & restore call logs in rc file
 	// because when the Core started it automatically migrated the call logs & removed them from the rc
@@ -4999,7 +4995,6 @@ static void call_logs_migrate(void) {
 	linphone_config_read_file(linphone_core_get_config(laure->lc), logs_rc);
 	ms_free(logs_rc);
 
-	linphone_core_set_call_logs_database_path(laure->lc, logs_db);
 	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(laure->lc), 10, int , "%d");
 
 	for (; i < bctbx_list_size(linphone_core_get_call_logs(laure->lc)); i++) {
@@ -5046,30 +5041,23 @@ static void call_logs_migrate(void) {
 	*call_logs_attr = bctbx_list_free_with_data(*call_logs_attr, (void (*)(void*))linphone_call_log_unref);
 	*call_logs_attr = linphone_core_read_call_logs_from_config_file(laure->lc);
 
-	unlink(logs_db);
-	ms_free(logs_db);
 	linphone_core_manager_destroy(laure);
 }
 
 static void call_logs_sqlite_storage(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char *logs_db = bc_tester_file("call_logs.db");
 	bctbx_list_t *logs = NULL;
 	LinphoneCallLog *call_log = NULL;
 	LinphoneAddress *laure = NULL;
-	time_t user_data_time = time(NULL);
 	time_t start_time = 0;
-	unlink(logs_db);
 
-	linphone_core_set_call_logs_database_path(marie->lc, logs_db);
 	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 0);
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);
 	call_log = linphone_call_get_call_log(linphone_core_get_current_call(marie->lc));
 	start_time = linphone_call_log_get_start_date(call_log);
-	linphone_call_log_set_user_data(call_log, &user_data_time);
 	linphone_call_log_set_ref_key(call_log, "ref_key");
 	end_call(marie, pauline);
 	BC_ASSERT_TRUE(linphone_core_get_call_history_size(marie->lc) == 1);
@@ -5097,13 +5085,11 @@ static void call_logs_sqlite_storage(void) {
 		BC_ASSERT_TRUE(linphone_address_equal(
 			linphone_call_log_get_to_address(call_log),
 			linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc))));
-		BC_ASSERT_PTR_NOT_NULL(linphone_call_log_get_local_stats(call_log));
 		BC_ASSERT_GREATER(linphone_call_log_get_quality(call_log), -1, float, "%.1f");
 		BC_ASSERT_PTR_NOT_NULL(ref_key);
 		if (ref_key) {
 			BC_ASSERT_STRING_EQUAL(ref_key, "ref_key");
 		}
-		BC_ASSERT_PTR_EQUAL(linphone_call_log_get_user_data(call_log), &user_data_time);
 
 		call_id = linphone_call_log_get_call_id(call_log);
 		BC_ASSERT_PTR_NOT_NULL(call_id);
@@ -5116,7 +5102,6 @@ static void call_logs_sqlite_storage(void) {
 		BC_ASSERT_TRUE(linphone_address_equal(
 			linphone_call_log_get_remote_address(call_log),
 			linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc))));
-		BC_ASSERT_PTR_NOT_NULL(linphone_call_log_get_remote_stats(call_log));
 
 		BC_ASSERT_EQUAL(linphone_call_log_get_start_date(call_log), start_time, unsigned long long, "%llu");
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(call_log), LinphoneCallSuccess, int, "%d");
@@ -5146,8 +5131,6 @@ static void call_logs_sqlite_storage(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	unlink(logs_db);
-	ms_free(logs_db);
 }
 
 static void call_with_http_proxy(void) {

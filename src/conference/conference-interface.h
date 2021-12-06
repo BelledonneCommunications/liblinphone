@@ -29,6 +29,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Call;
 class ConferenceListenerInterface;
 class IdentityAddress;
 class CallSessionParams;

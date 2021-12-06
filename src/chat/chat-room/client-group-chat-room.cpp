@@ -436,15 +436,14 @@ void ClientGroupChatRoom::setConferenceId (const ConferenceId &conferenceId) {
 	if (focus) {
 		shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 		if (session) {
-			LinphoneCallLog * sessionLog = session->getLog();
-			if (sessionLog->to) linphone_address_unref(sessionLog->to);
+			shared_ptr<CallLog> sessionLog = session->getLog();
 			if (conferenceId.getPeerAddress().isValid()) {
 				// Use the peer address of the conference ID because it has also the conf-id param hence the To field can be used to search in the map of chat rooms
-				sessionLog->to = linphone_address_new(conferenceId.getPeerAddress().asString().c_str());
+				sessionLog->setToAddress(linphone_address_new(conferenceId.getPeerAddress().asString().c_str()));
 			} else {
 				// If the conference ID peer address is not valid, use the address of the focus
 				shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(getConference())->focus;
-				sessionLog->to = linphone_address_new(focus->getAddress().asString().c_str());
+				sessionLog->setToAddress(linphone_address_new(focus->getAddress().asString().c_str()));
 			}
 		}
 	}

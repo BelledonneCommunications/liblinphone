@@ -30,27 +30,27 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceCallEventPrivate : public EventLogPrivate {
 public:
-	shared_ptr<Call> call;
-	shared_ptr<const ConferenceInfo> conferenceInfo;
+	shared_ptr<CallLog> callLog;
+	shared_ptr<ConferenceInfo> conferenceInfo;
 };
 
 // -----------------------------------------------------------------------------
 
-ConferenceCallEvent::ConferenceCallEvent (Type type, time_t creationTime, const shared_ptr<Call> &call, const std::shared_ptr<const ConferenceInfo> &conferenceInfo) :
+ConferenceCallEvent::ConferenceCallEvent (Type type, time_t creationTime, const shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo) :
 	EventLog(*new ConferenceCallEventPrivate, type, creationTime) {
 	L_D();
-	L_ASSERT(call);
-	L_ASSERT(type == Type::ConferenceCallStart || type == Type::ConferenceCallConnected || type == Type::ConferenceCallEnd);
-	d->call = call;
+	L_ASSERT(callLog);
+	L_ASSERT(type == Type::ConferenceCallStarted || type == Type::ConferenceCallConnected || type == Type::ConferenceCallEnded);
+	d->callLog = callLog;
 	d->conferenceInfo = conferenceInfo;
 }
 
-shared_ptr<Call> ConferenceCallEvent::getCall () const {
+shared_ptr<CallLog> ConferenceCallEvent::getCallLog () const {
 	L_D();
-	return d->call;
+	return d->callLog;
 }
 
-std::shared_ptr<const ConferenceInfo> ConferenceCallEvent::getConferenceInfo () const {
+std::shared_ptr<ConferenceInfo> ConferenceCallEvent::getConferenceInfo () const {
 	L_D();
 	return d->conferenceInfo;
 }

@@ -40,6 +40,7 @@ public:
 	mutable std::unordered_map<long long, std::weak_ptr<EventLog>> storageIdToEvent;
 	mutable std::unordered_map<long long, std::weak_ptr<ChatMessage>> storageIdToChatMessage;
 	mutable std::unordered_map<long long, ConferenceId> storageIdToConferenceId;
+	mutable std::unordered_map<long long, std::weak_ptr<CallLog>> storageIdToCallLog;
 	mutable std::unordered_map<long long, std::weak_ptr<ConferenceInfo>> storageIdToConferenceInfo;
 
 private:
@@ -69,6 +70,7 @@ private:
 	void insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime);
 	long long insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	long long insertConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId);
+	long long insertOrUpdateConferenceCall (const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
 	long long selectSipAddressId (const std::string &sipAddress) const;
 	long long selectChatRoomId (long long peerSipAddressId, long long localSipAddressId) const;
@@ -78,6 +80,7 @@ private:
 	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const;
 	long long selectConferenceInfoId (long long organizerSipAddressId, time_t startTime, const std::string &subject);
 	long long selectConferenceInfoParticipantId (long long conferenceInfoId, long long participantSipAddressId) const;
+	long long selectConferenceCallId (const std::string &callId);
 
 	void deleteContents (long long chatMessageId);
 	void deleteChatRoomParticipant (long long chatRoomId, long long participantSipAddressId);
@@ -120,8 +123,6 @@ private:
 	) const;
 
 	std::shared_ptr<EventLog> selectConferenceCallEvent (
-		const ConferenceId &conferenceId,
-		EventLog::Type type,
 		const soci::row &row
 	) const;
 
@@ -192,6 +193,14 @@ private:
 	void removePreviousConferenceId(const ConferenceId& confId);
 
 	// ---------------------------------------------------------------------------
+	// Call log API.
+	// ---------------------------------------------------------------------------
+
+#ifdef HAVE_DB_STORAGE
+	std::shared_ptr<CallLog> selectCallLog (const soci::row &row) const;
+#endif
+
+	// ---------------------------------------------------------------------------
 	// Conference Info API.
 	// ---------------------------------------------------------------------------
 
@@ -206,11 +215,13 @@ private:
 	void cache (const std::shared_ptr<EventLog> &eventLog, long long storageId) const;
 	void cache (const std::shared_ptr<ChatMessage> &chatMessage, long long storageId) const;
 	void cache (const ConferenceId &conferenceId, long long storageId) const;
+	void cache (const std::shared_ptr<CallLog> &callLog, long long storageId) const;
 	void cache (const std::shared_ptr<ConferenceInfo> &conferenceInfo, long long storageId) const;
 
 	std::shared_ptr<EventLog> getEventFromCache (long long storageId) const;
 	std::shared_ptr<ChatMessage> getChatMessageFromCache (long long storageId) const;
-	ConferenceId getConferenceIdFromCache(long long storageId) const;
+	ConferenceId getConferenceIdFromCache (long long storageId) const;
+	std::shared_ptr<CallLog> getCallLogFromCache (long long storageId) const;
 	std::shared_ptr<ConferenceInfo> getConferenceInfoFromCache (long long storageId) const;
 
 	void invalidConferenceEventsFromQuery (const std::string &query, long long chatRoomId);
@@ -230,7 +241,7 @@ private:
 #ifdef HAVE_DB_STORAGE
 	void importLegacyFriends (DbSession &inDbSession);
 	void importLegacyHistory (DbSession &inDbSession);
-	// TODO: void importLegacyCallLogs (DbSession &inDbSession);
+	void importLegacyCallLogs (DbSession &inDbSession);
 #endif
 
 	// ---------------------------------------------------------------------------

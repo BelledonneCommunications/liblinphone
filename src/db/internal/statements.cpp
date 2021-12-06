@@ -121,6 +121,12 @@ namespace Statements {
 			SELECT id
 			FROM conference_info_participant
 			WHERE conference_info_id = :1 AND participant_sip_address_id = :2
+		)",
+
+		/* SelectConferenceCall */ R"(
+			SELECT id
+			FROM conference_call
+			WHERE call_id = :1
 		)"
 	};
 

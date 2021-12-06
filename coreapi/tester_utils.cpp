@@ -68,10 +68,6 @@ void linphone_core_cbs_set_auth_info_requested(LinphoneCoreCbs *cbs, LinphoneCor
 	cbs->vtable->auth_info_requested = cb;
 }
 
-LinphoneQualityReporting *linphone_call_log_get_quality_reporting(LinphoneCallLog *call_log) {
-	return &call_log->reporting;
-}
-
 reporting_session_report_t **linphone_quality_reporting_get_reports(LinphoneQualityReporting *qreporting) {
 	return &qreporting->reports[0];
 }

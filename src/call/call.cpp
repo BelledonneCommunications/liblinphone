@@ -48,9 +48,8 @@ shared_ptr<AbstractChatRoom> Call::getChatRoom () {
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
 		mChatRoom = getCore()->getOrCreateBasicChatRoom(getLocalAddress(), *getRemoteAddress());
 		if (mChatRoom) {
-			const char *callId = linphone_call_log_get_call_id(getLog());
-			lInfo() << "Setting call id [" << callId << "] to ChatRoom [" << mChatRoom << "]";
-			mChatRoom->getPrivate()->setCallId(callId);
+			lInfo() << "Setting call id [" << getLog()->getCallId() << "] to ChatRoom [" << mChatRoom << "]";
+			mChatRoom->getPrivate()->setCallId(getLog()->getCallId());
 		}
 	}
 	return mChatRoom;
@@ -382,16 +381,17 @@ void Call::onCallSessionAccepting (const std::shared_ptr<CallSession> &session) 
 }
 
 void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
-	LinphoneCallLog *log = session->getLog();
+	shared_ptr<CallLog> log = session->getLog();
 	if (session->getState() == CallSession::State::PushIncomingReceived) {
 		session->setStateToEnded();
 	}
-	linphone_core_report_early_failed_call(getCore()->getCCore(),
-		linphone_call_log_get_dir(log),
-		linphone_address_clone(linphone_call_log_get_from_address(log)),
-		linphone_address_clone(linphone_call_log_get_to_address(log)),
+
+	getCore()->reportEarlyCallFailed(log->getDirection(),	
+		linphone_address_clone(log->getFromAddress()),
+		linphone_address_clone(log->getToAddress()),
 		ei,
-		log->call_id);
+		log->getCallId());
+
 	cleanupSessionAndUnrefCObjectCall();
 }
 
@@ -1138,7 +1138,7 @@ const Address &Call::getLocalAddress () const {
 	return getActiveSession()->getLocalAddress();
 }
 
-LinphoneCallLog *Call::getLog () const {
+shared_ptr<CallLog> Call::getLog () const {
 	return getActiveSession()->getLog();
 }
 

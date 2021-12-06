@@ -1167,7 +1167,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 	if (linphone_core_get_local_ip_for(AF_INET, nullptr, ipv4) == 0)
 		haveIpv4 = true;
 	if (linphone_core_ipv6_enabled(q->getCore()->getCCore())) {
-		const LinphoneAddress *to = linphone_call_log_get_to_address(log);
+		const LinphoneAddress *to = log->getToAddress();
 
 		if (linphone_core_get_local_ip_for(AF_INET6, nullptr, ipv6) == 0)
 			haveIpv6 = true;
@@ -1844,7 +1844,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	/* Re-check local ip address each time we make a new offer, because it may change in case of network reconnection */
 	{
-		LinphoneAddress *address = (direction == LinphoneCallOutgoing ? log->to : log->from);
+		const LinphoneAddress *address = (direction == LinphoneCallOutgoing ? log->getToAddress() : log->getFromAddress());
 		getLocalIp(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
 	}
 

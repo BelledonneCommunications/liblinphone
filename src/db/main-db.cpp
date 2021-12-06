@@ -67,6 +67,7 @@ namespace {
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
+	constexpr unsigned int ModuleVersionLegacyCallLogsImport = makeVersion(1, 0, 0);
 
 	constexpr int LegacyFriendListColId = 0;
 	constexpr int LegacyFriendListColName = 1;
@@ -95,6 +96,18 @@ namespace {
 	constexpr int LegacyMessageColContentId = 11;
 	constexpr int LegacyMessageColContentType = 13;
 	constexpr int LegacyMessageColIsSecured = 14;
+
+	constexpr int LegacyCallLogColFrom = 1;
+	constexpr int LegacyCallLogColTo = 2;
+	constexpr int LegacyCallLogColDirection = 3;
+	constexpr int LegacyCallLogColDuration = 4;
+	constexpr int LegacyCallLogColStartTime = 5;
+	constexpr int LegacyCallLogColConnectedTime = 6;
+	constexpr int LegacyCallLogColStatus = 7;
+	constexpr int LegacyCallLogColVideoEnabled = 8;
+	constexpr int LegacyCallLogColQuality = 9;
+	constexpr int LegacyCallLogColCallId = 10;
+	constexpr int LegacyCallLogColRefKey = 11;
 }
 #endif
 
@@ -175,15 +188,16 @@ struct SqlEventFilterBuilder<Type> {
 namespace {
 	#ifdef _WIN32
 		// TODO: Find a workaround to deal with StaticString concatenation!!!
-		constexpr char ConferenceCallFilter[] = "3,4";
+		constexpr char ConferenceCallFilter[] = "3,21,4";
 		constexpr char ConferenceChatMessageFilter[] = "5";
 		constexpr char ConferenceInfoNoDeviceFilter[] = "1,2,6,7,8,9,12,13,14,15,16";
 		constexpr char ConferenceInfoFilter[] = "1,2,6,7,8,9,10,11,12,13,14,15,16";
 		constexpr char ConferenceChatMessageSecurityFilter[] = "5,13,14,15,16";
 	#else
 		constexpr auto ConferenceCallFilter = SqlEventFilterBuilder<
-			EventLog::Type::ConferenceCallStart,
-			EventLog::Type::ConferenceCallEnd
+			EventLog::Type::ConferenceCallStarted,
+			EventLog::Type::ConferenceCallConnected,
+			EventLog::Type::ConferenceCallEnded
 		>::get();
 
 		constexpr auto ConferenceChatMessageFilter = SqlEventFilterBuilder<EventLog::Type::ConferenceChatMessage>::get();
@@ -583,6 +597,68 @@ long long MainDbPrivate::insertConferenceInfoParticipant (long long conferenceIn
 #endif
 }
 
+long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceInfoId = -1;
+
+	if (conferenceInfo != nullptr) {
+		const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizer().asString());
+		conferenceInfoId = selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), conferenceInfo->getSubject());
+		if (conferenceInfoId < 0) {
+			conferenceInfoId = insertConferenceInfo(conferenceInfo);
+		}
+	}
+
+	int duration = callLog->getDuration();
+	const tm &connectedTime = Utils::getTimeTAsTm(callLog->getConnectedTime());
+	int status = callLog->getStatus();
+	int videoEnabled = callLog->isVideoEnabled() ? 1 : 0;
+	double quality = static_cast<double>(callLog->getQuality());
+	const string &callId = callLog->getCallId();
+	const string &refKey = callLog->getRefKey();
+	soci::indicator confInfoInd = conferenceInfoId > -1 ? soci::i_ok : soci::i_null;
+
+	long long conferenceCallId = selectConferenceCallId(callLog->getCallId());
+	if (conferenceCallId < 0) {
+		lInfo() << "Insert new conference call in database: " << callLog->getCallId();
+
+		const long long fromSipAddressId = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress())->asString());
+		const long long toSipAddressId = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())->asString());
+		int direction = static_cast<int>(callLog->getDirection());
+		const tm &startTime = Utils::getTimeTAsTm(callLog->getStartTime());
+
+		*dbSession.getBackendSession() << "INSERT INTO conference_call ("
+		"  from_sip_address_id, to_sip_address_id, direction, duration, start_time, connected_time, status, video_enabled,"
+		"  quality, call_id, refkey, conference_info_id"
+		") VALUES ("
+		"  :fromSipAddressId, :toSipAddressId, :direction, :duration, :startTime, :connectedTime, :status, :videoEnabled,"
+		"  :quality, :callId, :refKey, :conferenceInfoId"
+		")",
+		soci::use(fromSipAddressId), soci::use(toSipAddressId), soci::use(direction), soci::use(duration), soci::use(startTime),
+		soci::use(connectedTime), soci::use(status), soci::use(videoEnabled), soci::use(quality), soci::use(callId),
+		soci::use(refKey), soci::use(conferenceInfoId, confInfoInd);
+
+		conferenceCallId = dbSession.getLastInsertId();
+	} else {
+		lInfo() << "Update conference call in database: " << callLog->getCallId();
+
+		*dbSession.getBackendSession() << "UPDATE conference_call SET"
+		"  duration = :duration, connected_time = :connectedTime, status = :status, video_enabled = :videoEnabled,"
+		"  quality = :quality, call_id = :callId, refkey = :refKey, conference_info_id = :conferenceInfoId"
+		" WHERE id = :conferenceCallId",
+		soci::use(duration), soci::use(connectedTime), soci::use(status), soci::use(videoEnabled), soci::use(quality),
+		soci::use(callId), soci::use(refKey), soci::use(conferenceInfoId, confInfoInd),
+		soci::use(conferenceCallId);
+	}
+
+	cache(callLog, conferenceCallId);
+
+	return conferenceCallId;
+#else
+	return -1;
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 long long MainDbPrivate::selectSipAddressId (const string &sipAddress) const {
@@ -720,6 +796,20 @@ long long MainDbPrivate::selectConferenceInfoParticipantId (long long conference
 #endif
 }
 
+long long MainDbPrivate::selectConferenceCallId (const std::string &callId) {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceCallId;
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << Statements::get(Statements::SelectConferenceCall),
+		soci::use(callId), soci::into(conferenceCallId);
+
+	return session->got_data() ? conferenceCallId : -1;
+#else
+	return -1;
+#endif
+}
+
 // -----------------------------------------------------------------------------
 
 void MainDbPrivate::deleteContents (long long chatMessageId) {
@@ -786,17 +876,14 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 	switch (type) {
 		case EventLog::Type::None:
 		case EventLog::Type::ConferenceChatMessage:
+		case EventLog::Type::ConferenceCallStarted:
+		case EventLog::Type::ConferenceCallConnected:
+		case EventLog::Type::ConferenceCallEnded:
 			return nullptr;
 
 		case EventLog::Type::ConferenceCreated:
 		case EventLog::Type::ConferenceTerminated:
 			eventLog = selectConferenceEvent(conferenceId, type, row);
-			break;
-
-		case EventLog::Type::ConferenceCallStart:
-		case EventLog::Type::ConferenceCallConnected:
-		case EventLog::Type::ConferenceCallEnd:
-			eventLog = selectConferenceCallEvent(conferenceId, type, row);
 			break;
 
 		case EventLog::Type::ConferenceParticipantAdded:
@@ -852,12 +939,85 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEvent (
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent (
-	const ConferenceId &conferenceId,
-	EventLog::Type type,
 	const soci::row &row
 ) const {
-	// TODO.
-	return nullptr;
+	L_Q();
+
+	long long eventId = dbSession.resolveId(row, 0);
+	shared_ptr<EventLog> eventLog = getEventFromCache(eventId);
+	if (eventLog)
+		return eventLog;
+
+	EventLog::Type type = EventLog::Type(row.get<int>(1));
+
+	long long conferenceCallId = dbSession.resolveId(row, 3);
+	auto callLog = getCallLogFromCache(conferenceCallId);
+	if (callLog == nullptr) {
+
+		callLog = CallLog::create(q->getCore(), static_cast<LinphoneCallDir>(row.get<int>(6)), linphone_address_new(row.get<string>(4).c_str()), linphone_address_new(row.get<string>(5).c_str()));
+		callLog->setDuration(row.get<int>(7));
+		callLog->setStartTime(dbSession.getTime(row, 8));
+		callLog->setConnectedTime(dbSession.getTime(row, 9));
+		callLog->setStatus(static_cast<LinphoneCallStatus>(row.get<int>(10)));
+		callLog->setVideoEnabled(!!row.get<int>(11));
+		callLog->setQuality((float) row.get<double>(12));
+
+		soci::indicator ind = row.get_indicator(13);
+		if (ind == soci::i_ok) callLog->setCallId(row.get<string>(13));
+
+		ind = row.get_indicator(14);
+		if (ind == soci::i_ok) callLog->setRefKey(row.get<string>(14));
+
+		cache(callLog, conferenceCallId);
+	}
+
+	std::shared_ptr<ConferenceInfo> conferenceInfo = nullptr;
+	if (row.get_indicator(15) != soci::i_null) {
+		long long conferenceInfoId = dbSession.resolveId(row, 15);
+		callLog->setConferenceInfoId(conferenceInfoId);
+
+		auto conferenceInfo = getConferenceInfoFromCache(conferenceInfoId);
+		if (conferenceInfo == nullptr) {
+			conferenceInfo = ConferenceInfo::create();
+
+			IdentityAddress organizer = IdentityAddress(row.get<string>(16));
+			conferenceInfo->setOrganizer(organizer);
+
+			ConferenceAddress uri = ConferenceAddress(row.get<string>(17));
+			conferenceInfo->setUri(uri);
+
+			conferenceInfo->setDateTime(dbSession.getTime(row, 18));
+			conferenceInfo->setDuration(row.get<int>(19));
+			conferenceInfo->setSubject(row.get<string>(20));
+			conferenceInfo->setDescription(row.get<string>(21));
+
+			static const string query = "SELECT sip_address.value"
+				" FROM sip_address, conference_info, conference_info_participant"
+				" WHERE conference_info.id = :conferenceInfoId"
+				" AND sip_address.id = conference_info_participant.participant_sip_address_id"
+				" AND conference_info_participant.conference_info_id = conference_info.id";
+
+			soci::session *session = dbSession.getBackendSession();
+			soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(conferenceInfoId));
+			for (const auto &participantRow : participantRows) {
+				IdentityAddress participant(participantRow.get<string>(0));
+				conferenceInfo->addParticipant(participant);
+			}
+
+			cache(conferenceInfo, conferenceInfoId);
+		}
+	}
+
+	eventLog = make_shared<ConferenceCallEvent>(
+		type,
+		dbSession.getTime(row, 2),
+		callLog,
+		conferenceInfo
+	);
+
+	cache(eventLog, eventId);
+
+	return eventLog;
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
@@ -1071,8 +1231,51 @@ long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &even
 }
 
 long long MainDbPrivate::insertConferenceCallEvent (const shared_ptr<EventLog> &eventLog) {
-	// TODO.
-	return 0;
+#ifdef HAVE_DB_STORAGE
+	shared_ptr<ConferenceCallEvent> conferenceCallEvent = static_pointer_cast<ConferenceCallEvent>(eventLog);
+
+	long long eventId = -1;
+	auto callLog = conferenceCallEvent->getCallLog();
+	auto conferenceInfo = conferenceCallEvent->getConferenceInfo();
+	long long conferenceCallId = selectConferenceCallId(callLog->getCallId());
+
+	//EventLog::Type type = conferenceCallEvent->getType();
+	// switch(type) {
+	// 	case EventLog::Type::ConferenceCallStarted:
+	// 		if (conferenceCallId >= 0) {
+	// 			lWarning() << "Conference call is already stored in db for call-id: " << callLog->getCallId();
+	// 			return -1;
+	// 		}
+	// 		break;
+	// 	case EventLog::Type::ConferenceCallConnected:
+	// 		if (conferenceCallId < 0) {
+	// 			lWarning() << "Cannot add ConferenceCallConnected event as conference call is not present in db for call-id: " << callLog->getCallId();
+	// 			return -1;
+	// 		}
+	// 		break;
+	// 	case EventLog::Type::ConferenceCallEnded:
+	// 		if (conferenceCallId < 0) {
+	// 			lWarning() << "Cannot add ConferenceCallEnded event as conference call is not present in db for call-id: " << callLog->getCallId();
+	// 			return -1;
+	// 		}
+	// 		break;
+	// 	default:
+	// 		lError() << "Trying to insert a conference call without the correct event type!";
+	// 		return -1;
+	// }
+
+	conferenceCallId = insertOrUpdateConferenceCall(callLog, conferenceInfo);
+
+	eventId = insertEvent(eventLog);
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << "INSERT INTO conference_call_event (event_id, conference_call_id)"
+		" VALUES (:eventId, :conferenceCallId)", soci::use(eventId), soci::use(conferenceCallId);
+
+	return eventId;
+#else
+	return -1;
+#endif
 }
 
 long long MainDbPrivate::insertConferenceChatMessageEvent (const shared_ptr<EventLog> &eventLog) {
@@ -1459,6 +1662,46 @@ void MainDbPrivate::setChatMessageParticipantState (
 }
 
 // ---------------------------------------------------------------------------
+// Call log API.
+// ---------------------------------------------------------------------------
+
+#ifdef HAVE_DB_STORAGE
+std::shared_ptr<CallLog> MainDbPrivate::selectCallLog (const soci::row &row) const {
+	L_Q();
+
+	const long long &dbCallLogId = dbSession.resolveId(row, 0);
+
+	auto callLog = getCallLogFromCache(dbCallLogId);
+	if (callLog) return callLog;
+
+	callLog = CallLog::create(q->getCore(),
+		static_cast<LinphoneCallDir>(row.get<int>(3)),
+		linphone_address_new(row.get<string>(1).c_str()),
+		linphone_address_new(row.get<string>(2).c_str()));
+
+	callLog->setDuration(row.get<int>(4));
+	callLog->setStartTime(dbSession.getTime(row, 5));
+	callLog->setConnectedTime(dbSession.getTime(row, 6));
+	callLog->setStatus(static_cast<LinphoneCallStatus>(row.get<int>(7)));
+	callLog->setVideoEnabled(!!row.get<int>(8));
+	callLog->setQuality((float) row.get<double>(9));
+
+	soci::indicator ind = row.get_indicator(10);
+	if (ind == soci::i_ok) callLog->setCallId(row.get<string>(10));
+
+	ind = row.get_indicator(11);
+	if (ind == soci::i_ok) callLog->setRefKey(row.get<string>(11));
+
+	ind = row.get_indicator(12);
+	if (ind == soci::i_ok) callLog->setConferenceInfoId(dbSession.resolveId(row, 12));
+
+	cache(callLog, dbCallLogId);
+
+	return callLog;
+}
+#endif
+
+// ---------------------------------------------------------------------------
 // Conference Info API.
 // ---------------------------------------------------------------------------
 
@@ -1466,10 +1709,10 @@ void MainDbPrivate::setChatMessageParticipantState (
 shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row &row) const {
 	const long long &dbConferenceInfoId = dbSession.resolveId(row, 0);
 
-	auto confFromCache = getConferenceInfoFromCache(dbConferenceInfoId);
-	if (confFromCache) return confFromCache;
+	auto conferenceInfo = getConferenceInfoFromCache(dbConferenceInfoId);
+	if (conferenceInfo) return conferenceInfo;
 
-	auto conferenceInfo = ConferenceInfo::create();
+	conferenceInfo = ConferenceInfo::create();
 
 	IdentityAddress organizer(row.get<string>(1));
 	conferenceInfo->setOrganizer(organizer);
@@ -1546,6 +1789,19 @@ ConferenceId MainDbPrivate::getConferenceIdFromCache(long long storageId) const 
 #endif
 }
 
+shared_ptr<CallLog> MainDbPrivate::getCallLogFromCache (long long storageId) const {
+#ifdef HAVE_DB_STORAGE
+	auto it = storageIdToCallLog.find(storageId);
+	if (it == storageIdToCallLog.cend())
+		return nullptr;
+
+	shared_ptr<CallLog> callLog = it->second.lock();
+	return callLog;
+#else
+	return nullptr;
+#endif
+}
+
 shared_ptr<ConferenceInfo> MainDbPrivate::getConferenceInfoFromCache (long long storageId) const {
 #ifdef HAVE_DB_STORAGE
 	auto it = storageIdToConferenceInfo.find(storageId);
@@ -1585,6 +1841,12 @@ void MainDbPrivate::cache (const ConferenceId &conferenceId, long long storageId
 #ifdef HAVE_DB_STORAGE
 	L_ASSERT(conferenceId.isValid());
 	storageIdToConferenceId[storageId] = conferenceId;
+#endif
+}
+
+void MainDbPrivate::cache (const std::shared_ptr<CallLog> &callLog, long long storageId) const {
+#ifdef HAVE_DB_STORAGE
+	storageIdToCallLog[storageId] = callLog;
 #endif
 }
 
@@ -1829,6 +2091,10 @@ static inline bool checkLegacyFriendsTableExists (soci::session &session) {
 
 static inline bool checkLegacyHistoryTableExists (soci::session &session) {
 	return checkLegacyTableExists(session, "history");
+}
+
+static inline bool checkLegacyCallLogsTableExists (soci::session &session) {
+	return checkLegacyTableExists(session, "call_history");
 }
 #endif
 
@@ -2079,6 +2345,57 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 				"GROUP BY conference_event.chat_room_id),0))";// if there are no messages, the first is NULL. So put a 0 to the ID
 		tr.commit();
 		lInfo() << "Successful import of legacy messages.";
+	};
+}
+
+void MainDbPrivate::importLegacyCallLogs (DbSession &inDbSession) {
+	L_Q();
+	L_DB_TRANSACTION_C(q) {
+		if (getModuleVersion("legacy-call-logs-import") >= makeVersion(1, 0, 0))
+			return;
+		updateModuleVersion("legacy-call-logs-import", ModuleVersionLegacyCallLogsImport);
+
+		soci::session *inSession = inDbSession.getBackendSession();
+		if (!checkLegacyCallLogsTableExists(*inSession))
+			return;
+
+		soci::rowset<soci::row> logs = (inSession->prepare << "SELECT * FROM call_history");
+		for (const auto &log : logs) {
+			const int direction = log.get<int>(LegacyCallLogColDirection);
+			if (direction != 0 && direction != 1) {
+				lWarning() << "Unable to import legacy call log with invalid direction.";
+				continue;
+			}
+
+			const int status = log.get<int>(LegacyCallLogColStatus);
+			if (status < 0 || status > LinphoneCallDeclinedElsewhere) {
+				lWarning() << "Unable to import legacy call log with invalid status.";
+				continue;
+			}
+
+			auto callLog = CallLog::create(q->getCore(),
+				static_cast<LinphoneCallDir>(direction),
+				linphone_address_new(log.get<string>(LegacyCallLogColFrom).c_str()),
+				linphone_address_new(log.get<string>(LegacyCallLogColTo).c_str()));
+
+			callLog->setDuration(log.get<int>(LegacyCallLogColDuration));
+			callLog->setStartTime((time_t) std::stoul(log.get<string>(LegacyCallLogColStartTime)));
+			callLog->setConnectedTime((time_t) std::stoul(log.get<string>(LegacyCallLogColConnectedTime)));
+			callLog->setStatus(static_cast<LinphoneCallStatus>(status));
+			callLog->setVideoEnabled(!!log.get<int>(LegacyCallLogColVideoEnabled));
+			callLog->setQuality((float) log.get<double>(LegacyCallLogColQuality));
+
+			soci::indicator ind = log.get_indicator(LegacyCallLogColCallId);
+			if (ind == soci::i_ok) callLog->setCallId(log.get<string>(LegacyCallLogColCallId));
+
+			ind = log.get_indicator(LegacyCallLogColRefKey);
+			if (ind == soci::i_ok) callLog->setRefKey(log.get<string>(LegacyCallLogColRefKey));
+
+			insertOrUpdateConferenceCall(callLog, nullptr);
+		}
+
+		tr.commit();
+		lInfo() << "Successful import of legacy call logs.";
 	};
 }
 #endif
@@ -2521,6 +2838,59 @@ void MainDb::init () {
 			"    ON DELETE CASCADE"
 			") " + charset;
 
+		*session <<
+			"CREATE TABLE IF NOT EXISTS conference_call ("
+			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+			"  from_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  to_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  direction TINYINT UNSIGNED NOT NULL,"
+			"  duration INT UNSIGNED,"
+			"  start_time" + timestampType() + " NOT NULL,"
+			"  connected_time" + timestampType() + ","
+			"  status TINYINT UNSIGNED NOT NULL,"
+			"  video_enabled BOOLEAN NOT NULL,"
+			"  quality DOUBLE,"
+			"  call_id VARCHAR(64),"
+			"  refkey VARCHAR(64),"
+			"  conference_info_id" + primaryKeyRefStr("BIGINT UNSIGNED") + ","
+
+			"  FOREIGN KEY (from_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (to_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (conference_info_id)"
+			"    REFERENCES conference_info(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
+
+		*session <<
+			"CREATE TABLE IF NOT EXISTS conference_call_event ("
+			"  event_id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+			"  conference_call_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+
+			"  FOREIGN KEY (event_id)"
+			"    REFERENCES event(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (conference_call_id)"
+			"    REFERENCES conference_call(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
+
+		*session << "DROP VIEW IF EXISTS conference_call_event_view";
+		*session << "CREATE VIEW conference_call_event_view AS"
+		"  SELECT id, type, creation_time, conference_call_id, from_sip_address_id, to_sip_address_id, direction, conference_call.duration AS call_duration,"
+		"    conference_call.start_time AS call_start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id,"
+		"    organizer_sip_address_id, uri_sip_address_id, conference_info.start_time AS conf_start_time, conference_info.duration AS conf_duration,"
+		"    subject, description"
+		"  FROM event"
+		"  LEFT JOIN conference_call_event ON conference_call_event.event_id = event.id"
+		"  LEFT JOIN conference_call ON conference_call.id = conference_call_event.conference_call_id"
+		"  LEFT JOIN conference_info ON conference_info.id = conference_call.conference_info_id";
+
 		d->updateSchema();
 
 		d->updateModuleVersion("events", ModuleVersionEvents);
@@ -2557,9 +2927,9 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 				eventId = d->insertConferenceEvent(eventLog);
 				break;
 
-			case EventLog::Type::ConferenceCallStart:
+			case EventLog::Type::ConferenceCallStarted:
 			case EventLog::Type::ConferenceCallConnected:
-			case EventLog::Type::ConferenceCallEnd:
+			case EventLog::Type::ConferenceCallEnded:
 				eventId = d->insertConferenceCallEvent(eventLog);
 				break;
 
@@ -2639,9 +3009,9 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceCreated:
 			case EventLog::Type::ConferenceTerminated:
-			case EventLog::Type::ConferenceCallStart:
+			case EventLog::Type::ConferenceCallStarted:
 			case EventLog::Type::ConferenceCallConnected:
-			case EventLog::Type::ConferenceCallEnd:
+			case EventLog::Type::ConferenceCallEnded:
 			case EventLog::Type::ConferenceParticipantAdded:
 			case EventLog::Type::ConferenceParticipantRemoved:
 			case EventLog::Type::ConferenceParticipantSetAdmin:
@@ -4176,13 +4546,13 @@ void MainDb::deleteChatRoomParticipantDevice (
 
 // -----------------------------------------------------------------------------
 
-std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (bool onlyFutureConferenceInfos) const {
+std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (time_t afterThisTime) const {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 		" start_time, duration, subject, description"
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id";
-	if (onlyFutureConferenceInfos) query += " AND start_time >= :startTime";
+	if (afterThisTime > -1) query += " AND start_time >= :startTime";
 	query += " ORDER BY start_time";
 
 	DurationLogger durationLogger("Get conference infos.");
@@ -4195,8 +4565,8 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (bool only
 		soci::session *session = d->dbSession.getBackendSession();
 
 		// We cannot create an empty rowset so each "if" will make one
-		if (onlyFutureConferenceInfos) {
-			const tm &startTime = Utils::getTimeTAsTm(ms_time(NULL));
+		if (afterThisTime > -1) {
+			const tm &startTime = Utils::getTimeTAsTm(afterThisTime);
 			soci::rowset<soci::row> rows = (session->prepare << query, soci::use(startTime));
 
 			for (const auto &row : rows) {
@@ -4218,6 +4588,68 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (bool only
 	};
 #else
 	return list<shared_ptr<ConferenceInfo>>();
+#endif
+}
+
+std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo (long long conferenceInfoId) const {
+#ifdef HAVE_DB_STORAGE
+	static const string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+		" start_time, duration, subject, description"
+		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id"
+		"  AND conference_info.id = :conferenceInfoId";
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		shared_ptr<ConferenceInfo> confInfo = nullptr;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(conferenceInfoId));
+
+		const auto &row = rows.begin();
+		if (row != rows.end()) {
+			confInfo = d->selectConferenceInfo(*row);
+		}
+
+		tr.commit();
+
+		return confInfo;
+	};
+#else
+	return nullptr;
+#endif
+}
+
+std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const Address *uri) const {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
+		" start_time, duration, subject, description"
+		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
+		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id"
+		"  AND uri_sip_address.value LIKE '%%" + uri->asStringUriOnly() + "%%'";
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		shared_ptr<ConferenceInfo> confInfo = nullptr;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query);
+
+		const auto &row = rows.begin();
+		if (row != rows.end()) {
+			confInfo = d->selectConferenceInfo(*row);
+		}
+
+		tr.commit();
+
+		return confInfo;
+	};
+#else
+	return nullptr;
 #endif
 }
 
@@ -4250,12 +4682,257 @@ void MainDb::deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &confer
 
 // -----------------------------------------------------------------------------
 
+long long MainDb::insertCallLog (const std::shared_ptr<CallLog> &callLog) {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+
+		long long id = d->insertOrUpdateConferenceCall(callLog, nullptr);
+		tr.commit();
+
+		return id;
+	};
+#else
+	return -1;
+#endif
+}
+
+void MainDb::deleteCallLog (const std::shared_ptr<CallLog> &callLog) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		const long long &dbConferenceCallId = d->selectConferenceCallId(callLog->getCallId());
+
+		*d->dbSession.getBackendSession() << "DELETE FROM conference_call WHERE id = :conferenceCallId", soci::use(dbConferenceCallId);
+		d->storageIdToCallLog.erase(dbConferenceCallId),
+
+		tr.commit();
+	};
+#endif
+}
+
+std::shared_ptr<CallLog> MainDb::getCallLog (const std::string &callId, int limit) {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
+		"  AND call_id = :callId";
+
+	if (limit > 0) {
+		query += " AND conference_call.id IN (SELECT id from conference_call ORDER BY id DESC LIMIT " + std::to_string(limit) + ")";
+	}
+
+	DurationLogger durationLogger("Get call log.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		std::shared_ptr<CallLog> callLog = nullptr;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(callId));
+
+		const auto &row = rows.begin();
+		if (row != rows.end()) {
+			callLog = d->selectCallLog(*row);
+		}
+
+		tr.commit();
+
+		return callLog;
+	};
+#else
+	return nullptr;
+#endif
+}
+
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (int limit) {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
+		" ORDER BY conference_call.id DESC";
+
+	if (limit > 0) query += " LIMIT" + to_string(limit);
+
+	DurationLogger durationLogger("Get call history.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		list<shared_ptr<CallLog>> clList;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query);
+		for (const auto &row : rows) {
+			auto callLog = d->selectCallLog(row);
+			clList.push_back(callLog);
+		}
+
+		tr.commit();
+
+		return clList;
+	};
+#else
+	return list<shared_ptr<CallLog>>();
+#endif
+}
+
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *address, int limit) {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
+		"  AND (from_sip_address.value LIKE '%%" + address->asStringUriOnly() + "%%'"
+		"  OR to_sip_address.value LIKE '%%" + address->asStringUriOnly() + "%%')"
+		" ORDER BY conference_call.id DESC";
+
+	if (limit > 0) query += " LIMIT" + to_string(limit);
+
+	DurationLogger durationLogger("Get call history.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		list<shared_ptr<CallLog>> clList;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query);
+		for (const auto &row : rows) {
+			auto callLog = d->selectCallLog(row);
+			clList.push_back(callLog);
+		}
+
+		tr.commit();
+
+		return clList;
+	};
+#else
+	return list<shared_ptr<CallLog>>();
+#endif
+}
+
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *peer, const Address *local, int limit) {
+#ifdef HAVE_DB_STORAGE
+	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
+		"  AND ((from_sip_address.value LIKE '%%" + local->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + peer->asStringUriOnly() + "%%' AND direction = 0) OR"
+		"  (from_sip_address.value LIKE '%%" + peer->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + local->asStringUriOnly() + "%%' AND DIRECTION = 1))"
+		" ORDER BY conference_call.id DESC";
+
+	if (limit > 0) query += " LIMIT" + to_string(limit);
+
+	DurationLogger durationLogger("Get call history 2.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		list<shared_ptr<CallLog>> clList;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query);
+		for (const auto &row : rows) {
+			auto callLog = d->selectCallLog(row);
+			clList.push_back(callLog);
+		}
+
+		tr.commit();
+
+		return clList;
+	};
+#else
+	return list<shared_ptr<CallLog>>();
+#endif
+}
+
+std::shared_ptr<CallLog> MainDb::getLastOutgoingCall () {
+#ifdef HAVE_DB_STORAGE
+	static const string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
+		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
+		"  AND direction = 0"
+		" ORDER BY conference_call.id DESC LIMIT 1";
+
+		DurationLogger durationLogger("Get last outgoing call.");
+
+	return L_DB_TRANSACTION {
+		L_D();
+
+		std::shared_ptr<CallLog> callLog = nullptr;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::rowset<soci::row> rows = (session->prepare << query);
+
+		const auto &row = rows.begin();
+		if (row != rows.end()) {
+			callLog = d->selectCallLog(*row);
+		}
+
+		tr.commit();
+
+		return callLog;
+	};
+#else
+	return nullptr;
+#endif
+}
+
+void MainDb::deleteCallHistory () {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		*session << "DELETE FROM conference_call";
+
+		tr.commit();
+	};
+#endif
+}
+
+int MainDb::getCallHistorySize () {
+#ifdef HAVE_DB_STORAGE
+	return L_DB_TRANSACTION {
+		L_D();
+
+		int count = 0;
+
+		soci::session *session = d->dbSession.getBackendSession();
+
+		soci::statement st = (session->prepare << "SELECT count(*) FROM conference_call", soci::into(count));
+		st.execute();
+		st.fetch();
+
+		tr.commit();
+
+		return count;
+	};
+#else
+	return -1;
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
 bool MainDb::import (Backend, const string &parameters) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
-        // Backend is useless, it's sqlite3. (Only available legacy backend.)
-        const string uri = "sqlite3://" + LinphonePrivate::Utils::localeToUtf8(parameters);
+	// Backend is useless, it's sqlite3. (Only available legacy backend.)
+	const string uri = "sqlite3://" + LinphonePrivate::Utils::localeToUtf8(parameters);
 	DbSession inDbSession(uri);
 
 	if (!inDbSession) {
@@ -4268,6 +4945,7 @@ bool MainDb::import (Backend, const string &parameters) {
 		d->importLegacyFriends(inDbSession);
 
 	d->importLegacyHistory(inDbSession);
+	d->importLegacyCallLogs(inDbSession);
 
 	return true;
 #else

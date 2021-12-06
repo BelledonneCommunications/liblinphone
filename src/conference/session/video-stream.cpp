@@ -316,7 +316,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 
 	MSWebCam *cam = getVideoDevice(targetState);
 
-	getMediaSession().getLog()->video_enabled = true;
+	getMediaSession().getLog()->setVideoEnabled(true);
 	media_stream_set_direction(&mStream->ms, dir);
 	lInfo() << "Device rotation =" << getCCore()->device_rotation;
 	video_stream_set_device_rotation(mStream, getCCore()->device_rotation);

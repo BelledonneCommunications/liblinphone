@@ -29,39 +29,6 @@
 #include "carddav.h"
 #include "sal/register-op.h"
 
-struct _LinphoneQualityReporting{
-	reporting_session_report_t * reports[3]; /**Store information on audio and video media streams (RFC 6035) */
-	LinphoneQualityReportingReportSendCb on_report_sent;
-	bool_t was_video_running; /*Keep video state since last check in order to detect its (de)activation*/
-};
-
-struct _LinphoneCallLog{
-	belle_sip_object_t base;
-	void *user_data;
-	struct _LinphoneCore *lc;
-	LinphoneCallDir dir; /**< The direction of the call*/
-	LinphoneCallStatus status; /**< The status of the call*/
-	LinphoneAddress *from; /**<Originator of the call as a LinphoneAddress object*/
-	LinphoneAddress *to; /**<Destination of the call as a LinphoneAddress object*/
-	char start_date[128]; /**<Human readable string containing the start date*/
-	int duration; /**<Duration of the call starting in connected state in seconds*/
-	char *refkey;
-	rtp_stats_t local_stats;
-	rtp_stats_t remote_stats;
-	float quality;
-	time_t start_date_time; /**Start date of the call in seconds as expressed in a time_t */
-	time_t connected_date_time; /**Connecting date of the call in seconds as expressed in a time_t */
-	char* call_id; /**unique id of a call*/
-	struct _LinphoneQualityReporting reporting;
-	unsigned int storage_id;
-	LinphoneErrorInfo *error_info;
-	bool_t video_enabled;
-	bool_t was_conference; /**<That call was a call with a conference server */
-	bool_t early_aborted;
-};
-
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallLog);
-
 struct _CallCallbackObj
 {
 	LinphoneCallCbFunc _func;
@@ -772,7 +739,6 @@ namespace LinphonePrivate {
 	int max_calls; \
 	LinphoneTunnel *tunnel; \
 	char* device_id; \
-	char *logs_db_file; \
 	char *friends_db_file; \
 	belle_http_provider_t *http_provider; \
 	belle_tls_crypto_config_t *http_crypto_config; \
@@ -814,7 +780,6 @@ namespace LinphonePrivate {
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \
 	sqlite3 *zrtp_cache_db; \
 	bctbx_mutex_t zrtp_cache_db_mutex; \
-	sqlite3 *logs_db; \
 	sqlite3 *friends_db; \
 	bool_t debug_storage; \
 	void *system_context; \

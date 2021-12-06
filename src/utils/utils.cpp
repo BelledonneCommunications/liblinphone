@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <iomanip>
 #include <list>
 #include <sstream>
 
@@ -213,6 +214,7 @@ tm Utils::getTimeTAsTm (time_t t) {
 }
 
 time_t Utils::getTmAsTimeT (const tm &t) {
+	tm tCopy = t;
 	time_t result;
 
 	#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
@@ -222,11 +224,11 @@ time_t Utils::getTmAsTimeT (const tm &t) {
 	#endif
 
 	#if TARGET_IPHONE_SIMULATOR
-		result = timegm(&const_cast<tm &>(t));
+		result = timegm(&tCopy);
 		adjustTimezone = 0;
 	#else
 		// mktime uses local time => It's necessary to adjust the timezone to get an UTC time.
-		result = mktime(&const_cast<tm &>(t));
+		result = mktime(&tCopy);
 
 		#if defined(LINPHONE_WINDOWS_UNIVERSAL) || defined(LINPHONE_MSC_VER_GREATER_19)
 			_get_timezone(&adjustTimezone);
@@ -241,6 +243,25 @@ time_t Utils::getTmAsTimeT (const tm &t) {
 	}
 
 	return result - time_t(adjustTimezone);
+}
+
+std::string Utils::getTimeAsString (const std::string &format, time_t t) {
+	tm dateTime = getTimeTAsTm(t);
+
+	std::ostringstream os;
+	os << std::put_time(&dateTime, format.c_str());
+	return os.str();
+}
+
+time_t Utils::getStringToTime (const std::string &format, const std::string &s) {
+#ifndef _WIN32
+	tm dateTime;
+
+	if (strptime(s.c_str(), format.c_str(), &dateTime)) {
+		return getTmAsTimeT(dateTime);
+	}
+#endif
+	return 0;
 }
 
 // -----------------------------------------------------------------------------

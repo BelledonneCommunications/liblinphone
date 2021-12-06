@@ -8,7 +8,6 @@ linphone_include_HEADERS=\
 	buffer.h \
 	call.h \
 	callbacks.h \
-	call_log.h \
 	call_params.h \
 	call_stats.h \
 	chat.h \

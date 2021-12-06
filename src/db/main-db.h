@@ -26,6 +26,7 @@
 #include "linphone/utils/enum-mask.h"
 
 #include "abstract/abstract-db.h"
+#include "call/call-log.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
 #include "conference/conference-info.h"
@@ -224,9 +225,28 @@ public:
 	// Conference Info.
 	// ---------------------------------------------------------------------------
 
-	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos (bool onlyFutureConferenceInfos = true) const;
+	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos (time_t afterThisTime = -1) const;
+	std::shared_ptr<ConferenceInfo> getConferenceInfo (long long conferenceInfoId) const;
+	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI (const Address *uri) const;
 	void insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
+
+	// ---------------------------------------------------------------------------
+	// Call log.
+	// ---------------------------------------------------------------------------
+
+	long long insertCallLog (const std::shared_ptr<CallLog> &callLog);
+	void deleteCallLog (const std::shared_ptr<CallLog> &callLog);
+
+	std::shared_ptr<CallLog> getCallLog (const std::string &callId, int limit);
+
+	std::list<std::shared_ptr<CallLog>> getCallHistory (int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistory (const Address *address, int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistory (const Address *peer, const Address *local, int limit = -1);
+	std::shared_ptr<CallLog> getLastOutgoingCall ();
+	void deleteCallHistory ();
+
+	int getCallHistorySize ();
 
 	// ---------------------------------------------------------------------------
 	// Other.

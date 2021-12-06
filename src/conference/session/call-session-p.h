@@ -126,7 +126,7 @@ protected:
 	CallSession::State transferState = CallSession::State::Idle;
 	LinphoneProxyConfig *destProxy = nullptr;
 	LinphoneErrorInfo *ei = nullptr;
-	LinphoneCallLog *log = nullptr;
+	std::shared_ptr<CallLog> log = nullptr;
 	std::string referTo;
 	mutable Address referToAddress;
 	std::string emptyString = "";

@@ -1033,12 +1033,12 @@ void MS2Stream::updateStats(){
 			_linphone_call_stats_set_rtp_stats(mStats, rtpStats);
 	}
 	float quality = media_stream_get_average_quality_rating(getMediaStream());
-	LinphoneCallLog *log = getMediaSession().getLog();
+	shared_ptr<CallLog> log = getMediaSession().getLog();
 	if (quality >= 0) {
-		if (log->quality == -1.0)
-			log->quality = quality;
+		if (log->getQuality() == -1.0)
+			log->setQuality(quality);
 		else
-			log->quality *= quality / 5.0f;
+			log->setQuality(log->getQuality() * (quality / 5.0f));
 	}
 }
 

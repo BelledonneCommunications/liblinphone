@@ -237,7 +237,7 @@ shared_ptr<Call> Core::getCallByCallId (const string &callId) const {
 	}
 
 	for (const auto &call : d->calls) {
-		if (call->getLog()->call_id && !strcmp(call->getLog()->call_id, callId.c_str())) {
+		if (!call->getLog()->getCallId().empty() && call->getLog()->getCallId() == callId) {
 			return call;
 		}
 	}
@@ -305,6 +305,77 @@ LinphoneStatus Core::terminateAllCalls () {
 		calls.pop_front();
 	}
 	return 0;
+}
+
+// =============================================================================
+
+void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallLog> &callLog, std::shared_ptr<ConferenceInfo> confInfo) {
+	// TODO: This is a workaround that has to be removed ASAP
+	// Do not add calls made to the conference factory in the history
+	LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), callLog->getToAddress());
+	if (account) {
+		const char *conference_factory_uri = linphone_account_params_get_conference_factory_uri(linphone_account_get_params(account));
+		if (conference_factory_uri) {
+			LinphoneAddress *conference_factory_addr = linphone_address_new(conference_factory_uri);
+			if (conference_factory_addr) {
+				if (linphone_address_weak_equal(callLog->getToAddress(), conference_factory_addr)) {
+					linphone_address_unref(conference_factory_addr);
+					return;
+				}
+				linphone_address_unref(conference_factory_addr);
+			}
+		}
+	}
+
+	// For PushIncomingState call, from and to address are unknow.
+	const char *usernameFrom = callLog->getFromAddress() ? linphone_address_get_username(callLog->getFromAddress()) : nullptr;
+	const char *usernameTo = callLog->getToAddress() ? linphone_address_get_username(callLog->getToAddress()) : nullptr;
+	if ((usernameFrom && (strstr(usernameFrom, "chatroom-") == usernameFrom))
+		|| (usernameTo && (strstr(usernameTo, "chatroom-") == usernameTo))
+	)
+		return;
+	// End of workaround
+
+#ifdef HAVE_DB_STORAGE
+	L_D();
+
+	if (confInfo == nullptr) {
+		// Let's see if we have a conference info in db with the corresponding URI
+		confInfo = d->mainDb->getConferenceInfoFromURI(L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress()));
+	}
+
+	auto event = make_shared<ConferenceCallEvent>(type, std::time(nullptr), callLog, confInfo);
+	d->mainDb->addEvent(event);
+#endif
+
+	LinphoneCore *lc = getCCore();
+
+	lc->call_logs = bctbx_list_prepend(lc->call_logs, linphone_call_log_ref(callLog->toC()));
+	if (bctbx_list_size(lc->call_logs) > (size_t)lc->max_call_logs) {
+		bctbx_list_t *elem, *prevelem = NULL;
+		/*find the last element*/
+		for(elem = lc->call_logs; elem != NULL; elem = elem->next) {
+			prevelem = elem;
+		}
+		elem = prevelem;
+		linphone_call_log_unref((LinphoneCallLog*) elem->data);
+		lc->call_logs = bctbx_list_erase_link(lc->call_logs, elem);
+	}
+
+#ifndef HAVE_DB_STORAGE
+	call_logs_write_to_config_file(lc);
+#endif
+
+	linphone_core_notify_call_log_updated(getCCore(), callLog->toC());
+}
+
+void Core::reportEarlyCallFailed (LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const std::string callId) {
+	auto callLog = CallLog::create(getSharedFromThis(), dir, from, to);
+	callLog->setErrorInfo(ei);
+	callLog->setStatus(LinphoneCallEarlyAborted);
+	callLog->setCallId(callId);
+
+	reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, callLog, nullptr);
 }
 
 LINPHONE_END_NAMESPACE

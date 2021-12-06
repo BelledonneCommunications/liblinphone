@@ -34,8 +34,6 @@ typedef struct _Sal Sal;
 typedef struct _SalOp SalOp;
 #endif
 
-typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
-
 #ifdef __cplusplus
 LINPHONE_BEGIN_NAMESPACE
 	class SalMediaDescription;

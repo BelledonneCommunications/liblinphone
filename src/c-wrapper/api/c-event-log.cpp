@@ -39,8 +39,8 @@ L_DECLARE_C_OBJECT_IMPL(EventLog);
 
 static bool isConferenceType (LinphoneEventLogType type) {
 	switch (type) {
-		case LinphoneEventLogTypeConferenceCallEnd:
-		case LinphoneEventLogTypeConferenceCallStart:
+		case LinphoneEventLogTypeConferenceCallEnded:
+		case LinphoneEventLogTypeConferenceCallStarted:
 		case LinphoneEventLogTypeConferenceChatMessage:
 		case LinphoneEventLogTypeConferenceCreated:
 		case LinphoneEventLogTypeConferenceTerminated:
@@ -69,8 +69,8 @@ static bool isConferenceType (LinphoneEventLogType type) {
 
 static bool isConferenceCallType (LinphoneEventLogType type) {
 	switch (type) {
-		case LinphoneEventLogTypeConferenceCallEnd:
-		case LinphoneEventLogTypeConferenceCallStart:
+		case LinphoneEventLogTypeConferenceCallEnded:
+		case LinphoneEventLogTypeConferenceCallStarted:
 			return true;
 
 		default:
@@ -248,15 +248,28 @@ unsigned int linphone_event_log_get_notify_id (const LinphoneEventLog *event_log
 // ConferenceCallEvent.
 // -----------------------------------------------------------------------------
 
-LinphoneCall *linphone_event_log_get_call (const LinphoneEventLog *event_log) {
+LinphoneCallLog *linphone_event_log_get_call_log (const LinphoneEventLog *event_log) {
 	if (!isConferenceCallType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 
-	std::shared_ptr<LinphonePrivate::Call> call = static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
+	std::shared_ptr<LinphonePrivate::CallLog> callLog = static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
 			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getCall();
-	if (call) {
-		return call->toC();
+		)->getCallLog();
+	if (callLog) {
+		return callLog->toC();
+	}
+	return NULL;
+}
+
+LinphoneConferenceInfo *linphone_event_log_get_conference_info (const LinphoneEventLog *event_log) {
+	if (!isConferenceCallType(linphone_event_log_get_type(event_log)))
+		return nullptr;
+
+	std::shared_ptr<LinphonePrivate::ConferenceInfo> confInfo = static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getConferenceInfo();
+	if (confInfo) {
+		return confInfo->toC();
 	}
 	return NULL;
 }

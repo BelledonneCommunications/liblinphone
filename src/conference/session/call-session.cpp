@@ -41,11 +41,11 @@ LINPHONE_BEGIN_NAMESPACE
 // =============================================================================
 
 int CallSessionPrivate::computeDuration () const {
-	if (log->connected_date_time == 0) {
-		if (log->start_date_time == 0) return 0; 
-		return (int)(ms_time(nullptr) - log->start_date_time);
+	if (log->getConnectedTime() == 0) {
+		if (log->getStartTime() == 0) return 0; 
+		return (int)(ms_time(nullptr) - log->getStartTime());
 	}
-	return (int)(ms_time(nullptr) - log->connected_date_time);
+	return (int)(ms_time(nullptr) - log->getConnectedTime());
 }
 
 /*
@@ -101,30 +101,30 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 			case CallSession::State::Error:
 				switch (linphone_error_info_get_reason(q->getErrorInfo())) {
 					case LinphoneReasonDeclined:
-						if (log->status != LinphoneCallMissed) // Do not re-change the status of a call if it's already set
-							log->status = LinphoneCallDeclined;
+						if (log->getStatus() != LinphoneCallMissed) // Do not re-change the status of a call if it's already set
+							log->setStatus(LinphoneCallDeclined);
 						break;
 					case LinphoneReasonNotAnswered:
-						if (log->dir == LinphoneCallIncoming)
-							log->status = LinphoneCallMissed;
+						if (log->getDirection() == LinphoneCallIncoming)
+							log->setStatus(LinphoneCallMissed);
 						break;
 					case LinphoneReasonNone:
-						if (log->dir == LinphoneCallIncoming) {
+						if (log->getDirection() == LinphoneCallIncoming) {
 							if (ei) {
 								int code = linphone_error_info_get_protocol_code(ei);
 								if ((code >= 200) && (code < 300))
-									log->status = LinphoneCallAcceptedElsewhere;
+									log->setStatus(LinphoneCallAcceptedElsewhere);
 								else if (code == 487)
-									log->status = LinphoneCallMissed;
+									log->setStatus(LinphoneCallMissed);
 							}
 						}
 						break;
 					case LinphoneReasonDoNotDisturb:
-						if (log->dir == LinphoneCallIncoming) {
+						if (log->getDirection() == LinphoneCallIncoming) {
 							if (ei) {
 								int code = linphone_error_info_get_protocol_code(ei);
 								if ((code >= 600) && (code < 700))
-									log->status = LinphoneCallDeclinedElsewhere;
+									log->setStatus(LinphoneCallDeclinedElsewhere);
 							}
 						}
 						break;
@@ -134,8 +134,8 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 				setTerminated();
 				break;
 			case CallSession::State::Connected:
-				log->status = LinphoneCallSuccess;
-				log->connected_date_time = ms_time(nullptr);
+				log->setStatus(LinphoneCallSuccess);
+				log->setConnectedTime(ms_time(nullptr));
 				break;
 			default:
 				break;
@@ -231,12 +231,12 @@ bool CallSessionPrivate::startPing () {
 		if (direction == LinphoneCallIncoming) {
 			string from = pingOp->getFrom();
 			string to = pingOp->getTo();
-			linphone_configure_op(q->getCore()->getCCore(), pingOp, log->from, nullptr, false);
+			linphone_configure_op(q->getCore()->getCCore(), pingOp, log->getFromAddress(), nullptr, false);
 			pingOp->setRoute(op->getNetworkOrigin());
 			pingOp->ping(from.c_str(), to.c_str());
 		} else if (direction == LinphoneCallOutgoing) {
-			char *from = linphone_address_as_string(log->from);
-			char *to = linphone_address_as_string(log->to);
+			char *from = linphone_address_as_string(log->getFromAddress());
+			char *to = linphone_address_as_string(log->getToAddress());
 			pingOp->ping(from, to);
 			ms_free(from);
 			ms_free(to);
@@ -256,7 +256,7 @@ void CallSessionPrivate::setParams (CallSessionParams *csp) {
 }
 
 void CallSessionPrivate::createOp () {
-	createOpTo(log->to);
+	createOpTo(log->getToAddress());
 }
 
 bool CallSessionPrivate::isInConference () const {
@@ -323,9 +323,7 @@ bool CallSessionPrivate::failure () {
 				if (redirectionTo) {
 					char *url = sal_address_as_string(redirectionTo);
 					lWarning() << "Redirecting CallSession [" << q << "] to " << url;
-					if (log->to)
-						linphone_address_unref(log->to);
-					log->to = linphone_address_new(url);
+					log->setToAddress(linphone_address_new(url));
 					ms_free(url);
 					restartInvite();
 					return true;
@@ -894,11 +892,11 @@ void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, L
 
 void CallSessionPrivate::completeLog () {
 	L_Q();
-	log->duration = computeDuration(); /* Store duration since connected */
-	log->error_info = linphone_error_info_ref(ei);
-	if (log->status == LinphoneCallMissed)
+	log->setDuration(computeDuration()); /* Store duration since connected */
+	log->setErrorInfo(linphone_error_info_ref(ei));
+	if (log->getStatus() == LinphoneCallMissed)
 		q->getCore()->getCCore()->missed_calls++;
-	linphone_core_report_call_log(q->getCore()->getCCore(), log);
+	q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, log, nullptr);
 }
 
 void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
@@ -1088,8 +1086,6 @@ CallSession::~CallSession () {
 		delete d->remoteParams;
 	if (d->ei)
 		linphone_error_info_unref(d->ei);
-	if (d->log)
-		linphone_call_log_unref(d->log);
 	if (d->op)
 		d->op->release();
 }
@@ -1144,11 +1140,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		d->setDestProxy( linphone_core_lookup_known_proxy(core, toAddr) );
 	}
 
-	if (d->log) {
-		// already ref for push incoming call
-		linphone_call_log_unref(d->log);
-	}
-	d->log = linphone_call_log_new(direction, fromAddr, toAddr);
+	d->log = CallLog::create(getCore(), direction, fromAddr, toAddr);
 
 	if (op) {
 		/* We already have an op for incoming calls */
@@ -1160,7 +1152,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 				linphone_core_get_config(core), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
-		linphone_call_log_set_call_id(d->log, op->getCallId().c_str()); /* Must be known at that time */
+		d->log->setCallId(op->getCallId()); /* Must be known at that time */
 	}
 
 	if (direction == LinphoneCallOutgoing) {
@@ -1178,8 +1170,8 @@ void CallSession::configure (LinphoneCallDir direction, const string &callid) {
 	d->direction = direction;
 	
 	// Keeping a valid address while following https://www.ietf.org/rfc/rfc3323.txt guidelines.
-	d->log = linphone_call_log_new(direction, linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"), linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"));
-	linphone_call_log_set_call_id(d->log, callid.c_str());
+	d->log = CallLog::create(getCore(), direction, linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"), linphone_address_new("Anonymous <sip:anonymous@anonymous.invalid>"));
+	d->log->setCallId(callid);
 }
 
 bool CallSession::isOpConfigured () {
@@ -1227,7 +1219,7 @@ LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 
 LinphoneStatus CallSession::declineNotAnswered (LinphoneReason reason) {
 	L_D();
-	d->log->status = LinphoneCallMissed;
+	d->log->setStatus(LinphoneCallMissed);
 	d->nonOpError = true;
 	linphone_error_info_set(d->ei, nullptr, reason, linphone_reason_to_error_code(reason), "Not answered", nullptr);
 	return decline(reason);
@@ -1290,7 +1282,7 @@ bool CallSession::initiateOutgoing () {
 	L_D();
 	bool defer = false;
 	d->setState(CallSession::State::OutgoingInit, "Starting outgoing call");
-	d->log->start_date_time = ms_time(nullptr);
+	d->log->setStartTime(ms_time(nullptr));
 	if (!d->destProxy)
 		defer = d->startPing();
 	return defer;
@@ -1298,7 +1290,7 @@ bool CallSession::initiateOutgoing () {
 
 void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	L_D();
-	int elapsed = (int)(currentRealTime - d->log->start_date_time);
+	int elapsed = (int)(currentRealTime - d->log->getStartTime());
 	if ((d->state == CallSession::State::OutgoingInit) && (elapsed > getCore()->getCCore()->sip_conf.delayed_timeout)) {
 		/* Start the call even if the OPTIONS reply did not arrive */
 		startInvite(nullptr, "");
@@ -1313,8 +1305,8 @@ void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 			d->listener->onPushCallSessionTimeoutCheck(getSharedFromThis(), elapsed);
 	}
 
-	if ((getCore()->getCCore()->sip_conf.in_call_timeout > 0) && (d->log->connected_date_time != 0)
-		&& ((currentRealTime - d->log->connected_date_time) > getCore()->getCCore()->sip_conf.in_call_timeout)) {
+	if ((getCore()->getCCore()->sip_conf.in_call_timeout > 0) && (d->log->getConnectedTime() != 0)
+		&& ((currentRealTime - d->log->getConnectedTime()) > getCore()->getCCore()->sip_conf.in_call_timeout)) {
 		lInfo() << "In call timeout (" << getCore()->getCCore()->sip_conf.in_call_timeout << ")";
 		terminate();
 	}
@@ -1391,11 +1383,11 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	if (destination)
 		destinationStr = destination->asString();
 	else {
-		realUrl = linphone_address_as_string(d->log->to);
+		realUrl = linphone_address_as_string(d->log->getToAddress());
 		destinationStr = realUrl;
 		ms_free(realUrl);
 	}
-	char *from = linphone_address_as_string(d->log->from);
+	char *from = linphone_address_as_string(d->log->getFromAddress());
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
 	if (content) {
@@ -1416,7 +1408,7 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 			d->setState(CallSession::State::Error, "Call failed");
 		}
 	} else {
-		linphone_call_log_set_call_id(d->log, d->op->getCallId().c_str()); /* Must be known at that time */
+		d->log->setCallId(d->op->getCallId()); /* Must be known at that time */
 		d->setState(CallSession::State::OutgoingProgress, "Outgoing call in progress");
 	}
 	return result;
@@ -1527,7 +1519,7 @@ int CallSession::getDuration () const {
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		case CallSession::State::Released:
-			return d->log->duration;
+			return d->log->getDuration();
 		default:
 			return d->computeDuration();
 	}
@@ -1544,11 +1536,11 @@ const Address& CallSession::getLocalAddress () const {
 	L_D();
 	return (d->direction == LinphoneCallIncoming)
 		? 
-			(linphone_call_log_get_to_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log)) : d->emptyAddress) :
-			(linphone_call_log_get_from_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_from_address(d->log)) : d->emptyAddress);
+			(d->log->getToAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress()) : d->emptyAddress) :
+			(d->log->getFromAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getFromAddress()) : d->emptyAddress);
 }
 
-LinphoneCallLog * CallSession::getLog () const {
+shared_ptr<CallLog> CallSession::getLog () const {
 	L_D();
 	return d->log;
 }
@@ -1595,7 +1587,7 @@ const Address &CallSession::getReferToAddress () const {
 const Address *CallSession::getRemoteAddress () const {
 	L_D();
 	const LinphoneAddress *address = (d->direction == LinphoneCallIncoming)
-	? linphone_call_log_get_from_address(d->log) : linphone_call_log_get_to_address(d->log);
+	? d->log->getFromAddress() : d->log->getToAddress();
 	return address? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
 }
 
@@ -1654,7 +1646,7 @@ CallSession::State CallSession::getPreviousState () const {
 
 const Address& CallSession::getToAddress () const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log));
+	return *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress());
 }
 
 CallSession::State CallSession::getTransferState () const {

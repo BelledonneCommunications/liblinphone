@@ -37,6 +37,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "call/call.h"
+#include "call/call-log.h"
 #include "core/core-p.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/notify-conference-listener.h"
@@ -1933,7 +1934,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	if (getMe()->isAdmin()) {
 		LinphoneAddress *addr;
 		LinphoneCallParams *params;
-		LinphoneCallLog *callLog;
 		std::shared_ptr<LinphonePrivate::Call> focusCall = nullptr;
 		switch (state) {
 			case ConferenceInterface::State::None:
@@ -1953,8 +1953,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				focusCall->setConference(toC());
 				focus = Participant::create(this, Address(focusCall->getRemoteContact()), focusCall->getActiveSession());
 				m_pendingCalls.push_back(call);
-				callLog = focusCall->getLog();
-				callLog->was_conference = TRUE;
 				linphone_call_params_unref(params);
 				Conference::addParticipant(call);
 			}
@@ -1981,8 +1979,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 					focusCall->setConference(toC());
 					focus->setSession(focusCall->getActiveSession());
 					m_pendingCalls.push_back(call);
-					callLog = focusCall->getLog();
-					callLog->was_conference = TRUE;
 					linphone_call_params_unref(params);
 				}
 				return true;

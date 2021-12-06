@@ -60,7 +60,7 @@ void linphone_call_notify_remote_recording(LinphoneCall *call, bool_t recording)
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
 
-LINPHONE_PUBLIC LinphoneCallLog *linphone_call_log_new(LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress * to);
+LINPHONE_PUBLIC LinphoneCallLog *linphone_call_log_new(LinphoneCore *core, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress * to);
 void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 LinphonePlayer *linphone_call_build_player(LinphoneCall*call);
 
@@ -441,8 +441,6 @@ void _linphone_core_codec_config_write(LinphoneCore *lc);
 
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_read_call_logs_from_config_file(LinphoneCore *lc);
 void call_logs_write_to_config_file(LinphoneCore *lc);
-void linphone_core_call_log_storage_init(LinphoneCore *lc);
-void linphone_core_call_log_storage_close(LinphoneCore *lc);
 void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log);
 LINPHONE_PUBLIC const MSList *linphone_core_get_call_history(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_delete_call_history(LinphoneCore *lc);
@@ -673,9 +671,6 @@ LINPHONE_PUBLIC void linphone_core_set_default_account_index(LinphoneCore *core,
 int linphone_core_get_default_account_index(LinphoneCore *lc);
 
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;
-
-void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log);
-void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const char *cid);
 
 LinphoneVideoDefinition * linphone_video_definition_new(unsigned int width, unsigned int height, const char *name);
 

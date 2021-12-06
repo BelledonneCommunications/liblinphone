@@ -189,7 +189,7 @@ LinphoneCallDir linphone_call_get_dir (const LinphoneCall *call) {
 }
 
 LinphoneCallLog *linphone_call_get_call_log (const LinphoneCall *call) {
-	return Call::toCpp(call)->getLog();
+	return Call::toCpp(call)->getLog()->toC();
 }
 
 const char *linphone_call_get_refer_to (const LinphoneCall *call) {

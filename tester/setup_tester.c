@@ -1446,12 +1446,9 @@ static void search_friend_in_call_log(void) {
 	linphone_magic_search_unref(magicSearch);
 
 	// Ensure tester call log & zrtp secrets db are correctly removed
-	const char *call_log_db_path = linphone_core_get_call_logs_database_path(manager->lc);
-	BC_ASSERT_EQUAL(0, bctbx_file_exist(call_log_db_path), int, "%d");
 	const char *zrtp_secrets_db_path = linphone_core_get_zrtp_secrets_file(manager->lc);
 	BC_ASSERT_EQUAL(0, bctbx_file_exist(zrtp_secrets_db_path), int, "%d");
 	linphone_core_manager_destroy(manager);
-	BC_ASSERT_NOT_EQUAL(0, bctbx_file_exist(call_log_db_path), int, "%d");
 	BC_ASSERT_NOT_EQUAL(0, bctbx_file_exist(zrtp_secrets_db_path), int, "%d");
 }
 
@@ -2351,6 +2348,31 @@ end:
 	linphone_core_manager_destroy(manager);
 }
 
+static void migration_from_call_history_db (void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	char *src_db = bc_tester_res("db/call-history.db");
+	char *tmp_db  = bc_tester_file("tmp.db");
+
+	BC_ASSERT_EQUAL(liblinphone_tester_copy_file(src_db, tmp_db), 0, int, "%d");
+
+	// The call_history.db has 600+ calls with the very first DB scheme.
+	// This will test the migration procedure
+	linphone_core_set_call_logs_database_path(marie->lc, tmp_db);
+
+	const bctbx_list_t *call_logs = linphone_core_get_call_history(marie->lc);
+	BC_ASSERT(bctbx_list_size(call_logs) > 0);
+
+	linphone_core_manager_destroy(marie);
+	remove(tmp_db);
+	bctbx_free(src_db);
+	bctbx_free(tmp_db);
+}
+
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),
 	TEST_NO_TAG("Version update check", linphone_version_update_test),
@@ -2404,7 +2426,8 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
 	TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
 	TEST_NO_TAG("Dialplan", dial_plan),
-	TEST_NO_TAG("Audio devices", audio_devices)
+	TEST_NO_TAG("Audio devices", audio_devices),
+	TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db)
 };
 
 test_suite_t setup_test_suite = {"Setup", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

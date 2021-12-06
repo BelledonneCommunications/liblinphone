@@ -23,20 +23,20 @@
 #include "event-log/event-log.h"
 
 #include "conference/conference-info.h"
+#include "call/call-log.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Call;
 class ConferenceCallEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceCallEvent : public EventLog {
 public:
-	ConferenceCallEvent (Type type, time_t creationTime, const std::shared_ptr<Call> &call, const std::shared_ptr<const ConferenceInfo> &conferenceInfo);
+	ConferenceCallEvent (Type type, time_t creationTime, const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
-	std::shared_ptr<Call> getCall () const;
-	std::shared_ptr<const ConferenceInfo> getConferenceInfo () const;
+	std::shared_ptr<CallLog> getCallLog () const;
+	std::shared_ptr<ConferenceInfo> getConferenceInfo () const;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceCallEvent);

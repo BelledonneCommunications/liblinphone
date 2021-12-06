@@ -104,11 +104,18 @@ LINPHONE_PUBLIC unsigned int linphone_event_log_get_notify_id (const LinphoneEve
 // -----------------------------------------------------------------------------
 
 /**
- * Returns the call of a conference call event.
+ * Returns the call log of a conference call event.
  * @param event_log A #LinphoneEventLog object. @notnil
- * @return The conference #LinphoneCall. @maybenil
+ * @return The conference #LinphoneCallLog. @maybenil
  */
-LINPHONE_PUBLIC LinphoneCall *linphone_event_log_get_call (const LinphoneEventLog *event_log);
+LINPHONE_PUBLIC LinphoneCallLog *linphone_event_log_get_call_log (const LinphoneEventLog *event_log);
+
+/**
+ * Returns the conference info of a conference call event.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The conference #LinphoneConferenceInfo. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_event_log_get_conference_info (const LinphoneEventLog *event_log);
 
 // -----------------------------------------------------------------------------
 // ConferenceChatMessageEvent.

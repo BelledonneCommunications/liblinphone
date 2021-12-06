@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -17,11 +17,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LINPHONE_CALL_LOG_H
+#define LINPHONE_CALL_LOG_H
 
-#ifndef __LINPHONE_CALL_LOG_H__
-#define __LINPHONE_CALL_LOG_H__
-
-#include "linphone/types.h"
+#include "linphone/api/c-types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,11 +29,20 @@ extern "C" {
 /**
  * @addtogroup call_logs
  * @{
-**/
+ */
 
-/*******************************************************************************
- * Public functions                                                            *
- ******************************************************************************/
+/**
+ * Acquire a reference to the call log.
+ * @param call_log #LinphoneCallLog object @notnil
+ * @return The same #LinphoneCallLog object @notnil
+**/
+LINPHONE_PUBLIC LinphoneCallLog * linphone_call_log_ref(LinphoneCallLog *call_log);
+
+/**
+ * Release a reference to the call log.
+ * @param call_log #LinphoneCallLog object @notnil
+**/
+LINPHONE_PUBLIC void linphone_call_log_unref(LinphoneCallLog *call_log);
 
 /**
  * Get the call ID used by the call.
@@ -63,14 +71,6 @@ LINPHONE_PUBLIC int linphone_call_log_get_duration(const LinphoneCallLog *call_l
  * @return The origin #LinphoneAddress (ie from) of the call. @notnil
 **/
 LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_from_address(const LinphoneCallLog *call_log);
-
-/**
- * Get the RTP statistics computed locally regarding the call.
- * @param call_log #LinphoneCallLog object @notnil
- * @return The RTP statistics that have been computed locally for the call.
- * @donotwrap
-**/
-LINPHONE_PUBLIC const rtp_stats_t * linphone_call_log_get_local_stats(const LinphoneCallLog *call_log);
 
 /**
  * Get the overall quality indication of the call.
@@ -112,15 +112,6 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_call_log_get_remote_address(con
  * @param address #LinphoneAddress object @notnil
 **/
 LINPHONE_PUBLIC void linphone_call_log_set_remote_address(LinphoneCallLog *call_log, LinphoneAddress * address);
-
-/**
- * Get the RTP statistics computed by the remote end and sent back via RTCP.
- * @note Not implemented yet.
- * @param call_log #LinphoneCallLog object @notnil
- * @return The RTP statistics that have been computed by the remote end for the call.
- * @donotwrap
-**/
-LINPHONE_PUBLIC const rtp_stats_t * linphone_call_log_get_remote_stats(const LinphoneCallLog *call_log);
 
 /**
  * Get the start date of the call.
@@ -174,7 +165,7 @@ LINPHONE_PUBLIC char * linphone_call_log_to_str(const LinphoneCallLog *call_log)
  * @param call_log #LinphoneCallLog object @notnil
  * @return TRUE if the call was a call to a conference server, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_call_log_was_conference(const LinphoneCallLog *call_log);
+LINPHONE_PUBLIC bool_t linphone_call_log_was_conference(LinphoneCallLog *call_log);
 
 /**
  * When the call was failed, return an object describing the failure.
@@ -182,11 +173,6 @@ LINPHONE_PUBLIC bool_t linphone_call_log_was_conference(const LinphoneCallLog *c
  * @return #LinphoneErrorInfo about the error encountered by the call associated with this call log or NULL. @maybenil
 **/
 LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_call_log_get_error_info(const LinphoneCallLog *call_log);
-
-
-/*******************************************************************************
- * Reference and user data handling functions                                  *
- ******************************************************************************/
 
 /**
  * Get the user data associated with the call log.
@@ -203,17 +189,11 @@ LINPHONE_PUBLIC void *linphone_call_log_get_user_data(const LinphoneCallLog *cal
 LINPHONE_PUBLIC void linphone_call_log_set_user_data(LinphoneCallLog *call_log, void *user_data);
 
 /**
- * Acquire a reference to the call log.
- * @param call_log #LinphoneCallLog object @notnil
- * @return The same #LinphoneCallLog object @notnil
+ * Retrieves the conference info associated to this call log in DB.
+ * @param call_log #LinphoneCallLog object. @notnil
+ * @return The #LinphoneConferenceInfo associated. @maybenil
 **/
-LINPHONE_PUBLIC LinphoneCallLog * linphone_call_log_ref(LinphoneCallLog *call_log);
-
-/**
- * Release a reference to the call log.
- * @param call_log #LinphoneCallLog object @notnil
-**/
-LINPHONE_PUBLIC void linphone_call_log_unref(LinphoneCallLog *call_log);
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_call_log_get_conference_info(LinphoneCallLog *call_log);
 
 /**
  * Creates a fake #LinphoneCallLog.
@@ -234,10 +214,10 @@ LINPHONE_PUBLIC LinphoneCallLog *linphone_core_create_call_log(LinphoneCore *cor
 
 /**
  * @}
-**/
+ */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __LINPHONE_CALL_LOG_H__ */
+#endif /* LINPHONE_CALL_LOG_H */

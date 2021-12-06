@@ -132,6 +132,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	c-wrapper/c-wrapper.h
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
+	call/call-log.h
 	call/call.h
 	call/audio-device/audio-device.h
 	call/audio-device/audio-device.cpp
@@ -342,6 +343,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-audio-device.cpp
 	c-wrapper/api/c-auth-info.cpp
 	c-wrapper/api/c-call-cbs.cpp
+	c-wrapper/api/c-call-log.cpp
 	c-wrapper/api/c-call-params.cpp
 	c-wrapper/api/c-call-stats.cpp
 	c-wrapper/api/c-call.cpp
@@ -373,6 +375,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
+	call/call-log.cpp
 	call/call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
