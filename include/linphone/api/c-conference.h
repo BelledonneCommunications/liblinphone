@@ -54,6 +54,7 @@ LINPHONE_PUBLIC void linphone_conference_remove_callbacks(LinphoneConference *co
  * This is meant only to be called from a callback to be able to get the user_data associated with the LinphoneConferenceCbs that is calling the callback.
  * @param conference #LinphoneConference object. @notnil
  * @param cbs The LinphoneConferenceCbs object. @notnil
+ * @donotwrap
  */
 LINPHONE_PUBLIC void linphone_conference_set_current_callbacks(LinphoneConference *conference, LinphoneConferenceCbs *cbs);
 
