@@ -259,6 +259,13 @@ bool Content::isFileEncrypted (const string& filePath) const {
 		return false;
 	}
 	
+	// is the encryptedVfs set up?
+	if (bctoolbox::VfsEncryption::openCallbackGet() == nullptr) {
+		// no: we can't open the file using encryptedVFS
+		// no real way to check if the file is encrypted but there is no way to decrypt it anyway
+		return false;
+	}
+
 	// open the file using encrypted vfs
 	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.data(), "r");
 	if (fp == NULL) {
