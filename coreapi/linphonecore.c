@@ -8892,3 +8892,10 @@ bctbx_list_t *linphone_core_get_future_conference_information_list(LinphoneCore 
 bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time) {
 	return get_conference_information_list(core, time);
 }
+
+void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info) {
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	mainDb->deleteConferenceInfo(LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
+#endif
+}

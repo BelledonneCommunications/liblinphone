@@ -6060,6 +6060,14 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_future_conference_information_li
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_after_time(LinphoneCore *core, time_t time);
 
 /**
+ * Deletes a conference information from DB.
+ * @param core #LinphoneCore object. @notnil
+ * @param conference_info the #LinphoneConferenceInfo to delete. @notnil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info);
+
+/**
 
  * Create conference on a server by inviting participants
  * @param core The #LinphoneCore @notnil
