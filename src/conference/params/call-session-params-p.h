@@ -68,6 +68,9 @@ public:
 	void setEndTime(time_t time);
 	time_t getEndTime() const;
 
+	void setDescription(std::string description);
+	const std::string & getDescription() const;
+
 public:
 	std::string sessionName;
 
@@ -88,6 +91,7 @@ private:
 	SalCustomHeader *customHeaders = nullptr;
 	std::string conferenceId = "";
 	std::string from = "";
+	std::string description = "";
 	std::unordered_map<std::string, std::string> customContactParameters;
 	std::shared_ptr<CallSession> referer; /* In case call creation is consecutive to an incoming transfer, this points to the original call */
 	std::list<Content> customContents;

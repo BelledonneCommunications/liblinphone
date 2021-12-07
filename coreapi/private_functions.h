@@ -131,11 +131,13 @@ void linphone_call_params_set_used_text_codec(LinphoneCallParams *params, OrtpPa
 bool_t linphone_call_params_get_no_user_consent(const LinphoneCallParams *params);
 time_t linphone_call_params_get_start_time (const LinphoneCallParams *params);
 time_t linphone_call_params_get_end_time (const LinphoneCallParams *params);
+const char * linphone_call_params_get_description (const LinphoneCallParams *params);
 
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 void linphone_call_params_set_end_time (LinphoneCallParams *params, time_t time);
 void linphone_call_params_set_start_time (LinphoneCallParams *params, time_t time);
+void linphone_call_params_set_description (LinphoneCallParams *params, const char * desc);
 LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams *params, bool_t value);
 LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
@@ -636,9 +638,10 @@ void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCali
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);
 void linphone_core_notify_ec_calibration_audio_uninit(LinphoneCore *lc);
 void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *chat_room);
-void linphone_core_notify_conference_info_on_participant_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address);
-void linphone_core_notify_conference_info_on_participant_error(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address, LinphoneConferenceInfoError error);
-void linphone_core_notify_conference_info_on_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
+void linphone_core_notify_conference_info_participant_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address);
+void linphone_core_notify_conference_info_participant_error(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address, LinphoneConferenceInfoError error);
+void linphone_core_notify_conference_info_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
+void linphone_core_notify_conference_info_created(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
 
 void set_playback_gain_db(AudioStream *st, float gain);
 

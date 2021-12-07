@@ -668,32 +668,59 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 
 	const auto & conference = getCore()->findAudioVideoConference(conferenceId, false);
 
+	std::shared_ptr<MediaConference::RemoteConference> remoteConference = nullptr;
+
 	if (conference) {
 		lInfo() << "Attaching call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") to conference " << conference->getConferenceAddress() << " ID " << conferenceId;
-		setConference(conference->toC());
 
-		std::shared_ptr<MediaConference::RemoteConference> remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
+		remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
 		if (remoteConference) {
 			remoteConference->setMainSession(session);
 		}
 	} else {
+
 		auto confParams = ConferenceParams::create(getCore()->getCCore());
-		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
-		const auto confLayout = MediaSession::computeConferenceLayout(rmd);
-		confParams->setLayout(confLayout);
-		const auto & remoteParams = session->getRemoteParams();
-		confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
-		confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
+		std::shared_ptr<ConferenceInfo> conferenceInfo = 
+		#ifdef HAVE_DB_STORAGE
+			getCore()->getPrivate()->mainDb ? getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(remoteContactAddress) :
+		#endif
+			nullptr;
+		if (conferenceInfo) {
+			confParams->setSubject(conferenceInfo->getSubject());
+			auto startTime = conferenceInfo->getDateTime();
+			confParams->setStartTime(startTime);
+			auto duration = conferenceInfo->getDuration();
+			if (duration > 0) {
+				// duration is in minutes therefore convert it to seconds by multiplying it by 60
+				time_t endTime = startTime + duration * 60;
+				confParams->setEndTime(endTime);
+			}
+			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};
+			for (const auto & participant : conferenceInfo->getParticipants()) {
+				invitees.push_back(participant);
+			}
 
-		// It is expected that the core of the remote conference is the participant one
-		lInfo() << "Creating conference with ID " << conferenceId << " and attaching call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ")";
-		auto remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
-		setConference(remoteConf->toC());
+			const ConferenceAddress confAddr(conferenceInfo->getUri());
+			const ConferenceId confId(confAddr, session->getLocalAddress());
+			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), session, confAddr, confId, invitees, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
+		} else {
+			std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+			const auto confLayout = MediaSession::computeConferenceLayout(rmd);
+			confParams->setLayout(confLayout);
+			const auto & remoteParams = session->getRemoteParams();
+			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
+			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
 
-		// Record conf-id to be used later when terminating the remote conference
-		if (remoteContactAddress.hasUriParam("conf-id")) {
-			setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
+			// It is expected that the core of the remote conference is the participant one
+			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 		}
+	}
+
+	setConference(remoteConference->toC());
+
+	// Record conf-id to be used later when terminating the remote conference
+	if (remoteContactAddress.hasUriParam("conf-id")) {
+		setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
 	}
 }
 

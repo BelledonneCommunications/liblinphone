@@ -43,6 +43,7 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_conferenceAddress = params.m_conferenceAddress;
 	m_factoryAddress = params.m_factoryAddress;
 	m_subject = params.m_subject;
+	m_description = params.m_description;
 	m_layout = params.m_layout;
 	m_me = params.m_me;
 	m_startTime = params.m_startTime;

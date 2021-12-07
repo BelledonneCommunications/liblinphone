@@ -702,29 +702,6 @@ void ChatMessagePrivate::notifyReceiving () {
 		positiveDeliveryNotificationRequired = false;
 		negativeDeliveryNotificationRequired = false;
 		displayNotificationRequired = false;
-	} else if (contentType == ContentType::Icalendar) {
-
-		auto conferenceInfo = Factory::get()->createConferenceInfoFromIcalendarContent(L_GET_C_BACK_PTR(getContents().front()));
-		if (conferenceInfo) {
-			auto confParams = ConferenceParams::create(q->getCore()->getCCore());
-			confParams->setSubject(conferenceInfo->getSubject());
-			auto startTime = conferenceInfo->getDateTime();
-			confParams->setStartTime(startTime);
-			auto duration = conferenceInfo->getDuration();
-			if (duration > 0) {
-				// duration is in minutes therefore convert it to seconds by multiplying it by 60
-				time_t endTime = startTime + duration * 60;
-				confParams->setEndTime(endTime);
-			}
-			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};
-			for (const auto & participant : conferenceInfo->getParticipants()) {
-				invitees.push_back(participant);
-			}
-
-			const ConferenceAddress confAddr(conferenceInfo->getUri());
-			const ConferenceId confId(confAddr, q->getLocalAddress());
-			auto remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), confAddr, confId, invitees, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
-		}
 	}
 
 	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(

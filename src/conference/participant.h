@@ -58,6 +58,8 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class Call;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
+	friend class Core;
+	friend class CorePrivate;
 	friend class Conference;
 	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;

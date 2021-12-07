@@ -401,7 +401,7 @@ bool Conference::isMe (const IdentityAddress &addr) const {
 
 // -----------------------------------------------------------------------------
 
-string Conference::getResourceLists (const list<IdentityAddress> &addresses) const {
+string Conference::getResourceLists (const list<IdentityAddress> &addresses) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();

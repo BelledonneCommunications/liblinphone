@@ -294,7 +294,7 @@ LinphoneParticipant *linphone_conference_get_me (const LinphoneConference *confe
 }
 
 const char *linphone_conference_get_subject (const LinphoneConference *conference) {
-	return MediaConference::Conference::toCpp(conference)->getSubject().c_str();
+	return L_STRING_TO_C(MediaConference::Conference::toCpp(conference)->getSubject());
 }
 
 void linphone_conference_set_subject(LinphoneConference *conference, const char *subject) {
@@ -456,6 +456,14 @@ void linphone_conference_params_set_subject(LinphoneConferenceParams *params, co
 
 const char * linphone_conference_params_get_subject(const LinphoneConferenceParams *params){
 	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getSubject());
+}
+
+const char *linphone_conference_params_get_description (const LinphoneConferenceParams *params) {
+	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getDescription());
+}
+
+void linphone_conference_params_set_description(LinphoneConferenceParams *params, const char *description) {
+	ConferenceParams::toCpp(params)->setDescription(L_C_TO_STRING(description));
 }
 
 void linphone_conference_params_set_start_time(LinphoneConferenceParams *params, time_t start){

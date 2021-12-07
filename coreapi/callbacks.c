@@ -1028,24 +1028,22 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 
 static int process_redirect(SalOp *op){
 	LinphoneCore *lc = static_cast<LinphoneCore *>(op->getSal()->getUserPointer());
+	LinphonePrivate::CallSession *session = static_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
 	LinphoneCall *call = linphone_core_get_call_by_callid(lc, op->getCallId().c_str());
-	LinphoneConference *conference = call ? linphone_call_get_conference(call) : NULL;
-	LinphoneConferenceState conference_state = conference ? linphone_conference_get_state(conference) : LinphoneConferenceStateNone;
-	std::shared_ptr<MediaConference::RemoteConference> remote_conference = conference ? dynamic_pointer_cast<MediaConference::RemoteConference>(MediaConference::Conference::toCpp(conference)->getSharedFromThis()) : NULL;
-	if (remote_conference && ((conference_state == LinphoneConferenceStateInstantiated) || (conference_state == LinphoneConferenceStateCreationPending))) {
-		const ConferenceId & conference_id = remote_conference->getConferenceId();
+	if (!session)
+		return -1;
+	auto sessionRef = (session) ? session->getSharedFromThis() : NULL;
+	auto mediaSessionRef = (sessionRef) ? dynamic_pointer_cast<LinphonePrivate::MediaSession>(sessionRef) : NULL;
+	if (mediaSessionRef && !call) {
 		char * remote_contact_address = sal_address_as_string(op->getRemoteContactAddress());
 		char msg [350];
 		snprintf(msg, 350, "Conference %s has been succesfully created", remote_contact_address);
 		const ConferenceAddress conference_address(remote_contact_address);
 		ms_free(remote_contact_address);
-		remote_conference->setConferenceId(ConferenceId(conference_address, conference_id.getLocalAddress()));
-		remote_conference->setConferenceAddress(conference_address);
-		// Do not terminate conference if the call has been redirected
-		Call::toCpp(call)->setConference(NULL);
+		session->createConferenceInfo();
 		LinphoneErrorInfo *ei = linphone_error_info_new();
 		linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 200, msg, NULL);
-		linphone_call_terminate_with_error_info(call,ei);
+		session->terminate(ei);
 		linphone_error_info_unref(ei);
 		return 0;
 	} else {

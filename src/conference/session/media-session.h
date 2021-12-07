@@ -41,12 +41,14 @@ namespace MediaConference {
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class Call;
+	friend class Core;
 	friend class IceAgent;
 	friend class ToneManager;
 	friend class Stream;
 	friend class StreamsGroup;
 
 	friend class MediaConference::LocalConference;
+	friend class MediaConference::RemoteConference;
 public:
 	static ConferenceLayout computeConferenceLayout(const std::shared_ptr<SalMediaDescription> & md);
 

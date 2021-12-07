@@ -90,6 +90,20 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_addres
 LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address);
 
 /**
+ * Set the description of the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @param description the conference description. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_description(LinphoneConferenceParams *params, const char * description);
+
+/**
+ * Get conference description
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference description. @maybenil
+ */
+LINPHONE_PUBLIC const char * linphone_conference_params_get_description(const LinphoneConferenceParams *params);
+
+/**
  * Set the subject of the conference
  * @param conference The #LinphoneConference object. @notnil
  * @param subject the conference subject. @maybenil

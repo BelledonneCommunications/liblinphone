@@ -46,6 +46,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	disallowZrtp = src->disallowZrtp;
 	startTime = src->startTime;
 	endTime = src->endTime;
+	description = src->description;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
@@ -76,6 +77,14 @@ void CallSessionParamsPrivate::setEndTime(time_t time) {
 
 time_t CallSessionParamsPrivate::getEndTime() const {
 	return endTime;
+}
+
+void CallSessionParamsPrivate::setDescription(std::string desc) {
+	description = desc;
+}
+
+const std::string & CallSessionParamsPrivate::getDescription() const {
+	return description;
 }
 
 bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled () const {

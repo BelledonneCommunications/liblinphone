@@ -608,28 +608,36 @@ void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *c
 	cbs->vtable->account_registration_state_changed = cb;
 }
 
-void linphone_core_cbs_set_conference_info_on_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnSentCb cb) {
-	cbs->vtable->conference_info_on_sent = cb;
+void linphone_core_cbs_set_conference_info_created(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoSentCb cb) {
+	cbs->vtable->conference_info_created = cb;
 }
 
-LinphoneCoreCbsConferenceInfoOnSentCb linphone_core_cbs_get_conference_info_on_sent(LinphoneCoreCbs *cbs) {
-	return cbs->vtable->conference_info_on_sent;
+LinphoneCoreCbsConferenceInfoSentCb linphone_core_cbs_get_conference_info_created(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_created;
 }
 
-void linphone_core_cbs_set_conference_info_on_participant_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnParticipantSentCb cb) {
-	cbs->vtable->conference_info_on_participant_sent = cb;
+void linphone_core_cbs_set_conference_info_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoSentCb cb) {
+	cbs->vtable->conference_info_sent = cb;
 }
 
-LinphoneCoreCbsConferenceInfoOnParticipantSentCb linphone_core_cbs_get_conference_info_on_participant_sent(LinphoneCoreCbs *cbs) {
-	return cbs->vtable->conference_info_on_participant_sent;
+LinphoneCoreCbsConferenceInfoSentCb linphone_core_cbs_get_conference_info_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_sent;
 }
 
-void linphone_core_cbs_set_conference_info_on_participant_error(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoOnParticipantErrorCb cb) {
-	cbs->vtable->conference_info_on_participant_error = cb;
+void linphone_core_cbs_set_conference_info_participant_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoParticipantSentCb cb) {
+	cbs->vtable->conference_info_participant_sent = cb;
 }
 
-LinphoneCoreCbsConferenceInfoOnParticipantErrorCb linphone_core_cbs_get_conference_info_on_participant_error(LinphoneCoreCbs *cbs) {
-	return cbs->vtable->conference_info_on_participant_error;
+LinphoneCoreCbsConferenceInfoParticipantSentCb linphone_core_cbs_get_conference_info_participant_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_participant_sent;
+}
+
+void linphone_core_cbs_set_conference_info_participant_error(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoParticipantErrorCb cb) {
+	cbs->vtable->conference_info_participant_error = cb;
+}
+
+LinphoneCoreCbsConferenceInfoParticipantErrorCb linphone_core_cbs_get_conference_info_participant_error(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_info_participant_error;
 }
 
 
@@ -4609,7 +4617,7 @@ LinphoneCall * linphone_core_invite_address_with_params_2(LinphoneCore *lc, cons
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
 	bool defer = Call::toCpp(call)->initiateOutgoing();
 	if (!defer) {
-		if (Call::toCpp(call)->startInvite(NULL, L_C_TO_STRING(subject), content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : nullptr) != 0) {
+		if (Call::toCpp(call)->startInvite(NULL, L_C_TO_STRING(subject), content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : NULL) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
@@ -8509,7 +8517,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	return conf;
 }
 
-LinphoneConference *linphone_core_create_conference_on_server(LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants) {
+void linphone_core_create_conference_on_server(LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	// If a participant has an invalid address, the pointer to its address is NULL.
 	// For the purpose of building an std::list from a bctbx_list_t, replace it by an empty IdentityAddress (that is invalid)
@@ -8517,9 +8525,7 @@ LinphoneConference *linphone_core_create_conference_on_server(LinphoneCore *lc, 
 		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
 	});
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, true);
-	shared_ptr<LinphonePrivate::MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createConferenceOnServer(conferenceParams, identityAddress, participantsList);
-	if (conference) return linphone_conference_ref(conference->toC());
-	return NULL;
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->createConferenceOnServer(conferenceParams, identityAddress, participantsList);
 }
 
 LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
@@ -8820,7 +8826,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		bctbx_list_free(add_participant);
 
 		if (!cr) {
-			linphone_core_notify_conference_info_on_participant_error(core, conference_information, participant, LinphoneConferenceInfoChatRoomError);
+			linphone_core_notify_conference_info_participant_error(core, conference_information, participant, LinphoneConferenceInfoChatRoomError);
 			continue;
 		}
 
@@ -8830,7 +8836,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 		linphone_chat_message_send(msg);
 
 		// TODO: Check that the message is delivered before notifying and inserting into db
-		linphone_core_notify_conference_info_on_participant_sent(core, conference_information, participant);
+		linphone_core_notify_conference_info_participant_sent(core, conference_information, participant);
 		sent_count += 1;
 
 		linphone_chat_message_unref(msg);
@@ -8838,13 +8844,8 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 	}
 
 	if (sent_count == expected_sent_count) {
-		linphone_core_notify_conference_info_on_sent(core, conference_information);
+		linphone_core_notify_conference_info_sent(core, conference_information);
 	}
-
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	if (mainDb) mainDb->insertConferenceInfo(const_pointer_cast<ConferenceInfo>(ConferenceInfo::toCpp(conference_information)->getSharedFromThis()));
-#endif
 
 	linphone_content_unref(content);
 	bctbx_list_free(participants_copy);

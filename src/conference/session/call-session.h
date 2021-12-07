@@ -42,6 +42,7 @@ namespace MediaConference {
 
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
+	friend class Core;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
@@ -155,6 +156,8 @@ public:
 	void accepting ();
 	//bool isDelinedEarly ();
 	//const LinphoneErrorInfo * getErrorInfoCache () const;
+
+	const std::shared_ptr<LinphonePrivate::ConferenceInfo> createConferenceInfo() const;
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);

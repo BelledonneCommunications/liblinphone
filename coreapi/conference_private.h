@@ -309,7 +309,7 @@ class LINPHONE_PUBLIC RemoteConference:
 public:
 	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &focusAddr, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	RemoteConference(const std::shared_ptr<Core> &core, const std::shared_ptr<LinphonePrivate::Call>& focusCall, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
-	RemoteConference (const std::shared_ptr<Core> &core, const ConferenceAddress &confAddr, const ConferenceId &conferenceId, const std::list<IdentityAddress> &invitees, CallSessionListener *listener, const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
+	RemoteConference (const std::shared_ptr<Core> &core, const std::shared_ptr<LinphonePrivate::CallSession>& focusSession, const ConferenceAddress &confAddr, const ConferenceId &conferenceId, const std::list<IdentityAddress> &invitees, CallSessionListener *listener, const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
 
 	virtual ~RemoteConference();
 
@@ -394,8 +394,6 @@ private:
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 
-	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
-	std::shared_ptr<CallSession> createSession ();
 	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
 };
 

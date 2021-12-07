@@ -1181,8 +1181,10 @@ int SalCallOp::call (const string &from, const string &to, const string &subject
 	fillSessionExpiresHeaders(invite);
 	fillSessionExpiresMinSEHeader(invite);
 
-	if (!subject.empty())
+	if (!subject.empty()) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), belle_sip_header_create("Subject", subject.c_str()));
+		setSubject(subject);
+	}
 
 	if (mReplaces)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(invite), BELLE_SIP_HEADER(mReplaces));
@@ -1511,6 +1513,7 @@ int SalCallOp::update (const string &subject, bool noUserConsent, bool withSDP, 
 	if (update) {
 		if (!subject.empty()) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), belle_sip_header_create("Subject", subject.c_str()));
+			setSubject(subject);
 		}
 		if (mRoot->mSupportedHeader) {
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(update), mRoot->mSupportedHeader);

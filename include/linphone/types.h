@@ -505,7 +505,7 @@ typedef struct _LinphoneVideoDefinition LinphoneVideoDefinition;
 /**
  * @brief Describes conference invitations possible errors.
  *
- * It is notified via the conference_info_on_participant_error() callback in #LinphoneCoreCbs.
+ * It is notified via the conference_info_participant_error() callback in #LinphoneCoreCbs.
  * @ingroup misc
 **/
 typedef enum _LinphoneConferenceInfoError {

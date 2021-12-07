@@ -47,7 +47,9 @@ LINPHONE_BEGIN_NAMESPACE
 class AbstractChatRoom;
 class Address;
 class Call;
+class CallSession;
 class ConferenceId;
+class Participant;
 class ConferenceParams;
 class CorePrivate;
 class IdentityAddress;
@@ -87,6 +89,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ToneManager;
 	friend class EventLog;
 
+	friend class MediaConference::Conference;
 	friend class MediaConference::RemoteConference;
 
 	friend class LinphoneTest::LocalConferenceTester;
@@ -277,12 +280,16 @@ public:
 	void onStopAsyncBackgroundTaskStopped();
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 
-	std::shared_ptr<MediaConference::Conference> createConferenceOnServer(const std::shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants);
+	void createConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants);
+
+	void deleteConferenceCreationSession(const std::shared_ptr<CallSession> &session);
+	void insertConferenceCreationSession(const std::shared_ptr<Participant> &session);
 
 private:
 	Core ();
 
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
+	std::list<std::shared_ptr<Participant>> conferenceCreationSessions;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId & conferenceId) const;
 
 	L_DECLARE_PRIVATE(Core);

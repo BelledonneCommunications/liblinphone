@@ -508,11 +508,18 @@ typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
 typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *core, LinphoneAccount *account, LinphoneRegistrationState state, const char *message);
 
 /**
+ * Callback notifying that a conference information has been created.
+ * @param core The #LinphoneCore object. @notnil
+ * @param conference_info The #LinphoneConferenceInfo object that was created. @notnil
+ */
+typedef void (*LinphoneCoreCbsConferenceInfoCreatedCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info);
+
+/**
  * Callback notifying that a conference invitation has been sent to all participants.
  * @param core The #LinphoneCore object. @notnil
  * @param conference_info The #LinphoneConferenceInfo object that was sent. @notnil
  */
-typedef void (*LinphoneCoreCbsConferenceInfoOnSentCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info);
+typedef void (*LinphoneCoreCbsConferenceInfoSentCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info);
 
 /**
  * Callback notifying that a conference invitation has been sent to #LinphoneAddress.
@@ -520,7 +527,7 @@ typedef void (*LinphoneCoreCbsConferenceInfoOnSentCb)(LinphoneCore *core, const 
  * @param conference_info The #LinphoneConferenceInfo object that was sent. @notnil
  * @param participant The #LinphoneAddress object corresponding to the participant. @notnil
  */
-typedef void (*LinphoneCoreCbsConferenceInfoOnParticipantSentCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *participant);
+typedef void (*LinphoneCoreCbsConferenceInfoParticipantSentCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *participant);
 
 /**
  * Callback notifying that a conference invitation could not be sent to #LinphoneAddress.
@@ -528,7 +535,7 @@ typedef void (*LinphoneCoreCbsConferenceInfoOnParticipantSentCb)(LinphoneCore *c
  * @param conference_info The #LinphoneConferenceInfo object that was sent. @notnil
  * @param participant The #LinphoneAddress object corresponding to the participant. @notnil
  */
-typedef void (*LinphoneCoreCbsConferenceInfoOnParticipantErrorCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *participant, LinphoneConferenceInfoError error);
+typedef void (*LinphoneCoreCbsConferenceInfoParticipantErrorCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *participant, LinphoneConferenceInfoError error);
 
 /**
  * @}

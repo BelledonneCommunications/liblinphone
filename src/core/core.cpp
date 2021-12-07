@@ -44,7 +44,6 @@
 #ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
-#include "conference/participant.h"
 #endif
 #include "core/core-listener.h"
 #include "core/core-p.h"
@@ -56,6 +55,8 @@
 #include "linphone/lpconfig.h"
 
 #include "conference/session/media-session.h"
+#include "conference/session/media-session-p.h"
+#include "conference/params/media-session-params-p.h"
 #include "conference/session/streams.h"
 #include "conference/participant.h"
 #include "conference_private.h"
@@ -306,8 +307,13 @@ void CorePrivate::uninit() {
 		// Terminate audio video conferences just before core is stopped
 		audioVideoConference.second->terminate();
 	}
-
 	q->audioVideoConferenceById.clear();
+
+	for (const auto &participant : q->conferenceCreationSessions) {
+		// Terminate audio video conferences just before core is stopped
+		participant->getSession()->terminate();
+	}
+	q->conferenceCreationSessions.clear();
 
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -1265,6 +1271,23 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 	belle_sip_object_unref(timer);
 }
 
+void Core::deleteConferenceCreationSession(const shared_ptr<CallSession> &session) {
+	auto it = std::find_if(conferenceCreationSessions.begin(), conferenceCreationSessions.end(), [&session] (const auto & p) {
+		return p->getSession() == session;
+	});
+	if (it != conferenceCreationSessions.cend()) {
+		conferenceCreationSessions.erase(it);
+		lInfo() << "Session " << session << " has been removed from the list of session used to create conferences";
+	}
+
+	lDebug() << "Unable to find session " << session << " among the list of session used to create conferences";
+}
+
+void Core::insertConferenceCreationSession(const shared_ptr<Participant> &session) {
+	L_ASSERT(session);
+	conferenceCreationSessions.push_back(session);
+}
+
 const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & conferenceId) const {
 	Address peerAddress = conferenceId.getPeerAddress().asAddress();
 	peerAddress.removeUriParam("gr");
@@ -1273,7 +1296,6 @@ const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & confer
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 	return prunedConferenceId;
 }
-
 
 std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
 
@@ -1384,17 +1406,17 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const C
 	return conference;
 }
 
-shared_ptr<MediaConference::Conference> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+void Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
 	L_D()
-	if (!params) {
+	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
-		return nullptr;
+		return;
 	}
 
-	string conferenceFactoryUri = Core::getConferenceFactoryUri(getSharedFromThis(), localAddr);
-	if (conferenceFactoryUri.empty()) {
+	auto conferenceFactoryUri = Address(Core::getConferenceFactoryUri(getSharedFromThis(), localAddr));
+	if (!conferenceFactoryUri.isValid()) {
 		lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
-		return nullptr;
+		return;
 	}
 
 	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
@@ -1409,18 +1431,51 @@ shared_ptr<MediaConference::Conference> Core::createConferenceOnServer(const sha
 		}
 	}
 
-	auto conference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getSharedFromThis(), IdentityAddress(conferenceFactoryUri), conferenceId, nullptr, params), [](MediaConference::RemoteConference * c){c->unref();});
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	auto params = linphone_core_create_call_params(lc, nullptr);
+	// Participant with the focus call is admin
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomHeader("Require", "recipient-list-invite");
+	auto addressesList(participants);
 
-	if (!conference) {
-		lWarning() << "Cannot create conference with subject [" << params->getSubject() <<"]";
-		return nullptr;
+	addressesList.sort();
+	addressesList.unique();
+
+	if (!addressesList.empty()) {
+		Content content;
+		content.setBodyFromUtf8(Conference::getResourceLists(addressesList));
+		content.setContentType(ContentType::ResourceLists);
+		content.setContentDisposition(ContentDisposition::RecipientList);
+		if (linphone_core_content_encoding_supported(lc, "deflate")) {
+			content.setContentEncoding("deflate");
+		}
+
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContent(content);
 	}
-	if (!conference->addParticipants(participants)) {
-		lWarning() << "Couldn't add participants to newly created chat room, aborting";
-		return nullptr;
+	linphone_call_params_set_start_time(params, confParams->getStartTime());
+	linphone_call_params_set_end_time(params, confParams->getEndTime());
+	linphone_call_params_enable_video(params, confParams->videoEnabled());
+	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
+
+	auto participant = Participant::create(nullptr, localAddr);
+	auto session = participant->createSession(getSharedFromThis(), L_GET_CPP_PTR_FROM_C_OBJECT(params), (confParams->audioEnabled() || confParams->videoEnabled()), nullptr);
+
+	if (!session) {
+		lWarning() << "Cannot create conference with subject [" << confParams->getSubject() <<"]";
+		return;
 	}
 
-	return conference;
+	linphone_call_params_unref(params);
+
+	Address meCleanedAddress(localAddr.asAddress());
+	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
+	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
+	session->initiateOutgoing();
+	session->getPrivate()->createOp();
+
+	session->startInvite(nullptr, confParams->getSubject(), nullptr);
+
+	insertConferenceCreationSession(participant);
 }
 
 bool Core::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {

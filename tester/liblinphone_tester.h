@@ -418,9 +418,10 @@ typedef struct _stats {
 	int number_of_LinphoneCoreAudioDevicesListUpdated;
 	int number_of_LinphoneCoreVersionUpdateCheck;
 
-	int number_of_LinphoneConferenceInfoOnParticipantSent;
-	int number_of_LinphoneConferenceInfoOnParticipantError;
-	int number_of_LinphoneConferenceInfoOnSent;
+	int number_of_LinphoneConferenceInfoParticipantSent;
+	int number_of_LinphoneConferenceInfoParticipantError;
+	int number_of_LinphoneConferenceInfoSent;
+	int number_of_LinphoneConferenceInfoCreated;
 
 	int number_of_LinphoneRemoteRecordingEnabled;
 	int number_of_LinphoneRemoteRecordingDisabled;
