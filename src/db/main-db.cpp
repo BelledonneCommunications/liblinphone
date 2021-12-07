@@ -4757,7 +4757,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (int limit) {
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
 		" ORDER BY conference_call.id DESC";
 
-	if (limit > 0) query += " LIMIT" + to_string(limit);
+	if (limit > 0) query += " LIMIT " + to_string(limit);
 
 	DurationLogger durationLogger("Get call history.");
 
@@ -4793,7 +4793,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *addre
 		"  OR to_sip_address.value LIKE '%%" + address->asStringUriOnly() + "%%')"
 		" ORDER BY conference_call.id DESC";
 
-	if (limit > 0) query += " LIMIT" + to_string(limit);
+	if (limit > 0) query += " LIMIT " + to_string(limit);
 
 	DurationLogger durationLogger("Get call history.");
 
@@ -4829,7 +4829,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *peer,
 		"  (from_sip_address.value LIKE '%%" + peer->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + local->asStringUriOnly() + "%%' AND DIRECTION = 1))"
 		" ORDER BY conference_call.id DESC";
 
-	if (limit > 0) query += " LIMIT" + to_string(limit);
+	if (limit > 0) query += " LIMIT " + to_string(limit);
 
 	DurationLogger durationLogger("Get call history 2.");
 

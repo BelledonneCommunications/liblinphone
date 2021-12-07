@@ -8850,6 +8850,21 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 	bctbx_list_free(participants_copy);
 }
 
+LinphoneConferenceInfo *linphone_core_get_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
+	auto confInfo = mainDb->getConferenceInfoFromURI(L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+
+	if (confInfo != nullptr) {
+		return linphone_conference_info_ref(confInfo->toC());
+	}
+
+	return NULL;
+#else
+	return NULL;
+#endif
+}
+
 static bctbx_list_t *get_conference_information_list(LinphoneCore *core, time_t t) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;

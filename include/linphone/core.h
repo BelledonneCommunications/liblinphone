@@ -6026,6 +6026,15 @@ LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_la
 LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text);
 
 /**
+ * Retrieve the conference information linked to the provided URI.
+ * @param core #LinphoneCore object. @notnil
+ * @param uri #LinphoneAddress of the uri. @notnil
+ * @return The #LinphoneConferenceInfo. @tobefreed @maybenil
+ * @ingroup conference
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_core_get_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri);
+
+/**
  * Retrieve the list of conference information on DB.
  * @param core #LinphoneCore object. @notnil
  * @return The list of conference infos \bctbx_list{LinphoneConferenceInfo}. @tobefreed @maybenil
