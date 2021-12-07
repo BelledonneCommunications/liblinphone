@@ -296,7 +296,7 @@ void CallSessionParams::setFromHeader(const std::string &fromValue) {
 
 const char* CallSessionParams::getFromHeader() const {
 	L_D();
-	return d->from.c_str();
+	return (d->from.empty()?NULL:d->from.c_str()); // C style API, return NULL when the string is empty
 }
 // -----------------------------------------------------------------------------
 

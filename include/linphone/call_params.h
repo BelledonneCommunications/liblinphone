@@ -393,14 +393,14 @@ LINPHONE_PUBLIC bool_t linphone_call_params_is_recording(const LinphoneCallParam
 /**
  * Force the from header of a call when instanciating it (if set, it precludes the search in proxy and primary contact)
  * @param call_params The #LinphoneCallParams to add the forced from to. @notnil
- * @param from_value The value of the forced from, empty string to delete it. @notnil
+ * @param from_value The value of the forced from, null to delete it. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_call_params_set_from_header(LinphoneCallParams *call_params, const char *from_value);
 
 /**
  * Get the from header in the CallParams
  * @param call_params The #LinphoneCallParams to get the from header from. @notnil
- * @return The content of the from header, may be an empty string. @notnil
+ * @return The content of the from header, may be null. @maybenil
 **/
 LINPHONE_PUBLIC const char *linphone_call_params_get_from_header(const LinphoneCallParams *call_params);
 
