@@ -1,3 +1,7 @@
+[account_creator]
+backend=1
+url=http://subscribe.example.org/flexiapi/api/
+
 [sip]
 sip_port=-1
 sip_tcp_port=-1
@@ -8,8 +12,8 @@ composing_idle_timeout=1
 store_ha1_passwd=0 #used for sipp
 
 [auth_info_0]
-username=marie
-userid=marie
+username=marie laroueverte
+userid=marie laroueverte
 passwd=secret
 realm=sip.example.org
 
@@ -17,20 +21,12 @@ realm=sip.example.org
 realm=sip.example.org
 reg_proxy=<sip:sip.example.org;transport=tcp>
 reg_route=<sip:sip.example.org;transport=tcp>
-reg_identity="Super Marie" <sip:marie@sip.example.org>
+reg_identity="Super Marie" <sip:marie%20laroueverte@sip.example.org>
 reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
-
-[proxy_1]
-reg_proxy=<sip:sip.example.org;transport=tcp>
-reg_route=<sip:sip.example.org;transport=tcp>
-reg_identity="Super Marie 2" <sip:marie2@sip.example.org>
-reg_expires=3600
-reg_sendregister=1
-publish=0
-dial_escape_plus=0
+realm=sip.example.org
 
 [friend_0]
 url="Paupoche" <sip:pauline@sip.example.org>
@@ -57,6 +53,7 @@ device=StaticImage: Static picture
 echocancellation=0 #to not overload cpu in case of VG
 
 [net]
+
 stun_server=stun.example.org
 
 #leave this section, which is used by "Codec setup" test of "Setup" suite.
@@ -65,8 +62,33 @@ mime=VP8
 rate=90000
 enabled=1
 
+[misc]
+hide_chat_rooms_from_removed_proxies=0
+hide_empty_chat_rooms=0
+
+[app]
+sender_name_hidden_in_forward_message=1
+
 [tester]
 test_env=1
 
-[storage]
-call_logs_db_uri=null
+[ldap_0]
+use_tls=1
+timeout=10
+deref_aliases=0
+max_results=50
+auth_method=SIMPLE
+username=uid=marie,dc=bc,dc=com
+password=secret
+bind_dn=cn=Marie Laroueverte,ou=people,dc=bc,dc=com
+base_object=dc=bc,dc=com
+server=ldap://ldap.example.org/
+filter=(sn=%s)
+name_attribute=sn
+sip_attribute=mobile,telephoneNumber,homePhone,sn
+attributes=telephoneNumber,givenName,sn,mobile,homePhone,mail
+sip_domain=ldap.example.org
+use_sal=1
+verify_server_certificates=0
+enable=1
+debug=1

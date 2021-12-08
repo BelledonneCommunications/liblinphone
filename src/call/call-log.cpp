@@ -209,7 +209,7 @@ std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo () {
 		mConferenceInfo = L_GET_PRIVATE(getCore())->mainDb->getConferenceInfo(mConferenceInfoId);
 	}
 
-	return nullptr;
+	return mConferenceInfo;
 }
 
 // =============================================================================

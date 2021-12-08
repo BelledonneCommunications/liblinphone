@@ -482,6 +482,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&clonable_object_test_suite);
 #ifdef HAVE_DB_STORAGE
 	bc_tester_add_suite(&main_db_test_suite);
+	bc_tester_add_suite(&conference_info_tester);
 #endif
 	bc_tester_add_suite(&property_container_test_suite);
 #ifdef VIDEO_ENABLED

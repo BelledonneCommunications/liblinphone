@@ -55,3 +55,6 @@ hide_empty_chat_rooms=0
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

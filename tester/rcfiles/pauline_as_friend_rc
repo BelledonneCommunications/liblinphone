@@ -12,3 +12,6 @@ subscribe=1
 
 [tester]
 test_env=1s
+
+[storage]
+call_logs_db_uri=null

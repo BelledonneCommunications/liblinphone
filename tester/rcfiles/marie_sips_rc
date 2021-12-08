@@ -49,8 +49,10 @@ device=StaticImage: Static picture
 echocancellation=0 #to not overload cpu in case of VG
 
 [net]
-
 stun_server=stun.example.org
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

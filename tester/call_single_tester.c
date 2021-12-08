@@ -5079,10 +5079,10 @@ static void call_logs_sqlite_storage(void) {
 		ref_key = linphone_call_log_get_ref_key(call_log);
 		BC_ASSERT_EQUAL(linphone_call_log_get_dir(call_log), LinphoneCallOutgoing, int, "%d");
 		BC_ASSERT_LOWER(linphone_call_log_get_duration(call_log), 2, int, "%d");
-		BC_ASSERT_TRUE(linphone_address_equal(
+		BC_ASSERT_TRUE(linphone_address_weak_equal(
 			linphone_call_log_get_from_address(call_log),
 			linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(marie->lc))));
-		BC_ASSERT_TRUE(linphone_address_equal(
+		BC_ASSERT_TRUE(linphone_address_weak_equal(
 			linphone_call_log_get_to_address(call_log),
 			linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc))));
 		BC_ASSERT_GREATER(linphone_call_log_get_quality(call_log), -1, float, "%.1f");

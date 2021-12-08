@@ -227,7 +227,7 @@ public:
 
 	std::list<std::shared_ptr<ConferenceInfo>> getConferenceInfos (time_t afterThisTime = -1) const;
 	std::shared_ptr<ConferenceInfo> getConferenceInfo (long long conferenceInfoId) const;
-	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI (const Address *uri) const;
+	std::shared_ptr<ConferenceInfo> getConferenceInfoFromURI (const ConferenceAddress &uri) const;
 	void insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 	void deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo);
 
@@ -241,8 +241,8 @@ public:
 	std::shared_ptr<CallLog> getCallLog (const std::string &callId, int limit);
 
 	std::list<std::shared_ptr<CallLog>> getCallHistory (int limit = -1);
-	std::list<std::shared_ptr<CallLog>> getCallHistory (const Address *address, int limit = -1);
-	std::list<std::shared_ptr<CallLog>> getCallHistory (const Address *peer, const Address *local, int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistory (const ConferenceAddress &address, int limit = -1);
+	std::list<std::shared_ptr<CallLog>> getCallHistory (const ConferenceAddress &peer, const ConferenceAddress &local, int limit = -1);
 	std::shared_ptr<CallLog> getLastOutgoingCall ();
 	void deleteCallHistory ();
 

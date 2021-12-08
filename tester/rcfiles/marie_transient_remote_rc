@@ -3,3 +3,6 @@ config-uri=http://provisioning.example.org:10080/marie_transient_xml
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

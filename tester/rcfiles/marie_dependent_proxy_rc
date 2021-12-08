@@ -64,3 +64,6 @@ enabled=1
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

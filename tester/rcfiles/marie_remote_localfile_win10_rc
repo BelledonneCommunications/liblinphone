@@ -3,3 +3,6 @@ config-uri=file://./Assets/rcfiles/marie_remote_localfile2_rc
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

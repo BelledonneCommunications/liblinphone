@@ -41,3 +41,6 @@ reg_identity=sip:user@sip.accounttest.org
 sip_port=-1
 sip_tcp_port=-1
 sip_tls_port=-1
+
+[storage]
+call_logs_db_uri=null

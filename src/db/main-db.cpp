@@ -606,6 +606,7 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 		if (conferenceInfoId < 0) {
 			conferenceInfoId = insertConferenceInfo(conferenceInfo);
 		}
+		callLog->setConferenceInfoId(conferenceInfoId);
 	}
 
 	int duration = callLog->getDuration();
@@ -621,8 +622,8 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 	if (conferenceCallId < 0) {
 		lInfo() << "Insert new conference call in database: " << callLog->getCallId();
 
-		const long long fromSipAddressId = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress())->asString());
-		const long long toSipAddressId = insertSipAddress(L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())->asString());
+		const long long fromSipAddressId = insertSipAddress(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress())).asString());
+		const long long toSipAddressId = insertSipAddress(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())).asString());
 		int direction = static_cast<int>(callLog->getDirection());
 		const tm &startTime = Utils::getTimeTAsTm(callLog->getStartTime());
 
@@ -4619,13 +4620,13 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo (long long conferenceI
 #endif
 }
 
-std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const Address *uri) const {
+std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const ConferenceAddress &uri) const {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
 		" start_time, duration, subject, description"
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id"
-		"  AND uri_sip_address.value LIKE '%%" + uri->asStringUriOnly() + "%%'";
+		"  AND uri_sip_address.value LIKE '%%" + uri.asString() + "%%'";
 
 	return L_DB_TRANSACTION {
 		L_D();
@@ -4780,14 +4781,14 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (int limit) {
 #endif
 }
 
-std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *address, int limit) {
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const ConferenceAddress &address, int limit) {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
-		"  AND (from_sip_address.value LIKE '%%" + address->asStringUriOnly() + "%%'"
-		"  OR to_sip_address.value LIKE '%%" + address->asStringUriOnly() + "%%')"
+		"  AND (from_sip_address.value LIKE '%%" + address.asString() + "%%'"
+		"  OR to_sip_address.value LIKE '%%" + address.asString() + "%%')"
 		" ORDER BY conference_call.id DESC";
 
 	if (limit > 0) query += " LIMIT " + to_string(limit);
@@ -4816,14 +4817,14 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *addre
 #endif
 }
 
-std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const Address *peer, const Address *local, int limit) {
+std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const ConferenceAddress &peer, const ConferenceAddress &local, int limit) {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
-		"  AND ((from_sip_address.value LIKE '%%" + local->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + peer->asStringUriOnly() + "%%' AND direction = 0) OR"
-		"  (from_sip_address.value LIKE '%%" + peer->asStringUriOnly() + "%%' AND to_sip_address.value LIKE '%%" + local->asStringUriOnly() + "%%' AND DIRECTION = 1))"
+		"  AND ((from_sip_address.value LIKE '%%" + local.asString() + "%%' AND to_sip_address.value LIKE '%%" + peer.asString() + "%%' AND direction = 0) OR"
+		"  (from_sip_address.value LIKE '%%" + peer.asString() + "%%' AND to_sip_address.value LIKE '%%" + local.asString() + "%%' AND DIRECTION = 1))"
 		" ORDER BY conference_call.id DESC";
 
 	if (limit > 0) query += " LIMIT " + to_string(limit);

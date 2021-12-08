@@ -160,6 +160,7 @@ set(RC_FILES
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
+	rcfiles/marie_rc_call_logs_migration
 	rcfiles/marie_rtp_port_range_rc
 	rcfiles/marie_os_defined_rtp_ports_rc
 	rcfiles/marie_rc_rtcp_xr
@@ -322,6 +323,7 @@ set(SOURCE_FILES_CXX
 	lime-user-authentication-tester.cpp
 	vfs-encryption-tester.cpp
 	potential_configuration_tester.cpp
+	conference-info-tester.cpp
 )
 
 if(ENABLE_FLEXIAPI)

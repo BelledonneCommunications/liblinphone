@@ -3,3 +3,6 @@ config-uri=https://provisioning.example.org:10443/marie_xml
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

@@ -3,3 +3,6 @@ config-uri=file:///data/data/org.linphone.tester/files/config_files/rcfiles/mari
 
 [tester]
 test_env=1
+
+[storage]
+call_logs_db_uri=null

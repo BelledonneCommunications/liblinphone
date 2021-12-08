@@ -8853,7 +8853,7 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 LinphoneConferenceInfo *linphone_core_get_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
-	auto confInfo = mainDb->getConferenceInfoFromURI(L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+	auto confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)));
 
 	if (confInfo != nullptr) {
 		return linphone_conference_info_ref(confInfo->toC());

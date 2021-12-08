@@ -69,3 +69,6 @@ test_env=1
 
 [app]
 sender_name_hidden_in_forward_message=1
+
+[storage]
+call_logs_db_uri=null

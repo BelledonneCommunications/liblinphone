@@ -92,3 +92,6 @@ use_sal=1
 verify_server_certificates=0
 enable=1
 debug=1
+
+[storage]
+call_logs_db_uri=null

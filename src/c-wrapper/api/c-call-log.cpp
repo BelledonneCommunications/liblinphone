@@ -325,7 +325,7 @@ bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, cons
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return NULL;
 
-	auto list = mainDb->getCallHistory(L_GET_CPP_PTR_FROM_C_OBJECT(addr));
+	auto list = mainDb->getCallHistory(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)));
 
 	bctbx_list_t *results = NULL;
 	if (!list.empty()) {
@@ -352,7 +352,7 @@ bctbx_list_t *linphone_core_get_call_history_2(
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
 	if (!mainDb) return NULL;
 
-	auto list = mainDb->getCallHistory(L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr), L_GET_CPP_PTR_FROM_C_OBJECT(local_addr));
+	auto list = mainDb->getCallHistory(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)), ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)));
 
 	bctbx_list_t *results = NULL;
 	if (!list.empty()) {

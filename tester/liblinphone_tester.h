@@ -58,6 +58,7 @@ extern test_suite_t push_incoming_call_test_suite;
 extern test_suite_t clonable_object_test_suite;
 extern test_suite_t conference_event_test_suite;
 extern test_suite_t conference_test_suite;
+extern test_suite_t conference_info_tester;
 extern test_suite_t contents_test_suite;
 extern test_suite_t cpim_test_suite;
 extern test_suite_t ics_test_suite;

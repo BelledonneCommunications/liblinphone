@@ -2354,7 +2354,7 @@ static void migration_from_call_history_db (void) {
 		return;
 	}
 
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc_call_logs_migration");
 	char *src_db = bc_tester_res("db/call-history.db");
 	char *tmp_db  = bc_tester_file("tmp.db");
 
