@@ -237,6 +237,7 @@ public:
 	virtual void setDeviceRotation(int rotation) override;
 	virtual void getRecvStats(VideoStats *s) const override;
 	virtual void getSendStats(VideoStats *s) const override;
+	virtual void setDisplayMode(MSVideoDisplayMode displayMode) override;
 	
 	virtual void onSnapshotTaken(const std::string &filepath) = 0;
 	virtual VideoStream *getVideoStream()const = 0;

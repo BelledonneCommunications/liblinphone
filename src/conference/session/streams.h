@@ -251,6 +251,7 @@ public:
 	virtual void setDeviceRotation(int rotation) = 0;
 	virtual void getRecvStats(VideoStats *s) const = 0;
 	virtual void getSendStats(VideoStats *s) const = 0;
+	virtual void setDisplayMode(MSVideoDisplayMode displayMode) = 0;
 	virtual ~VideoControlInterface() = default;
 };
 

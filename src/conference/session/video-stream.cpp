@@ -683,6 +683,15 @@ void MS2VideoControl::zoomVideo (float zoomFactor, float cx, float cy){
 		lWarning() << "Could not apply zoom: video output wasn't activated";
 }
 
+void MS2VideoControl::setDisplayMode(MSVideoDisplayMode displayMode) {
+	VideoStream *vs = getVideoStream();
+	if (vs && vs->output) {
+		ms_filter_call_method(vs->output, MS_VIDEO_DISPLAY_SET_MODE, &displayMode);
+	} else {
+		lWarning() << "Could not set display mode: video output wasn't activated";
+	}
+}
+
 LINPHONE_END_NAMESPACE
 
 
