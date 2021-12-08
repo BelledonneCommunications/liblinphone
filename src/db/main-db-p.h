@@ -78,7 +78,7 @@ private:
 	ConferenceId selectConferenceId (const long long chatRoomId) const;
 	long long selectChatRoomParticipantId (long long chatRoomId, long long participantSipAddressId) const;
 	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const;
-	long long selectConferenceInfoId (long long organizerSipAddressId, time_t startTime, const std::string &subject);
+	long long selectConferenceInfoId (long long uriSipAddressId);
 	long long selectConferenceInfoParticipantId (long long conferenceInfoId, long long participantSipAddressId) const;
 	long long selectConferenceCallId (const std::string &callId);
 

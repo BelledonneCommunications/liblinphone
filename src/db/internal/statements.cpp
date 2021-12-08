@@ -114,7 +114,7 @@ namespace Statements {
 		/* SelectConferenceInfoId */ R"(
 			SELECT id
 			FROM conference_info
-			WHERE organizer_sip_address_id = :1 AND start_time = :2 AND subject = :3
+			WHERE uri_sip_address_id = :1
 		)",
 
 		/* SelectConferenceInfoParticipantId */ R"(

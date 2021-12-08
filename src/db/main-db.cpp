@@ -536,21 +536,20 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 	const string &subject = conferenceInfo->getSubject();
 	const string &description = conferenceInfo->getDescription();
 
-	long long conferenceInfoId = selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), subject);
+	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
 		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
 
 		*dbSession.getBackendSession() << "UPDATE conference_info SET"
 			"  organizer_sip_address_id = :organizerSipAddressId,"
-			"  uri_sip_address_id = :uriSipAddressid,"
 			"  start_time = :startTime,"
 			"  duration = :duration,"
 			"  subject = :subject,"
 			"  description = :description"
 			" WHERE id = :conferenceInfoId",
-			soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime),
-			soci::use(duration), soci::use(subject), soci::use(description), soci::use(conferenceInfoId);
+			soci::use(organizerSipAddressId), soci::use(startTime), soci::use(duration),
+			soci::use(subject), soci::use(description), soci::use(conferenceInfoId);
 	} else {
 		lInfo() << "Insert new conference info in database.";
 
@@ -602,8 +601,8 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 	long long conferenceInfoId = -1;
 
 	if (conferenceInfo != nullptr) {
-		const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizer().asString());
-		conferenceInfoId = selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), conferenceInfo->getSubject());
+		const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
+		conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
 		if (conferenceInfoId < 0) {
 			conferenceInfoId = insertConferenceInfo(conferenceInfo);
 		}
@@ -766,15 +765,13 @@ long long MainDbPrivate::selectOneToOneChatRoomId (long long sipAddressIdA, long
 #endif
 }
 
-long long MainDbPrivate::selectConferenceInfoId (long long organizerSipAddressId, time_t startTime, const std::string &subject) {
+long long MainDbPrivate::selectConferenceInfoId (long long uriSipAddressId) {
 #ifdef HAVE_DB_STORAGE
 	long long conferenceInfoId;
 
-	const tm &startTimeTm = Utils::getTimeTAsTm(startTime);
-
 	soci::session *session = dbSession.getBackendSession();
 	*session << Statements::get(Statements::SelectConferenceInfoId),
-		soci::use(organizerSipAddressId), soci::use(startTimeTm), soci::use(subject), soci::into(conferenceInfoId);
+		soci::use(uriSipAddressId), soci::into(conferenceInfoId);
 
 	return session->got_data() ? conferenceInfoId : -1;
 #else
@@ -4669,8 +4666,8 @@ void MainDb::deleteConferenceInfo (const std::shared_ptr<ConferenceInfo> &confer
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &organizerSipAddressId = d->selectSipAddressId(conferenceInfo->getOrganizer().asString());
-		const long long &dbConferenceId = d->selectConferenceInfoId(organizerSipAddressId, conferenceInfo->getDateTime(), conferenceInfo->getSubject());
+		const long long &uriSipAddressId = d->selectSipAddressId(conferenceInfo->getUri().asString());
+		const long long &dbConferenceId = d->selectConferenceInfoId(uriSipAddressId);
 
 		*d->dbSession.getBackendSession() << "DELETE FROM conference_info WHERE id = :conferenceId", soci::use(dbConferenceId);
 		d->storageIdToConferenceInfo.erase(dbConferenceId);
