@@ -429,7 +429,24 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	if (filepath && bctbx_file_exist(filepath) != 0) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
-	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, filepath);
+
+	if  (mgr->rc_path) {
+		if (mgr->rc_local == NULL) {
+			char random_id[8];
+			belle_sip_random_token(random_id, sizeof random_id);
+
+			mgr->rc_local = bctbx_strdup_printf("%s/%s_%s", bc_tester_get_writable_dir_prefix(), bctbx_basename(mgr->rc_path),random_id);
+		}
+		bctbx_vfs_file_t* in = bctbx_file_open(bctbx_vfs_get_default(), filepath, "r");
+		bctbx_vfs_file_t* out = bctbx_file_open2(bctbx_vfs_get_default(), mgr->rc_local , O_WRONLY|O_CREAT|O_TRUNC);
+		uint8_t *buf = bctbx_malloc(bctbx_file_size(in));
+		bctbx_file_read(in, buf, (size_t)bctbx_file_size(in), 0);
+		bctbx_file_write(out, buf, (size_t)bctbx_file_size(in),0);
+		bctbx_file_close(in);
+		bctbx_file_close(out);
+	}
+
+	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, NULL);
 
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
@@ -3147,11 +3164,11 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	LinphoneCall *callee_call=NULL;
 	LinphoneCall *caller_call=NULL;
 	bool_t callee_should_ring = TRUE;
-	
+
 	if (linphone_core_is_in_conference(callee_mgr->lc) || linphone_core_get_current_call(callee_mgr->lc) != NULL){
 		callee_should_ring = FALSE;
 	}
-	
+
 	const LinphoneCoreToneManagerStats *callee_stats = linphone_core_get_tone_manager_stats(callee_mgr->lc);
 	const LinphoneCoreToneManagerStats *caller_stats = linphone_core_get_tone_manager_stats(caller_mgr->lc);
 	const LinphoneCoreToneManagerStats initial_callee_stats = *callee_stats;
@@ -3219,7 +3236,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		}
 		linphone_address_unref(callee_from);
 	}
-	
+
 	if (callee_stats->number_of_startRingbackTone == callee_stats->number_of_stopRingbackTone) {
 		if (callee_should_ring){
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,(int*)&callee_stats->number_of_startRingtone,callee_mgr->stat.number_of_LinphoneCallIncomingReceived));
@@ -3314,9 +3331,9 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallConnected,initial_caller.number_of_LinphoneCallConnected+1));
 
 	result = wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+1, 2000) && wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+1, 2000);
-	
+
 	BC_ASSERT_EQUAL(callee_stats->number_of_startErrorTone, callee_mgr->stat.number_of_LinphoneCallEnd + callee_mgr->stat.number_of_LinphoneCallError, int, "%d");
-	
+
 	/* The ringtone, if it has started, must have stopped. */
 	BC_ASSERT_EQUAL(callee_stats->number_of_startRingtone - initial_callee_stats.number_of_startRingtone,
 			callee_stats->number_of_stopRingtone - initial_callee_stats.number_of_stopRingtone,
