@@ -4712,15 +4712,16 @@ void MainDb::deleteCallLog (const std::shared_ptr<CallLog> &callLog) {
 
 std::shared_ptr<CallLog> MainDb::getCallLog (const std::string &callId, int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
-		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
-		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
-		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
-		"  AND call_id = :callId";
+	string query = "SELECT c.id, from_sip_address.value, to_sip_address.value, direction, duration, start_time,"
+		"  connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+		" FROM conference_call as c, sip_address AS from_sip_address, sip_address AS to_sip_address";
 
 	if (limit > 0) {
-		query += " AND conference_call.id IN (SELECT id from conference_call ORDER BY id DESC LIMIT " + std::to_string(limit) + ")";
+		query += " INNER JOIN (SELECT id from conference_call ORDER BY id DESC LIMIT " + std::to_string(limit) + ") as c2 ON c.id = c2.id";
 	}
+
+	query += " WHERE c.from_sip_address_id = from_sip_address.id AND c.to_sip_address_id = to_sip_address.id"
+		"  AND call_id = :callId";
 
 	DurationLogger durationLogger("Get call log.");
 
