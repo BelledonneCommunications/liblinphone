@@ -295,8 +295,10 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		} else {
 			p->setPreserveSession(true);
 		}
+
 		// Pass admin information on if it is available in the contact address
 		Address remoteContactAddress(call->getRemoteContact());
+
 		if (remoteContactAddress.hasParam ("admin")) {
 			bool value = Utils::stob(remoteContactAddress.getParamValue("admin"));
 			p->setAdmin(value);
@@ -552,7 +554,7 @@ LocalConference::LocalConference (
 }
 
 LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
-	Conference(core, IdentityAddress(op->getFrom()), nullptr, ConferenceParams::create(core->getCCore())) {
+	Conference(core, IdentityAddress(op->getTo()), nullptr, ConferenceParams::create(core->getCCore())) {
 
 #ifdef HAVE_ADVANCED_IM
 	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
@@ -1744,6 +1746,8 @@ RemoteConference::RemoteConference (
 	confParams->enableLocalParticipant(false);
 	pendingSubject = confParams->getSubject();
 
+	getMe()->setAdmin(true);
+
 	invitedAddresses = invitees;
 	setConferenceId(conferenceId);
 	setConferenceAddress(confAddr);
@@ -1806,6 +1810,16 @@ RemoteConference::RemoteConference (
 	setConferenceId(conferenceId);
 
 	const auto & conferenceAddress = focus->getSession()->getRemoteContactAddress();
+
+	#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb)  {
+		const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*conferenceAddress));
+		// me is admin if the organizer is the same as me
+		getMe()->setAdmin((confInfo && (confInfo->getOrganizer() == getMe()->getAddress())));
+	}
+	#endif
+
 	setConferenceAddress(*conferenceAddress);
 	setState(ConferenceInterface::State::CreationPending);
 	finalizeCreation();
@@ -2164,26 +2178,34 @@ bool RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::
 int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 	auto session = getMainSession();
 	if (getMe()->isAdmin()) {
-		Address refer_to_addr;
-		int res;
 		std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 		if (p) {
 			switch (state) {
 				case ConferenceInterface::State::Created:
 				case ConferenceInterface::State::TerminationPending:
+				{
 					if(!findParticipant(addr)) {
 						lError() << "Conference: could not remove participant \'" << addr << "\': not in the participants list";
 						return -1;
 					}
-					refer_to_addr = addr.asAddress();
-					linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
-					res = session->getPrivate()->getOp()->refer(refer_to_addr.asString().c_str());
+					LinphoneCore *cCore = getCore()->getCCore();
+					SalReferOp *referOp = new SalReferOp(cCore->sal.get());
+					LinphoneAddress *lAddr = linphone_address_new(session->getRemoteContact().c_str());
+					linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
+					linphone_address_unref(lAddr);
+					Address referToAddr = addr.asAddress();
+					referToAddr.setMethodParam("BYE");
+					auto res = referOp->sendRefer(referToAddr.getInternalAddress());
+					referOp->unref();
+
 					if (res == 0)
 						return Conference::removeParticipant(p);
 					else {
 						lError() << "Conference: could not remove participant \'" << addr << "\': REFER with BYE has failed";
 						return -1;
 					}
+				}
+					break;
 				default:
 					lError() << "Could not remove participant " << addr << " from conference " << getConferenceAddress() << ". Bad conference state (" << Utils::toString(state) << ")";
 					return -1;

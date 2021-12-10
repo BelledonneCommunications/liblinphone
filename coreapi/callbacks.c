@@ -542,6 +542,7 @@ static void call_refer_received(SalOp *op, const SalAddress *referTo) {
 	string method;
 	if (referToAddr.isValid())
 		method = referToAddr.getMethodParam();
+
 	if (session && (method.empty() || (method == "INVITE"))) {
 		auto sessionRef = session->getSharedFromThis();
 		L_GET_PRIVATE(sessionRef)->referred(referToAddr);
@@ -990,20 +991,27 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 			}
 		}
 	} else {
-		if (linphone_core_conference_server_enabled(lc)) {
-			shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(
-				ConferenceId(ConferenceAddress(op->getTo()), ConferenceAddress(op->getTo()))
-			);
+		shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(
+			ConferenceId(ConferenceAddress(op->getTo()), ConferenceAddress(op->getTo()))
+		);
 
-			if (conference) {
-				Address fromAddr(op->getFrom());
-				shared_ptr<Participant> participant = conference->findParticipant(fromAddr);
-				if (!participant || !participant->isAdmin()) {
-					static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
-					return;
-				}
+		if (conference) {
+			Address fromAddr(op->getFrom());
+			auto from = conference->findParticipant(fromAddr);
+			if (!from || !from->isAdmin()) {
+				static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
+				return;
+			}
+
+			if (addr.hasUriParam("method") && (addr.getUriParamValue("method") == "BYE")) {
+				auto participant = conference->findParticipant(IdentityAddress(op->getFrom()));
+				if (participant)
+					conference->removeParticipant(addr);
+				static_cast<SalReferOp *>(op)->reply(SalReasonNone);
+				return;
+			} else {
+				auto participant = conference->findParticipant(addr);
 				if (addr.hasParam("admin")) {
-					participant = conference->findParticipant(addr);
 					if (participant) {
 						bool value = Utils::stob(addr.getParamValue("admin"));
 						conference->setParticipantAdminStatus(participant, value);
@@ -1011,7 +1019,6 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						return;
 					}
 				} else {
-					participant = static_pointer_cast<MediaConference::LocalConference>(conference)->findParticipant(addr);
 					if (!participant) {
 						bool ret = static_pointer_cast<MediaConference::LocalConference>(conference)->addParticipant(
 							IdentityAddress(addr));
@@ -1021,7 +1028,6 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				}
 			}
 		}
-
 	}
 	static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
 }

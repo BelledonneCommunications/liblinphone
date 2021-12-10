@@ -864,6 +864,18 @@ void CallSessionPrivate::setContactOp () {
 					conference->setConferenceAddress(contactAddress);
 				}
 			}
+
+			#ifdef HAVE_DB_STORAGE
+			auto &mainDb = q->getCore()->getPrivate()->mainDb;
+			if (mainDb)  {
+				const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*q->getRemoteAddress()));
+				if (confInfo) {
+					// me is admin if the organizer is the same as me
+					contactAddress.setParam("admin", Utils::toString((confInfo->getOrganizer() == q->getLocalAddress())));
+				}
+			}
+			#endif
+
 			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
 			op->setContactAddress(contactAddress.getInternalAddress());
 		} else {
@@ -1730,6 +1742,18 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 			contactAddress.removeParam("isfocus");
 		}
 	}
+
+	#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb)  {
+		const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*getRemoteAddress()));
+		if (confInfo) {
+			// me is admin if the organizer is the same as me
+			contactAddress.setParam("admin", Utils::toString((confInfo->getOrganizer() == getLocalAddress())));
+		}
+	}
+	#endif
+
 }
 
 // -----------------------------------------------------------------------------
