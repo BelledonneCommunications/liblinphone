@@ -330,15 +330,9 @@ public:
 	virtual void leave() override;
 	virtual bool isIn() const override;
 
-	virtual int startRecording (const char *path) override {
-		return 0;
-	}
-	virtual int stopRecording() override {
-		return 0;
-	}
-	virtual bool isRecording() const override {
-		return false;
-	}
+	virtual int startRecording (const char *path) override;
+	virtual int stopRecording() override;
+	virtual bool isRecording() const override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;

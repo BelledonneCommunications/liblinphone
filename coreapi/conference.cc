@@ -1618,7 +1618,7 @@ int LocalConference::stopRecording () {
 bool LocalConference::isRecording () const {
 	AudioControlInterface * aci = dynamic_cast<MS2AudioMixer*> (mMixerSession->getMixerByType(SalAudio));
 	if (aci){
-		aci->isRecording();
+		return aci->isRecording();
 	}
 	return false;
 }
@@ -1849,6 +1849,37 @@ void RemoteConference::setMainSession(const std::shared_ptr<LinphonePrivate::Cal
 
 const std::shared_ptr<CallSession> RemoteConference::getMainSession() const {
 	return focus ? focus->getSession() : nullptr;
+}
+
+int RemoteConference::startRecording (const char *path) {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	if (session){
+		session->setRecordPath(path);
+		session->startRecording();
+	}else{
+		lError() << "RemoteConference::startRecording(): no audio session.";
+		return -1;
+	}
+	return 0;
+}
+
+int RemoteConference::stopRecording () {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	if (session){
+		session->stopRecording();
+	}else{
+		lError() << "RemoteConference::stopRecording(): no audio session.";
+		return -1;
+	}
+	return 0;
+}
+
+bool RemoteConference::isRecording () const {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	if (session){
+		return session->isRecording();
+	}
+	return false;
 }
 
 void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {

@@ -81,6 +81,7 @@ public:
 	bool startRecording ();
 	void stopRecording ();
 	bool isRecording ();
+	void setRecordPath(const std::string &path);
 	void terminateBecauseOfLostMedia ();
 	LinphoneStatus updateFromConference (const MediaSessionParams *msp, const std::string &subject = "");
 	LinphoneStatus update (const MediaSessionParams *msp, const UpdateMethod method = UpdateMethod::Default, const bool isCapabilityNegotiationUpdate = false, const std::string &subject = "");

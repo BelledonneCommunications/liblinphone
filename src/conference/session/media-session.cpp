@@ -3711,6 +3711,12 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 	return result;
 }
 
+void MediaSession::setRecordPath(const std::string &path) {
+	L_D();
+	d->getParams()->setRecordFilePath(path);
+	lInfo() << "MediaSession " << this << " set record file path " << path;
+}
+
 bool MediaSession::startRecording () {
 	L_D();
 	if (d->getParams()->getRecordFilePath().empty()) {
