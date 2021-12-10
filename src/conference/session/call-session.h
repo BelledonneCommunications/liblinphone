@@ -101,6 +101,7 @@ public:
 	LinphoneStatus accept (const CallSessionParams *csp = nullptr);
 	LinphoneStatus acceptUpdate (const CallSessionParams *csp = nullptr);
 	virtual void configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to);
+	LinphoneProxyConfig * getDestProxy ();
 	void configure (LinphoneCallDir direction, const std::string &callid);
 	bool isOpConfigured ();
 	LinphoneStatus decline (LinphoneReason reason);

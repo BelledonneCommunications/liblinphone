@@ -1458,7 +1458,7 @@ void Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confPara
 	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
 
 	auto participant = Participant::create(nullptr, localAddr);
-	auto session = participant->createSession(getSharedFromThis(), L_GET_CPP_PTR_FROM_C_OBJECT(params), (confParams->audioEnabled() || confParams->videoEnabled()), nullptr);
+	auto session = dynamic_pointer_cast<MediaSession>(participant->createSession(getSharedFromThis(), L_GET_CPP_PTR_FROM_C_OBJECT(params), (confParams->audioEnabled() || confParams->videoEnabled()), nullptr));
 
 	if (!session) {
 		lWarning() << "Cannot create conference with subject [" << confParams->getSubject() <<"]";
@@ -1470,11 +1470,24 @@ void Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confPara
 	Address meCleanedAddress(localAddr.asAddress());
 	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
+	session->enableToneIndications(false);
+	LinphoneProxyConfig *destProxy = session->getDestProxy();
+	const LinphoneNatPolicy *natPolicy = nullptr;
+	if (destProxy){
+		natPolicy = linphone_proxy_config_get_nat_policy(destProxy);
+	}
+	if (!natPolicy){
+		natPolicy = linphone_core_get_nat_policy(getCCore());
+	}
+	if (natPolicy){
+		LinphoneNatPolicy *newNatPolicy = linphone_nat_policy_clone(natPolicy);
+		// remove stun server asynchronous gathering, we don't actually need it and it looses some time.
+		linphone_nat_policy_enable_stun(newNatPolicy, false);
+		session->setNatPolicy(newNatPolicy);
+		linphone_nat_policy_unref(newNatPolicy);
+	}
 	session->initiateOutgoing();
-	session->getPrivate()->createOp();
-
 	session->startInvite(nullptr, confParams->getSubject(), nullptr);
-
 	insertConferenceCreationSession(participant);
 }
 

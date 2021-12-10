@@ -48,6 +48,19 @@ static void linphone_nat_policy_destroy(LinphoneNatPolicy *policy) {
 	}
 }
 
+static void _linphone_nat_policy_clone(LinphoneNatPolicy *pol, const LinphoneNatPolicy *otherPol){
+	if (otherPol->stun_server) pol->stun_server = bctbx_strdup(otherPol->stun_server);
+	if (otherPol->stun_server_username) pol->stun_server_username = bctbx_strdup(otherPol->stun_server_username);
+	pol->ice_enabled = otherPol->ice_enabled;
+	pol->stun_enabled = otherPol->stun_enabled;
+	pol->turn_enabled = otherPol->turn_enabled;
+	pol->upnp_enabled = otherPol->upnp_enabled;
+	pol->turn_udp_enabled = otherPol->turn_udp_enabled;
+	pol->turn_tcp_enabled = otherPol->turn_tcp_enabled;
+	pol->turn_tls_enabled = otherPol->turn_tls_enabled;
+	pol->lc = otherPol->lc;
+}
+
 /* Simply cancel pending DNS resoltion, as the core is going to shutdown.*/
 void linphone_nat_policy_release(LinphoneNatPolicy *policy){
 	if (policy->stun_resolver_context) {
@@ -69,7 +82,7 @@ BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneNatPolicy);
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneNatPolicy, belle_sip_object_t,
 	(belle_sip_object_destroy_t)linphone_nat_policy_destroy,
-	NULL, // clone
+	(belle_sip_object_clone_t)_linphone_nat_policy_clone, // clone
 	NULL, // marshal
 	FALSE
 );
@@ -93,6 +106,10 @@ static void _linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy,
 	linphone_config_set_string_list(config, section, "protocols", l);
 	belle_sip_free(section);
 	bctbx_list_free(l);
+}
+
+LinphoneNatPolicy *linphone_nat_policy_clone(const LinphoneNatPolicy *other){
+	return (LinphoneNatPolicy*) belle_sip_object_clone(BELLE_SIP_OBJECT(other));
 }
 
 void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy) {

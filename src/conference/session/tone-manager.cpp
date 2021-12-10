@@ -634,6 +634,7 @@ void ToneManager::updateRingingSessions(const std::shared_ptr<CallSession> &call
 void ToneManager::prepareForNextState(const std::shared_ptr<CallSession> &callSession, CallSession::State nextState){
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(callSession);
 	if (!session) return;
+	if (!session->toneIndicationsEnabled()) return;
 	
 	updateRingingSessions(callSession, nextState);
 	
@@ -652,6 +653,7 @@ void ToneManager::prepareForNextState(const std::shared_ptr<CallSession> &callSe
 void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, CallSession::State state){
 	shared_ptr<MediaSession> session = dynamic_pointer_cast<MediaSession>(callSession);
 	if (!session) return;
+	if (!session->toneIndicationsEnabled()) return;
 	
 	updateRingingSessions(callSession, state);
 	

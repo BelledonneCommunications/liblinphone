@@ -3342,15 +3342,38 @@ void MediaSession::cancelDtmfs () {
 	d->dtmfSequence.clear();
 }
 
+void MediaSession::setNatPolicy(LinphoneNatPolicy *pol){
+	L_D();
+	if (pol){
+		linphone_nat_policy_ref(pol);
+	}
+	if (d->natPolicy){
+		linphone_nat_policy_unref(d->natPolicy);
+	}
+	d->natPolicy = pol;
+}
+
+void MediaSession::enableToneIndications(bool enabled){
+	L_D();
+	d->toneIndicationsEnabled = enabled;
+}
+
+bool MediaSession::toneIndicationsEnabled()const{
+	L_D();
+	return d->toneIndicationsEnabled;
+}
+
 void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
 	L_D();
 	CallSession::configure (direction, cfg, op, from, to);
 
-	if (d->destProxy)
-		d->natPolicy = linphone_proxy_config_get_nat_policy(d->destProxy);
-	if (!d->natPolicy)
-		d->natPolicy = linphone_core_get_nat_policy(getCore()->getCCore());
-	linphone_nat_policy_ref(d->natPolicy);
+	if (!d->natPolicy){
+		if (d->destProxy)
+			d->natPolicy = linphone_proxy_config_get_nat_policy(d->destProxy);
+		if (!d->natPolicy)
+			d->natPolicy = linphone_core_get_nat_policy(getCore()->getCCore());
+		linphone_nat_policy_ref(d->natPolicy);
+	}
 
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
@@ -3656,6 +3679,8 @@ int MediaSession::getRandomRtpPort (const SalStreamDescription & stream) const {
 
 int MediaSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
+	
+	if (d->getOp() == nullptr) d->createOp();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
 	if (getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
 		/* Give a chance to set card prefered sampling frequency */

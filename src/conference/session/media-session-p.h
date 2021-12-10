@@ -265,6 +265,8 @@ private:
 	bool tryEnterConference();
 	void fillRtpParameters(SalStreamDescription & stream) const;
 	void fillVideoRptParameters(SalStreamDescription & newStream) const;
+	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
+	SalStreamDescription & addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx);
 
 private:
 	static const std::string ecStateStore;
@@ -300,6 +302,7 @@ private:
 	std::shared_ptr<SalMediaDescription> resultDesc = nullptr;
 	bool localIsOfferer = false;
 	bool expectMediaInAck = false;
+	bool toneIndicationsEnabled = true;
 	int freeStreamIndex = 0;
 	unsigned int remoteSessionId = 0;
 	unsigned int remoteSessionVer = 0;
@@ -318,8 +321,7 @@ private:
 	AudioDevice * currentInputAudioDevice = nullptr;
 
 	SalMediaRecord lastRemoteRecordingState = SalMediaRecordOff;
-	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
-	SalStreamDescription & addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx);
+	
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

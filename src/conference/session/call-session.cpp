@@ -1129,6 +1129,11 @@ LinphoneStatus CallSession::acceptUpdate (const CallSessionParams *csp) {
 	return d->acceptUpdate(csp, d->prevState, Utils::toString(d->prevState));
 }
 
+LinphoneProxyConfig * CallSession::getDestProxy (){
+	L_D();
+	return d->destProxy;
+}
+
 void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
 	L_D();
 	d->direction = direction;

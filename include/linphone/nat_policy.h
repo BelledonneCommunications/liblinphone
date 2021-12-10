@@ -34,6 +34,14 @@ extern "C" {
  * @{
  */
 
+
+/**
+ * Clone an existing #LinphoneNatPolicy object.
+ * @param policy #LinphoneNatPolicy object. @notnil
+ * @return A clone of the original #LinphoneNatPolicy object. @notnil
+**/
+LINPHONE_PUBLIC LinphoneNatPolicy *linphone_nat_policy_clone(const LinphoneNatPolicy *other);
+
 /**
  * Acquire a reference to the #LinphoneNatPolicy object.
  * @param policy #LinphoneNatPolicy object. @notnil
