@@ -93,6 +93,9 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	string conferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
 	setConferenceFactoryUri(conferenceFactoryUri);
 
+	string audioVideoConferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "") : "";
+	mAudioVideoConferenceFactoryAddress = Address(audioVideoConferenceFactoryUri);
+
 	if (lc && lc->push_config) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
 	} else {
@@ -176,6 +179,10 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	}
 
 	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
+	string audioVideoConferenceFactoryUri = linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
+	if (!audioVideoConferenceFactoryUri.empty()) {
+		mAudioVideoConferenceFactoryAddress = Address(audioVideoConferenceFactoryUri);
+	}
 }
 
 AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) {
@@ -204,6 +211,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mDependsOn = other.mDependsOn;
 	mIdKey = other.mIdKey;
 	mConferenceFactoryUri = other.mConferenceFactoryUri;
+	mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress;
 	mFileTransferServer = other.mFileTransferServer;
 	mIdentity = other.mIdentity;
 
@@ -355,9 +363,7 @@ void AccountParams::setIdKey (const std::string &idKey) {
 }
 
 void AccountParams::setConferenceFactoryUri (const std::string &conferenceFactoryUri) {
-	if (!conferenceFactoryUri.empty()) {
-		mConferenceFactoryUri = conferenceFactoryUri;
-	}
+	mConferenceFactoryUri = conferenceFactoryUri;
 }
 
 void AccountParams::setFileTranferServer (const std::string &fileTransferServer) {
@@ -464,6 +470,10 @@ void AccountParams::setPushNotificationConfig (PushNotificationConfig *pushNotif
 	
 	mPushNotificationConfig = pushNotificationConfig;
 	mPushNotificationConfig->ref();
+}
+
+void AccountParams::setAudioVideoConferenceFactoryAddress (const Address &audioVideoConferenceFactoryAddress) {
+	mAudioVideoConferenceFactoryAddress = audioVideoConferenceFactoryAddress;
 }
 
 // -----------------------------------------------------------------------------
@@ -616,6 +626,10 @@ PushNotificationConfig* AccountParams::getPushNotificationConfig () const {
 	return mPushNotificationConfig;
 }
 
+const Address& AccountParams::getAudioVideoConferenceFactoryAddress () const {
+	return mAudioVideoConferenceFactoryAddress;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress (const LinphoneAddress *serverAddr) {
@@ -753,6 +767,10 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	}
 
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
+
+	if (mAudioVideoConferenceFactoryAddress.isValid()) {
+		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", mAudioVideoConferenceFactoryAddress.asString().c_str());
+	}
 }
 
 LINPHONE_END_NAMESPACE

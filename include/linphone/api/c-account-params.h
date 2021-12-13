@@ -505,6 +505,14 @@ LINPHONE_PUBLIC void linphone_account_params_set_nat_policy(LinphoneAccountParam
 LINPHONE_PUBLIC void linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *params, const char *uri);
 
 /**
+ * Set the audio video conference factory uri.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @param address The #LinphoneAddress to set. @maybenil
+ * @param uri The uri of the audio video conference factory. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params, const LinphoneAddress *address);
+
+/**
  * If enabled, the proxy will be used as the only route.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to enable, FALSE otherwise.
@@ -524,6 +532,13 @@ LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const 
  * @return The uri of the conference factory. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params);
+
+/**
+ * Get the audio video conference factory uri.
+ * @param params The #LinphoneAccountParams object @notnil
+ * @return The #LinphoneAddress of the audio video conference factory. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress* linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params);
 
 /**
  * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates for VOIP push notification.

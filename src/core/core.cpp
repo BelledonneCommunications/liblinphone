@@ -35,6 +35,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #endif
 
+#include "account/account.h"
 #include "address/address.h"
 #include "call/call.h"
 #include "chat/encryption/encryption-engine.h"
@@ -1505,4 +1506,17 @@ const std::list<LinphoneMediaEncryption> Core::getSupportedMediaEncryptions() co
 	}
 	return encEnumList;
 }
+
+Address Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress) {
+	Address addr(localAddress.asAddress());
+	LinphoneAccount *account = linphone_core_lookup_known_account(core->getCCore(), L_GET_C_BACK_PTR(&addr));
+
+	if (!account) {
+		lWarning() << "No account found for local address: [" << localAddress.asString() << "]";
+		return Address();
+	}
+
+	return Address(Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress());
+}
+
 LINPHONE_END_NAMESPACE

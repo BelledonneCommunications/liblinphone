@@ -19,6 +19,7 @@
 
 #include "account/account-params.h"
 #include "push-notification/push-notification-config.h"
+#include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-address.h"
@@ -271,6 +272,19 @@ void linphone_account_params_set_conference_factory_uri(LinphoneAccountParams *p
 
 const char* linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params) {
 	return L_STRING_TO_C(AccountParams::toCpp(params)->getConferenceFactoryUri());
+}
+
+void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params, const LinphoneAddress *address) {
+	if (address == nullptr) {
+		AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(Address());
+	} else {
+		AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
+	}
+}
+
+const LinphoneAddress* linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
+	const Address &address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
+	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
 }
 
 void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow) {

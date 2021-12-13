@@ -102,6 +102,7 @@ public:
 	static std::shared_ptr<Core> create (LinphoneCore *cCore);
 
 	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
+	static Address getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
 
 	// ---------------------------------------------------------------------------
 	// Application lifecycle.

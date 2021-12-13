@@ -21,6 +21,7 @@
 #define _L_ACCOUNT_PARAMS_H_
 
 #include <belle-sip/object++.hh>
+#include "address/address.h"
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-push-notification-config.h"
 #include "linphone/types.h"
@@ -73,6 +74,7 @@ public:
 	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
 	LinphoneStatus setRoutes (const bctbx_list_t *routes);
 	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
+	void setAudioVideoConferenceFactoryAddress (const Address &audioVideoConferenceFactoryAddress);
 
 	// Getters
 	int getExpires () const;
@@ -109,6 +111,7 @@ public:
 	LinphoneAVPFMode getAvpfMode () const;
 	LinphoneNatPolicy* getNatPolicy () const;
 	PushNotificationConfig* getPushNotificationConfig () const;
+	const Address& getAudioVideoConferenceFactoryAddress () const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -165,6 +168,8 @@ private:
 	LinphoneNatPolicy *mNatPolicy = nullptr;
 
 	PushNotificationConfig *mPushNotificationConfig;
+
+	Address mAudioVideoConferenceFactoryAddress;
 };
 
 LINPHONE_END_NAMESPACE
