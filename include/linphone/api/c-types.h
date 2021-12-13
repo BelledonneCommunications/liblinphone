@@ -159,11 +159,24 @@ typedef struct _LinphoneConferenceParams LinphoneConferenceParams;
 typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
 
 /**
- * @brief Object defining all informations of a conference
+ * @brief Object defining all information related to a conference
  *
  * @ingroup conference
  */
 typedef struct _LinphoneConferenceInfo LinphoneConferenceInfo;
+
+/**
+ * @brief Object used to create remote conferences and send ICS to notify participants
+ * 
+ * @ingroup conference
+ */
+typedef struct _LinphoneConferenceScheduler LinphoneConferenceScheduler;
+
+/**
+ * An object to handle the callbacks of #LinphoneConferenceScheduler object.
+ * @ingroup account
+ */
+typedef struct _LinphoneConferenceSchedulerCbs LinphoneConferenceSchedulerCbs;
 
 // -----------------------------------------------------------------------------
 // Participants.

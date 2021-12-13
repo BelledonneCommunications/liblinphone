@@ -418,16 +418,14 @@ typedef struct _stats {
 	int number_of_LinphoneCoreAudioDevicesListUpdated;
 	int number_of_LinphoneCoreVersionUpdateCheck;
 
-	int number_of_LinphoneConferenceInfoParticipantSent;
-	int number_of_LinphoneConferenceInfoParticipantError;
-	int number_of_LinphoneConferenceInfoSent;
-	int number_of_LinphoneConferenceInfoCreated;
-
 	int number_of_LinphoneRemoteRecordingEnabled;
 	int number_of_LinphoneRemoteRecordingDisabled;
 	
 	int number_of_LinphoneParticipantDeviceStartSpeaking;
 	int number_of_LinphoneParticipantDeviceStopSpeaking;
+
+	int number_of_ConferenceSchedulerStateReady;
+	int number_of_ConferenceSchedulerInvitationsSent;
 }stats;
 
 typedef struct _LinphoneCoreManager {

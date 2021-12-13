@@ -104,6 +104,7 @@ public:
 	std::list<IdentityAddress> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
+	std::list<std::shared_ptr<ChatMessage>> pendingCreationMessages;
 
 	std::shared_ptr<ChatRoomParams> params;
 

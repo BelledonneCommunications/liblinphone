@@ -477,3 +477,7 @@ LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_c
 	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
 	return conferenceInfo ? linphone_conference_info_ref(conferenceInfo->toC()) : nullptr;
 }
+
+LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createConferenceSchedulerCbs();
+}

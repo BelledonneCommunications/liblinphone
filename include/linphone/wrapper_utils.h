@@ -127,6 +127,22 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(con
 LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *message, LinphoneChatMessageCbs *cbs);
 
 /**
+ * @brief Gets the list of listener in the account.
+ * @param account #LinphoneConferenceScheduler object. @notnil
+ * @return The list of #LinphoneConferenceSchedulerCbs. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_scheduler_get_callbacks_list(const LinphoneConferenceScheduler *conference_scheduler);
+
+/**
+ * Sets the current LinphoneConferenceSchedulerCbs.
+ * @param account #LinphoneConferenceScheduler object. @notnil
+ * @param cbs The #LinphoneConferenceSchedulerCbs object. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_conference_scheduler_set_current_callbacks(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerCbs *cbs);
+
+/**
  * Accessor for the shared_ptr&lt;BelCard&gt; stored by a #LinphoneVcard
  * @param vcard a #LinphoneVcard
  * @return a shared_ptr<BelCard>

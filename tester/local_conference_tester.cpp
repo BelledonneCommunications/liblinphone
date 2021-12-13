@@ -2324,33 +2324,60 @@ static void group_chat_room_server_ephemeral_mode_changed (void) {
 	}
 }
 
+static void conference_scheduler_state_changed(LinphoneConferenceScheduler *scheduler, LinphoneConferenceSchedulerState state) {
+	stats *stat = get_stats(linphone_scheduler_get_core(scheduler));
+	if (state == LinphoneConferenceSchedulerStateReady) {
+		stat->number_of_ConferenceSchedulerStateReady++;
+	}
+}
+
+static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
+	stats *stat = get_stats(linphone_scheduler_get_core(scheduler));
+	stat->number_of_ConferenceSchedulerInvitationsSent++;
+}
+
 static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConference & organizer, std::list<LinphoneCoreManager*> participants, time_t start_time, time_t end_time, const char * subject, const char * description) {
 	bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
 	coresList = bctbx_list_append(coresList, organizer.getLc());
-	bctbx_list_t *participantsAddresses = NULL;
 	std::list<stats> participant_stats;
 	for (auto & p : participants) {
 		coresList = bctbx_list_append(coresList, p->lc);
-		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_ref(p->identity));
 		participant_stats.push_back(p->stat);
 	}
 
 	stats organizer_stat=organizer.getStats();
 
 	// Marie creates a new group chat room
-	LinphoneConferenceParams *params = linphone_core_create_conference_params(organizer.getLc());
-	linphone_conference_params_set_subject(params, subject);
-	linphone_conference_params_set_audio_enabled(params, TRUE);
-	linphone_conference_params_set_start_time(params, start_time);
-	linphone_conference_params_set_end_time(params, end_time);
-	linphone_conference_params_set_description(params, description);
-	linphone_core_create_conference_on_server(organizer.getLc(), params, NULL, participantsAddresses);
-	linphone_conference_params_unref(params);
+	LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(organizer.getLc());
+	LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+	linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
+	linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+	linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+	linphone_conference_scheduler_cbs_unref(cbs);
 
-	BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_LinphoneConferenceInfoCreated, organizer_stat.number_of_LinphoneConferenceInfoCreated + 1, 10000));
+	LinphoneConferenceInfo *conf_info = linphone_conference_info_new();
+	linphone_conference_info_set_organizer(conf_info, organizer.getCMgr()->identity);
+	for (auto & p : participants) {
+		linphone_conference_info_add_participant(conf_info, p->identity);
+	}
+	linphone_conference_info_set_duration(conf_info, (int)((end_time - start_time) / 60)); // duration is expected to be set in minutes
+	linphone_conference_info_set_date_time(conf_info, start_time);
+	linphone_conference_info_set_subject(conf_info, subject);
+	linphone_conference_info_set_description(conf_info, description);
 
-	BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_LinphoneConferenceInfoParticipantSent, organizer_stat.number_of_LinphoneConferenceInfoParticipantSent + 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_LinphoneConferenceInfoSent, organizer_stat.number_of_LinphoneConferenceInfoSent + 1, 10000));
+	linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+	linphone_conference_info_unref(conf_info);
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_ConferenceSchedulerStateReady, organizer_stat.number_of_ConferenceSchedulerStateReady + 1, 10000));
+
+	LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(organizer.getLc());
+	linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendBasic);
+	linphone_conference_scheduler_send_invitations(conference_scheduler, chat_room_params);
+	linphone_chat_room_params_unref(chat_room_params);
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_ConferenceSchedulerInvitationsSent, organizer_stat.number_of_ConferenceSchedulerInvitationsSent + 1, 10000));
+
+	linphone_conference_scheduler_unref(conference_scheduler);
 
 	LinphoneAddress * conference_address = NULL;
 
@@ -2466,7 +2493,6 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 	BC_ASSERT_EQUAL(organizer.getStats().number_of_LinphoneConferenceStateDeleted, organizer_stat.number_of_LinphoneConferenceStateDeleted, int, "%d");
 
 	bctbx_list_free(coresList);
-	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 
 	char * conference_address_str = (conference_address) ? linphone_address_as_string(conference_address) : ms_strdup("<unknown>");
 	ms_message("%s is creating conference %s on server %s", linphone_core_get_identity(organizer.getLc()), conference_address_str, linphone_core_get_identity(focus.getLc()));

@@ -163,41 +163,18 @@ static void build_ics () {
 	BC_ASSERT_STRING_EQUAL(confStr.c_str(), expectedIcs.c_str());
 }
 
-static void conference_info_created(LinphoneCore *core, const LinphoneConferenceInfo *info) {
-	stats *stat = get_stats(core);
-	stat->number_of_LinphoneConferenceInfoCreated++;
-	linphone_core_send_conference_information(core, info, NULL);
-}
-
-static void conference_info_participant_sent(LinphoneCore *core, const LinphoneConferenceInfo *info, const LinphoneAddress *address) {
-	stats *stat = get_stats(core);
-	stat->number_of_LinphoneConferenceInfoParticipantSent++;
-}
-
-static void conference_info_participant_error(LinphoneCore *core, const LinphoneConferenceInfo *info, const LinphoneAddress *address, LinphoneConferenceInfoError error) {
-	stats *stat = get_stats(core);
-	stat->number_of_LinphoneConferenceInfoParticipantError++;
-}
-
-static void conference_info_sent(LinphoneCore *core, const LinphoneConferenceInfo *info) {
-	stats *stat = get_stats(core);
-	stat->number_of_LinphoneConferenceInfoSent++;
+static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
+	stats *stat = get_stats(linphone_scheduler_get_core(scheduler));
+	stat->number_of_ConferenceSchedulerInvitationsSent++;
+	BC_ASSERT_PTR_NULL(failed_addresses);
 }
 
 void setup_conference_info_cbs(LinphoneCoreManager * mgr) {
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_conference_info_created(cbs, conference_info_created);
-	linphone_core_cbs_set_conference_info_participant_sent(cbs, conference_info_participant_sent);
-	linphone_core_cbs_set_conference_info_participant_error(cbs, conference_info_participant_error);
-	linphone_core_cbs_set_conference_info_sent(cbs, conference_info_sent);
-	linphone_core_add_callbacks(mgr->lc, cbs);
-	linphone_core_cbs_unref(cbs);
-
 	// Needed to send the ICS
 	linphone_core_set_file_transfer_server(mgr->lc, file_transfer_url);
 }
 
-static void send_conference_invitations(void) {
+static void send_conference_invitations(bool_t enable_group, bool_t enable_encryption, const char *subject) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
@@ -217,32 +194,52 @@ static void send_conference_invitations(void) {
 	LinphoneAddress *conf_uri = linphone_address_new("sip:confvideo@sip.linphone.org");
 	linphone_conference_info_set_uri(conf_info, conf_uri);
 
-	linphone_core_send_conference_information(marie->lc, conf_info, NULL);
+	LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie->lc);
+	LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+	linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+	linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+	linphone_conference_scheduler_cbs_unref(cbs);
 
+	linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+	LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(marie->lc);
+	if (enable_group || enable_encryption) {
+		linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendFlexisipChat);
+		linphone_chat_room_params_set_subject(chat_room_params, subject);
+		linphone_chat_room_params_enable_group(chat_room_params, enable_group);
+		linphone_chat_room_params_enable_encryption(chat_room_params, enable_encryption);
+	}
+	linphone_conference_scheduler_send_invitations(conference_scheduler, chat_room_params);
+	linphone_chat_room_params_unref(chat_room_params);
+	
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_ConferenceSchedulerInvitationsSent, 1, 15000));
 	linphone_conference_info_unref(conf_info);
+	linphone_conference_scheduler_unref(conference_scheduler);
 
 	bctbx_list_t *participants = bctbx_list_append(NULL, laure->identity);
 	LinphoneChatRoom *cr = linphone_core_search_chat_room(marie->lc, NULL, marie->identity, NULL, participants);
+	BC_ASSERT_PTR_NOT_NULL(cr);
 	bctbx_list_free(participants);
+	
+	if (cr) {
+		LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
+		linphone_chat_room_unref(cr);
 
-	LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
-	linphone_chat_room_unref(cr);
+		const bctbx_list_t* original_contents = linphone_chat_message_get_contents(msg);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+		LinphoneContent *original_content = (LinphoneContent *) bctbx_list_get_data(original_contents);
+		linphone_chat_message_unref(msg);
 
-	const bctbx_list_t* original_contents = linphone_chat_message_get_contents(msg);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
-	LinphoneContent *original_content = (LinphoneContent *) bctbx_list_get_data(original_contents);
-	linphone_chat_message_unref(msg);
-
-	LinphoneConferenceInfo *conf_info_from_original_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
-	if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
-		BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
-		BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
-		const bctbx_list_t * participants = linphone_conference_info_get_participants(conf_info_from_original_content);
-		BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
-		bctbx_list_free((bctbx_list_t *)participants);
-		BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_original_content), 120, int, "%d");
-		BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_original_content) == conf_time);
-		linphone_conference_info_unref(conf_info_from_original_content);
+		LinphoneConferenceInfo *conf_info_from_original_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
+		if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
+			BC_ASSERT_TRUE(linphone_address_weak_equal(marie->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
+			BC_ASSERT_TRUE(linphone_address_weak_equal(conf_uri, linphone_conference_info_get_uri(conf_info_from_original_content)));
+			const bctbx_list_t * participants = linphone_conference_info_get_participants(conf_info_from_original_content);
+			BC_ASSERT_EQUAL(bctbx_list_size(participants), 2, size_t, "%zu");
+			bctbx_list_free((bctbx_list_t *)participants);
+			BC_ASSERT_EQUAL(linphone_conference_info_get_duration(conf_info_from_original_content), 120, int, "%d");
+			BC_ASSERT_TRUE(linphone_conference_info_get_date_time(conf_info_from_original_content) == conf_time);
+			linphone_conference_info_unref(conf_info_from_original_content);
+		}
 	}
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
@@ -288,22 +285,34 @@ static void send_conference_invitations(void) {
 		BC_ASSERT_PTR_NULL(conf_info_list_future);
 	}
 
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoParticipantSent, 2, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoParticipantError, 0, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceInfoSent, 1, int, "%d");
-
 	linphone_address_unref(conf_uri);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 }
 
+static void send_conference_invitations_1(void) {
+	send_conference_invitations(FALSE, FALSE, NULL);
+}
+
+/*static void send_conference_invitations_2(void) {
+	// TODO: configure conference factory URI
+	send_conference_invitations(FALSE, TRUE, "dummy subject");
+}
+
+static void send_conference_invitations_3(void) {
+	// TODO: configure conference factory URI
+	send_conference_invitations(TRUE, TRUE, "conference group!");
+}*/
+
 test_t ics_tests[] = {
 	TEST_NO_TAG("Parse minimal Ics", parse_minimal_ics),
 	TEST_NO_TAG("Parse RFC example", parse_rfc_example),
 	TEST_NO_TAG("Parse folded example", parse_folded_example),
 	TEST_NO_TAG("Build Ics", build_ics),
-	TEST_NO_TAG("Send conference invitations", send_conference_invitations),
+	TEST_NO_TAG("Send conference invitations in basic chat room", send_conference_invitations_1),
+	//TEST_NO_TAG("Send conference invitations in one-to-one encrypted chat room", send_conference_invitations_2),
+	//TEST_NO_TAG("Send conference invitations in a group encrypted chat room", send_conference_invitations_3),
 };
 
 static int suite_begin(void) {

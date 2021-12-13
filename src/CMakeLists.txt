@@ -174,6 +174,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/conference-enums.h
 	conference/conference-id.h
 	conference/conference-info.h
+	conference/conference-scheduler.h
 	conference/conference-listener.h
 	conference/notify-conference-listener.h
 	conference/conference.h
@@ -355,6 +356,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-content.cpp
 	c-wrapper/api/c-conference-cbs.cpp
 	c-wrapper/api/c-conference-info.cpp
+	c-wrapper/api/c-conference-scheduler.cpp
 	c-wrapper/api/c-conference.cpp
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
@@ -403,6 +405,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-enums.cpp
 	conference/conference-id.cpp
 	conference/conference-info.cpp
+	conference/conference-scheduler.cpp
 	conference/conference.cpp
 	conference/conference-interface.cpp
 	conference/notify-conference-listener.cpp

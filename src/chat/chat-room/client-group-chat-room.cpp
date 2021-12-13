@@ -817,8 +817,14 @@ void ClientGroupChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> 
 		auto it = std::find(pendingExhumeMessages.begin(), pendingExhumeMessages.end(), chatMessage);
 		if (it == pendingExhumeMessages.end())
 			pendingExhumeMessages.push_back(chatMessage);
-	} else {
+	} else if (q->getState() == ConferenceInterface::State::Instantiated || q->getState() == ConferenceInterface::State::CreationPending) {
+		auto it = std::find(pendingCreationMessages.begin(), pendingCreationMessages.end(), chatMessage);
+		if (it == pendingCreationMessages.end())
+			pendingCreationMessages.push_back(chatMessage);
+	} else if (q->getState() == ConferenceInterface::State::Created) {
 		ChatRoomPrivate::sendChatMessage(chatMessage);
+	} else {
+		lError() << "Can't send a chat message in a chat room that is in state " << q->getState();
 	}
 }
 

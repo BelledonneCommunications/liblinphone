@@ -69,7 +69,7 @@ private:
 	IdentityAddress mOrganizer;
 	std::list<IdentityAddress> mParticipants;
 	ConferenceAddress mUri;
-	time_t mDateTime;
+	time_t mDateTime = (time_t) -1;
 	int mDuration = 0;
 	std::string mSubject = "";
 	std::string mDescription = "";

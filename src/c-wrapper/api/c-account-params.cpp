@@ -275,16 +275,12 @@ const char* linphone_account_params_get_conference_factory_uri(const LinphoneAcc
 }
 
 void linphone_account_params_set_audio_video_conference_factory_address(LinphoneAccountParams *params, const LinphoneAddress *address) {
-	if (address == nullptr) {
-		AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(Address());
-	} else {
-		AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
-	}
+	AccountParams::toCpp(params)->setAudioVideoConferenceFactoryAddress(address);
 }
 
 const LinphoneAddress* linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
-	const Address &address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
-	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
+	LinphoneAddress *address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
+	return address != nullptr ? linphone_address_ref(address) : nullptr;
 }
 
 void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow) {

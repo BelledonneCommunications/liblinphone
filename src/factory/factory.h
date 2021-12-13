@@ -219,6 +219,8 @@ public:
 	
 	std::shared_ptr<ConferenceInfo> createConferenceInfoFromIcalendarContent(LinphoneContent *content) const;
 	
+	LinphoneConferenceSchedulerCbs *createConferenceSchedulerCbs() const;
+	
 	
 protected:
 	static void _DestroyingCb(void);

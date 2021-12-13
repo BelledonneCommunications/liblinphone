@@ -201,49 +201,6 @@ void Conference::setConferenceId (const ConferenceId &conferenceId) {
 	getCore()->insertAudioVideoConference(getSharedFromThis());
 }
 
-const std::shared_ptr<LinphonePrivate::ConferenceInfo> & Conference::createConferenceInfo() {
-	if (!getConferenceAddress().isValid()) {
-		conferenceInfo = nullptr;
-		lError() << "Cannot generate conference info because the conference address is invalid. Conference is in state " << getState() << ". It should be have gone through state CreationPending to have a valid conference address";
-	} else if (!conferenceInfo) {
-		conferenceInfo = LinphonePrivate::ConferenceInfo::create();
-
-		// Conference address
-		conferenceInfo->setUri(getConferenceAddress());
-
-		// Participants
-		conferenceInfo->setOrganizer(conferenceId.getLocalAddress().getAddressWithoutGruu());
-		for (const auto & address : invitedAddresses) {
-			conferenceInfo->addParticipant(address);
-		}
-
-		// Start/End time
-		auto startTime = ((confParams->getStartTime() < 0) ? ms_time(NULL) : confParams->getStartTime());
-		auto endTime = ((confParams->getEndTime() < 0) ? startTime : confParams->getEndTime());
-		auto duration = static_cast<int>((endTime - startTime)/60);
-		if (duration > 0) {
-			conferenceInfo->setDuration(duration);
-		}
-		conferenceInfo->setDateTime(startTime);
-
-		// Subject
-		if (!getSubject().empty()) {
-			conferenceInfo->setSubject(getSubject());
-		}
-
-		#ifdef HAVE_DB_STORAGE
-		auto &mainDb = getCore()->getPrivate()->mainDb;
-		if (mainDb) mainDb->insertConferenceInfo(conferenceInfo);
-		#endif
-
-		linphone_core_notify_conference_info_created(getCore()->getCCore(), conferenceInfo->toC());
-
-	}
-
-	return conferenceInfo;
-
-}
-
 bool Conference::isConferenceEnded() const {
 	const auto & endTime = confParams->getEndTime();
 	const auto now = time(NULL);

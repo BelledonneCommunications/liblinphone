@@ -93,13 +93,6 @@ LINPHONE_PUBLIC void linphone_conference_info_add_participant(LinphoneConference
 LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_info_get_uri(const LinphoneConferenceInfo *conference_info);
 
 /**
- * Set the URI of the conference.
- * @param conference_info The #LinphoneConferenceInfo object. @notnil
- * @param uri The URI of the conference (#LinphoneAddress). @maybenil
- */
-LINPHONE_PUBLIC void linphone_conference_info_set_uri(LinphoneConferenceInfo *conference_info, LinphoneAddress *uri);
-
-/**
  * Retrieve the date and time of the conference.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The date and time of the conference.

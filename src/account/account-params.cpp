@@ -94,7 +94,10 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	setConferenceFactoryUri(conferenceFactoryUri);
 
 	string audioVideoConferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "audio_video_conference_factory_uri", "") : "";
-	mAudioVideoConferenceFactoryAddress = Address(audioVideoConferenceFactoryUri);
+	mAudioVideoConferenceFactoryAddress = nullptr;
+	if (!audioVideoConferenceFactoryUri.empty()) {
+		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
+	}
 
 	if (lc && lc->push_config) {
 		mPushNotificationConfig = PushNotificationConfig::toCpp(lc->push_config)->clone();
@@ -180,8 +183,9 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
 	string audioVideoConferenceFactoryUri = linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
+	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
-		mAudioVideoConferenceFactoryAddress = Address(audioVideoConferenceFactoryUri);
+		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
 	}
 }
 
@@ -211,7 +215,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mDependsOn = other.mDependsOn;
 	mIdKey = other.mIdKey;
 	mConferenceFactoryUri = other.mConferenceFactoryUri;
-	mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress;
+	mAudioVideoConferenceFactoryAddress = other.mAudioVideoConferenceFactoryAddress ? linphone_address_clone(other.mAudioVideoConferenceFactoryAddress) : nullptr;
 	mFileTransferServer = other.mFileTransferServer;
 	mIdentity = other.mIdentity;
 
@@ -237,6 +241,7 @@ AccountParams::~AccountParams () {
 	if (mRoutesString)  bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
 	if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
+	if (mAudioVideoConferenceFactoryAddress) linphone_address_unref(mAudioVideoConferenceFactoryAddress);
 }
 
 AccountParams* AccountParams::clone () const {
@@ -472,8 +477,14 @@ void AccountParams::setPushNotificationConfig (PushNotificationConfig *pushNotif
 	mPushNotificationConfig->ref();
 }
 
-void AccountParams::setAudioVideoConferenceFactoryAddress (const Address &audioVideoConferenceFactoryAddress) {
-	mAudioVideoConferenceFactoryAddress = audioVideoConferenceFactoryAddress;
+void AccountParams::setAudioVideoConferenceFactoryAddress (const LinphoneAddress *audioVideoConferenceFactoryAddress) {
+	if (mAudioVideoConferenceFactoryAddress != nullptr) {
+		linphone_address_unref(mAudioVideoConferenceFactoryAddress);
+		mAudioVideoConferenceFactoryAddress = nullptr;
+	}
+	if (audioVideoConferenceFactoryAddress != nullptr) {
+		mAudioVideoConferenceFactoryAddress = linphone_address_clone(audioVideoConferenceFactoryAddress);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -626,7 +637,7 @@ PushNotificationConfig* AccountParams::getPushNotificationConfig () const {
 	return mPushNotificationConfig;
 }
 
-const Address& AccountParams::getAudioVideoConferenceFactoryAddress () const {
+LinphoneAddress* AccountParams::getAudioVideoConferenceFactoryAddress () const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 
@@ -768,8 +779,8 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
 
-	if (mAudioVideoConferenceFactoryAddress.isValid()) {
-		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", mAudioVideoConferenceFactoryAddress.asString().c_str());
+	if (mAudioVideoConferenceFactoryAddress != nullptr) {
+		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress));
 	}
 }
 

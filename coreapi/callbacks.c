@@ -1039,16 +1039,13 @@ static int process_redirect(SalOp *op){
 	if (!session)
 		return -1;
 	auto sessionRef = (session) ? session->getSharedFromThis() : NULL;
+	// Try to cast session to MediaSession to detect if the 302 is for a conference or a chat room.
+	// In the case of the chat room, the op stores a CallSession.
+	// The user pointer of the op stores a media session if it is creating a conference
 	auto mediaSessionRef = (sessionRef) ? dynamic_pointer_cast<LinphonePrivate::MediaSession>(sessionRef) : NULL;
 	if (mediaSessionRef && !call) {
-		char * remote_contact_address = sal_address_as_string(op->getRemoteContactAddress());
-		char msg [350];
-		snprintf(msg, 350, "Conference %s has been succesfully created", remote_contact_address);
-		const ConferenceAddress conference_address(remote_contact_address);
-		ms_free(remote_contact_address);
-		session->createConferenceInfo();
 		LinphoneErrorInfo *ei = linphone_error_info_new();
-		linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 200, msg, NULL);
+		linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 200, NULL, NULL);
 		session->terminate(ei);
 		linphone_error_info_unref(ei);
 		return 0;

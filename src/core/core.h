@@ -58,6 +58,7 @@ class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
 class SalMediaDescription;
+class ConferenceScheduler;
 
 namespace MediaConference {
 	class RemoteConference;
@@ -91,6 +92,7 @@ class LINPHONE_PUBLIC Core : public Object {
 
 	friend class MediaConference::Conference;
 	friend class MediaConference::RemoteConference;
+	friend class ConferenceScheduler;
 
 	friend class LinphoneTest::LocalConferenceTester;
 public:
@@ -102,7 +104,7 @@ public:
 	static std::shared_ptr<Core> create (LinphoneCore *cCore);
 
 	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
-	static Address getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
+	static LinphoneAddress* getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
 
 	// ---------------------------------------------------------------------------
 	// Application lifecycle.
@@ -281,16 +283,12 @@ public:
 	void onStopAsyncBackgroundTaskStopped();
 	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 
-	void createConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants);
-
-	void deleteConferenceCreationSession(const std::shared_ptr<CallSession> &session);
-	void insertConferenceCreationSession(const std::shared_ptr<Participant> &session);
+	std::shared_ptr<CallSession> createConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants);
 
 private:
 	Core ();
 
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
-	std::list<std::shared_ptr<Participant>> conferenceCreationSessions;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId & conferenceId) const;
 
 	L_DECLARE_PRIVATE(Core);

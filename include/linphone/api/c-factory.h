@@ -685,6 +685,13 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info(
  */
 LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content);
 
+/**
+ * Creates an object #LinphoneConferenceSchedulerCbs
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneConferenceSchedulerCbs @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory);
+
 
 /************ */
 /* DEPRECATED */

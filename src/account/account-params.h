@@ -74,7 +74,7 @@ public:
 	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
 	LinphoneStatus setRoutes (const bctbx_list_t *routes);
 	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
-	void setAudioVideoConferenceFactoryAddress (const Address &audioVideoConferenceFactoryAddress);
+	void setAudioVideoConferenceFactoryAddress (const LinphoneAddress *audioVideoConferenceFactoryAddress);
 
 	// Getters
 	int getExpires () const;
@@ -111,7 +111,7 @@ public:
 	LinphoneAVPFMode getAvpfMode () const;
 	LinphoneNatPolicy* getNatPolicy () const;
 	PushNotificationConfig* getPushNotificationConfig () const;
-	const Address& getAudioVideoConferenceFactoryAddress () const;
+	LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -169,7 +169,7 @@ private:
 
 	PushNotificationConfig *mPushNotificationConfig;
 
-	Address mAudioVideoConferenceFactoryAddress;
+	LinphoneAddress *mAudioVideoConferenceFactoryAddress = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

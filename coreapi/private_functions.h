@@ -347,6 +347,9 @@ void _linphone_participant_device_notify_audio_direction_changed(LinphonePartici
 void _linphone_participant_device_notify_video_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
 void _linphone_participant_device_notify_text_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
 
+void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerState state);
+void linphone_conference_scheduler_notify_invitations_sent(LinphoneConferenceScheduler *conference_scheduler, bctbx_list_t *failed_invites);
+
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);
 
@@ -607,6 +610,7 @@ void linphone_core_notify_first_call_started(LinphoneCore *lc);
 void linphone_core_notify_last_call_ended(LinphoneCore *lc);
 void linphone_core_notify_audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
 void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc);
+void linphone_core_notify_conference_info_received(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore* lc);
@@ -638,10 +642,6 @@ void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCali
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);
 void linphone_core_notify_ec_calibration_audio_uninit(LinphoneCore *lc);
 void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *chat_room);
-void linphone_core_notify_conference_info_participant_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address);
-void linphone_core_notify_conference_info_participant_error(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address, LinphoneConferenceInfoError error);
-void linphone_core_notify_conference_info_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
-void linphone_core_notify_conference_info_created(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
 
 void set_playback_gain_db(AudioStream *st, float gain);
 

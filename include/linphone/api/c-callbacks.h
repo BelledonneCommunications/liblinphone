@@ -554,6 +554,21 @@ typedef void (*LinphoneParticipantDeviceCbsVideoDirectionChangedCb) (LinphonePar
 typedef void (*LinphoneParticipantDeviceCbsTextDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
 
 /**
+ * Callback for notifying when a registration state has changed for the conference scheduler.
+ * @param conference_scheduler #LinphoneConferenceScheduler object whose state has changed. @notnil
+ * @param state The current #LinphoneConferenceSchedulerState.
+ */
+typedef void (*LinphoneConferenceSchedulerCbsStateChangedCb) (LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerState state);
+
+/**
+ * Callback for notifying when conference invitations have been sent. 
+ * In case of error for some participants, their addresses will be given as parameter.
+ * @param conference_scheduler #LinphoneConferenceScheduler object whose state has changed. @notnil
+ * @param failed_invitations a list of addresses for which invitation couldn't be sent. \bctbx_list{LinphoneAddress} @maybenil
+ */
+typedef void (*LinphoneConferenceSchedulerCbsInvitationsSentCb) (LinphoneConferenceScheduler *conference_scheduler, const bctbx_list_t *failed_invitations);
+
+/**
  * @}
 **/
 

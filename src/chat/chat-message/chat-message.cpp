@@ -936,6 +936,7 @@ void ChatMessagePrivate::handleAutoDownload() {
 			if (confInfo != nullptr) {
 				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
 				mainDb->insertConferenceInfo(ConferenceInfo::toCpp(confInfo)->getSharedFromThis());
+				linphone_core_notify_conference_info_received(q->getCore()->getCCore(), confInfo);
 				linphone_conference_info_unref(confInfo);
 			}
 		}
@@ -1547,6 +1548,7 @@ void ChatMessage::send () {
 	d->currentSendStep &= ~ChatMessagePrivate::Step::Encryption;
 
 	d->loadContentsFromDatabase();
+
 	getChatRoom()->getPrivate()->sendChatMessage(getSharedFromThis());
 }
 

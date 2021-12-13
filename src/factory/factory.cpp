@@ -571,6 +571,10 @@ LinphoneXmlRpcRequestCbs* Factory::createXmlRpcRequestCbs() const {
 	return linphone_xml_rpc_request_cbs_new();
 }
 
+LinphoneConferenceSchedulerCbs* Factory::createConferenceSchedulerCbs() const {
+	return linphone_conference_scheduler_cbs_new();
+}
+
 bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend) const {
 #ifdef HAVE_ADVANCED_IM
 	return TRUE;

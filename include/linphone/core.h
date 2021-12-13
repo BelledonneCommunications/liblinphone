@@ -278,10 +278,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
 	LinphoneCoreCbsChatRoomExhumedCb chat_room_exhumed;
 	LinphoneCoreCbsAccountRegistrationStateChangedCb account_registration_state_changed;
-	LinphoneCoreCbsConferenceInfoCreatedCb conference_info_created;
-	LinphoneCoreCbsConferenceInfoSentCb conference_info_sent;
-	LinphoneCoreCbsConferenceInfoParticipantSentCb conference_info_participant_sent;
-	LinphoneCoreCbsConferenceInfoParticipantErrorCb conference_info_participant_error;
+	LinphoneCoreCbsConferenceInfoReceivedCb conference_info_received;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -388,6 +385,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_registration_state_changed(LinphoneCo
  * @deprecated 30/09/2020. see linphone_account_cbs_get_registration_state_changed()
  */
 LINPHONE_PUBLIC LinphoneCoreCbsRegistrationStateChangedCb linphone_core_cbs_get_registration_state_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the conference info received callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The conference info received callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoReceivedCb cb);
+
+/**
+ * Get the conference info received callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The current conference info received callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoReceivedCb linphone_core_cbs_get_conference_info_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallStateChangedCb callback.
@@ -1013,62 +1024,6 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_account_registration_state_changed(Li
  * @return The current account registration state changed callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsAccountRegistrationStateChangedCb linphone_core_cbs_get_account_registration_state_changed(LinphoneCoreCbs *cbs);
-
-/*
- * Set the conference info created callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @param cb The conference info created callback to be used.
- */
-LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_created(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoCreatedCb cb);
-
-/**
- * Get the conference info created callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @return The current conference info created callback.
- */
-LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoCreatedCb linphone_core_cbs_get_conference_info_created(LinphoneCoreCbs *cbs);
-
-/*
- * Set the conference info sent callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @param cb The conference info sent callback to be used.
- */
-LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoSentCb cb);
-
-/**
- * Get the conference info sent callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @return The current conference info sent callback.
- */
-LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoSentCb linphone_core_cbs_get_conference_info_sent(LinphoneCoreCbs *cbs);
-
-/*
- * Set the conference info on participant sent callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @param cb The conference info on participant sent callback to be used.
- */
-LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_participant_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoParticipantSentCb cb);
-
-/**
- * Get the conference info on participant sent callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @return The current conference info on participant sent callback.
- */
-LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoParticipantSentCb linphone_core_cbs_get_conference_info_participant_sent(LinphoneCoreCbs *cbs);
-
-/*
- * Set the conference info on participant error callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @param cb The conference info on participant error callback to be used.
- */
-LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_participant_error(LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceInfoParticipantErrorCb cb);
-
-/**
- * Get the conference info on participant error callback.
- * @param cbs #LinphoneCoreCbs object. @notnil
- * @return The current conference info on participant error callback.
- */
-LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoParticipantErrorCb linphone_core_cbs_get_conference_info_participant_error(LinphoneCoreCbs *cbs);
 
 /**
  * @}
@@ -4151,14 +4106,20 @@ LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const c
  * @{
  */
 
-/**
- * Create a conference
+/** Create a conference
  * @param core The #LinphoneCore instance where the conference will be created inside. @notnil
  * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
  * @return A pointer on the freshly created conference #LinphoneConference. That object will be automatically
  * freed by the core after calling linphone_core_terminate_conference(). @maybenil
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *core, const LinphoneConferenceParams *params);
+
+/**
+ * Create a conference scheduler that can be used to create remote conferences for now or later and then send conference info as an ICS through chat.
+ * @param core The #LinphoneCore. @notnil
+ * @return A pointer on the freshly created #LinphoneConferenceScheduler. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceScheduler *linphone_core_create_conference_scheduler(LinphoneCore *core);
 
 /**
  * Find a conference.
@@ -6032,15 +5993,6 @@ LINPHONE_PUBLIC void linphone_core_set_default_conference_layout(LinphoneCore *l
 LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc);
 
 /**
- * Send the conference invitations to all participants as an ICS file.
- * @param core The #LinphoneCore @notnil
- * @param conference_information The #LinphoneConferenceInfo @notnil
- * @param text An optional text to be added to the sent chat message @maybenil
- * @ingroup conference
- */
-LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text);
-
-/**
  * Retrieve the conference information linked to the provided URI.
  * @param core #LinphoneCore object. @notnil
  * @param uri #LinphoneAddress of the uri. @notnil
@@ -6081,16 +6033,6 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_afte
  * @ingroup conference
  */
 LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info);
-
-/**
- * Create conference on a server by inviting participants
- * @param core The #LinphoneCore @notnil
- * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
- * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
- * @param participants The initial list of participants of the chat room. \bctbx_list{LinphoneAddress} @notnil
- * @ingroup conference
- */
-LINPHONE_PUBLIC void linphone_core_create_conference_on_server(LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
 
 /************ */
 /* DEPRECATED */

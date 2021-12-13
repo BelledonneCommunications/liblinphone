@@ -158,8 +158,6 @@ public:
 	//bool isDelinedEarly ();
 	//const LinphoneErrorInfo * getErrorInfoCache () const;
 
-	const std::shared_ptr<LinphonePrivate::ConferenceInfo> createConferenceInfo() const;
-
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState () const;

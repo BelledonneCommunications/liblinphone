@@ -144,8 +144,6 @@ public:
 
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) = 0;
 
-	const std::shared_ptr<LinphonePrivate::ConferenceInfo> & createConferenceInfo();
-
 	virtual int terminate() = 0;
 	virtual void finalizeCreation() = 0;
 

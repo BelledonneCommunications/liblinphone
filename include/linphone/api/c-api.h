@@ -40,6 +40,7 @@
 #include "linphone/api/c-conference.h"
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference-info.h"
+#include "linphone/api/c-conference-scheduler.h"
 #include "linphone/api/c-content.h"
 #include "linphone/api/c-dial-plan.h"
 #include "linphone/api/c-event-log.h"

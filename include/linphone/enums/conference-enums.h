@@ -60,4 +60,18 @@ typedef enum _LinphoneConferenceParticipantListType{
 	LinphoneConferenceParticipantListTypeOpen = 1, /**< All devices calling the conference URI are allowed to join the conference */
 } LinphoneConferenceParticipantListType;
 
+/**
+ * @brief Describes conference scheduler possible states.
+ *
+ * It is notified via the conference_scheduler_state_changed callback in #LinphoneConferenceSchedulerCbs.
+ * @ingroup conference
+**/
+typedef enum _LinphoneConferenceSchedulerState {
+	LinphoneConferenceSchedulerStateIdle = 0, /**< Default state of a freshly created #LinphoneConferenceScheduler */
+	LinphoneConferenceSchedulerStateError = 1, /**< An error has happened during conference creation */
+	LinphoneConferenceSchedulerStateAllocationPending = 2, /**< Conference creation is in progress */
+	LinphoneConferenceSchedulerStateReady = 3, /**< Confererence has been created */
+	LinphoneConferenceSchedulerStateUpdating = 4, /**< Conference has been updated */
+} LinphoneConferenceSchedulerState;
+
 #endif // ifndef _L_CONFERENCE_ENUMS_H_

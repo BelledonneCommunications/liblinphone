@@ -527,13 +527,6 @@ LINPHONE_PUBLIC int linphone_conference_stop_recording(LinphoneConference *confe
  */
 LINPHONE_PUBLIC bool_t linphone_conference_is_recording(const LinphoneConference *conference);
 
-/**
- * Creates the conference info for the conference. The function return a non null pointer only when the conference address has been correctly set (i.e. the conference has gone through the CreationPending state)
- * @param conference A #LinphoneConference object @notnil
- * @return the conference info @maybenil
- */
-LINPHONE_PUBLIC const LinphoneConferenceInfo * linphone_conference_create_conference_info(LinphoneConference *conference);
-
 /************ */
 /* DEPRECATED */
 /* ********** */

@@ -107,10 +107,6 @@ LinphoneStatus linphone_conference_add_participant (LinphoneConference *conferen
 	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis());
 }
 
-const LinphoneConferenceInfo * linphone_conference_create_conference_info(LinphoneConference *conference) {
-	return MediaConference::Conference::toCpp(conference)->createConferenceInfo()->toC();
-}
-
 LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri) {
 	return MediaConference::Conference::toCpp(conference)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 }

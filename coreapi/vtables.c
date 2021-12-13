@@ -398,23 +398,8 @@ void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *
 	cleanup_dead_vtable_refs(lc);
 }
 
-void linphone_core_notify_conference_info_created(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info) {
-	NOTIFY_IF_EXIST(conference_info_created, lc, conference_info);
-	cleanup_dead_vtable_refs(lc);
-}
-
-void linphone_core_notify_conference_info_participant_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address) {
-	NOTIFY_IF_EXIST(conference_info_participant_sent, lc, conference_info, address);
-	cleanup_dead_vtable_refs(lc);
-}
-
-void linphone_core_notify_conference_info_participant_error(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info, const LinphoneAddress *address, LinphoneConferenceInfoError error) {
-	NOTIFY_IF_EXIST(conference_info_participant_error, lc, conference_info, address, error);
-	cleanup_dead_vtable_refs(lc);
-}
-
-void linphone_core_notify_conference_info_sent(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info) {
-	NOTIFY_IF_EXIST(conference_info_sent, lc, conference_info);
+void linphone_core_notify_conference_info_received(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info) {
+	NOTIFY_IF_EXIST(conference_info_received, lc, conference_info);
 	cleanup_dead_vtable_refs(lc);
 }
 

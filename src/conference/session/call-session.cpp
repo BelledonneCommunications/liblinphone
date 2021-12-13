@@ -28,6 +28,7 @@
 #include "conference/params/call-session-params-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/call-session.h"
+#include "conference/conference-scheduler.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
 
@@ -715,7 +716,6 @@ void CallSessionPrivate::setReleased () {
 		pendingActions.pop();
 	}
 
-	q->getCore()->deleteConferenceCreationSession(q->getSharedFromThis());
 	if (listener)
 		listener->onCallSessionSetReleased(q->getSharedFromThis());
 }
@@ -1774,74 +1774,6 @@ bool CallSession::isEarlyState (CallSession::State state) {
 		default:
 			return false;
 	}
-}
-
-const std::shared_ptr<LinphonePrivate::ConferenceInfo> CallSession::createConferenceInfo() const {
-	L_D();
-	const auto op = d->getOp();
-	const auto isInConference = d->isInConference();
-	char * salConferenceAddress = isInConference ? sal_address_as_string(op->getContactAddress()) : sal_address_as_string(op->getRemoteContactAddress());
-	const ConferenceAddress conferenceAddress(salConferenceAddress);
-	ms_free(salConferenceAddress);
-
-	if (!conferenceAddress.isValid()) {
-		lError() << "Cannot generate conference info because the conference address is invalid. Conference is in state " << getState() << ". It should be have gone through state CreationPending to have a valid conference address";
-	} else {
-		const auto & localParams = getParams();
-		auto conferenceInfo = LinphonePrivate::ConferenceInfo::create();
-
-		// Conference address
-		conferenceInfo->setUri(conferenceAddress);
-
-		// Participants
-		auto organizer = getLocalAddress();
-		organizer.removeUriParam("gr"); // Remove gr parameter.
-		conferenceInfo->setOrganizer(organizer);
-
-		// Search content
-		for (const auto & content : localParams->getCustomContents()) {
-			auto invitedAddresses = Conference::parseResourceLists(content);
-			if (!invitedAddresses.empty()) {
-				for (const auto & address : invitedAddresses) {
-					conferenceInfo->addParticipant(address);
-				}
-				break;
-			}
-		}
-
-		// Start/End time
-		const auto & startTime = L_GET_PRIVATE(localParams)->getStartTime();
-		auto actualStartTime = ((startTime < 0) ? ms_time(NULL) : startTime);
-		const auto & endTime = L_GET_PRIVATE(localParams)->getEndTime();
-		auto actualEndTime = ((endTime < 0) ? ms_time(NULL) : endTime);
-		auto duration = static_cast<int>((actualEndTime - actualStartTime)/60);
-		if (duration > 0) {
-			conferenceInfo->setDuration(duration);
-		}
-		conferenceInfo->setDateTime(actualStartTime);
-
-		// Subject
-		const auto & subject = op->getSubject();
-		if (!subject.empty()) {
-			conferenceInfo->setSubject(subject);
-		}
-
-		const auto & description = L_GET_PRIVATE(localParams)->getDescription();
-		if (!description.empty()) {
-			conferenceInfo->setDescription(description);
-		}
-
-		#ifdef HAVE_DB_STORAGE
-		auto &mainDb = getCore()->getPrivate()->mainDb;
-		if (mainDb) mainDb->insertConferenceInfo(conferenceInfo);
-		#endif
-
-		linphone_core_notify_conference_info_created(getCore()->getCCore(), conferenceInfo->toC());
-
-		return conferenceInfo;
-	}
-
-	return nullptr;
 }
 
 LINPHONE_END_NAMESPACE
