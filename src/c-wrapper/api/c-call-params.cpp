@@ -129,6 +129,24 @@ void linphone_call_params_set_supported_encryptions (LinphoneCallParams *params,
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setSupportedEncryptions(encEnumList);
 }
 
+bctbx_list_t* linphone_call_params_get_srtp_suites (const LinphoneCallParams *call_params) {
+	const auto suitesList = L_GET_CPP_PTR_FROM_C_OBJECT(call_params)->getSrtpSuites();
+	bctbx_list_t * encryption_list = NULL;
+	for (const auto & suite : suitesList) {
+		encryption_list = bctbx_list_append(encryption_list, LINPHONE_INT_TO_PTR(suite));
+	}
+	return encryption_list;
+}
+
+void linphone_call_params_set_srtp_suites (LinphoneCallParams *call_params, bctbx_list_t* srtpSuites) {
+	std::list<MSCryptoSuite> suitesList;
+	for(bctbx_list_t * suite = srtpSuites;suite!=NULL;suite=suite->next){
+		suitesList.push_back(static_cast<MSCryptoSuite>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(suite))));
+	}
+
+	L_GET_CPP_PTR_FROM_C_OBJECT(call_params)->setSrtpSuites(suitesList);
+}
+
 void linphone_call_params_set_custom_headers (LinphoneCallParams *params, const SalCustomHeader *ch) {
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setCustomHeaders(ch);
 }

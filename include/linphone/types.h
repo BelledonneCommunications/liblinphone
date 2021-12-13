@@ -24,6 +24,7 @@
 #include "ortp/payloadtype.h"
 #include "mediastreamer2/msinterfaces.h"
 #include "mediastreamer2/msvideo.h"
+#include "mediastreamer2/ms_srtp.h"
 #include "linphone/defs.h"
 
 // For migration purpose.
@@ -745,6 +746,21 @@ typedef enum _LinphoneMediaEncryption {
 	LinphoneMediaEncryptionZRTP = 2, /**< Use ZRTP media encryption */
 	LinphoneMediaEncryptionDTLS = 3 /**< Use DTLS media encryption */
 } LinphoneMediaEncryption;
+
+/**
+ * @brief Enum describing type of SRTP encryption suite
+ * @ingroup media_parameters
+**/
+typedef enum _LinphoneSrtpSuite {
+	LinphoneAESCM128HMACSHA180 = 0,
+	LinphoneAESCM128HMACSHA132 = 1,
+	LinphoneAES192CMHMACSHA180 = 2,
+	LinphoneAES192CMHMACSHA132 = 3,
+	LinphoneAES256CMHMACSHA180 = 4,
+	LinphoneAES256CMHMACSHA132 = 5,
+	LinphoneAEADAES128GCM = 6,
+	LinphoneAEADAES256GCM = 7
+} LinphoneSrtpSuite;
 
 /**
  * @brief Enum describing the ZRTP SAS validation status of a peer URI.

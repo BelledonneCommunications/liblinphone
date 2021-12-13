@@ -37,6 +37,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	inConference = src->inConference;
 	conferenceId = src->conferenceId;
 	from = src->from;
+	srtpSuites = src->srtpSuites;
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
 	capabilityNegotiation = src->capabilityNegotiation;
@@ -208,6 +209,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
 	d->conferenceId = "";
 	d->from = "";
+	d->srtpSuites = std::list<MSCryptoSuite>{};
 	d->privacy = LinphonePrivacyDefault;
 	d->startTime = (time_t)-1;
 	d->endTime = (time_t)-1;
@@ -308,6 +310,15 @@ const char* CallSessionParams::getFromHeader() const {
 	return (d->from.empty()?NULL:d->from.c_str()); // C style API, return NULL when the string is empty
 }
 // -----------------------------------------------------------------------------
+void CallSessionParams::setSrtpSuites (const std::list<MSCryptoSuite> &srtpSuites) {
+	L_D();
+	d->srtpSuites = srtpSuites;
+}
+
+const std::list<MSCryptoSuite>& CallSessionParams::getSrtpSuites () const {
+	L_D();
+	return d->srtpSuites;
+}
 
 LinphoneProxyConfig *CallSessionParams::getProxyConfig() const {
 	L_D();
