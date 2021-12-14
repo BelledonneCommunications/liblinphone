@@ -2880,7 +2880,7 @@ void MainDb::init () {
 
 		*session << "DROP VIEW IF EXISTS conference_call_event_view";
 		*session << "CREATE VIEW conference_call_event_view AS"
-		"  SELECT id, type, creation_time, conference_call_id, from_sip_address_id, to_sip_address_id, direction, conference_call.duration AS call_duration,"
+		"  SELECT event.id, type, creation_time, conference_call_id, from_sip_address_id, to_sip_address_id, direction, conference_call.duration AS call_duration,"
 		"    conference_call.start_time AS call_start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id,"
 		"    organizer_sip_address_id, uri_sip_address_id, conference_info.start_time AS conf_start_time, conference_info.duration AS conf_duration,"
 		"    subject, description"
@@ -4714,7 +4714,7 @@ std::shared_ptr<CallLog> MainDb::getCallLog (const std::string &callId, int limi
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT c.id, from_sip_address.value, to_sip_address.value, direction, duration, start_time,"
 		"  connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
-		" FROM conference_call as c, sip_address AS from_sip_address, sip_address AS to_sip_address";
+		" FROM (conference_call as c, sip_address AS from_sip_address, sip_address AS to_sip_address)";
 
 	if (limit > 0) {
 		query += " INNER JOIN (SELECT id from conference_call ORDER BY id DESC LIMIT " + std::to_string(limit) + ") as c2 ON c.id = c2.id";
