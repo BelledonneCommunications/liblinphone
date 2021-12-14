@@ -680,13 +680,14 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 		if (message->getState() != ChatMessage::State::FileTransferError) {
 			// Remove the FileTransferContent from the message and store the FileContent
 			FileContent *fileContent = currentFileContentToTransfer;
-			message->getPrivate()->addContent(fileContent);
 			
 			if (currentFileTransferContent != nullptr) {
 				lInfo() << "Found downloaded file transfer content [" << currentFileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
-				message->getPrivate()->removeContent(currentFileTransferContent);
+				message->getPrivate()->replaceContent(currentFileTransferContent, fileContent);
 				delete currentFileTransferContent;
 				currentFileTransferContent = nullptr;
+			} else {
+				message->getPrivate()->addContent(fileContent);
 			}
 
 			releaseHttpRequest();
