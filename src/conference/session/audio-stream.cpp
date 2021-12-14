@@ -441,7 +441,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
+//	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute

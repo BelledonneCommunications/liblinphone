@@ -1396,8 +1396,10 @@ shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<Conferen
 		lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
 		return nullptr;
 	}
-	Address conferenceFactoryUri = Address(linphone_address_as_string_uri_only(factoryUri));
+	auto conferenceFactoryUriStr = linphone_address_as_string_uri_only(factoryUri);
 	linphone_address_unref(factoryUri);
+	Address conferenceFactoryUri = Address(conferenceFactoryUriStr);
+	ms_free(conferenceFactoryUriStr);
 
 	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
 	if (!localAddr.hasGruu()) {

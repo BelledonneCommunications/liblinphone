@@ -4621,8 +4621,7 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 		stats laure_stats = laure->stat;
 		stats marie_stats = marie->stat;
 
-		const LinphoneCallParams *old_params = linphone_call_get_params(michelle_called_by_marie);
-		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
+		LinphoneCallParams * new_params = linphone_core_create_call_params(marie->lc, michelle_called_by_marie);
 		linphone_call_params_enable_video (new_params, !enable_video);
 		linphone_call_update(michelle_called_by_marie, new_params);
 		linphone_call_params_unref (new_params);
@@ -6745,7 +6744,7 @@ static void remote_participant_adds_video_during_conference(void) {
 	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);
 
-	add_calls_to_local_conference(lcs, marie, NULL, participants, TRUE);
+	add_calls_to_local_conference(lcs, marie, conf, participants, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -6807,8 +6806,7 @@ static void remote_participant_adds_video_during_conference(void) {
 	stats michelle_initial_stats = michelle->stat;
 
 	LinphoneCall * pauline_conf_call = linphone_core_get_call_by_remote_address2(pauline->lc, marie->identity);
-	const LinphoneCallParams *pauline_old_params = linphone_call_get_params(pauline_conf_call);
-	LinphoneCallParams * pauline_new_params = linphone_call_params_copy(pauline_old_params);
+	LinphoneCallParams * pauline_new_params = linphone_core_create_call_params(pauline->lc, pauline_conf_call);
 	linphone_call_params_enable_video (pauline_new_params, TRUE);
 	linphone_call_update(pauline_conf_call, pauline_new_params);
 	linphone_call_params_unref (pauline_new_params);
@@ -7843,21 +7841,24 @@ end:
 
 }
 
-/*
-static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, bool_t enable_video, bool_t exp_video_enabled) {
+static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, bool_t enable_video, bctbx_list_t * participants, const LinphoneAddress * conference_address) {
 
-	LinphoneConference *m1_conference = linphone_core_get_conference(m1->lc);
+	LinphoneConference *m1_conference = linphone_core_search_conference(m1->lc, NULL, NULL, conference_address, NULL);
+	BC_ASSERT_PTR_NOT_NULL(m1_conference);
 	bool_t expected_m1_video_capability = FALSE;
 	if (m1_conference) {
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m1_conference);
 		expected_m1_video_capability = linphone_conference_params_is_video_enabled(params);
+		BC_ASSERT_TRUE(linphone_conference_is_in(m1_conference));
 	}
 
-	LinphoneConference *m2_conference = linphone_core_get_conference(m2->lc);
+	LinphoneConference *m2_conference = linphone_core_search_conference(m2->lc, NULL, NULL, conference_address, NULL);
+	BC_ASSERT_PTR_NOT_NULL(m2_conference);
 	bool_t expected_m2_video_capability = FALSE;
 	if (m2_conference) {
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m2_conference);
 		expected_m2_video_capability = linphone_conference_params_is_video_enabled(params);
+		BC_ASSERT_TRUE(linphone_conference_is_in(m2_conference));
 	}
 
 	LinphoneCall * m1_calls_m2 = linphone_core_get_call_by_remote_address2(m1->lc, m2->identity);
@@ -7866,11 +7867,24 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 	LinphoneCall * m2_calls_m1 = linphone_core_get_call_by_remote_address2(m2->lc, m1->identity);
 	BC_ASSERT_PTR_NOT_NULL(m2_calls_m1);
 
+	bctbx_list_t* lcs=NULL;
+	stats* initial_participants_stats = NULL;
+	int counter = 1;
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		lcs=bctbx_list_append(lcs,m->lc);
+
+		// Participant stats
+		initial_participants_stats = (stats*)realloc(initial_participants_stats, counter * sizeof(stats));
+		initial_participants_stats[counter - 1] = m->stat;
+		counter++;
+	}
+
 	if (m1_calls_m2) {
+ms_message("%s - DEBUG DEBUG  m1 %s m2 %s enable video %s\n", __func__, linphone_core_get_identity(m1->lc), linphone_core_get_identity(m2->lc), (enable_video ? "true" : "false"));
 		stats initial_m2_stat = m2->stat;
 		stats initial_m1_stat = m1->stat;
-		const LinphoneCallParams *old_params = linphone_call_get_params(m1_calls_m2);
-		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
+		LinphoneCallParams * new_params = linphone_core_create_call_params(m1->lc, m1_calls_m2);
 		linphone_call_params_enable_video (new_params, enable_video);
 		linphone_call_update(m1_calls_m2, new_params);
 		linphone_call_params_unref (new_params);
@@ -7880,7 +7894,7 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		int defer_update = !!linphone_config_get_int(linphone_core_get_config(m2->lc), "sip", "defer_update_default", FALSE);
 		if (defer_update == TRUE) {
 			LinphoneCallParams * m2_params = linphone_core_create_call_params(m2->lc, m2_calls_m1);
-			linphone_call_params_enable_video(m2_params, exp_video_enabled);
+			linphone_call_params_enable_video(m2_params, enable_video);
 			linphone_call_accept_update(m2_calls_m1, m2_params);
 			linphone_call_params_unref(m2_params);
 		}
@@ -7888,32 +7902,67 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallStreamsRunning, initial_m2_stat.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallStreamsRunning, initial_m1_stat.number_of_LinphoneCallStreamsRunning + 1));
 
+		counter = 0;
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_device_media_changed,initial_participants_stats[counter].number_of_participant_device_media_changed+1,3000));
+
+			if ((m != m1) && (m != m2)) {
+				int defer_update = !!linphone_config_get_int(linphone_core_get_config(m->lc), "sip", "defer_update_default", FALSE);
+				if (defer_update == TRUE) {
+					LinphoneCall * m2_calls_m = linphone_core_get_call_by_remote_address2(m->lc, m2->identity);
+					LinphoneCallParams * m_params = linphone_core_create_call_params(m->lc, m2_calls_m);
+					linphone_call_accept_update(m2_calls_m, m_params);
+					linphone_call_params_unref(m_params);
+				}
+			}
+
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_participants_stats[counter].number_of_LinphoneCallStreamsRunning + 1,3000));
+
+			LinphoneConference *m_conference = linphone_core_search_conference(m->lc, NULL, NULL, conference_address, NULL);
+			BC_ASSERT_PTR_NOT_NULL(m_conference);
+			if (m_conference) {
+				BC_ASSERT_TRUE(linphone_conference_is_in(m_conference));
+			}
+			counter++;
+		}
+
 		// Wait for first frame if video is enabled
-		if (exp_video_enabled) {
+		if (enable_video) {
 			// Make sure video is received for participants. For conference we can't because of missing APIs.
 			liblinphone_tester_set_next_video_frame_decoded_cb(m1_calls_m2);
 			BC_ASSERT_TRUE( wait_for(m1->lc, m2->lc, &m1->stat.number_of_IframeDecoded, initial_m1_stat.number_of_IframeDecoded + 1));
 		}
 
 		// Check video parameters
-		const LinphoneCallParams *m1_call_params = linphone_call_get_params(m1_calls_m2);
-		BC_ASSERT_TRUE(linphone_call_params_video_enabled(m1_call_params) == exp_video_enabled);
+		const LinphoneCallParams *m1_call_params = linphone_call_get_current_params(m1_calls_m2);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(m1_call_params) == enable_video);
 		if (!m2_conference) {
-			const LinphoneCallParams *m2_call_params = linphone_call_get_params(m2_calls_m1);
-			BC_ASSERT_TRUE(linphone_call_params_video_enabled(m2_call_params) == exp_video_enabled);
+			const LinphoneCallParams *m2_call_params = linphone_call_get_current_params(m2_calls_m1);
+			BC_ASSERT_TRUE(linphone_call_params_video_enabled(m2_call_params) == enable_video);
 		}
+	}
+
+	if (initial_participants_stats) {
+		ms_free(initial_participants_stats);
 	}
 
 	if (m1_conference) {
 		// Verify that video capabilities are still enabled
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m1_conference);
 		BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == expected_m1_video_capability);
+		BC_ASSERT_TRUE(linphone_conference_is_in(m1_conference));
 	}
 
 	if (m2_conference) {
 		// Verify that video capabilities are still enabled
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m2_conference);
 		BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == expected_m2_video_capability);
+		BC_ASSERT_TRUE(linphone_conference_is_in(m2_conference));
+	}
+
+	if (lcs) {
+		bctbx_list_free(lcs);
 	}
 }
 
@@ -7929,8 +7978,10 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	LinphoneCall* marie_call_michelle;
 	LinphoneCall* michelle_called_by_marie;
 	LinphoneCall* marie_call_laure;
+	LinphoneCall* laure_called_by_marie;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	bctbx_list_t* new_participants=NULL;
+	LinphoneConference *conference = NULL;
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,michelle->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -7961,12 +8012,10 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	LinphoneCallParams * pauline_call_params=linphone_core_create_call_params(pauline->lc, NULL);
 	LinphoneCallParams * laure_call_params=linphone_core_create_call_params(laure->lc, NULL);
 	LinphoneCallParams * michelle_call_params=linphone_core_create_call_params(michelle->lc, NULL);
-	if ((automatically_video_accept == FALSE) && (defer_update == FALSE)) {
-		linphone_call_params_enable_video(marie_call_params,TRUE);
-		linphone_call_params_enable_video(pauline_call_params,TRUE);
-		linphone_call_params_enable_video(laure_call_params,TRUE);
-		linphone_call_params_enable_video(michelle_call_params,TRUE);
-	}
+	linphone_call_params_enable_video(marie_call_params,TRUE);
+	linphone_call_params_enable_video(pauline_call_params,TRUE);
+	linphone_call_params_enable_video(laure_call_params,TRUE);
+	linphone_call_params_enable_video(michelle_call_params,TRUE);
 
 	BC_ASSERT_TRUE(call_with_params(marie,pauline,marie_call_params,pauline_call_params));
 	marie_call_pauline=linphone_core_get_current_call(marie->lc);
@@ -7983,6 +8032,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	marie_call_laure=linphone_core_get_current_call(marie->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure))
 		goto end;
+	laure_called_by_marie=linphone_core_get_current_call(laure->lc);
 
 	linphone_call_params_unref(marie_call_params);
 	linphone_call_params_unref(pauline_call_params);
@@ -7992,84 +8042,111 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, NULL, new_participants, TRUE);
 
-	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
-	BC_ASSERT_PTR_NOT_NULL(marie_conference);
-	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
-	unsigned int no_participants = (unsigned int)bctbx_list_size(new_participants);
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_participants, int, "%d");
-
-	// Wait that the three participants have joined the local conference, by checking the StreamsRunning states
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 2*no_participants, 10000));
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		if (defer_update == TRUE) {
-			linphone_config_set_int(linphone_core_get_config(c), "sip", "defer_update_default", TRUE);
-		}
-	}
-
-	// Enable video
-	bool_t video_enabled = TRUE;
-	set_video_in_conference(lcs, marie, new_participants, video_enabled);
-
-
-	wait_for_list(lcs ,NULL, 0, 2000);
-
-	// Disable video in calls of the remote participants
-	video_enabled = FALSE;
-
-	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		set_video_in_call(m, marie, video_enabled, video_enabled);
-	}
-
-	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_set_video_enabled(conf_params, TRUE);
+	conference = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conference);
-	// Verify that video capabilities are still enabled
-	const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
-	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == TRUE);
+	if (conference) {
+		add_calls_to_local_conference(lcs, marie, conference, new_participants, TRUE);
 
-	wait_for_list(lcs ,NULL, 0, 2000);
+		BC_ASSERT_TRUE(linphone_conference_is_in(conference));
+		unsigned int no_participants = (unsigned int)bctbx_list_size(new_participants);
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_participants, int, "%d");
 
-	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_participants, int, "%d");
+		// Wait that the three participants have joined the local conference, by checking the StreamsRunning states
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 2*no_participants, 10000));
 
-	video_enabled = TRUE;
-	// Video is enabled in the call between Marie and Laure
-	set_video_in_call(laure, marie, video_enabled, video_enabled);
-
-	wait_for_list(lcs ,NULL, 0, 2000);
-
-	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_participants, int, "%d");
-
-	// Disable video capability in conference
-	video_enabled = FALSE;
-	set_video_in_conference(lcs, marie, new_participants, video_enabled);
-
-	wait_for_list(lcs ,NULL, 0, 2000);
-
-	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_participants, int, "%d");
-
-	// Pauline tries to enable video in the current call
-	set_video_in_call(pauline, marie, TRUE, video_enabled);
-
-	wait_for_list(lcs ,NULL, 0, 2000);
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		if (defer_update == TRUE) {
-			linphone_config_set_int(linphone_core_get_config(c), "sip", "defer_update_default", FALSE);
+		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+			if (defer_update == TRUE) {
+				linphone_config_set_int(linphone_core_get_config(c), "sip", "defer_update_default", TRUE);
+			}
 		}
-	}
 
-	terminate_conference(new_participants, marie, NULL, NULL);
+		const LinphoneAddress * conference_address = linphone_conference_get_conference_address(conference);
+
+		// Disable video in calls of the remote participants
+		bool_t video_enabled = FALSE;
+
+		for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			set_video_in_call(m, marie, video_enabled, new_participants, conference_address);
+		}
+
+		// Verify that video capabilities are still enabled
+		const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
+		BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == TRUE);
+
+		wait_for_list(lcs ,NULL, 0, 2000);
+
+		BC_ASSERT_TRUE(linphone_conference_is_in(conference));
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_participants, int, "%d");
+		const LinphoneCallParams *call_params = linphone_call_get_current_params(marie_call_michelle);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(michelle_called_by_marie);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(marie_call_laure);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(laure_called_by_marie);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(marie_call_pauline);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(pauline_called_by_marie);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+
+		video_enabled = TRUE;
+		// Video is enabled in the call between Marie and Laure
+		set_video_in_call(laure, marie, video_enabled, new_participants, conference_address);
+
+		wait_for_list(lcs ,NULL, 0, 2000);
+
+		BC_ASSERT_TRUE(linphone_conference_is_in(conference));
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_participants, int, "%d");
+		call_params = linphone_call_get_current_params(marie_call_michelle);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(michelle_called_by_marie);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(marie_call_laure);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(laure_called_by_marie);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(marie_call_pauline);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(pauline_called_by_marie);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+
+		// Pauline tries to enable video in the current call
+		set_video_in_call(pauline, marie, video_enabled, new_participants, conference_address);
+
+		wait_for_list(lcs ,NULL, 0, 2000);
+
+		call_params = linphone_call_get_current_params(marie_call_michelle);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(michelle_called_by_marie);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(marie_call_laure);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(laure_called_by_marie);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(marie_call_pauline);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+		call_params = linphone_call_get_current_params(pauline_called_by_marie);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+
+		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+			if (defer_update == TRUE) {
+				linphone_config_set_int(linphone_core_get_config(c), "sip", "defer_update_default", FALSE);
+			}
+		}
+
+		terminate_conference(new_participants, marie, conference, NULL);
+	}
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
@@ -8079,6 +8156,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 
 end:
 
+	if (conference) linphone_conference_unref(conference);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
 	destroy_mgr_in_conference(marie);
@@ -8099,6 +8177,7 @@ static void toggle_video_settings_during_conference_without_automatically_accept
 	toggle_video_settings_during_conference_base(FALSE, FALSE);
 }
 
+/*
 static void update_conf_params_during_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
@@ -8481,8 +8560,7 @@ static void try_to_update_call_params_during_conference(void) {
 	if (pauline_called_by_marie) {
 		stats initial_marie_stat = marie->stat;
 		stats initial_pauline_stat = pauline->stat;
-		const LinphoneCallParams *old_params = linphone_call_get_params(pauline_called_by_marie);
-		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
+		LinphoneCallParams * new_params = linphone_core_create_call_params(marie->lc, pauline_called_by_marie);
 		linphone_call_params_enable_video (new_params, TRUE);
 		linphone_call_update(pauline_called_by_marie, new_params);
 		linphone_call_params_unref (new_params);
@@ -8720,7 +8798,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
-			// Particiopant stats
+			// Participant stats
 			initial_participants_stats = (stats*)realloc(initial_participants_stats, counter * sizeof(stats));
 			initial_participants_stats[counter - 1] = m->stat;
 
@@ -10157,9 +10235,9 @@ test_t video_conference_tests[] = {
 	TEST_NO_TAG("Video conference by merging video calls with active speaker layout and local participant disabled", video_conference_created_by_merging_video_calls_with_active_speaker_layout_and_local_participant_disabled),
 //	TEST_NO_TAG("Try to update call parameter during conference", try_to_update_call_params_during_conference),
 //	TEST_NO_TAG("Update conference parameter during conference", update_conf_params_during_conference),
-//	TEST_NO_TAG("Toggle video settings during conference without automatically accept video policy", toggle_video_settings_during_conference_without_automatically_accept_video_policy),
-//	TEST_NO_TAG("Toggle video settings during conference with automatically accept video policy", toggle_video_settings_during_conference_with_automatically_accept_video_policy),
-//	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
+	TEST_NO_TAG("Toggle video settings during conference without automatically accept video policy", toggle_video_settings_during_conference_without_automatically_accept_video_policy),
+	TEST_NO_TAG("Toggle video settings during conference with automatically accept video policy", toggle_video_settings_during_conference_with_automatically_accept_video_policy),
+	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
 //	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
 	TEST_NO_TAG("Eject from 3 participants conference with grid layout", eject_from_3_participants_local_conference_grid_layout),
 	TEST_NO_TAG("Eject from 4 participants conference with grid layout", eject_from_4_participants_conference_grid_layout),

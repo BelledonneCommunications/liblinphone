@@ -196,6 +196,7 @@ void MS2Stream::addAcapToStream(std::shared_ptr<SalMediaDescription> & desc, con
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
+	const auto & mediaDesc = (ctx.localIsOfferer) ? ctx.localMediaDescription : ctx.remoteMediaDescription;
 	localDesc.rtp_addr = getPublicIp();
 	localDesc.rtcp_addr = getPublicIp();
 	
@@ -215,9 +216,13 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		}
 	}
 	if (!isTransportOwner()){
-		/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
-		localDesc.rtp_port = 0;
-		localDesc.setBundleOnly(TRUE);
+		if (mediaDesc->bundles.empty()) {
+			removeFromBundle();
+		} else {
+			/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
+			localDesc.rtp_port = 0;
+			localDesc.setBundleOnly(TRUE);
+		}
 	}
 
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = mSessions.rtp_session? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;

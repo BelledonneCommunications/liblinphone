@@ -1147,6 +1147,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setEndTime(confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
+					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(true);
 				} else {
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(false);
 				}
@@ -1168,6 +1169,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_params_set_end_time(params, confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					linphone_call_params_enable_rtp_bundle(params, TRUE);
+					linphone_call_params_enable_video(params, TRUE);
 				} else {
 					linphone_call_params_enable_video(params, FALSE);
 				}

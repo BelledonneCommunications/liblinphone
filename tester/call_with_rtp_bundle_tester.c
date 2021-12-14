@@ -101,6 +101,7 @@ typedef struct params{
 	bool_t with_ice;
 	bool_t with_dtls_srtp;
 	bool_t with_media_relay;
+	bool_t disable_bundle;
 } params_t;
 
 static void audio_video_call(const params_t *params) {
@@ -181,12 +182,63 @@ static void audio_video_call(const params_t *params) {
 		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)) == LinphoneMediaEncryptionDTLS);
 		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marie_call)) == LinphoneMediaEncryptionDTLS);
 	}
-	
+
 	//make sure receive frame rate computation is done with a significant number of frame
 	wait_for_until(marie->lc,pauline->lc,NULL,0,2000);
 	
 	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(pauline_call)), 8.0, float, "%f");
 	BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(marie_call)), 8.0, float, "%f");
+
+	stats initial_marie_stat = marie->stat;
+	stats initial_pauline_stat = pauline->stat;
+
+	LinphoneCallParams * new_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_video (new_params, FALSE);
+	linphone_call_params_enable_rtp_bundle (new_params, !params->disable_bundle);
+	linphone_call_update(pauline_call, new_params);
+	linphone_call_params_unref (new_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdating, initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// Check video parameters
+	const LinphoneCallParams *pauline_call_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(pauline_call_params));
+	const LinphoneCallParams *marie_call_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_call_params));
+
+	//Wait to see any undesirable side effect
+	wait_for_until(marie->lc,pauline->lc,NULL,0,1000);
+
+	initial_marie_stat = marie->stat;
+	initial_pauline_stat = pauline->stat;
+
+	new_params = linphone_core_create_call_params(marie->lc, marie_call);
+	linphone_call_params_enable_video (new_params, TRUE);
+	linphone_call_update(marie_call, new_params);
+	linphone_call_params_unref (new_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdating, initial_marie_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, initial_pauline_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// Check video parameters
+	pauline_call_params = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_call_params));
+	marie_call_params = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_params));
+	
+	liblinphone_tester_check_rtcp(marie,pauline);
+	liblinphone_tester_set_next_video_frame_decoded_cb(pauline_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_IframeDecoded,initial_pauline_stat.number_of_IframeDecoded + 1));
+	liblinphone_tester_set_next_video_frame_decoded_cb(marie_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,initial_marie_stat.number_of_IframeDecoded + 1));
+
+	//Wait to see any undesirable side effect
+	wait_for_until(marie->lc,pauline->lc,NULL,0,1000);
 
 	end_call(marie,pauline);
 	
@@ -197,6 +249,12 @@ end:
 
 static void simple_audio_video_call(void) {
 	params_t params = {0};
+	audio_video_call(&params);
+}
+
+static void simple_audio_video_call_with_bundle_disable(void) {
+	params_t params = {0};
+	params.disable_bundle = TRUE;
 	audio_video_call(&params);
 }
 
@@ -223,6 +281,7 @@ static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
 	TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
 	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
+	TEST_NO_TAG("Simple audio-video call with bundle disable", simple_audio_video_call_with_bundle_disable),
 	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
 	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp),
 	TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),

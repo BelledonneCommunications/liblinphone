@@ -213,6 +213,7 @@ void MediaSessionPrivate::accepted () {
 
 	/* Reset the internal call update flag, so it doesn't risk to be copied and used in further re-INVITEs */
 	getParams()->getPrivate()->setInternalCallUpdate(false);
+	getCurrentParams()->getPrivate()->setInConference(getParams()->getPrivate()->getInConference());
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 	std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
 	if (!md && (prevState == CallSession::State::OutgoingEarlyMedia) && resultDesc) {
@@ -855,7 +856,7 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 	/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() & sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
 	if (rcp) {
-		if (!fromOffer){
+		//if (!fromOffer){
 			/*
 			 * This is to avoid to re-propose again some streams that have just been declined.
 			 */
@@ -871,12 +872,13 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 				lInfo() << "CallSession [" << q << "]: disabling RTT in our call params because the remote doesn't want it";
 				getParams()->enableRealtimeText(false);
 			}
-		}
+		//}
 		// Real Time Text is always by default accepted when proposed.
 		if (!getParams()->realtimeTextEnabled() && rcp->realtimeTextEnabled())
 			getParams()->enableRealtimeText(true);
 
 		bool isInLocalConference = getParams()->getPrivate()->getInConference();
+		const auto & cCore = q->getCore()->getCCore();
 
 		if (isInLocalConference) {
 			// If the call is in a local conference, then check conference capabilities to know whether the video must be enabled or not
@@ -887,16 +889,23 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 				if (conference) {
 					const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
 					isConferenceVideoCapabilityOn = linphone_conference_params_is_video_enabled(params);
-					if (rcp->videoEnabled() && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
+					if (rcp->videoEnabled() && linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
 						getParams()->enableVideo(isConferenceVideoCapabilityOn);
 					}
 				}
 			}
 		} else {
-			if (rcp->videoEnabled() && q->getCore()->getCCore()->video_policy.automatically_accept && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
+			if (rcp->videoEnabled() && cCore->video_policy.automatically_accept && linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
 				lInfo() << "CallSession [" << q << "]: re-enabling video in our call params because the remote wants it and the policy allows to automatically accept";
 				getParams()->enableVideo(true);
 			}
+		}
+
+		// Enable bundle mode in local parameters if remote offered it and core can accept bundle mode.
+		// In fact, we can have the scenario where bundle mode is only enabled by one of the cores in the call or conference.
+		// If bundle mode has been accepted, then future reINVITEs or UPDATEs must reoffer bundle mode unless the user has explicitely requested to disable it
+		if (rcp->rtpBundleEnabled() && linphone_config_get_bool(linphone_core_get_config(cCore), "rtp", "accept_bundle", TRUE)) {
+			getParams()->enableRtpBundle(true);
 		}
 	}
 }
@@ -1284,19 +1293,17 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 }
 
 void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, SalStreamConfiguration & cfg, const std::string mid){
-	if (cfg.dir != SalStreamInactive) {
-		SalStreamBundle bundle;
-		if (!md->bundles.empty()){
-			bundle = md->bundles.front();
-			// Delete first element
-			md->bundles.erase(md->bundles.begin());
-		}
-		bundle.addStream(cfg, mid);
-		cfg.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
-		/* rtcp-mux must be enabled when bundle mode is proposed.*/
-		cfg.rtcp_mux = TRUE;
-		md->bundles.push_front(bundle);
+	SalStreamBundle bundle;
+	if (!md->bundles.empty()){
+		bundle = md->bundles.front();
+		// Delete first element
+		md->bundles.erase(md->bundles.begin());
 	}
+	bundle.addStream(cfg, mid);
+	cfg.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
+	/* rtcp-mux must be enabled when bundle mode is proposed.*/
+	cfg.rtcp_mux = TRUE;
+	md->bundles.push_front(bundle);
 }
 
 /* This function is to authorize the downgrade from avpf to non-avpf, when avpf is enabled locally but the remote
@@ -1947,18 +1954,15 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	// If the call is linked to a conference, search stream with content main first
 	const SalStreamDescription &oldVideoStream = refMd ? ((conference && (refMd->findStreamWithContent(mainStreamAttrValue) != Utils::getEmptyConstRefObject<SalStreamDescription>())) ? refMd->findStreamWithContent(mainStreamAttrValue) : refMd->findBestStream(SalVideo)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	const auto & callVideoEnabled = getParams()->videoEnabled();
+	auto callVideoEnabled = getParams()->videoEnabled();
 	bool addVideoStream = false;
-	if (localIsOfferer) {
-		if (conference && isInLocalConference) {
-			addVideoStream = isVideoConferenceEnabled;
-			getParams()->enableVideo(isVideoConferenceEnabled);
-		} else {
-			addVideoStream = callVideoEnabled;
-		}
+	if (conference && isInLocalConference) {
+		addVideoStream = isVideoConferenceEnabled;
+	} else {
+		addVideoStream = callVideoEnabled;
 	}
 
-	if ((localIsOfferer && addVideoStream) || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
+	if (addVideoStream || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
 		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
@@ -1966,18 +1970,25 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		bool enableVideoStream = false;
 		// Set direction appropriately to configuration
 		if (conference && isInLocalConference) {
-			enableVideoStream = isVideoConferenceEnabled;
+			const auto joiningConference = (isInLocalConference && !q->getCurrentParams()->getPrivate()->getInConference());
 			if (!isVideoConferenceEnabled) {
+				enableVideoStream = false;
 				videoDir = SalStreamInactive;
 			} else {
+				// Enable video based on conference capabilities if:
+				// - joining conference
+				// - receiving an offer
 				switch (confLayout) {
 					case ConferenceLayout::ActiveSpeaker:
+						enableVideoStream = true;
 						videoDir = SalStreamSendRecv;
 						break;
 					case ConferenceLayout::Grid:
+						enableVideoStream = (localIsOfferer && !joiningConference) ? callVideoEnabled : isVideoConferenceEnabled;
 						videoDir = SalStreamRecvOnly;
 						break;
 					case ConferenceLayout::None:
+						enableVideoStream = (localIsOfferer && !joiningConference) ? callVideoEnabled : isVideoConferenceEnabled;
 						videoDir = getParams()->getPrivate()->getSalVideoDirection();
 						break;
 				}
@@ -2061,7 +2072,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const auto & mdForMainStream = localIsOfferer ? md : refMd;
 	const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
 	if (audioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(audioStreamIndex));
-	const auto videoStreamIndex = (conference || remoteContactAddress.hasParam("isfocus")) ? mdForMainStream->findIdxStreamWithContent(mainStreamAttrValue) : mdForMainStream->findIdxBestStream(SalVideo);
+	const auto videoStreamIndex = ((conference && !isConferenceLayoutNone) || remoteContactAddress.hasParam("isfocus")) ? mdForMainStream->findIdxStreamWithContent(mainStreamAttrValue) : mdForMainStream->findIdxBestStream(SalVideo);
 	if (videoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(videoStreamIndex));
 	const auto textStreamIndex = mdForMainStream->findIdxBestStream(SalText);
 	if (textStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(textStreamIndex));
@@ -3763,6 +3774,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 	if (d->getCurrentParams() == msp)
 		lWarning() << "MediaSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
+
 		d->localIsOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->broken = false;
 		d->setState(nextState, "Updating call");
