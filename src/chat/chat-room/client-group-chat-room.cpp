@@ -818,6 +818,7 @@ void ClientGroupChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> 
 		if (it == pendingExhumeMessages.end())
 			pendingExhumeMessages.push_back(chatMessage);
 	} else if (q->getState() == ConferenceInterface::State::Instantiated || q->getState() == ConferenceInterface::State::CreationPending) {
+		lInfo() << "Trying to send a message [" << chatMessage << "] in a chat room that's not created yet, queuing the message and it will be sent later";
 		auto it = std::find(pendingCreationMessages.begin(), pendingCreationMessages.end(), chatMessage);
 		if (it == pendingCreationMessages.end())
 			pendingCreationMessages.push_back(chatMessage);
@@ -923,6 +924,8 @@ void ClientGroupChatRoomPrivate::removeConferenceIdFromPreviousList(const Confer
 
 void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	L_D();
+
+	setConferenceId(ConferenceId(addr, getConferenceId().getLocalAddress()));
 	lInfo() << "Conference [" << conference->getConferenceId() << "] has been created";
 
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(addr);
@@ -930,7 +933,6 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	static_pointer_cast<RemoteConference>(getConference())->focus->clearDevices();
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(addr);
 
-	setConferenceId(ConferenceId(addr, getConferenceId().getLocalAddress()));
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	setState(ConferenceInterface::State::Created);
 }
@@ -1013,6 +1015,16 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
 	_linphone_chat_room_notify_conference_joined(cr, L_GET_C_BACK_PTR(event));
+
+	// Now that chat room has been inserted in database, we can send any pending message
+	for (const auto &message: d->pendingCreationMessages) {
+		lInfo() << "Found message [" << message << "] waiting for chat room to be created, sending it now";
+		// First we need to update from & to address of the message, 
+		// as it was created at a time where the remote address of the chat room may not have been known
+		message->getPrivate()->setChatRoom(getSharedFromThis());
+		d->sendChatMessage(message);
+	}
+	d->pendingCreationMessages.clear();
 
 	d->bgTask.stop();
 }

@@ -88,6 +88,7 @@ private:
 	// 1-1 exhume related
 	bool localExhumePending = false;
 	std::list<std::shared_ptr<ChatMessage>> pendingExhumeMessages;
+	std::list<std::shared_ptr<ChatMessage>> pendingCreationMessages;
 	std::list<ConferenceId> previousConferenceIds;
 	
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);

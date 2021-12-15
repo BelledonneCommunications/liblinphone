@@ -742,13 +742,6 @@ void ChatRoom::setState (ConferenceInterface::State newState) {
 		if (getState() != newState) {
 			conference->setState(newState);
 			d->notifyStateChanged();
-
-			if (newState == ConferenceInterface::State::Created) {
-				for (const auto &message: d->pendingCreationMessages) {
-					d->sendChatMessage(message);
-				}
-				d->pendingCreationMessages.clear();
-			}
 		}
 	}
 }
