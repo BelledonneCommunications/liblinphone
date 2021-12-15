@@ -53,6 +53,9 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setConferenceFactoryAddress (const Address &address) override { m_factoryAddress = address; };
 		const Address getFactoryAddress() const { return m_factoryAddress; };
 
+		void setStatic(bool enable) {m_static = enable;}
+		bool isStatic() const {return m_static;}
+
 		virtual void enableVideo(bool enable) override {m_enableVideo = enable;}
 		bool videoEnabled() const {return m_enableVideo;}
 
@@ -111,6 +114,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		time_t m_startTime = (time_t)-1;
 		time_t m_endTime = (time_t)-1;
 		LinphoneProxyConfig * m_proxyCfg = nullptr;
+		bool m_static = false;
 };
 
 LINPHONE_END_NAMESPACE

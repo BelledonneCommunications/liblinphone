@@ -49,6 +49,7 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_startTime = params.m_startTime;
 	m_endTime = params.m_endTime;
 	m_proxyCfg = params.m_proxyCfg;
+	m_static = params.m_static;
 }
 
 LINPHONE_END_NAMESPACE

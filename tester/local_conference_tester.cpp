@@ -2501,14 +2501,14 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 	return conference_address;
 }
 
-static void create_conference_base (time_t start_time, int duration, bool_t add_uninvited_participant, LinphoneConferenceParticipantListType participant_list_type, bool_t remove_participant) {
+static void create_conference_base (time_t start_time, int duration, bool_t add_uninvited_participant, LinphoneConferenceParticipantListType participant_list_type, bool_t remove_participant, const LinphoneMediaEncryption encryption, bool_t enable_video) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
-		ClientConference laure("laure_rc_udp", focus.getIdentity().asAddress());
-		ClientConference michelle("michelle_rc_udp", focus.getIdentity().asAddress());
-		
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
+
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
 		focus.registerAsParticipantDevice(laure);
@@ -2516,6 +2516,42 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 
 		setup_conference_info_cbs(marie.getCMgr());
 
+		if (enable_video) {
+			LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+			linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+			linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+			linphone_core_set_video_activation_policy(marie.getLc(), pol);
+			linphone_core_set_video_activation_policy(focus.getLc(), pol);
+			linphone_core_set_video_activation_policy(pauline.getLc(), pol);
+			linphone_core_set_video_activation_policy(laure.getLc(), pol);
+			linphone_core_set_video_activation_policy(michelle.getLc(), pol);
+
+			linphone_video_activation_policy_unref(pol);
+
+			linphone_core_set_video_device(marie.getLc(), liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(marie.getLc(), TRUE);
+			linphone_core_enable_video_display(marie.getLc(), TRUE);
+
+			linphone_core_set_video_device(pauline.getLc(), liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(pauline.getLc(), TRUE);
+			linphone_core_enable_video_display(pauline.getLc(), TRUE);
+
+			linphone_core_set_video_device(marie.getLc(), liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(laure.getLc(), TRUE);
+			linphone_core_enable_video_display(laure.getLc(), TRUE);
+
+			linphone_core_set_video_device(michelle.getLc(), liblinphone_tester_mire_id);
+			linphone_core_enable_video_capture(michelle.getLc(), TRUE);
+			linphone_core_enable_video_display(michelle.getLc(), TRUE);
+
+			linphone_core_enable_video_capture(focus.getLc(), TRUE);
+			linphone_core_enable_video_display(focus.getLc(), TRUE);
+		}
+
+		linphone_core_set_media_encryption(marie.getLc(),encryption);
+		linphone_core_set_media_encryption(pauline.getLc(),encryption);
+		linphone_core_set_media_encryption(laure.getLc(),encryption);
+		linphone_core_set_media_encryption(michelle.getLc(),encryption);
 		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
 		linphone_core_set_conference_participant_list_type(focus.getLc(), participant_list_type);
 
@@ -2543,6 +2579,12 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			LinphoneCallParams *new_params = linphone_core_create_call_params(mgr->lc, nullptr);
+			// Multistream ZRTP is not supported yet
+			if (encryption == LinphoneMediaEncryptionZRTP) {
+				linphone_call_params_set_media_encryption (new_params, LinphoneMediaEncryptionSRTP);
+			} else {
+				linphone_call_params_set_media_encryption (new_params, encryption);
+			}
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
 			linphone_call_params_unref(new_params);
 		}
@@ -2832,6 +2874,11 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateTerminated, 1, 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateDeleted, 1, 10000));
 
+			// Explicitely terminate conference as those on server are static by default
+			LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(focus.getLc()));
+			LinphoneConference * pconference = linphone_core_search_conference(focus.getLc(), NULL, uri, confAddr, NULL);
+			linphone_address_unref(uri);
+			linphone_conference_terminate(pconference);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending, 1, 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, 1, 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, 1, 10000));
@@ -2848,23 +2895,27 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 }
 
 static void create_simple_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE);
+}
+
+static void create_simple_srtp_conference (void) {
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE);
 }
 
 static void create_conference_with_uninvited_participant (void) {
-	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE);
+	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, FALSE);
 }
 
 static void create_conference_with_uninvited_participant_not_allowed (void) {
-	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE);
+	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE);
 }
 
 static void create_conference_starting_immediately (void) {
-	create_conference_base (ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE);
+	create_conference_base (ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE);
 }
 
 static void create_conference_starting_in_the_past (void) {
-	create_conference_base (ms_time(NULL) - 600, 900, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE);
+	create_conference_base (ms_time(NULL) - 600, 900, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE, LinphoneMediaEncryptionNone, FALSE);
 }
 
 #if 0
@@ -2873,7 +2924,7 @@ static void conference_with_participant_added_outside_valid_time_slot (bool_t be
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
-		ClientConference laure("laure_rc_udp", focus.getIdentity().asAddress());
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress());
 		
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -2945,7 +2996,7 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
-		ClientConference laure("laure_rc_udp", focus.getIdentity().asAddress());
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress());
 		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
 		
 		focus.registerAsParticipantDevice(marie);
@@ -3416,6 +3467,9 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateTerminated, pauline_stat.number_of_LinphoneConferenceStateTerminated + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateDeleted, pauline_stat.number_of_LinphoneConferenceStateDeleted + 1, 10000));
 
+		// Explicitely terminate conference as those on server are static by default
+		LinphoneConference * conference2 = linphone_core_search_conference(focus.getLc(), NULL, focusUri, confAddr2, NULL);
+		linphone_conference_terminate(conference2);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending, focus_stat.number_of_LinphoneConferenceStateTerminationPending + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, focus_stat.number_of_LinphoneConferenceStateTerminated + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, focus_stat.number_of_LinphoneConferenceStateDeleted + 1, 10000));
@@ -3428,7 +3482,7 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 			LinphoneConference * pconference = linphone_core_search_conference(mgr->lc, NULL, uri, confAddr1, NULL);
 			BC_ASSERT_PTR_NOT_NULL(pconference);
 			if (pconference) {
-				char * conference_address_str = (confAddr2) ? linphone_address_as_string(confAddr2) : ms_strdup("<unknown>");
+				char * conference_address_str = (confAddr1) ? linphone_address_as_string(confAddr1) : ms_strdup("<unknown>");
 				ms_message("%s is terminating conference %s", linphone_core_get_identity(mgr->lc), conference_address_str);
 				ms_free(conference_address_str);
 				linphone_conference_terminate(pconference);
@@ -3445,6 +3499,9 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd, focus_stat.number_of_LinphoneCallEnd + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased, focus_stat.number_of_LinphoneCallReleased + 1, 10000));
+
+		// Explicitely terminate conference as those on server are static by default
+		linphone_conference_terminate(conference1);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminationPending, focus_stat.number_of_LinphoneConferenceStateTerminationPending + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateTerminated, focus_stat.number_of_LinphoneConferenceStateTerminated + 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneConferenceStateDeleted, focus_stat.number_of_LinphoneConferenceStateDeleted + 1, 10000));
@@ -3487,6 +3544,7 @@ static test_t local_conference_tests[] = {
 	TEST_NO_TAG("Group chat Server chat room with ephemeral message mode changed", LinphoneTest::group_chat_room_server_ephemeral_mode_changed),
 	TEST_ONE_TAG("Multi domain chatroom", LinphoneTest::multidomain_group_chat_room,"LeaksMemory"), /* because of coreMgr restart*/
 	TEST_NO_TAG("Create simple conference", LinphoneTest::create_simple_conference),
+	TEST_NO_TAG("Create simple SRTP conference", LinphoneTest::create_simple_srtp_conference),
 	TEST_NO_TAG("Create conference with uninvited participant", LinphoneTest::create_conference_with_uninvited_participant),
 	TEST_NO_TAG("Create conference with uninvited participant not allowed", LinphoneTest::create_conference_with_uninvited_participant_not_allowed),
 	TEST_NO_TAG("Create conference starting immediately", LinphoneTest::create_conference_starting_immediately),

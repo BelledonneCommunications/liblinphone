@@ -540,10 +540,12 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	confParams->setSubject(op->getSubject());
 	confParams->enableLocalParticipant(false);
 	confParams->enableOneParticipantConference(true);
+	confParams->setStatic(true);
 
 	MediaSessionParams msp;
 	msp.enableAudio(audioEnabled);
 	msp.enableVideo(videoEnabled);
+	msp.getPrivate()->setInConference(true);
 
 	if (times.size() > 0) {
 		const auto startTime = times.front().first;
@@ -1079,7 +1081,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	const auto & inputDevice = (coreCurrentCall) ? coreCurrentCall->getInputAudioDevice() : nullptr;
 
 	// Add participant only if creation is successful or call was previously part of the conference
-	bool canAddParticipant = ((callConfId.compare(confId) == 0) || ((getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created)));
+	bool canAddParticipant = ((callConfId.compare(confId) == 0) || (getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created));
 	if (canAddParticipant) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 
@@ -1372,7 +1374,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	}
 
 	// If call that we are trying to remove from the conference is in paused by remote state, then it temporarely left the conference therefore it must not be terminated
-	if ((getParticipantCount() == 0) && (sessionState != LinphonePrivate::CallSession::State::PausedByRemote)){
+	if (!confParams->isStatic() && (getParticipantCount() == 0) && (sessionState != LinphonePrivate::CallSession::State::PausedByRemote)){
 		leave();
 		if (getState() == ConferenceInterface::State::TerminationPending) {
 			setState(ConferenceInterface::State::Terminated);
@@ -1385,7 +1387,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 }
 
 void LocalConference::checkIfTerminated() {
-	if (getParticipantCount() == 0) {
+	if (!confParams->isStatic() && (getParticipantCount() == 0)) {
 		leave();
 		if (getState() == ConferenceInterface::State::TerminationPending) {
 			setState(ConferenceInterface::State::Terminated);
@@ -1442,6 +1444,9 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 
 int LocalConference::terminate () {
 	lInfo() << "Terminate conference " << getConferenceAddress();
+
+	// Take a ref because the conference may be immediately go to deleted state if terminate is called when there are 0 participants
+	const auto ref = getSharedFromThis();
 	setState(ConferenceInterface::State::TerminationPending);
 
 	auto participantIt = participants.begin();

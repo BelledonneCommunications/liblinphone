@@ -619,9 +619,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						}
 						if (remoteParams->videoEnabled()) {
 							auto videoStats = static_pointer_cast<MediaSession>(session)->getVideoStats();
-							auto iceState = linphone_call_stats_get_ice_state(videoStats);
-							iceNegotiationOngoing |= (iceState == LinphoneIceStateInProgress);
-							linphone_call_stats_unref(videoStats);
+							if (videoStats) {
+								auto iceState = linphone_call_stats_get_ice_state(videoStats);
+								iceNegotiationOngoing |= (iceState == LinphoneIceStateInProgress);
+								linphone_call_stats_unref(videoStats);
+							}
 						}
 						if (!iceNegotiationOngoing || !!!linphone_config_get_int(linphone_core_get_config(lc), "sip", "update_call_when_ice_completed", true)){
 							conference->addParticipant(getSharedFromThis());

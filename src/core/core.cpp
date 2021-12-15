@@ -1435,6 +1435,7 @@ shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<Conferen
 	linphone_call_params_set_start_time(params, confParams->getStartTime());
 	linphone_call_params_set_end_time(params, confParams->getEndTime());
 	linphone_call_params_enable_video(params, confParams->videoEnabled());
+	linphone_call_params_set_media_encryption (params, LinphoneMediaEncryptionNone);
 	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
 
 	auto participant = Participant::create(nullptr, localAddr);
