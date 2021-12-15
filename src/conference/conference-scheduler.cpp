@@ -79,6 +79,10 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	const auto identityAddress = mConferenceInfo->getOrganizer();
 	conferenceParams->enableVideo(true);
 	conferenceParams->setSubject(mConferenceInfo->getSubject());
+
+	if (mConferenceInfo->getDateTime() <= 0) {
+		mConferenceInfo->setDateTime(ms_time(NULL));
+	}
 	if (mConferenceInfo->getDateTime() > -1) {
 		conferenceParams->setStartTime(mConferenceInfo->getDateTime());
 		if (mConferenceInfo->getDuration() > 0) {
