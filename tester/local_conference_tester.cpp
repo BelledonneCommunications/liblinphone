@@ -2412,7 +2412,7 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 			if (!conference_address) {
 				conference_address = linphone_address_clone(linphone_conference_info_get_uri(conf_info_from_original_content));
 			}
-			LinphoneConferenceInfo * conf_info_in_db = linphone_core_get_conference_information_from_uri(mgr->lc, conference_address);
+			LinphoneConferenceInfo * conf_info_in_db = linphone_core_find_conference_information_from_uri(mgr->lc, conference_address);
 			if(!BC_ASSERT_PTR_NOT_NULL(conf_info_in_db)) {
 				return conference_address;
 			}
@@ -2460,7 +2460,7 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 		participant_stats.pop_front();
 	}
 
-	LinphoneConferenceInfo * conf_info_in_db = linphone_core_get_conference_information_from_uri(organizer.getLc(), conference_address);
+	LinphoneConferenceInfo * conf_info_in_db = linphone_core_find_conference_information_from_uri(organizer.getLc(), conference_address);
 	if(BC_ASSERT_PTR_NOT_NULL(conf_info_in_db)) {
 		BC_ASSERT_TRUE(linphone_address_weak_equal(organizer.getCMgr()->identity, linphone_conference_info_get_organizer(conf_info_in_db)));
 		BC_ASSERT_TRUE(linphone_address_weak_equal(conference_address, linphone_conference_info_get_uri(conf_info_in_db)));

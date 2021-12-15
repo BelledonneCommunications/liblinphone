@@ -5993,13 +5993,13 @@ LINPHONE_PUBLIC void linphone_core_set_default_conference_layout(LinphoneCore *l
 LINPHONE_PUBLIC LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc);
 
 /**
- * Retrieve the conference information linked to the provided URI.
+ * Retrieve the conference information linked to the provided URI if any.
  * @param core #LinphoneCore object. @notnil
  * @param uri #LinphoneAddress of the uri. @notnil
- * @return The #LinphoneConferenceInfo. @tobefreed @maybenil
+ * @return The #LinphoneConferenceInfo found if any, NULL otherwise. @tobefreed @maybenil
  * @ingroup conference
  */
-LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_core_get_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri);
+LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri);
 
 /**
  * Retrieve the list of conference information on DB.

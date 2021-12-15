@@ -162,34 +162,66 @@ void linphone_nat_policy_clear(LinphoneNatPolicy *policy) {
 }
 
 bool_t linphone_nat_policy_stun_enabled(const LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_stun_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_stun_enabled(const LinphoneNatPolicy *policy) {
 	return policy->stun_enabled;
 }
 
 void linphone_nat_policy_enable_stun(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_stun_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_stun_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->stun_enabled = enable;
 }
 
 bool_t linphone_nat_policy_turn_enabled(const LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_turn_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_turn_enabled(const LinphoneNatPolicy *policy) {
 	return policy->turn_enabled;
 }
 
 void linphone_nat_policy_enable_turn(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_turn_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_turn_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->turn_enabled = enable;
 }
 
 bool_t linphone_nat_policy_ice_enabled(const LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_ice_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_ice_enabled(const LinphoneNatPolicy *policy) {
 	return policy->ice_enabled;
 }
 
 void linphone_nat_policy_enable_ice(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_ice_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_ice_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->ice_enabled = enable;
 }
 
 bool_t linphone_nat_policy_upnp_enabled(const LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_upnp_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_upnp_enabled(const LinphoneNatPolicy *policy) {
 	return policy->upnp_enabled;
 }
 
 void linphone_nat_policy_enable_upnp(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_upnp_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_upnp_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->upnp_enabled = enable;
 	if (enable) {
 		ms_warning("uPnP NAT policy is no longer supported");
@@ -369,26 +401,50 @@ LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *lc
 }
 
 void linphone_nat_policy_enable_udp_turn_transport(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_udp_turn_transport_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_udp_turn_transport_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->turn_udp_enabled = enable;
 }
 
 bool_t linphone_nat_policy_udp_turn_transport_enabled(LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_udp_turn_transport_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_udp_turn_transport_enabled(LinphoneNatPolicy *policy) {
 	return policy->turn_udp_enabled;
 }
 
 void linphone_nat_policy_enable_tcp_turn_transport(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_tcp_turn_transport_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_tcp_turn_transport_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->turn_tcp_enabled = enable;
 }
 
 bool_t linphone_nat_policy_tcp_turn_transport_enabled(LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_tcp_turn_transport_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_tcp_turn_transport_enabled(LinphoneNatPolicy *policy) {
 	return policy->turn_tcp_enabled;
 }
 
 void linphone_nat_policy_enable_tls_turn_transport(LinphoneNatPolicy *policy, bool_t enable) {
+	linphone_nat_policy_set_tls_turn_transport_enabled(policy, enable);
+}
+
+void linphone_nat_policy_set_tls_turn_transport_enabled(LinphoneNatPolicy *policy, bool_t enable) {
 	policy->turn_tls_enabled = enable;
 }
 
 bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNatPolicy *policy) {
+	return linphone_nat_policy_is_tls_turn_transport_enabled(policy);
+}
+
+bool_t linphone_nat_policy_is_tls_turn_transport_enabled(LinphoneNatPolicy *policy) {
 	return policy->turn_tls_enabled;
 }
 

@@ -79,8 +79,25 @@ LINPHONE_PUBLIC void linphone_nat_policy_clear(LinphoneNatPolicy *policy);
  * Tell whether STUN is enabled.
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether STUN is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_stun_enabled() instead.
  */
 LINPHONE_PUBLIC bool_t linphone_nat_policy_stun_enabled(const LinphoneNatPolicy *policy);
+
+/**
+ * Tell whether STUN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether STUN is enabled.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_stun_enabled(const LinphoneNatPolicy *policy);
+
+/**
+ * Enable STUN.
+ * If TURN is also enabled, TURN will be used instead of STUN.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable STUN.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_stun_enabled() instead.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_stun(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Enable STUN.
@@ -88,14 +105,31 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_stun_enabled(const LinphoneNatPolicy 
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable STUN.
  */
-LINPHONE_PUBLIC void linphone_nat_policy_enable_stun(LinphoneNatPolicy *policy, bool_t enable);
+LINPHONE_PUBLIC void linphone_nat_policy_set_stun_enabled(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tell whether TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether TURN is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_turn_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_turn_enabled(const LinphoneNatPolicy *policy);
 
 /**
  * Tell whether TURN is enabled.
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether TURN is enabled.
  */
-LINPHONE_PUBLIC bool_t linphone_nat_policy_turn_enabled(const LinphoneNatPolicy *policy);
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_turn_enabled(const LinphoneNatPolicy *policy);
+
+/**
+ * Enable TURN.
+ * If STUN is also enabled, it is ignored and TURN is used.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable TURN.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_turn_enabled() instead.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_turn(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Enable TURN.
@@ -103,14 +137,31 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_turn_enabled(const LinphoneNatPolicy 
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable TURN.
  */
-LINPHONE_PUBLIC void linphone_nat_policy_enable_turn(LinphoneNatPolicy *policy, bool_t enable);
+LINPHONE_PUBLIC void linphone_nat_policy_set_turn_enabled(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tell whether ICE is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether ICE is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_ice_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_ice_enabled(const LinphoneNatPolicy *policy);
 
 /**
  * Tell whether ICE is enabled.
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether ICE is enabled.
  */
-LINPHONE_PUBLIC bool_t linphone_nat_policy_ice_enabled(const LinphoneNatPolicy *policy);
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_ice_enabled(const LinphoneNatPolicy *policy);
+
+/**
+ * Enable ICE.
+ * ICE can be enabled without STUN/TURN, in which case only the local candidates will be used.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable ICE.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_ice_enabled() instead.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_ice(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Enable ICE.
@@ -118,14 +169,33 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_ice_enabled(const LinphoneNatPolicy *
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable ICE.
  */
-LINPHONE_PUBLIC void linphone_nat_policy_enable_ice(LinphoneNatPolicy *policy, bool_t enable);
+LINPHONE_PUBLIC void linphone_nat_policy_set_ice_enabled(LinphoneNatPolicy *policy, bool_t enable);
+
+
+/**
+ * Tell whether uPnP is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether uPnP is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_upnp_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_upnp_enabled(const LinphoneNatPolicy *policy);
+
 
 /**
  * Tell whether uPnP is enabled.
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether uPnP is enabled.
  */
-LINPHONE_PUBLIC bool_t linphone_nat_policy_upnp_enabled(const LinphoneNatPolicy *policy);
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_upnp_enabled(const LinphoneNatPolicy *policy);
+
+/**
+ * Enable uPnP.
+ * This has the effect to disable every other policies (ICE, STUN and TURN).
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable uPnP.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_upnp_enabled() instead.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_upnp(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Enable uPnP.
@@ -133,7 +203,7 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_upnp_enabled(const LinphoneNatPolicy 
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable uPnP.
  */
-LINPHONE_PUBLIC void linphone_nat_policy_enable_upnp(LinphoneNatPolicy *policy, bool_t enable);
+LINPHONE_PUBLIC void linphone_nat_policy_set_upnp_enabled(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Get the STUN/TURN server to use with this NAT policy.
@@ -189,8 +259,26 @@ LINPHONE_PUBLIC const struct addrinfo * linphone_nat_policy_get_stun_server_addr
  * Used when TURN is enabled.
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable UDP TURN transport.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_udp_turn_transport_enabled() instead.
  */
 LINPHONE_PUBLIC void linphone_nat_policy_enable_udp_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Enable UDP TURN transport.
+ * Used when TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable UDP TURN transport.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_set_udp_turn_transport_enabled(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tells whether UDP TURN transport is enabled.
+ * Used when TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether UDP TURN transport is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_udp_turn_transport_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_udp_turn_transport_enabled(LinphoneNatPolicy *policy);
 
 /**
  * Tells whether UDP TURN transport is enabled.
@@ -198,7 +286,16 @@ LINPHONE_PUBLIC void linphone_nat_policy_enable_udp_turn_transport(LinphoneNatPo
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether UDP TURN transport is enabled.
  */
-LINPHONE_PUBLIC bool_t linphone_nat_policy_udp_turn_transport_enabled(LinphoneNatPolicy *policy);
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_udp_turn_transport_enabled(LinphoneNatPolicy *policy);
+
+/**
+ * Enable TCP TURN transport.
+ * Used when TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable TCP TURN transport.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_tcp_turn_transport_enabled() instead.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_tcp_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Enable TCP TURN transport.
@@ -206,7 +303,16 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_udp_turn_transport_enabled(LinphoneNa
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable TCP TURN transport.
  */
-LINPHONE_PUBLIC void linphone_nat_policy_enable_tcp_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
+LINPHONE_PUBLIC void linphone_nat_policy_set_tcp_turn_transport_enabled(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tells whether TCP TURN transport is enabled.
+ * Used when TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether TCP TURN transport is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_tcp_turn_transport_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_tcp_turn_transport_enabled(LinphoneNatPolicy *policy);
 
 /**
  * Tells whether TCP TURN transport is enabled.
@@ -214,7 +320,16 @@ LINPHONE_PUBLIC void linphone_nat_policy_enable_tcp_turn_transport(LinphoneNatPo
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether TCP TURN transport is enabled.
  */
-LINPHONE_PUBLIC bool_t linphone_nat_policy_tcp_turn_transport_enabled(LinphoneNatPolicy *policy);
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_tcp_turn_transport_enabled(LinphoneNatPolicy *policy);
+
+/**
+ * Enable TLS TURN transport.
+ * Used when TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @param enable Boolean value telling whether to enable TLS TURN transport.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_set_tls_turn_transport_enabled() instead.
+ */
+LINPHONE_PUBLIC void linphone_nat_policy_enable_tls_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
 
 /**
  * Enable TLS TURN transport.
@@ -222,7 +337,16 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_tcp_turn_transport_enabled(LinphoneNa
  * @param policy #LinphoneNatPolicy object @notnil
  * @param enable Boolean value telling whether to enable TLS TURN transport.
  */
-LINPHONE_PUBLIC void linphone_nat_policy_enable_tls_turn_transport(LinphoneNatPolicy *policy, bool_t enable);
+LINPHONE_PUBLIC void linphone_nat_policy_set_tls_turn_transport_enabled(LinphoneNatPolicy *policy, bool_t enable);
+
+/**
+ * Tells whether TLS TURN transport is enabled.
+ * Used when TURN is enabled.
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return Boolean value telling whether TLS TURN transport is enabled.
+ * @deprecated 15/12/2021 Use linphone_nat_policy_is_tls_turn_transport_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNatPolicy *policy);
 
 /**
  * Tells whether TLS TURN transport is enabled.
@@ -230,7 +354,7 @@ LINPHONE_PUBLIC void linphone_nat_policy_enable_tls_turn_transport(LinphoneNatPo
  * @param policy #LinphoneNatPolicy object @notnil
  * @return Boolean value telling whether TLS TURN transport is enabled.
  */
-LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNatPolicy *policy);
+LINPHONE_PUBLIC bool_t linphone_nat_policy_is_tls_turn_transport_enabled(LinphoneNatPolicy *policy);
 
 /**
  * Returns the #LinphoneCore object managing this nat policy, if any.

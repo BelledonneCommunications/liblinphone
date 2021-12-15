@@ -8759,7 +8759,7 @@ const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
 	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
 }
 
-LinphoneConferenceInfo *linphone_core_get_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
+LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(LinphoneCore *core, LinphoneAddress *uri) {
 #ifdef HAVE_DB_STORAGE
 	auto &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(core)->mainDb;
 	auto confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)));
