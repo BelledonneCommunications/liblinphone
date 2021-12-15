@@ -637,7 +637,7 @@ PushNotificationConfig* AccountParams::getPushNotificationConfig () const {
 	return mPushNotificationConfig;
 }
 
-LinphoneAddress* AccountParams::getAudioVideoConferenceFactoryAddress () const {
+const LinphoneAddress* AccountParams::getAudioVideoConferenceFactoryAddress () const {
 	return mAudioVideoConferenceFactoryAddress;
 }
 

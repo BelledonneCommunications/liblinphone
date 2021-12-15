@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include "core-p.h"
+#include "account/account.h"
 #include "call/call.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
@@ -314,15 +315,22 @@ void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallL
 	// Do not add calls made to the conference factory in the history
 	LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), callLog->getToAddress());
 	if (account) {
-		const char *conference_factory_uri = linphone_account_params_get_conference_factory_uri(linphone_account_get_params(account));
-		if (conference_factory_uri) {
-			LinphoneAddress *conference_factory_addr = linphone_address_new(conference_factory_uri);
+		string conferenceFactoryUri = Account::toCpp(account)->getAccountParams()->getConferenceFactoryUri();
+		if (!conferenceFactoryUri.empty()) {
+			LinphoneAddress *conference_factory_addr = linphone_address_new(conferenceFactoryUri.c_str());
 			if (conference_factory_addr) {
 				if (linphone_address_weak_equal(callLog->getToAddress(), conference_factory_addr)) {
 					linphone_address_unref(conference_factory_addr);
 					return;
 				}
 				linphone_address_unref(conference_factory_addr);
+			}
+		}
+		// Do not add calls made to the audio/video conference factory in the history either
+		const LinphoneAddress *audioVideoConferenceFactoryAddress = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+		if (audioVideoConferenceFactoryAddress != nullptr) {
+			if (linphone_address_weak_equal(callLog->getToAddress(), audioVideoConferenceFactoryAddress)) {
+				return;
 			}
 		}
 	}

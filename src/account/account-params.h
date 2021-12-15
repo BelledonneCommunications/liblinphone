@@ -111,7 +111,7 @@ public:
 	LinphoneAVPFMode getAvpfMode () const;
 	LinphoneNatPolicy* getNatPolicy () const;
 	PushNotificationConfig* getPushNotificationConfig () const;
-	LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
+	const LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);

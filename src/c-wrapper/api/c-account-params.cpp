@@ -279,8 +279,8 @@ void linphone_account_params_set_audio_video_conference_factory_address(Linphone
 }
 
 const LinphoneAddress* linphone_account_params_get_audio_video_conference_factory_address(const LinphoneAccountParams *params) {
-	LinphoneAddress *address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
-	return address != nullptr ? linphone_address_ref(address) : nullptr;
+	const LinphoneAddress *address = AccountParams::toCpp(params)->getAudioVideoConferenceFactoryAddress();
+	return address != nullptr ? address : nullptr;
 }
 
 void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow) {
