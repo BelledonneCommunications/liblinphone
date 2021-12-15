@@ -173,6 +173,42 @@ static void register_with_refresh_for_algo(LinphoneCoreManager *lcm, bool_t refr
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationCleared,1, int, "%d");
 }
 
+static void register_with_route(LinphoneCoreManager *lcm, const char *domain, const char*route) {
+	stats* lcm_counters = &lcm->stat;
+	LinphoneTransports *transport = linphone_factory_create_transports(linphone_factory_get());
+	linphone_transports_set_udp_port(transport, 5070);
+	linphone_transports_set_tcp_port(transport, 5070);
+	linphone_transports_set_tls_port(transport, 5071);
+	linphone_transports_set_dtls_port(transport, 0);
+
+	LinphoneAddress *from = create_linphone_address_for_algo(domain, NULL);
+	LinphoneAddress *routeAddress = linphone_address_new(route);
+
+	if (transport) linphone_core_set_transports(lcm->lc, transport);
+	LinphoneAccountParams *accountParams =  linphone_core_create_account_params(lcm->lc);
+	linphone_account_params_set_identity_address(accountParams, from);
+	linphone_account_params_set_routes_addresses(accountParams, bctbx_list_new(routeAddress));
+	linphone_account_params_set_server_addr(accountParams, route);
+	linphone_account_params_set_register_enabled(accountParams, TRUE);
+
+	LinphoneAccount *account = linphone_core_create_account(lcm->lc, accountParams);
+	linphone_account_params_unref(accountParams);
+	if (account) {
+		if (linphone_core_add_account(lcm->lc, account) != -1) {
+			linphone_core_set_default_account(lcm->lc, account);
+		}
+	}
+
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, NULL, &lcm_counters->number_of_LinphoneRegistrationOk, 1, 200000));
+
+	linphone_address_unref(from);
+	linphone_address_unref(routeAddress);
+	linphone_account_unref(account);
+	linphone_transports_unref(transport);
+	linphone_core_manager_stop(lcm);
+	BC_ASSERT_EQUAL(lcm_counters->number_of_LinphoneRegistrationCleared,1, int, "%d");
+}
+
 static void register_with_refresh(LinphoneCoreManager* lcm, bool_t refresh,const char* domain,const char* route) {
 	register_with_refresh_for_algo(lcm, refresh, domain, route, NULL);
 }
@@ -296,6 +332,24 @@ static void simple_tcp_register(void){
 	sprintf(route,"sip:%s;transport=tcp",test_route);
 	lcm = create_lcm();
 	register_with_refresh(lcm,FALSE,test_domain,route);
+	linphone_core_manager_destroy(lcm);
+}
+
+static void simple_udp_register(void){
+	char route[256];
+	LinphoneCoreManager* lcm;
+	sprintf(route,"sip:%s;transport=udp","sip.buggy.example.org");
+	lcm = create_lcm();
+	register_with_route(lcm,"sipopen.example.org",route);
+	linphone_core_manager_destroy(lcm);
+}
+
+static void simple_tcp_register2(void){
+	char route[256];
+	LinphoneCoreManager* lcm;
+	sprintf(route,"sip:%s;transport=tcp","sip.buggy.example.org");
+	lcm = create_lcm();
+	register_with_route(lcm,"sipopen.example.org",route);
 	linphone_core_manager_destroy(lcm);
 }
 
@@ -1553,6 +1607,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),
 	TEST_NO_TAG("Simple register unregister", simple_unregister),
 	TEST_NO_TAG("TCP register", simple_tcp_register),
+	TEST_NO_TAG("TCP register 2", simple_tcp_register2),
+	TEST_NO_TAG("UDP register", simple_udp_register),
 	TEST_NO_TAG("Register with custom headers", register_with_custom_headers),
 	TEST_NO_TAG("TCP register compatibility mode", simple_tcp_register_compatibility_mode),
 	TEST_NO_TAG("TLS register", simple_tls_register),
