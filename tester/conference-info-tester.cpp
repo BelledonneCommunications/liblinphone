@@ -103,10 +103,64 @@ static void get_existing_conference_info_from_call_log () {
 	linphone_core_manager_destroy(marie);
 }
 
+static void last_outgoing_call_without_conference () {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneAddress *paulineAddr = linphone_address_new("sip:pauline@sip.linphone.org");
+
+	// Create a fake call log
+	auto callLog = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(),
+		LinphoneCallOutgoing,
+		linphone_address_clone(marie->identity),
+		linphone_address_clone(paulineAddr));
+
+	callLog->setDuration(60);
+	callLog->setStatus(LinphoneCallSuccess);
+	callLog->setQuality(0.69f);
+	callLog->setCallId("cAlL-iDdD");
+
+	// Report the call
+	L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, callLog, nullptr);
+
+	// Create a new fake call log to a conference
+	callLog = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(),
+		LinphoneCallOutgoing,
+		linphone_address_clone(marie->identity),
+		linphone_address_new("sip:video-conf-test@sip.linphone.org;conf-id=K4lHv;gr=60610d90-d695-0009-b3a1-331c5842bae0"));
+
+	callLog->setDuration(120);
+	callLog->setStatus(LinphoneCallSuccess);
+	callLog->setQuality(1.0);
+	callLog->setCallId("FTD9-zVeBW");
+
+	// Create a conference info
+	auto conferenceInfo = ConferenceInfo::create();
+
+	conferenceInfo->setOrganizer(IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(marie->identity)));
+	conferenceInfo->setUri(ConferenceAddress("sip:video-conf-test@sip.linphone.org;gr=60610d90-d695-0009-b3a1-331c5842bae0;conf-id=K4lHv"));
+	conferenceInfo->setDateTime(std::time(nullptr));
+	conferenceInfo->setDuration(30);
+	conferenceInfo->setSubject("Test de vidéo conférence");
+	conferenceInfo->setDescription("Réunion pour parler de la vidéo conférence.");
+	conferenceInfo->addParticipant(IdentityAddress("sip:laure@sip.linphone.org"));
+
+	// Report the call event without specifying the conference info
+	L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->reportConferenceCallEvent(EventLog::Type::ConferenceCallEnded, callLog, conferenceInfo);
+
+	auto lastCall = L_GET_PRIVATE_FROM_C_OBJECT(marie->lc)->mainDb->getLastOutgoingCall();
+
+	BC_ASSERT_PTR_NOT_NULL(lastCall);
+	if (lastCall != nullptr) {
+		BC_ASSERT_TRUE(linphone_address_equal(lastCall->getToAddress(), paulineAddr));
+	}
+
+	linphone_address_unref(paulineAddr);
+	linphone_core_manager_destroy(marie);
+}
 
 test_t conference_tests[] = {
 	TEST_NO_TAG("Get conference info from call log", get_conference_info_from_call_log),
 	TEST_NO_TAG("Get existing conference info from call log", get_existing_conference_info_from_call_log),
+	TEST_NO_TAG("Last outgoing call does not return calls with conference info", last_outgoing_call_without_conference),
 };
 
 test_suite_t conference_info_tester = {

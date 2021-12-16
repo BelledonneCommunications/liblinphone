@@ -4860,7 +4860,7 @@ std::shared_ptr<CallLog> MainDb::getLastOutgoingCall () {
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
-		"  AND direction = 0"
+		"  AND direction = 0 AND conference_info_id IS NULL"
 		" ORDER BY conference_call.id DESC LIMIT 1";
 
 		DurationLogger durationLogger("Get last outgoing call.");

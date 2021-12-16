@@ -3102,6 +3102,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
 
 /**
  * Get the latest outgoing call log.
+ * Conference calls are not returned by this function!
  * Requires ENABLE_DB_STORAGE to work.
  * @param core #LinphoneCore object @notnil
  * @return The last outgoing call log if any. @maybenil
