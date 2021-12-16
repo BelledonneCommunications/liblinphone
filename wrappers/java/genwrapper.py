@@ -32,7 +32,6 @@ import abstractapi as AbsApi
 import metadoc
 import metaname
 
-
 CORE_ACCESSOR_LIST = [
     'Call',
     'ChatMessage',
@@ -158,20 +157,58 @@ class JavaTranslator:
                 return True
         return False
 
+    def fix_getter_property_name(self, name):
+        return "is{0}{1}".format(name[0].title(), name[1:])
+
+    def fix_setter_property_name(self, name):
+        return "set{0}Enabled".format(name[6:])
+
     def translate_property(self, _property, _hasCoreAccessor):
         properties = []
         if _property.getter is not None:
-            properties.append(self.translate_method(_property.getter, _hasCoreAccessor))
+            property = self.translate_method(_property.getter, _hasCoreAccessor)
+            properties.append(property)
+            name = property["name"]
+            if name.endswith("Enabled") and not (name.startswith("is") or name.startswith("get")):
+                newName = self.fix_getter_property_name(name)
+                #print('Fixme getter: {0}, using {1} instead'.format(name, newName))
+                property = self.translate_method(_property.getter, _hasCoreAccessor, newName)
+                property['briefDoc']["hidden"] = True
+                properties.append(property)
+                
         if _property.setter is not None:
-            properties.append(self.translate_method(_property.setter, _hasCoreAccessor))
+            property = self.translate_method(_property.setter, _hasCoreAccessor)
+            properties.append(property)
+            name = property["name"]
+            if name.startswith("enable"):
+                newName = self.fix_setter_property_name(name)
+                #print('Fixme setter: {0}, using {1} instead'.format(name, newName))
+                property = self.translate_method(_property.setter, _hasCoreAccessor, newName)
+                property['briefDoc']["hidden"] = True
+                properties.append(property)
+
         return properties
 
     def translate_jni_property(self, class_, _property):
         properties = []
         if _property.getter is not None:
-            properties.append(self.translate_jni_method(class_, _property.getter))
+            property = self.translate_jni_method(class_, _property.getter)
+            properties.append(property)
+            name = property["methodName"]
+            if property["name"].endswith("Enabled") and not (name.startswith("is") or name.startswith("get")):
+                newName = self.fix_getter_property_name(name)
+                property = self.translate_jni_method(class_, _property.getter, False, newName)
+                properties.append(property)
+
         if _property.setter is not None:
-            properties.append(self.translate_jni_method(class_, _property.setter))
+            property = self.translate_jni_method(class_, _property.setter)
+            properties.append(property)
+            if property["notEmpty"] == True and property["methodName"].startswith("enable"):
+                name = property["methodName"]
+                newName = self.fix_setter_property_name(name)
+                property = self.translate_jni_method(class_, _property.setter, False, newName)
+                properties.append(property)
+
         return properties
 
     def generate_listener(self, name, _class):
@@ -208,7 +245,7 @@ class JavaTranslator:
     def generate_set_listener(self, _class):
         return self.generate_listener('setListener', _class)
 
-    def translate_method(self, _method, _hasCoreAccessor=False):
+    def translate_method(self, _method, _hasCoreAccessor=False, _forceMethodName=""):
         methodDict = {}
 
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
@@ -227,6 +264,8 @@ class JavaTranslator:
         methodDict['convertInputClassArrayToLongArray'] = False
 
         methodDict['name'] = _method.name.to_camel_case(lower=True)
+        if _forceMethodName != "":
+            methodDict['name'] = _forceMethodName
         methodDict['name_native'] = methodDict['name']
 
         if _method.name.to_c()[-1].isdigit():
@@ -251,7 +290,7 @@ class JavaTranslator:
 
         return methodDict
 
-    def translate_jni_method(self, class_, _method, static=False):
+    def translate_jni_method(self, class_, _method, static=False, _forceMethodName=""):
         jni_blacklist = ['linphone_call_set_native_video_window_id',
                         'linphone_core_set_native_preview_window_id',
                         'linphone_core_set_native_video_window_id']
@@ -278,7 +317,11 @@ class JavaTranslator:
         methodDict['hasReturn'] = not methodDict['return'] == 'void' and not methodDict['hasListReturn'] and not methodDict['hasByteArrayReturn']
         methodDict['hasStringReturn'] = methodDict['return'] == 'jstring'
         methodDict['hasNormalReturn'] = not methodDict['hasListReturn'] and not methodDict['hasStringReturn'] and not methodDict['hasByteArrayReturn']
-        methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _method.name.translate(self.nameTranslator)
+        methodDict['methodName'] = _method.name.translate(self.nameTranslator)
+        methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + methodDict['methodName']
+        if _forceMethodName != "":
+            methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _forceMethodName
+
         methodDict['notStatic'] = not static
         methodDict['isConst'] = _method.returnType.isconst
         methodDict['isNotConst'] = not _method.returnType.isconst
@@ -677,7 +720,7 @@ class Jni:
             'notRefCountable': not javaClass.refCountable
         }
         self.objects.append(obj)
-		
+        
         jniInterface = javaClass.jniInterface
         if jniInterface is not None:
             interface = {
@@ -787,7 +830,48 @@ class GenWrapper:
             'linphone_push_notification_message_get_local_addr',
             'linphone_push_notification_message_get_peer_addr',
             'linphone_core_get_new_message_from_callid',
-            'linphone_core_get_new_chat_room_from_conf_addr'
+            'linphone_core_get_new_chat_room_from_conf_addr',
+            'linphone_call_params_is_capability_negotiation_reinvite_enabled',
+            'linphone_conference_params_set_audio_enabled',
+            'linphone_conference_params_is_audio_enabled',
+            'linphone_conference_params_set_video_enabled',
+            'linphone_conference_params_is_video_enabled',
+            'linphone_conference_params_set_chat_enabled',
+            'linphone_conference_params_is_chat_enabled',
+            'linphone_conference_params_set_local_participant_enabled',
+            'linphone_conference_params_is_local_participant_enabled',
+            'linphone_conference_params_set_one_participant_conference_enabled',
+            'linphone_conference_params_is_one_participant_conference_enabled',
+            'linphone_core_set_native_ringing_enabled',
+            'linphone_core_is_native_ringing_enabled',
+            'linphone_core_set_session_expires_enabled',
+            'linphone_core_get_session_expires_enabled',
+            'linphone_core_is_capability_negotiation_reinvite_enabled',
+            'linphone_core_is_zero_rtp_port_for_stream_inactive_enabled',
+            'linphone_core_is_friend_list_subscription_enabled',
+            'linphone_core_set_auto_download_voice_recordings_enabled',
+            'linphone_core_is_auto_download_voice_recordings_enabled',
+            'linphone_core_set_auto_download_icalendars_enabled',
+            'linphone_core_is_auto_download_icalendars_enabled',
+            'linphone_core_set_record_aware_enabled',
+            'linphone_core_is_record_aware_enabled',
+            'linphone_core_set_push_notification_enabled',
+            'linphone_core_is_push_notification_enabled',
+            'linphone_core_set_auto_iterate_enabled',
+            'linphone_core_is_auto_iterate_enabled',
+            'linphone_core_set_vibration_on_incoming_call_enabled',
+            'linphone_core_is_vibration_on_incoming_call_enabled',
+            'linphone_account_params_set_register_enabled',
+            'linphone_account_params_set_publish_enabled',
+            'linphone_account_params_set_dial_escape_plus_enabled',
+            'linphone_account_params_set_quality_reporting_enabled',
+            'linphone_account_params_get_quality_reporting_enabled',
+            'linphone_account_params_get_publish_enabled',
+            'linphone_account_params_get_register_enabled',
+            'linphone_account_params_get_dial_escape_plus_enabled',
+            'linphone_account_params_set_outbound_proxy_enabled',
+            'linphone_account_params_get_outbound_proxy_enabled',
+            'linphone_account_is_avpf_enabled',
         ]
         self.parser.parse_all()
         self.translator = JavaTranslator(package, exceptions)

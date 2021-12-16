@@ -2869,8 +2869,26 @@ LINPHONE_PUBLIC const char *linphone_core_get_ring(const LinphoneCore *core);
  * @param core #LinphoneCore object @notnil
  * @param enable True to enable native ringing, false otherwise
  * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_core_enable_native_ringing() instead.
 **/
 LINPHONE_PUBLIC void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Sets whether to use the native ringing (Android only).
+ * @param core #LinphoneCore object @notnil
+ * @param enable True to enable native ringing, false otherwise
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_enable_native_ringing(LinphoneCore *core, bool_t enable);
+
+/**
+ * Returns whether the native ringing is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return True if we use the native ringing, false otherwise
+ * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_core_native_ringing_enabled() instead.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core);
 
 /**
  * Returns whether the native ringing is enabled or not.
@@ -2878,7 +2896,7 @@ LINPHONE_PUBLIC void linphone_core_set_native_ringing_enabled(LinphoneCore *core
  * @return True if we use the native ringing, false otherwise
  * @ingroup media_parameters
 **/
-LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_native_ringing_enabled(const LinphoneCore *core);
 
 /**
  * Specify whether the tls server certificate must be verified when connecting to a SIP/TLS server.
@@ -3828,15 +3846,32 @@ LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *cor
  * @param core #LinphoneCore object @notnil
  * @param enabled Enable or disable it
  * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_core_enable_session_expires() instead.
 **/
 LINPHONE_PUBLIC void linphone_core_set_session_expires_enabled(const LinphoneCore *core, bool_t enabled);
+
+/**
+ * Enable the Session Timers support
+ * @param core #LinphoneCore object @notnil
+ * @param enabled Enable or disable it
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_enable_session_expires(const LinphoneCore *core, bool_t enabled);
+
+/**
+ * Check if the Session Timers feature is enabled
+ * @param core #LinphoneCore object @notnil
+ * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_core_session_expires_enabled() instead.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_get_session_expires_enabled(const LinphoneCore *core);
 
 /**
  * Check if the Session Timers feature is enabled
  * @param core #LinphoneCore object @notnil
  * @ingroup media_parameters
 **/
-LINPHONE_PUBLIC bool_t linphone_core_get_session_expires_enabled(const LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_session_expires_enabled(const LinphoneCore *core);
 
 /**
  * Sets the session expires value, 0 by default
@@ -4468,8 +4503,17 @@ LINPHONE_PUBLIC void linphone_core_enable_tcap_line_merging(LinphoneCore *core, 
  * @param core #LinphoneCore object. @notnil
  * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
  * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_core_capability_negotiation_reinvite_enabled() instead.
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
+
+/**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
 
 /**
  * Define whether RTP port is set to 0 when a stream is inactive
@@ -4484,8 +4528,17 @@ LINPHONE_PUBLIC void linphone_core_enable_zero_rtp_port_for_stream_inactive(Linp
  * @param core #LinphoneCore object. @notnil
  * @return TRUE if the RTP port is set to 0 if the stream direction is inactive; FALSE otherwise.
  * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_core_zero_rtp_port_for_stream_inactive_enabled() instead.
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
+
+/**
+ * Check if RTP port is set to 0 when a stream is inactive
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if the RTP port is set to 0 if the stream direction is inactive; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
 
 /**
  * Define whether capability negotiation (RFC5939) reINVITE is enabled
@@ -5523,8 +5576,16 @@ LINPHONE_PUBLIC void linphone_core_enable_friend_list_subscription(LinphoneCore 
  * Returns whether or not friend lists subscription are enabled
  * @param core The #LinphoneCore @notnil
  * @return whether or not the feature is enabled
+ * @deprecated 16/12/2021 Use linphone_core_friend_list_subscription_enabled() instead.
 **/
 LINPHONE_PUBLIC bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *core);
+
+/**
+ * Returns whether or not friend lists subscription are enabled
+ * @param core The #LinphoneCore @notnil
+ * @return whether or not the feature is enabled
+**/
+LINPHONE_PUBLIC bool_t linphone_core_friend_list_subscription_enabled(LinphoneCore *core);
 
 /**
  * Retrieves a list of #LinphoneAddress sort and filter
@@ -5641,8 +5702,26 @@ LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(
  * @param core #LinphoneCore object @notnil
  * @param auto_download_voice_recordings TRUE to automatically download incoming voice recordings, FALSE to disable it.
  * @ingroup chat
+ * @deprecated 16/12/2021 Use linphone_core_enable_auto_download_voice_recordings() instead.
 **/
 LINPHONE_PUBLIC void linphone_core_set_auto_download_voice_recordings_enabled(LinphoneCore *core, bool_t auto_download_voice_recordings);
+
+/**
+ * Auto download files attach to a chat message if it's content type matches the one we use for voice recordings.
+ * @param core #LinphoneCore object @notnil
+ * @param auto_download_voice_recordings TRUE to automatically download incoming voice recordings, FALSE to disable it.
+ * @ingroup chat
+**/
+LINPHONE_PUBLIC void linphone_core_enable_auto_download_voice_recordings(LinphoneCore *core, bool_t auto_download_voice_recordings);
+
+/**
+ * Gets if the auto download for incoming voice recordings is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if voice recordings will be automatically downloaded, FALSE otherwise.
+ * @ingroup chat
+ * @deprecated 16/12/2021 Use linphone_core_auto_download_voice_recordings_enabled() instead.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_voice_recordings_enabled(LinphoneCore *core);
 
 /**
  * Gets if the auto download for incoming voice recordings is enabled or not.
@@ -5650,7 +5729,16 @@ LINPHONE_PUBLIC void linphone_core_set_auto_download_voice_recordings_enabled(Li
  * @return TRUE if voice recordings will be automatically downloaded, FALSE otherwise.
  * @ingroup chat
 **/
-LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_voice_recordings_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_auto_download_voice_recordings_enabled(LinphoneCore *core);
+
+/**
+ * Auto download files attach to a chat message if it's content type matches the one we use for icalendars.
+ * @param core #LinphoneCore object @notnil
+ * @param auto_download_icalendars TRUE to automatically download incoming icalendars, FALSE to disable it.
+ * @ingroup chat
+ * @deprecated 16/12/2021 Use linphone_core_enable_auto_download_icalendars() instead.
+**/
+LINPHONE_PUBLIC void linphone_core_set_auto_download_icalendars_enabled(LinphoneCore *core, bool_t auto_download_icalendars);
 
 /**
  * Auto download files attach to a chat message if it's content type matches the one we use for icalendars.
@@ -5658,7 +5746,16 @@ LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_voice_recordings_enabled(L
  * @param auto_download_icalendars TRUE to automatically download incoming icalendars, FALSE to disable it.
  * @ingroup chat
 **/
-LINPHONE_PUBLIC void linphone_core_set_auto_download_icalendars_enabled(LinphoneCore *core, bool_t auto_download_icalendars);
+LINPHONE_PUBLIC void linphone_core_enable_auto_download_icalendars(LinphoneCore *core, bool_t auto_download_icalendars);
+
+/**
+ * Gets if the auto download for incoming icalendars is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if icalendars will be automatically downloaded, FALSE otherwise.
+ * @ingroup chat
+ * @deprecated 16/12/2021 Use linphone_core_auto_download_icalendars_enabled() instead.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_icalendars_enabled(LinphoneCore *core);
 
 /**
  * Gets if the auto download for incoming icalendars is enabled or not.
@@ -5666,7 +5763,7 @@ LINPHONE_PUBLIC void linphone_core_set_auto_download_icalendars_enabled(Linphone
  * @return TRUE if icalendars will be automatically downloaded, FALSE otherwise.
  * @ingroup chat
 **/
-LINPHONE_PUBLIC bool_t linphone_core_is_auto_download_icalendars_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_auto_download_icalendars_enabled(LinphoneCore *core);
 
 /**
  * Returns whether or not sender name is hidden in forward message.
@@ -5686,15 +5783,31 @@ LINPHONE_PUBLIC void linphone_core_enable_sender_name_hidden_in_forward_message(
  * Enables the record aware feature that will warn other users when recording.
  * @param core #LinphoneCore object @notnil
  * @param enable TRUE to activate the record aware feature, FALSE to disable it.
+ * @deprecated 16/12/2021 Use linphone_core_enable_record_aware() instead.
 **/
 LINPHONE_PUBLIC void linphone_core_set_record_aware_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Enables the record aware feature that will warn other users when recording.
+ * @param core #LinphoneCore object @notnil
+ * @param enable TRUE to activate the record aware feature, FALSE to disable it.
+**/
+LINPHONE_PUBLIC void linphone_core_enable_record_aware(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets if the record aware feature is enabled or not.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if the record aware feature is enabled, FALSE otherwise.
+ * @deprecated 16/12/2021 Use linphone_core_record_aware_enabled() instead.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_record_aware_enabled(LinphoneCore *core);
 
 /**
  * Gets if the record aware feature is enabled or not.
  * @param core #LinphoneCore object @notnil
  * @return TRUE if the record aware feature is enabled, FALSE otherwise.
 **/
-LINPHONE_PUBLIC bool_t linphone_core_is_record_aware_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_record_aware_enabled(LinphoneCore *core);
 
 /**
  * Enables the automatic sending of 180 Ringing when receiving a call.
@@ -5797,8 +5910,28 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_add
  * @param core The #LinphoneCore @notnil
  * @param enable TRUE to enable push notifications, FALSE to disable
  * @ingroup misc
+ * @deprecated 16/12/2021 Use linphone_core_enable_push_notification() instead.
  */
 LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Enable or disable push notifications on Android & iOS.
+ * If enabled, it will try to get the push token add configure each account with push_notification_allowed
+ * set to true with push parameters. IOS: will also instanciate a PushRegistry, so make sure that your app does not instanciate one too or there will be a conflict.
+ * @param core The #LinphoneCore @notnil
+ * @param enable TRUE to enable push notifications, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_enable_push_notification(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether push notifications are enabled or not (Android & iOS only). If not, the app will have to handle all the push-related settings for each accounts
+ * @param core The #LinphoneCore @notnil
+ * @return TRUE if push notifications are enabled, FALSE otherwise
+ * @ingroup misc
+ * @deprecated 16/12/2021 Use linphone_core_push_notification_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
 
 /**
  * Gets whether push notifications are enabled or not (Android & iOS only). If not, the app will have to handle all the push-related settings for each accounts
@@ -5806,7 +5939,7 @@ LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *c
  * @return TRUE if push notifications are enabled, FALSE otherwise
  * @ingroup misc
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_push_notification_enabled(LinphoneCore *core);
 
 /**
  * Gets whether push notifications are available or not (Android & iOS only).
@@ -5839,8 +5972,28 @@ LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push_with_stringified
  * @param core The #LinphoneCore @notnil
  * @param enable TRUE to enable auto iterate, FALSE to disable
  * @ingroup misc
+ * @deprecated 16/12/2021 Use linphone_core_enable_auto_iterate() instead.
  */
 LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
+ * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
+ * If disabled, it is the application that must do this job.
+ * @param core The #LinphoneCore @notnil
+ * @param enable TRUE to enable auto iterate, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_enable_auto_iterate(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether auto iterate is enabled or not (Android & iOS only).
+ * @param core The #LinphoneCore @notnil
+ * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
+ * @ingroup misc
+ * @deprecated 16/12/2021 Use linphone_core_auto_iterate_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
 
 /**
  * Gets whether auto iterate is enabled or not (Android & iOS only).
@@ -5848,14 +6001,31 @@ LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, 
  * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
  * @ingroup misc
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_auto_iterate_enabled(LinphoneCore *core);
+
+/**
+ * Enable vibration will incoming call is ringing (Android only).
+ * @param core The #LinphoneCore @notnil
+ * @ingroup misc
+ * @deprecated 16/12/2021 Use linphone_core_enable_vibration_on_incoming_call() instead.
+ */
+LINPHONE_PUBLIC void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable);
 
 /**
  * Enable vibration will incoming call is ringing (Android only).
  * @param core The #LinphoneCore @notnil
  * @ingroup misc
  */
-LINPHONE_PUBLIC void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable);
+LINPHONE_PUBLIC void linphone_core_enable_vibration_on_incoming_call(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether the device will vibrate while an incoming call is ringing (Android only).
+ * @param core The #LinphoneCore @notnil
+ * @return TRUE if the device will vibrate (if possible), FALSE otherwise
+ * @ingroup misc
+ * @deprecated 16/12/2021 Use linphone_core_vibration_on_incoming_call_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_vibration_on_incoming_call_enabled(LinphoneCore *core);
 
 /**
  * Gets whether the device will vibrate while an incoming call is ringing (Android only).
@@ -5863,7 +6033,7 @@ LINPHONE_PUBLIC void linphone_core_set_vibration_on_incoming_call_enabled(Linpho
  * @return TRUE if the device will vibrate (if possible), FALSE otherwise
  * @ingroup misc
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_vibration_on_incoming_call_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_vibration_on_incoming_call_enabled(LinphoneCore *core);
 
 /**
  * Returns a list of audio devices, with only the first device for each type

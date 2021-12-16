@@ -204,8 +204,16 @@ LINPHONE_PUBLIC LinphoneTransportType linphone_account_get_transport(LinphoneAcc
  * Indicates whether AVPF/SAVPF is being used for calls using this account.
  * @param account The #LinphoneAccount object. @notnil
  * @return TRUE if AVPF/SAVPF is enabled, FALSE otherwise.
+ * @deprecated 16/12/2021 Use linphone_account_avpf_enabled() instead.
  */
 LINPHONE_PUBLIC bool_t linphone_account_is_avpf_enabled(LinphoneAccount *account);
+
+/**
+ * Indicates whether AVPF/SAVPF is being used for calls using this account.
+ * @param account The #LinphoneAccount object. @notnil
+ * @return TRUE if AVPF/SAVPF is enabled, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_avpf_enabled(LinphoneAccount *account);
 
 /**
  * Find authentication info matching account, if any, similarly to linphone_core_find_auth_info.

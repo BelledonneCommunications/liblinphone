@@ -80,6 +80,10 @@ SalStreamDir get_video_dir_from_call_params (const LinphoneCallParams *params) {
 }
 
 bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params) {
+	return linphone_call_params_capability_negotiation_reinvite_enabled(params);
+}
+
+bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params) {
 	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->capabilityNegotiationReInviteEnabled();
 }
 
