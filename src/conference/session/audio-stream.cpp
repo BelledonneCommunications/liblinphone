@@ -348,6 +348,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
 		captcard = playcard = nullptr;
+		if (targetState == CallSession::State::OutgoingEarlyMedia){
+			// Restart will be required upon transitionning to StreamsRunning state to take into account that sound resources
+			// may have been released meanwhile.
+			mRestartStreamRequired = true;
+			lInfo() << "Soundcard usage will be checked again when moving to StreamsRunning.";
+		}
 	}
 
 	if (playcard) {
