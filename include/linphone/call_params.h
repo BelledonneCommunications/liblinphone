@@ -90,7 +90,7 @@ LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_
  * @ingroup media_parameters
  * @deprecated 16/12/2021 Use linphone_call_params_capability_negotiation_reinvite_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
+LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 
 /**
  * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
@@ -617,6 +617,15 @@ LINPHONE_PUBLIC void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *
 /************ */
 /* DEPRECATED */
 /* ********** */
+
+/**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @deprecated 16/12/2021 Use #linphone_call_params_capability_negotiation_reinvite_enabled() instead.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 
 /**
  * @brief Get the size of the video that is received.

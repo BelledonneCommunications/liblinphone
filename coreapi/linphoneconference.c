@@ -395,50 +395,50 @@ LinphoneConferenceParams *linphone_conference_params_clone (const LinphoneConfer
 }
 
 void linphone_conference_params_set_audio_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	linphone_conference_params_enable_audio(params, enable);
+	linphone_conference_params_enable_audio (params, enable);
 }
 
-void linphone_conference_params_enable_audio(LinphoneConferenceParams *params, bool_t enable) {
+void linphone_conference_params_enable_audio (LinphoneConferenceParams *params, bool_t enable) {
 	ConferenceParams::toCpp(params)->enableAudio(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_audio_enabled (const LinphoneConferenceParams *params) {
-	return linphone_conference_params_audio_enabled(params);
+	return linphone_conference_params_audio_enabled (params);
 }
 
-bool_t linphone_conference_params_audio_enabled(const LinphoneConferenceParams *params) {
+bool_t linphone_conference_params_audio_enabled (const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->audioEnabled() ? TRUE : FALSE;
 }
 
 void linphone_conference_params_set_video_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	linphone_conference_params_enable_video(params, enable);
+	linphone_conference_params_enable_video (params, enable);
 }
 
-void linphone_conference_params_enable_video(LinphoneConferenceParams *params, bool_t enable) {
+void linphone_conference_params_enable_video (LinphoneConferenceParams *params, bool_t enable) {
 	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_video_enabled (const LinphoneConferenceParams *params) {
-	return linphone_conference_params_video_enabled(params);
+	return linphone_conference_params_video_enabled (params);
 }
 
-bool_t linphone_conference_params_video_enabled(const LinphoneConferenceParams *params) {
+bool_t linphone_conference_params_video_enabled (const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->videoEnabled() ? TRUE : FALSE;
 }
 
 void linphone_conference_params_set_chat_enabled (LinphoneConferenceParams *params, bool_t enable) {
-	linphone_conference_params_enable_chat(params, enable);
+	linphone_conference_params_enable_chat (params, enable);
 }
 
-void linphone_conference_params_enable_chat(LinphoneConferenceParams *params, bool_t enable) {
+void linphone_conference_params_enable_chat (LinphoneConferenceParams *params, bool_t enable) {
 	ConferenceParams::toCpp(params)->enableChat(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_chat_enabled (const LinphoneConferenceParams *params) {
-	return linphone_conference_params_chat_enabled(params);
+	return linphone_conference_params_chat_enabled (params);
 }
 
-bool_t linphone_conference_params_chat_enabled(const LinphoneConferenceParams *params) {
+bool_t linphone_conference_params_chat_enabled (const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->chatEnabled() ? TRUE : FALSE;
 }
 
@@ -466,7 +466,7 @@ void linphone_conference_params_set_one_participant_conference_enabled(LinphoneC
 	linphone_conference_params_enable_one_participant_conference(params, enable);
 }
 
-void linphone_conference_params_enable_one_participant_conference(LinphoneConferenceParams *params, bool_t enable) {
+void linphone_conference_params_enable_one_participant_conference(LinphoneConferenceParams *params, bool_t enable){
 	ConferenceParams::toCpp(params)->enableOneParticipantConference(!!enable);
 }
 
@@ -474,7 +474,7 @@ bool_t linphone_conference_params_is_one_participant_conference_enabled(const Li
 	return linphone_conference_params_one_participant_conference_enabled(params);
 }
 
-bool_t linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params) {
+bool_t linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params){
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
 

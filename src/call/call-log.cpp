@@ -172,7 +172,7 @@ void CallLog::setRemoteAddress (const LinphoneAddress *remoteAddress) {
 		mFrom = linphone_address_clone(remoteAddress);
 	} else {
 		if (mTo) linphone_address_unref(mTo);
-		mTo = linphone_address_clone(mTo);
+		mTo = linphone_address_clone(remoteAddress);
 	}
 }
 

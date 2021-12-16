@@ -774,7 +774,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 				local_devices = linphone_participant_get_devices (p);
 				for (bctbx_list_t *itd = local_devices; itd; itd = bctbx_list_next(itd)) {
 					LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_is_audio_enabled(remote_params)) == FALSE)) {
+					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_audio_enabled(remote_params)) == FALSE)) {
 						audio_direction = LinphoneMediaDirectionInactive;
 					} else if (_linphone_participant_device_get_audio_enabled(d) == TRUE) {
 						audio_direction = LinphoneMediaDirectionSendRecv;
@@ -782,7 +782,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 						audio_direction = LinphoneMediaDirectionRecvOnly;
 					}
 
-					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_is_video_enabled(remote_params)) == FALSE)) {
+					if ((remote_is_in == FALSE) || ((!!linphone_conference_params_video_enabled(remote_params)) == FALSE)) {
 						video_direction = LinphoneMediaDirectionInactive;
 					} else if (_linphone_participant_device_get_video_enabled(d) == TRUE) {
 						video_direction = LinphoneMediaDirectionSendRecv;
@@ -790,7 +790,7 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 						video_direction = LinphoneMediaDirectionInactive;
 					}
 
-					if ((remote_is_in == FALSE) || (!!linphone_conference_params_is_chat_enabled(remote_params) == FALSE)) {
+					if ((remote_is_in == FALSE) || (!!linphone_conference_params_chat_enabled(remote_params) == FALSE)) {
 						text_direction = LinphoneMediaDirectionInactive;
 					} else if (_linphone_participant_device_get_real_time_text_enabled(d) == TRUE) {
 						text_direction = LinphoneMediaDirectionSendRecv;
@@ -828,9 +828,9 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 
 		const LinphoneConferenceParams * local_params = linphone_conference_get_current_params(local_conference);
 		const LinphoneConferenceParams * remote_params = linphone_conference_get_current_params(remote_conference);
-		BC_ASSERT_EQUAL(linphone_conference_params_is_audio_enabled(local_params), linphone_conference_params_is_audio_enabled(remote_params), int, "%0d");
-		BC_ASSERT_EQUAL(linphone_conference_params_is_video_enabled(local_params), linphone_conference_params_is_video_enabled(remote_params), int, "%0d");
-		BC_ASSERT_EQUAL(linphone_conference_params_is_chat_enabled(local_params), linphone_conference_params_is_chat_enabled(remote_params), int, "%0d");
+		BC_ASSERT_EQUAL(linphone_conference_params_audio_enabled(local_params), linphone_conference_params_audio_enabled(remote_params), int, "%0d");
+		BC_ASSERT_EQUAL(linphone_conference_params_video_enabled(local_params), linphone_conference_params_video_enabled(remote_params), int, "%0d");
+		BC_ASSERT_EQUAL(linphone_conference_params_chat_enabled(local_params), linphone_conference_params_chat_enabled(remote_params), int, "%0d");
 	}
 }
 
@@ -941,7 +941,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 		//const unsigned int local_conf_participants = linphone_conference_get_participant_count(conference);
 		//const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
-		//const bool_t video_enabled = !!linphone_conference_params_is_video_enabled(conf_params);
+		//const bool_t video_enabled = !!linphone_conference_params_video_enabled(conf_params);
 		//const LinphoneConferenceLayout layout = linphone_conference_params_get_layout(conf_params);
 		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(conference);
 		//const int nb_audio_streams = 1;
@@ -1076,7 +1076,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		BC_ASSERT_PTR_NOT_NULL(focus_conference);
 		if (focus_conference) {
 			const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
-			if (!!linphone_conference_params_is_video_enabled(conf_params) == TRUE) {
+			if (!!linphone_conference_params_video_enabled(conf_params) == TRUE) {
 				BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallUpdating,(focus_initial_stats.number_of_LinphoneCallUpdating+update_counter),20000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+counter+update_counter),20000));
 			}
@@ -1094,7 +1094,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 	BC_ASSERT_PTR_NOT_NULL(focus_conference);
 	if (focus_conference) {
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
-		if (!!linphone_conference_params_is_video_enabled(conf_params) == TRUE) {
+		if (!!linphone_conference_params_video_enabled(conf_params) == TRUE) {
 			int idx = 0;
 			int part_updates = (int)bctbx_list_size(new_participants);
 			for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
@@ -1311,7 +1311,7 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 	if (conference) {
 		local_conference_address = linphone_address_clone(linphone_conference_get_conference_address(conference));
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
-		one_participant_conference_enabled = linphone_conference_params_is_one_participant_conference_enabled(conf_params);
+		one_participant_conference_enabled = linphone_conference_params_one_participant_conference_enabled(conf_params);
 	}
 	int expected_no_participants = 0;
 	if (((participant_size == 2) && !one_participant_conference_enabled) || (participant_size == 1)) {
@@ -1335,7 +1335,7 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 			BC_ASSERT_EQUAL(linphone_conference_is_in(conference), local_participant_is_in, int, "%d");
 
 			const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(conference);
-			video_enabled = (!!linphone_conference_params_is_video_enabled(conf_params));
+			video_enabled = (!!linphone_conference_params_video_enabled(conf_params));
 		}
 	}
 
@@ -3237,7 +3237,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	bool_t caller_capability_negotiations_enabled = linphone_call_params_capability_negotiations_enabled(caller_params);
-	bool_t caller_capability_negotiation_reinvite_enabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
+	bool_t caller_capability_negotiation_reinvite_enabled = linphone_call_params_capability_negotiation_reinvite_enabled(caller_params);
 	const LinphoneMediaEncryption caller_local_enc = linphone_call_params_get_media_encryption(caller_params);
 	const bool_t caller_mand_enc = linphone_call_params_mandatory_media_encryption_enabled (caller_params);
 	bctbx_list_t* caller_supported_encs = linphone_call_params_get_supported_encryptions (caller_params);
@@ -3260,7 +3260,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 
 	bool_t callee_capability_negotiations_enabled = linphone_call_params_capability_negotiations_enabled(callee_params);
-	bool_t callee_capability_negotiation_reinvite_enabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params);
+	bool_t callee_capability_negotiation_reinvite_enabled = linphone_call_params_capability_negotiation_reinvite_enabled(callee_params);
 	const LinphoneMediaEncryption callee_local_enc = linphone_call_params_get_media_encryption(callee_params);
 	const bool_t callee_mand_enc = linphone_call_params_mandatory_media_encryption_enabled (callee_params);
 
@@ -3478,9 +3478,9 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 				if(conference == NULL) {
 					LinphoneConferenceParams *params = linphone_conference_params_new(lc);
 					// When local participant is disabled, the conference is not attached to the core (lc->conf_ctx)
-					linphone_conference_params_set_one_participant_conference_enabled(params, TRUE);
+					linphone_conference_params_enable_one_participant_conference(params, TRUE);
 					linphone_conference_params_set_subject(params, _linphone_call_get_subject(call));
-					linphone_conference_params_set_video_enabled(params, linphone_call_params_video_enabled(linphone_call_get_current_params(call)));
+					linphone_conference_params_enable_video(params, linphone_call_params_video_enabled(linphone_call_get_current_params(call)));
 					conference = linphone_core_create_conference_with_params(lc, params);
 					linphone_conference_params_unref(params);
 					linphone_conference_unref(conference); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */

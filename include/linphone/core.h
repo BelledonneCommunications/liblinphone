@@ -4504,7 +4504,7 @@ LINPHONE_PUBLIC void linphone_core_enable_tcap_line_merging(LinphoneCore *core, 
  * @ingroup media_parameters
  * @deprecated 16/12/2021 Use linphone_core_capability_negotiation_reinvite_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
 
 /**
  * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
@@ -4529,7 +4529,7 @@ LINPHONE_PUBLIC void linphone_core_enable_zero_rtp_port_for_stream_inactive(Linp
  * @ingroup media_parameters
  * @deprecated 16/12/2021 Use linphone_core_zero_rtp_port_for_stream_inactive_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
+LINPHONE_PUBLIC bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
 
 /**
  * Check if RTP port is set to 0 when a stream is inactive
@@ -7601,6 +7601,24 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char * linphone_core_get_call_logs_database_path(LinphoneCore *core);
+
+/**
+ * Check if RTP port is set to 0 when a stream is inactive
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if the RTP port is set to 0 if the stream direction is inactive; FALSE otherwise.
+ * @ingroup media_parameters
+ * @deprecated 16/12/2021. Use linphone_core_zero_rtp_port_for_stream_inactive_enabled() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
+
+/**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ * @deprecated 16/12/2021. Use linphone_core_capability_negotiation_reinvite_enabled() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
 
 #ifdef __cplusplus
 }

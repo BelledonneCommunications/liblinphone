@@ -267,7 +267,7 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 		LinphoneNatPolicy *callee_nat_policy = linphone_core_get_nat_policy(callee->lc);
 		const bool_t callee_ice_enabled = linphone_nat_policy_ice_enabled(callee_nat_policy);
 
-		const bool_t capabilityNegotiationReinviteEnabled = linphone_core_sdp_200_ack_enabled(caller->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
+		const bool_t capabilityNegotiationReinviteEnabled = linphone_core_sdp_200_ack_enabled(caller->lc) ? linphone_call_params_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_capability_negotiation_reinvite_enabled(caller_params);
 		bool sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled) || (caller_ice_enabled && callee_ice_enabled);
 		const int expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -330,7 +330,7 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			// Update expected encryotion
 			get_expected_encryption_from_call_params(calleeCall, callerCall, &expectedEncryption, &potentialConfigurationChosen);
 
-			const bool_t capabilityNegotiationReinviteEnabledAfterUpdate = linphone_core_sdp_200_ack_enabled(callee->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(callerCall)) : linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(calleeCall));
+			const bool_t capabilityNegotiationReinviteEnabledAfterUpdate = linphone_core_sdp_200_ack_enabled(callee->lc) ? linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(callerCall)) : linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(calleeCall));
 			bool sendReInviteAfterUpdate = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabledAfterUpdate) || (caller_ice_enabled && callee_ice_enabled);
 
 			const int expectedStreamsRunningAfterUpdate = 1 + ((sendReInviteAfterUpdate) ? 1 : 0);
@@ -1301,7 +1301,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
 
 	bool potentialConfigurationChosen = (caller_cap_neg && callee_cap_neg);
-	bool_t capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
+	bool_t capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
 	bool sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled) || (marie_ice_enabled && pauline_ice_enabled);
 	int expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -1350,7 +1350,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &dummyPotentialConfigurationChosen);
 	// As Pauline sends a reINVITE without SDP, Marie replies with the same SDP as she previously sent hence it has the same capability negotiation flags as the previous answer to the INVITE.
 	// A reINVITE is sent again if capability negotiations are sent
-	capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
+	capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
 	sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled) || (marie_ice_enabled && pauline_ice_enabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -1393,7 +1393,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+1)));
 
 	get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &potentialConfigurationChosen);
-	capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
+	capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
 	sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -1460,7 +1460,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 
 	encryptionAfterUpdate = (caller_cap_neg && callee_cap_neg) ? encryption2 : encryption;
 	get_expected_encryption_from_call_params(marieCall, paulineCall, &expectedEncryption, &potentialConfigurationChosen);
-	capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
+	capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
 	sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -1640,7 +1640,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
 	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
 
-	bool capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
+	bool capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
 	bool sendReInvite = ((caller_cap_neg && callee_cap_neg && capabilityNegotiationReinviteEnabled) || (marie_ice_enabled && pauline_ice_enabled));
 	int expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -1683,7 +1683,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
 
-	capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
+	capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
 	sendReInvite = (caller_cap_neg && callee_cap_neg && capabilityNegotiationReinviteEnabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -1748,7 +1748,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdating,(marie_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,(pauline_stat.number_of_LinphoneCallUpdatedByRemote+1)));
 
-	capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
+	capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(marieCall));
 	sendReInvite = (caller_cap_neg && callee_cap_neg && capabilityNegotiationReinviteEnabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
@@ -2807,7 +2807,7 @@ void call_with_toggling_encryption_base(const LinphoneMediaEncryption encryption
 		encryptionAfterUpdate = encryption;
 		get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &potentialConfigurationChosen);
 		BC_ASSERT_TRUE(potentialConfigurationChosen);
-		bool_t capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
+		bool_t capabilityNegotiationReinviteEnabled = linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
 		bool sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled);
 		expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 

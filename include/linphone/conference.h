@@ -109,7 +109,7 @@ LINPHONE_PUBLIC const char *linphone_conference_params_get_subject(const Linphon
  * @param enable If TRUE, audio will be enabled during conference
  * @deprecated 16/12/2021 Use linphone_conference_params_enable_audio() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_params_set_audio_enabled(LinphoneConferenceParams *params, bool_t enable);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_set_audio_enabled(LinphoneConferenceParams *params, bool_t enable);
 
 /**
  * Enable audio capabilities
@@ -124,7 +124,7 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_audio(LinphoneConferenceP
  * @return TRUE if the conference supports audio capabilities, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_audio_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_conference_params_is_audio_enabled(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_audio_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Check whether audio capabilities are enabled
@@ -139,7 +139,15 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_audio_enabled(const LinphoneCo
  * @param enable If TRUE, video will be enabled during conference
  * @deprecated 16/12/2021 Use linphone_conference_params_enable_video() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_params_set_video_enabled(LinphoneConferenceParams *params, bool_t enable);
+LINPHONE_PUBLIC void linphone_conference_params_enable_video(LinphoneConferenceParams *params, bool_t enable);
+
+/**
+ * Enable video capabilities
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param enable If TRUE, video will be enabled during conference
+ * @deprecated 16/12/2021 Use linphone_conference_params_enable_video() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_set_video_enabled(LinphoneConferenceParams *params, bool_t enable);
 
 /**
  * Enable video capabilities
@@ -154,7 +162,7 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_video(LinphoneConferenceP
  * @return TRUE if the conference supports video capabilities, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_video_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_conference_params_is_video_enabled(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_video_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Check whether video capabilities are enabled
@@ -169,7 +177,7 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_video_enabled(const LinphoneCo
  * @param enable If TRUE, chat is enabled during conference
  * @deprecated 16/12/2021 Use linphone_conference_params_enable_chat() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_params_set_chat_enabled(LinphoneConferenceParams *params, bool_t enable);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_set_chat_enabled(LinphoneConferenceParams *params, bool_t enable);
 
 /**
  * Enable chat capabilities
@@ -184,7 +192,7 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_chat(LinphoneConferencePa
  * @return TRUE if the conference supports chat capabilities, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_chat_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_conference_params_is_chat_enabled(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Check whether chat capabilities are enabled
@@ -208,7 +216,7 @@ LINPHONE_PUBLIC LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(c
  * @param enable TRUE if local participant is automatically added to the conference, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_enable_local_participant() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable);
 
 /**
  * Enable local participant to enter the conference.
@@ -225,7 +233,7 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_local_participant(Linphon
  * @return TRUE if local participant is by default part of the conference, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_local_participant_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_conference_params_is_local_participant_enabled(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_local_participant_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Returns whether local participant has to enter the conference.
@@ -240,12 +248,13 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_local_participant_enabled(cons
  * @param enable TRUE if conference can have only one participant, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_enable_one_participant_conference() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_params_set_one_participant_conference_enabled(LinphoneConferenceParams *params, bool_t enable);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_set_one_participant_conference_enabled(LinphoneConferenceParams *params, bool_t enable);
 
 /**
  * Enable conference with one participant.
  * @param params A #LinphoneConferenceParams @notnil
  * @param enable TRUE if conference can have only one participant, FALSE otherwise
+ * @deprecated 16/12/2021 Use linphone_conference_params_enable_one_participant_conference() instead.
  */
 LINPHONE_PUBLIC void linphone_conference_params_enable_one_participant_conference(LinphoneConferenceParams *params, bool_t enable);
 
@@ -255,7 +264,7 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_one_participant_conferenc
  * @return TRUE if the conference can have only one participant, FALSE otherwise
  * @deprecated 16/12/2021 Use linphone_conference_params_one_participant_conference_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_one_participant_conference_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Returns whether conference can have only one participant

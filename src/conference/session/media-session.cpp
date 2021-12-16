@@ -168,7 +168,7 @@ bool MediaSessionPrivate::tryEnterConference() {
 
 bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescription> & remoteMd, const std::shared_ptr<SalMediaDescription> & finalMd) const {
 	L_Q();
-	if (remoteMd && remoteMd->isEmpty() && linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(q->getCore()->getCCore())) {
+	if (remoteMd && remoteMd->isEmpty() && linphone_core_zero_rtp_port_for_stream_inactive_enabled(q->getCore()->getCCore())) {
 		return false;
 	}
 	return (finalMd && (finalMd->isEmpty() || incompatibleSecurity(finalMd)));
@@ -888,7 +888,7 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 				conference = listener->getCallSessionConference(q->getSharedFromThis());
 				if (conference) {
 					const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
-					isConferenceVideoCapabilityOn = linphone_conference_params_is_video_enabled(params);
+					isConferenceVideoCapabilityOn = linphone_conference_params_video_enabled(params);
 					if (rcp->videoEnabled() && linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
 						getParams()->enableVideo(isConferenceVideoCapabilityOn);
 					}

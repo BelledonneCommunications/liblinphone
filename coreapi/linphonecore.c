@@ -8015,7 +8015,7 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 }
 
 bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
-	return linphone_core_zero_rtp_port_for_stream_inactive_enabled(lc)	;
+	return linphone_core_zero_rtp_port_for_stream_inactive_enabled(lc);
 }
 
 bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
@@ -8026,12 +8026,12 @@ void linphone_core_enable_zero_rtp_port_for_stream_inactive(LinphoneCore *lc, bo
 	linphone_config_set_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", (int)enable);
 }
 
-bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
-	return linphone_core_capability_negotiation_reinvite_enabled(lc);
+bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
 }
 
-bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *core) {
-	return (bool_t)!!linphone_config_get_int(core->config, "sip", "capability_negotiations_reinvite", 1);
+bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
+	return linphone_core_capability_negotiation_reinvite_enabled(lc);
 }
 
 void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *lc, bool_t enable) {
@@ -8532,7 +8532,7 @@ static void linphone_core_set_conference(LinphoneCore *lc, LinphoneConference *c
 LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc, const LinphoneConferenceParams *params) {
 	const char *conf_method_name;
 	LinphoneConference *conf = nullptr;
-	bool serverMode = params && !linphone_conference_params_is_local_participant_enabled(params);
+	bool serverMode = params && !linphone_conference_params_local_participant_enabled(params);
 
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {

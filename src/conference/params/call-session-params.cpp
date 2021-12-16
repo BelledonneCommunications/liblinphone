@@ -202,7 +202,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	const auto & cCore = core->getCCore();
 	d->inConference = false;
 	d->capabilityNegotiation = !!linphone_core_capability_negociation_enabled(cCore);
-	d->capabilityNegotiationReInvite = !!linphone_core_is_capability_negotiation_reinvite_enabled(cCore);
+	d->capabilityNegotiationReInvite = !!linphone_core_capability_negotiation_reinvite_enabled(cCore);
 	d->mergeTcapLines = !!linphone_core_tcap_lines_merging_enabled(cCore);
 	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
