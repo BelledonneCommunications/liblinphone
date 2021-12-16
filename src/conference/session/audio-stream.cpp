@@ -230,6 +230,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 
 	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	MS2AudioMixer *audioMixer = getAudioMixer();
 	MSSndCard *playcard = nullptr;
 	// try to get currently used playcard if it was already set
 	if (outputAudioDevice) {
@@ -244,8 +245,13 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			bool muted = mMuted;
 			MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
 			if (muted && !mMuted) {
-				lInfo() << "Early media finished, unmuting audio input...";
-				enableMic(micEnabled());
+				if (audioMixer){
+					lInfo() << "Early media finished, unmuting audio input and will connect audio to conference.";
+					mRestartStreamRequired = true;
+				}else{
+					lInfo() << "Early media finished, unmuting audio input...";
+					enableMic(micEnabled());
+				}
 			}
 
 			if (playcard) {
@@ -265,7 +271,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 
-	MS2AudioMixer *audioMixer = getAudioMixer();
+	
 	int usedPt = -1;
 	string onHoldFile = "";
 	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, stream, &usedPt);
@@ -437,7 +443,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
 		setupRingbackPlayer();
 	
-	if (audioMixer){
+	if (audioMixer && !mMuted){
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
