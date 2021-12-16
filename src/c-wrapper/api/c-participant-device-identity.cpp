@@ -62,7 +62,7 @@ void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdenti
 
 void linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *deviceIdentity, const char *descriptor){
 #ifdef HAVE_ADVANCED_IM
-	ParticipantDeviceIdentity::toCpp(deviceIdentity)->setCapabilityDescriptor(descriptor);
+	ParticipantDeviceIdentity::toCpp(deviceIdentity)->setCapabilityDescriptor(L_C_TO_STRING(descriptor));
 #endif
 }
 

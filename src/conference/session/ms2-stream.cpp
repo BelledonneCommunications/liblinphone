@@ -196,7 +196,6 @@ void MS2Stream::addAcapToStream(std::shared_ptr<SalMediaDescription> & desc, con
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
-	const auto & mediaDesc = (ctx.localIsOfferer) ? ctx.localMediaDescription : ctx.remoteMediaDescription;
 	localDesc.rtp_addr = getPublicIp();
 	localDesc.rtcp_addr = getPublicIp();
 	
@@ -216,7 +215,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		}
 	}
 	if (!isTransportOwner()){
-		if (mediaDesc->bundles.empty()) {
+		if (localDesc.getChosenConfiguration().mid.empty()) {
 			removeFromBundle();
 		} else {
 			/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */

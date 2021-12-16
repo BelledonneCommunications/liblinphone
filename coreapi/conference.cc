@@ -2286,8 +2286,10 @@ bool RemoteConference::isIn () const {
 	if (state != ConferenceInterface::State::Created)
 		return false;
 	auto session = getMainSession();
+	if (!session) return false;
 	LinphoneCallState callState = static_cast<LinphoneCallState>(session->getState());
-	return callState == LinphoneCallStreamsRunning;
+	auto focusContactAddress = Address(session->getRemoteContact());
+	return ((callState == LinphoneCallUpdatedByRemote) || (callState == LinphoneCallUpdating) || (callState == LinphoneCallStreamsRunning)) && focusContactAddress.hasUriParam("conf-id");
 }
 
 bool RemoteConference::focusIsReady () const {
