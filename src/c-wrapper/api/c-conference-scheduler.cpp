@@ -58,6 +58,7 @@ void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceSchedu
 
 void linphone_conference_scheduler_notify_invitations_sent(LinphoneConferenceScheduler *conference_scheduler, bctbx_list_t *failed_invites) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ConferenceScheduler, ConferenceScheduler::toCpp(conference_scheduler), linphone_conference_scheduler_cbs_get_invitations_sent, failed_invites);
+	bctbx_list_free_with_data(failed_invites, (bctbx_list_free_func)linphone_address_unref);
 }
 
 void linphone_conference_scheduler_add_callbacks(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerCbs *cbs) {

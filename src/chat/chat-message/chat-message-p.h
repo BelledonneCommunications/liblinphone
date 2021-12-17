@@ -105,6 +105,11 @@ public:
 		this->toAddress = toAddress;
 	}
 
+	// Used by the ConferenceScheduler to keep track of the recipient Address in One-To-One Flexisip chat room
+	void setRecipientAddress (const IdentityAddress &recipientAddress) {
+		this->recipientAddress = recipientAddress;
+	}
+
 	void markContentsAsNotLoaded () {
 		contentsNotLoadedFromDatabase = true;
 	}
@@ -274,6 +279,7 @@ private:
 	std::string forwardInfo;
 	std::string replyingToMessageId;
 	IdentityAddress replyingToMessageSender;
+	IdentityAddress recipientAddress;
 
 	bool isEphemeral = false;
 	long ephemeralLifetime = 0;
@@ -283,6 +289,8 @@ private:
 
 	bool encryptionPrevented = false;
 	mutable bool contentsNotLoadedFromDatabase = false;
+
+	std::list<std::shared_ptr<ChatMessageListener>> listeners;
 	L_DECLARE_PUBLIC(ChatMessage);
 };
 

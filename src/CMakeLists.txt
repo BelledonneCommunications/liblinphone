@@ -138,6 +138,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	call/audio-device/audio-device.cpp
 	chat/chat-message/chat-message-p.h
 	chat/chat-message/chat-message.h
+	chat/chat-message/chat-message-listener.h
 	chat/chat-message/imdn-message-p.h
 	chat/chat-message/imdn-message.h
 	chat/chat-message/is-composing-message.h

@@ -269,9 +269,14 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			}
 		}
 	} else if (newState == CallSession::State::Error) {
-		if (q->getState() == ConferenceInterface::State::CreationPending)
+		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			q->setState(ConferenceInterface::State::CreationFailed);
-		else if (q->getState() == ConferenceInterface::State::TerminationPending) {
+			// If there are chat message pending chat room creation, set state to NotDelivered and remove them from queue.
+			for (const auto &message: pendingCreationMessages) {
+				message->getPrivate()->setState(ChatMessage::State::NotDelivered);
+			}
+			pendingCreationMessages.clear();
+		} else if (q->getState() == ConferenceInterface::State::TerminationPending) {
 			if (session->getReason() == LinphoneReasonNotFound) {
 				// Somehow the chat room is no longer known on the server, so terminate it
 				q->onConferenceTerminated(q->getConferenceAddress());

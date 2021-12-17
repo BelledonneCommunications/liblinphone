@@ -20,6 +20,8 @@
  */
 
 #include "conference-scheduler.h"
+#include "participant.h"
+#include "chat/chat-message/chat-message-p.h"
 #include "core/core-p.h"
 #include "content/file-content.h"
 
@@ -99,7 +101,7 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	mSession->setListener(this);
 }
 
-void ConferenceScheduler::onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) {
+void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	const Address *remoteAddress = session->getRemoteContactAddress();
 	if (remoteAddress == nullptr) {
 		lError() << "[Conference Scheduler] Cannot update conference info focus URI because the remote contact address is invalid.";
@@ -108,6 +110,72 @@ void ConferenceScheduler::onCallSessionSetTerminated (const std::shared_ptr<Call
 		auto conferenceAddress = ConferenceAddress(*remoteAddress);
 		lInfo () << "[Conference Scheduler] Conference has been succesfully created: " << conferenceAddress;
 		setConferenceAddress(conferenceAddress);
+	}
+}
+
+void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
+	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+	IdentityAddress participantAddress = message->getRecipientAddress();
+
+	if (state == ChatMessage::State::NotDelivered) { // Message wasn't delivered
+		if (chatRoom->getState() == Conference::State::Created) { // Chat room was created successfully
+			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne) { // Message was sent using a 1-1 chat room
+				lError() << "[Conference Scheduler] Invitation couldn't be sent to participant [" << participantAddress << "]";
+				mInvitationsInError.push_back(Address(participantAddress.asAddress()));
+			} else { // Message was sent using a group chat room
+				lError() << "[Conference Scheduler] At least some participants of the chat room haven't received the invitation!";
+				mInvitationsSent += (unsigned long)(message->getParticipantsByImdnState(ChatMessage::State::Delivered).size());
+				for (auto &participant : message->getParticipantsByImdnState(ChatMessage::State::NotDelivered)) {
+					participantAddress = participant.getParticipant()->getAddress();
+					lError() << "[Conference Scheduler] Invitation couldn't be sent to participant [" << participantAddress << "]";
+					mInvitationsInError.push_back(Address(participantAddress.asAddress()));
+				}
+			}
+		} else { // Chat room wasn't created
+			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne) { // Message was sent using a 1-1 chat room
+				lError() << "[Conference Scheduler] Invitation couldn't be sent to participant [" << participantAddress << "]";
+				mInvitationsInError.push_back(Address(participantAddress.asAddress()));
+			} else { // Message was sent using a group chat room
+				lError() << "[Conference Scheduler] Chat room wasn't creatd, so no one received the invitation!";
+				for (auto &participant : mConferenceInfo->getParticipants()) {
+					mInvitationsInError.push_back(Address(participant.asAddress()));
+				}
+			}
+		}
+	} else if (state == ChatMessage::State::Delivered) { // Message was delivered
+		if (chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne) { // A message was sent for each participant
+			lInfo() << "[Conference Scheduler] Invitation to participant [" << participantAddress << "] was delivered";
+			mInvitationsSent += 1;
+		} else { // A single message was used for all participants
+			// In case of a group chat room there is only 1 message being sent
+			auto participants = chatRoom->getParticipants();
+			if (participants.size() == mConferenceInfo->getParticipants().size()) {
+				lInfo() << "[Conference Scheduler] Invitation to was delivered to all participants";
+				mInvitationsSent = (unsigned long)(mConferenceInfo->getParticipants().size());
+			} else { // In case someone couldn't be invited in the chat room, all others may have received the invitation
+				for (auto &participant : mConferenceInfo->getParticipants()) {
+					bool found = false;
+					for (auto &chatRoomParticipant : participants) {
+						if (participant.asAddress().weakEqual(chatRoomParticipant->getAddress().asAddress())) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						lError() << "[Conference Scheduler] Invitation couldn't be sent to participant [" << participant << "]";
+						mInvitationsInError.push_back(Address(participant.asAddress()));
+					} else {
+						mInvitationsSent += 1;
+					}
+				}
+			}
+		}
+	} else {
+		return;
+	}
+
+	if (mInvitationsSent + mInvitationsInError.size() == mConferenceInfo->getParticipants().size()) {
+		linphone_conference_scheduler_notify_invitations_sent(toC(), L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(mInvitationsInError));
 	}
 }
 
@@ -131,6 +199,16 @@ void ConferenceScheduler::setConferenceAddress(const ConferenceAddress& conferen
 	setState(State::Ready);
 }
 
+shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_ptr<AbstractChatRoom> chatRoom) {
+	FileContent *content = new FileContent(); // content will be deleted by ChatMessage
+	content->setContentType(ContentType::Icalendar);
+	content->setFileName("conference.ics");
+	content->setBodyFromUtf8(mConferenceInfo->toIcsString());
+	shared_ptr<LinphonePrivate::ChatMessage> message = chatRoom->createFileTransferMessage(content);
+	message->addListener(getSharedFromThis());
+	return message;
+}
+
 void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomParams) {
 	if (mState != State::Ready) {
 		lWarning() << "[Conference Scheduler] Can't send conference invitation if state ins't Ready, current state is " << stateToString(mState);
@@ -142,7 +220,8 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		return;
 	}
 
-	bctbx_list_t *participantsInError = nullptr;
+	mInvitationsInError.clear();
+	mInvitationsSent = 0;
 
 	if (chatRoomParams->isGroup()) {
 		shared_ptr<AbstractChatRoom> chatRoom = getCore()->getPrivate()->createChatRoom(
@@ -152,15 +231,12 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		if (!chatRoom) {
 			lError() << "[Conference Scheduler] Failed to create group chat room using given chat room params & conference information";
 			for (auto participant : mConferenceInfo->getParticipants()) {
-				LinphoneAddress *cAddress = L_GET_C_BACK_PTR(&(participant.asAddress()));
-				participantsInError = bctbx_list_append(participantsInError, cAddress);
+				mInvitationsInError.push_back(Address(participant.asAddress()));
 			}
+			linphone_conference_scheduler_notify_invitations_sent(toC(), L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(mInvitationsInError));
+			return;
 		} else {
-			FileContent *content = new FileContent();
-			content->setContentType(ContentType::Icalendar);
-			content->setFileName("conference.ics");
-			content->setBodyFromUtf8(mConferenceInfo->toIcsString());
-			shared_ptr<LinphonePrivate::ChatMessage> message = chatRoom->createFileTransferMessage(content);
+			shared_ptr<ChatMessage> message = createInvitationChatMessage(chatRoom);
 			message->send();
 		}
 	} else {
@@ -187,25 +263,14 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 
 			if (!chatRoom) {
 				lError() << "[Conference Scheduler] Couldn't find nor create a chat room between [" << mConferenceInfo->getOrganizer() << "] and [" << participant << "]";
-				LinphoneAddress *cAddress = L_GET_C_BACK_PTR(&(participant.asAddress()));
-				participantsInError = bctbx_list_append(participantsInError, cAddress);
+				mInvitationsInError.push_back(Address(participant.asAddress()));
 				continue;
 			}
 
-			FileContent *content = new FileContent();
-			content->setContentType(ContentType::Icalendar);
-			content->setFileName("conference.ics");
-			content->setBodyFromUtf8(mConferenceInfo->toIcsString());
-			shared_ptr<LinphonePrivate::ChatMessage> message = chatRoom->createFileTransferMessage(content);
+			shared_ptr<ChatMessage> message = createInvitationChatMessage(chatRoom);
+			message->getPrivate()->setRecipientAddress(participant);
 			message->send();
-			// content will be deleted by ChatMessage
 		}
-	}
-
-	linphone_conference_scheduler_notify_invitations_sent(toC(), participantsInError);
-	
-	if (participantsInError != nullptr) {
-		bctbx_list_free(participantsInError);
 	}
 }
 

@@ -24,6 +24,7 @@
 #include <conference/session/call-session-listener.h>
 #include <conference/conference-info.h>
 #include "core/core-accessor.h"
+#include <chat/chat-message/chat-message-listener.h>
 #include <chat/chat-room/chat-room-params.h>
 #include <conference/session/call-session.h>
 #include <belle-sip/object++.hh>
@@ -40,7 +41,8 @@ class LINPHONE_PUBLIC ConferenceScheduler : public bellesip::HybridObject<Linpho
 	public CoreAccessor, 
 	public UserDataAccessor, 
 	public CallbacksHolder<ConferenceSchedulerCbs>,
-	public CallSessionListener
+	public CallSessionListener,
+	public ChatMessageListener
 {
 public:
 
@@ -56,6 +58,7 @@ public:
 	virtual ~ConferenceScheduler ();
 
 	void onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) override;
+	void onChatMessageStateChanged (const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
 
 	State getState () const;
 
@@ -69,10 +72,15 @@ public:
 private:
 	void setState (State newState);
 	std::string stateToString (State state);
+
+	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom);
 	
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
 	std::shared_ptr<CallSession> mSession = nullptr;
+
+	unsigned long mInvitationsSent = 0;
+	std::list<Address> mInvitationsInError;
 };
 
 class ConferenceSchedulerCbs : public bellesip::HybridObject<LinphoneConferenceSchedulerCbs, ConferenceSchedulerCbs>, public Callbacks {

@@ -42,6 +42,8 @@ class FileTransferContent;
 class ChatMessagePrivate;
 class Participant;
 class ParticipantImdnState;
+class ChatMessageListener;
+class ConferenceScheduler;
 
 class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class BasicToClientGroupChatRoom;
@@ -59,6 +61,7 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class ServerGroupChatRoomPrivate;
 	friend class LimeX3dhEncryptionEngine;
 	friend class CorePrivate;
+	friend class ConferenceScheduler;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
@@ -116,6 +119,7 @@ public:
 	const ConferenceAddress &getFromAddress () const;
 	const ConferenceAddress &getToAddress () const;
 	const ConferenceAddress &getLocalAddress () const;
+	const IdentityAddress &getRecipientAddress () const;
 	const std::string &getForwardInfo () const;
 
 	bool isReply () const;
@@ -149,6 +153,8 @@ public:
 	bool downloadFile (FileTransferContent *content);
 	bool isFileTransferInProgress () const;
 	void fileUploadEndBackgroundTask ();
+
+	void addListener(std::shared_ptr<ChatMessageListener> listener);
 
 protected:
 	explicit ChatMessage (ChatMessagePrivate &p);

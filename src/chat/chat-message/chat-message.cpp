@@ -30,6 +30,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
+#include "chat/chat-message/chat-message-listener.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
@@ -241,6 +242,13 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (cbs && linphone_chat_message_cbs_get_msg_state_changed(cbs))
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 	_linphone_chat_message_notify_msg_state_changed(msg, (LinphoneChatMessageState)state);
+
+	for (auto &listener : listeners) {
+		listener->onChatMessageStateChanged(q->getSharedFromThis(), state);
+	}
+	if (state == ChatMessage::State::Displayed) {
+		listeners.clear();
+	}
 
 	// 3. Specific case, change to displayed once all file transfers haven been downloaded, and only if chat message has been marked as read.
 	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
@@ -1441,6 +1449,11 @@ const ConferenceAddress &ChatMessage::getLocalAddress () const {
 		return d->toAddress;
 }
 
+const IdentityAddress &ChatMessage::getRecipientAddress () const {
+	L_D();
+	return d->recipientAddress;
+}
+
 const std::string &ChatMessage::getForwardInfo () const {
 	L_D();
 	return d->forwardInfo;
@@ -1626,6 +1639,11 @@ int ChatMessage::putCharacter (uint32_t character) {
 void ChatMessage::fileUploadEndBackgroundTask () {
 	L_D();
 	d->fileTransferChatMessageModifier.fileUploadEndBackgroundTask();
+}
+
+void ChatMessage::addListener(shared_ptr<ChatMessageListener> listener) {
+	L_D();
+	d->listeners.push_back(listener);
 }
 
 std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e) {
