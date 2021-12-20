@@ -583,13 +583,13 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		&& (targetState == CallSession::State::OutgoingEarlyMedia))) {
 		rtp_session_set_symmetric_rtp(mSessions.rtp_session, false);
 	}
+	rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream.getChosenConfiguration().rtcp_mux);
 
 	if (getState() == Stream::Stopped){
 		/* These things below are not expected to change while the stream is running. */
 		media_stream_set_max_network_bitrate(getMediaStream(), mOutputBandwidth * 1000);
 		if (isMulticast)
 			rtp_session_set_multicast_ttl(mSessions.rtp_session, stream.getChosenConfiguration().ttl);
-		rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream.getChosenConfiguration().rtcp_mux);
 
 		setupSrtp(params);
 
