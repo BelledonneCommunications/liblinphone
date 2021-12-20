@@ -81,15 +81,15 @@ public class CoreManager {
     private BluetoothHelper mBluetoothHelper;
     private ShutdownReceiver mShutdownReceiver;
 
-	// These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
+    // These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
-	private native void stopCore(long ptr);
-	private native void leaveConference(long ptr);
-	private native void pauseAllCalls(long ptr);
-	private native void reloadSoundDevices(long ptr);
-	private native void enterBackground(long ptr);
-	private native void enterForeground(long ptr);
-	private native void ensureRegistered(long ptr);
+    private native void stopCore(long ptr);
+    private native void leaveConference(long ptr);
+    private native void pauseAllCalls(long ptr);
+    private native void reloadSoundDevices(long ptr);
+    private native void enterBackground(long ptr);
+    private native void enterForeground(long ptr);
+    private native void ensureRegistered(long ptr);
 
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
@@ -165,9 +165,9 @@ public class CoreManager {
         return mCore;
     }
 
-	public void ensureRegistered() {
-		ensureRegistered(mCore.getNativePointer());
-	}
+    public void ensureRegistered() {
+        ensureRegistered(mCore.getNativePointer());
+    }
 
     public void onLinphoneCoreStart() {
         if (mCore.isAutoIterateEnabled()) {
@@ -409,6 +409,14 @@ public class CoreManager {
         if (mCore != null) {
             updatePushNotificationInformation(mCore.getNativePointer(), appId, token);
         }
+    }
+
+    public void setAudioManagerInCommunicationMode() {
+        if (mAudioHelper != null) mAudioHelper.setAudioManagerInCommunicationMode();
+    }
+
+    public void setAudioManagerInNormalMode() {
+        if (mAudioHelper != null) mAudioHelper.setAudioManagerInNormalMode();
     }
 
     private Class getServiceClass() {
