@@ -584,6 +584,16 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 		actualCfg.ttl = belle_sdp_connection_get_ttl(cnx);
 	}
 
+	actualCfg.rtcp_mux = belle_sdp_media_description_get_attribute(media_desc, "rtcp-mux") != NULL;
+	actualCfg.bundle_only = belle_sdp_media_description_get_attribute(media_desc, "bundle-only") != NULL;
+
+	attribute = belle_sdp_media_description_get_attribute(media_desc, "mid");
+	if (attribute){
+		value = belle_sdp_attribute_get_value(attribute);
+		if (value)
+			actualCfg.mid = L_C_TO_STRING(value);
+	}
+
 	SalStreamDir dir=SalStreamInactive;
 	if ( belle_sdp_media_description_get_attribute ( media_desc,"sendrecv" ) ) {
 		dir=SalStreamSendRecv;
@@ -594,19 +604,9 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"inactive" ) ) {
 		dir=SalStreamInactive;
 	} else {
-		dir=salMediaDesc->dir; /*takes default value if not present*/
+		dir=((rtp_port == 0) && (!actualCfg.bundle_only)) ? SalStreamInactive : salMediaDesc->dir; /*takes default value if not present*/
 	}
 	actualCfg.dir = dir;
-
-	actualCfg.rtcp_mux = belle_sdp_media_description_get_attribute(media_desc, "rtcp-mux") != NULL;
-	actualCfg.bundle_only = belle_sdp_media_description_get_attribute(media_desc, "bundle-only") != NULL;
-
-	attribute = belle_sdp_media_description_get_attribute(media_desc, "mid");
-	if (attribute){
-		value = belle_sdp_attribute_get_value(attribute);
-		if (value)
-			actualCfg.mid = L_C_TO_STRING(value);
-	}
 
 	actualCfg.payloads.clear();
 	/* Get media payload types */

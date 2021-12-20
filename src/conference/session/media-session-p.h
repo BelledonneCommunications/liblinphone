@@ -199,7 +199,7 @@ private:
 	void makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool offerNegotiatedMediaProtocolOnly, const bool forceCryptoKeyGeneration = false);
 	void fillLocalStreamDescription(SalStreamDescription & stream, std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const SalCustomSdpAttribute *customSdpAttributes);
 	void fillConferenceParticipantVideoStream(SalStreamDescription &newStream, const std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<ParticipantDevice> & dev, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs);
-	void addNewConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs);
+	void addConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs);
 	void copyOldStreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & refMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration);

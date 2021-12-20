@@ -737,7 +737,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		return std::make_pair(resultCfg, success);
 	}
 	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
-
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 

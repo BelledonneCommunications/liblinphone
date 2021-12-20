@@ -1476,7 +1476,7 @@ SalStreamDescription & MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMed
 	}
 }
 
-void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs) {
+void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs) {
 
 	L_Q();
 
@@ -1520,7 +1520,7 @@ void MediaSessionPrivate::addNewConferenceParticipantVideostreams(std::shared_pt
 				newStream.name = "Thumbnail Video " + dev->getAddress().asString();
 				cfg.dir = SalStreamRecvOnly;
 				validateVideoStreamDirection(cfg);
-				if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, cfg, "vs" + devLabel);
+				if (getParams()->rtpBundleEnabled() && (foundStreamIdx == -1)) addStreamToBundle(md, newStream, cfg, "vs" + devLabel);
 			} else {
 				lInfo() << "Don't put video stream for device in conference with address " << dev->getAddress().asString() << " on local offer for CallSession [" << q << "]";
 				cfg.dir = SalStreamInactive;
@@ -1694,47 +1694,10 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 
 					if (cppConference && isInLocalConference) {
 						// Local conference
-						const auto & currentConfParams = cppConference->getCurrentParams();
-						bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
-
-						if (isVideoConferenceEnabled && (dev || !contentAttrValue.empty())) {
-							if (!contentAttrValue.empty() && participantsAttrValue.empty()) {
-								const auto & confLayout = cppConference->getLayout();
-								bool isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-								if (isConferenceLayoutActiveSpeaker) {
-									cfg.dir = SalStreamSendRecv;
-								} else {
-									cfg.dir = SalStreamInactive;
-								}
-							} else if (dev) {
-								const auto & devAddress = dev->getAddress().asAddress();
-								const auto isMe = cppConference->isMe(dev->getAddress());
-								if (isMe && !mediaEnabled) {
-									cfg.dir = SalStreamInactive;
-								} else {
-									switch (dev->getVideoDirection()) {
-										case LinphoneMediaDirectionSendOnly:
-										case LinphoneMediaDirectionRecvOnly:
-										case LinphoneMediaDirectionInactive:
-											cfg.dir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(dev->getVideoDirection());
-											break;
-										case LinphoneMediaDirectionSendRecv:
-											cfg.dir = ((remoteContactAddress == devAddress) && (contentAttrValue.compare("thumbnail") == 0)) ? SalStreamRecvOnly : SalStreamSendOnly;
-											break;
-										case LinphoneMediaDirectionInvalid:
-											cfg.dir = SalStreamInactive;
-											break;
-									}
-								}
-							}
-
-						} else {
-							// disable non main streams if the participant is not in the conference
-							cfg.dir = SalStreamInactive;
-							newStream.disable();
-						}
-
-					} else if (remoteContactAddress.hasParam("isfocus") || isInLocalConference) {
+						// disable streams if the participant is not in the conference
+						cfg.dir = SalStreamInactive;
+						newStream.disable();
+					} else if (remoteContactAddress.hasParam("isfocus")) {
 						// If the call is in a remote conference
 						if (!meLabel.empty() && (meLabel.compare(participantsAttrValue) == 0)) {
 							if (mediaEnabled) {
@@ -1926,7 +1889,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
-		if (participantDevice && !localIsOfferer) {
+		if (participantDevice && !localIsOfferer && !isInLocalConference) {
 			participantDevice->setLayout(MediaSession::computeConferenceLayout(op->getRemoteMediaDescription()));
 		}
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
@@ -2031,7 +1994,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			if (remoteContactAddress) {
 				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 				const auto & dev = cppConference->findParticipantDevice(*remoteContactAddress);
-				if (!isConferenceLayoutNone) {
+				if (dev && !isConferenceLayoutNone) {
 					videoStream.setLabel(dev->getLabel());
 					videoStream.setContent(mainStreamAttrValue);
 				}
@@ -2066,8 +2029,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
+	addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	copyOldStreams(md, oldMd, refMd, pth, encList);
-	addNewConferenceParticipantVideostreams(md, oldMd, pth, encList);
 
 	setupEncryptionKeys(md, forceCryptoKeyGeneration);
 	setupImEncryptionEngineParameters(md);
