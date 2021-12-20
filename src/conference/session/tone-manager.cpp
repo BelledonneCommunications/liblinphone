@@ -145,7 +145,7 @@ void ToneManager::stopRingtone(){
 }
 
 void ToneManager::startErrorTone(LinphoneReason reason) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "[ToneManager] " << __func__ << " for reason=" << reason;
 	mStats.number_of_startErrorTone++;
 	LinphoneToneDescription *tone = getToneFromReason(reason);
 
@@ -160,7 +160,7 @@ void ToneManager::startErrorTone(LinphoneReason reason) {
 }
 
 void ToneManager::startNamedTone(LinphoneToneID toneId) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "[ToneManager] " << __func__ << " for tone ID=" << toneId;
 	mStats.number_of_startNamedTone++;
 	LinphoneToneDescription *tone = getToneFromId(toneId);
 	
@@ -187,7 +187,7 @@ void ToneManager::stopTone() {
 // ---------------------------------------------------
 
 void ToneManager::playDtmf(char dtmf, int duration) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "[ToneManager] " << __func__ << " : " << dtmf;
 	LinphoneCore *lc = getCore().getCCore();
 
 	MSSndCard *card = linphone_core_in_call(lc)
@@ -243,7 +243,7 @@ void ToneManager::stopDtmfStream() {
 }
 
 LinphoneStatus ToneManager::playFile(const char *audiofile) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "[ToneManager] " << __func__ << " : " << (audiofile ? audiofile : "NULL");
 	LinphoneCore *lc = getCore().getCCore();
 	MSFilter *f = getAudioResource(LocalPlayer, lc->sound_conf.play_sndcard, true);
 	int loopms = -1;
@@ -408,6 +408,7 @@ LinphoneToneDescription *ToneManager::getToneFromId(LinphoneToneID id) {
 }
 
 void ToneManager::setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile) {
+	lInfo() << "[ToneManager] " << __func__ << " Reason=" << reason << ", ID=" << id << ", file=" << (audiofile ? audiofile : "NULL");
 	LinphoneCore *lc = getCore().getCCore();
 	LinphoneToneDescription *tone = getToneFromReason(reason);
 
