@@ -51,7 +51,7 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 	bool_t expected_m1_video_capability = FALSE;
 	if (m1_conference) {
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m1_conference);
-		expected_m1_video_capability = linphone_conference_params_is_video_enabled(params);
+		expected_m1_video_capability = linphone_conference_params_video_enabled(params);
 		BC_ASSERT_TRUE(linphone_conference_is_in(m1_conference) == linphone_conference_params_local_participant_enabled(params));
 	}
 
@@ -60,7 +60,7 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 	bool_t expected_m2_video_capability = FALSE;
 	if (m2_conference) {
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m2_conference);
-		expected_m2_video_capability = linphone_conference_params_is_video_enabled(params);
+		expected_m2_video_capability = linphone_conference_params_video_enabled(params);
 		BC_ASSERT_TRUE(linphone_conference_is_in(m2_conference) == linphone_conference_params_local_participant_enabled(params));
 	}
 
@@ -161,15 +161,15 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 	if (m1_conference) {
 		// Verify that video capabilities are still enabled
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m1_conference);
-		BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == expected_m1_video_capability);
-		BC_ASSERT_TRUE(linphone_conference_is_in(m1_conference) == linphone_conference_params_is_local_participant_enabled(params));
+		BC_ASSERT_TRUE(linphone_conference_params_video_enabled(params) == expected_m1_video_capability);
+		BC_ASSERT_TRUE(linphone_conference_is_in(m1_conference) == linphone_conference_params_local_participant_enabled(params));
 	}
 
 	if (m2_conference) {
 		// Verify that video capabilities are still enabled
 		const LinphoneConferenceParams * params = linphone_conference_get_current_params(m2_conference);
-		BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == expected_m2_video_capability);
-		BC_ASSERT_TRUE(linphone_conference_is_in(m2_conference) == linphone_conference_params_is_local_participant_enabled(params));
+		BC_ASSERT_TRUE(linphone_conference_params_video_enabled(params) == expected_m2_video_capability);
+		BC_ASSERT_TRUE(linphone_conference_is_in(m2_conference) == linphone_conference_params_local_participant_enabled(params));
 	}
 
 	if (lcs) {
@@ -4834,7 +4834,7 @@ static void conference_created_by_merging_video_calls_base(bool_t event_package_
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params) == enable_video);
 
 	wait_for_list(lcs ,NULL, 0, 2000);
-	if (linphone_conference_params_is_video_enabled(current_conf_params)) {
+	if (linphone_conference_params_video_enabled(current_conf_params)) {
 		check_video_conference_with_local_participant(participants, marie, layout);
 	}
 

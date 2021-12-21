@@ -109,16 +109,16 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	size_t index;
 	const auto & localMd = params.localMediaDescription;
 	for(index = 0; index < localMd->streams.size(); ++index){
-		Stream *s;
+		Stream *s = nullptr;
 		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {
 			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
 		}
-		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
+		if ((index >= mStreams.size() || ((s = mStreams[index].get()) == nullptr)) && (localMd->streams[index].getDirection() != SalStreamInactive)){
 			s = createStream(params);
-		}else{
+		} else if (s) {
 			if (s->getType() != params.getLocalStreamDescription().type){
 				lError() << "Inconsistency detected while creating streams. Type has changed from " <<
 					sal_stream_type_to_string(s->getType()) << " to " << 
@@ -179,7 +179,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 		Stream *streamPtr = stream.get();
 		lInfo() << "StreamsGroup " << this << " rendering " << *stream;
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
-		
+
 		if (params.localStreamDescriptionChanges) {
 			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
@@ -190,7 +190,13 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 		}
 		if (streamPtr->getState() == Stream::Preparing)
 			streamPtr->finishPrepare();
-		streamPtr->render(params, targetState);
+
+		const auto & streamDesc = params.getResultStreamDescription();
+		if (streamDesc.getDirection() == SalStreamInactive) {
+			streamPtr->stop();
+		} else {
+			streamPtr->render(params, targetState);
+		}
 	}
 	if (!mBandwidthReportTimer){
 		mBandwidthReportTimer = getCore().createTimer([this](){ this->computeAndReportBandwidth(); return true; }, 1000 , "StreamsGroup timer");

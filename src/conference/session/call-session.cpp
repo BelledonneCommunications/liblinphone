@@ -161,13 +161,18 @@ void CallSessionPrivate::onCallStateChanged (LinphoneCall *call, LinphoneCallSta
 
 void CallSessionPrivate::executePendingActions() {
 	if ((state != CallSession::State::End) && (state != CallSession::State::Released) && (state != CallSession::State::Error)) {
+		std::queue<std::function<LinphoneStatus()>> unsuccessfulActions;
 		while (pendingActions.empty() == false) {
 			// Store std::function in a temporary variable in order to take it out of the queue before executing it
 			const auto f = pendingActions.front();
 			pendingActions.pop();
 			// Execute method
-			f();
+			const auto result = f();
+			if (result != 0) {
+				unsuccessfulActions.push(f);
+			}
 		}
+		pendingActions = unsuccessfulActions;
 	}
 }
 
@@ -688,6 +693,7 @@ bool CallSessionPrivate::isUpdateAllowed (CallSession::State &nextState) const {
 			lError() << "Update is not allowed in [" << Utils::toString(state) << "] state";
 			return false;
 	}
+
 	return true;
 }
 
@@ -860,7 +866,8 @@ void CallSessionPrivate::setContactOp () {
 			if (isInConference()) {
 				std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
 				if (conference) {
-					// Change conference address in order to add GRUU to it
+					// Try to change conference address in order to add GRUU to it
+					// Note that this operation may fail if the conference was previously created on the server
 					conference->setConferenceAddress(contactAddress);
 				}
 			}

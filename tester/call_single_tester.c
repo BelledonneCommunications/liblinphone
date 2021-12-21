@@ -1705,11 +1705,11 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
 	if (callee_with_ice){
-		enable_stun_in_core(marie, TRUE);
+		enable_stun_in_core(marie, TRUE, TRUE);
 		linphone_core_manager_wait_for_stun_resolution(marie);
 	}
 	if (caller_with_ice){
-		enable_stun_in_core(pauline, TRUE);
+		enable_stun_in_core(pauline, TRUE, TRUE);
 		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 
@@ -3053,9 +3053,9 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 		}
 
 		if (policy == LinphonePolicyUseIce) {
-			enable_stun_in_core(marie, TRUE);
+			enable_stun_in_core(marie, TRUE, TRUE);
 			linphone_core_manager_wait_for_stun_resolution(marie);
-			enable_stun_in_core(pauline, TRUE);
+			enable_stun_in_core(pauline, TRUE, TRUE);
 			linphone_core_manager_wait_for_stun_resolution(pauline);
 		}
 
@@ -4171,7 +4171,7 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 	lcs = bctbx_list_append(lcs,marie->lc);
 	lcs = bctbx_list_append(lcs,pauline->lc);
 	if (use_ice){
-		enable_stun_in_core(marie, TRUE);
+		enable_stun_in_core(marie, TRUE, TRUE);
 		linphone_core_manager_wait_for_stun_resolution(marie);
 		/* We need RTP symmetric because ICE will put the STUN address in the C line, and no relay is made in this
 		 * scenario.*/
@@ -5198,10 +5198,10 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
-		enable_stun_in_core(marie, TRUE);
+		enable_stun_in_core(marie, TRUE, TRUE);
 		linphone_core_manager_wait_for_stun_resolution(marie);
 
-		enable_stun_in_core(pauline, TRUE);
+		enable_stun_in_core(pauline, TRUE, TRUE);
 		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 	if (!with_ice_reinvite) {

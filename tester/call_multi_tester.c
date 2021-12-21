@@ -710,9 +710,9 @@ void stop_ringing_when_accepting_call_while_holding_another(bool_t activate_ice)
 	core_list = bctbx_list_append(core_list, laure->lc);
 	
 // Enable ICE	
-	enable_stun_in_core(marie, activate_ice);
-	enable_stun_in_core(pauline, activate_ice);
-	enable_stun_in_core(laure, activate_ice);
+	enable_stun_in_core(marie, TRUE, activate_ice);
+	enable_stun_in_core(pauline, TRUE, activate_ice);
+	enable_stun_in_core(laure, TRUE, activate_ice);
 	if(activate_ice){
 		linphone_core_manager_wait_for_stun_resolution(marie);
 		linphone_core_manager_wait_for_stun_resolution(pauline);

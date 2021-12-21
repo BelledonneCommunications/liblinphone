@@ -96,11 +96,11 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	enable_stun_in_core(pauline, TRUE);
+	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	if (callee_has_ice) {
-		enable_stun_in_core(marie, TRUE);
+		enable_stun_in_core(marie, TRUE, TRUE);
 		linphone_core_manager_wait_for_stun_resolution(marie);
 	}
 
@@ -168,8 +168,8 @@ static void audio_call_with_ice_no_matching_audio_codecs(void) {
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
 
-	enable_stun_in_core(marie, TRUE);
-	enable_stun_in_core(pauline, TRUE);
+	enable_stun_in_core(marie, TRUE, TRUE);
+	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
@@ -256,10 +256,10 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
 
-	enable_stun_in_core(marie, TRUE);
+	enable_stun_in_core(marie, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	enable_stun_in_core(pauline, TRUE);
+	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	linphone_core_get_local_ip(marie->lc, AF_INET, NULL, localip);
@@ -433,10 +433,10 @@ static void call_with_ice_no_sdp(void){
 
 	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
 
-	enable_stun_in_core(marie, TRUE);
+	enable_stun_in_core(marie, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	enable_stun_in_core(pauline, TRUE);
+	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	BC_ASSERT_TRUE(call(pauline,marie));
@@ -480,10 +480,10 @@ static void ice_added_by_reinvite(void){
 	liblinphone_tester_check_rtcp(marie,pauline);
 
 	/*enable ICE on both ends*/
-	enable_stun_in_core(marie, TRUE);
+	enable_stun_in_core(marie, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	enable_stun_in_core(pauline, TRUE);
+	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	c = linphone_core_get_current_call(marie->lc);
@@ -654,10 +654,10 @@ static void call_terminated_during_ice_reinvite(void){
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *pauline_call, *marie_call;
 
-	enable_stun_in_core(marie, TRUE);
+	enable_stun_in_core(marie, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	enable_stun_in_core(pauline, TRUE);
+	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 

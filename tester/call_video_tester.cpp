@@ -2015,6 +2015,10 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 		check_media_direction(marie,linphone_core_get_current_call(marie->lc),lcs,LinphoneMediaDirectionInactive,LinphoneMediaDirectionInactive);
 		check_media_direction(pauline,linphone_core_get_current_call(pauline->lc), lcs, LinphoneMediaDirectionInactive, LinphoneMediaDirectionInactive);
 
+		const LinphoneCallParams * remote_params=linphone_call_get_remote_params(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_EQUAL(linphone_call_params_get_audio_direction(remote_params) , LinphoneMediaDirectionInactive, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(remote_params) , LinphoneMediaDirectionInactive, int, "%d");
+
 		if (no_sdp) {
 			linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
 		}
@@ -2030,6 +2034,10 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 
 		check_media_direction(marie,linphone_core_get_current_call(marie->lc),lcs,LinphoneMediaDirectionSendRecv,LinphoneMediaDirectionSendRecv);
 		check_media_direction(pauline,linphone_core_get_current_call(pauline->lc),lcs,LinphoneMediaDirectionSendRecv,LinphoneMediaDirectionSendRecv);
+
+		remote_params=linphone_call_get_remote_params(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_EQUAL(linphone_call_params_get_audio_direction(remote_params) , LinphoneMediaDirectionSendRecv, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(remote_params) , LinphoneMediaDirectionSendRecv, int, "%d");
 
 		/*assert that after pause and resume, SRTP is still being used*/
 		current_params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));

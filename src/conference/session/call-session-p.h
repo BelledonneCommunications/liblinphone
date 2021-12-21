@@ -150,7 +150,7 @@ protected:
 	bool notifyRinging = true;
 	bool referPending = false;
 	bool reinviteOnCancelResponseRequested = false;
-	std::queue<std::function<void()>> pendingActions;
+	std::queue<std::function<LinphoneStatus()>> pendingActions;
 
 private:
 	void completeLog ();

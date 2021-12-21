@@ -100,8 +100,8 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 	bool_t audio_enabled, video_enabled, realtime_text_enabled;
 	MSTimeSpec ts;
 
-	c1=linphone_core_get_current_call(caller->lc);
-	c2=linphone_core_get_current_call(callee->lc);
+	c1=linphone_core_get_call_by_remote_address2(caller->lc, callee->identity);
+	c2=linphone_core_get_call_by_remote_address2(callee->lc, caller->identity);
 
 	BC_ASSERT_PTR_NOT_NULL(c1);
 	BC_ASSERT_PTR_NOT_NULL(c2);

@@ -226,6 +226,7 @@ void SalStreamConfiguration::disable(){
 	/* Remove potential bundle parameters. A disabled stream is moved out of the bundle. */
 	mid.clear();
 	bundle_only = false;
+	dir = SalStreamInactive;
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/

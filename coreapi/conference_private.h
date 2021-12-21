@@ -121,6 +121,7 @@ public:
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) = 0;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
+	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
 
@@ -222,6 +223,7 @@ public:
 	virtual bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
@@ -318,6 +320,7 @@ public:
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) override;
+	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	virtual int removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;

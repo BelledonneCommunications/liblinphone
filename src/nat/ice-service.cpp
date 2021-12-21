@@ -50,6 +50,7 @@ bool IceService::isActive() const{
 }
 
 bool IceService::isRunning() const{
+ms_message("%s - current session %p state %0d failed %0d running %0d completed %0d stopped %0d", __func__, mIceSession, (mIceSession ? ice_session_state(mIceSession) : -1), IS_Failed, IS_Running, IS_Completed, IS_Stopped);
 	if (!isActive()) return false; // No running because it is not active
 	return ice_session_state(mIceSession) == IS_Running;
 }
@@ -135,15 +136,18 @@ void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
 
 void IceService::createStreams(const OfferAnswerContext &params){
 	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled, getMediaSessionPrivate().getAf() == AF_INET6);
-	
+
 	if (!mIceSession) return;
-	
+
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
 		if (!stream) continue;
+
 		size_t index = stream->getIndex();
 		params.scopeStreamToIndex(index);
-		bool streamActive = params.getLocalStreamDescription().enabled();
+
+		const auto streamDesc = params.getLocalStreamDescription();
+		bool streamActive = streamDesc.enabled() && (streamDesc.getDirection() != SalStreamInactive);
 		
 		if (!params.localIsOfferer){
 			int bundleOwnerIndex = params.remoteMediaDescription->getIndexOfTransportOwner(params.getRemoteStreamDescription());
@@ -158,6 +162,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 				streamActive = false;
 			}
 		}
+
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)index);
 		if (!cl && streamActive) {
 			cl = ice_check_list_new();
@@ -170,7 +175,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		stream->setIceCheckList(cl);
 		stream->iceStateChanged();
 	}
-	
+
 	if (!params.localIsOfferer){
 		if (params.remoteMediaDescription){
 			// This may delete the ice session.
@@ -184,11 +189,13 @@ void IceService::createStreams(const OfferAnswerContext &params){
 }
 
 bool IceService::prepare(){
+
 	if (!mIceSession) return false;
-	
+
 	// Start ICE gathering if needed.
 	if (!ice_session_candidates_gathered(mIceSession)) {
 		int err = gatherIceCandidates();
+
 		if (err == 0) {
 			// Ice candidates gathering wasn't started, but we can proceed with the call anyway.
 			return false;
@@ -367,7 +374,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 			ice_check_list_set_state(cl, ICL_Failed);
 			continue;
 		}
-		if (stream.rtp_port == 0) {
+		if ((stream.rtp_port == 0) || (stream.getDirection() == SalStreamInactive))  {
 			ice_session_remove_check_list(mIceSession, cl);
 			mStreamsGroup.getStream(i)->setIceCheckList(nullptr);
 			continue;
@@ -461,7 +468,7 @@ void IceService::updateFromRemoteMediaDescription(const std::shared_ptr<SalMedia
 		const auto & remoteDescStream = remoteDesc->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		if (!cl) continue;
-		if (!remoteDescStream.enabled() || remoteDescStream.getRtpPort() == 0) {
+		if (!remoteDescStream.enabled() || (remoteDescStream.getRtpPort() == 0) || (remoteDescStream.getDirection() == SalStreamInactive)) {
 			/*
 			 * rtp_port == 0 is true when it is a secondary stream part of bundle.
 			 */
@@ -518,7 +525,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		auto & stream = desc->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		rtpCandidate = rtcpCandidate = nullptr;
-		if (!stream.enabled() || !cl || stream.getRtpPort() == 0)
+		if (!stream.enabled() || !cl || (stream.getRtpPort() == 0) || (stream.getDirection() == SalStreamInactive))
 			continue;
 		if (ice_check_list_state(cl) == ICL_Completed) {
 			result = !!ice_check_list_selected_valid_local_candidate(ice_session_check_list(mIceSession, (int)i), &rtpCandidate, &rtcpCandidate);
@@ -742,7 +749,6 @@ bool IceService::hasCompletedCheckList () const {
 void IceService::handleIceEvent(const OrtpEvent *ev){
 	OrtpEventType evt = ortp_event_get_type(ev);
 	const OrtpEventData *evd = ortp_event_get_data(const_cast<OrtpEvent*>(ev));
-	
 	switch (evt){
 		case ORTP_EVENT_ICE_SESSION_PROCESSING_FINISHED:
 			if (hasCompletedCheckList()) {

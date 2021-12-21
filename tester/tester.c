@@ -444,6 +444,7 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 		bctbx_file_write(out, buf, (size_t)bctbx_file_size(in),0);
 		bctbx_file_close(in);
 		bctbx_file_close(out);
+		bctbx_free(buf);
 	}
 
 	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, NULL);
@@ -2325,7 +2326,8 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 		char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
 		char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
 
-		ms_message(" %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
+		ms_message(" %s call %p from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
+																		,call
 																		,from
 																		,to
 																		,linphone_call_state_to_string(cstate));
@@ -4084,7 +4086,7 @@ void set_lime_curve_list(const int curveId, bctbx_list_t *managerList) {
 	set_lime_curve_list_tls (curveId, managerList, FALSE, FALSE);
 }
 
-void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_ice) {
+void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_stun, const bool_t enable_ice) {
 	LinphoneCore * lc = mgr->lc;
 	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(lc);
 	char *stun_server = NULL;
@@ -4100,7 +4102,7 @@ void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_ice) {
 		stun_server = ms_strdup(linphone_core_get_stun_server(lc));
 	}
 
-	linphone_nat_policy_enable_stun(nat_policy, TRUE);
+	linphone_nat_policy_enable_stun(nat_policy, enable_stun);
 
 	if (enable_ice) {
 		linphone_nat_policy_enable_ice(nat_policy, TRUE);

@@ -948,6 +948,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 	else
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000));
 	bool_t mandatory = linphone_core_is_media_encryption_mandatory(lc);
+
 	if (md->hasZrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
@@ -1538,11 +1539,11 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 						const auto & devLabel = dev->getLabel();
 						// main stream has the same label as one of the minature streams
 						const auto & foundStreamIdx = devLabel.empty() ? -1 : md->findIdxStreamWithLabel(devLabel);
-						SalStreamDescription & newStream = addStreamToMd(md, foundStreamIdx);
+						SalStreamDescription & newParticipantStream = addStreamToMd(md, foundStreamIdx);
 						if (isConferenceLayoutActiveSpeaker) {
-							newStream.setContent(content);
+							newParticipantStream.setContent(content);
 						}
-						fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth, encs);
+						fillConferenceParticipantVideoStream(newParticipantStream, oldMd, md, dev, pth, encs);
 					}
 				}
 			}
@@ -1553,11 +1554,11 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 					const auto & devLabel = dev->getLabel();
 					std::vector<std::pair<std::string, std::string>> attributes;
 					const auto & foundStreamIdx = devLabel.empty() ? -1 : ((remoteContactAddress == dev->getAddress().asAddress()) ? md->findIdxStreamWithContent(content, devLabel) : md->findIdxStreamWithLabel(devLabel));
-					SalStreamDescription & newStream = addStreamToMd(md, foundStreamIdx);
+					SalStreamDescription & newMeStream = addStreamToMd(md, foundStreamIdx);
 					if (isConferenceLayoutActiveSpeaker) {
-						newStream.setContent(content);
+						newMeStream.setContent(content);
 					}
-					fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth, encs);
+					fillConferenceParticipantVideoStream(newMeStream, oldMd, md, dev, pth, encs);
 				}
 			}
 
@@ -1885,12 +1886,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	bool isConferenceLayoutNone = false;
 	bool isVideoConferenceEnabled = false;
 	ConferenceLayout confLayout = ConferenceLayout::None;
+	auto deviceState = ParticipantDevice::State::ScheduledForJoining;
 	if (conference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
-		if (participantDevice && !localIsOfferer && !isInLocalConference) {
-			participantDevice->setLayout(MediaSession::computeConferenceLayout(op->getRemoteMediaDescription()));
+
+		if (participantDevice) {
+			if (!localIsOfferer && !isInLocalConference) {
+				participantDevice->setLayout(MediaSession::computeConferenceLayout(op->getRemoteMediaDescription()));
+			}
+			deviceState = participantDevice->getState();
 		}
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
 		confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
@@ -1940,11 +1946,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		// Set direction appropriately to configuration
 		if (conference) {
 			if (isInLocalConference) {
-				const auto joiningConference = (isInLocalConference && !q->getCurrentParams()->getPrivate()->getInConference());
 				if (!isVideoConferenceEnabled) {
 					enableVideoStream = false;
 					videoDir = SalStreamInactive;
-				} else {
+				} else if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) {
 					// Enable video based on conference capabilities if:
 					// - joining conference
 					// - receiving an offer
@@ -1954,14 +1959,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 							videoDir = SalStreamSendRecv;
 							break;
 						case ConferenceLayout::Grid:
-							enableVideoStream = (localIsOfferer && !joiningConference) ? callVideoEnabled : isVideoConferenceEnabled;
+							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : isVideoConferenceEnabled;
 							videoDir = SalStreamRecvOnly;
 							break;
 						case ConferenceLayout::None:
-							enableVideoStream = (localIsOfferer && !joiningConference) ? callVideoEnabled : isVideoConferenceEnabled;
+							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : isVideoConferenceEnabled;
 							videoDir = getParams()->getPrivate()->getSalVideoDirection();
 							break;
 					}
+				} else {
+					videoDir = getParams()->getPrivate()->getSalVideoDirection();
+					enableVideoStream = (localIsOfferer) ? callVideoEnabled : isVideoConferenceEnabled;
 				}
 			} else {
 				switch (confLayout) {
@@ -2029,7 +2037,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-	addConferenceParticipantVideostreams(md, oldMd, pth, encList);
+
+	if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) {
+		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
+	}
 	copyOldStreams(md, oldMd, refMd, pth, encList);
 
 	setupEncryptionKeys(md, forceCryptoKeyGeneration);
@@ -2338,24 +2349,34 @@ void MediaSessionPrivate::freeResources () {
 	getStreamsGroup().finish();
 }
 
-void MediaSessionPrivate::queueIceCompletionTask(const std::function<void()> &lambda){
+void MediaSessionPrivate::queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda){
 	iceDeferedCompletionTasks.push(lambda);
 }
 
 void MediaSessionPrivate::runIceCompletionTasks(){
 	while(!iceDeferedCompletionTasks.empty()){
-		iceDeferedCompletionTasks.front()();
+		const auto task = iceDeferedCompletionTasks.front();
+		LinphoneStatus result = task();
 		iceDeferedCompletionTasks.pop();
+
+		if (result != 0) {
+			pendingActions.push(task);
+		}
 	}
 }
-void MediaSessionPrivate::queueIceGatheringTask(const std::function<void()> &lambda){
+void MediaSessionPrivate::queueIceGatheringTask(const std::function<LinphoneStatus()> &lambda){
 	iceDeferedGatheringTasks.push(lambda);
 }
 
 void MediaSessionPrivate::runIceGatheringTasks(){
 	while(!iceDeferedGatheringTasks.empty()){
-		iceDeferedGatheringTasks.front()();
+		const auto task = iceDeferedGatheringTasks.front();
+		LinphoneStatus result = task();
 		iceDeferedGatheringTasks.pop();
+
+		if (result != 0) {
+			pendingActions.push(task);
+		}
 	}
 }
 
@@ -2376,6 +2397,7 @@ void MediaSessionPrivate::onGatheringFinished(IceService &service){
 
 void MediaSessionPrivate::onIceCompleted(IceService &service){
 	L_Q();
+
 	/* The ICE session has succeeded, so perform a call update */
 	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;
 	if (getStreamsGroup().getIceService().isControlling() && isUpdateSentWhenIceCompleted()) {
@@ -2710,12 +2732,41 @@ void MediaSessionPrivate::setTerminated () {
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
-
+	L_Q();
 	op->accept();
 	std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
 	if (md && !md->isEmpty())
 		updateStreams(md, nextState);
 	setState(nextState, stateInfo);
+
+	// If the call is in a local conference and the remote wants to enable or disable video, then send an update to honor the request
+	LinphoneConference * conference = nullptr;
+	if (listener) {
+		conference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	if (conference && isInLocalConference && (getParams()->videoEnabled() != q->getRemoteParams()->videoEnabled())) {
+		shared_ptr<MediaConference::Conference> cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		const auto & device = cppConference->findParticipantDevice(q->getSharedFromThis());
+		ParticipantDevice::State deviceState = ParticipantDevice::State::ScheduledForJoining;
+		if (device) {
+			deviceState = device->getState();
+		}
+
+		const auto videoConference = cppConference->getCurrentParams().videoEnabled();
+		if (videoConference && (deviceState == ParticipantDevice::State::Present)) {
+			// Send update to enable video
+			MediaSessionParams *newParams = q->getMediaParams()->clone();
+			const auto & videoEnabled = q->getRemoteParams()->videoEnabled();
+			newParams->enableVideo(videoEnabled);
+			if (videoEnabled) {
+				newParams->enableRtpBundle(true);
+			}
+			lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") got a request to " << (videoEnabled ? "enable" : "disable") << " video - hence updating the call to provide the right streams";
+			q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
+			delete newParams;
+		}
+	}
 	return 0;
 }
 
@@ -2981,7 +3032,10 @@ void MediaSessionPrivate::startAccept(){
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
 		if ((linphone_core_get_media_resource_mode(q->getCore()->getCCore()) == LinphoneExclusiveMediaResources) && linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
-			pendingActions.push([this] {this->startAccept();});
+			pendingActions.push([this] {
+				this->startAccept();
+				return 0;
+			});
 			return;
 		}
 	}
@@ -3048,6 +3102,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	auto acceptCompletionTask = [this](){
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
 		startAccept();
+		return 0;
 	};
 	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()){
 		queueIceGatheringTask(acceptCompletionTask);
@@ -3095,6 +3150,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
 		updateLocalMediaDescriptionFromIce(isRemoteDescNull);
 		startAcceptUpdate(nextState, stateInfo);
+		return 0;
 	};
 
 	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()){
@@ -3416,10 +3472,11 @@ void MediaSession::initiateIncoming () {
 			if (d->deferIncomingNotification) {
 				auto incomingNotificationTask = [d](){
 					/* There is risk that the call can be terminated before this task is executed, for example if offer/answer fails.*/
-					if (d->state != State::Idle && d->state != State::PushIncomingReceived) return;
+					if (d->state != State::Idle && d->state != State::PushIncomingReceived) return 0;
 					d->deferIncomingNotification = false;
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 					d->startIncomingNotification();
+					return 0;
 				};
 				d->queueIceGatheringTask(incomingNotificationTask);
 			}else{
@@ -3449,6 +3506,7 @@ bool MediaSession::initiateOutgoing () {
 					L_D();
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 					startInvite(nullptr, "");
+					return 0;
 				});
 			}
 			defer |= ice_needs_defer;
@@ -3504,14 +3562,14 @@ LinphoneStatus MediaSession::pause () {
 LinphoneStatus MediaSession::delayResume() {
 	lInfo() << "Delaying call resume";
 	L_D();
-	d->pendingActions.push([this] {this->resume();});
+	d->pendingActions.push([this] {return this->resume();});
 	return -1;
 }
 
 LinphoneStatus MediaSession::resume () {
 	L_D();
 	if (d->state == CallSession::State::Pausing) {
-		d->pendingActions.push([this] {this->resume();});
+		d->pendingActions.push([this] {return this->resume();});
 	} else if (d->state != CallSession::State::Paused) {
 		lWarning() << "we cannot resume a call that has not been established and paused before. Current state: " << Utils::toString(d->state);
 		return -1;
@@ -3523,7 +3581,9 @@ LinphoneStatus MediaSession::resume () {
 		}
 		if (linphone_core_preempt_sound_resources(getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " because sound resources cannot be preempted";
-			d->pendingActions.push([this] {this->resume();});
+			d->pendingActions.push([this] {
+				return this->resume();
+			});
 			return -1;
 		}
 
@@ -3554,30 +3614,72 @@ LinphoneStatus MediaSession::resume () {
 		updateContactAddress(contactAddress);
 		d->op->setContactAddress(contactAddress.getInternalAddress());
 	}
-	
+
+	// The state must be set before recreating the media description in order for the method forceStreamsDirAccordingToState (called by makeLocalMediaDescription) to set the stream directions accordingly
+	const auto isIceRunning = getStreamsGroup().getIceService().isRunning();
+	CallSession::State initialState = d->state;
 	d->setState(CallSession::State::Resuming, "Resuming");
-	
-	auto retryableAction = [this, subject]() -> int{
+
+	d->makeLocalMediaDescription(true, false, true);
+
+	const auto & localDesc = d->localDesc;
+
+	auto retryableAction = [this, isIceRunning, subject, localDesc, initialState]() -> int{
 		L_D();
-		d->makeLocalMediaDescription(true, false, true);
-		d->localDesc->setDir(SalStreamSendRecv);
+		auto updateCompletionTask = [this, subject, localDesc, initialState]() -> int{
+			L_D();
 
-		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
-			d->op->setLocalMediaDescription(nullptr);
+			CallSession::State previousState = initialState;
+			if (d->state != CallSession::State::Resuming) {
+				previousState = d->state;
+				d->setState(CallSession::State::Resuming, "Resuming");
+			}
 
-		if (d->op->update(subject.c_str(), false) != 0)
-			return -1;
+			// Save current media description in order to use the media description created at the time of the first execution of this method
+			const auto currentLocalDesc = d->localDesc;
+			d->localDesc = localDesc;
+			// We may running this code after ICE candidates have been gathered or ICE released task completed, therefore the local description must be updated to include ICE candidates for every stream
+			d->updateLocalMediaDescriptionFromIce(!getCore()->getCCore()->sip_conf.sdp_200_ack);
 
-		if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
-			/* We are NOT offering, set local media description after sending the call so that we are ready to
-			* process the remote offer when it will arrive. */
-			d->op->setLocalMediaDescription(d->localDesc);
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+				d->op->setLocalMediaDescription(nullptr);
+			} else {
+				d->op->setLocalMediaDescription(d->localDesc);
+			}
+
+			const auto res = d->op->update(subject.c_str(), false);
+
+			// Restore local media description
+			d->localDesc = currentLocalDesc;
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+				/* We are NOT offering, set local media description after sending the call so that we are ready to
+				* process the remote offer when it will arrive. */
+				d->op->setLocalMediaDescription(d->localDesc);
+			}
+
+			if (res != 0) {
+				d->setState(previousState, "Restore initial state");
+				return -1;
+			}
+
+			return 0;
+		};
+
+		if (linphone_nat_policy_ice_enabled(d->natPolicy) && d->getStreamsGroup().prepare()) {
+			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") resume to gather ICE candidates";
+			d->queueIceGatheringTask(updateCompletionTask);
+			return 0;
+		} else if (isIceRunning) {
+			// ICE negotiations are ongoing hence the update cannot be send right now
+			lInfo() << "Ice negotiations are ongoing and resume once they complete, therefore defer CallSession " << this << " (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") resume until Ice negotiations are completed.";
+			d->queueIceCompletionTask(updateCompletionTask);
+			return 0;
 		}
-		return 0;
+		return updateCompletionTask();
 	};
 	d->op->setRetryFunction(retryableAction);
 	if (retryableAction() == -1) return -1;
-	
+
 	if (!d->getParams()->getPrivate()->getInConference() && d->listener)
 		d->listener->onSetCurrentSession(getSharedFromThis());
 
@@ -3747,42 +3849,77 @@ LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp
 LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const UpdateMethod method, const bool isCapabilityNegotiationUpdate, const string &subject) {
 	L_D();
 	CallSession::State nextState;
-	CallSession::State initialState = d->state;
 	LinphoneStatus result = 0;
 	if (!d->isUpdateAllowed(nextState))
 		return -1;
+
 	if (d->getCurrentParams() == msp)
 		lWarning() << "MediaSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
 
-		d->localIsOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
-		d->broken = false;
+		// The state must be set before recreating the media description in order for the method forceStreamsDirAccordingToState (called by makeLocalMediaDescription) to set the stream directions accordingly
+		CallSession::State initialState = d->state;
 		d->setState(nextState, "Updating call");
+		d->broken = false;
 		d->setParams(new MediaSessionParams(*msp));
-		auto isIceRunning = getStreamsGroup().getIceService().isRunning();
+
+		const auto isIceRunning = getStreamsGroup().getIceService().isRunning();
+
 		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
 		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		bool isCapabilityNegotiationReInvite = isCapabilityNegotiationEnabled() && isCapabilityNegotiationUpdate;
+		bool isOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
+		d->localIsOfferer = isOfferer;
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
 
-		auto updateCompletionTask = [this, method, subject, initialState]() -> LinphoneStatus{
+		const auto & localDesc = d->localDesc;
+
+		auto updateCompletionTask = [this, method, subject, localDesc, nextState, initialState]() -> LinphoneStatus{
 			L_D();
-			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+
+			CallSession::State previousState = initialState;
+			if (d->state != nextState) {
+				CallSession::State newState;
+				if (!d->isUpdateAllowed(newState))
+					return -1;
+
+				previousState = d->state;
+				d->setState(newState, "Updating call");
+			}
+
+			// We may running this code after ICE candidates have been gathered or ICE released task completed, therefore the local description must be updated to include ICE candidates for every stream
+			const auto currentLocalDesc = d->localDesc;
+			d->localDesc = localDesc;
+			d->updateLocalMediaDescriptionFromIce(!getCore()->getCCore()->sip_conf.sdp_200_ack);
+
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+				d->op->setLocalMediaDescription(nullptr);
+			} else {
+				d->op->setLocalMediaDescription(d->localDesc);
+			}
 			LinphoneStatus res = d->startUpdate(method, subject);
-			if (res && (d->state != initialState)) {
+
+			d->localDesc = currentLocalDesc;
+			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
+				/* We are NOT offering, set local media description after sending the call so that we are ready to
+				* process the remote offer when it will arrive. */
+				d->op->setLocalMediaDescription(d->localDesc);
+			}
+
+			if (res && (d->state != previousState)) {
 				/* Restore initial state */
-				d->setState(initialState, "Restore initial state");
+				d->setState(previousState, "Restore initial state");
 			}
 			return res;
 		};
 
 		if (linphone_nat_policy_ice_enabled(d->natPolicy) && d->getStreamsGroup().prepare()) {
-			lInfo() << "Defer CallSession update to gather ICE candidates";
+			lInfo() << "Defer CallSession " << this << " (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") update to gather ICE candidates";
 			d->queueIceGatheringTask(updateCompletionTask);
 			return 0;
 		} else if (isIceRunning) {
 			// ICE negotiations are ongoing hence the update cannot be send right now
-			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession update until ICE negotiations are completed.";
+			lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession " << this << " (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") update until Ice negotiations are completed.";
 			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}

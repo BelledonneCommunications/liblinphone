@@ -322,6 +322,8 @@ private:
 
 	void updateRecordState(SalMediaRecord state);
 	void createRemoteConference(const std::shared_ptr<CallSession> &session);
+	void tryToAddToConference(std::shared_ptr<MediaConference::Conference> & conference, const std::shared_ptr<CallSession> &session);
+	bool isIceNegotiationOngoing(const std::shared_ptr<CallSession> &session) const;
 };
 
 LINPHONE_END_NAMESPACE

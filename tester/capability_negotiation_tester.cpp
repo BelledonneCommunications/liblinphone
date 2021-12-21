@@ -189,7 +189,7 @@ LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(const ch
 #endif // VIDEO_ENABLED
 
 	if (enable_ice){
-		enable_stun_in_core(mgr, enable_ice);
+		enable_stun_in_core(mgr, TRUE, enable_ice);
 		linphone_core_manager_wait_for_stun_resolution(mgr);
 	}
 
