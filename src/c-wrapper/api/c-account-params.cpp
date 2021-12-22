@@ -87,10 +87,18 @@ void linphone_account_params_set_expires(LinphoneAccountParams *params, int expi
 }
 
 void linphone_account_params_set_register_enabled(LinphoneAccountParams *params, bool_t enable) {
+	linphone_account_params_enable_register(params, enable);
+}
+
+void linphone_account_params_enable_register(LinphoneAccountParams *params, bool_t enable) {
 	AccountParams::toCpp(params)->setRegisterEnabled(enable);
 }
 
 void linphone_account_params_set_publish_enabled(LinphoneAccountParams *params, bool_t enable) {
+	linphone_account_params_enable_publish(params, enable);
+}
+
+void linphone_account_params_enable_publish(LinphoneAccountParams *params, bool_t enable) {
 	AccountParams::toCpp(params)->setPublishEnabled(enable);
 }
 
@@ -103,6 +111,10 @@ int linphone_account_params_get_publish_expires(const LinphoneAccountParams *par
 }
 
 void linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *params, bool_t enable) {
+	linphone_account_params_enable_dial_escape_plus(params, enable);
+}
+
+void linphone_account_params_enable_dial_escape_plus(LinphoneAccountParams *params, bool_t enable) {
 	AccountParams::toCpp(params)->setDialEscapePlusEnabled(enable);
 }
 
@@ -115,10 +127,18 @@ void linphone_account_params_set_use_international_prefix_for_calls_and_chats(Li
 }
 
 void linphone_account_params_set_quality_reporting_enabled(LinphoneAccountParams *params, bool_t enable) {
+	linphone_account_params_enable_quality_reporting(params, enable);
+}
+
+void linphone_account_params_enable_quality_reporting(LinphoneAccountParams *params, bool_t enable) {
 	AccountParams::toCpp(params)->setQualityReportingEnabled(enable);
 }
 
 bool_t linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params) {
+	return linphone_account_params_quality_reporting_enabled(params);
+}
+
+bool_t linphone_account_params_quality_reporting_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getQualityReportingEnabled();
 }
 
@@ -163,6 +183,10 @@ const char *linphone_account_params_get_identity(const LinphoneAccountParams *pa
 }
 
 bool_t linphone_account_params_get_publish_enabled(const LinphoneAccountParams *params) {
+	return linphone_account_params_publish_enabled(params);
+}
+
+bool_t linphone_account_params_publish_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getPublishEnabled();
 }
 
@@ -179,6 +203,10 @@ int linphone_account_params_get_expires(const LinphoneAccountParams *params) {
 }
 
 bool_t linphone_account_params_get_register_enabled(const LinphoneAccountParams *params) {
+	return linphone_account_params_register_enabled(params);
+}
+
+bool_t linphone_account_params_register_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getRegisterEnabled();
 }
 
@@ -199,6 +227,10 @@ const char* linphone_account_params_get_contact_uri_parameters(const LinphoneAcc
 }
 
 bool_t linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams *params) {
+	return linphone_account_params_dial_escape_plus_enabled(params);
+}
+
+bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getDialEscapePlusEnabled();
 }
 
@@ -312,10 +344,18 @@ LinphonePushNotificationConfig *linphone_account_params_get_push_notification_co
 }
 
 void linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable) {
+	linphone_account_params_enable_outbound_proxy(params, enable);
+}
+
+void linphone_account_params_enable_outbound_proxy(LinphoneAccountParams *params, bool_t enable) {
 	AccountParams::toCpp(params)->setOutboundProxyEnabled(enable);
 }
 
 bool_t linphone_account_params_get_outbound_proxy_enabled(const LinphoneAccountParams *params) {
+	return linphone_account_params_outbound_proxy_enabled(params);
+}
+
+bool_t linphone_account_params_outbound_proxy_enabled(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getOutboundProxyEnabled();
 }
 

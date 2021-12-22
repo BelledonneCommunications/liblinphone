@@ -88,8 +88,17 @@ LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_
  * @param params the #LinphoneCallParams @notnil
  * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
  * @ingroup media_parameters
+ * @deprecated 16/12/2021 Use linphone_call_params_capability_negotiation_reinvite_enabled() instead.
  */
 LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
+
+/**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 
 /**
  * Define whether capability negotiation (RFC5939) reINVITE is enabled

@@ -146,15 +146,31 @@ LINPHONE_PUBLIC void linphone_account_params_set_expires(LinphoneAccountParams *
  * Indicates  either or not, REGISTRATION must be issued for this #LinphoneAccountParams.
  * @param params #LinphoneAccountParams object. @notnil
  * @param enable If TRUE, registration will be engaged.
+ * @deprecated 16/12/2021 Use linphone_account_params_enable_register() instead.
  */
 LINPHONE_PUBLIC void linphone_account_params_set_register_enabled(LinphoneAccountParams *params, bool_t enable);
+
+/**
+ * Indicates  either or not, REGISTRATION must be issued for this #LinphoneAccountParams.
+ * @param params #LinphoneAccountParams object. @notnil
+ * @param enable If TRUE, registration will be engaged.
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_register(LinphoneAccountParams *params, bool_t enable);
+
+/**
+ * Indicates either or not, PUBLISH must be issued for this #LinphoneAccountParams.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param enable If TRUE, publish will be engaged.
+ * @deprecated 16/12/2021 Use linphone_account_params_enable_publish() instead.
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_publish_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * Indicates either or not, PUBLISH must be issued for this #LinphoneAccountParams.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable If TRUE, publish will be engaged.
  */
-LINPHONE_PUBLIC void linphone_account_params_set_publish_enabled(LinphoneAccountParams *params, bool_t enable);
+LINPHONE_PUBLIC void linphone_account_params_enable_publish(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * Set the publish expiration time in second.
@@ -175,8 +191,17 @@ LINPHONE_PUBLIC int linphone_account_params_get_publish_expires(const LinphoneAc
  * #linphone_core_invite).
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
+ * @deprecated 16/12/2021 Use linphone_account_params_enable_dial_escape_plus() instead.
 **/
 LINPHONE_PUBLIC void linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *params, bool_t enable);
+
+/**
+ * Set whether liblinphone should replace "+" by international calling prefix in dialed numbers (passed to
+ * #linphone_core_invite).
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
+**/
+LINPHONE_PUBLIC void linphone_account_params_enable_dial_escape_plus(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * Set an international prefix to be automatically prepended when inviting a number with
@@ -198,15 +223,31 @@ LINPHONE_PUBLIC void linphone_account_params_set_use_international_prefix_for_ca
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to store quality statistics and send them to the collector, FALSE to disable it.
+ * @deprecated 16/12/2021 Use linphone_account_params_enable_quality_reporting() instead.
  */
 LINPHONE_PUBLIC void linphone_account_params_set_quality_reporting_enabled(LinphoneAccountParams *params, bool_t enable);
+
+ /**
+ * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param enable TRUE to store quality statistics and send them to the collector, FALSE to disable it.
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_quality_reporting(LinphoneAccountParams *params, bool_t enable);
+
+/**
+ * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if quality repotring is enabled, FALSE otherwise.
+ * @deprecated 16/12/2021 Use linphone_account_params_quality_reporting_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params);
 
 /**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return TRUE if quality repotring is enabled, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params);
+LINPHONE_PUBLIC bool_t linphone_account_params_quality_reporting_enabled(const LinphoneAccountParams *params);
 
  /**
  * Set the route of the collector end-point when using quality reporting. This SIP address
@@ -293,8 +334,16 @@ LINPHONE_PUBLIC const char *linphone_account_params_get_identity(const LinphoneA
  * Tell if the PUBLISH is enabled.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return TRUE if PUBLISH request is enabled for this proxy.
+ * @deprecated 16/12/2021 Use linphone_account_params_publish_enabled() instead.
 **/
 LINPHONE_PUBLIC bool_t linphone_account_params_get_publish_enabled(const LinphoneAccountParams *params);
+
+/**
+ * Tell if the PUBLISH is enabled.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if PUBLISH request is enabled for this proxy.
+**/
+LINPHONE_PUBLIC bool_t linphone_account_params_publish_enabled(const LinphoneAccountParams *params);
 
 /**
  * Get the account params proxy address.
@@ -322,8 +371,16 @@ LINPHONE_PUBLIC int linphone_account_params_get_expires(const LinphoneAccountPar
  * Returns whether the account params is enabled or not.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return TRUE if registration to the proxy is enabled.
+ * @deprecated 16/12/2021 Use linphone_account_params_register_enabled() instead.
 **/
 LINPHONE_PUBLIC bool_t linphone_account_params_get_register_enabled(const LinphoneAccountParams *params);
+
+/**
+ * Returns whether the account params is enabled or not.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if registration to the proxy is enabled.
+**/
+LINPHONE_PUBLIC bool_t linphone_account_params_register_enabled(const LinphoneAccountParams *params);
 
 /**
  * Returns the contact parameters.
@@ -363,8 +420,16 @@ LINPHONE_PUBLIC const char* linphone_account_params_get_contact_uri_parameters(c
  * Return whether or not the + should be replaced by 00.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return Whether liblinphone should replace "+" by "00" in dialed numbers (passed to #linphone_core_invite()).
+ * @deprecated 16/12/2021 Use linphone_account_params_dial_escape_plus_enabled() instead.
 **/
 LINPHONE_PUBLIC bool_t linphone_account_params_get_dial_escape_plus_enabled(const LinphoneAccountParams *params);
+
+/**
+ * Return whether or not the + should be replaced by 00.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return Whether liblinphone should replace "+" by "00" in dialed numbers (passed to #linphone_core_invite()).
+**/
+LINPHONE_PUBLIC bool_t linphone_account_params_dial_escape_plus_enabled(const LinphoneAccountParams *params);
 
 /**
  * Get the prefix set for this account params.
@@ -516,15 +581,31 @@ LINPHONE_PUBLIC void linphone_account_params_set_audio_video_conference_factory_
  * If enabled, the proxy will be used as the only route.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param enable TRUE to enable, FALSE otherwise.
+ * @deprecated 16/12/2021 Use linphone_account_params_enable_outbound_proxy() instead.
  */
 LINPHONE_PUBLIC void linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable);
+
+/**
+ * If enabled, the proxy will be used as the only route.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param enable TRUE to enable, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_outbound_proxy(LinphoneAccountParams *params, bool_t enable);
+
+/**
+ * Tell if the proxy is used as the only route.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return enable TRUE if enabled, FALSE otherwise.
+ * @deprecated 16/12/2021 Use linphone_account_params_outbound_proxy_enabled() instead.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const LinphoneAccountParams *params);
 
 /**
  * Tell if the proxy is used as the only route.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return enable TRUE if enabled, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const LinphoneAccountParams *params);
+LINPHONE_PUBLIC bool_t linphone_account_params_outbound_proxy_enabled(const LinphoneAccountParams *params);
 
 /**
  * Get the conference factory uri.

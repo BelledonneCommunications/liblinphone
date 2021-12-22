@@ -127,6 +127,10 @@ LinphoneTransportType linphone_account_get_transport(LinphoneAccount *account) {
 }
 
 bool_t linphone_account_is_avpf_enabled(LinphoneAccount *account) {
+	return linphone_account_avpf_enabled(account);
+}
+
+bool_t linphone_account_avpf_enabled(LinphoneAccount *account) {
 	return Account::toCpp(account)->isAvpfEnabled();
 }
 

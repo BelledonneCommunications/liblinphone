@@ -2749,6 +2749,10 @@ void linphone_core_update_push_notification_information(LinphoneCore *core, cons
 }
 
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
+	linphone_core_enable_push_notification(core, enable);
+}
+
+void linphone_core_enable_push_notification(LinphoneCore *core, bool_t enable) {
 	if (core->push_notification_enabled != enable) {
 		linphone_config_set_int(core->config, "net", "push_notification", enable);
 		core->push_notification_enabled = enable;
@@ -2763,6 +2767,10 @@ void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enab
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
+	return linphone_core_push_notification_enabled(core);
+}
+
+bool_t linphone_core_push_notification_enabled(LinphoneCore *core) {
 	return core->push_notification_enabled;
 }
 
@@ -2775,21 +2783,37 @@ void linphone_core_did_register_for_remote_push_with_stringified_token(LinphoneC
 }
 
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
+	linphone_core_enable_auto_iterate(core, enable);
+}
+
+void linphone_core_enable_auto_iterate(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "misc", "auto_iterate", enable);
 	core->auto_iterate_enabled = enable;
 	getPlatformHelpers(core)->enableAutoIterate(enable);
 }
 
 bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core) {
+	return linphone_core_auto_iterate_enabled(core);
+}
+
+bool_t linphone_core_auto_iterate_enabled(LinphoneCore *core) {
 	return core->auto_iterate_enabled;
 }
 
 void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable) {
+	linphone_core_enable_vibration_on_incoming_call(core, enable);	
+}
+
+void linphone_core_enable_vibration_on_incoming_call(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "misc", "vibrate_on_incoming_call", enable);
 	core->vibrate_on_incoming_call = enable;
 }
 
 bool_t linphone_core_is_vibration_on_incoming_call_enabled(LinphoneCore *core) {
+	return linphone_core_vibration_on_incoming_call_enabled(core);
+}
+
+bool_t linphone_core_vibration_on_incoming_call_enabled(LinphoneCore *core) {
 	return core->vibrate_on_incoming_call;
 }
 
@@ -4844,21 +4868,37 @@ void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *l
 }
 
 bool_t linphone_core_is_auto_download_voice_recordings_enabled(LinphoneCore *lc) {
-	return lc->auto_download_incoming_voice_recordings;
+	return linphone_core_auto_download_voice_recordings_enabled(lc);
+}
+
+bool_t linphone_core_auto_download_voice_recordings_enabled(LinphoneCore *core) {
+	return core->auto_download_incoming_voice_recordings;
 }
 
 void linphone_core_set_auto_download_voice_recordings_enabled(LinphoneCore *lc, bool_t auto_download_voice_recordings) {
-	lc->auto_download_incoming_voice_recordings = auto_download_voice_recordings;
-	linphone_config_set_bool(lc->config, "app", "auto_download_incoming_voice_recordings", auto_download_voice_recordings);
+	linphone_core_enable_auto_download_voice_recordings(lc, auto_download_voice_recordings);
+}
+
+void linphone_core_enable_auto_download_voice_recordings(LinphoneCore *core, bool_t auto_download_voice_recordings) {
+	core->auto_download_incoming_voice_recordings = auto_download_voice_recordings;
+	linphone_config_set_bool(core->config, "app", "auto_download_incoming_voice_recordings", auto_download_voice_recordings);
 }
 
 bool_t linphone_core_is_auto_download_icalendars_enabled(LinphoneCore *lc) {
-	return lc->auto_download_incoming_icalendars;
+	return linphone_core_auto_download_icalendars_enabled(lc);
+}
+
+bool_t linphone_core_auto_download_icalendars_enabled(LinphoneCore *core) {
+	return core->auto_download_incoming_icalendars;
 }
 
 void linphone_core_set_auto_download_icalendars_enabled(LinphoneCore *lc, bool_t auto_download_icalendars) {
-	lc->auto_download_incoming_icalendars = auto_download_icalendars;
-	linphone_config_set_bool(lc->config, "app", "auto_download_incoming_icalendars", auto_download_icalendars);
+	linphone_core_enable_auto_download_icalendars(lc, auto_download_icalendars);
+}
+
+void linphone_core_enable_auto_download_icalendars(LinphoneCore *core, bool_t auto_download_icalendars) {
+	core->auto_download_incoming_icalendars = auto_download_icalendars;
+	linphone_config_set_bool(core->config, "app", "auto_download_incoming_icalendars", auto_download_icalendars);
 }
 
 bool_t linphone_core_is_sender_name_hidden_in_forward_message(LinphoneCore *lc) {
@@ -4871,17 +4911,25 @@ void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *lc
 }
 
 bool_t linphone_core_is_record_aware_enabled(LinphoneCore *lc) {
-	return lc->record_aware;
+	return linphone_core_record_aware_enabled(lc);
+}
+
+bool_t linphone_core_record_aware_enabled(LinphoneCore *core) {
+	return core->record_aware;
 }
 
 void linphone_core_set_record_aware_enabled(LinphoneCore *lc, bool_t enable) {
-	lc->record_aware = enable;
-	linphone_config_set_bool(lc->config, "app", "record_aware", enable);
+	linphone_core_enable_record_aware(lc, enable);
+}
+
+void linphone_core_enable_record_aware(LinphoneCore *core, bool_t enable) {
+	core->record_aware = enable;
+	linphone_config_set_bool(core->config, "app", "record_aware", enable);
 
 	if (enable) {
-		linphone_core_add_supported_tag(lc, "record-aware");
+		linphone_core_add_supported_tag(core, "record-aware");
 	} else {
-		linphone_core_remove_supported_tag(lc, "record-aware");
+		linphone_core_remove_supported_tag(core, "record-aware");
 	}
 }
 
@@ -5463,11 +5511,19 @@ const char *linphone_core_get_ring(const LinphoneCore *lc){
 }
 
 void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable) {
+	linphone_core_enable_native_ringing(core, enable);
+}
+
+void linphone_core_enable_native_ringing(LinphoneCore *core, bool_t enable) {
 	core->native_ringing_enabled = enable;
 	linphone_config_set_int(core->config, "sound", "use_native_ringing", enable);
 }
 
 bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core) {
+	return linphone_core_native_ringing_enabled(core);
+}
+
+bool_t linphone_core_native_ringing_enabled(const LinphoneCore *core) {
 	return core->native_ringing_enabled;
 }
 
@@ -7959,6 +8015,10 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 }
 
 bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
+	return linphone_core_zero_rtp_port_for_stream_inactive_enabled(lc)	;
+}
+
+bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", 0);
 }
 
@@ -7967,7 +8027,11 @@ void linphone_core_enable_zero_rtp_port_for_stream_inactive(LinphoneCore *lc, bo
 }
 
 bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
-	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
+	return linphone_core_capability_negotiation_reinvite_enabled(lc);
+}
+
+bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *core) {
+	return (bool_t)!!linphone_config_get_int(core->config, "sip", "capability_negotiations_reinvite", 1);
 }
 
 void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *lc, bool_t enable) {
@@ -8184,12 +8248,20 @@ void linphone_core_set_enable_sip_update(const LinphoneCore *lc, int value) {
  * RFC 4028 : Session Timers
  */
 bool_t linphone_core_get_session_expires_enabled(const LinphoneCore *lc) {
-	return (bool_t)linphone_config_get_int(lc->config, "sip", "session_expires_enabled", 0);
+	return linphone_core_session_expires_enabled(lc);
+}
+
+bool_t linphone_core_session_expires_enabled(const LinphoneCore *core) {
+	return (bool_t)linphone_config_get_int(core->config, "sip", "session_expires_enabled", 0);
 }
 
 void linphone_core_set_session_expires_enabled(const LinphoneCore *lc, bool_t enabled) {
-	lc->sal->setSessionTimersEnabled(enabled);
-	linphone_config_set_int(lc->config, "sip", "session_expires_enabled", (int)enabled);
+	linphone_core_enable_session_expires(lc, enabled);
+}
+
+void linphone_core_enable_session_expires(const LinphoneCore *core, bool_t enabled) {
+	core->sal->setSessionTimersEnabled(enabled);
+	linphone_config_set_int(core->config, "sip", "session_expires_enabled", (int)enabled);
 }
 
 int linphone_core_get_session_expires_value(const LinphoneCore *lc) {
