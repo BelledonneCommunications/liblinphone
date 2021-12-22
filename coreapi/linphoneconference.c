@@ -354,7 +354,7 @@ void linphone_conference_params_set_audio_enabled (LinphoneConferenceParams *par
 }
 
 void linphone_conference_params_enable_audio(LinphoneConferenceParams *params, bool_t enable) {
-	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+	ConferenceParams::toCpp(params)->enableAudio(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_audio_enabled (const LinphoneConferenceParams *params) {
@@ -386,7 +386,7 @@ void linphone_conference_params_set_chat_enabled (LinphoneConferenceParams *para
 }
 
 void linphone_conference_params_enable_chat(LinphoneConferenceParams *params, bool_t enable) {
-	ConferenceParams::toCpp(params)->enableVideo(enable ? true : false);
+	ConferenceParams::toCpp(params)->enableChat(enable ? true : false);
 }
 
 bool_t linphone_conference_params_is_chat_enabled (const LinphoneConferenceParams *params) {
