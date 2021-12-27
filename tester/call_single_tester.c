@@ -901,6 +901,181 @@ static void simple_call_compatibility_mode(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+// This test is used to write down reasons on call and in logs after declining with reason.
+// Call states like End/Release may depends to the reason too.
+// Check theses cases to know if it is coherent or if the behaviour should change.
+static void call_declined_with_reasons(void) {
+	for(int reasonToTest = LinphoneReasonNone ; reasonToTest <= LinphoneReasonTransferred ; ++reasonToTest){
+	// create core from start on each iteration to avoid state conflicting between calls.
+		LinphoneCoreManager* callee_mgr = linphone_core_manager_new("marie_rc");
+		LinphoneCoreManager* caller_mgr = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	
+		LinphoneCall* in_call = NULL;
+		LinphoneCall* out_call = linphone_core_invite_address(caller_mgr->lc,callee_mgr->identity);
+//------------------------------------------------------------------
+//						Reasons Checklist
+//------------------------------------------------------------------
+		int incall_reason_target = reasonToTest, incall_log_status_target = reasonToTest;
+		int outcall_reason_target = reasonToTest, outcall_log_status_target = reasonToTest;
+		bool_t caller_end = TRUE;
+		bool_t caller_release = TRUE;
+		switch(reasonToTest){
+		case LinphoneReasonNone :
+			caller_end = FALSE;
+			incall_reason_target = LinphoneReasonDeclined;
+			incall_log_status_target = LinphoneReasonDeclined;
+			break;
+		case LinphoneReasonNoResponse:
+			caller_end = FALSE;
+			outcall_reason_target = LinphoneReasonUnknown;
+			break;
+		case LinphoneReasonForbidden:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonDeclined:// Default
+		break;
+		case LinphoneReasonNotFound:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonNotAnswered:
+			caller_end = FALSE;
+			incall_reason_target = LinphoneReasonNone;
+			outcall_reason_target = LinphoneReasonUnknown;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonBusy:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonUnsupportedContent:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonBadEvent:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonIOError:
+			caller_end = FALSE;
+			caller_release = FALSE;
+			outcall_reason_target = LinphoneReasonNone;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonDoNotDisturb:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonBusy;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonUnauthorized:
+			caller_end = FALSE;
+			outcall_reason_target = LinphoneReasonNone;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonNotAcceptable:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonNoMatch:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonMovedPermanently:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonGone:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonTemporarilyUnavailable:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonAddressIncomplete:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonNotImplemented:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonBadGateway:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonSessionIntervalTooSmall:
+			caller_end = FALSE;
+			outcall_reason_target = LinphoneReasonUnknown;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonServerTimeout:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonUnknown:
+			caller_end = FALSE;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		case LinphoneReasonTransferred:
+			caller_end = FALSE;
+			outcall_reason_target = LinphoneReasonUnknown;
+			incall_log_status_target = LinphoneReasonNoResponse;
+			outcall_log_status_target = LinphoneReasonNoResponse;
+		break;
+		}// No default because we want to have all use cases from Reasons
+//------------------------------------------------------------------
+//						Call test
+//------------------------------------------------------------------	
+		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallIncomingReceived,1));
+		BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(callee_mgr->lc));
+	
+		linphone_call_ref(out_call);
+		BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallOutgoingRinging,1));
+		BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(callee_mgr->lc));
+		if (in_call) {
+			linphone_call_ref(in_call);
+			linphone_call_decline(in_call, reasonToTest);
+	
+			BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEnd,1));
+			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEnd,( caller_end ? 1 : 0)));
+			BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallReleased,1));
+			BC_ASSERT_TRUE(wait_for(caller_mgr->lc,callee_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallReleased, (caller_release ? 1 : 0) ));
+	
+			BC_ASSERT_EQUAL(linphone_call_get_reason(in_call),incall_reason_target, int, "%d");
+			BC_ASSERT_EQUAL(linphone_call_get_reason(out_call),outcall_reason_target, int, "%d");
+			BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)),incall_log_status_target, int, "%d");
+			BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)),outcall_log_status_target, int, "%d");
+			
+			linphone_call_unref(in_call);
+		}
+		linphone_call_unref(out_call);
+		wait_for_until(caller_mgr->lc,callee_mgr->lc,NULL,0,500);
+		linphone_core_manager_destroy(callee_mgr);
+		linphone_core_manager_destroy(caller_mgr);
+	}
+}
+
 static void terminate_call_with_error(void) {
 	LinphoneCall* call_callee ;
 	LinphoneErrorInfo *ei  ;
@@ -5882,6 +6057,7 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call declined in Early Media", call_declined_in_early_media),
 	TEST_NO_TAG("Call declined on timeout in Early Media",call_declined_on_timeout_in_early_media),
 	TEST_NO_TAG("Call declined with error", call_declined_with_error),
+	TEST_NO_TAG("Call declined with reasons", call_declined_with_reasons),
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
 	TEST_NO_TAG("Call cancelled without response", call_called_without_any_response),
