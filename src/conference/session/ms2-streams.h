@@ -110,6 +110,7 @@ private:
 	void updateStats();
 	void initMulticast(const OfferAnswerContext &params);
 	void configureRtpSession(RtpSession *session);
+	void configureRtpTransport(RtpSession *session);
 	void applyJitterBufferParams (RtpSession *session);
 	void setupSrtp(const OfferAnswerContext &params);
 	void setupDtlsParams(MediaStream *ms);

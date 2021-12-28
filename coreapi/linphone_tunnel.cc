@@ -40,6 +40,8 @@
 #include "linphone/lpconfig.h"
 #include "c-wrapper/c-wrapper.h"
 
+#include "tester_utils.h" // for linphone_tunnel_is_tunnel_rtp_transport() declaration
+
 LinphoneTunnel* linphone_core_get_tunnel(const LinphoneCore *lc){
 	return lc->tunnel;
 }
@@ -465,4 +467,8 @@ const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel) {
 
 void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled) {
 	bcTunnel(tunnel)->simulateUdpLoss(enabled == FALSE ? false : true);
+}
+
+bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTunnel *tunnel, const RtpTransport *tp){
+	return bcTunnel(tunnel)->isTunnelRtpTransport(tp) ? TRUE : FALSE;
 }

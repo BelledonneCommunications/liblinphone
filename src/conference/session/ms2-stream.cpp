@@ -765,6 +765,42 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 	}
 }
 
+void MS2Stream::configureRtpTransport(RtpSession *session){
+	if (getCCore()->rtptf) {
+		RtpTransport *meta_rtp;
+		RtpTransport *meta_rtcp;
+		rtp_session_get_transports(session, &meta_rtp, &meta_rtcp);
+		LinphoneCoreRtpTransportFactoryFunc rtpFunc = nullptr, rtcpFunc = nullptr;
+		void *rtpFuncData = nullptr, *rtcpFuncData = nullptr;
+		
+		switch(getType()){
+			case SalAudio:
+				rtpFunc = getCCore()->rtptf->audio_rtp_func;
+				rtpFuncData = getCCore()->rtptf->audio_rtp_func_data;
+				rtcpFunc = getCCore()->rtptf->audio_rtcp_func;
+				rtcpFuncData = getCCore()->rtptf->audio_rtcp_func_data;
+			break;
+			case SalVideo:
+				rtpFunc = getCCore()->rtptf->video_rtp_func;
+				rtpFuncData = getCCore()->rtptf->video_rtp_func_data;
+				rtcpFunc = getCCore()->rtptf->video_rtcp_func;
+				rtcpFuncData = getCCore()->rtptf->video_rtcp_func_data;
+			break;
+			case SalText:
+			break;
+			case SalOther:
+			break;
+		}
+		
+		if (!meta_rtp_transport_get_endpoint(meta_rtp)) {
+			lInfo() << *this << " using custom RTP transport endpoint";
+			meta_rtp_transport_set_endpoint(meta_rtp, rtpFunc(rtpFuncData, mPortConfig.rtpPort));
+		}
+		if (!meta_rtp_transport_get_endpoint(meta_rtcp))
+			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
+	}
+}
+
 void MS2Stream::initializeSessions(MediaStream *stream){
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
 		if (!mPortConfig.multicastIp.empty())
@@ -774,13 +810,14 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 	}
 	
 	configureRtpSession(stream->sessions.rtp_session);
-	setupDtlsParams(stream);
 	
+	setupDtlsParams(stream);
 	if (mPortConfig.rtpPort == -1){
 		// Case where we requested random ports from the system. Now that they are allocated, get them.
 		mPortConfig.rtpPort = rtp_session_get_local_port(stream->sessions.rtp_session);
 		mPortConfig.rtcpPort = rtp_session_get_local_rtcp_port(stream->sessions.rtp_session);
 	}
+	configureRtpTransport(stream->sessions.rtp_session);
 	int dscp = -1;
 	switch(getType()){
 		case SalAudio:
@@ -889,39 +926,6 @@ void MS2Stream::stopEventHandling(){
 }
 
 bool MS2Stream::prepare(){
-	if (getCCore()->rtptf) {
-		RtpTransport *meta_rtp;
-		RtpTransport *meta_rtcp;
-		rtp_session_get_transports(mSessions.rtp_session, &meta_rtp, &meta_rtcp);
-		LinphoneCoreRtpTransportFactoryFunc rtpFunc = nullptr, rtcpFunc = nullptr;
-		void *rtpFuncData = nullptr, *rtcpFuncData = nullptr;
-		
-		switch(getType()){
-			case SalAudio:
-				rtpFunc = getCCore()->rtptf->audio_rtp_func;
-				rtpFuncData = getCCore()->rtptf->audio_rtp_func_data;
-				rtcpFunc = getCCore()->rtptf->audio_rtcp_func;
-				rtcpFuncData = getCCore()->rtptf->audio_rtcp_func_data;
-			break;
-			case SalVideo:
-				rtpFunc = getCCore()->rtptf->video_rtp_func;
-				rtpFuncData = getCCore()->rtptf->video_rtp_func_data;
-				rtcpFunc = getCCore()->rtptf->video_rtcp_func;
-				rtcpFuncData = getCCore()->rtptf->video_rtcp_func_data;
-			break;
-			case SalText:
-			break;
-			case SalOther:
-			break;
-		}
-		
-		if (!meta_rtp_transport_get_endpoint(meta_rtp)) {
-			lInfo() << this << " using custom RTP transport endpoint";
-			meta_rtp_transport_set_endpoint(meta_rtp, rtpFunc(rtpFuncData, mPortConfig.rtpPort));
-		}
-		if (!meta_rtp_transport_get_endpoint(meta_rtcp))
-			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
-	}
 	setIceCheckList(mIceCheckList);
 	startEventHandling();
 	Stream::prepare();

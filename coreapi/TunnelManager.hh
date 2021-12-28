@@ -193,6 +193,8 @@ namespace belledonnecomm {
 		const std::string& getUsername() const;
 		void setDomain(const char *domain);
 		const std::string& getDomain() const;
+		// Used for tests: returns true if given RtpTransport is for tunnelling.
+		bool isTunnelRtpTransport(const RtpTransport *tp)const;
 
 	private:
 		enum EventType{

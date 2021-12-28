@@ -3212,7 +3212,7 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 		linphone_tunnel_add_server(linphone_core_get_tunnel(marie->lc),tunnel_config);
 		linphone_tunnel_enable_sip(linphone_core_get_tunnel(marie->lc),FALSE);
 		linphone_tunnel_set_mode(linphone_core_get_tunnel(marie->lc),LinphoneTunnelModeEnable);
-		for (i=0;i<100;i++) {
+		for (i=0;i<500;i++) {
 			if (linphone_tunnel_connected(linphone_core_get_tunnel(marie->lc))) {
 				linphone_core_iterate(marie->lc);
 				break;
@@ -3287,6 +3287,19 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 			BC_ASSERT_TRUE(check_ice(pauline,marie,enable_tunnel?LinphoneIceStateReflexiveConnection:LinphoneIceStateHostConnection));
 			wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);/*fixme to workaround a crash*/
 		}
+		if (enable_tunnel){
+			LinphoneTunnel *tunnel = linphone_core_get_tunnel(marie->lc);
+			BC_ASSERT_PTR_NOT_NULL(tunnel);
+			if (tunnel){
+				RtpTransport *tp = linphone_call_get_meta_rtp_transport(linphone_core_get_current_call(marie->lc), LinphoneStreamTypeAudio);
+				RtpTransport *endpoint = meta_rtp_transport_get_endpoint(tp);
+				BC_ASSERT_PTR_NOT_NULL(endpoint);
+				if (endpoint){
+					BC_ASSERT_TRUE(linphone_tunnel_is_tunnel_rtp_transport(tunnel, endpoint));
+				}
+			}
+		}
+		
 #ifdef VIDEO_ENABLED
 		if (enable_video) {
 			if (linphone_core_video_supported(marie->lc)) {

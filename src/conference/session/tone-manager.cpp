@@ -578,6 +578,7 @@ shared_ptr<CallSession> ToneManager::lookupRingingSession() const{
 void ToneManager::cleanPauseTone(){
 	if (mSessionPaused){
 		stopTone();
+		destroyRingStream(); // the "pause" tone is exclusively played by the RingStream API.
 		mSessionPaused = nullptr;
 	}
 }

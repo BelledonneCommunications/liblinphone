@@ -279,7 +279,10 @@ LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall
 LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
 LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
 
-#endif
+#endif  // !defined(__cplusplus)
+
+LINPHONE_PUBLIC bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTunnel *tunnel, const RtpTransport *tp);
+
 
 #ifdef __cplusplus
 }
