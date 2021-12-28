@@ -48,10 +48,11 @@ static char* get_public_contact_ip(LinphoneCore* lc)  {
 }
 
 
-static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_sip, LinphoneMediaEncryption encryption, bool_t with_video_and_ice, bool_t dual_socket, bool_t gruu) {
+static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_sip, LinphoneMediaEncryption encryption, bool_t with_video_and_ice, bool_t dual_socket, bool_t gruu, bool_t callee_has_tunnel) {
 	if (linphone_core_tunnel_available()){
 		LinphoneCoreManager *pauline = linphone_core_manager_new( "pauline_rc");
 		LinphoneCoreManager *marie = linphone_core_manager_new( "marie_rc");
+		LinphoneCoreManager *tunnelized_agent = callee_has_tunnel ? marie : pauline;
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
@@ -82,7 +83,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationOk,1));
 
 		if (!gruu) {
-			public_ip = get_public_contact_ip(pauline->lc);
+			public_ip = get_public_contact_ip(tunnelized_agent->lc);
 			BC_ASSERT_STRING_NOT_EQUAL(public_ip, tunnel_ip);
 		}
 
@@ -102,7 +103,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		}
 
 		if (tunnel_mode != LinphoneTunnelModeDisable){
-			tunnel = linphone_core_get_tunnel(pauline->lc);
+			tunnel = linphone_core_get_tunnel(tunnelized_agent->lc);
 			linphone_tunnel_ref(tunnel);
 			LinphoneTunnelConfig *config = linphone_tunnel_config_new();
 
@@ -141,7 +142,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 			 */
 
 			if (tunnel_mode == LinphoneTunnelModeEnable && with_sip) {
-				BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationOk,2));
+				BC_ASSERT_TRUE(wait_for(tunnelized_agent->lc,NULL,&tunnelized_agent->stat.number_of_LinphoneRegistrationOk,2));
 				/* Ensure that we did use the tunnel. If so, we should see contact changed from:
 				Contact: <sip:pauline@192.168.0.201>;.[...]
 				To:
@@ -149,7 +150,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 				*/
 				if (!gruu) {
 					ms_free(public_ip);
-					public_ip = get_public_contact_ip(pauline->lc);
+					public_ip = get_public_contact_ip(tunnelized_agent->lc);
 					if (!dual_socket) {
 						BC_ASSERT_STRING_EQUAL(public_ip, tunnel_ip);
 					} else {
@@ -158,9 +159,16 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 				}
 			} else {
 				if (!gruu) {
-					public_ip2 = get_public_contact_ip(pauline->lc);
+					public_ip2 = get_public_contact_ip(tunnelized_agent->lc);
 					BC_ASSERT_STRING_EQUAL(public_ip, public_ip2);
 				}
+			}
+			if (tunnel_mode == LinphoneTunnelModeEnable){
+				int count = 0;
+				while (!linphone_tunnel_connected(tunnel) && count < 10){
+					wait_for_until(tunnelized_agent->lc,NULL, NULL, 0, 500);
+				}
+				BC_ASSERT_TRUE(linphone_tunnel_connected(tunnel));
 			}
 		}
 
@@ -172,7 +180,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)),
 				encryption, int, "%d");
 		}
-		if (tunnel_mode == LinphoneTunnelModeEnable && with_sip){
+		if (tunnel_mode == LinphoneTunnelModeEnable && with_sip && !callee_has_tunnel){
 			/* make sure the call from pauline arrived from the tunnel by checking the contact address*/
 			marie_call = linphone_core_get_current_call(marie->lc);
 			BC_ASSERT_PTR_NOT_NULL(marie_call);
@@ -190,6 +198,18 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 						}
 						linphone_address_unref(tmp);
 					}
+				}
+			}
+		}
+		if (tunnel_mode == LinphoneTunnelModeEnable){
+			LinphoneTunnel *tunnel = linphone_core_get_tunnel(tunnelized_agent->lc);
+			BC_ASSERT_PTR_NOT_NULL(tunnel);
+			if (tunnel){
+				RtpTransport *tp = linphone_call_get_meta_rtp_transport(linphone_core_get_current_call(tunnelized_agent->lc), LinphoneStreamTypeAudio);
+				RtpTransport *endpoint = meta_rtp_transport_get_endpoint(tp);
+				BC_ASSERT_PTR_NOT_NULL(endpoint);
+				if (endpoint){
+					BC_ASSERT_TRUE(linphone_tunnel_is_tunnel_rtp_transport(tunnel, endpoint));
 				}
 			}
 		}
@@ -217,34 +237,38 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 
 
 static void call_with_tunnel(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE, FALSE);
+}
+
+static void incoming_call_with_tunnel(void) {
+	call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE, TRUE);
 }
 
 static void call_with_tunnel_and_gruu(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, TRUE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, TRUE, FALSE);
 }
 
 static void call_with_tunnel_srtp(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionSRTP, FALSE, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionSRTP, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void call_with_tunnel_without_sip(void) {
-	call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void call_with_tunnel_auto(void) {
-	call_with_tunnel_base(LinphoneTunnelModeAuto, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeAuto, TRUE, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void call_with_tunnel_auto_without_sip_with_srtp(void) {
-	call_with_tunnel_base(LinphoneTunnelModeAuto, FALSE, LinphoneMediaEncryptionSRTP, FALSE, FALSE, FALSE);
+	call_with_tunnel_base(LinphoneTunnelModeAuto, FALSE, LinphoneMediaEncryptionSRTP, FALSE, FALSE, FALSE, TRUE);
 }
 
 #ifdef VIDEO_ENABLED
 
 static void full_tunnel_video_ice_call(void){
 	if (linphone_core_tunnel_available()){
-		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, TRUE, FALSE, FALSE);
+		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, TRUE, FALSE, FALSE, FALSE);
 	}else
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);
 }
@@ -348,20 +372,21 @@ static void register_on_second_tunnel(void) {
 
 static void dual_socket_mode(void) {
 	if (linphone_core_tunnel_available())
-		call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE);
+		call_with_tunnel_base(LinphoneTunnelModeEnable, FALSE, LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE, FALSE);
 	else
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);
 }
 
 static void dual_socket_mode_with_sip(void) {
 	if (linphone_core_tunnel_available())
-		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE);
+		call_with_tunnel_base(LinphoneTunnelModeEnable, TRUE, LinphoneMediaEncryptionNone, FALSE, TRUE, FALSE, FALSE);
 	else
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);
 }
 
 test_t tunnel_tests[] = {
 	TEST_NO_TAG("Simple", call_with_tunnel),
+	TEST_NO_TAG("Incoming call", incoming_call_with_tunnel),
 	TEST_NO_TAG("Simple call with gruu", call_with_tunnel_and_gruu),
 	TEST_NO_TAG("With SRTP", call_with_tunnel_srtp),
 	TEST_NO_TAG("Without SIP", call_with_tunnel_without_sip),

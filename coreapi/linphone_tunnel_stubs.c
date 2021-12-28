@@ -38,6 +38,8 @@
 #include "private.h"
 #include "linphone/lpconfig.h"
 
+#include "tester_utils.h" // for linphone_tunnel_is_tunnel_rtp_transport() declaration
+
 
 LinphoneTunnel* linphone_core_get_tunnel(const LinphoneCore *lc){
 	return lc->tunnel;
@@ -133,3 +135,8 @@ void linphone_tunnel_set_username(LinphoneTunnel *tunnel, const char *username) 
 const char *linphone_tunnel_get_username(LinphoneTunnel *tunnel) { return NULL; }
 void linphone_tunnel_set_domain(LinphoneTunnel *tunnel, const char *domain) {}
 const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel) { return NULL; }
+
+bool_t linphone_tunnel_is_tunnel_rtp_transport(const LinphoneTunnel *tunnel, const RtpTransport *tp){
+	return FALSE;
+}
+
