@@ -6444,6 +6444,17 @@ float linphone_core_get_static_picture_fps(LinphoneCore *lc) {
 	return 0;
 }
 
+void * linphone_core_create_native_video_window_id(const LinphoneCore *lc){
+#ifdef VIDEO_ENABLED
+	LinphoneCall *call=linphone_core_get_current_call (lc);
+	if (call) {
+		auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
+		if (ms) return ms->createNativeVideoWindowId();
+	}
+#endif
+	return 0;
+}
+
 void * linphone_core_get_native_video_window_id(const LinphoneCore *lc){
 	if (lc->video_window_id) {
 		/* case where the video id was previously set by the app*/
@@ -6474,6 +6485,21 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #else
 	_linphone_core_set_native_video_window_id(lc, id);
 #endif
+}
+
+void * linphone_core_create_native_preview_window_id(LinphoneCore *lc){
+#ifdef VIDEO_ENABLED
+	LinphoneCall *call=linphone_core_get_current_call(lc);
+	if (call) {
+		auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
+		if (ms) return ms->createNativePreviewVideoWindowId();
+	}
+	if( lc->previewstream==NULL && linphone_core_video_preview_enabled(lc) && !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls())
+		toggle_video_preview(lc,TRUE);
+	if (lc->previewstream)
+		return video_preview_create_native_window_id(lc->previewstream);
+#endif
+	return 0;
 }
 
 void * linphone_core_get_native_preview_window_id(LinphoneCore *lc){
@@ -6515,6 +6541,7 @@ void linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id) {
 	_linphone_core_set_native_preview_window_id(lc, id);
 #endif
 }
+
 
 void linphone_core_show_video(LinphoneCore *lc, bool_t show){
 #ifdef VIDEO_ENABLED

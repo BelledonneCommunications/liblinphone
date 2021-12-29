@@ -3580,11 +3580,26 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_static_picture_fps(LinphoneCore
 LINPHONE_PUBLIC float linphone_core_get_static_picture_fps(LinphoneCore *core);
 
 /**
+ * Create a native window handle for the video window.
+ * see linphone_core_set_native_video_window_id() for details about `window_id`
+ *
+ * MSQOgl can be used for the creation.
+ ** linphone_core_create_native_video_window_id() returns a #QQuickFramebufferObject::Renderer. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** linphone_core_set_native_video_window_id() must be called with this object after the creation.
+ ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return The native window handle of the video window. @maybenil
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void * linphone_core_create_native_video_window_id(const LinphoneCore *core);
+
+/**
  * Get the native window handle of the video window.
  * see #linphone_core_set_native_video_window_id for details about `window_id`
  *
  * There is a special case for Qt :
- ** linphone_core_get_native_video_window_id() returns a #QQuickFramebufferObject::Renderer and creates one if it doesn't exist. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** linphone_core_get_native_video_window_id() returns a #QQuickFramebufferObject::Renderer.
  ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
  *
  * @param core #LinphoneCore object @notnil
@@ -3618,7 +3633,8 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
  ** There is a special case for Qt :
  *** The "MSQOGL" filter must be selected by using #linphone_core_set_video_display_filter.
  *** Setting window id is only used to stop rendering by passing #LINPHONE_VIDEO_DISPLAY_NONE.
- *** linphone_core_get_native_preview_window_id() returns a #QQuickFramebufferObject::Renderer and creates one if it doesn't exist.  This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ *** linphone_core_get_native_video_window_id() returns a #QQuickFramebufferObject::Renderer and linphone_core_create_native_video_window_id() creates one.
+ *** After a creation, linphone_core_set_native_video_window_id() must be called with the new object.
  *
  * On mobile operating systems, #LINPHONE_VIDEO_DISPLAY_AUTO is not supported and `window_id` depends of the platform :
  ** iOS : It is a #UIView.
@@ -3630,11 +3646,26 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
 LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core, void *window_id);
 
 /**
+ * Create a native window handle for the video preview window.
+ * see linphone_core_set_native_video_window_id() for details about `window_id`
+ *
+ * MSQOgl can be used for the creation.
+ ** linphone_core_create_native_preview_window_id() returns a #QQuickFramebufferObject::Renderer. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** linphone_core_set_native_preview_window_id() must be called with this object after the creation.
+ ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return The native window handle of the video preview window. @maybenil
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void * linphone_core_create_native_preview_window_id(LinphoneCore *core);
+
+/**
  * Get the native window handle of the video preview window.
  * see linphone_core_set_native_video_window_id() for details about `window_id`
  *
  * There is a special case for Qt :
- ** linphone_core_get_native_preview_window_id() wreturns a #QQuickFramebufferObject::Renderer and creates one if it doesn't exist. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** linphone_core_get_native_preview_window_id() returns a #QQuickFramebufferObject::Renderer.
  ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
  *
  * @param core #LinphoneCore object @notnil

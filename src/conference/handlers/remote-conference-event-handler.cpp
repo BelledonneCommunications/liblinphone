@@ -333,11 +333,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				} else {
 					device = participant->findDevice(gruu);
 					if (device) {
-						conf->notifyParticipantDeviceMediaChanged(
-							creationTime,
-							isFullState,
-							participant,
-							device);
 
 						if (endpoint.getStatus().present()) {
 							const auto & status = endpoint.getStatus().get();
@@ -380,12 +375,15 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						}
 					}
 */
-
+					bool mediaChanged = false;
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
 						if (mediaType.compare("audio") == 0) {
-							device->setAudioDirection(mediaDirection);
+							if(device->getAudioDirection() != mediaDirection) {
+								mediaChanged = true;
+								device->setAudioDirection(mediaDirection);
+							}
 
 							if (media.getSrcId()) {
 								const std::string srcId = media.getSrcId().get();
@@ -393,7 +391,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								device->setSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("video") == 0) {
-							device->setVideoDirection(mediaDirection);
+							if(device->getVideoDirection() != mediaDirection) {
+								mediaChanged = true;
+								device->setVideoDirection(mediaDirection);
+							}
 							if (media.getLabel()) {
 								const std::string label = media.getLabel().get();
 								if (!label.empty()) {
@@ -401,11 +402,20 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								}
 							}
 						} else if (mediaType.compare("text") == 0) {
-							device->setTextDirection(mediaDirection);
+							if(device->getTextDirection() != mediaDirection) {
+								mediaChanged = true;
+								device->setTextDirection(mediaDirection);
+							}
 						} else {
 							lError() << "Unrecognized media type " << mediaType;
 						}
 					}
+					if(mediaChanged)
+						conf->notifyParticipantDeviceMediaChanged(
+							creationTime,
+							isFullState,
+							participant,
+							device);
 
 					if (endpoint.getStatus().present()) {
 						const auto & status = endpoint.getStatus().get();

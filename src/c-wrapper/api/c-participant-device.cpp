@@ -127,6 +127,10 @@ void * linphone_participant_device_get_native_video_window_id(const LinphonePart
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getWindowId();
 }
 
+void * linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device){
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->createWindowId();
+}
+
 void _linphone_participant_device_notify_conference_left(LinphoneParticipantDevice *participant_device) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_left);
 }

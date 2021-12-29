@@ -110,7 +110,11 @@ public:
 	RtpTransport * getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;
 	void * getNativeVideoWindowId () const;
+	void * getNativeVideoWindowId (const std::string label);
 	void * getNativePreviewVideoWindowId () const;
+	void * createNativePreviewVideoWindowId () const;
+	void * createNativeVideoWindowId () const;
+	void * createNativeVideoWindowId (const std::string label);
 	const CallSessionParams *getParams () const override;
 	float getPlayVolume () const;
 	float getRecordVolume () const;

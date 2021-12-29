@@ -116,6 +116,7 @@ public:
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
 
+	void * createWindowId() const;
 	void setWindowId(void * newWindowId);
 	void * getWindowId() const;
 

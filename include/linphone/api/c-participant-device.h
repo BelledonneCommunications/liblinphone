@@ -171,6 +171,13 @@ LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(Linp
 LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Create a window ID and return it.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return the window ID of the device @maybenil
+ */
+LINPHONE_PUBLIC void * linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 

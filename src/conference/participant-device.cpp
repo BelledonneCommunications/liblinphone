@@ -355,6 +355,13 @@ void ParticipantDeviceCbs::setTextDirectionChanged(LinphoneParticipantDeviceCbsT
 	mTextDirectionChangedCb = cb;
 }
 
+void * ParticipantDevice::createWindowId() const {
+	if (!mWindowId && !mLabel.empty() && mSession)
+		return static_pointer_cast<MediaSession>(mSession)->createNativeVideoWindowId(mLabel);
+	else
+		return nullptr;
+}
+
 void ParticipantDevice::setWindowId(void * newWindowId) {
 #ifdef VIDEO_ENABLED
 	mWindowId = newWindowId;

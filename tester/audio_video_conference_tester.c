@@ -6029,10 +6029,6 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallPaused,(michelle_stats.number_of_LinphoneCallPaused + 1), 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_stats.number_of_LinphoneCallPausedByRemote + 3),5000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_media_changed,michelle_stats.number_of_participant_device_media_changed+3,3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_device_media_changed,pauline_stats.number_of_participant_device_media_changed+3,3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_participant_device_media_changed,laure_stats.number_of_participant_device_media_changed+3,3000));
-
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_device_left,marie_stats.number_of_participant_device_left+4,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_device_left,michelle_stats.number_of_participant_device_left+4,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_device_left,pauline_stats.number_of_participant_device_left+4,3000));
