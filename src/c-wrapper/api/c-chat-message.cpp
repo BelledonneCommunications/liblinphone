@@ -444,7 +444,11 @@ bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (const Linpho
 bool_t linphone_chat_message_download_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
 	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
 	if (!content->isFileTransfer()) {
-		lError() << "LinphoneContent isn't an instance of FileTransferContent";
+		if (content->isFile()) {
+			lError() << "LinphoneContent [" << content << "] isn't an instance of FileTransferContent, it's a FileContent";
+		} else {
+			lError() << "LinphoneContent [" << content << "] isn't an instance of FileTransferContent, it's a Content";
+		}
 		return false;
 	}
 	LinphonePrivate::FileTransferContent *fileTransferContent = static_cast<LinphonePrivate::FileTransferContent* >(content);

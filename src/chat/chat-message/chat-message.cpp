@@ -1556,7 +1556,11 @@ void ChatMessage::cancelFileTransfer () {
 	L_D();
 	if (d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid()) {
 		lWarning() << "Canceling file transfer on message [" << getSharedFromThis() << "]";
+		d->fileTransferChatMessageModifier.cancelFileTransfer();
+		lInfo() << "File transfer on message [" << getSharedFromThis() << "] has been cancelled";
+
 		if (d->state == State::FileTransferInProgress) {
+			lInfo() << "File transfer on message [" << getSharedFromThis() << "] was in progress, updating state";
 			// For auto download messages, set the state back to Delivered
 			if (d->isAutoFileTransferDownloadInProgress()) {
 				d->setState(State::Delivered);
@@ -1565,7 +1569,6 @@ void ChatMessage::cancelFileTransfer () {
 				d->setState(State::NotDelivered);
 			}
 		}
-		d->fileTransferChatMessageModifier.cancelFileTransfer();
 	} else {
 		lInfo() << "No existing file transfer - nothing to cancel";
 	}

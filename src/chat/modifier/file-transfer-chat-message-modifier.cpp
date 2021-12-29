@@ -687,6 +687,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				delete currentFileTransferContent;
 				currentFileTransferContent = nullptr;
 			} else {
+				lWarning() << "Download seems successful but file transfer content not found, adding file content [" << fileContent << "] anyway...";
 				message->getPrivate()->addContent(fileContent);
 			}
 
@@ -899,7 +900,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 	}
 
 	lastNotifiedPercentage = 0;
-	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
+	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], result will be available in file content [" << fileContent << "]";
 
 	belle_http_request_listener_callbacks_t cbs = { 0 };
 	cbs.process_response_headers = _chat_process_response_headers_from_get_file;
