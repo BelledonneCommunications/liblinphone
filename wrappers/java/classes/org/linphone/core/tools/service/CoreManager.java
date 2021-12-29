@@ -239,9 +239,7 @@ public class CoreManager {
                             Log.w("[Core Manager] Incoming call is early media and ringing is disabled, stop ringing");
                             mAudioHelper.stopRinging();
                         } else {
-                            Log.w("[Core Manager] Incoming call is early media and ringing is disabled, release ringing audio focus but acquire call audio focus");
-                            mAudioHelper.releaseRingingAudioFocus();
-                            mAudioHelper.requestCallAudioFocus();
+                            Log.i("[Core Manager] Incoming call is early media and ringing is disabled, keep ringing audio focus as sound card will be using RING stream");
                         }
                     }
                 } else if (state == Call.State.Connected) {
