@@ -578,6 +578,7 @@ shared_ptr<CallSession> ToneManager::lookupRingingSession() const{
 void ToneManager::cleanPauseTone(){
 	if (mSessionPaused){
 		stopTone();
+		destroyRingStream();
 		mSessionPaused = nullptr;
 	}
 }
@@ -674,7 +675,7 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 		break;
 		case CallSession::State::Pausing:
 		{
-			if (session->pausedByApp() && (getCore().getCallCount() == 1) && !linphone_core_is_in_conference(getCore().getCCore()) ) {
+			if (session->pausedByApp() && (getCore().getCallCount() == 1) && !linphone_core_is_in_conference(getCore().getCCore()) && mSessionPaused == nullptr ) {
 				mSessionPaused = session;
 				startNamedTone(LinphoneToneCallOnHold);
 			}

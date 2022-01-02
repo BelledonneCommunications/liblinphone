@@ -649,6 +649,51 @@ static void dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux() {
 	call_paused_resumed_with_ice(LinphoneMediaEncryptionDTLS, TRUE, TRUE, TRUE);
 }
 
+static void call_terminated_during_ice_reinvite(void){
+	LinphoneCoreManager * marie = linphone_core_manager_new( "marie_sips_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *pauline_call, *marie_call;
+
+	enable_stun_in_core(marie, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(marie);
+
+	enable_stun_in_core(pauline, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(pauline);
+
+
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	if (marie_call && pauline_call){
+		linphone_call_accept(pauline_call);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+		/*wait for ICE reINVITE to be received */
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+		/* let the callee answer the reINVITE */
+		BC_ASSERT_TRUE(wait_for(NULL, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		/* callee now sends a reINVITE now */
+		linphone_call_pause(pauline_call);
+		/* Wait for the INVITE to be challenged by proxy and restarted by pauline */
+		wait_for_until(NULL, pauline->lc, NULL, 0, 5000);
+		/* Caller sends BYE but the 200OK is not received yet. */
+		linphone_call_terminate(marie_call);
+		/* The 200 ok will be received and processed by marie, followed by the INVITE(pause) */
+		
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+		
+		BC_ASSERT_TRUE(marie->stat.number_of_LinphoneCallStreamsRunning == 1);
+		
+	}
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+
 static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE in IPv4 with IPv6 enabled", call_with_ice_in_ipv4_with_v6_enabled, "ICE"),
 	TEST_ONE_TAG("Call with ICE IPv4 to IPv6", call_with_ice_ipv4_to_ipv6, "ICE"),
@@ -690,7 +735,8 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE pause and resume with both ice and rtcp mux", call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE"),
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with caller ice and rtcp mux", dtls_srtp_call_paused_resumed_with_caller_ice_and_rtcp_mux, "ICE", "DTLS"),
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with callee ice and rtcp mux", dtls_srtp_call_paused_resumed_with_callee_ice_and_rtcp_mux, "ICE", "DTLS"),
-	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with both ice and rtcp mux", dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE", "DTLS")
+	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with both ice and rtcp mux", dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE", "DTLS"),
+	TEST_ONE_TAG("Call terminated during ICE re-INVITE", call_terminated_during_ice_reinvite, "ICE")
 };
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
