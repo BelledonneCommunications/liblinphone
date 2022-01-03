@@ -3330,6 +3330,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				size_t audioStreamIndex = static_cast<size_t>(d->mainAudioStreamIndex);
 				const SalStreamDescription & sd = md->streams[audioStreamIndex];
 				params->enableAudio(sd.enabled());
+				params->setAudioDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd.getDirection()));
 				params->setMediaEncryption(sd.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, md->streams[audioStreamIndex].getCustomSdpAttributes());
 			}else params->enableAudio(false);
@@ -3338,6 +3339,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				size_t videoStreamIndex = static_cast<size_t>(d->mainVideoStreamIndex);
 				const SalStreamDescription & sd = md->streams[videoStreamIndex];
 				params->enableVideo(sd.enabled());
+				params->setVideoDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd.getDirection()));
 				params->setMediaEncryption(sd.hasSrtp() ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, md->streams[videoStreamIndex].getCustomSdpAttributes());
 			}else params->enableVideo(false);
