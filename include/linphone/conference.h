@@ -139,14 +139,6 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_audio_enabled(const LinphoneCo
  * @param enable If TRUE, video will be enabled during conference
  * @deprecated 16/12/2021 Use linphone_conference_params_enable_video() instead.
  */
-LINPHONE_PUBLIC void linphone_conference_params_enable_video(LinphoneConferenceParams *params, bool_t enable);
-
-/**
- * Enable video capabilities
- * @param params A #LinphoneConferenceParams @notnil
- * @param enable If TRUE, video will be enabled during conference
- * @deprecated 16/12/2021 Use linphone_conference_params_enable_video() instead.
- */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_set_video_enabled(LinphoneConferenceParams *params, bool_t enable);
 
 /**
