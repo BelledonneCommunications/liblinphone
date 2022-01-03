@@ -331,6 +331,14 @@ static void dtls_srtp_call(void) {
 	call_base(LinphoneMediaEncryptionDTLS,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
 }
 
+static void dtls_srtp_call_with_ice(void) {
+	call_base(LinphoneMediaEncryptionDTLS,FALSE,FALSE,LinphonePolicyUseIce,FALSE);
+}
+
+static void dtls_srtp_call_with_ice_and_dtls_start_immediate(void) {
+	call_base_with_configfile(LinphoneMediaEncryptionDTLS, FALSE, FALSE, LinphonePolicyUseIce, FALSE, "marie_dtls_srtp_immediate_rc", "pauline_dtls_srtp_immediate_rc");
+}
+
 static void dtls_srtp_call_with_media_realy(void) {
 	call_base(LinphoneMediaEncryptionDTLS,FALSE,TRUE,LinphonePolicyNoFirewall,FALSE);
 }
@@ -872,6 +880,8 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
 	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call with ICE", dtls_srtp_call_with_ice, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call with ICE and dtls start immediatly", dtls_srtp_call_with_ice_and_dtls_start_immediate, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy, "DTLS"),
 	TEST_NO_TAG("SRTP call with declined srtp", call_with_declined_srtp),
 	TEST_NO_TAG("SRTP call paused and resumed", call_srtp_paused_and_resumed),

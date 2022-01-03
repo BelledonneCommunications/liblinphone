@@ -142,7 +142,20 @@ static void check_turn_context_statistics(MSTurnContext *turn_context1, MSTurnCo
 	}
 }
 
-static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t caller_turn_enabled, bool_t callee_turn_enabled, bool_t rtcp_mux_enabled, bool_t ipv6, bool_t turn_tcp, bool_t turn_tls, LinphoneMediaEncryption mode) {
+typedef struct _CallConfig {
+	bool_t video_enabled;
+	bool_t forced_relay;
+	bool_t caller_turn_enabled;
+	bool_t callee_turn_enabled;
+	bool_t rtcp_mux_enabled;
+	bool_t ipv6;
+	bool_t turn_tcp;
+	bool_t turn_tls;
+	LinphoneMediaEncryption mode;
+	bool_t dtls_srtp_immediate;
+} CallConfig;
+
+static void ice_turn_call_base(const CallConfig *config) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 	LinphoneCall *lcall;
@@ -156,36 +169,41 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	if (ipv6) {
+	if (config->ipv6) {
 		linphone_core_enable_ipv6(marie->lc, TRUE);
 		linphone_core_enable_ipv6(pauline->lc, TRUE);
 	} else {
 		linphone_core_enable_ipv6(marie->lc, FALSE);
 		linphone_core_enable_ipv6(pauline->lc, FALSE);
 	}
-	
+
+	if (config->dtls_srtp_immediate) {
+		linphone_config_set_string(linphone_core_get_config(marie->lc), "rtp", "dtls_srtp_start", "immediate");
+		linphone_config_set_string(linphone_core_get_config(pauline->lc), "rtp", "dtls_srtp_start", "immediate");
+	}
+
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
 
-	configure_nat_policy(marie->lc, caller_turn_enabled, turn_tcp, turn_tls);
-	configure_nat_policy(pauline->lc, callee_turn_enabled, turn_tcp, turn_tls);
-	if (forced_relay == TRUE) {
+	configure_nat_policy(marie->lc, config->caller_turn_enabled, config->turn_tcp, config->turn_tls);
+	configure_nat_policy(pauline->lc, config->callee_turn_enabled, config->turn_tcp, config->turn_tls);
+	if (config->forced_relay == TRUE) {
 		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
 		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
 		linphone_core_enable_short_turn_refresh(marie->lc, TRUE);
 		linphone_core_enable_short_turn_refresh(pauline->lc, TRUE);
 		expected_ice_state = LinphoneIceStateRelayConnection;
 	}
-	if (rtcp_mux_enabled == TRUE) {
+	if (config->rtcp_mux_enabled == TRUE) {
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
 	}
 
-	if (linphone_core_media_encryption_supported(marie->lc, mode)) {
-		linphone_core_set_media_encryption(marie->lc,mode);
-		linphone_core_set_media_encryption(pauline->lc,mode);
+	if (linphone_core_media_encryption_supported(marie->lc, config->mode)) {
+		linphone_core_set_media_encryption(marie->lc,config->mode);
+		linphone_core_set_media_encryption(pauline->lc,config->mode);
 
-		if (mode == LinphoneMediaEncryptionDTLS) { /* for DTLS we must access certificates or at least have a directory to store them */
+		if (config->mode == LinphoneMediaEncryptionDTLS) { /* for DTLS we must access certificates or at least have a directory to store them */
 			char *path = bc_tester_file("certificates-marie");
 			linphone_core_set_user_certificates_path(marie->lc, path);
 			bc_free(path);
@@ -200,7 +218,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
 
-	if (video_enabled) {
+	if (config->video_enabled) {
 #ifdef VIDEO_ENABLED
 		linphone_core_set_video_device(pauline->lc,liblinphone_tester_mire_id);
 		linphone_core_set_video_device(marie->lc,liblinphone_tester_mire_id);
@@ -249,8 +267,8 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	 * We have to check that turn channel is used by either marie or pauline.
 	 */
 	if (cl1 && cl2) {
-		check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, forced_relay);
-		if (!rtcp_mux_enabled) check_turn_context_statistics(cl1->rtcp_turn_context, cl2->rtcp_turn_context, forced_relay);
+		check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, config->forced_relay);
+		if (!config->rtcp_mux_enabled) check_turn_context_statistics(cl1->rtcp_turn_context, cl2->rtcp_turn_context, config->forced_relay);
 	}
 
 	end_call(marie, pauline);
@@ -261,71 +279,147 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 }
 
 static void basic_ice_turn_call(void) {
-	ice_turn_call_base(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void basic_ipv6_ice_turn_call(void) {
 	if (liblinphone_tester_ipv6_available()) {
-		ice_turn_call_base(FALSE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+		CallConfig cfg = {0};
+		cfg.caller_turn_enabled = TRUE;
+		cfg.callee_turn_enabled = TRUE;
+		cfg.ipv6 = TRUE;
+		ice_turn_call_base(&cfg);
 	} else {
 		ms_warning("Test skipped, no ipv6 available");
 	}
 }
 
 static void basic_ice_turn_call_tcp(void) {
-	ice_turn_call_base(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.turn_tcp = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void basic_ice_turn_call_tls(void) {
-	ice_turn_call_base(FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.turn_tls = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 #ifdef VIDEO_ENABLED
 static void video_ice_turn_call(void) {
-	ice_turn_call_base(TRUE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.video_enabled = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	ice_turn_call_base(&cfg);
 }
 #endif
 
 static void relayed_ice_turn_call(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_call_with_tcp(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.turn_tcp = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_call_with_tls(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.turn_tls = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 #ifdef VIDEO_ENABLED
 static void relayed_video_ice_turn_call(void) {
-	ice_turn_call_base(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.video_enabled = TRUE;
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	ice_turn_call_base(&cfg);
 }
 #endif
 
 static void relayed_ice_turn_call_with_rtcp_mux(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.rtcp_mux_enabled = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_to_ice_stun_call(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_call_with_srtp(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionSRTP);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.mode = LinphoneMediaEncryptionSRTP;
+	ice_turn_call_base(&cfg);
+}
+
+static void relayed_ice_turn_call_with_dtls_srtp_immediate(void) {
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.mode = LinphoneMediaEncryptionDTLS;
+	cfg.dtls_srtp_immediate = TRUE;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_tls_with_srtp(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionSRTP);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.turn_tls = TRUE;
+	cfg.mode = LinphoneMediaEncryptionSRTP;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_tls_to_ice_with_srtp(void){
-	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionSRTP);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.rtcp_mux_enabled = TRUE;
+	cfg.turn_tls = TRUE;
+	cfg.mode = LinphoneMediaEncryptionSRTP;
+	ice_turn_call_base(&cfg);
 }
 
 static void relayed_ice_turn_to_ice_with_dtls_srtp(void){
-	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionDTLS);
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.rtcp_mux_enabled = TRUE;
+	cfg.mode = LinphoneMediaEncryptionDTLS;
+	ice_turn_call_base(&cfg);
 }
 
 
@@ -346,6 +440,7 @@ test_t stun_tests[] = {
 	TEST_TWO_TAGS("Relayed ICE+TURN call with rtcp-mux", relayed_ice_turn_call_with_rtcp_mux, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN to ICE+STUN call", relayed_ice_turn_to_ice_stun_call, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN call with SRTP", relayed_ice_turn_call_with_srtp, "ICE", "TURN"),
+	TEST_TWO_TAGS("Relayed ICE+TURN call with DTLS-SRTP immediately", relayed_ice_turn_call_with_dtls_srtp_immediate, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call with SRTP", relayed_ice_turn_tls_with_srtp, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call to ICE with SRTP", relayed_ice_turn_tls_to_ice_with_srtp, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN call to ICE with DTLS-SRTP", relayed_ice_turn_to_ice_with_dtls_srtp, "ICE", "TURN")
