@@ -2599,7 +2599,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 		bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 		if (proposeEarlyMedia)
 			q->acceptEarlyMedia();
-		else {
+		else if (state != CallSession::State::IncomingEarlyMedia) {
 			op->notifyRinging(false, linphone_core_get_tag_100rel_support_level(q->getCore()->getCCore()));
 		}
 	}

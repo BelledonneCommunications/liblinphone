@@ -5769,6 +5769,50 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_state_changed_accept_early_media(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg) {
+	if (cstate == LinphoneCallIncomingReceived) {
+		/* send a 183 to initiate the early media */
+		linphone_call_accept_early_media(call);
+	}
+}
+
+static void call_with_early_media_accepted_state_changed_callback(void) {
+	LinphoneCoreManager* marie   = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	bctbx_list_t* lcs = NULL;
+	LinphoneCall* marie_call;
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_call_state_changed(cbs, call_state_changed_accept_early_media);
+	linphone_core_add_callbacks(pauline->lc, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	lcs = bctbx_list_append(lcs,marie->lc);
+	lcs = bctbx_list_append(lcs,pauline->lc);
+	/*
+		Marie calls Pauline, and after the call has rung, transitions to an early_media session
+	*/
+
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+
+	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,5000));
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingRinging, 0, int, "%d");
+
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		linphone_call_terminate(marie_call);
+
+		bctbx_list_free(lcs);
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -5852,6 +5896,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call recording with record-aware both recording", call_recording_with_record_aware_both_recording),
 	TEST_NO_TAG("Call without automatic 180 ringing", call_without_automatic_180_ringing),
 	TEST_NO_TAG("Call without automatic 180 ringing but early media", call_without_automatic_180_ringing_but_early_media),
+	TEST_NO_TAG("Call with early media accepted in state changed callback", call_with_early_media_accepted_state_changed_callback),
 };
 
 test_t call_not_established_tests[] = {
