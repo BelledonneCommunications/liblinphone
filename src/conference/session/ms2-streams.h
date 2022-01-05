@@ -157,6 +157,7 @@ public:
 	virtual void enableSpeaker(bool value) override;
 	virtual bool micEnabled()const override;
 	virtual bool speakerEnabled()const override;
+	virtual void setRecordPath(const std::string &path) override;
 	virtual bool startRecording() override;
 	virtual void stopRecording() override;
 	virtual bool isRecording() override{

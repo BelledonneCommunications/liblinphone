@@ -139,7 +139,7 @@ public:
 	void connectEndpoint(Stream *as, MSAudioEndpoint *endpoint, bool muted);
 	void disconnectEndpoint(Stream *as, MSAudioEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
-	void setRecordPath(const std::string &path);
+	void setRecordPath(const std::string &path) override;
 	
 	/* AudioControlInterface methods */
 	virtual void enableMic(bool value) override;

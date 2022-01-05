@@ -358,7 +358,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		ms_snd_card_set_preferred_sample_rate(captcard, stream.getMaxRate());
 	
 	if (!audioMixer && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
-		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
+		setRecordPath(getMediaSessionPrivate().getParams()->getRecordFilePath());
 		getMediaSessionPrivate().getCurrentParams()->setRecordFilePath(getMediaSessionPrivate().getParams()->getRecordFilePath());
 	}
 
@@ -725,6 +725,10 @@ bool MS2AudioStream::speakerEnabled()const{
 
 void MS2AudioStream::sendDtmf(int dtmf){
 	audio_stream_send_dtmf(mStream, (char)dtmf);
+}
+
+void MS2AudioStream::setRecordPath(const std::string &path) {
+	audio_stream_set_mixed_record_file(mStream, path.c_str());
 }
 
 bool MS2AudioStream::startRecording(){

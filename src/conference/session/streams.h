@@ -210,6 +210,7 @@ public:
 	virtual void enableSpeaker(bool value) = 0;
 	virtual bool micEnabled()const = 0;
 	virtual bool speakerEnabled()const = 0;
+	virtual void setRecordPath(const std::string &path) = 0;
 	virtual bool startRecording() = 0;
 	virtual void stopRecording() = 0;
 	virtual bool isRecording() = 0;

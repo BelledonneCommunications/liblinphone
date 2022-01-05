@@ -3703,6 +3703,8 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 void MediaSession::setRecordPath(const std::string &path) {
 	L_D();
 	d->getParams()->setRecordFilePath(path);
+	AudioControlInterface * i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i != nullptr) i->setRecordPath(path);
 	lInfo() << "MediaSession " << this << " set record file path " << path;
 }
 
