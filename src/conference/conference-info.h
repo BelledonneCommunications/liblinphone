@@ -52,8 +52,8 @@ public:
 	time_t getDateTime () const;
 	void setDateTime (time_t dateTime);
 
-	int getDuration () const;
-	void setDuration (int duration);
+	unsigned int getDuration () const;
+	void setDuration (unsigned int duration);
 
 	const std::string &getSubject () const;
 	void setSubject (const std::string &subject);
@@ -70,7 +70,7 @@ private:
 	std::list<IdentityAddress> mParticipants;
 	ConferenceAddress mUri;
 	time_t mDateTime = (time_t) -1;
-	int mDuration = 0;
+	unsigned int mDuration = 0;
 	std::string mSubject = "";
 	std::string mDescription = "";
 

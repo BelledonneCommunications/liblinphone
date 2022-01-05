@@ -532,7 +532,7 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizer().asString());
 	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
 	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
-	int duration = conferenceInfo->getDuration();
+	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getSubject();
 	const string &description = conferenceInfo->getDescription();
 
@@ -985,7 +985,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent (
 			conferenceInfo->setUri(uri);
 
 			conferenceInfo->setDateTime(dbSession.getTime(row, 18));
-			conferenceInfo->setDuration(row.get<int>(19));
+			conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 19, 0));
 			conferenceInfo->setSubject(row.get<string>(20));
 			conferenceInfo->setDescription(row.get<string>(21));
 
@@ -1719,7 +1719,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	conferenceInfo->setUri(uri);
 
 	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
-	conferenceInfo->setDuration(row.get<int>(4));
+	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
 	conferenceInfo->setSubject(row.get<string>(5));
 	conferenceInfo->setDescription(row.get<string>(6));
 
@@ -4098,9 +4098,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					" AND chat_room_participant.chat_room_id = chat_room.id";
 
 				// Fetch participants.
-				unsigned int lastNotifyId = getBackend() == Backend::Mysql
-					? row.get<unsigned int>(7, 0)
-					: static_cast<unsigned int>(row.get<int>(7, 0));
+				unsigned int lastNotifyId = d->dbSession.getUnsignedInt(row, 7, 0);
 				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {

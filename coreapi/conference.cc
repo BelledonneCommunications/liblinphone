@@ -465,6 +465,32 @@ bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePri
 	return soFarSoGood;
 }
 
+std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
+	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
+	info->setOrganizer(getMe()->getAddress());
+
+	if (!invitedAddresses.empty()) {
+		info->setParticipants(invitedAddresses);
+	}
+
+	const auto & conferenceAddress = getConferenceAddress();
+	if (conferenceAddress.isValid()) {
+		info->setUri(conferenceAddress);
+	}
+
+	time_t startTime = confParams->getStartTime();
+	time_t endTime = confParams->getEndTime();
+	info->setDateTime(startTime);
+	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
+		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
+		info->setDuration(duration);
+	}
+
+	info->setSubject(confParams->getSubject());
+
+	return info;
+}
+
 LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -572,6 +598,54 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	setState(ConferenceInterface::State::Instantiated);
 }
 
+LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::shared_ptr<ConferenceInfo> & info) :
+	Conference(core, info->getOrganizer(), nullptr, ConferenceParams::create(core->getCCore())) {
+
+#ifdef HAVE_ADVANCED_IM
+	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+	if (eventLogEnabled) {
+		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
+		addListener(eventHandler);
+	}
+#endif // HAVE_ADVANCED_IM
+
+	mMixerSession.reset(new MixerSession(*core.get()));
+
+	const auto & conferenceAddress = info->getUri();
+
+	// WORKAROUND: Always recreate conference with audio and video enabled. ConferenceInfo doesn't store this information
+	confParams->enableAudio(true);
+	confParams->enableVideo(true);
+	confParams->setSubject(info->getSubject());
+	confParams->enableLocalParticipant(false);
+	confParams->enableOneParticipantConference(true);
+	confParams->setStatic(true);
+
+	time_t startTime = info->getDateTime();
+	confParams->setStartTime(startTime);
+
+	const auto duration = info->getDuration();
+	if ((duration > 0) && (startTime >= 0)) {
+		time_t endTime = startTime + duration * 60;
+		confParams->setEndTime(endTime);
+	}
+
+	const auto & participants = info->getParticipants();
+	for (const auto & p : participants) {
+		invitedAddresses.push_back(p);
+	}
+	invitedAddresses.push_back(info->getOrganizer());
+
+	getMe()->setAdmin(true);
+	getMe()->setFocus(true);
+
+	setState(ConferenceInterface::State::Instantiated);
+
+	setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
+	setConferenceAddress(conferenceAddress);
+
+}
+
 LocalConference::~LocalConference() {
 	if ((state != ConferenceInterface::State::Terminated) && (state != ConferenceInterface::State::Deleted)) {
 		terminate();
@@ -610,12 +684,20 @@ void LocalConference::confirmCreation () {
 		linphone_address_set_uri_param (addr, "conf-id", confId);
 		Address conferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
 		linphone_address_unref(addr);
-
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 
 		const_cast<LinphonePrivate::CallSessionParamsPrivate *>(L_GET_PRIVATE(session->getParams()))->setInConference(true);
 		session->getPrivate()->setConferenceId(confId);
 		session->startIncomingNotification(false);
+
+#ifdef HAVE_DB_STORAGE
+		// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		if (mainDb) {
+			lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
+			mainDb->insertConferenceInfo(createConferenceInfo());
+		}
+#endif
 
 	} else {
 		lError() << "Unable to confirm the creation of the conference because no session was created";
@@ -1775,14 +1857,14 @@ RemoteConference::RemoteConference (
 
 	const auto & conferenceAddress = focus->getSession()->getRemoteContactAddress();
 
-	#ifdef HAVE_DB_STORAGE
+#ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb)  {
 		const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*conferenceAddress));
 		// me is admin if the organizer is the same as me
 		getMe()->setAdmin((confInfo && (confInfo->getOrganizer() == getMe()->getAddress())));
 	}
-	#endif
+#endif
 
 	setConferenceAddress(*conferenceAddress);
 	setState(ConferenceInterface::State::CreationPending);

@@ -111,14 +111,14 @@ LINPHONE_PUBLIC void linphone_conference_info_set_date_time(LinphoneConferenceIn
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The duration of the conference.
  */
-LINPHONE_PUBLIC int linphone_conference_info_get_duration(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC unsigned int linphone_conference_info_get_duration(const LinphoneConferenceInfo *conference_info);
 
 /**
  * Set the duration (in minutes) of the conference.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @param duration The duration of the conference.
  */
-LINPHONE_PUBLIC void linphone_conference_info_set_duration(LinphoneConferenceInfo *conference_info, int duration);
+LINPHONE_PUBLIC void linphone_conference_info_set_duration(LinphoneConferenceInfo *conference_info, unsigned int duration);
 
 /**
  * Retrieve the subject of the conference.

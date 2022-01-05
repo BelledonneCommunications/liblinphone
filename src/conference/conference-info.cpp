@@ -75,11 +75,11 @@ void ConferenceInfo::setDateTime (time_t dateTime) {
 	mDateTime = dateTime;
 }
 
-int ConferenceInfo::getDuration () const {
+unsigned int ConferenceInfo::getDuration () const {
 	return mDuration;
 }
 
-void ConferenceInfo::setDuration (int duration) {
+void ConferenceInfo::setDuration (unsigned int duration) {
 	mDuration = duration;
 }
 

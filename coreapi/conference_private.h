@@ -197,13 +197,13 @@ protected:
 	std::list<IdentityAddress> invitedAddresses;
 	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = nullptr;
 
-protected:
-
 	// Legacy member
 	std::string mConferenceID;
 
 	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
 	void *mCbUserData = nullptr;
+
+	std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
 };
 
 /*
@@ -213,6 +213,7 @@ class LINPHONE_PUBLIC LocalConference: public Conference {
 public:
 	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	LocalConference (const std::shared_ptr<Core> &core, SalCallOp *op);
+	LocalConference (const std::shared_ptr<Core> &core, const std::shared_ptr<ConferenceInfo> & info);
 
 	virtual ~LocalConference();
 

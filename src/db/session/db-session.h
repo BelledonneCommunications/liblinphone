@@ -62,6 +62,8 @@ public:
 
 	std::time_t getTime (const soci::row &row, int col) const;
 
+	unsigned int getUnsignedInt (const soci::row &row, std::size_t col, const unsigned int def = 0) const;
+
 private:
 	DbSessionPrivate *mPrivate;
 

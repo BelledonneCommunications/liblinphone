@@ -61,6 +61,7 @@ class SalMediaDescription;
 class ConferenceScheduler;
 
 namespace MediaConference {
+	class LocalConference;
 	class RemoteConference;
 	class Conference;
 }
@@ -91,6 +92,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class EventLog;
 
 	friend class MediaConference::Conference;
+	friend class MediaConference::LocalConference;
 	friend class MediaConference::RemoteConference;
 	friend class ConferenceScheduler;
 

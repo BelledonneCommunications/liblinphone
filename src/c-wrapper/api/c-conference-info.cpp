@@ -87,11 +87,11 @@ void linphone_conference_info_set_date_time(LinphoneConferenceInfo *conference_i
 	ConferenceInfo::toCpp(conference_info)->setDateTime(datetime);
 }
 
-int linphone_conference_info_get_duration(const LinphoneConferenceInfo *conference_info) {
+unsigned int linphone_conference_info_get_duration(const LinphoneConferenceInfo *conference_info) {
 	return ConferenceInfo::toCpp(conference_info)->getDuration();
 }
 
-void linphone_conference_info_set_duration(LinphoneConferenceInfo *conference_info, int duration) {
+void linphone_conference_info_set_duration(LinphoneConferenceInfo *conference_info, unsigned int duration) {
 	ConferenceInfo::toCpp(conference_info)->setDuration(duration);
 }
 

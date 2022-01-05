@@ -78,6 +78,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	}
 
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
+
 	if (entityAddress != getConferenceId().getPeerAddress())
 		return;
 

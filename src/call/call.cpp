@@ -687,6 +687,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			getCore()->getPrivate()->mainDb ? getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(remoteContactAddress) :
 		#endif
 			nullptr;
+
 		if (conferenceInfo) {
 			confParams->setSubject(conferenceInfo->getSubject());
 			auto startTime = conferenceInfo->getDateTime();

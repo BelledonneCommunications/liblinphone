@@ -206,7 +206,10 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	confInfo->setDescription(event->getDescription());
 
 	tm dur = event->getDuration();
-	confInfo->setDuration(dur.tm_hour*60 + dur.tm_min + dur.tm_sec/60);
+	int duration = dur.tm_hour*60 + dur.tm_min + dur.tm_sec/60;
+	if (duration >= 0) {
+		confInfo->setDuration(static_cast<unsigned int>(duration));
+	}
 
 	if (!event->getXConfUri().empty()) {
 		const ConferenceAddress uri(event->getXConfUri());

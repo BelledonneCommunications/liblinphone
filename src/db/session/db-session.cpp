@@ -274,6 +274,22 @@ long long DbSession::resolveId (const soci::row &row, int col) const {
 	return 0;
 }
 
+unsigned int DbSession::getUnsignedInt (const soci::row &row, const std::size_t col, const unsigned int def) const {
+	L_D();
+
+	switch (d->backend) {
+		case DbSessionPrivate::Backend::Mysql:
+			return row.get<unsigned int>(col, def);
+		case DbSessionPrivate::Backend::Sqlite3:
+			return static_cast<unsigned int>(row.get<int>(col, static_cast<int>(def)));
+		case DbSessionPrivate::Backend::None:
+			return 0;
+	}
+
+	L_ASSERT(false);
+	return 0;
+}
+
 time_t DbSession::getTime (const soci::row &row, int col) const {
 	L_D();
 

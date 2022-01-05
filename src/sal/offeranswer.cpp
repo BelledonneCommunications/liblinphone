@@ -959,7 +959,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		SalStreamDescription stream;
 		SalStreamConfiguration actualCfg;
 
-		if ((rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
+		if ((local_capabilities->streams.size() > i) && (rs.getType() == ls.getType()) && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs)) {
 			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
@@ -999,7 +999,9 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 				actualCfg.proto_other = rs.getChosenConfiguration().proto_other;
 			}
 		}
-		stream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
+		if (local_capabilities->streams.size() > i) {
+			stream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
+		}
 		stream.addActualConfiguration(actualCfg);
 		result->streams.push_back(stream);
 		i++;
