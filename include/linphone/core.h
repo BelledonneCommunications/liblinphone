@@ -110,12 +110,7 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *
 * Create a recorder params that will hold parameters.
 * This recorder support WAVE and MATROSKA formats.
 * @param lc A #LinphoneCore object @notnil
-* @param device Recording #LinphoneAudioDevice. If NULL, the audio device set in #LinphoneCore will be used @maybenil
-* @param web_cam_name Recording web cam. If NULL, no video will be recorded. @maybenil
-* @param window_id Id of the drawing window. Depend of video out @maybenil
-* @param format #LinphoneRecorderFileFormat File format we want to record to.
-* @param video_codec Codec of the video if we record video. "vp8" or "h264" @maybenil
-* @return A pointer on the new instance. NULL if failed. @notnil
+* @return A pointer on the newly created instance. @notnil
 */
 LINPHONE_PUBLIC LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc);
 
