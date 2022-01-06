@@ -1046,6 +1046,8 @@ void ChatMessagePrivate::send () {
 				}
 				currentSendStep |= ChatMessagePrivate::Step::Multipart;
 			}
+		} else {
+			lInfo() << "Chat room doesn't support multipart, skipping this modifier";
 		}
 
 		if (chatRoom->canHandleCpim()) {
@@ -1056,6 +1058,8 @@ void ChatMessagePrivate::send () {
 				ccmm.encode(q->getSharedFromThis(), errorCode);
 				currentSendStep |= ChatMessagePrivate::Step::Cpim;
 			}
+		} else {
+			lInfo() << "Chat room doesn't support CPIM, skipping this modifier";
 		}
 
 		if ((currentSendStep & ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
@@ -1076,6 +1080,8 @@ void ChatMessagePrivate::send () {
 				} else if (result == ChatMessageModifier::Result::Suspended) {
 					return;
 				}
+			} else {
+				lInfo() << "Encryption has been prevented, skipping this modifier";
 			}
 		}
 	}

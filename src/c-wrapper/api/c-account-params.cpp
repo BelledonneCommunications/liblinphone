@@ -356,3 +356,11 @@ void linphone_account_params_set_transport(LinphoneAccountParams *params, Linpho
 LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getTransport();
 }
+
+bool_t linphone_account_params_cpim_in_basic_chat_room_enabled(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->isCpimMessagesAllowedInBasicChatRooms();
+}
+
+void linphone_account_params_enable_cpim_in_basic_chat_room(LinphoneAccountParams *params, bool_t enable) {
+	AccountParams::toCpp(params)->setCpimMessagesAllowedInBasicChatRooms(enable);
+}

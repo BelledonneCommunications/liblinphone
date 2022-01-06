@@ -59,6 +59,7 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	mQualityReportingInterval = lc ? linphone_config_get_default_int(lc->config, "proxy", "quality_reporting_interval", 0) : 0;
 	mContactParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_parameters", "") : "";
 	mContactUriParameters = lc ? linphone_config_get_default_string(lc->config, "proxy", "contact_uri_parameters", "") : "";
+	mAllowCpimMessagesInBasicChatRooms = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "cpim_in_basic_chat_rooms_enabled", false) : false;
 	
 	mAvpfMode = lc ? static_cast<LinphoneAVPFMode>(linphone_config_get_default_int(lc->config, "proxy", "avpf", LinphoneAVPFDefault)) : LinphoneAVPFDefault;
 	mAvpfRrInterval = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
@@ -156,6 +157,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mDialEscapePlusEnabled = !!linphone_config_get_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
 	mInternationalPrefix = linphone_config_get_string(config, key, "dial_prefix", mInternationalPrefix.c_str());
 	mUseInternationalPrefixForCallsAndChats = !!linphone_config_get_int(config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
+	mAllowCpimMessagesInBasicChatRooms = !!linphone_config_get_default_int(config, key, "cpim_in_basic_chat_rooms_enabled", mAllowCpimMessagesInBasicChatRooms);
 
 	mPrivacy = static_cast<LinphonePrivacyMask>(linphone_config_get_int(config, key, "privacy", static_cast<int>(mPrivacy)));
 
@@ -191,6 +193,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mPushNotificationAllowed = other.mPushNotificationAllowed;
 	mRemotePushNotificationAllowed = other.mRemotePushNotificationAllowed;
 	mUseInternationalPrefixForCallsAndChats = other.mUseInternationalPrefixForCallsAndChats;
+	mAllowCpimMessagesInBasicChatRooms = other.mAllowCpimMessagesInBasicChatRooms;
 
 	mUserData = other.mUserData;
 
@@ -300,6 +303,10 @@ void AccountParams::setRemotePushNotificationAllowed (bool allow) {
 
 void AccountParams::setUseInternationalPrefixForCallsAndChats (bool enable) {
 	mUseInternationalPrefixForCallsAndChats = enable;
+}
+
+void AccountParams::setCpimMessagesAllowedInBasicChatRooms (bool allow) {
+	mAllowCpimMessagesInBasicChatRooms = allow;
 }
 
 void AccountParams::setUserData (void *userData) {
@@ -532,6 +539,10 @@ bool AccountParams::isPushNotificationAvailable () const {
 
 }
 
+bool AccountParams::isCpimMessagesAllowedInBasicChatRooms () const {
+	return mAllowCpimMessagesInBasicChatRooms;
+}
+
 void* AccountParams::getUserData () const {
 	return mUserData;
 }
@@ -729,19 +740,20 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 		pushParams = mPushNotificationConfig->asString(mRemotePushNotificationAllowed);
 	}
 	linphone_config_set_string(config, key, "push_parameters", pushParams.c_str());
-	linphone_config_set_int(config, key, "quality_reporting_enabled", mQualityReportingEnabled);
+	linphone_config_set_int(config, key, "quality_reporting_enabled", (int)mQualityReportingEnabled);
 	linphone_config_set_int(config, key, "quality_reporting_interval", mQualityReportingInterval);
 	linphone_config_set_int(config, key, "reg_expires", mExpires);
-	linphone_config_set_int(config, key, "reg_sendregister", mRegisterEnabled);
-	linphone_config_set_int(config, key, "publish", mPublishEnabled);
+	linphone_config_set_int(config, key, "reg_sendregister", (int)mRegisterEnabled);
+	linphone_config_set_int(config, key, "publish", (int)mPublishEnabled);
 	linphone_config_set_int(config, key, "avpf", mAvpfMode);
 	linphone_config_set_int(config, key, "avpf_rr_interval", mAvpfRrInterval);
-	linphone_config_set_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
+	linphone_config_set_int(config, key, "dial_escape_plus", (int)mDialEscapePlusEnabled);
 	linphone_config_set_string(config,key,"dial_prefix", mInternationalPrefix.c_str());
 	linphone_config_set_int(config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
 	linphone_config_set_int(config, key, "privacy", (int)mPrivacy);
 	linphone_config_set_int(config, key, "push_notification_allowed", (int)mPushNotificationAllowed);
 	linphone_config_set_int(config, key, "remote_push_notification_allowed", (int)mRemotePushNotificationAllowed);
+	linphone_config_set_int(config, key, "cpim_in_basic_chat_rooms_enabled", (int)mAllowCpimMessagesInBasicChatRooms);
 	if (!mRefKey.empty()) linphone_config_set_string(config, key, "refkey", mRefKey.c_str());
 	if (!mDependsOn.empty()) linphone_config_set_string(config, key, "depends_on", mDependsOn.c_str());
 	if (!mIdKey.empty()) linphone_config_set_string(config, key, "idkey", mIdKey.c_str());
