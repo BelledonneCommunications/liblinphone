@@ -1401,18 +1401,7 @@ void ChatMessagePrivate::loadContentsFromDatabase () const {
 
 bool ChatMessage::isRead () const {
 	L_D();
-
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(getCore()->getCCore());
-	if (linphone_im_notif_policy_get_recv_imdn_displayed(policy) && d->state == State::Displayed)
-		return true;
-
-	if (
-		linphone_im_notif_policy_get_recv_imdn_delivered(policy) &&
-		(d->state == State::DeliveredToUser || d->state == State::Displayed)
-	)
-		return true;
-
-	return d->state == State::Delivered || d->state == State::Displayed || d->state == State::DeliveredToUser;
+	return d->markedAsRead || d->state == State::Displayed;
 }
 
 const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
