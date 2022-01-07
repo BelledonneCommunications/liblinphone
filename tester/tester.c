@@ -441,9 +441,10 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 		}
 		bctbx_vfs_file_t* in = bctbx_file_open(bctbx_vfs_get_default(), filepath, "r");
 		bctbx_vfs_file_t* out = bctbx_file_open2(bctbx_vfs_get_default(), mgr->rc_local , O_WRONLY|O_CREAT|O_TRUNC);
-		uint8_t *buf = bctbx_malloc(bctbx_file_size(in));
-		bctbx_file_read(in, buf, (size_t)bctbx_file_size(in), 0);
-		bctbx_file_write(out, buf, (size_t)bctbx_file_size(in),0);
+		size_t in_size = (size_t)bctbx_file_size(in);
+		uint8_t *buf = bctbx_malloc(in_size);
+		bctbx_file_read(in, buf, in_size, 0);
+		bctbx_file_write(out, buf, in_size,0);
 		bctbx_file_close(in);
 		bctbx_file_close(out);
 		bctbx_free(buf);
