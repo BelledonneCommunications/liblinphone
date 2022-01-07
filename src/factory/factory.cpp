@@ -437,7 +437,7 @@ const std::string & Factory::getConfigDir(void *context) {
 	return mCachedConfigDir;
 }
 
-bool_t Factory::isConfigDirSet() const{
+bool Factory::isConfigDirSet() const{
 	return !mConfigDir.empty();
 }
 
@@ -452,7 +452,7 @@ const std::string & Factory::getDataDir(void *context) {
 	return mCachedDataDir;
 }
 
-bool_t Factory::isDataDirSet() const{
+bool Factory::isDataDirSet() const{
 	return !mDataDir.empty();
 }
 
@@ -467,12 +467,33 @@ const std::string & Factory::getDownloadDir(void *context) {
 	return mCachedDownloadDir;
 }
 
-bool_t Factory::isDownloadDirSet() const{
+bool Factory::isDownloadDirSet() const{
 	return !mDownloadDir.empty();
 }
 
 void Factory::setDownloadDir(const std::string& path) {
 	mDownloadDir = path;
+}
+
+const std::string & Factory::getCacheDir(void *context) {
+	if(!mCacheDir.empty())
+		return mCacheDir;
+
+	// Default system Cache dir is generated in the Data dir as "cache"
+	mCachedCacheDir = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context).append("cache/");
+	// make sure the directory exists
+	if (!bctbx_directory_exists(mCachedCacheDir.c_str())) {
+		bctbx_mkdir(mCachedCacheDir.c_str());
+	}
+	return mCachedCacheDir;
+}
+
+bool Factory::isCacheDirSet() const{
+	return !mCacheDir.empty();
+}
+
+void Factory::setCacheDir(const std::string& path) {
+	mCacheDir = path;
 }
 
 LinphoneErrorInfo* Factory::createErrorInfo() const {
@@ -674,7 +695,7 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 
 	std::string filepath = "";
 	if (linphone_content_is_file_encrypted(content)) {
-		char *tmp = linphone_content_get_plain_file_path(content);
+		char *tmp = linphone_content_export_plain_file(content);
 		filepath = tmp ? tmp : "";
 		if (tmp) bctbx_free(tmp);
 	} else if (linphone_content_get_file_path(content)) {

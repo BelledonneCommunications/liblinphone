@@ -192,8 +192,8 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 			path = bc_tester_file("certificates-pauline");
 			linphone_core_set_user_certificates_path(pauline->lc, path);
 			bc_free(path);
-			belle_sip_mkdir(linphone_core_get_user_certificates_path(marie->lc));
-			belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+			bctbx_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+			bctbx_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
 		}
 	}
 

@@ -631,8 +631,8 @@ void video_call_base_2(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 		path = bc_tester_file("certificates-pauline");
 		linphone_core_set_user_certificates_path(caller->lc, path);
 		bc_free(path);
-		belle_sip_mkdir(linphone_core_get_user_certificates_path(callee->lc));
-		belle_sip_mkdir(linphone_core_get_user_certificates_path(caller->lc));
+		bctbx_mkdir(linphone_core_get_user_certificates_path(callee->lc));
+		bctbx_mkdir(linphone_core_get_user_certificates_path(caller->lc));
 	}
 
 	linphone_core_set_media_encryption(callee->lc,mode);
@@ -754,8 +754,8 @@ void video_call_base_3(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 		path = bc_tester_file("certificates-pauline");
 		linphone_core_set_user_certificates_path(caller->lc, path);
 		bc_free(path);
-		belle_sip_mkdir(linphone_core_get_user_certificates_path(callee->lc));
-		belle_sip_mkdir(linphone_core_get_user_certificates_path(caller->lc));
+		bctbx_mkdir(linphone_core_get_user_certificates_path(callee->lc));
+		bctbx_mkdir(linphone_core_get_user_certificates_path(caller->lc));
 	}
 
 	linphone_core_set_media_encryption(callee->lc,mode);

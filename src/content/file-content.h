@@ -64,7 +64,7 @@ public:
 	 * This shall be a temporary copy
 	 * Caller is then responsible to delete it when no more needed
 	 */
-	const std::string getPlainFilePath () const;
+	const std::string exportPlainFile () const;
 
 private:
 	L_DECLARE_PRIVATE(FileContent);

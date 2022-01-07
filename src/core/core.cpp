@@ -54,6 +54,7 @@
 #include "linphone/utils/utils.h"
 #include "linphone/utils/algorithm.h"
 #include "linphone/lpconfig.h"
+#include "factory/factory.h"
 
 #include "conference/session/media-session.h"
 #include "conference/session/media-session-p.h"
@@ -323,6 +324,11 @@ void CorePrivate::uninit() {
 	if (mainDb != nullptr) {
 		mainDb->disconnect();
 	}
+
+	// clear encrypted files plain cache directory
+	std::string cacheDir(Factory::get()->getCacheDir(nullptr) + "/evfs/");
+	bctbx_rmdir(cacheDir.c_str(), TRUE);
+
 	/* The toneManager is kept until destructor, we may need it because of calls ended during linphone_core_destroy(). */
 }
 

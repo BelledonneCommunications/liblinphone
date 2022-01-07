@@ -202,17 +202,21 @@ public:
 	bool_t isImdnAvailable() const;
 	
 	const std::string & getConfigDir(void *context);
-	bool_t isConfigDirSet() const;
+	bool isConfigDirSet() const;
 	void setConfigDir(const std::string& path);
 	
 	const std::string & getDataDir(void *context);
-	bool_t isDataDirSet() const;
+	bool isDataDirSet() const;
 	void setDataDir(const std::string& path);
 	
 	const std::string & getDownloadDir(void *context);
-	bool_t isDownloadDirSet() const;
+	bool isDownloadDirSet() const;
 	void setDownloadDir(const std::string& path);
 	
+	const std::string & getCacheDir(void *context);
+	bool isCacheDirSet() const;
+	void setCacheDir(const std::string& path);
+
 	void setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
 	
 	std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
@@ -243,6 +247,7 @@ private:
 	std::string mConfigDir;
 	std::string mDataDir;
 	std::string mDownloadDir;
+	std::string mCacheDir;
 	
 	/*these are the cached result computed from directories set by the application*/
 	std::string mCachedDataResourcesDir;
@@ -253,6 +258,7 @@ private:
 	std::string mCachedConfigDir;
 	std::string mCachedDataDir;
 	std::string mCachedDownloadDir;
+	std::string mCachedCacheDir;
 	
 	//LinphoneErrorInfo* ei; useless ????????
 	

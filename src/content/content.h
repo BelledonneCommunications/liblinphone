@@ -97,7 +97,7 @@ protected:
 	explicit Content (ContentPrivate &p);
 
 	bool isFileEncrypted (const std::string& filePath) const;
-	const std::string getPlainFilePathFromEncryptedFile (const std::string& filePath) const;
+	const std::string exportPlainFileFromEncryptedFile (const std::string& filePath) const;
 
 private:
 	L_DECLARE_PRIVATE(Content);

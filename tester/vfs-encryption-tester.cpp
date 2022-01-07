@@ -61,7 +61,7 @@ static void enable_encryption(const uint16_t encryptionModule, const bool encryp
 			// prevent the encryption of any file with filename ending with -journal
 			auto filename = settings.filenameGet();
 			if (encryptDbJournal == false && (filename.size() > 8) && ( filename.compare (filename.size()-8, 8, std::string{"-journal"}) == 0)) { // This is a plain transfered file
-				BCTBX_SLOGD<<"Encryption test: skip encryption for -journal file";
+				BCTBX_SLOGI<<"Encryption test: skip encryption for -journal file";
 				settings.encryptionSuiteSet(bctoolbox::EncryptionSuite::plain);
 			} else { // just call the registered cb (the one registered by the linphone_factory_set_vfs_encryption call)
 				currentVfsCb(settings);
@@ -359,6 +359,9 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	LinphoneChatMessage *msg = NULL;
 	const LinphoneAddress *confAddr = NULL;
 	enable_encryption(encryptionModule);
+	char *plainFilePath=nullptr,*plainFilePath2=nullptr,*plainFilePath3=nullptr;
+
+	linphone_factory_set_cache_dir(linphone_factory_get(), bc_tester_get_writable_dir_prefix());
 
 	// create a user Marie
 	LinphoneCoreManager* marie;
@@ -476,30 +479,25 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	content = (LinphoneContent *)bctbx_list_get_data(contents);
 	BC_ASSERT_PTR_NOT_NULL(content);
 	BC_ASSERT_NSTRING_EQUAL(linphone_content_get_file_path(content), receivePaulineFilepath, strlen(receivePaulineFilepath)); // just to check we're on the correct path
+
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
 		BC_ASSERT_FALSE(linphone_content_is_file_encrypted(content));
 	} else {
 		BC_ASSERT_TRUE(linphone_content_is_file_encrypted(content));
 		// get a plain version of the file
-		auto plainFilePath = linphone_content_get_plain_file_path(content);
+		plainFilePath = linphone_content_export_plain_file(content);
 		// check it is plain and match the sent one
 		BC_ASSERT_FALSE(is_encrypted(plainFilePath));
 		compare_files(plainFilePath, sendFilepath);
-		auto plainFilePath2 = linphone_content_get_plain_file_path(content);
+		plainFilePath2 = linphone_content_export_plain_file(content);
 		// Make sure the second path returned is different from the first one as the file already exists
 		BC_ASSERT_STRING_NOT_EQUAL(plainFilePath, plainFilePath2);
 		compare_files(plainFilePath2, sendFilepath);
-		auto plainFilePath3 = linphone_content_get_plain_file_path(content);
+		plainFilePath3 = linphone_content_export_plain_file(content);
 		// Make sure the second path returned is different from the first one as the file already exists
 		BC_ASSERT_STRING_NOT_EQUAL(plainFilePath, plainFilePath3);
 		BC_ASSERT_STRING_NOT_EQUAL(plainFilePath2, plainFilePath3);
 		compare_files(plainFilePath3, sendFilepath);
-		std::remove(plainFilePath);
-		std::remove(plainFilePath2);
-		std::remove(plainFilePath3);
-		bctbx_free(plainFilePath);
-		bctbx_free(plainFilePath2);
-		bctbx_free(plainFilePath3);
 	}
 end:
 	// cleaning
@@ -515,9 +513,19 @@ end:
 	bctbx_list_free(coresManagerList);
 
 	linphone_core_manager_stop(marie);
+	linphone_core_manager_stop(pauline);
+	// Stopping core delete all plain files in cache, check that
+	if (encryptionModule != LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_EQUAL(bctbx_file_exist(plainFilePath), -1, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_file_exist(plainFilePath2), -1, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_file_exist(plainFilePath3), -1, int, "%d");
+		bctbx_free(plainFilePath);
+		bctbx_free(plainFilePath2);
+		bctbx_free(plainFilePath3);
+	}
+
 	linphone_core_manager_uninit2(marie, FALSE); // uinit but do not unlink the db files
 	ms_free(marie);
-	linphone_core_manager_stop(pauline);
 	linphone_core_manager_uninit2(pauline, FALSE); // uinit but do not unlink the db files
 	ms_free(pauline);
 

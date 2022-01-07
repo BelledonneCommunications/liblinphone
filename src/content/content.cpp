@@ -22,11 +22,13 @@
 
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
+#include "factory/factory.h"
 
 #include "content-p.h"
 #include "content-type.h"
 #include "header/header.h"
 
+#include "bctoolbox/port.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include "logger/logger.h"
 
@@ -279,36 +281,39 @@ bool Content::isFileEncrypted (const string& filePath) const {
 	return (ret == TRUE);
 }
 
-const string Content::getPlainFilePathFromEncryptedFile(const string& filePath) const {
+const string Content::exportPlainFileFromEncryptedFile(const string& filePath) const {
 	if (filePath.empty()) {
 		return filePath;
 	}
 
-	string plainPath(filePath);
-	plainPath.append(".bctbx_evfs_plain"); // TODO: have a tmp dir to store all plain version so it is easier to clean?
+	// plain files are stored in a "evfs" subdirectory of the cache directory
+	std::string cacheDir(Factory::get()->getCacheDir(nullptr) + "/evfs/");
+
+	// Create the directory if it is not present
+	if (!bctbx_directory_exists(cacheDir.c_str())) {
+		bctbx_mkdir(cacheDir.c_str());
+	}
+
+	std::string plainPath(cacheDir);
+	auto basename = bctbx_basename(filePath.c_str());
+	plainPath.append(basename);
+
 	if (bctbx_file_exist(plainPath.c_str()) == 0) {
 		lWarning() << "[Content] File [" << plainPath << "] already exists, trying another name";
 
-		size_t lastIndex = plainPath.find_last_of("/\\");
-		string fileDir = "";
-		string fileName = plainPath;
-		if (lastIndex < plainPath.size()) {
-			fileDir = plainPath.substr(0, lastIndex + 1);
-			fileName = plainPath.substr(lastIndex + 1);
-		}
-
 		int index = 1;
-		string plainPathTest(fileDir + std::to_string(index) + "_" + fileName);
+		string plainPathTest(cacheDir + std::to_string(index) + "_" + basename);
 		while (bctbx_file_exist(plainPathTest.c_str()) == 0) {
 			lWarning() << "[Content] File [" << plainPathTest << "] already exists, trying another name";
 			index += 1;
-			plainPathTest = fileDir + std::to_string(index) + "_" + fileName;
+			plainPathTest = cacheDir + std::to_string(index) + "_" + basename;
 		}
 		plainPath = plainPathTest;
 	}
+	bctbx_free(basename);
 
 	// open the file using encrypted vfs
-	auto cf = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.data(), "r");
+	auto cf = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filePath.c_str(), "r");
 	// open the plain file using standard vfs
 	if (cf == NULL)   {
 		lError() << "[Content] Can't open file " << filePath << " to decrypt it";
@@ -322,7 +327,7 @@ const string Content::getPlainFilePathFromEncryptedFile(const string& filePath) 
 		return std::string();
 	}
 
-	auto pf = bctbx_file_open(bctbx_vfs_get_standard(), plainPath.data(), "w");
+	auto pf = bctbx_file_open(bctbx_vfs_get_standard(), plainPath.c_str(), "w");
 	if (pf == NULL)   {
 		lError() << "[Content] Can't create file " << plainPath << " to decrypt "<< filePath;
 		return std::string();

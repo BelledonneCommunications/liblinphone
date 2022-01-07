@@ -346,12 +346,19 @@ const char *linphone_content_get_file_path (const LinphoneContent *content) {
 	return L_STRING_TO_C(content->cache.file_path);
 }
 
+/* function deprecated on 07/01/2022 export_plain_file is more explicit */
 char *linphone_content_get_plain_file_path (const LinphoneContent *content) {
+	return linphone_content_export_plain_file(content);
+}
+
+char *linphone_content_export_plain_file (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile()) {
-		return bctbx_strdup(L_STRING_TO_C(static_cast<const LinphonePrivate::FileContent *>(c)->getPlainFilePath()));
+		auto filePath = static_cast<const LinphonePrivate::FileContent *>(c)->exportPlainFile();
+		return bctbx_strdup(L_STRING_TO_C(filePath));
 	} else if (c->isFileTransfer()) {
-		return bctbx_strdup(L_STRING_TO_C(static_cast<const LinphonePrivate::FileTransferContent *>(c)->getPlainFilePath()));
+		auto filePath = static_cast<const LinphonePrivate::FileTransferContent *>(c)->exportPlainFile();
+		return bctbx_strdup(L_STRING_TO_C(filePath));
 	}
 	return NULL;
 }

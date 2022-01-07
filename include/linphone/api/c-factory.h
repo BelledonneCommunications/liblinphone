@@ -474,6 +474,31 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_download_dir_set(const LinphoneFactor
 LINPHONE_PUBLIC void linphone_factory_set_download_dir(LinphoneFactory *factory, const char *path);
 
 /**
+ * Get the cache path
+ * @param factory the #LinphoneFactory @notnil
+ * @param context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core. @maybenil
+ * @return The cache path @maybenil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC const char *linphone_factory_get_cache_dir(LinphoneFactory *factory, void *context);
+
+/**
+ * Test if cache dir has been set.
+ * @param factory the #LinphoneFactory @notnil
+ * @return TRUE if cache dir has been set.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC bool_t linphone_factory_is_cache_dir_set(const LinphoneFactory *factory);
+
+/**
+ * Set the directory where the application local cache is located.
+ * If the path is empty (default value), the path will be computed when calling linphone_factory_get_data_dir()
+ * @param factory #LinphoneFactory object @notnil
+ * @param path The path to the directory where the application local cache is located @maybenil
+ */
+LINPHONE_PUBLIC void linphone_factory_set_cache_dir(LinphoneFactory *factory, const char *path);
+
+/**
  * Creates an object LinphoneErrorInfo.
  * @param factory #LinphoneFactory object @notnil
  * @return a #LinphoneErrorInfo object. @notnil

@@ -246,9 +246,9 @@ bool FileTransferContent::isEncrypted () const {
 	return isFileEncrypted(d->filePath);
 }
 
-const string FileTransferContent::getPlainFilePath() const {
+const string FileTransferContent::exportPlainFile() const {
 	L_D();
-	return getPlainFilePathFromEncryptedFile(d->filePath);
+	return exportPlainFileFromEncryptedFile(d->filePath);
 }
 
 LINPHONE_END_NAMESPACE
