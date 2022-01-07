@@ -620,7 +620,7 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 
 	const auto duration = info->getDuration();
 	if ((duration > 0) && (startTime >= 0)) {
-		time_t endTime = startTime + duration * 60;
+		time_t endTime = startTime + static_cast<time_t>(duration) * 60;
 		confParams->setEndTime(endTime);
 	}
 
@@ -1225,9 +1225,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setEndTime(confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
-					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(true);
-				} else {
-					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(false);
 				}
 				// Conference resumes call that previously paused in order to add the participant
 				call->resume();
@@ -1248,9 +1245,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_params_set_end_time(params, confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					linphone_call_params_enable_rtp_bundle(params, TRUE);
-					linphone_call_params_enable_video(params, TRUE);
-				} else {
-					linphone_call_params_enable_video(params, FALSE);
 				}
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -1328,22 +1322,21 @@ bool LocalConference::finalizeParticipantAddition (std::shared_ptr<LinphonePriva
 		if (device->getState() == ParticipantDevice::State::ScheduledForJoining) {
 			device->setState(ParticipantDevice::State::Joining);
 
-			const Address & conferenceAddress = getConferenceAddress().asAddress();
-			const string & confId = conferenceAddress.getUriParamValue("conf-id");
+			getCore()->doLater([this, call] {
+				const Address & conferenceAddress = getConferenceAddress().asAddress();
+				const string & confId = conferenceAddress.getUriParamValue("conf-id");
 
-			LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call->toC());
-			linphone_call_params_set_in_conference(params, TRUE);
-			linphone_call_params_set_conference_id(params, confId.c_str());
-			linphone_call_params_set_start_time(params, confParams->getStartTime());
-			linphone_call_params_set_end_time(params, confParams->getEndTime());
-			if (getCurrentParams().videoEnabled()) {
-				linphone_call_params_enable_rtp_bundle(params, TRUE);
-				linphone_call_params_enable_video(params, TRUE);
-			} else {
-				linphone_call_params_enable_video(params, FALSE);
-			}
-			linphone_call_update(call->toC(), params);
-			linphone_call_params_unref(params);
+				LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call->toC());
+				linphone_call_params_set_in_conference(params, TRUE);
+				linphone_call_params_set_conference_id(params, confId.c_str());
+				linphone_call_params_set_start_time(params, confParams->getStartTime());
+				linphone_call_params_set_end_time(params, confParams->getEndTime());
+				if (getCurrentParams().videoEnabled()) {
+					linphone_call_params_enable_rtp_bundle(params, TRUE);
+				}
+				linphone_call_update(call->toC(), params);
+				linphone_call_params_unref(params);
+			});
 		} else if (device->getState() == ParticipantDevice::State::Joining) {
 			device->updateMedia();
 			device->setState(ParticipantDevice::State::Present);

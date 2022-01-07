@@ -50,7 +50,6 @@ bool IceService::isActive() const{
 }
 
 bool IceService::isRunning() const{
-ms_message("%s - current session %p state %0d failed %0d running %0d completed %0d stopped %0d", __func__, mIceSession, (mIceSession ? ice_session_state(mIceSession) : -1), IS_Failed, IS_Running, IS_Completed, IS_Stopped);
 	if (!isActive()) return false; // No running because it is not active
 	return ice_session_state(mIceSession) == IS_Running;
 }

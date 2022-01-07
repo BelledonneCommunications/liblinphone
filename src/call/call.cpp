@@ -521,7 +521,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						conference->addParticipant(getSharedFromThis());
 						auto params = linphone_core_create_call_params(getCore()->getCCore(), toC());
 						linphone_call_params_enable_audio(params, TRUE);
-						linphone_call_params_enable_video(params, conference->getCurrentParams().videoEnabled() ? TRUE : FALSE);
+						linphone_call_params_enable_video(params, (getRemoteParams()->videoEnabled() && conference->getCurrentParams().videoEnabled()) ? TRUE : FALSE);
 						linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
 						static_pointer_cast<MediaSession>(session)->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 						linphone_call_params_unref(params);
@@ -750,7 +750,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 				auto duration = conferenceInfo->getDuration();
 				if (duration > 0) {
 					// duration is in minutes therefore convert it to seconds by multiplying it by 60
-					time_t endTime = startTime + duration * 60;
+					time_t endTime = startTime + static_cast<time_t>(duration) * 60;
 					confParams->setEndTime(endTime);
 				}
 				std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};

@@ -88,7 +88,7 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	if (mConferenceInfo->getDateTime() > -1) {
 		conferenceParams->setStartTime(mConferenceInfo->getDateTime());
 		if (mConferenceInfo->getDuration() > 0) {
-			conferenceParams->setEndTime(mConferenceInfo->getDateTime() + (mConferenceInfo->getDuration() * 60)); // duration is in minutes
+			conferenceParams->setEndTime(mConferenceInfo->getDateTime() + (static_cast<time_t>(mConferenceInfo->getDuration()) * 60)); // duration is in minutes
 		}
 	}
 

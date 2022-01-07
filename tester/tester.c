@@ -435,7 +435,9 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 			char random_id[8];
 			belle_sip_random_token(random_id, sizeof random_id);
 
-			mgr->rc_local = bctbx_strdup_printf("%s/%s_%s", bc_tester_get_writable_dir_prefix(), bctbx_basename(mgr->rc_path),random_id);
+			char * basename = bctbx_basename(mgr->rc_path);
+			mgr->rc_local = bctbx_strdup_printf("%s/%s_%s", bc_tester_get_writable_dir_prefix(), basename, random_id);
+			bctbx_free(basename);
 		}
 		bctbx_vfs_file_t* in = bctbx_file_open(bctbx_vfs_get_default(), filepath, "r");
 		bctbx_vfs_file_t* out = bctbx_file_open2(bctbx_vfs_get_default(), mgr->rc_local , O_WRONLY|O_CREAT|O_TRUNC);
@@ -1945,6 +1947,10 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 /* same as new but insert the rc_local in the core manager before the init and provide path to db files */
 LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *zrtp_secrets_db) {
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
+	if (manager->rc_local) {
+		bctbx_free(manager->rc_local);
+		manager->rc_local = NULL;
+	}
 	manager->rc_local = bctbx_strdup(rc_local);
 	linphone_core_manager_init_with_db(manager, rc_factory, NULL, linphone_db, lime_db, zrtp_secrets_db);
 	return manager;

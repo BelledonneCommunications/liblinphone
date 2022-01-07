@@ -1725,20 +1725,24 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 							}
 
 						} else {
-							switch (s.getDirection()) {
-								case SalStreamSendOnly:
-									cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
-									break;
-								case SalStreamSendRecv:
-									cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
-									break;
-								case SalStreamRecvOnly:
-									cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
-									break;
-								case SalStreamInactive:
-									cfg.dir = SalStreamInactive;
-									break;
-								}
+							if (mediaEnabled) {
+								switch (s.getDirection()) {
+									case SalStreamSendOnly:
+										cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+										break;
+									case SalStreamSendRecv:
+										cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamSendRecv;
+										break;
+									case SalStreamRecvOnly:
+										cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
+										break;
+									case SalStreamInactive:
+										cfg.dir = SalStreamInactive;
+										break;
+									}
+							} else {
+								cfg.dir = SalStreamInactive;
+							}
 						}
 					} else {
 						// If it is not in a conference, then disable non main streams
@@ -1932,7 +1936,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	auto callVideoEnabled = getParams()->videoEnabled();
 	bool addVideoStream = false;
 	if (conference && isInLocalConference) {
-		addVideoStream = isVideoConferenceEnabled;
+		addVideoStream = callVideoEnabled && isVideoConferenceEnabled;
 	} else {
 		addVideoStream = callVideoEnabled;
 	}
@@ -1959,11 +1963,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 							videoDir = SalStreamSendRecv;
 							break;
 						case ConferenceLayout::Grid:
-							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : isVideoConferenceEnabled;
+							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : true;
 							videoDir = SalStreamRecvOnly;
 							break;
 						case ConferenceLayout::None:
-							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : isVideoConferenceEnabled;
+							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : true;
 							videoDir = getParams()->getPrivate()->getSalVideoDirection();
 							break;
 					}
@@ -1971,6 +1975,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 					videoDir = getParams()->getPrivate()->getSalVideoDirection();
 					enableVideoStream = (localIsOfferer) ? callVideoEnabled : isVideoConferenceEnabled;
 				}
+lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(q->getCore()->getCCore())) << " video conference " << isVideoConferenceEnabled << " layout " << confLayout << " enable stream " << enableVideoStream << " codecs " << videoCodecs.size();
 			} else {
 				switch (confLayout) {
 					case ConferenceLayout::ActiveSpeaker:
@@ -2038,7 +2043,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	}
 
 
-	if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) {
+	if (addVideoStream && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present))) {
 		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	}
 	copyOldStreams(md, oldMd, refMd, pth, encList);
@@ -2757,12 +2762,10 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 		if (videoConference && (deviceState == ParticipantDevice::State::Present)) {
 			// Send update to enable video
 			MediaSessionParams *newParams = q->getMediaParams()->clone();
-			const auto & videoEnabled = q->getRemoteParams()->videoEnabled();
-			newParams->enableVideo(videoEnabled);
-			if (videoEnabled) {
+			if (videoConference) {
 				newParams->enableRtpBundle(true);
 			}
-			lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") got a request to " << (videoEnabled ? "enable" : "disable") << " video - hence updating the call to provide the right streams";
+			lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") got a request to " << (newParams->videoEnabled() ? "enable" : "disable") << " video - hence updating the call to provide the right streams";
 			q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
 			delete newParams;
 		}
