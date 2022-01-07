@@ -116,7 +116,7 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
 		}
-		if ((index >= mStreams.size() || ((s = mStreams[index].get()) == nullptr)) && (localMd->streams[index].getDirection() != SalStreamInactive)){
+		if (index >= mStreams.size() || ((s = mStreams[index].get()) == nullptr)){
 			s = createStream(params);
 		} else if (s) {
 			if (s->getType() != params.getLocalStreamDescription().type){
@@ -191,12 +191,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 		if (streamPtr->getState() == Stream::Preparing)
 			streamPtr->finishPrepare();
 
-		const auto & streamDesc = params.getResultStreamDescription();
-		if (streamDesc.getDirection() == SalStreamInactive) {
-			streamPtr->stop();
-		} else {
-			streamPtr->render(params, targetState);
-		}
+		streamPtr->render(params, targetState);
 	}
 	if (!mBandwidthReportTimer){
 		mBandwidthReportTimer = getCore().createTimer([this](){ this->computeAndReportBandwidth(); return true; }, 1000 , "StreamsGroup timer");

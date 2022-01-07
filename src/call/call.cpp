@@ -475,14 +475,6 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 	}
 }
 
-void Call::changeSubjectInLocalConference(SalCallOp *op) {
-	if (getConference() && sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
-		// Handle subject change
-		lInfo() << this << ": New subject \"" << op->getSubject() << "\"";
-		linphone_conference_set_subject(getConference(), op->getSubject().c_str());
-	}
-}
-
 bool Call::attachedToRemoteConference() const {
 	return getConference() && !attachedToLocalConference();
 }
@@ -557,27 +549,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				if (!remoteContactAddress.hasParam("isfocus")) {
 					terminateConference();
 				}
-			} else if (attachedToLocalConference()) {
-				// The participant temporarely left the conference and put its call in pause
-				auto conference = MediaConference::Conference::toCpp(getConference());
-				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call, hence notify that no audio and video is available
-				lInfo() << "Call in conference has been put on hold by remote device, hence participant " << session->getRemoteAddress()->asString() << " temporarely left conference " << conference->getConferenceAddress();
-				conference->participantDeviceLeft(session);
 			}
 		}
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-			if (attachedToLocalConference()) {
-				// If the participant is already in the conference
-				auto conference = MediaConference::Conference::toCpp(getConference())->getSharedFromThis();
-				const auto & device = conference->findParticipantDevice(session);
-				const auto & deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
-				if ((deviceState == ParticipantDevice::State::Present) || (device->getState() == ParticipantDevice::State::Joining)) {
-					// The remote participant requested to change subject
-					changeSubjectInLocalConference(op);
-				}
-			} else if (op && op->getRemoteContactAddress()) {
+			if (op && op->getRemoteContactAddress() && !attachedToLocalConference()) {
 
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
@@ -604,31 +581,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			}
 		}
 		break;
-		case CallSession::State::Connected:
-			if (attachedToLocalConference()) {
-				reenterLocalConference(session);
-			}
-		break;
 		case CallSession::State::StreamsRunning:
 		{
-			const auto & confId = session->getPrivate()->getConferenceId();
-			// Try to add device to local conference
-			if (attachedToLocalConference()) {
-				auto conference = MediaConference::Conference::toCpp(getConference())->getSharedFromThis();
-				if(!conference->addParticipantDevice(getSharedFromThis())) {
-					// If the participant is already in the conference
-					const auto & device = conference->findParticipantDevice(session);
-					const auto & deviceState = device->getState();
-					if (deviceState == ParticipantDevice::State::Present) {
-						conference->participantDeviceMediaChanged(session);
-					} else if ((device->getState() == ParticipantDevice::State::Joining) || (device->getState() == ParticipantDevice::State::ScheduledForJoining)) {
-						// Participants complete their addition to a conference when the call goes back to the StreamsRunning state
-						tryToAddToConference(conference, session);
-					} else {
-						conference->participantDeviceJoined(session);
-					}
-				}
-			} else if (attachedToRemoteConference()) {
+			if (attachedToRemoteConference()) {
 				// The participant rejoins the conference
 				auto conference = MediaConference::Conference::toCpp(getConference());
 				const auto & previousState = getActiveSession()->getPreviousState();
@@ -638,8 +593,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					time_t creationTime = time(nullptr);
 					conference->notifyParticipantAdded(creationTime, false, conference->getMe());
 				}
-			} else if (op) {
+			} else if (op && !attachedToLocalConference()) {
 				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
+				const auto & confId = session->getPrivate()->getConferenceId();
 				if (!op->getTo().empty() && conference) {
 					tryToAddToConference(conference, session);
 				} else if (op->getRemoteContactAddress()) {
@@ -674,33 +630,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 	linphone_call_notify_state_changed(this->toC(), static_cast<LinphoneCallState>(state), message.c_str());
 }
 
-bool Call::isIceNegotiationOngoing(const shared_ptr<CallSession> &session) const {
-	bool iceNegotiationOngoing = false;
-	const auto & params = static_pointer_cast<MediaSession>(session)->getMediaParams();
-	if (params->audioEnabled()) {
-		auto audioStats = static_pointer_cast<MediaSession>(session)->getAudioStats();
-		if (audioStats) {
-			auto iceState = linphone_call_stats_get_ice_state(audioStats);
-			iceNegotiationOngoing |= (iceState == LinphoneIceStateInProgress);
-			linphone_call_stats_unref(audioStats);
-		}
-	}
-	if (params->videoEnabled()) {
-		auto videoStats = static_pointer_cast<MediaSession>(session)->getVideoStats();
-		if (videoStats) {
-			auto iceState = linphone_call_stats_get_ice_state(videoStats);
-			iceNegotiationOngoing |= (iceState == LinphoneIceStateInProgress);
-			linphone_call_stats_unref(videoStats);
-		}
-	}
-	return iceNegotiationOngoing;
-}
-
 void Call::tryToAddToConference(shared_ptr<MediaConference::Conference> & conference, const shared_ptr<CallSession> &session) {
-	bool iceNegotiationOngoing = isIceNegotiationOngoing(session);
-
 	// If the call is for a conference stored in the core, then add call to conference once ICE negotiations are terminated
-	if (!iceNegotiationOngoing || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
+	if (!mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
 		const auto & device = conference->findParticipantDevice(session);
 		if (device) {
 			const auto & deviceState = device->getState();
@@ -715,10 +647,8 @@ void Call::tryToAddToConference(shared_ptr<MediaConference::Conference> & confer
 }
 
 void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
-	bool iceNegotiationOngoing = isIceNegotiationOngoing(session);
-
 	// If the call is for a conference stored in the core, then add call to conference once ICE negotiations are terminated
-	if (!iceNegotiationOngoing || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
+	if (!mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
 		const auto op = session->getPrivate()->getOp();
 		char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 		Address remoteContactAddress(remoteContactAddressStr);

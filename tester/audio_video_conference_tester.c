@@ -5365,7 +5365,6 @@ static void audio_calls_initiated_by_host_added_to_video_conference(void) {
 	audio_calls_added_to_video_conference_base(LinphoneConferenceLayoutGrid, FALSE, TRUE, FALSE);
 }
 
-
 static void audio_calls_with_video_rejected_added_to_video_conference(void) {
 	audio_calls_added_to_video_conference_base(LinphoneConferenceLayoutGrid, FALSE, TRUE, TRUE);
 }

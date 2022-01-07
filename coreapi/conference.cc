@@ -93,9 +93,17 @@ Conference::Conference(
 		setState(ConferenceInterface::State::CreationFailed);
 	}
 
+	m_coreCbs = nullptr;
+	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChanged);
+	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
+	linphone_core_cbs_set_user_data(m_coreCbs, this);
+	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 }
 
 Conference::~Conference() {
+	linphone_core_remove_callbacks(getCore()->getCCore(), m_coreCbs);
+	linphone_core_cbs_unref(m_coreCbs);
 }
 
 void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
@@ -483,6 +491,23 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
 	info->setSubject(confParams->getSubject());
 
 	return info;
+}
+
+void Conference::callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
+	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
+	Conference *conf = static_cast<Conference *>(linphone_core_v_table_get_user_data(vtable));
+	if (conf) {
+		conf->callStateChangedCb(lc, call, cstate, message);
+	}
+}
+
+void Conference::transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
+	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
+	Conference *conf = static_cast<Conference *>(linphone_core_v_table_get_user_data(vtable));
+
+	if (conf) {
+		conf->transferStateChangedCb(lc, transfered, new_call_state);
+	}
 }
 
 LocalConference::LocalConference (
@@ -1225,6 +1250,9 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setEndTime(confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
+					if (getCurrentParams().localParticipantEnabled()) {
+						const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(true);
+					}
 				}
 				// Conference resumes call that previously paused in order to add the participant
 				call->resume();
@@ -1245,6 +1273,9 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				linphone_call_params_set_end_time(params, confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					linphone_call_params_enable_rtp_bundle(params, TRUE);
+					if (getCurrentParams().localParticipantEnabled()) {
+						linphone_call_params_enable_video(params, TRUE);
+					}
 				}
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -1720,6 +1751,95 @@ void LocalConference::notifyFullState () {
 	Conference::notifyFullState();
 }
 
+void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
+	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
+	LocalConference *conf = (LocalConference *)linphone_core_v_table_get_user_data(vtable);
+	auto cppCall = Call::toCpp(call)->getSharedFromThis();
+	if (conf && conf->toC() == cppCall->getConference()) {
+		lInfo() << "LocalConference::" << __func__ << " not implemented";
+
+		const auto & session = cppCall->getActiveSession();
+		switch(cstate) {
+			case LinphoneCallStateConnected:
+				if (getState() == ConferenceInterface::State::Created) {
+					enter();
+				}
+				break;
+			case LinphoneCallStateStreamsRunning:
+			{
+				if(!addParticipantDevice(cppCall)) {
+					// If the participant is already in the conference
+					const auto & device = findParticipantDevice(session);
+					const auto & deviceState = device->getState();
+					if (deviceState == ParticipantDevice::State::Present) {
+						participantDeviceMediaChanged(session);
+					} else if ((device->getState() == ParticipantDevice::State::Joining) || (device->getState() == ParticipantDevice::State::ScheduledForJoining)) {
+						// Participants complete their addition to a conference when the call goes back to the StreamsRunning state
+
+						if (!cppCall->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
+							// Participants complete their addition to a conference when the call goes back to the StreamsRunning state
+							finalizeParticipantAddition(cppCall);
+						}
+					} else {
+						participantDeviceJoined(session);
+					}
+				}
+			}
+				break;
+			case LinphoneCallStatePausedByRemote:
+				// The participant temporarely left the conference and put its call in pause
+				// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call, hence notify that no audio and video is available
+				lInfo() << "Call in conference has been put on hold by remote device, hence participant " << session->getRemoteAddress()->asString() << " temporarely left conference " << getConferenceAddress();
+				participantDeviceLeft(session);
+				break;
+			case LinphoneCallStateUpdatedByRemote:
+			{
+				// If the participant is already in the conference
+				const auto & device = findParticipantDevice(session);
+				const auto & deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
+				if (session && ((deviceState == ParticipantDevice::State::Present) || (device->getState() == ParticipantDevice::State::Joining))) {
+
+					const auto op = session->getPrivate()->getOp();
+					// The remote participant requested to change subject
+					if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
+						// Handle subject change
+						lInfo() << "conference " << getConferenceAddress() << " changed subject to \"" << op->getSubject() << "\"";
+						setSubject(op->getSubject());
+					}
+
+					if ((cppCall->getParams()->videoEnabled() != cppCall->getRemoteParams()->videoEnabled()) && getCurrentParams().videoEnabled() && (deviceState == ParticipantDevice::State::Present)) {
+						const auto & videoEnabled = cppCall->getRemoteParams()->videoEnabled();
+						getCore()->doLater([this, videoEnabled, call] {
+							// Send update to enable video
+							auto params = linphone_core_create_call_params(getCore()->getCCore(), call);
+							linphone_call_params_enable_video(params, videoEnabled);
+							if (videoEnabled) {
+								linphone_call_params_enable_rtp_bundle(params, TRUE);
+							}
+							lInfo() << "Media session (local address " << Call::toCpp(call)->getLocalAddress().asString() << " remote address " << Call::toCpp(call)->getRemoteAddress()->asString() << ") got a request to " << (videoEnabled ? "enable" : "disable") << " video - hence updating the call to provide the right streams";
+							linphone_call_update(call, params);
+							linphone_call_params_unref(params);
+						});
+					}
+				}
+			}
+				break;
+			default:
+				break;
+		}
+
+	}
+}
+
+void LocalConference::transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
+	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
+	LocalConference *conf = (LocalConference *)linphone_core_v_table_get_user_data(vtable);
+	auto cppCall = Call::toCpp(transfered)->getSharedFromThis();
+	if (conf && conf->findParticipantDevice(cppCall->getActiveSession())) {
+		lInfo() << "LocalConference::" << __func__ << " not implemented";
+	}
+}
+
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
@@ -1809,13 +1929,6 @@ RemoteConference::RemoteConference (
 //	lastNotify = 0;
 
 	focus = Participant::create(this, confAddr, focusSession);
-	m_coreCbs = nullptr;
-	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChangedCb);
-	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
-	linphone_core_cbs_set_user_data(m_coreCbs, this);
-	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
-
 	confParams->enableLocalParticipant(false);
 	pendingSubject = confParams->getSubject();
 
@@ -1842,13 +1955,6 @@ RemoteConference::RemoteConference (
 //	lastNotify = 0;
 
 	focus = Participant::create(this, focusAddr);
-	m_coreCbs = nullptr;
-	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChangedCb);
-	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
-	linphone_core_cbs_set_user_data(m_coreCbs, this);
-	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
-
 	pendingSubject = confParams->getSubject();
 	getMe()->setAdmin(true);
 
@@ -1873,13 +1979,6 @@ RemoteConference::RemoteConference (
 //	lastNotify = 0;
 
 	focus = Participant::create(this, Address(focusCall->getRemoteContact()), focusCall->getActiveSession());
-	m_coreCbs = nullptr;
-	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChangedCb);
-	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
-	linphone_core_cbs_set_user_data(m_coreCbs, this);
-	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
-
 	pendingSubject = confParams->getSubject();
 	setConferenceId(conferenceId);
 
@@ -1903,9 +2002,6 @@ RemoteConference::~RemoteConference () {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
-
-	linphone_core_remove_callbacks(getCore()->getCCore(), m_coreCbs);
-	linphone_core_cbs_unref(m_coreCbs);
 }
 
 void RemoteConference::finalizeCreation() {
@@ -2557,7 +2653,7 @@ void RemoteConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call,
 	}
 }
 
-void RemoteConference::transferStateChanged (LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
+void RemoteConference::transferStateChangedCb (LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	RemoteConference *conf = (RemoteConference *)linphone_core_v_table_get_user_data(vtable);
 	list<std::shared_ptr<LinphonePrivate::Call>>::iterator it = find(conf->m_transferingCalls.begin(), conf->m_transferingCalls.end(), Call::toCpp(transfered)->getSharedFromThis());

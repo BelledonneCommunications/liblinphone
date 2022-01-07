@@ -203,8 +203,15 @@ protected:
 
 	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
 	void *mCbUserData = nullptr;
+	LinphoneCoreCbs *m_coreCbs;
 
 	std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
+
+	static void callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
+	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
+
+	virtual void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) = 0;
+	virtual void transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) = 0;
 };
 
 /*
@@ -280,6 +287,10 @@ public:
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 	void confirmCreation();
+
+protected:
+	virtual void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;
+	virtual void transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) override;
 
 private:
 
@@ -369,6 +380,12 @@ public:
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
+
+protected:
+
+	virtual void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;
+	virtual void transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) override;
+
 private:
 	virtual const std::shared_ptr<CallSession> getMainSession() const override;
 
@@ -380,13 +397,9 @@ private:
 	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState);
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered, LinphoneCallState newCallState);
 
-	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
-	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
-
 	bool finalized = false;
 	std::string pendingSubject;
 	std::shared_ptr<Participant> focus;
-	LinphoneCoreCbs *m_coreCbs;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 

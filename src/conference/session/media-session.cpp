@@ -2737,39 +2737,11 @@ void MediaSessionPrivate::setTerminated () {
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
-	L_Q();
 	op->accept();
 	std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
 	if (md && !md->isEmpty())
 		updateStreams(md, nextState);
 	setState(nextState, stateInfo);
-
-	// If the call is in a local conference and the remote wants to enable or disable video, then send an update to honor the request
-	LinphoneConference * conference = nullptr;
-	if (listener) {
-		conference = listener->getCallSessionConference(q->getSharedFromThis());
-	}
-	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	if (conference && isInLocalConference && (getParams()->videoEnabled() != q->getRemoteParams()->videoEnabled())) {
-		shared_ptr<MediaConference::Conference> cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto & device = cppConference->findParticipantDevice(q->getSharedFromThis());
-		ParticipantDevice::State deviceState = ParticipantDevice::State::ScheduledForJoining;
-		if (device) {
-			deviceState = device->getState();
-		}
-
-		const auto videoConference = cppConference->getCurrentParams().videoEnabled();
-		if (videoConference && (deviceState == ParticipantDevice::State::Present)) {
-			// Send update to enable video
-			MediaSessionParams *newParams = q->getMediaParams()->clone();
-			if (videoConference) {
-				newParams->enableRtpBundle(true);
-			}
-			lInfo() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") got a request to " << (newParams->videoEnabled() ? "enable" : "disable") << " video - hence updating the call to provide the right streams";
-			q->update(newParams, CallSession::UpdateMethod::Default, q->isCapabilityNegotiationEnabled());
-			delete newParams;
-		}
-	}
 	return 0;
 }
 
@@ -3620,29 +3592,16 @@ LinphoneStatus MediaSession::resume () {
 
 	// The state must be set before recreating the media description in order for the method forceStreamsDirAccordingToState (called by makeLocalMediaDescription) to set the stream directions accordingly
 	const auto isIceRunning = getStreamsGroup().getIceService().isRunning();
-	CallSession::State initialState = d->state;
-	d->setState(CallSession::State::Resuming, "Resuming");
 
-	d->makeLocalMediaDescription(true, false, true);
-
-	const auto & localDesc = d->localDesc;
-
-	auto retryableAction = [this, isIceRunning, subject, localDesc, initialState]() -> int{
+	auto retryableAction = [this, isIceRunning, subject]() -> int{
 		L_D();
-		auto updateCompletionTask = [this, subject, localDesc, initialState]() -> int{
+		auto updateCompletionTask = [this, subject]() -> int{
 			L_D();
 
-			CallSession::State previousState = initialState;
-			if (d->state != CallSession::State::Resuming) {
-				previousState = d->state;
-				d->setState(CallSession::State::Resuming, "Resuming");
-			}
+			CallSession::State previousState = d->state;
+			d->setState(CallSession::State::Resuming, "Resuming");
 
-			// Save current media description in order to use the media description created at the time of the first execution of this method
-			const auto currentLocalDesc = d->localDesc;
-			d->localDesc = localDesc;
-			// We may running this code after ICE candidates have been gathered or ICE released task completed, therefore the local description must be updated to include ICE candidates for every stream
-			d->updateLocalMediaDescriptionFromIce(!getCore()->getCCore()->sip_conf.sdp_200_ack);
+			d->makeLocalMediaDescription(true, false, true);
 
 			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
 				d->op->setLocalMediaDescription(nullptr);
@@ -3652,8 +3611,6 @@ LinphoneStatus MediaSession::resume () {
 
 			const auto res = d->op->update(subject.c_str(), false);
 
-			// Restore local media description
-			d->localDesc = currentLocalDesc;
 			if (getCore()->getCCore()->sip_conf.sdp_200_ack) {
 				/* We are NOT offering, set local media description after sending the call so that we are ready to
 				* process the remote offer when it will arrive. */
