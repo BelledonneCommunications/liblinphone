@@ -2907,8 +2907,12 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
-	// MS Factory MUST be created after Android has been set, otherwise no camera will be detected !
-	lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
+	// MS Factory MUST be created after Android context has been set, otherwise no camera will be detected !
+	
+	// The ms2 factory must survive to linphone_core_stop(), otherwise it invalidates resources created by LinphonePlayer/LinphoneRecorder.
+	if (!lc->factory){
+		lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
+	}
 	lc->sal->setFactory(lc->factory);
 
 	belr::GrammarLoader::get().addPath(std::string(linphone_factory_get_top_resources_dir(lfactory)).append("/belr/grammars"));
@@ -7247,8 +7251,6 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	}
 #endif
 
-	lc->msevq=NULL;
-
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 #if TARGET_OS_IPHONE
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStarted();
@@ -7350,8 +7352,6 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
 		lc->callsCache = NULL;
 	}
-	ms_factory_destroy(lc->factory);
-	lc->factory = NULL;
 
 #if TARGET_OS_IPHONE
 	if (lc->platform_helper) {
@@ -7431,6 +7431,12 @@ void _linphone_core_uninit(LinphoneCore *lc)
 
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
+	if (lc->msevq){
+		ms_factory_destroy_event_queue(lc->factory);
+		lc->msevq=NULL;
+	}
+	ms_factory_destroy(lc->factory);
+	lc->factory = NULL;
 	bctbx_uninit_logger();
 }
 
