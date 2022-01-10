@@ -2699,6 +2699,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 			linphone_video_activation_policy_unref(pol);
 
 			for (int i = 0; i < 4; i++) {
+				stats focus_stat2=focus.getStats();
 				stats marie_stat2=marie.getStats();
 				stats pauline_stat2=pauline.getStats();
 				stats laure_stat2=laure.getStats();
@@ -2716,7 +2717,11 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallUpdatedByRemote, laure_stat2.number_of_LinphoneCallUpdatedByRemote + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallStreamsRunning, laure_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdatedByRemote, pauline_stat2.number_of_LinphoneCallUpdatedByRemote + 1, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat2.number_of_LinphoneCallStreamsRunning + 2, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat2.number_of_LinphoneCallStreamsRunning + 4, 10000));
 
+				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_changed, focus_stat2.number_of_participant_device_media_changed + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_device_media_changed, marie_stat2.number_of_participant_device_media_changed + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_device_media_changed, pauline_stat2.number_of_participant_device_media_changed + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_participant_device_media_changed, laure_stat2.number_of_participant_device_media_changed + 1, 10000));
@@ -2744,6 +2749,28 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 							}
 						}
 					}
+				}
+
+				LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(pauline.getLc(), confAddr);
+				BC_ASSERT_PTR_NOT_NULL(pcall);
+				if (pcall) {
+					const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
+					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enable, int, "%0d");
+					const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
+					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_rparams), enable, int, "%0d");
+					const LinphoneCallParams* call_params = linphone_call_get_current_params(pcall);
+					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_params), enable, int, "%0d");
+				}
+				Address paulineAddr(pauline.getIdentity().asAddress());
+				LinphoneCall * ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), L_GET_C_BACK_PTR(&paulineAddr));
+				BC_ASSERT_PTR_NOT_NULL(ccall);
+				if (ccall) {
+					const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
+					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enable, int, "%0d");
+					const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
+					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_rparams), enable, int, "%0d");
+					const LinphoneCallParams* call_cparams = linphone_call_get_current_params(ccall);
+					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_cparams), enable, int, "%0d");
 				}
 
 				// Wait a little bit
@@ -3056,7 +3083,6 @@ static void create_conference_starting_in_the_past (void) {
 	create_conference_base (ms_time(NULL) - 600, 900, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE);
 }
 
-#if 0
 static void create_simple_conference_with_audio_only_participant (void) {
 	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE);
 }
@@ -3069,6 +3095,10 @@ static void create_simple_stun_ice_conference_with_audio_only_participant (void)
 	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE);
 }
 
+static void create_simple_stun_ice_srtp_conference_with_audio_only_participant (void) {
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE);
+}
+
 static void create_conference_with_audio_only_and_uninvited_participant (void) {
 	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE);
 }
@@ -3076,7 +3106,6 @@ static void create_conference_with_audio_only_and_uninvited_participant (void) {
 static void create_simple_conference_with_audio_only_participant_enabling_video (void) {
 	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE);
 }
-#endif
 
 #if 0
 static void conference_with_participant_added_outside_valid_time_slot (bool_t before_start) {
@@ -3717,13 +3746,12 @@ static test_t local_conference_tests[] = {
 	TEST_NO_TAG("Create conference with uninvited participant not allowed", LinphoneTest::create_conference_with_uninvited_participant_not_allowed),
 	TEST_NO_TAG("Create conference starting immediately", LinphoneTest::create_conference_starting_immediately),
 	TEST_NO_TAG("Create conference starting in the past", LinphoneTest::create_conference_starting_in_the_past),
-#if 0
 	TEST_NO_TAG("Create simple conference with audio only participant", LinphoneTest::create_simple_conference_with_audio_only_participant),
 	TEST_NO_TAG("Create simple ICE conference with audio only participant", LinphoneTest::create_simple_ice_conference_with_audio_only_participant),
 	TEST_NO_TAG("Create simple STUN+ICE conference with audio only participant", LinphoneTest::create_simple_stun_ice_conference_with_audio_only_participant),
+	TEST_NO_TAG("Create simple STUN+ICE SRTP conference with audio only participant", LinphoneTest::create_simple_stun_ice_srtp_conference_with_audio_only_participant),
 	TEST_NO_TAG("Create conference with audio only and uninvited participant", LinphoneTest::create_conference_with_audio_only_and_uninvited_participant),
 	TEST_NO_TAG("Create simple conference with audio only participant enabling video", LinphoneTest::create_simple_conference_with_audio_only_participant_enabling_video),
-#endif
 #if 0
 	TEST_NO_TAG("Conference with participants added after conference end", LinphoneTest::conference_with_participants_added_after_end),
 	TEST_NO_TAG("Conference with participants added before conference start", LinphoneTest::conference_with_participants_added_before_start),

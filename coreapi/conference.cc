@@ -1236,6 +1236,15 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(call->getParams()))->setEndTime(confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
+					if (getCurrentParams().localParticipantEnabled()) {
+						const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(true);
+					} else {
+						if (call->getRemoteParams()) {
+							const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(call->getRemoteParams()->videoEnabled());
+						}
+					}
+				} else {
+					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(false);
 				}
 			break;
 			case LinphoneCallPaused:
@@ -1252,7 +1261,13 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableRtpBundle(true);
 					if (getCurrentParams().localParticipantEnabled()) {
 						const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(true);
+					} else {
+						if (call->getRemoteParams()) {
+							const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(call->getRemoteParams()->videoEnabled());
+						}
 					}
+				} else {
+					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(false);
 				}
 				// Conference resumes call that previously paused in order to add the participant
 				call->resume();
@@ -1275,7 +1290,13 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					linphone_call_params_enable_rtp_bundle(params, TRUE);
 					if (getCurrentParams().localParticipantEnabled()) {
 						linphone_call_params_enable_video(params, TRUE);
+					} else {
+						if (linphone_call_get_remote_params(call->toC())) {
+							linphone_call_params_enable_video(params, linphone_call_params_video_enabled(linphone_call_get_remote_params(call->toC())));
+						}
 					}
+				} else {
+					linphone_call_params_enable_video(params, FALSE);
 				}
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -1364,7 +1385,11 @@ bool LocalConference::finalizeParticipantAddition (std::shared_ptr<LinphonePriva
 				linphone_call_params_set_end_time(params, confParams->getEndTime());
 				if (getCurrentParams().videoEnabled()) {
 					linphone_call_params_enable_rtp_bundle(params, TRUE);
+					linphone_call_params_enable_video(params, linphone_call_params_video_enabled(linphone_call_get_remote_params(call->toC())));
+				} else {
+					linphone_call_params_enable_video(params, FALSE);
 				}
+
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
 			});
@@ -1756,8 +1781,6 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 	LocalConference *conf = (LocalConference *)linphone_core_v_table_get_user_data(vtable);
 	auto cppCall = Call::toCpp(call)->getSharedFromThis();
 	if (conf && conf->toC() == cppCall->getConference()) {
-		lInfo() << "LocalConference::" << __func__ << " not implemented";
-
 		const auto & session = cppCall->getActiveSession();
 		switch(cstate) {
 			case LinphoneCallStateConnected:
@@ -1807,7 +1830,10 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 						setSubject(op->getSubject());
 					}
 
-					if ((cppCall->getParams()->videoEnabled() != cppCall->getRemoteParams()->videoEnabled()) && getCurrentParams().videoEnabled() && (deviceState == ParticipantDevice::State::Present)) {
+					const bool videoActive = (device->getVideoDirection() != LinphoneMediaDirectionInactive);
+					const bool videoToggled = videoActive != cppCall->getParams()->videoEnabled();
+					// If video has been toggled, then send a reINVITE in case anything changed on the conference (participant added or removed)
+					if (videoToggled && getCurrentParams().videoEnabled() && (deviceState == ParticipantDevice::State::Present)) {
 						const auto & videoEnabled = cppCall->getRemoteParams()->videoEnabled();
 						getCore()->doLater([this, videoEnabled, call] {
 							// Send update to enable video

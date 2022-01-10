@@ -853,45 +853,46 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 		* false, which is then preventing it to be eventually used when video is later added to the call.
 		* I did the choice of commenting it out.
 		*/
+
+	LinphoneConference * conference = nullptr;
+	if (listener) {
+		conference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	bool isInRemoteConference = conference && !isInLocalConference;
+
 	/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() & sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
 	if (rcp) {
-		//if (!fromOffer){
-			/*
-			 * This is to avoid to re-propose again some streams that have just been declined.
-			 */
-			if (getParams()->audioEnabled() && !rcp->audioEnabled()) {
-				lInfo() << "CallSession [" << q << "]: disabling audio in our call params because the remote doesn't want it";
-				getParams()->enableAudio(false);
-			}
-			if (getParams()->videoEnabled() && !rcp->videoEnabled()) {
-				lInfo() << "CallSession [" << q << "]: disabling video in our call params because the remote doesn't want it";
-				getParams()->enableVideo(false);
-			}
-			if (getParams()->realtimeTextEnabled() && !rcp->realtimeTextEnabled()) {
-				lInfo() << "CallSession [" << q << "]: disabling RTT in our call params because the remote doesn't want it";
-				getParams()->enableRealtimeText(false);
-			}
-		//}
+		/*
+		 * This is to avoid to re-propose again some streams that have just been declined.
+		 */
+		if (getParams()->audioEnabled() && !rcp->audioEnabled() && !isInRemoteConference) {
+			lInfo() << "CallSession [" << q << "]: disabling audio in our call params because the remote doesn't want it";
+			getParams()->enableAudio(false);
+		}
+		if (getParams()->videoEnabled() && !rcp->videoEnabled() && !isInRemoteConference) {
+			lInfo() << "CallSession [" << q << "]: disabling video in our call params because the remote doesn't want it";
+			getParams()->enableVideo(false);
+		}
+		if (getParams()->realtimeTextEnabled() && !rcp->realtimeTextEnabled() && !isInRemoteConference) {
+			lInfo() << "CallSession [" << q << "]: disabling RTT in our call params because the remote doesn't want it";
+			getParams()->enableRealtimeText(false);
+		}
 		// Real Time Text is always by default accepted when proposed.
 		if (!getParams()->realtimeTextEnabled() && rcp->realtimeTextEnabled())
 			getParams()->enableRealtimeText(true);
 
-		bool isInLocalConference = getParams()->getPrivate()->getInConference();
 		const auto & cCore = q->getCore()->getCCore();
 
 		if (isInLocalConference) {
 			// If the call is in a local conference, then check conference capabilities to know whether the video must be enabled or not
 			bool isConferenceVideoCapabilityOn = false;
-			LinphoneConference * conference = nullptr;
-			if (listener) {
-				conference = listener->getCallSessionConference(q->getSharedFromThis());
-				if (conference) {
-					const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
-					isConferenceVideoCapabilityOn = linphone_conference_params_video_enabled(params);
-					if (rcp->videoEnabled() && linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
-						getParams()->enableVideo(isConferenceVideoCapabilityOn);
-					}
+			if (conference) {
+				const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
+				isConferenceVideoCapabilityOn = linphone_conference_params_video_enabled(params);
+				if (rcp->videoEnabled() && linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
+					getParams()->enableVideo(isConferenceVideoCapabilityOn);
 				}
 			}
 		} else {
@@ -1891,10 +1892,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	bool isVideoConferenceEnabled = false;
 	ConferenceLayout confLayout = ConferenceLayout::None;
 	auto deviceState = ParticipantDevice::State::ScheduledForJoining;
+	std::shared_ptr<ParticipantDevice> participantDevice = nullptr;
 	if (conference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
-		const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
+		participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
 
 		if (participantDevice) {
 			if (!localIsOfferer && !isInLocalConference) {
@@ -1975,11 +1977,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 					videoDir = getParams()->getPrivate()->getSalVideoDirection();
 					enableVideoStream = (localIsOfferer) ? callVideoEnabled : isVideoConferenceEnabled;
 				}
-lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(q->getCore()->getCCore())) << " video conference " << isVideoConferenceEnabled << " layout " << confLayout << " enable stream " << enableVideoStream << " codecs " << videoCodecs.size();
 			} else {
 				switch (confLayout) {
 					case ConferenceLayout::ActiveSpeaker:
-						videoDir = (localIsOfferer) ? SalStreamSendOnly : getParams()->getPrivate()->getSalVideoDirection();
+						videoDir = (localIsOfferer) ? ((callVideoEnabled) ? SalStreamSendOnly : SalStreamInactive) : getParams()->getPrivate()->getSalVideoDirection();
 						enableVideoStream = true;
 						break;
 					case ConferenceLayout::None:
@@ -1987,7 +1988,7 @@ lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity
 						enableVideoStream = callVideoEnabled;
 						break;
 					case ConferenceLayout::Grid:
-						videoDir = (localIsOfferer) ? SalStreamSendOnly : getParams()->getPrivate()->getSalVideoDirection();
+						videoDir = (localIsOfferer) ? ((callVideoEnabled) ? SalStreamSendOnly : SalStreamInactive) : getParams()->getPrivate()->getSalVideoDirection();
 						enableVideoStream = callVideoEnabled;
 						break;
 				}
@@ -2042,8 +2043,7 @@ lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-
-	if (addVideoStream && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present))) {
+	if (addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) && (localIsOfferer || (!localIsOfferer && (participantDevice->getVideoDirection() != LinphoneMediaDirectionInactive)))) {
 		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	}
 	copyOldStreams(md, oldMd, refMd, pth, encList);

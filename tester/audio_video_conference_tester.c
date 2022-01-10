@@ -46,6 +46,8 @@ void destroy_mgr_in_conference(LinphoneCoreManager *mgr) {
 
 static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, bool_t enable_video, bctbx_list_t * participants, const LinphoneAddress * conference_address) {
 
+	ms_message("%s %s video in call with %s", linphone_core_get_identity(m1->lc), ((enable_video) ? "enables" : "disables"), linphone_core_get_identity(m2->lc));
+
 	LinphoneConference *m1_conference = linphone_core_search_conference(m1->lc, NULL, NULL, conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(m1_conference);
 	bool_t expected_m1_video_capability = FALSE;
@@ -93,8 +95,8 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallUpdatedByRemote, initial_m2_stat.number_of_LinphoneCallUpdatedByRemote + 1));
 
-		int defer_update = !!linphone_config_get_int(linphone_core_get_config(m2->lc), "sip", "defer_update_default", FALSE);
-		if (defer_update == TRUE) {
+		int m2_defer_update = !!linphone_config_get_int(linphone_core_get_config(m2->lc), "sip", "defer_update_default", FALSE);
+		if (m2_defer_update == TRUE) {
 			LinphoneCallParams * m2_params = linphone_core_create_call_params(m2->lc, m2_calls_m1);
 			linphone_call_params_enable_video(m2_params, enable_video);
 			linphone_call_accept_update(m2_calls_m1, m2_params);
@@ -103,9 +105,21 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallUpdating, initial_m1_stat.number_of_LinphoneCallUpdating + 1));
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallStreamsRunning, initial_m2_stat.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallStreamsRunning, initial_m1_stat.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallUpdatedByRemote, initial_m1_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+
+		int m1_defer_update = !!linphone_config_get_int(linphone_core_get_config(m1->lc), "sip", "defer_update_default", FALSE);
+		if (m1_defer_update == TRUE) {
+			LinphoneCallParams * m1_params = linphone_core_create_call_params(m1->lc, m1_calls_m2);
+			linphone_call_params_enable_video(m1_params, enable_video);
+			linphone_call_accept_update(m1_calls_m2, m1_params);
+			linphone_call_params_unref(m1_params);
+		}
+		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallUpdating, initial_m2_stat.number_of_LinphoneCallUpdating + 1));
+		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallStreamsRunning, initial_m2_stat.number_of_LinphoneCallStreamsRunning + 2));
+		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallStreamsRunning, initial_m1_stat.number_of_LinphoneCallStreamsRunning + 2));
 
 		counter = 0;
-		int idx = 0;
+		int idx = 1;
 		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_device_media_changed,initial_participants_stats[counter].number_of_participant_device_media_changed+1,3000));
