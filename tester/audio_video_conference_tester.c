@@ -495,12 +495,28 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	// Check that laure received volumes from other participant's devices
 	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
-	if (laure_call) {
+	LinphoneConference * laure_conference = (laure_call) ? linphone_call_get_conference(laure_call) : NULL;
+	BC_ASSERT_PTR_NOT_NULL(laure_conference);
+	LinphoneConferenceLayout laure_layout = LinphoneConferenceLayoutNone;
+	if (laure_conference) {
+		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(laure_conference);
+		laure_layout = linphone_conference_params_get_layout(conf_params);
+	}
+
+	if (laure_call && (laure_layout != LinphoneConferenceLayoutNone)) {
 		check_conference_volumes(laure_call);
 	}
 	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
-	if (pauline_call) {
+	LinphoneConference * pauline_conference = (pauline_call) ? linphone_call_get_conference(pauline_call) : NULL;
+	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
+	LinphoneConferenceLayout pauline_layout = LinphoneConferenceLayoutNone;
+	if (pauline_conference) {
+		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(pauline_conference);
+		pauline_layout = linphone_conference_params_get_layout(conf_params);
+	}
+
+	if (pauline_call && (pauline_layout != LinphoneConferenceLayoutNone)) {
 		check_conference_volumes(pauline_call);
 	}
 

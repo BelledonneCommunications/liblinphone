@@ -1106,7 +1106,10 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		update_counter += (update_counter+1);
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+2*counter),5000));
+	const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
+	const LinphoneConferenceLayout layout = linphone_conference_params_get_layout(conf_params);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+((layout == LinphoneConferenceLayoutNone) ? 1 : 2)*counter),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participants_added,(conf_initial_stats.number_of_participants_added + counter),3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participant_devices_added,(conf_initial_stats.number_of_participant_devices_added + counter),3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participants_added,(focus_initial_stats.number_of_participants_added + counter),3000));
@@ -1121,8 +1124,29 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 			for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 				counter = init_parts_count + (int)part_updates;
 				LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote+part_updates),5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+part_updates),5000));
+
+				LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+				LinphoneParticipant * m_participant = linphone_conference_find_participant(focus_conference, m_uri);
+				BC_ASSERT_PTR_NOT_NULL(m_participant);
+				linphone_address_unref(m_uri);
+				if (m_participant) {
+					bctbx_list_t *devices = linphone_participant_get_devices(m_participant);
+
+					for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+						LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
+						LinphoneConferenceLayout device_layout = linphone_participant_device_get_layout(d);
+
+						if (device_layout != LinphoneConferenceLayoutNone) {
+							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote+part_updates),5000));
+							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+part_updates),5000));
+						}
+					}
+
+					if (devices) {
+						bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+					}
+
+				}
 
 				part_updates--;
 				idx++;
@@ -1130,7 +1154,6 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+counter+((int)bctbx_list_size(new_participants))),5000));
 		}
 	}
-
 
 	ms_free(participants_initial_stats);
 	bctbx_list_free(participants);

@@ -1123,7 +1123,7 @@ void MediaSessionPrivate::runStunTestsIfNeeded () {
 		const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
 		int audioPort = portFromStreamIndex(audioStreamIndex);
 
-		LinphoneConference * conference = listener->getCallSessionConference(q->getSharedFromThis());
+		LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 		bool isConferenceLayoutActiveSpeaker = false;
 		if (conference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();

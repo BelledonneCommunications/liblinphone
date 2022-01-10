@@ -593,10 +593,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					time_t creationTime = time(nullptr);
 					conference->notifyParticipantAdded(creationTime, false, conference->getMe());
 				}
-				for (const auto & p : conference->getParticipants()) {
-					for (const auto & device : p->getDevices()) {
-						device->updateStreamAvailabilities();
-					}
+				for (const auto & device : conference->getParticipantDevices()) {
+					device->updateStreamAvailabilities();
 				}
 			} else if (op && !attachedToLocalConference()) {
 				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
