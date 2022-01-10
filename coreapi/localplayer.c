@@ -45,7 +45,6 @@ LinphonePlayer *linphone_core_create_local_player(LinphoneCore *lc, const char *
 		ms_error("linphone_core_create_local_player(): no sound card.");
 		return NULL;
 	}
-	ms_snd_card_set_stream_type(snd_card, MS_SND_CARD_STREAM_MEDIA);
 
 	if (video_display_name == NULL) video_display_name = linphone_core_get_video_display_filter(lc);
 	obj->impl = ms_media_player_new(lc->factory, snd_card, video_display_name, window_id);
