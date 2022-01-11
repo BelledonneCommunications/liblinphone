@@ -216,7 +216,7 @@ bool CorePrivate::isShutdownDone() {
 
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(it->second);
-		if (chatRoom && (chatRoom->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage() 
+		if (chatRoom && (chatRoom->getPrivate()->getImdnHandler()->isCurrentlySendingImdnMessages() 
 			|| !chatRoom->getPrivate()->getTransientChatMessages().empty())) {
 			return false;
 		}

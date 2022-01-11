@@ -108,8 +108,17 @@ void Imdn::onImdnMessageNotDelivered (const std::shared_ptr<ImdnMessage> &messag
 	sentImdnMessages.remove(message);
 }
 
-bool Imdn::hasUndeliveredImdnMessage() {
-	return !(sentImdnMessages.empty() && deliveredMessages.empty() && displayedMessages.empty() && nonDeliveredMessages.empty());
+bool Imdn::isCurrentlySendingImdnMessages() {
+	// This check is here ensure that we avoid blocking the stopping of the core due to IMDNs from previous accounts
+	// that are still in the message data base
+	if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
+		LinphoneProxyConfig *cfg = getRelatedProxyConfig();
+		if (!cfg || linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk ){
+			return false;
+		}
+	}
+	
+	return !sentImdnMessages.empty();
 }
 
 // -----------------------------------------------------------------------------
@@ -314,7 +323,7 @@ LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
 	if (!addr) {
 		return NULL;
 	}
-	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity(chatRoom->getCore()->getCCore(), addr);
+	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity_strict(chatRoom->getCore()->getCCore(), addr);
 	linphone_address_unref(addr);
 	return cfg;
 }
@@ -323,7 +332,10 @@ void Imdn::send () {
 	try {
 		if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
 			LinphoneProxyConfig *cfg = getRelatedProxyConfig();
-			if (cfg && linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
+			if (!cfg) {
+				lInfo() << "No matching proxy config found, will wait to send pending IMDNs";
+				return;
+			} else if (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
 				lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
 				return;
 			}

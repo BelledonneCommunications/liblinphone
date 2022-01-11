@@ -4261,16 +4261,15 @@ static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const Lin
 	}
 	return ret;
 }
-
 /*
  * Returns a proxy config matching the given identity address
  * Prefers registered, then first registering matching, otherwise first matching
+ * returns NULL if none is found
  */
-LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri){
 	LinphoneProxyConfig *found_cfg = NULL;
 	LinphoneProxyConfig *found_reg_cfg = NULL;
 	LinphoneProxyConfig *found_noreg_cfg = NULL;
-	LinphoneProxyConfig *default_cfg=lc->default_proxy;
 	const bctbx_list_t *elem;
 
 	for (elem=linphone_core_get_proxy_config_list(lc);elem!=NULL;elem=elem->next){
@@ -4288,19 +4287,31 @@ LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, c
 	}
 	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
 	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-	if (!found_cfg) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
+	
+	return found_cfg;
+}
+
+
+/*
+ * Returns a proxy config matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
+ * returns default proxy config if none is found
+ */
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+	LinphoneProxyConfig *found_cfg = linphone_core_lookup_proxy_by_identity_strict(lc, uri);
+	if (!found_cfg) found_cfg = lc->default_proxy;
 	return found_cfg;
 }
 
 /*
  * Returns an account matching the given identity address
  * Prefers registered, then first registering matching, otherwise first matching
+ * returns NULL if none is found
  */
-LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+LinphoneAccount * linphone_core_lookup_account_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri){
 	LinphoneAccount *found_acc = NULL;
 	LinphoneAccount *found_reg_acc= NULL;
 	LinphoneAccount *found_noreg_acc = NULL;
-	LinphoneAccount *default_acc=lc->default_account;
 	const bctbx_list_t *elem;
 
 	for (elem=linphone_core_get_account_list(lc);elem!=NULL;elem=elem->next){
@@ -4318,7 +4329,17 @@ LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, con
 	}
 	if (!found_acc && found_reg_acc)    found_acc = found_reg_acc;
 	else if (!found_acc && found_noreg_acc) found_acc = found_noreg_acc;
-	if (!found_acc) found_acc=default_acc; /*when no matching account is found, use the default account*/
+	return found_acc;
+}
+
+/*
+ * Returns an account matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
+ * returns default account if none is found
+ */
+LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+	LinphoneAccount *found_acc = linphone_core_lookup_account_by_identity_strict(lc, uri);
+	if (!found_acc) found_acc = lc->default_account;
 	return found_acc;
 }
 

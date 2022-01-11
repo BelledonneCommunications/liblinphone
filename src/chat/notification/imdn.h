@@ -63,7 +63,7 @@ public:
 
 	void onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message);
 	void onImdnMessageNotDelivered (const std::shared_ptr<ImdnMessage> &message);
-	bool hasUndeliveredImdnMessage();
+	bool isCurrentlySendingImdnMessages();
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
