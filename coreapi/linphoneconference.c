@@ -528,7 +528,7 @@ void linphone_conference_params_set_conference_factory_address(LinphoneConferenc
 }
 
 const LinphoneAddress *linphone_conference_params_get_conference_factory_address(const LinphoneConferenceParams *params){
-	auto &conferenceAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
+	auto & conferenceAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
 	if( conferenceAddress.isValid() && conferenceAddress != Address())	// isValid() is not enough and empty address should return NULL.
 		return L_GET_C_BACK_PTR(&conferenceAddress);
 	else

@@ -51,7 +51,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		}
 
 		virtual void setConferenceFactoryAddress(const Address &address)override {
-			m_useDefaultFactoryAddress = false;	// Default is used only if conference factory address has not been set.
+			m_useDefaultFactoryAddress = false;
 			m_factoryAddress = address;// Setting with Address("") means that we want a local conference
 		};
 		
@@ -115,8 +115,8 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		ParticipantListType m_participantListType = ParticipantListType::Open;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
 		ConferenceLayout m_layout = ConferenceLayout::None;
-		bool m_useDefaultFactoryAddress = true;	// Using a boolean in order to avoid using pointers (and then dynamic allocations)
 		Address m_factoryAddress = Address();
+		bool m_useDefaultFactoryAddress = true;
 		std::string m_subject = "";
 		std::string m_description = "";
 		IdentityAddress m_me = IdentityAddress();

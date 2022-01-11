@@ -1038,7 +1038,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		}
 	}
 
-	LinphoneConference * focus_conference = linphone_core_get_conference(focus_mgr->lc);
+	LinphoneConference * focus_conference = (conf_to_focus_call) ? linphone_call_get_conference(conf_to_focus_call) : NULL;
 	int init_parts_count = (focus_conference) ? linphone_conference_get_participant_count(focus_conference) : 0;
 	bool_t focus_conference_not_existing = (focus_conference) ? FALSE : TRUE;
 	LinphoneConference * admin_conference = conference ? conference : linphone_core_get_conference(conf_mgr->lc);
@@ -1093,7 +1093,9 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 			BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
 		}
 
-		focus_conference = linphone_core_get_conference(focus_mgr->lc);
+		LinphoneCall * actual_conf_to_focus_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, focus_mgr->identity);
+		BC_ASSERT_PTR_NOT_NULL(actual_conf_to_focus_call);
+		focus_conference = linphone_call_get_conference(actual_conf_to_focus_call);
 		BC_ASSERT_PTR_NOT_NULL(focus_conference);
 		if (focus_conference) {
 			const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
@@ -3535,18 +3537,20 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 					linphone_conference_unref(conference); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */
 					linphone_conference_add_participant(conference, call);
 				}
-				if(conf_srv->first_call == NULL) conf_srv->first_call = call;
+			}
+			if((linphone_call_get_conference(call) || conference) && (conf_srv->first_call == NULL)) {
+				conf_srv->first_call = call;
+				linphone_call_set_user_data(call, conference ? conference :linphone_call_get_conference(call));
 			}
 			if(conference) {
 				// local participant should never be in
 				linphone_conference_leave(conference);
 			}
 			break;
-
 		case LinphoneCallEnd:
 			if(call == conf_srv->first_call) {
-				if(linphone_core_get_conference(lc)) {
-					linphone_core_terminate_conference(lc);
+				if(linphone_call_get_user_data(call)) {
+					linphone_conference_terminate((LinphoneConference *)linphone_call_get_user_data(call));
 				}
 				conf_srv->first_call = NULL;
 			}

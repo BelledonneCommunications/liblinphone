@@ -79,8 +79,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
 
-	if (entityAddress != getConferenceId().getPeerAddress())
+	if (entityAddress != getConferenceId().getPeerAddress()) {
+		lError() << "Unable to process received NOTIFY because the entity address " << entityAddress << " doesn't match the peer address " << getConferenceId().getPeerAddress();
 		return;
+	}
 
 	auto &confDescription = confInfo->getConferenceDescription();
 

@@ -8583,8 +8583,12 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 				lInfo() << "Creating remote conference with identity from default account" << linphone_address_as_string(identity);
 			}
 		}
-		
-		if ( (!conf_method_name && !linphone_address_is_valid(factory_uri_const)) || (conf_method_name && strcasecmp(conf_method_name, "local") == 0) ) {
+
+		// Create a local conference if:
+		// - it is a conference server
+		// - conference type is not defined and conference factory address is not defined
+		// - conference type is local
+		if (linphone_core_conference_server_enabled(lc) || (!conf_method_name && !linphone_address_is_valid(factory_uri_const)) || (conf_method_name && strcasecmp(conf_method_name, "local") == 0) ) {
 			conf = linphone_local_conference_new_with_params(lc, identity, params2);
 		} else if (!serverMode){
 // Get Factory URI
@@ -8595,7 +8599,9 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 					if(account){
 						const char *uri = linphone_account_params_get_conference_factory_uri(linphone_account_get_params(linphone_core_get_default_account(lc)));
 						factory_uri = linphone_address_new(uri);
-						lInfo() << "Creating remote conference with factory address from default account : " << linphone_address_as_string(factory_uri);
+						char * factory_uri_str = factory_uri ? linphone_address_as_string(factory_uri) : NULL;
+						lInfo() << "Creating remote conference with factory address from default account : " << std::string(factory_uri_str);
+						ms_free(factory_uri_str);
 					}else{
 						ms_error("Cannot create a remote conference from default account : no account available");
 						errorOnRemoteConference = true;
@@ -8606,7 +8612,9 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 				}
 			}else {// case of: !conf_method_name && factory_uri_str != ""
 				factory_uri = linphone_address_clone(factory_uri_const);
-				lInfo() << "Creating remote conference with factory address from conference params : " << linphone_address_as_string(factory_uri);
+				char * factory_uri_str = factory_uri ? linphone_address_as_string(factory_uri) : NULL;
+				lInfo() << "Creating remote conference with factory address from conference params : " << std::string(factory_uri_str);
+				ms_free(factory_uri_str);
 			}
 			if(!errorOnRemoteConference) {
 				conf = linphone_remote_conference_new_with_params(lc, factory_uri, identity, params2);

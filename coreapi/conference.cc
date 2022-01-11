@@ -907,7 +907,7 @@ int LocalConference::participantDeviceJoined(const std::shared_ptr<LinphonePriva
 		if (device) {
 			return participantDeviceJoined(p, device);
 		} else {
-			lWarning() << "Unable to find device with session " << session << " among devices of participant " << p->getAddress().asString() << " of conference " << getConferenceAddress();
+			lDebug() << "Unable to find device with session " << session << " among devices of participant " << p->getAddress().asString() << " of conference " << getConferenceAddress();
 		}
 	}
 	return -1;
@@ -2621,8 +2621,12 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 					}
 
 					setConferenceId(ConferenceId(ConferenceAddress(focusContactAddress), getConferenceId().getLocalAddress()));
-					call->setConferenceId(focusContactAddress.getUriParamValue("conf-id"));
-					finalizeCreation();
+					if (call) {
+						call->setConferenceId(focusContactAddress.getUriParamValue("conf-id"));
+						if (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
+							finalizeCreation();
+						}
+					}
 				}
 			}
 			break;

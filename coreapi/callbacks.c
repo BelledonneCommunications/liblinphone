@@ -210,17 +210,16 @@ static void call_received(SalCallOp *h) {
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(h->getTo()), ConferenceAddress(h->getTo())));
 			if (!conference) {
-				 if (h->isContentInRemote(ContentType::ResourceLists)) {
+				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
+
+				if (confInfo && (sal_address_has_param(h->getToAddress(), "conf-id"))) {
+						std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
+				} else {
 					auto localConference = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
 					localConference->confirmCreation();
 					linphone_address_unref(toAddr);
 					linphone_address_unref(fromAddr);
 					return;
-				} else {
-					std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
-					if (confInfo) {
-						std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
-					}
 				}
 			}
 		}
@@ -1043,7 +1042,12 @@ static int process_redirect(SalOp *op){
 		linphone_error_info_unref(ei);
 		return 0;
 	} else {
-		return op->processRedirect();
+		auto ret = op->processRedirect();
+		if (call) {
+			LinphoneCallLog * call_log = linphone_call_get_call_log(call);
+			linphone_call_log_set_call_id(call_log, op->getCallId().c_str());
+		}
+		return ret;
 	}
 	return -1;
 }

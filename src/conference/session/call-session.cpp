@@ -185,6 +185,7 @@ void CallSessionPrivate::setTransferState (CallSession::State newState) {
 	}
 	lInfo() << "Transfer state for CallSession [" << q << "] changed from ["
 		<< Utils::toString(transferState) << "] to [" << Utils::toString(newState) << "]";
+
 	transferState = newState;
 	if (listener)
 		listener->onCallSessionTransferStateChanged(q->getSharedFromThis(), newState);

@@ -72,10 +72,16 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 			if(m_useDefaultFactoryAddress) {
 				auto core = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_account_get_core(account));
 				auto factory_addr = Core::getAudioVideoConferenceFactoryAddress(core->getSharedFromThis(), account);
-				m_factoryAddress = (factory_addr ? *L_GET_CPP_PTR_FROM_C_OBJECT(factory_addr) : Address());
-				ms_message("Update conference parameters from account, factory:%s", factory_addr ? linphone_address_as_string(factory_addr) : "NULL");
-				if(factory_addr)
+				char * conferenceFactoryAddressString = factory_addr ? linphone_address_as_string(factory_addr) : NULL;
+				const Address conferenceFactoryAddress(L_C_TO_STRING(conferenceFactoryAddressString));
+				m_factoryAddress = Address(conferenceFactoryAddress);
+				ms_message("Update conference parameters from account, factory:%s", conferenceFactoryAddressString);
+				if (factory_addr) {
 					linphone_address_unref(factory_addr);
+				}
+				if (conferenceFactoryAddressString) {
+					ms_free(conferenceFactoryAddressString);
+				}
 			}
 		}else
 			ms_message("Update conference parameters from account: no account parameters");
