@@ -889,27 +889,13 @@ void ChatMessagePrivate::handleAutoDownload() {
 					if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
 					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
 					|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
-						string file = ftc->getFileName();
-						size_t foundDot = file.find_last_of(".");
-						string fileName = file;
-						string fileExt = "";
-						if (foundDot != string::npos) {
-							fileName = file.substr(0, foundDot);
-							fileExt = file.substr(foundDot + 1);
+						ostringstream sstream;
+						size_t randomSize = 12;
+						for (size_t i = 0; i < randomSize; i++) {
+							sstream << rand() % 10;
 						}
-
-						int prefix = 1;
+						string file = sstream.str();
 						string filepath = downloadPath + file;
-						while (bctbx_file_exist(filepath.c_str()) == 0) {
-							std::ostringstream sstr;
-							if (fileExt == "") {
-								sstr << downloadPath << fileName << "(" << prefix << ")";
-							} else {
-								sstr << downloadPath << fileName << "(" << prefix << ")." << fileExt;
-							}
-							filepath = sstr.str();
-							prefix += 1;
-						}
 						lInfo() << "Automatically downloading file to " << filepath;
 						ftc->setFilePath(filepath);
 						setAutoFileTransferDownloadInProgress(true);

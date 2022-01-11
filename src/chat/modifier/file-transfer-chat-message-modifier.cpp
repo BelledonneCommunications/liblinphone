@@ -32,6 +32,8 @@
 
 #include "file-transfer-chat-message-modifier.h"
 
+#include <cstdio>
+
 // =============================================================================
 
 using namespace std;
@@ -647,6 +649,38 @@ static void _chat_message_on_recv_end (belle_sip_user_body_handler_t *bh, void *
 	d->onRecvEnd(bh);
 }
 
+static void renameFileAfterAutoDownload(shared_ptr<Core> core, FileContent *fileContent) {
+	string file = fileContent->getFileName();
+	size_t foundDot = file.find_last_of(".");
+	string fileName = file;
+	string fileExt = "";
+	if (foundDot != string::npos) {
+		fileName = file.substr(0, foundDot);
+		fileExt = file.substr(foundDot + 1);
+	}
+
+	int prefix = 1;
+	string downloadPath = core->getDownloadPath();
+	string filepath = downloadPath + file;
+	while (bctbx_file_exist(filepath.c_str()) == 0) {
+		std::ostringstream sstr;
+		if (fileExt == "") {
+			sstr << downloadPath << fileName << "(" << prefix << ")";
+		} else {
+			sstr << downloadPath << fileName << "(" << prefix << ")." << fileExt;
+		}
+		filepath = sstr.str();
+		prefix += 1;
+	}
+
+	lInfo() << "Renaming downloaded file from [" << fileContent->getFilePath() << "] to [" << filepath << "]";
+	if (std::rename(fileContent->getFilePath().c_str(), filepath.c_str())) {
+		lError() << "Error while renaming file!";
+	} else {
+		fileContent->setFilePath(filepath);
+	}
+}
+
 void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *bh) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
@@ -694,6 +728,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 			releaseHttpRequest();
 			message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
 			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
+				renameFileAfterAutoDownload(core, fileContent);
 				message->getPrivate()->handleAutoDownload();
 			}
 		}
