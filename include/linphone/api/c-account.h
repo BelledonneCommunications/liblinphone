@@ -83,7 +83,7 @@ LINPHONE_PUBLIC int linphone_account_set_params(LinphoneAccount *account, Linpho
  * @param account The #LinphoneAccount object. @notnil
  * @return The #LinphoneAccountParams attached to this account. @notnil
  */
-LINPHONE_PUBLIC const LinphoneAccountParams* linphone_account_get_params(LinphoneAccount *account);
+LINPHONE_PUBLIC const LinphoneAccountParams* linphone_account_get_params(const LinphoneAccount *account);
 
 /**
  * Assign a user pointer to the account.

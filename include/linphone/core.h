@@ -4173,7 +4173,8 @@ LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const c
  * @{
  */
 
-/** Create a conference
+/** Create a conference. Local or remote conference is determinated from the 'conference_type' variable in the 'misc' section of the configuration, or by the factory address parameter.
+ * See linphone_conference_params_set_conference_factory_address() for more details.
  * @param core The #LinphoneCore instance where the conference will be created inside. @notnil
  * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
  * @return A pointer on the freshly created conference #LinphoneConference. That object will be automatically

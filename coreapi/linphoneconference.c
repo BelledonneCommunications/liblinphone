@@ -443,7 +443,12 @@ bool_t linphone_conference_params_chat_enabled (const LinphoneConferenceParams *
 }
 
 LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params){
-	return ConferenceParams::toCpp(params)->getProxyCfg();
+	auto account = ConferenceParams::toCpp(params)->getAccount();
+	return linphone_core_lookup_proxy_by_identity(linphone_account_get_core(account), linphone_account_params_get_identity_address(linphone_account_get_params(account)));
+}
+
+LinphoneAccount * linphone_conference_params_get_account(const LinphoneConferenceParams *params){
+	return ConferenceParams::toCpp(params)->getAccount();
 }
 
 void linphone_conference_params_set_local_participant_enabled(LinphoneConferenceParams *params, bool_t enable){
@@ -516,6 +521,18 @@ void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, t
 
 time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params){
 	return ConferenceParams::toCpp(params)->getEndTime();
+}
+
+void linphone_conference_params_set_conference_factory_address(LinphoneConferenceParams *params, const LinphoneAddress *address){
+	ConferenceParams::toCpp(params)->setConferenceFactoryAddress(address ? *L_GET_CPP_PTR_FROM_C_OBJECT(address) : Address());
+}
+
+const LinphoneAddress *linphone_conference_params_get_conference_factory_address(const LinphoneConferenceParams *params){
+	auto &conferenceAddress = ConferenceParams::toCpp(params)->getConferenceFactoryAddress();
+	if( conferenceAddress.isValid() && conferenceAddress != Address())	// isValid() is not enough and empty address should return NULL.
+		return L_GET_C_BACK_PTR(&conferenceAddress);
+	else
+		return NULL;
 }
 
 void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type){

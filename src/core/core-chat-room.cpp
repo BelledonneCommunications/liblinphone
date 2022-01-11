@@ -618,15 +618,21 @@ static bool compare_chat_room (const shared_ptr<AbstractChatRoom>& first, const 
 //
 string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const IdentityAddress &localAddress) {
 	Address addr(localAddress.asAddress());
-	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
-
-	if (!proxy) {
-		lWarning() << "No proxy configuration found for local address: [" << localAddress.asString() << "]";
+	LinphoneAccount *account= linphone_core_lookup_account_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
+	if (!account) {
+		lWarning() << "No account found for local address: [" << localAddress.asString() << "]";
 		return string();
-	}
-	const char *uri = linphone_proxy_config_get_conference_factory_uri(proxy);
-	if (uri) {
-		return uri;
+	}else
+		return getConferenceFactoryUri(core, account);
+}
+
+string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const LinphoneAccount *account) {
+	const LinphoneAccountParams *params = linphone_account_get_params(account);
+	if(params){
+		const char *uri = linphone_account_params_get_conference_factory_uri(params);
+		if (uri) {
+			return uri;
+		}
 	}
 	return string();
 }

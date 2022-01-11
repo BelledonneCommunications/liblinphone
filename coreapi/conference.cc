@@ -852,13 +852,14 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 
 			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
 
-			if (!confParams->getProxyCfg()) {
+			if (!confParams->getAccount()) {
 				// Set proxy configuration used for the conference
 				auto callProxyCfg = linphone_call_get_dest_proxy(call);
 				if (callProxyCfg) {
-					confParams->setProxyCfg(callProxyCfg);
+					auto callAccount = linphone_core_lookup_account_by_identity(getCore()->getCCore(), linphone_proxy_config_get_identity_address(callProxyCfg));
+					confParams->setAccount(callAccount);
 				} else {
-					confParams->setProxyCfg(linphone_core_lookup_known_proxy(getCore()->getCCore(), address));
+					confParams->setAccount(linphone_core_lookup_known_account(getCore()->getCCore(), address));
 				}
 			}
 
@@ -1184,13 +1185,14 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	if (canAddParticipant) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 
-		if (!confParams->getProxyCfg()) {
+		if (!confParams->getAccount()) {
 			// Set proxy configuration used for the conference
 			auto callProxyCfg = linphone_call_get_dest_proxy(call->toC());
 			if (callProxyCfg) {
-				confParams->setProxyCfg(callProxyCfg);
+				auto callAccount = linphone_core_lookup_account_by_identity(getCore()->getCCore(), linphone_proxy_config_get_identity_address(callProxyCfg));
+				confParams->setAccount(callAccount);
 			} else {
-				confParams->setProxyCfg(linphone_core_lookup_known_proxy(getCore()->getCCore(), linphone_call_get_to_address(call->toC())));
+				confParams->setAccount(linphone_core_lookup_known_account(getCore()->getCCore(), linphone_call_get_to_address(call->toC())));
 			}
 		}
 
@@ -1999,6 +2001,7 @@ RemoteConference::RemoteConference (
 //	lastNotify = 0;
 
 	focus = Participant::create(this, focusAddr);
+	lInfo() << "Create focus '" << focus->getAddress() << "' from address : " << focusAddr;
 	pendingSubject = confParams->getSubject();
 	getMe()->setAdmin(true);
 
@@ -2237,9 +2240,12 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
 				linphone_call_params_enable_video(params, confParams->videoEnabled());
 				Conference::setSubject(pendingSubject);
-				focusCall = Call::toCpp(linphone_core_invite_address_with_params_2(getCore()->getCCore(), addr, params, L_STRING_TO_C(pendingSubject), nullptr))->getSharedFromThis();
-				focusCall->setConference(toC());
-				focus = Participant::create(this, Address(focusCall->getRemoteContact()), focusCall->getActiveSession());
+				auto focusCallC = linphone_core_invite_address_with_params_2(getCore()->getCCore(), addr, params, L_STRING_TO_C(pendingSubject), nullptr);
+				if(focusCallC) {
+					focusCall = Call::toCpp(focusCallC)->getSharedFromThis();
+					focusCall->setConference(toC());
+					focus->setSession(focusCall->getActiveSession());
+				}
 				m_pendingCalls.push_back(call);
 				linphone_call_params_unref(params);
 				Conference::addParticipant(call);

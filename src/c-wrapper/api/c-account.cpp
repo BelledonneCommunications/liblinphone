@@ -58,7 +58,7 @@ int linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams*
 	return Account::toCpp(account)->setAccountParams(AccountParams::toCpp(params)->getSharedFromThis());
 }
 
-const LinphoneAccountParams* linphone_account_get_params(LinphoneAccount *account) {
+const LinphoneAccountParams* linphone_account_get_params(const LinphoneAccount *account) {
 	return Account::toCpp(account)->getAccountParams()->toC();
 }
 

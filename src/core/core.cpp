@@ -1502,11 +1502,14 @@ LinphoneAddress* Core::getAudioVideoConferenceFactoryAddress(const std::shared_p
 	if (!account) {
 		lWarning() << "No account found for local address: [" << localAddress.asString() << "]";
 		return nullptr;
-	}
+	}else
+		return getAudioVideoConferenceFactoryAddress(core, account);
+}
 
+LinphoneAddress* Core::getAudioVideoConferenceFactoryAddress(const std::shared_ptr<Core> &core, const LinphoneAccount * account) {
 	const LinphoneAddress *address = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 	if (address == nullptr) {
-		string conferenceFactoryUri = getConferenceFactoryUri(core, localAddress);
+		string conferenceFactoryUri = getConferenceFactoryUri(core, account);
 		lWarning() << "Audio/video conference factory is null, fallback to default conference factory URI [" << conferenceFactoryUri << "]";
 		if (conferenceFactoryUri.empty()) return nullptr;
 		return linphone_address_new(conferenceFactoryUri.c_str());

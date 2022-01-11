@@ -90,6 +90,22 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_addres
 LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address);
 
 /**
+ * Set the conference factory address of the conference. 
+ * By default when creating a new conference, the factory address will come from the current proxy configuration.
+ * If NULL then the conference will be local else it will be a remote conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @param address the conference factory address. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_conference_factory_address(LinphoneConferenceParams *params, const LinphoneAddress *address);
+
+/**
+ * Get the conference factory address of the conference that has been set.
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the factory address conference description. @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_params_get_conference_factory_address(const LinphoneConferenceParams *params);
+
+/**
  * Set the description of the conference
  * @param conference The #LinphoneConference object. @notnil
  * @param description the conference description. @maybenil

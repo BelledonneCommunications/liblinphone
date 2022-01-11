@@ -50,8 +50,14 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 			return new ConferenceParams(*this);
 		}
 
-		virtual void setConferenceFactoryAddress (const Address &address) override { m_factoryAddress = address; };
-		const Address getFactoryAddress() const { return m_factoryAddress; };
+		virtual void setConferenceFactoryAddress(const Address &address)override {
+			m_useDefaultFactoryAddress = false;	// Default is used only if conference factory address has not been set.
+			m_factoryAddress = address;// Setting with Address("") means that we want a local conference
+		};
+		
+		const Address& getConferenceFactoryAddress() const {
+			return m_factoryAddress;
+		};
 
 		void setStatic(bool enable) {m_static = enable;}
 		bool isStatic() const {return m_static;}
@@ -86,8 +92,8 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		void setLayout(const ConferenceLayout l) { m_layout = l; };
 		const ConferenceLayout & getLayout() const { return m_layout; };
 
-		void setProxyCfg(LinphoneProxyConfig * p) { m_proxyCfg = p; };
-		LinphoneProxyConfig * getProxyCfg() const { return m_proxyCfg; };
+		void setAccount(LinphoneAccount * a);
+		LinphoneAccount * getAccount() const { return m_account; };
 
 		virtual void setStartTime (const time_t &start) override { m_startTime = start; };
 		const time_t &getStartTime() const { return m_startTime; };
@@ -99,6 +105,8 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		const ParticipantListType &getParticipantListType() const { return m_participantListType; };
 
 	private:
+		void updateFromAccount(LinphoneAccount * account);// Update Me and default factory from account.
+	
 		bool m_enableVideo = false;
 		bool m_enableAudio = false;
 		bool m_enableChat = false;
@@ -107,13 +115,14 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		ParticipantListType m_participantListType = ParticipantListType::Open;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
 		ConferenceLayout m_layout = ConferenceLayout::None;
+		bool m_useDefaultFactoryAddress = true;	// Using a boolean in order to avoid using pointers (and then dynamic allocations)
 		Address m_factoryAddress = Address();
 		std::string m_subject = "";
 		std::string m_description = "";
 		IdentityAddress m_me = IdentityAddress();
 		time_t m_startTime = (time_t)-1;
 		time_t m_endTime = (time_t)-1;
-		LinphoneProxyConfig * m_proxyCfg = nullptr;
+		LinphoneAccount * m_account = nullptr;
 		bool m_static = false;
 };
 

@@ -54,6 +54,10 @@ void linphone_address_unref (LinphoneAddress *address) {
 	belle_sip_object_unref(address);
 }
 
+bool_t linphone_address_is_valid (const LinphoneAddress *address){
+	return address && L_GET_CPP_PTR_FROM_C_OBJECT(address)->isValid();
+}
+
 const char *linphone_address_get_scheme (const LinphoneAddress *address) {
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(address)->getScheme());
 }

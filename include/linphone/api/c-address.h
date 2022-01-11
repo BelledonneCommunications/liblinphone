@@ -62,6 +62,13 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_address_ref (LinphoneAddress *address)
 LINPHONE_PUBLIC void linphone_address_unref (LinphoneAddress *address);
 
 /**
+ * Returns if address is valid.
+ * @param address a #LinphoneAddress object. @maybenil
+ * @return the scheme if any, NULL otherwise. @maybenil
+ **/
+LINPHONE_PUBLIC bool_t linphone_address_is_valid (const LinphoneAddress *address);
+
+/**
  * Returns the address scheme, normally "sip".
  * @param address a #LinphoneAddress object. @notnil
  * @return the scheme if any, NULL otherwise. @maybenil

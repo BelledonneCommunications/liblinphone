@@ -194,11 +194,19 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_chat_en
 LINPHONE_PUBLIC bool_t linphone_conference_params_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
+ * Returns the account for the conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return a pointer to the account or NULL if it is not set. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneAccount * linphone_conference_params_get_account(const LinphoneConferenceParams *params);
+
+/**
  * Returns the proxy configuration for the conference
  * @param params A #LinphoneConferenceParams @notnil
  * @return a pointer to the proxy configuration or NULL if it is not set. @maybenil
+ * @deprecated 11/01/2022 Use linphone_conference_params_get_account() instead.
  */
-LINPHONE_PUBLIC LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneProxyConfig * linphone_conference_params_get_proxy_cfg(const LinphoneConferenceParams *params);
 
 /**
  * Enable local participant to enter the conference.
