@@ -802,6 +802,11 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
+	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
+		setDirection(ChatMessage::Direction::Outgoing);
+	}
+
 	// Check if this is a duplicate message.
 	if (chatRoom->findChatMessage(imdnId, direction)) {
 		lInfo() << "Duplicated SIP MESSAGE, ignored.";
@@ -828,12 +833,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 		}
 	}
 
-	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
-		setDirection(ChatMessage::Direction::Outgoing);
-		markAsRead();
-	}
-
 	if (errorCode > 0) {
 		reason = linphone_error_code_to_reason(errorCode);
 		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
@@ -843,8 +842,19 @@ LinphoneReason ChatMessagePrivate::receive () {
 		return reason;
 	}
 
+	// If message was outgoing, mark it as read
+	if (direction == ChatMessage::Direction::Outgoing) {
+		markAsRead();
+	}
+
 	if (getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
-		_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		// If we receive a message that is Outgoing it means we are in a flexisip based chat room and this message was sent by us from another device, storing it
+		if (direction == ChatMessage::Direction::Outgoing) {
+			toBeStored = true;
+		} else {
+			_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		}
+
 		if (toBeStored) {
 			storeInDb();
 		}

@@ -7150,6 +7150,73 @@ static void group_chat_forward_file_transfer_message_digest_auth_server_encrypte
 	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
 }
 
+static void group_chat_room_message_sync_between_devices_with_same_identity (void) {
+	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie1);
+	coresManagerList = bctbx_list_append(coresManagerList, marie2);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarie1Stats = marie1->stat;
+	stats initialMarie2Stats = marie2->stat;
+	stats initialPaulineStats = pauline->stat;
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marie1Cr = create_chat_room_client_side(coresList, marie1, &initialMarie1Stats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
+	BC_ASSERT_PTR_NOT_NULL(marie1Cr);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marie1Cr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+	// Check that the chat room is correctly created on Chloe's side and that the participants are added
+	LinphoneChatRoom *marie2Cr = check_creation_chat_room_client_side(coresList, marie2, &initialMarie2Stats, confAddr, initialSubject, 1, FALSE);
+	BC_ASSERT_PTR_NOT_NULL(marie2Cr);
+
+	// Marie2 won't send 200OK to flexisip when receiving it's own outgoing message from marie1
+	sal_set_send_error(linphone_core_get_sal(marie2->lc), -1); // to trash 200ok without generating error
+
+	const char *marie1TextMessage = "Hum.";
+	LinphoneChatMessage *marie1Message = _send_message(marie1Cr, marie1TextMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneMessageReceived, initialMarie2Stats.number_of_LinphoneMessageReceived + 1, 5000));
+	linphone_chat_message_unref(marie1Message);
+	
+	wait_for_list(coresList, NULL, 0, 1000);
+
+	// Marie2 will now receive the message again but this time it will acknowledge it
+	sal_set_send_error(linphone_core_get_sal(marie2->lc), 0);
+	linphone_core_refresh_registers(marie2->lc);
+
+	// Check that the duplicate is detected and we are not notified of it, not it is stored in DB
+	BC_ASSERT_FALSE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneMessageReceived, initialMarie2Stats.number_of_LinphoneMessageReceived + 2, 5000));
+	bctbx_list_t *messages = linphone_chat_room_get_history(marie2Cr, 0);
+	int count = (int)(bctbx_list_size(messages));
+	BC_ASSERT_EQUAL(count, 1, int, "%d");
+	bctbx_list_free_with_data(messages, (bctbx_list_free_func)linphone_chat_message_unref);
+	
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie1, marie1Cr, coresList);
+	linphone_core_manager_delete_chat_room(marie2, marie2Cr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+
+	linphone_core_manager_destroy(marie1);
+	linphone_core_manager_destroy(marie2);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t group_chat_tests[] = {
 	TEST_NO_TAG("Chat room params", group_chat_room_params),
 	TEST_NO_TAG("Chat room with forced local identity", group_chat_room_creation_with_given_identity),
@@ -7159,6 +7226,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Send encrypted message", group_chat_room_send_message_encrypted),
 	TEST_NO_TAG("Send message with error", group_chat_room_send_message_with_error),
 	TEST_NO_TAG("Send invite on a multi register account", group_chat_room_invite_multi_register_account),
+	TEST_NO_TAG("Send message check sync between devices", group_chat_room_message_sync_between_devices_with_same_identity),
 	TEST_NO_TAG("Add admin", group_chat_room_add_admin),
 	TEST_NO_TAG("Add admin lately notified", group_chat_room_add_admin_lately_notified),
 	TEST_NO_TAG("Add admin with a non admin", group_chat_room_add_admin_non_admin),

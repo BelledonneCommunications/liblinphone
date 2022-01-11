@@ -254,9 +254,13 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 							if (allow_cpim_in_basic_chat_room_sender) {
 								BC_ASSERT_TRUE(linphone_chat_message_is_forward(recv_msg));
 								BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(recv_msg), "Anonymous");
+								// Because of CPIM
+								BC_ASSERT_STRING_NOT_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
 							} else {
 								// On a basic chat room we won't have this information unless CPIM has been enabled, see linphone_account_params_cpim_in_basic_chat_room_enabled()
 								BC_ASSERT_FALSE(linphone_chat_message_is_forward(recv_msg));
+								// Because of no CPIM
+								BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
 							}
 							linphone_chat_message_unref(recv_msg);
 						}
@@ -297,6 +301,8 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 								if (replied_message) {
 									linphone_chat_message_unref(replied_message);
 								}
+								// Because of CPIM
+								BC_ASSERT_STRING_NOT_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
 							} else {
 								// On a basic chat room we won't have this information unless CPIM has been enabled, see linphone_account_params_cpim_in_basic_chat_room_enabled()
 								BC_ASSERT_FALSE(linphone_chat_message_is_reply(recv_msg));
@@ -304,6 +310,8 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 								BC_ASSERT_FALSE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
 															linphone_chat_message_get_from_address(recv_msg)));
 								BC_ASSERT_TRUE(linphone_chat_message_get_reply_message_id(recv_msg) == NULL);
+								// Because of no CPIM
+								BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
 							}
 
 							contents = linphone_chat_message_get_contents(recv_msg);
