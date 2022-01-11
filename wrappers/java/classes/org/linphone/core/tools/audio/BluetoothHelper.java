@@ -22,6 +22,7 @@ package org.linphone.core.tools.audio;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHeadset;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
@@ -40,7 +41,9 @@ public class BluetoothHelper {
     public BluetoothHelper(Context context) {
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        BluetoothManager bluetoothManager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
+        mBluetoothAdapter = bluetoothManager.getAdapter();
+        
         if (mBluetoothAdapter != null) {
             Log.i("[Bluetooth] Adapter found");
             if (mAudioManager.isBluetoothScoAvailableOffCall()) {
