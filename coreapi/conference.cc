@@ -914,18 +914,18 @@ int LocalConference::participantDeviceJoined(const std::shared_ptr<LinphonePriva
 
 int LocalConference::participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
-	const auto audioDirection = device->getAudioDirection();
-	const auto videoDirection = device->getVideoDirection();
-	const auto textDirection = device->getTextDirection();
-	if ((device->updateMedia() || (device->getState() != ParticipantDevice::State::Present)) && (getState() == ConferenceInterface::State::Created)) {
+	const auto audioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
+	const auto videoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
+	const auto textDirection = device->getStreamCapability(LinphoneStreamTypeText);
+	if ((device->updateMediaCapabilities() || (device->getState() != ParticipantDevice::State::Present)) && (getState() == ConferenceInterface::State::Created)) {
 		device->setState(ParticipantDevice::State::Present);
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceJoined(creationTime, false, participant, device);
-		const auto newAudioDirection = device->getAudioDirection();
+		const auto newAudioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
 		const bool audioToggled = ((audioDirection == LinphoneMediaDirectionInactive) && (newAudioDirection != LinphoneMediaDirectionInactive)) || ((audioDirection != LinphoneMediaDirectionInactive) && (newAudioDirection == LinphoneMediaDirectionInactive));
-		const auto newVideoDirection = device->getVideoDirection();
+		const auto newVideoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
 		const bool videoToggled = ((videoDirection == LinphoneMediaDirectionInactive) && (newVideoDirection != LinphoneMediaDirectionInactive)) || ((videoDirection != LinphoneMediaDirectionInactive) && (newVideoDirection == LinphoneMediaDirectionInactive));
-		const auto newTextDirection = device->getTextDirection();
+		const auto newTextDirection = device->getStreamCapability(LinphoneStreamTypeText);
 		const bool textToggled = ((textDirection == LinphoneMediaDirectionInactive) && (newTextDirection != LinphoneMediaDirectionInactive)) || ((textDirection != LinphoneMediaDirectionInactive) && (newTextDirection == LinphoneMediaDirectionInactive));
 		if (audioToggled || videoToggled || textToggled) {
 			const auto & updatedParticipantSession = device->getSession();
@@ -952,18 +952,18 @@ int LocalConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivate
 
 int LocalConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
-	const auto audioDirection = device->getAudioDirection();
-	const auto videoDirection = device->getVideoDirection();
-	const auto textDirection = device->getTextDirection();
-	if ((device->updateMedia() || (device->getState() != ParticipantDevice::State::OnHold)) && (getState() == ConferenceInterface::State::Created)) {
+	const auto audioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
+	const auto videoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
+	const auto textDirection = device->getStreamCapability(LinphoneStreamTypeText);
+	if ((device->updateMediaCapabilities() || (device->getState() != ParticipantDevice::State::OnHold)) && (getState() == ConferenceInterface::State::Created)) {
 		device->setState(ParticipantDevice::State::OnHold);
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceLeft(creationTime, false, participant, device);
-		const auto newAudioDirection = device->getAudioDirection();
+		const auto newAudioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
 		const bool audioToggled = ((audioDirection == LinphoneMediaDirectionInactive) && (newAudioDirection != LinphoneMediaDirectionInactive)) || ((audioDirection != LinphoneMediaDirectionInactive) && (newAudioDirection == LinphoneMediaDirectionInactive));
-		const auto newVideoDirection = device->getVideoDirection();
+		const auto newVideoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
 		const bool videoToggled = ((videoDirection == LinphoneMediaDirectionInactive) && (newVideoDirection != LinphoneMediaDirectionInactive)) || ((videoDirection != LinphoneMediaDirectionInactive) && (newVideoDirection == LinphoneMediaDirectionInactive));
-		const auto newTextDirection = device->getTextDirection();
+		const auto newTextDirection = device->getStreamCapability(LinphoneStreamTypeText);
 		const bool textToggled = ((textDirection == LinphoneMediaDirectionInactive) && (newTextDirection != LinphoneMediaDirectionInactive)) || ((textDirection != LinphoneMediaDirectionInactive) && (newTextDirection == LinphoneMediaDirectionInactive));
 		if (audioToggled || videoToggled || textToggled) {
 			const auto & updatedParticipantSession = device->getSession();
@@ -999,17 +999,17 @@ int LocalConference::participantDeviceMediaChanged(const IdentityAddress &addr) 
 
 int LocalConference::participantDeviceMediaChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	int success = -1;
-	const auto audioDirection = device->getAudioDirection();
-	const auto videoDirection = device->getVideoDirection();
-	const auto textDirection = device->getTextDirection();
-	if (device->updateMedia() && ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created))) {
+	const auto audioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
+	const auto videoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
+	const auto textDirection = device->getStreamCapability(LinphoneStreamTypeText);
+	if (device->updateMediaCapabilities() && ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created))) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceMediaChanged(creationTime, false, participant, device);
-		const auto newAudioDirection = device->getAudioDirection();
+		const auto newAudioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
 		const bool audioToggled = ((audioDirection == LinphoneMediaDirectionInactive) && (newAudioDirection != LinphoneMediaDirectionInactive)) || ((audioDirection != LinphoneMediaDirectionInactive) && (newAudioDirection == LinphoneMediaDirectionInactive));
-		const auto newVideoDirection = device->getVideoDirection();
+		const auto newVideoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
 		const bool videoToggled = ((videoDirection == LinphoneMediaDirectionInactive) && (newVideoDirection != LinphoneMediaDirectionInactive)) || ((videoDirection != LinphoneMediaDirectionInactive) && (newVideoDirection == LinphoneMediaDirectionInactive));
-		const auto newTextDirection = device->getTextDirection();
+		const auto newTextDirection = device->getStreamCapability(LinphoneStreamTypeText);
 		const bool textToggled = ((textDirection == LinphoneMediaDirectionInactive) && (newTextDirection != LinphoneMediaDirectionInactive)) || ((textDirection != LinphoneMediaDirectionInactive) && (newTextDirection == LinphoneMediaDirectionInactive));
 		if (audioToggled || videoToggled || textToggled) {
 			const auto & updatedParticipantSession = device->getSession();
@@ -1394,7 +1394,7 @@ bool LocalConference::finalizeParticipantAddition (std::shared_ptr<LinphonePriva
 				linphone_call_params_unref(params);
 			});
 		} else if (device->getState() == ParticipantDevice::State::Joining) {
-			device->updateMedia();
+			device->updateMediaCapabilities();
 			device->setState(ParticipantDevice::State::Present);
 			const auto & p = findParticipant(call->getActiveSession());
 
@@ -1715,9 +1715,9 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 		notifyAvailableMediaChanged(creationTime, false, mediaCapabilities);
 	}
 	for (auto & meDev : me->getDevices()) {
-		meDev->setAudioDirection(this->confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-		meDev->setVideoDirection(this->confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-		meDev->setTextDirection(this->confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		meDev->setStreamCapability((this->confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeAudio);
+		meDev->setStreamCapability((this->confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeVideo);
+		meDev->setStreamCapability((this->confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeText);
 	}
 	return ret;
 }
@@ -1830,7 +1830,7 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 						setSubject(op->getSubject());
 					}
 
-					const bool videoActive = (device->getVideoDirection() != LinphoneMediaDirectionInactive);
+					const bool videoActive = (device->getStreamCapability(LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive);
 					const bool videoToggled = videoActive != cppCall->getParams()->videoEnabled();
 					// If video has been toggled, then send a reINVITE in case anything changed on the conference (participant added or removed)
 					if (videoToggled && getCurrentParams().videoEnabled() && (deviceState == ParticipantDevice::State::Present)) {

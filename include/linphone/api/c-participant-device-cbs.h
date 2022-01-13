@@ -109,46 +109,32 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbsConferenceLeftCb linphone_participan
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_conference_left (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceLeftCb cb);
 
 /**
- * Get the participant device audio direction changed callback.
+ * Get the participant device stream capability changed callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @return The current participant device audio direction changed callback.
+ * @return The current participant device stream capability changed callback.
  */
-LINPHONE_PUBLIC LinphoneParticipantDeviceCbsAudioDirectionChangedCb linphone_participant_device_cbs_get_audio_direction_changed (const LinphoneParticipantDeviceCbs *cbs);
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsStreamCapabilityChangedCb linphone_participant_device_cbs_get_stream_capability_changed (const LinphoneParticipantDeviceCbs *cbs);
 
 /**
- * Set the participant device audio direction changed callback.
+ * Set the participant device stream capability changed callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @param[in] cb The participant device audio direction changed callback to be used.
+ * @param[in] cb The participant device stream capability changed callback to be used.
  */
-LINPHONE_PUBLIC void linphone_participant_device_cbs_set_audio_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsAudioDirectionChangedCb cb);
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_stream_capability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
 
 /**
- * Get the participant device video direction changed callback.
+ * Get the participant device stream availability changed callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @return The current participant device video direction changed callback.
+ * @return The current participant device stream availability changed callback.
  */
-LINPHONE_PUBLIC LinphoneParticipantDeviceCbsVideoDirectionChangedCb linphone_participant_device_cbs_get_video_direction_changed (const LinphoneParticipantDeviceCbs *cbs);
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb linphone_participant_device_cbs_get_stream_availability_changed (const LinphoneParticipantDeviceCbs *cbs);
 
 /**
- * Set the participant device video direction changed callback.
+ * Set the participant device stream availability changed callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @param[in] cb The participant device video direction changed callback to be used.
+ * @param[in] cb The participant device stream availability changed callback to be used.
  */
-LINPHONE_PUBLIC void linphone_participant_device_cbs_set_video_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsVideoDirectionChangedCb cb);
-
-/**
- * Get the participant device text direction changed callback.
- * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @return The current participant device text direction changed callback.
- */
-LINPHONE_PUBLIC LinphoneParticipantDeviceCbsTextDirectionChangedCb linphone_participant_device_cbs_get_text_direction_changed (const LinphoneParticipantDeviceCbs *cbs);
-
-/**
- * Set the participant device text direction changed callback.
- * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
- * @param[in] cb The participant device text direction changed callback to be used.
- */
-LINPHONE_PUBLIC void linphone_participant_device_cbs_set_text_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsTextDirectionChangedCb cb);
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_stream_availability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
 
 /**
  * @}

@@ -254,7 +254,7 @@ void LocalConferenceEventHandler::addEndpointStatus(const std::shared_ptr<Partic
 }
 
 void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, EndpointType & endpoint) {
-	const auto &audioDirection = device->getAudioDirection();
+	const auto &audioDirection = device->getStreamCapability(LinphoneStreamTypeAudio);
 	MediaType audio = MediaType("1");
 	audio.setDisplayText("audio");
 	audio.setType("audio");
@@ -262,7 +262,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
-	const auto &videoDirection = device->getVideoDirection();
+	const auto &videoDirection = device->getStreamCapability(LinphoneStreamTypeVideo);
 	MediaType video = MediaType("2");
 	video.setDisplayText("video");
 	video.setType("video");
@@ -272,7 +272,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
 	endpoint.getMedia().push_back(video);
 
-	const auto &textDirection = device->getTextDirection();
+	const auto &textDirection = device->getStreamCapability(LinphoneStreamTypeText);
 	MediaType text = MediaType("3");
 	text.setDisplayText("text");
 	text.setType("text");

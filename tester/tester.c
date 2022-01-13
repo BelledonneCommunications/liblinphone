@@ -819,9 +819,9 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 						text_direction = LinphoneMediaDirectionRecvOnly;
 					}
 
-					BC_ASSERT_EQUAL(linphone_participant_device_get_audio_direction(d), audio_direction, int, "%0d");
-					BC_ASSERT_EQUAL(linphone_participant_device_get_video_direction(d), video_direction, int, "%0d");
-					BC_ASSERT_EQUAL(linphone_participant_device_get_text_direction(d), text_direction, int, "%0d");
+					BC_ASSERT_EQUAL(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio), audio_direction, int, "%0d");
+					BC_ASSERT_EQUAL(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo), video_direction, int, "%0d");
+					BC_ASSERT_EQUAL(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeText), text_direction, int, "%0d");
 				}
 			} else {
 				LinphoneParticipant * remote_participant = linphone_conference_find_participant(remote_conference, p_address);
@@ -833,9 +833,9 @@ void check_conference_medias(LinphoneConference * local_conference, LinphoneConf
 						LinphoneParticipantDevice * remote_device = linphone_participant_find_device (remote_participant, linphone_participant_device_get_address(d));
 						BC_ASSERT_PTR_NOT_NULL(remote_device);
 						if (remote_device) {
-							check_participant_media_direction(linphone_participant_device_get_audio_direction(d), linphone_participant_device_get_audio_direction(remote_device), _linphone_participant_device_get_audio_enabled(d));
-							check_participant_media_direction(linphone_participant_device_get_video_direction(d), linphone_participant_device_get_video_direction(remote_device), _linphone_participant_device_get_video_enabled(d));
-							check_participant_media_direction(linphone_participant_device_get_text_direction(d), linphone_participant_device_get_text_direction(remote_device), _linphone_participant_device_get_real_time_text_enabled(d));
+							check_participant_media_direction(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio), linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeAudio), _linphone_participant_device_get_audio_enabled(d));
+							check_participant_media_direction(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo), linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeVideo), _linphone_participant_device_get_video_enabled(d));
+							check_participant_media_direction(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeText), linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeText), _linphone_participant_device_get_real_time_text_enabled(d));
 						}
 					}
 				}

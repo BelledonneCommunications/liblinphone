@@ -380,9 +380,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						const std::string mediaType = media.getType().get();
 						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
 						if (mediaType.compare("audio") == 0) {
-							if(device->getAudioDirection() != mediaDirection) {
+							if(device->getStreamCapability(LinphoneStreamTypeAudio) != mediaDirection) {
 								mediaChanged = true;
-								device->setAudioDirection(mediaDirection);
+								device->setStreamCapability(mediaDirection, LinphoneStreamTypeAudio);
 							}
 
 							if (media.getSrcId()) {
@@ -391,9 +391,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								device->setSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("video") == 0) {
-							if(device->getVideoDirection() != mediaDirection) {
+							if(device->getStreamCapability(LinphoneStreamTypeVideo) != mediaDirection) {
 								mediaChanged = true;
-								device->setVideoDirection(mediaDirection);
+								device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
 							}
 							if (media.getLabel()) {
 								const std::string label = media.getLabel().get();
@@ -402,20 +402,22 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								}
 							}
 						} else if (mediaType.compare("text") == 0) {
-							if(device->getTextDirection() != mediaDirection) {
+							if(device->getStreamCapability(LinphoneStreamTypeText) != mediaDirection) {
 								mediaChanged = true;
-								device->setTextDirection(mediaDirection);
+								device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);
 							}
 						} else {
 							lError() << "Unrecognized media type " << mediaType;
 						}
 					}
-					if(mediaChanged)
+					device->updateStreamAvailabilities();
+					if(mediaChanged) {
 						conf->notifyParticipantDeviceMediaChanged(
 							creationTime,
 							isFullState,
 							participant,
 							device);
+					}
 
 					if (endpoint.getStatus().present()) {
 						const auto & status = endpoint.getStatus().get();

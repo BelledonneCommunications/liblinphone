@@ -533,25 +533,18 @@ typedef void (*LinphoneParticipantDeviceCbsConferenceLeftCb) (LinphoneParticipan
 typedef void (*LinphoneParticipantDeviceCbsConferenceJoinedCb) (LinphoneParticipantDevice *participant_device);
 
 /**
- * Callback used to notify that participant device audio direction has changed.
+ * Callback used to notify that participant device stream capability has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
  * @param[in] direction  participant device's audio direction
  */
-typedef void (*LinphoneParticipantDeviceCbsAudioDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+typedef void (*LinphoneParticipantDeviceCbsStreamCapabilityChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction, const LinphoneStreamType stream_type);
 
 /**
- * Callback used to notify that participant device video direction has changed.
+ * Callback used to notify that participant device stream availability has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
  * @param[in] direction  participant device's video direction
  */
-typedef void (*LinphoneParticipantDeviceCbsVideoDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
-
-/**
- * Callback used to notify that participant device text direction has changed.
- * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- * @param[in] direction  participant device's text direction
- */
-typedef void (*LinphoneParticipantDeviceCbsTextDirectionChangedCb) (LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction);
+typedef void (*LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb) (LinphoneParticipantDevice *participant_device, bool_t available, const LinphoneStreamType stream_type);
 
 /**
  * Callback for notifying when a registration state has changed for the conference scheduler.

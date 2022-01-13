@@ -70,9 +70,9 @@ bool Conference::tryAddMeDevice() {
 			ms_free(devAddrStr);
 
 			// Initialize media directions
-			meDev->setAudioDirection(confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-			meDev->setVideoDirection(confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
-			meDev->setTextDirection(confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+			meDev->setStreamCapability((confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeAudio);
+			meDev->setStreamCapability((confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeVideo);
+			meDev->setStreamCapability((confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeText);
 
 			char label[Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));

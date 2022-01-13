@@ -311,6 +311,7 @@ class JavaTranslator:
         methodDict['hasCoreAccessor'] = hasCoreAccessor
         if hasCoreAccessor:
             methodDict['c_core_accessor'] = 'linphone_' + class_.name.to_snake_case() + '_get_core'
+        methodDict['needLjb'] = False
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace)
         methodDict['hasListReturn'] = methodDict['return'] == 'jobjectArray'
@@ -356,6 +357,7 @@ class JavaTranslator:
                 methodDict['isStringObjectArray'] = True
             elif isinstance(_method.returnType.containedTypeDesc, AbsApi.ClassType):
                 methodDict['isRealObjectArray'] = True
+                methodDict['needLjb'] = True
                 methodDict['isRealObjectConst'] = "TRUE" if _method.returnType.containedTypeDesc.isconst else "FALSE"
                 methodDict['objectCPrefix'] = 'linphone_' + _method.returnType.containedTypeDesc.desc.name.to_snake_case()
                 methodDict['objectClassCName'] = 'Linphone' + _method.returnType.containedTypeDesc.desc.name.to_camel_case()
@@ -522,6 +524,7 @@ class JavaTranslator:
                 methodDict['jparams'] += 'L' + self.jni_path + arg.type.desc.name.translate(self.jninameTranslator) + ';'
                 methodDict['params_impl'] += 'j_' + argname
                 methodDict['jenums'].append({'enumName': argname, 'cEnumPrefix': arg.type.desc.name.to_snake_case(fullName=True)})
+                methodDict['needLjb'] = True
             elif isinstance(arg.type, AbsApi.ListType):
                 methodDict['jparams'] += '[L' + self.jni_path + arg.type.containedTypeDesc.desc.name.to_camel_case() + ';'
                 methodDict['params_impl'] += 'j_' + argname
@@ -534,6 +537,7 @@ class JavaTranslator:
                     classname =  arg.type.containedTypeDesc.desc.name.to_camel_case()
                     isConst = 'TRUE' if arg.type.containedTypeDesc.isconst else 'FALSE'
                     methodDict['jlists'].append({'list_name': argname, 'objectCPrefix':cprefix, 'objectClassCName':classcname, 'objectClassName':classname, 'isRealObjectArray':True, 'isStringObjectArray':False, 'isObjectConst':isConst})
+                methodDict['needLjb'] = True
 
         methodDict['jparams'] += ')'
         if (methodDict['return'] == 'void'):

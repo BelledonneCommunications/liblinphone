@@ -771,7 +771,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 			/* Give a chance to update the contact address if connectivity has changed */
 			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
 
-		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore()) && linphone_proxy_config_get_contact(destProxy)) {
 			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
 		}
 	} else {

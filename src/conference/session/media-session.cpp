@@ -2043,7 +2043,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-	if (addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) && (localIsOfferer || (!localIsOfferer && (participantDevice->getVideoDirection() != LinphoneMediaDirectionInactive)))) {
+	if (addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) && (localIsOfferer || (!localIsOfferer && (participantDevice->getStreamCapability(LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive)))) {
 		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	}
 	copyOldStreams(md, oldMd, refMd, pth, encList);

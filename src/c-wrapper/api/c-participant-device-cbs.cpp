@@ -69,26 +69,18 @@ void linphone_participant_device_cbs_set_conference_left (LinphoneParticipantDev
 	ParticipantDeviceCbs::toCpp(cbs)->setConferenceLeft(cb);
 }
 
-LinphoneParticipantDeviceCbsAudioDirectionChangedCb linphone_participant_device_cbs_get_audio_direction_changed (const LinphoneParticipantDeviceCbs *cbs) {
-	return ParticipantDeviceCbs::toCpp(cbs)->getAudioDirectionChanged();
+void linphone_participant_device_cbs_set_stream_availability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setStreamAvailabilityChanged(cb);
 }
 
-void linphone_participant_device_cbs_set_audio_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsAudioDirectionChangedCb cb) {
-	ParticipantDeviceCbs::toCpp(cbs)->setAudioDirectionChanged(cb);
+LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb linphone_participant_device_cbs_get_stream_availability_changed (const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getStreamAvailabilityChanged();
 }
 
-LinphoneParticipantDeviceCbsVideoDirectionChangedCb linphone_participant_device_cbs_get_video_direction_changed (const LinphoneParticipantDeviceCbs *cbs) {
-	return ParticipantDeviceCbs::toCpp(cbs)->getVideoDirectionChanged();
+void linphone_participant_device_cbs_set_stream_capability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setStreamCapabilityChanged(cb);
 }
 
-void linphone_participant_device_cbs_set_video_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsVideoDirectionChangedCb cb) {
-	ParticipantDeviceCbs::toCpp(cbs)->setVideoDirectionChanged(cb);
-}
-
-LinphoneParticipantDeviceCbsTextDirectionChangedCb linphone_participant_device_cbs_get_text_direction_changed (const LinphoneParticipantDeviceCbs *cbs) {
-	return ParticipantDeviceCbs::toCpp(cbs)->getTextDirectionChanged();
-}
-
-void linphone_participant_device_cbs_set_text_direction_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsTextDirectionChangedCb cb) {
-	ParticipantDeviceCbs::toCpp(cbs)->setTextDirectionChanged(cb);
+LinphoneParticipantDeviceCbsStreamCapabilityChangedCb linphone_participant_device_cbs_get_stream_capability_changed (const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getStreamCapabilityChanged();
 }

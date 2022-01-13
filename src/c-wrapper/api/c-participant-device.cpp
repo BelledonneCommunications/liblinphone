@@ -71,16 +71,12 @@ time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipan
 	return ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
 }
 
-LinphoneMediaDirection linphone_participant_device_get_audio_direction (const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getAudioDirection();
+LinphoneMediaDirection linphone_participant_device_get_stream_capability (const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
+	return ParticipantDevice::toCpp(participant_device)->getStreamCapability(stream_type);
 }
 
-LinphoneMediaDirection linphone_participant_device_get_video_direction (const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getVideoDirection();
-}
-
-LinphoneMediaDirection linphone_participant_device_get_text_direction (const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getTextDirection();
+bool_t linphone_participant_device_get_stream_availability (const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
+	return ParticipantDevice::toCpp(participant_device)->getStreamAvailability(stream_type);
 }
 
 uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device) {
@@ -139,15 +135,10 @@ void _linphone_participant_device_notify_conference_joined(LinphoneParticipantDe
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_joined);
 }
 
-void _linphone_participant_device_notify_audio_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_audio_direction_changed, direction);
+void _linphone_participant_device_notify_stream_capability_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction, const LinphoneStreamType stream_type) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_stream_capability_changed, direction, stream_type);
 }
 
-void _linphone_participant_device_notify_video_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_video_direction_changed, direction);
+void _linphone_participant_device_notify_stream_availability_changed(LinphoneParticipantDevice *participant_device, bool_t available, const LinphoneStreamType stream_type) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_stream_availability_changed, available, stream_type);
 }
-
-void _linphone_participant_device_notify_text_direction_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_text_direction_changed, direction);
-}
-

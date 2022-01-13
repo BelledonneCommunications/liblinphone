@@ -105,13 +105,8 @@ public:
 	ConferenceLayout getLayout() const { return mLayout; };
 
 	// Media getters and setters
-	LinphoneMediaDirection getAudioDirection() const;
-	LinphoneMediaDirection getVideoDirection() const;
-	LinphoneMediaDirection getTextDirection() const;
-	bool setAudioDirection(const LinphoneMediaDirection direction);
-	bool setVideoDirection(const LinphoneMediaDirection direction);
-	bool setTextDirection(const LinphoneMediaDirection direction);
-	bool updateMedia();
+	bool updateMediaCapabilities();
+	bool updateStreamAvailabilities();
 
 	bool adminModeSupported() const;
 	void enableAdminModeSupport(bool support);
@@ -119,6 +114,12 @@ public:
 	void * createWindowId() const;
 	void setWindowId(void * newWindowId);
 	void * getWindowId() const;
+
+	bool setStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type);
+	LinphoneMediaDirection getStreamCapability(const LinphoneStreamType type) const;
+
+	bool setStreamAvailability(const bool available, const LinphoneStreamType type);
+	bool getStreamAvailability(const LinphoneStreamType type) const;
 
 protected:
 	Conference *getConference () const;
@@ -138,13 +139,13 @@ private:
 	bool mSupportAdminMode = false;
 	void * mWindowId = NULL;
 
-	std::map<ConferenceMediaCapabilities, LinphoneMediaDirection> mediaCapabilities;
+	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
+	std::map<LinphoneStreamType, bool> streamAvailabilities;
 
 	void *mUserData = nullptr;
 
 	LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
-	bool setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceMediaCapabilities capIdx);
-	LinphoneMediaDirection getMediaDirection(const ConferenceMediaCapabilities capIdx) const;
+	bool computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };
@@ -159,19 +160,16 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 		void setConferenceJoined(LinphoneParticipantDeviceCbsConferenceJoinedCb cb);
 		LinphoneParticipantDeviceCbsConferenceLeftCb getConferenceLeft()const;
 		void setConferenceLeft(LinphoneParticipantDeviceCbsConferenceLeftCb cb);
-		LinphoneParticipantDeviceCbsAudioDirectionChangedCb getAudioDirectionChanged()const;
-		void setAudioDirectionChanged(LinphoneParticipantDeviceCbsAudioDirectionChangedCb cb);
-		LinphoneParticipantDeviceCbsVideoDirectionChangedCb getVideoDirectionChanged()const;
-		void setVideoDirectionChanged(LinphoneParticipantDeviceCbsVideoDirectionChangedCb cb);
-		LinphoneParticipantDeviceCbsTextDirectionChangedCb getTextDirectionChanged()const;
-		void setTextDirectionChanged(LinphoneParticipantDeviceCbsTextDirectionChangedCb cb);
+		LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged()const;
+		void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
+		LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged()const;
+		void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
 	private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsConferenceJoinedCb mConferenceJoinedCb = nullptr;
 	LinphoneParticipantDeviceCbsConferenceLeftCb mConferenceLeftCb = nullptr;
-	LinphoneParticipantDeviceCbsAudioDirectionChangedCb mAudioDirectionChangedCb = nullptr;
-	LinphoneParticipantDeviceCbsVideoDirectionChangedCb mVideoDirectionChangedCb = nullptr;
-	LinphoneParticipantDeviceCbsTextDirectionChangedCb mTextDirectionChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb mStreamAvailabilityChangedCb = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

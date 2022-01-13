@@ -2739,9 +2739,9 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 							for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 								LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
 								if (enable == TRUE) {
-									BC_ASSERT_TRUE(linphone_participant_device_get_video_direction(d) == LinphoneMediaDirectionSendRecv);
+									BC_ASSERT_TRUE(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == LinphoneMediaDirectionSendRecv);
 								} else {
-									BC_ASSERT_TRUE(linphone_participant_device_get_video_direction(d) == LinphoneMediaDirectionInactive);
+									BC_ASSERT_TRUE(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == LinphoneMediaDirectionInactive);
 								}
 							}
 							if (devices) {
@@ -2771,6 +2771,29 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_rparams), enable, int, "%0d");
 					const LinphoneCallParams* call_cparams = linphone_call_get_current_params(ccall);
 					BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_cparams), enable, int, "%0d");
+				}
+
+				LinphoneAddress *paulineUri = linphone_address_new(linphone_core_get_identity(pauline.getLc()));
+				LinphoneConference * paulineConference = linphone_core_search_conference(pauline.getLc(), NULL, paulineUri, confAddr, NULL);
+				linphone_address_unref(paulineUri);
+				BC_ASSERT_PTR_NOT_NULL(paulineConference);
+
+				if (paulineConference) {
+					bctbx_list_t *participants = linphone_conference_get_participant_list(paulineConference);
+					for (bctbx_list_t *itp = participants; itp; itp = bctbx_list_next(itp)) {
+						LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(itp);
+
+						bctbx_list_t *devices = linphone_participant_get_devices (p);
+						for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
+							LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+							BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == enable);
+						}
+
+						if (devices) {
+							bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+						}
+					}
+					bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 				}
 
 				// Wait a little bit

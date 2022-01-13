@@ -410,11 +410,13 @@ static {{return}} {{callbackName}}({{params}}) {
 	env->DeleteLocalRef(jlistenerClass);
 	env->DeleteLocalRef(up);
 
+	{{#needLjb}}
+	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
+	{{/needLjb}}
 	{{#jobjects}}
 	jobject j_{{objectName}} = get{{className}}(env, (Linphone{{className}} *){{objectName}}, TRUE, {{isObjectConst}});
 	{{/jobjects}}
 	{{#jenums}}
-	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 	jobject j_{{enumName}} = env->CallStaticObjectMethod(ljb->{{cEnumPrefix}}_class, ljb->{{cEnumPrefix}}_class_constructor_from_int, (jint){{enumName}});
 	{{/jenums}}
 	{{#jstrings}}
@@ -424,7 +426,6 @@ static {{return}} {{callbackName}}({{params}}) {
 	bctbx_list_t *list_it = (bctbx_list_t *){{list_name}};
 	size_t count = bctbx_list_size({{list_name}});
 	{{#isRealObjectArray}}
-	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 	jobjectArray j_{{list_name}} = env->NewObjectArray((int)count, ljb->{{objectCPrefix}}_class, nullptr);{{/isRealObjectArray}}
 	{{#isStringObjectArray}}jobjectArray j_{{list_name}} = env->NewObjectArray((int)count, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
 	int i = 0;
