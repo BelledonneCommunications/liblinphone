@@ -147,9 +147,9 @@ LinphoneStatus sip_setup_context_login_account(SipSetupContext * ctx, const char
 		ms_warning("Fail to parse %s",uri);
 		return -1;
 	}
-	strncpy(ctx->domain,linphone_address_get_domain(from),sizeof(ctx->domain));
+	strncpy(ctx->domain, linphone_address_get_domain(from), sizeof(ctx->domain) - 1);
 	ctx->domain[sizeof(ctx->domain) - 1] = '\0';
-	strncpy(ctx->username,linphone_address_get_username(from),sizeof(ctx->username));
+	strncpy(ctx->username, linphone_address_get_username(from), sizeof(ctx->username) - 1);
 	ctx->username[sizeof(ctx->username) - 1] = '\0';
 	linphone_address_unref(from);
 	if (ctx->funcs->login_account)
