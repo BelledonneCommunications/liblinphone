@@ -590,19 +590,23 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		
 		if ((ice_check_list_state(cl) == ICL_Completed) && (ice_session_role(mIceSession) == IR_Controlling)) {
 			stream.ice_remote_candidates.clear();
-			if (ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate)) {
+			bool_t ok = ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate);
+			if (rtpCandidate){
 				SalIceRemoteCandidate rtp_remote_candidate;
 				rtp_remote_candidate.addr = L_C_TO_STRING(rtpCandidate->taddr.ip);
 				rtp_remote_candidate.port = rtpCandidate->taddr.port;
 				stream.ice_remote_candidates.push_back(rtp_remote_candidate);
-				if (rtcpCandidate){
+			}
+			if (rtcpCandidate){
 					SalIceRemoteCandidate rtcp_remote_candidate;
 					rtcp_remote_candidate.addr = L_C_TO_STRING(rtcpCandidate->taddr.ip);
 					rtcp_remote_candidate.port = rtcpCandidate->taddr.port;
 					stream.ice_remote_candidates.push_back(rtcp_remote_candidate);
-				}
-			} else {
-				lError() << "ice: Selected valid remote candidates should be present if the check list is in the Completed state";
+			} else if (!ok){
+				lWarning() << "IceService: no RTCP valid remote candidates, rtcp-mux used ?";
+			}
+			if (rtpCandidate == nullptr && rtcpCandidate == nullptr){
+				lError() << "IceService: Selected valid remote candidates should be present if the check list is in the Completed state. This is a BUG !";
 			}
 		} else {
 			for (auto & ice_remote_candidate : stream.ice_remote_candidates) {
