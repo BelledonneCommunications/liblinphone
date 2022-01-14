@@ -582,6 +582,13 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to_another (LinphoneCall *
 LINPHONE_PUBLIC void * linphone_call_get_native_video_window_id(const LinphoneCall *call);
 
 /**
+ * Create a native video window id where the video is to be displayed.
+ * @param call the #LinphoneCall object @notnil
+ * @return the native video window id (type may vary depending on platform). @maybenil
+**/
+LINPHONE_PUBLIC void * linphone_call_create_native_video_window_id(const LinphoneCall *call);
+
+/**
  * Set the native video window id where the video is to be displayed.
  * For MacOS, Linux, Windows: if not set or 0 a window will be automatically created, unless the special id -1 is given.
  * @param call the #LinphoneCall object @notnil

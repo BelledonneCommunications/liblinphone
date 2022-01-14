@@ -170,6 +170,7 @@ public:
 	RtpTransport *getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;
 	void *getNativeVideoWindowId () const;
+	void *createNativeVideoWindowId () const;
 	const MediaSessionParams *getParams () const;
 	LinphonePlayer *getPlayer () const;
 	float getPlayVolume () const;

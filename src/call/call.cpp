@@ -1179,6 +1179,10 @@ void *Call::getNativeVideoWindowId () const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getNativeVideoWindowId();
 }
 
+void *Call::createNativeVideoWindowId () const {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->createNativeVideoWindowId();
+}
+
 const MediaSessionParams *Call::getParams () const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getMediaParams();
 }

@@ -429,6 +429,10 @@ void *linphone_call_get_native_video_window_id (const LinphoneCall *call) {
 	return Call::toCpp(call)->getNativeVideoWindowId();
 }
 
+void *linphone_call_create_native_video_window_id (const LinphoneCall *call) {
+	return Call::toCpp(call)->createNativeVideoWindowId();
+}
+
 void linphone_call_set_native_video_window_id (LinphoneCall *call, void *id) {
 	Call::toCpp(call)->setNativeVideoWindowId(id);
 }
