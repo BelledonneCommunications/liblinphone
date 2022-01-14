@@ -1956,20 +1956,18 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 					enableVideoStream = false;
 					videoDir = SalStreamInactive;
 				} else if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) {
+					enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : true;
 					// Enable video based on conference capabilities if:
 					// - joining conference
 					// - receiving an offer
 					switch (confLayout) {
 						case ConferenceLayout::ActiveSpeaker:
-							enableVideoStream = true;
 							videoDir = SalStreamSendRecv;
 							break;
 						case ConferenceLayout::Grid:
-							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : true;
 							videoDir = SalStreamRecvOnly;
 							break;
 						case ConferenceLayout::None:
-							enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : true;
 							videoDir = getParams()->getPrivate()->getSalVideoDirection();
 							break;
 					}
@@ -1978,18 +1976,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 					enableVideoStream = (localIsOfferer) ? callVideoEnabled : isVideoConferenceEnabled;
 				}
 			} else {
+				enableVideoStream = callVideoEnabled;
 				switch (confLayout) {
 					case ConferenceLayout::ActiveSpeaker:
 						videoDir = (localIsOfferer) ? ((callVideoEnabled) ? SalStreamSendOnly : SalStreamInactive) : getParams()->getPrivate()->getSalVideoDirection();
-						enableVideoStream = true;
 						break;
 					case ConferenceLayout::None:
 						videoDir = getParams()->getPrivate()->getSalVideoDirection();
-						enableVideoStream = callVideoEnabled;
 						break;
 					case ConferenceLayout::Grid:
 						videoDir = (localIsOfferer) ? ((callVideoEnabled) ? SalStreamSendOnly : SalStreamInactive) : getParams()->getPrivate()->getSalVideoDirection();
-						enableVideoStream = callVideoEnabled;
 						break;
 				}
 			}
@@ -2800,7 +2796,7 @@ LinphoneMediaDirection MediaSessionPrivate::getVideoDirFromMd (const std::shared
 	return MediaSessionParamsPrivate::salStreamDirToMediaDirection(videoStream.getDirection());
 }
 
-int MediaSessionPrivate::getThumbnailStreamIdx() const {
+int MediaSessionPrivate::getThumbnailStreamIdx(bool useNegotiatedMediaDesc) const {
 	L_Q();
 	// In order to set properly the negotiated parameters, we must know if the client is sending video to the conference, i.e. look at the thumbnail stream direction. In order to do so, we must know the label of the searched thumbnail stream.
 	// The local case is quite straightforward because all labels are known, but for the client is more difficult as the NOTIFY message may have not come or been processed.
@@ -2813,7 +2809,7 @@ int MediaSessionPrivate::getThumbnailStreamIdx() const {
 		const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
 		const auto & confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
 		const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-		const auto & md = (isInLocalConference) ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
+		const auto & md = (useNegotiatedMediaDesc) ? op->getFinalMediaDescription() : ((isInLocalConference) ? op->getLocalMediaDescription() : op->getRemoteMediaDescription());
 		SalStreamDescription mainVideoStream;
 		if (md) {
 			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
@@ -2834,6 +2830,7 @@ int MediaSessionPrivate::getThumbnailStreamIdx() const {
 }
 
 void MediaSessionPrivate::updateCurrentParams () const {
+	L_Q();
 	CallSessionPrivate::updateCurrentParams();
 
 	VideoControlInterface *i = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
@@ -2953,19 +2950,23 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			getCurrentParams()->enableAudio(false);
 		}
 
-		const auto streamIdx = getThumbnailStreamIdx();
+		const auto streamIdx = getThumbnailStreamIdx(true);
 		const auto &videoStream = (streamIdx == -1) ? md->findBestStream(SalVideo) : md->getStreamIdx(static_cast<unsigned int>(streamIdx));
 		if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(videoStream.hasImplicitAvpf());
 
-			getCurrentParams()->setVideoDirection(getVideoDirFromMd(md));
+			const auto videoDirection = getVideoDirFromMd(md);
+			getCurrentParams()->setVideoDirection(videoDirection);
 
 			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
 				const std::string & rtpAddr = (videoStream.getRtpAddress().empty() == false) ? videoStream.getRtpAddress() : md->addr;
 				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr.c_str()));
 			} else
 				getCurrentParams()->enableVideoMulticast(false);
-			getCurrentParams()->enableVideo(videoStream.enabled());
+			LinphoneConference * conference = listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis())) : nullptr;
+			const auto enable = (conference) ? (videoDirection != LinphoneMediaDirectionInactive) : videoStream.enabled();
+
+			getCurrentParams()->enableVideo(enable);
 		} else {
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(false);
 			getCurrentParams()->setVideoDirection(LinphoneMediaDirectionInactive);
@@ -4261,7 +4262,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, audioStream.custom_sdp_attributes);
 			}else params->enableAudio(false);
 
-			const auto streamIdx = d->getThumbnailStreamIdx();
+			const auto streamIdx = d->getThumbnailStreamIdx(false);
 			const auto &videoStream = (streamIdx == -1) ? md->findBestStream(SalVideo) : md->getStreamIdx(static_cast<unsigned int>(streamIdx));
 			if (videoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){
 				params->enableVideo(videoStream.enabled());
