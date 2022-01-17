@@ -149,16 +149,34 @@ namespace Ics {
 		int mSecond;
 	};
 
+	void replace_all(string& inout, string what, string with) {
+		for (string::size_type pos{}; inout.npos != (pos = inout.find(what.data(), pos, what.length())); pos += with.length()) {
+			inout.replace(pos, what.length(), with.data(), with.length());
+		}
+	}
+
 	class EventNode : public Node {
 	public:
 		EventNode () = default;
 
 		void setSummary (const string &summary) {
 			mSummary = summary;
+
+			// We need to unescape "\n", "\", ";", ","
+			replace_all(mSummary, "\\n", "\n");
+			replace_all(mSummary, "\\;", ";");
+			replace_all(mSummary, "\\,", ",");
+			replace_all(mSummary, "\\\\", "\\");
 		}
 
 		void setDescription (const string &description) {
 			mDescription = description;
+
+			// We need to unescape "\n", "\", ";", ","
+			replace_all(mDescription, "\\n", "\n");
+			replace_all(mDescription, "\\;", ";");
+			replace_all(mDescription, "\\,", ",");
+			replace_all(mDescription, "\\\\", "\\");
 		}
 
 		void setXProp (const string &xProp) {

@@ -87,6 +87,22 @@ void Ics::Event::setXConfUri (const std::string &xConfUri) {
 	mXConfUri = xConfUri;
 }
 
+static std::string escape (std::string str) {
+	ostringstream output;
+
+	std::for_each(str.cbegin(), str.cend(), [&output] (char c) {
+		switch(c) {
+			case '\\': output << "\\\\"; break;
+			case '\n': output << "\\n"; break;
+			case ';': output << "\\;"; break;
+			case ',': output << "\\,"; break;
+			default: output << c;
+		}
+	});
+
+	return output.str();
+}
+
 std::string Ics::Event::asString () const {
 	ostringstream output;
 
@@ -117,8 +133,8 @@ std::string Ics::Event::asString () const {
 		}
 	}
 	if (!mXConfUri.empty()) output << "X-CONFURI:" << mXConfUri << "\r\n";
-	if (!mSummary.empty()) output << "SUMMARY:" << mSummary << "\r\n";
-	if (!mDescription.empty()) output << "DESCRIPTION:" << mDescription << "\r\n";
+	if (!mSummary.empty()) output << "SUMMARY:" << escape(mSummary) << "\r\n";
+	if (!mDescription.empty()) output << "DESCRIPTION:" << escape(mDescription) << "\r\n";
 
 	// An EVENT needs two mandatory attributes DTSTAMP AND UID
 	time_t usedTime = mCreationTime != (time_t) -1 ? mCreationTime : ms_time(NULL);

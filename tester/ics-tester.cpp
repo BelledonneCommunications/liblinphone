@@ -79,6 +79,10 @@ static void parse_rfc_example () {
 
 	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
 	BC_ASSERT_PTR_NOT_NULL(ics);
+
+	const string expectedDescription = "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\n Atlanta, Georgia";
+	auto confInfo = ics->toConferenceInfo();
+	BC_ASSERT_STRING_EQUAL(confInfo->getDescription().c_str(), expectedDescription.c_str());
 }
 
 static void parse_folded_example () {
@@ -102,14 +106,18 @@ static void parse_folded_example () {
 
 	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
 	BC_ASSERT_PTR_NOT_NULL(ics);
+
+	const string expectedDescription = "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\nAtlanta, Georgia";
+	auto confInfo = ics->toConferenceInfo();
+	BC_ASSERT_STRING_EQUAL(confInfo->getDescription().c_str(), expectedDescription.c_str());
 }
 
 static void build_ics () {
 	Ics::Icalendar calendar;
 	auto event = make_shared<Ics::Event>();
 
-	event->setSummary("\n\n    Conf chat vidéo");
-	event->setDescription("Parler de la vidéo conférence et répartir les tâches.\n\n\n    ");
+	event->setSummary("\n\n    Conf chat audio\\vidéo");
+	event->setDescription("Parler de la vidéo conférence et \nrépartir les tâches, puis le développement ;-\\.\n\n\n    ");
 	event->setOrganizer("sip:marie@sip.linphone.org");
 	event->addAttendee("sip:pauline@sip.linphone.org");
 	event->addAttendee("sip:laure@sip.linphone.org");
@@ -143,8 +151,9 @@ static void build_ics () {
 		"ATTENDEE:sip:pauline@sip.linphone.org\r\n"
 		"ATTENDEE:sip:laure@sip.linphone.org\r\n"
 		"X-CONFURI:sip:videoconf1@sip.linphone.org\r\n"
-		"SUMMARY:Conf chat vidéo\r\n"
-		"DESCRIPTION:Parler de la vidéo conférence et répartir les tâches.\r\n"
+		"SUMMARY:Conf chat audio\\\\vidéo\r\n"
+		"DESCRIPTION:Parler de la vidéo conférence et \\nrépartir les tâches\\, p\r\n"
+		" uis le développement \\;-\\\\.\r\n"
 		"DTSTAMP:19700101T000000Z\r\n"
 		"UID:19700101T000000Z@sip.linphone.org\r\n"
 		"END:VEVENT\r\n"
