@@ -91,6 +91,35 @@ namespace linphone {
 		static std::list<std::string> bctbxListToCppList(::bctbx_list_t *bctbxList);
 	};
 
+	template <class T>
+	class EnumBctbxListWrapper: public AbstractBctbxListWrapper {
+	public:
+		EnumBctbxListWrapper(const std::list<T> &cppList): AbstractBctbxListWrapper() {
+			mCList = fromCppList(cppList);
+		}
+		virtual ~EnumBctbxListWrapper() {
+			bctbx_list_free(mCList);
+		}
+		static bctbx_list_t* fromCppList(const std::list<T> &cppList) {
+			bctbx_list_t* cList = NULL;
+			for(auto val : cppList) {
+				cList = bctbx_list_append(cList, reinterpret_cast<void *>(static_cast<intptr_t>(val)));
+			}
+			return cList;
+		}
+		static std::list<T> bctbxListToCppList(const ::bctbx_list_t *bctbxList) {
+			std::list<T> cppList{};
+			for(auto it=bctbxList; it; it=it->next) {
+				cppList.push_back(static_cast<T>(static_cast<int>(reinterpret_cast<intptr_t>(it->data))));
+			}
+			return cppList;
+		}
+		static std::list<T> bctbxListToCppList(::bctbx_list_t *bctbxList) {
+			auto cppList = bctbxListToCppList(const_cast<const ::bctbx_list_t *>(bctbxList));
+			if (bctbxList) bctbx_list_free(bctbxList);
+			return cppList;
+		}
+	};
 
 	template <class T, class U>
 	class StructBctbxListWrapper: public AbstractBctbxListWrapper {

@@ -175,7 +175,7 @@ LINPHONE_PUBLIC void linphone_call_params_set_supported_encryptions (LinphoneCal
 /**
  * Returns the list of enable srtp suite in the call (enforced only if SDES is the selected encryption mode)
  * @param call_params the #LinphoneCallParams @notnil
- * @return a list of srtp suite enabled in a given call \bctbx_list{MSCryptoSuite} @notnil
+ * @return a list of srtp suite enabled in a given call \bctbx_list{LinphoneSrtpSuite} @notnil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_call_params_get_srtp_suites(LinphoneCallParams *call_params);
@@ -183,7 +183,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_call_params_get_srtp_suites(LinphoneCallP
 /**
  * Sets the list of srtp suite enabled(enforced only when SDES is the encryption mode)
  * @param call_params #LinphoneCallParams object @notnil
- * @param srtpSuites list with the list of SRTP encryption suites enabled in a given call \bctbx_list{MSCryptoSuite} @notnil
+ * @param srtpSuites list with the list of SRTP encryption suites enabled in a given call \bctbx_list{LinphoneSrtpSuite} @notnil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_call_params_set_srtp_suites(LinphoneCallParams *call_params, bctbx_list_t* srtpSuites);
