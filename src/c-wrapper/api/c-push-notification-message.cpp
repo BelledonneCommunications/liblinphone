@@ -26,10 +26,10 @@ using namespace LinphonePrivate;
 LinphonePushNotificationMessage *linphone_push_notification_message_new(const char *call_id, bool_t is_text,
 																		const char *text_content, const char *subject,
 																		const char *from_addr, const char *local_addr,
-																		const char *peer_addr) {
+																		const char *peer_addr, bool_t is_icalendar) {
 	return PushNotificationMessage::createCObject(
 		call_id ? call_id : "", is_text, text_content ? text_content : "",
-		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "");
+		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "", is_icalendar);
 }
 
 LinphonePushNotificationMessage *linphone_push_notification_message_ref(LinphonePushNotificationMessage *msg) {
@@ -76,4 +76,8 @@ const LinphoneAddress *linphone_push_notification_message_get_local_addr(const L
 const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *msg) {
 	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->asString().c_str());
 	;
+}
+
+bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *msg) {
+	return PushNotificationMessage::toCpp(msg)->isIcalendar();
 }

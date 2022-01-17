@@ -37,7 +37,7 @@ extern "C" {
 
 LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_message_new(const char *call_id, bool_t is_text,
 									   const char *text_content, const char *subject, const char *from_addr,
-									   const char *local_addr, const char *peer_addr);
+									   const char *local_addr, const char *peer_addr, bool_t is_icalendar);
 
 /**
  * Take a reference on a #LinphonePushNotificationMessage.
@@ -100,6 +100,13 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_lo
  * @return The peer #LinphoneAddress. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *message);
+
+/**
+ * Tells whether or not this message contains an icalendar by checking it's content type.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this content type is 'text/calendar;conference-event=yes', FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *message);
 
 /**
  * @}

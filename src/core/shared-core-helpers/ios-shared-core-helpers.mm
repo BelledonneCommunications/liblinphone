@@ -349,9 +349,11 @@ void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
 	NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
 	NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
 	NSNumber *ttl = [NSNumber numberWithUnsignedLongLong:ms_get_cur_time_ms()];
+	const char *type = linphone_chat_message_get_content_type(msg) ;
+	NSNumber *isIcalendar = [NSNumber numberWithBool: strcmp(type, "text/calendar;conference-event=yes") == 0 ? true : false];
 
-	NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, nil]
-							forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", @"ttl", nil]];
+	NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, isIcalendar, nil]
+							forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", @"ttl", @"isIcalendar", nil]];
 
 	[messages setObject:newMsg forKey:callId];
 	[defaults setObject:messages forKey:@"messages"];
@@ -369,6 +371,8 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 	string fromAddr;
 	string localAddr;
 	string peerAddr;
+	bool isIcalendar;
+	
 
 	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
 	NSString *objcCallId = [NSString stringWithUTF8String:callId.c_str()];
@@ -391,13 +395,14 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 	fromAddr = [[NSString stringWithString:msgData[@"fromAddr"]] UTF8String];
 	localAddr = [[NSString stringWithString:msgData[@"localAddr"]] UTF8String];
 	peerAddr = [[NSString stringWithString:msgData[@"peerAddr"]] UTF8String];
+	isIcalendar = [msgData[@"isIcalendar"] boolValue];
 
 	[messages removeObjectForKey:objcCallId];
 	lInfo() << "[push] push received: removed " << callId.c_str() << " from UserDefaults[messages]. nb of msg: " << [messages count];
 	[defaults setObject:messages forKey:@"messages"];
 	[defaults release];
 
-	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
+	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, isIcalendar);
 	lInfo() << "[push] PushNotificationMessage created: " << msg->toString();
 	return msg;
 }

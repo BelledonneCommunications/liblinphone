@@ -26,15 +26,15 @@ LINPHONE_BEGIN_NAMESPACE
 PushNotificationMessage::PushNotificationMessage(const std::string &callId, bool isText,
 												 const std::string &textContent, const std::string &subject,
 												 const std::string &fromAddr, const std::string &localAddr,
-												 const std::string &peerAddr) {
+												 const std::string &peerAddr, bool isIcalendar) {
 	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr,
-								  peerAddr);
+								  peerAddr, isIcalendar);
 }
 
 void PushNotificationMessage::init(const std::string &callId, bool isText,
 								   const std::string &textContent, const std::string &subject,
 								   const std::string &fromAddr, const std::string &localAddr,
-								   const std::string &peerAddr) {
+								   const std::string &peerAddr, bool isIcalendar) {
 	mCallId = callId;
 	mIsText = isText;
 	mTextContent = textContent;
@@ -42,6 +42,7 @@ void PushNotificationMessage::init(const std::string &callId, bool isText,
 	mFromAddr = fromAddr;
 	mLocalAddr = localAddr;
 	mPeerAddr = peerAddr;
+	mIsIcalendar = isIcalendar;
 }
 
 const std::string &PushNotificationMessage::getCallId() const {
@@ -71,6 +72,10 @@ shared_ptr<Address> PushNotificationMessage::getPeerAddr() const {
 	return make_shared<Address>(mPeerAddr);
 }
 
+bool PushNotificationMessage::isIcalendar() const {
+	return mIsIcalendar;
+}
+
 std::string PushNotificationMessage::toString() const {
 	std::ostringstream ss;
 
@@ -81,6 +86,7 @@ std::string PushNotificationMessage::toString() const {
 	ss << "fromAddr[" << mFromAddr << "] ";
 	ss << "localAddr[" << mLocalAddr << "] ";
 	ss << "peerAddr[" << mPeerAddr << "] ";
+	ss << "isIcalendar[" << mIsIcalendar << "] ";
 
 	return ss.str();
 }

@@ -29,11 +29,11 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
   public:
 	PushNotificationMessage(const std::string &callId, bool isText,
 							const std::string &textContent, const std::string &subject, const std::string &fromAddr,
-							const std::string &localAddr, const std::string &peerAddr);
+							const std::string &localAddr, const std::string &peerAddr, bool isIcalendar);
 
 	void init(const std::string &callId, bool isText, const std::string &textContent,
 			  const std::string &subject, const std::string &fromAddr, const std::string &localAddr,
-			  const std::string &peerAddr);
+			  const std::string &peerAddr, bool isIcalendar);
 
 	const std::string &getCallId() const;
 	bool isText() const;
@@ -42,6 +42,7 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::shared_ptr<Address> getFromAddr() const;
 	std::shared_ptr<Address> getLocalAddr() const;
 	std::shared_ptr<Address> getPeerAddr() const;
+	bool isIcalendar() const;
 
 	std::string toString() const override;
 
@@ -53,6 +54,7 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::string mFromAddr;
 	std::string mLocalAddr;
 	std::string mPeerAddr;
+	bool mIsIcalendar;
 };
 
 LINPHONE_END_NAMESPACE
