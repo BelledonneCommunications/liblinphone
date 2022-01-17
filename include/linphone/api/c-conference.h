@@ -168,13 +168,19 @@ LINPHONE_PUBLIC time_t linphone_conference_params_get_end_time(const LinphoneCon
  */
 LINPHONE_PUBLIC void linphone_conference_params_set_participant_list_type(LinphoneConferenceParams *params, LinphoneConferenceParticipantListType type);
 
-
 /**
  * Get the participant list type
  * @param conference The #LinphoneConference object. @notnil
  * @return participant list type #LinphoneConferenceParticipantListType.
  */
 LINPHONE_PUBLIC LinphoneConferenceParticipantListType linphone_conference_params_get_participant_list_type(const LinphoneConferenceParams *params);
+
+/**
+ * Get the current state of the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the #LinphoneConferenceState of the conference.
+ */
+LINPHONE_PUBLIC LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *conference);
 
 /**
  * @}

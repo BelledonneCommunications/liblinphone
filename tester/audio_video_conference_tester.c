@@ -813,7 +813,6 @@ end:
 	destroy_mgr_in_conference(laure);
 }
 
-#if 0
 static void simple_conference_with_admin_changed(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -1521,7 +1520,6 @@ static void simple_conference_with_subject_change_from_not_admin(void) {
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
-#endif
 
 static void simple_conference_with_one_participant_base(bool_t local) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -2306,7 +2304,6 @@ static void simple_conference_with_one_participant(void) {
 	bctbx_list_free(all_manangers_in_conf);
 }
 
-#if 0
 static void simple_conference_with_subject_change_from_admin_base(bool_t enable_video) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -2329,7 +2326,9 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(laure->lc, liblinphone_tester_mire_id);
 	linphone_core_set_video_device(michelle->lc, liblinphone_tester_mire_id);
-	linphone_core_set_video_device(((LinphoneCoreManager*)focus)->lc, liblinphone_tester_mire_id);
+	if (enable_video) {
+		linphone_core_set_video_device(((LinphoneCoreManager*)focus)->lc, liblinphone_tester_mire_id);
+	}
 
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
@@ -2339,8 +2338,10 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 	linphone_core_enable_video_display(laure->lc, TRUE);
 	linphone_core_enable_video_capture(michelle->lc, TRUE);
 	linphone_core_enable_video_display(michelle->lc, TRUE);
-	linphone_core_enable_video_capture(((LinphoneCoreManager*)focus)->lc, TRUE);
-	linphone_core_enable_video_display(((LinphoneCoreManager*)focus)->lc, TRUE);
+	if (enable_video) {
+		linphone_core_enable_video_capture(((LinphoneCoreManager*)focus)->lc, TRUE);
+		linphone_core_enable_video_display(((LinphoneCoreManager*)focus)->lc, TRUE);
+	}
 
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -2493,7 +2494,6 @@ static void simple_conference_with_subject_change_from_admin(void) {
 static void simple_video_conference_with_subject_change_from_admin(void) {
 	simple_conference_with_subject_change_from_admin_base(TRUE);
 }
-#endif
 
 static void simple_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
@@ -10255,14 +10255,14 @@ test_t audio_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple conference notify speaking device", simple_conference_notify_speaking_device),
 	TEST_NO_TAG("Simple conference established before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
-//	TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),
-//	TEST_NO_TAG("Simple conference with participant removal from not admin", simple_conference_with_participant_removal_from_not_admin),
-//	TEST_NO_TAG("Simple conference with participant addition from not admin", simple_conference_with_participant_addition_from_not_admin),
-//	TEST_NO_TAG("Simple conference with subject change from not admin", simple_conference_with_subject_change_from_not_admin),
-//	TEST_NO_TAG("Simple conference with subject change from admin", simple_conference_with_subject_change_from_admin),
+	TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),
+	TEST_NO_TAG("Simple conference with participant removal from not admin", simple_conference_with_participant_removal_from_not_admin),
+	TEST_NO_TAG("Simple conference with participant addition from not admin", simple_conference_with_participant_addition_from_not_admin),
+	TEST_NO_TAG("Simple conference with subject change from not admin", simple_conference_with_subject_change_from_not_admin),
+	TEST_NO_TAG("Simple conference with subject change from admin", simple_conference_with_subject_change_from_admin),
 	TEST_NO_TAG("Simple conference with one participant with local", simple_conference_with_one_participant_local),
 	TEST_NO_TAG("Simple conference with one participant without local", simple_conference_with_one_participant_no_local),
-//	TEST_NO_TAG("Simple video conference with subject change from admin", simple_video_conference_with_subject_change_from_admin),
+	TEST_NO_TAG("Simple video conference with subject change from admin", simple_video_conference_with_subject_change_from_admin),
 	TEST_NO_TAG("Simple conference with one participant", simple_conference_with_one_participant),
 	TEST_NO_TAG("Simple conference with active speaker layout", simple_conference_with_active_speaker_layout),
 	TEST_NO_TAG("Simple conference with grid layout", simple_conference_with_grid_layout),

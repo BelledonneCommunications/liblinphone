@@ -441,8 +441,10 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&zrtp_ice_capability_negotiation_test_suite);
 	bc_tester_add_suite(&dtls_srtp_ice_capability_negotiation_test_suite);
 #ifdef VIDEO_ENABLED
+	bc_tester_add_suite(&video_test_suite);
 	bc_tester_add_suite(&call_video_test_suite);
 	bc_tester_add_suite(&call_video_msogl_test_suite);// Conditionals are defined in suite
+	bc_tester_add_suite(&call_video_quality_test_suite);
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
@@ -485,10 +487,6 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&conference_info_tester);
 #endif
 	bc_tester_add_suite(&property_container_test_suite);
-#ifdef VIDEO_ENABLED
-	bc_tester_add_suite(&video_test_suite);
-	bc_tester_add_suite(&call_video_quality_test_suite);
-#endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&multicast_call_test_suite);
 	bc_tester_add_suite(&proxy_config_test_suite);
 	bc_tester_add_suite(&account_test_suite);

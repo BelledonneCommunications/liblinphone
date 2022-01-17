@@ -543,6 +543,10 @@ LinphoneConferenceParticipantListType linphone_conference_params_get_participant
 	return static_cast<LinphoneConferenceParticipantListType>(ConferenceParams::toCpp(params)->getParticipantListType());
 }
 
+bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params) {
+	return (ConferenceParams::toCpp(params)->isStatic() ? TRUE : FALSE);
+}
+
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getID().c_str();
 }
@@ -555,5 +559,3 @@ void linphone_conference_notify_audio_device_changed(LinphoneConference *confere
 	LinphoneCore * core = MediaConference::Conference::toCpp(conference)->getCore()->getCCore();
 	linphone_core_notify_audio_device_changed(core, audio_device);
 }
-
-

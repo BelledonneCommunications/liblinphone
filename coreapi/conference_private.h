@@ -46,11 +46,6 @@ typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference,
 char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
 /**
- * Get the state of a conference
- */
-LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *obj);
-
-/**
  * Set a callback which will be called when the state of the conferenec is switching
  * @param obj A #LinphoneConference object
  * @param cb The callback to call

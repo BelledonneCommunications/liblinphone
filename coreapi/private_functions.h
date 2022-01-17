@@ -134,10 +134,10 @@ time_t linphone_call_params_get_end_time (const LinphoneCallParams *params);
 const char * linphone_call_params_get_description (const LinphoneCallParams *params);
 
 
-// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 void linphone_call_params_set_end_time (LinphoneCallParams *params, time_t time);
 void linphone_call_params_set_start_time (LinphoneCallParams *params, time_t time);
 void linphone_call_params_set_description (LinphoneCallParams *params, const char * desc);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams *params, bool_t value);
 LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
@@ -348,6 +348,8 @@ void _linphone_participant_device_notify_stream_capability_changed(LinphoneParti
 
 void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerState state);
 void linphone_conference_scheduler_notify_invitations_sent(LinphoneConferenceScheduler *conference_scheduler, bctbx_list_t *failed_invites);
+
+LINPHONE_PUBLIC bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params);
 
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);

@@ -2179,86 +2179,89 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	for (size_t i = 0; i < md->streams.size(); i++) {
 
 		auto & newStream = md->streams[i];
-		auto & newStreamActualCfg = newStream.cfgs[newStream.getActualConfigurationIndex()];
-		auto & newStreamActualCfgCrypto = newStreamActualCfg.crypto;
 
 		// Make best effort to keep same keys if user wishes so
-		if (keepSrtpKeys && oldMd && (i < oldMd->streams.size()) && oldMd->streams[i].enabled()) {
-			const auto & oldStream = oldMd->streams[i];
-			const auto & oldStreamSupportedEncryptions = oldStream.getSupportedEncryptions();
-			const bool oldStreamSupportsSrtp = (std::find(oldStreamSupportedEncryptions.cbegin(), oldStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != oldStreamSupportedEncryptions.cend());
-			const auto newStreamSupportedEncryptions = newStream.getSupportedEncryptions();
-			const bool newStreamSupportsSrtp = (std::find(newStreamSupportedEncryptions.cbegin(), newStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != newStreamSupportedEncryptions.cend());
-			const auto & oldStreamActualCfg = oldStream.getActualConfiguration();
-			const auto & oldStreamActualCfgCrypto = oldStreamActualCfg.crypto;
+		if (newStream.enabled()) {
+			auto & newStreamActualCfg = newStream.cfgs[newStream.getActualConfigurationIndex()];
+			auto & newStreamActualCfgCrypto = newStreamActualCfg.crypto;
 
-			// Actual configuration
-			if (newStreamActualCfg.hasSrtp()) {
-				if (forceKeyGeneration) {
-					// Generate new crypto keys
-					newStreamActualCfgCrypto = generateNewCryptoKeys();
-				} else if (oldStreamActualCfg.hasSrtp()) {
-					// If old stream actual configuration supported SRTP, then copy crypto parameters
-					lInfo() << "Keeping same crypto keys when making new local stream description";
-					newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
-				} else if (oldMd->supportCapabilityNegotiation()) {
-					// Search crypto attributes in acaps if previous media description did support capability negotiations
-					// Copy acap crypto attributes if old stream supports it as potential configuration
-					for (const auto & cap : oldStream.acaps) {
-						const auto & nameValuePair = cap.second;
-						const auto & name = nameValuePair.first;
-						if (name.compare(attrName) == 0) {
-							const auto & attrValue = nameValuePair.second;
+			if (keepSrtpKeys && oldMd && (i < oldMd->streams.size()) && oldMd->streams[i].enabled()) {
+				const auto & oldStream = oldMd->streams[i];
+				const auto & oldStreamSupportedEncryptions = oldStream.getSupportedEncryptions();
+				const bool oldStreamSupportsSrtp = (std::find(oldStreamSupportedEncryptions.cbegin(), oldStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != oldStreamSupportedEncryptions.cend());
+				const auto newStreamSupportedEncryptions = newStream.getSupportedEncryptions();
+				const bool newStreamSupportsSrtp = (std::find(newStreamSupportedEncryptions.cbegin(), newStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != newStreamSupportedEncryptions.cend());
+				const auto & oldStreamActualCfg = oldStream.getActualConfiguration();
+				const auto & oldStreamActualCfgCrypto = oldStreamActualCfg.crypto;
 
-							const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(attrValue);
-							if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
-								newStreamActualCfgCrypto.push_back(keyEnc);
-							}
-						}
-					}
-				} else {
-					newStreamActualCfgCrypto = generateNewCryptoKeys();
-				}
-			}
-
-			// If capability negotiation is enabled, search keys among acaps
-			if (md->supportCapabilityNegotiation()) {
-				// If both old and new stream support SRTP as potential configuration
-				if (newStreamSupportsSrtp && !forceKeyGeneration) {
-					if (oldStreamSupportsSrtp && oldMd->supportCapabilityNegotiation()) {
+				// Actual configuration
+				if (newStreamActualCfg.hasSrtp()) {
+					if (forceKeyGeneration) {
+						// Generate new crypto keys
+						newStreamActualCfgCrypto = generateNewCryptoKeys();
+					} else if (oldStreamActualCfg.hasSrtp()) {
+						// If old stream actual configuration supported SRTP, then copy crypto parameters
+						lInfo() << "Keeping same crypto keys when making new local stream description";
+						newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
+					} else if (oldMd->supportCapabilityNegotiation()) {
+						// Search crypto attributes in acaps if previous media description did support capability negotiations
 						// Copy acap crypto attributes if old stream supports it as potential configuration
 						for (const auto & cap : oldStream.acaps) {
 							const auto & nameValuePair = cap.second;
 							const auto & name = nameValuePair.first;
 							if (name.compare(attrName) == 0) {
-								const auto & value = nameValuePair.second;
-								const auto & idx = cap.first;
-								newStream.addAcap(idx, name, value);
+								const auto & attrValue = nameValuePair.second;
+
+								const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(attrValue);
+								if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
+									newStreamActualCfgCrypto.push_back(keyEnc);
+								}
 							}
 						}
-					} else if (oldStreamActualCfg.hasSrtp()) {
-						// Copy crypto attributes from actual configuration if old stream supports it as actual configuration
-						for (const auto & c : oldStreamActualCfgCrypto) {
-							MSCryptoSuiteNameParams desc;
-							if (ms_crypto_suite_to_name_params(c.algo,&desc)==0){
-								const auto & idx = md->getFreeAcapIdx();
-								const auto value = SalStreamConfiguration::cryptoToSdpValue(c);
-								newStream.addAcap(idx, attrName, value);
+					} else {
+						newStreamActualCfgCrypto = generateNewCryptoKeys();
+					}
+				}
+
+				// If capability negotiation is enabled, search keys among acaps
+				if (md->supportCapabilityNegotiation()) {
+					// If both old and new stream support SRTP as potential configuration
+					if (newStreamSupportsSrtp && !forceKeyGeneration) {
+						if (oldStreamSupportsSrtp && oldMd->supportCapabilityNegotiation()) {
+							// Copy acap crypto attributes if old stream supports it as potential configuration
+							for (const auto & cap : oldStream.acaps) {
+								const auto & nameValuePair = cap.second;
+								const auto & name = nameValuePair.first;
+								if (name.compare(attrName) == 0) {
+									const auto & value = nameValuePair.second;
+									const auto & idx = cap.first;
+									newStream.addAcap(idx, name, value);
+								}
+							}
+						} else if (oldStreamActualCfg.hasSrtp()) {
+							// Copy crypto attributes from actual configuration if old stream supports it as actual configuration
+							for (const auto & c : oldStreamActualCfgCrypto) {
+								MSCryptoSuiteNameParams desc;
+								if (ms_crypto_suite_to_name_params(c.algo,&desc)==0){
+									const auto & idx = md->getFreeAcapIdx();
+									const auto value = SalStreamConfiguration::cryptoToSdpValue(c);
+									newStream.addAcap(idx, attrName, value);
+								}
 							}
 						}
 					}
 				}
+			} else {
+				if (newStreamActualCfg.hasSrtp()) {
+					newStreamActualCfgCrypto = generateNewCryptoKeys();
+				}
 			}
-		} else {
-			if (newStreamActualCfg.hasSrtp()) {
-				newStreamActualCfgCrypto = generateNewCryptoKeys();
-			}
-		}
 
-		if (newStreamActualCfg.hasSrtp() && newStreamActualCfgCrypto.empty()) {
-			lInfo() << "Don't put stream " << i << " on local offer for CallSession [" << q << "] because it requires protocol " << sal_media_proto_to_string(newStreamActualCfg.getProto()) << " but no suitable crypto key has been found.";
-			newStreamActualCfg.dir = SalStreamInactive;
-			md->streams[i].disable();
+			if (newStreamActualCfg.hasSrtp() && newStreamActualCfgCrypto.empty()) {
+				lInfo() << "Don't put stream " << i << " on local offer for CallSession [" << q << "] because it requires protocol " << sal_media_proto_to_string(newStreamActualCfg.getProto()) << " but no suitable crypto key has been found.";
+				newStreamActualCfg.dir = SalStreamInactive;
+				md->streams[i].disable();
+			}
 		}
 	}
 }

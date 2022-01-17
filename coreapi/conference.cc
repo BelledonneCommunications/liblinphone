@@ -1559,13 +1559,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	}
 
 	// If call that we are trying to remove from the conference is in paused by remote state, then it temporarely left the conference therefore it must not be terminated
-	if (!confParams->isStatic() && (getParticipantCount() == 0) && (sessionState != LinphonePrivate::CallSession::State::PausedByRemote)){
-		leave();
-		if (getState() == ConferenceInterface::State::TerminationPending) {
-			setState(ConferenceInterface::State::Terminated);
-		} else {
-			setState(ConferenceInterface::State::TerminationPending);
-		}
+	if (sessionState != LinphonePrivate::CallSession::State::PausedByRemote) {
+		checkIfTerminated();
 	}
 	
 	return err;
