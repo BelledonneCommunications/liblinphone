@@ -445,6 +445,7 @@ void IceService::clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescrip
 			 *  (because rtcp-mux is mandatory with bundles)
 			 */
 			ice_check_list_remove_rtcp_candidates(cl);
+			rtp_session_enable_rtcp_mux(cl->rtp_session, TRUE);
 		}
 	}
 }
@@ -529,6 +530,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 			continue;
 		if (ice_check_list_state(cl) == ICL_Completed) {
 			result = !!ice_check_list_selected_valid_local_candidate(ice_session_check_list(mIceSession, (int)i), &rtpCandidate, &rtcpCandidate);
+			if (!result) lError() << "No selected valid local candidate but check list is completed, this is a bug.";
 		} else {
 			result = !!ice_check_list_default_local_candidate(ice_session_check_list(mIceSession, (int)i), &rtpCandidate, &rtcpCandidate);
 		}
@@ -590,22 +592,18 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 		
 		if ((ice_check_list_state(cl) == ICL_Completed) && (ice_session_role(mIceSession) == IR_Controlling)) {
 			stream.ice_remote_candidates.clear();
-			bool_t ok = ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate);
-			if (rtpCandidate){
+			if (ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate)){
 				SalIceRemoteCandidate rtp_remote_candidate;
 				rtp_remote_candidate.addr = L_C_TO_STRING(rtpCandidate->taddr.ip);
 				rtp_remote_candidate.port = rtpCandidate->taddr.port;
 				stream.ice_remote_candidates.push_back(rtp_remote_candidate);
-			}
-			if (rtcpCandidate){
+				if (rtcpCandidate){
 					SalIceRemoteCandidate rtcp_remote_candidate;
 					rtcp_remote_candidate.addr = L_C_TO_STRING(rtcpCandidate->taddr.ip);
 					rtcp_remote_candidate.port = rtcpCandidate->taddr.port;
 					stream.ice_remote_candidates.push_back(rtcp_remote_candidate);
-			} else if (!ok){
-				lWarning() << "IceService: no RTCP valid remote candidates, rtcp-mux used ?";
-			}
-			if (rtpCandidate == nullptr && rtcpCandidate == nullptr){
+				}
+			}else{
 				lError() << "IceService: Selected valid remote candidates should be present if the check list is in the Completed state. This is a BUG !";
 			}
 		} else {
