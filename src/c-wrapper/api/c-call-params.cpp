@@ -139,9 +139,9 @@ bctbx_list_t* linphone_call_params_get_srtp_suites (const LinphoneCallParams *ca
 }
 
 void linphone_call_params_set_srtp_suites (LinphoneCallParams *call_params, bctbx_list_t* srtpSuites) {
-	std::list<MSCryptoSuite> suitesList;
+	std::list<LinphoneSrtpSuite> suitesList;
 	for(bctbx_list_t * suite = srtpSuites;suite!=NULL;suite=suite->next){
-		suitesList.push_back(static_cast<MSCryptoSuite>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(suite))));
+		suitesList.push_back(static_cast<LinphoneSrtpSuite>(LINPHONE_PTR_TO_INT(bctbx_list_get_data(suite))));
 	}
 
 	L_GET_CPP_PTR_FROM_C_OBJECT(call_params)->setSrtpSuites(suitesList);

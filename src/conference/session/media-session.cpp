@@ -2175,18 +2175,78 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	}
 }
 
+/**
+ * Convert enum LinphoneSrtpSuite into enum MSCryptoSuite
+ * Enums definitions are not perferctly matching
+ * any input without corresponding MSCryptoSuite value gives a MS_CRYPTO_SUITE_INVALID output
+ *
+ * @param[in]	suite	The LinphoneSrtpSuite to be converted
+ * @return	the matching MSCryptoSuite value
+ **/
+static MSCryptoSuite LinphoneSrtpSuite2MSCryptoSuite(const LinphoneSrtpSuite suite) {
+	switch (suite) {
+		case LinphoneSrtpSuiteAESCM128HMACSHA180 : return MS_AES_128_SHA1_80;
+		case LinphoneSrtpSuiteAESCM128HMACSHA132 : return MS_AES_128_SHA1_32;
+		case LinphoneSrtpSuiteAES256CMHMACSHA180 : return MS_AES_256_SHA1_80;
+		case LinphoneSrtpSuiteAES256CMHMACSHA132 : return MS_AES_256_SHA1_32;
+		// all these case are not supported by the MS enumeration
+		case LinphoneSrtpSuiteAES192CMHMACSHA180 :
+		case LinphoneSrtpSuiteAES192CMHMACSHA132 :
+		case LinphoneSrtpSuiteAEADAES128GCM :
+		case LinphoneSrtpSuiteAEADAES256GCM :
+		case LinphoneSrtpSuiteInvalid :
+		default:
+			return MS_CRYPTO_SUITE_INVALID;
+	}
+}
+
+/**
+ * Convert a list of enum LinphoneSrtpSuite into a list enum MSCryptoSuite
+ * Enums definitions are not perferctly matching
+ * input giving MS_CRYPTO_SUITE_INVALID are skipped in the output list
+ *
+ * @param[in]	suite	The list of LinphoneSrtpSuite to be converted
+ * @return	the matching MSCryptoSuite list, unconvertible input are skipped
+ **/
+static std::list<MSCryptoSuite> LinphoneSrtpSuite2MSCryptoSuite(const std::list<LinphoneSrtpSuite> suites) {
+	std::list<MSCryptoSuite> ret{};
+	for (const auto suite:suites) {
+		auto MSsuite = LinphoneSrtpSuite2MSCryptoSuite(suite);
+		if (MSsuite != MS_CRYPTO_SUITE_INVALID) {
+			ret.push_back(MSsuite);
+		}
+	}
+	return ret;
+}
+
 std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() const {
 	L_Q();
 	std::vector<SalSrtpCryptoAlgo>  cryptos;
 	const bool doNotUseParams = (direction == LinphoneCallIncoming) && (state == CallSession::State::Idle);
-	const MSCryptoSuite *suites = (doNotUseParams) ? linphone_core_get_all_supported_srtp_crypto_suites(q->getCore()->getCCore()) : linphone_core_get_srtp_crypto_suites_array(q->getCore()->getCCore());
-	size_t cryptoId = 0;
-	for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-		MSCryptoSuite suite = suites[j];
+	const MSCryptoSuite *suites = nullptr;
+	std::list<MSCryptoSuite> suitesList{};
+	if (doNotUseParams) {
+		suites = linphone_core_get_all_supported_srtp_crypto_suites(q->getCore()->getCCore());
+	} else {
+		// use settings from callParams if any, otherwise get them from the core configuration
+		auto callParamSrtpSuites = getParams()->getSrtpSuites();
+		if (callParamSrtpSuites.empty()) {
+			suites = linphone_core_get_srtp_crypto_suites_array(q->getCore()->getCCore());
+		} else {
+			suitesList = LinphoneSrtpSuite2MSCryptoSuite(callParamSrtpSuites);
+		}
+	}
+	if (suites!=nullptr) {
+		for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+			suitesList.push_back(suites[j]);
+		}
+	}
+	unsigned int cryptoId = 1;
+	for (auto suite:suitesList) {
 		if (doNotUseParams || !isEncryptionMandatory() || (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
 			SalSrtpCryptoAlgo newCrypto;
-			setupEncryptionKey(newCrypto, suite, static_cast<unsigned int>(cryptoId) + 1);
-			cryptos.emplace(std::next(cryptos.begin(),static_cast<ptrdiff_t>(cryptoId)),newCrypto);
+			setupEncryptionKey(newCrypto, suite, cryptoId);
+			cryptos.push_back(newCrypto);
 			cryptoId++;
 		} else if (isEncryptionMandatory() && ms_crypto_suite_is_unencrypted(suite)) {
 			lWarning() << "Not offering " << std::string(ms_crypto_suite_to_string(suite)) << " because either RTP or RTCP streams is not encrypted";

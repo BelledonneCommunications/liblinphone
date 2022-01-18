@@ -209,7 +209,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
 	d->conferenceId = "";
 	d->from = "";
-	d->srtpSuites = std::list<MSCryptoSuite>{};
+	d->srtpSuites = std::list<LinphoneSrtpSuite>{};
 	d->privacy = LinphonePrivacyDefault;
 	d->startTime = (time_t)-1;
 	d->endTime = (time_t)-1;
@@ -310,12 +310,12 @@ const char* CallSessionParams::getFromHeader() const {
 	return (d->from.empty()?NULL:d->from.c_str()); // C style API, return NULL when the string is empty
 }
 // -----------------------------------------------------------------------------
-void CallSessionParams::setSrtpSuites (const std::list<MSCryptoSuite> &srtpSuites) {
+void CallSessionParams::setSrtpSuites (const std::list<LinphoneSrtpSuite> &srtpSuites) {
 	L_D();
 	d->srtpSuites = srtpSuites;
 }
 
-const std::list<MSCryptoSuite>& CallSessionParams::getSrtpSuites () const {
+const std::list<LinphoneSrtpSuite>& CallSessionParams::getSrtpSuites () const {
 	L_D();
 	return d->srtpSuites;
 }

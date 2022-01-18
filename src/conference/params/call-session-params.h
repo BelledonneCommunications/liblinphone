@@ -68,8 +68,8 @@ public:
 	const char * getCustomHeader (const std::string &headerName) const;
 	void setFromHeader (const std::string &fromValue);
 	const char * getFromHeader () const;
-	void setSrtpSuites (const std::list<MSCryptoSuite> &srtpSuites);
-	const std::list<MSCryptoSuite>& getSrtpSuites () const;
+	void setSrtpSuites (const std::list<LinphoneSrtpSuite> &srtpSuites);
+	const std::list<LinphoneSrtpSuite>& getSrtpSuites () const;
 
 	void addCustomContactParameter (const std::string &paramName, const std::string &paramValue = "");
 	void clearCustomContactParameters ();

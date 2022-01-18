@@ -24,7 +24,6 @@
 #include "ortp/payloadtype.h"
 #include "mediastreamer2/msinterfaces.h"
 #include "mediastreamer2/msvideo.h"
-#include "mediastreamer2/ms_srtp.h"
 #include "linphone/defs.h"
 
 // For migration purpose.
@@ -752,14 +751,15 @@ typedef enum _LinphoneMediaEncryption {
  * @ingroup media_parameters
 **/
 typedef enum _LinphoneSrtpSuite {
-	LinphoneAESCM128HMACSHA180 = 0,
-	LinphoneAESCM128HMACSHA132 = 1,
-	LinphoneAES192CMHMACSHA180 = 2,
-	LinphoneAES192CMHMACSHA132 = 3,
-	LinphoneAES256CMHMACSHA180 = 4,
-	LinphoneAES256CMHMACSHA132 = 5,
-	LinphoneAEADAES128GCM = 6,
-	LinphoneAEADAES256GCM = 7
+	LinphoneSrtpSuiteAESCM128HMACSHA180 = 0,
+	LinphoneSrtpSuiteAESCM128HMACSHA132 = 1,
+	LinphoneSrtpSuiteAES192CMHMACSHA180 = 2,
+	LinphoneSrtpSuiteAES192CMHMACSHA132 = 3,
+	LinphoneSrtpSuiteAES256CMHMACSHA180 = 4,
+	LinphoneSrtpSuiteAES256CMHMACSHA132 = 5,
+	LinphoneSrtpSuiteAEADAES128GCM = 6,
+	LinphoneSrtpSuiteAEADAES256GCM = 7,
+	LinphoneSrtpSuiteInvalid = 0xFF
 } LinphoneSrtpSuite;
 
 /**
