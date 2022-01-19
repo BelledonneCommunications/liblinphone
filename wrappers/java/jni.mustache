@@ -555,6 +555,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 		jobjectArray jni_list_result = env->NewObjectArray(0, ljb->{{objectCPrefix}}_class, NULL);{{/isRealObjectArray}}
 		{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray(0, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
+		{{#isEnumObjectArray}}jintArray jni_list_result = env->NewIntArray(0);{{/isEnumObjectArray}}
 		{{/hasListReturn}}
 		return {{#hasReturn}}0{{/hasReturn}}{{#hasListReturn}}jni_list_result{{/hasListReturn}}{{#hasByteArrayReturn}}0{{/hasByteArrayReturn}};
 	}
@@ -568,6 +569,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	{{/objects}}{{#lists}}
 	bctbx_list_t *bctbx_list_{{list}} = nullptr;
 	int {{list}}_count = env->GetArrayLength({{list}});
+	{{#isEnumList}}jint *int_elems_{{list}} = env->GetIntArrayElements({{list}}, 0);{{/isEnumList}}
 	for (int i=0; i < {{list}}_count; i++) {
 		{{#isStringList}}
 		jstring obj = (jstring) env->GetObjectArrayElement({{list}}, i);
@@ -581,6 +583,9 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		jobject obj = env->GetObjectArrayElement({{list}}, i);
 		bctbx_list_{{list}} = bctbx_list_append(bctbx_list_{{list}}, ({{objectClassCName}} *)GetObjectNativePtr(env, obj));
 		{{/isObjList}}
+		{{#isEnumList}}
+		bctbx_list_{{list}} = bctbx_list_append(bctbx_list_{{list}}, (void*)(intptr_t)int_elems_{{list}}[i]);
+		{{/isEnumList}}
 	}
 	{{/lists}}{{#hasListReturn}}
 	{{#isConst}}const {{/isConst}}bctbx_list_t *list = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
@@ -590,21 +595,32 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	LinphoneJavaBindings *ljb = (LinphoneJavaBindings *)linphone_factory_get_user_data(linphone_factory_get());
 	jobjectArray jni_list_result = env->NewObjectArray((int)count, ljb->{{objectCPrefix}}_class, nullptr);{{/isRealObjectArray}}
 	{{#isStringObjectArray}}jobjectArray jni_list_result = env->NewObjectArray((int)count, env->FindClass("java/lang/String"), env->NewStringUTF(""));{{/isStringObjectArray}}
+	{{#isEnumObjectArray}}jintArray jni_list_result = env->NewIntArray((int)count);
+	int carray[(int)count];{{/isEnumObjectArray}}
 	int i = 0;
 	while (list_it != nullptr) {
 		{{#isRealObjectArray}}
 		{{objectClassCName}}* c_object = ({{objectClassCName}}*)list_it->data;
 		jobject object = get{{objectClassName}}(env, c_object, {{takeRefOnReturnedObject}}, {{isRealObjectConst}});
-		{{/isRealObjectArray}}
-		{{#isStringObjectArray}}const char *cstring = (const char *)list_it->data;
-		jstring object = cstring ? get_jstring_from_char(env, cstring) : 0;{{/isStringObjectArray}}
 		if (object != nullptr) {
 			env->SetObjectArrayElement(jni_list_result, (int)i, object);
-			{{#isRealObjectArray}}env->DeleteLocalRef(object);{{/isRealObjectArray}}
+			env->DeleteLocalRef(object);
 		}
+		{{/isRealObjectArray}}
+		{{#isStringObjectArray}}const char *cstring = (const char *)list_it->data;
+		jstring object = cstring ? get_jstring_from_char(env, cstring) : 0;
+		if (object != nullptr) {
+			env->SetObjectArrayElement(jni_list_result, (int)i, object);
+		}{{/isStringObjectArray}}
+		{{#isEnumObjectArray}}
+		carray[i] = (int)(intptr_t)list_it->data;
+		{{/isEnumObjectArray}}
 		list_it = bctbx_list_next(list_it);
 		i += 1;
 	}
+	{{#isEnumObjectArray}}
+	env->SetIntArrayRegion(jni_list_result, 0, (int)count, carray);
+	{{/isEnumObjectArray}}
 	{{#isNotConst}}bctbx_list_free(list);{{/isNotConst}}
 	{{/hasListReturn}}{{#hasByteArrayReturn}}
 	{{c_type_return}} jni_result = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});

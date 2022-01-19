@@ -273,7 +273,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 				}
 			}
 		}{{/cantBeCalledIfObjectIsConst}}
-        {{#exception}}int exceptionResult = {{/exception}}{{return_keyword}}{{#enumCast}}{{return}}.fromInt({{/enumCast}}{{#classCast}}({{return}}){{/classCast}}{{name_native}}({{native_params_impl}}){{#enumCast}}){{/enumCast}};{{#exception}}
+        {{#exception}}int exceptionResult = {{/exception}}{{return_keyword}}{{#enumCast}}{{return}}.fromInt({{/enumCast}}{{#enumArrayCast}}{{enumName}}.fromIntArray({{/enumArrayCast}}{{#classCast}}({{return}}){{/classCast}}{{name_native}}({{native_params_impl}}){{#enumCast}}){{/enumCast}}{{#enumArrayCast}}){{/enumArrayCast}};{{#exception}}
         if (exceptionResult != 0) throw new CoreException("{{name}} returned value " + exceptionResult);{{/exception}}{{#hasCoreAccessor}}{{#isNotGetCore}}
         }{{/isNotGetCore}}{{/hasCoreAccessor}}
     }

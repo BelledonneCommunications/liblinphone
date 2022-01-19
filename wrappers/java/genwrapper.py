@@ -245,13 +245,22 @@ class JavaTranslator:
     def generate_set_listener(self, _class):
         return self.generate_listener('setListener', _class)
 
+    def translate_method_native_arg(self, arg, namespace):
+        if type(arg.type) is AbsApi.EnumType:
+            return arg.name.translate(self.nameTranslator) + '.toInt()'
+        elif type(arg.type) is AbsApi.ListType and isinstance(arg.type.containedTypeDesc, AbsApi.EnumType):
+            typename = arg.type.translate(self.langTranslator, isReturn=True, namespace=namespace)
+            return typename[:-2] + '.toIntArray(' + arg.name.translate(self.nameTranslator) + ')'
+        return arg.name.translate(self.nameTranslator)
+
     def translate_method(self, _method, _hasCoreAccessor=False, _forceMethodName=""):
         methodDict = {}
 
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
-        isArray = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace) == 'jobjectArray'
+        native_type = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace)
+        isArray = native_type == 'jobjectArray' or native_type == 'jintArray'
         # Wrapper takes care or never returning a null array even if the doc says it can return a null list
         methodDict['return_maybenil'] = _method.maybenil and not isArray
         methodDict['return_notnil'] = _method.notnil or isArray
@@ -276,13 +285,17 @@ class JavaTranslator:
         methodDict['exception'] = self.throws_exception(_method.returnType)
 
         methodDict['enumCast'] = type(_method.returnType) is AbsApi.EnumType
+        methodDict['enumArrayCast'] = type(_method.returnType) is AbsApi.ListType and isinstance(_method.returnType.containedTypeDesc, AbsApi.EnumType)
+        methodDict['enumName'] = ""
+        if methodDict['enumArrayCast']:
+            methodDict['enumName'] = methodDict['return'][:-2]
         methodDict['classCast'] = type(_method.returnType) is AbsApi.ClassType
 
         methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '@NonNull ' if arg.notnil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
         methodDict['native_params'] = ', '.join(['long nativePtr'] + [arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['static_native_params'] = ', '.join([arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['native_params_impl'] = ', '.join(
-            ['nativePtr'] + [arg.name.translate(self.nameTranslator) + ('.toInt()' if type(arg.type) is AbsApi.EnumType else '') for arg in _method.args])
+            ['nativePtr'] + [self.translate_method_native_arg(arg, namespace) for arg in _method.args])
 
         methodDict['deprecated'] = _method.deprecated
         methodDict['briefDoc'] = _method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if _method.briefDescription is not None else None
@@ -314,7 +327,7 @@ class JavaTranslator:
         methodDict['needLjb'] = False
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace)
-        methodDict['hasListReturn'] = methodDict['return'] == 'jobjectArray'
+        methodDict['hasListReturn'] = methodDict['return'] == 'jobjectArray' or methodDict['return'] == 'jintArray'
         methodDict['hasByteArrayReturn'] = methodDict['return'] == 'jbyteArray'
         methodDict['hasReturn'] = not methodDict['return'] == 'void' and not methodDict['hasListReturn'] and not methodDict['hasByteArrayReturn']
         methodDict['hasStringReturn'] = methodDict['return'] == 'jstring'
@@ -345,6 +358,7 @@ class JavaTranslator:
         methodDict['returnClassName'] = _method.returnType.translate(self.langTranslator, namespace=namespace)
         methodDict['isRealObjectArray'] = False
         methodDict['isStringObjectArray'] = False
+        methodDict['isEnumObjectArray'] = False
         methodDict['c_type_return'] = _method.returnType.translate(self.clangTranslator)
 
         if methodDict['c_name'] in jni_blacklist:
@@ -355,6 +369,8 @@ class JavaTranslator:
                 methodDict['isStringObjectArray'] = True
             elif isinstance(_method.returnType.containedTypeDesc, AbsApi.BaseType):
                 methodDict['isStringObjectArray'] = True
+            elif isinstance(_method.returnType.containedTypeDesc, AbsApi.EnumType):
+                methodDict['isEnumObjectArray'] = True
             elif isinstance(_method.returnType.containedTypeDesc, AbsApi.ClassType):
                 methodDict['isRealObjectArray'] = True
                 methodDict['needLjb'] = True
@@ -393,7 +409,8 @@ class JavaTranslator:
             elif isinstance(arg.type, AbsApi.ListType):
                 isStringList = type(arg.type.containedTypeDesc) is AbsApi.BaseType and arg.type.containedTypeDesc.name == 'string'
                 isObjList = type(arg.type.containedTypeDesc) is AbsApi.ClassType
-                methodDict['lists'].append({'list': argname, 'isStringList': isStringList, 'isObjList': isObjList, 'objectClassCName': arg.type.containedTypeDesc.name})
+                isEnumList = type(arg.type.containedTypeDesc) is AbsApi.EnumType
+                methodDict['lists'].append({'list': argname, 'isStringList': isStringList, 'isEnumList': isEnumList, 'isObjList': isObjList, 'objectClassCName': arg.type.containedTypeDesc.name})
                 methodDict['params_impl'] += 'bctbx_list_' + argname
 
             elif isinstance(arg.type, AbsApi.EnumType):

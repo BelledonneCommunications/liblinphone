@@ -1281,7 +1281,7 @@ class JavaLangTranslator(CLikeLangTranslator):
 					return 'jobjectArray'
 				return _type.containedTypeDesc.translate(self, jni=True) + 'Array'
 			elif type(_type.containedTypeDesc) is EnumType:
-				ptrtype = _type.containedTypeDesc.translate(self, native=native)
+				return 'jintArray'
 		ptrtype = ''
 		if type(_type.containedTypeDesc) is ClassType:
 			ptrtype = _type.containedTypeDesc.translate(self, native=native, namespace=namespace)
