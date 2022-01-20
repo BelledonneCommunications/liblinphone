@@ -52,6 +52,7 @@ public:
 
 	LinphoneRecorderState getState () const;
 	int getDuration () const;
+	float getCaptureVolume() const;
 	FileContent* createContent () const;
 
 	void setParams (std::shared_ptr<RecorderParams> params);

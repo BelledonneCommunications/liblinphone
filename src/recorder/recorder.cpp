@@ -124,6 +124,10 @@ int Recorder::getDuration () const {
 	}
 }
 
+float Recorder::getCaptureVolume() const{
+	return ms_media_recorder_get_capture_volume(mRecorder);
+}
+
 FileContent* Recorder::createContent () const {
 	LinphoneRecorderState currentState = getState();
 	if (currentState != LinphoneRecorderClosed) {

@@ -70,6 +70,10 @@ int linphone_recorder_get_duration(const LinphoneRecorder *recorder) {
 	return Recorder::toCpp(recorder)->getDuration();
 }
 
+float linphone_recorder_get_capture_volume(const LinphoneRecorder *recorder) {
+	return Recorder::toCpp(recorder)->getCaptureVolume();
+}
+
 LinphoneContent *linphone_recorder_create_content(LinphoneRecorder *recorder) {
 	LinphonePrivate::Content *fileContent = Recorder::toCpp(recorder)->createContent();
 	if (fileContent != nullptr) {
