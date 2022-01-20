@@ -126,6 +126,10 @@ private:
 	SalCustomSdpAttribute *customSdpAttributes = nullptr;
 	SalCustomSdpAttribute *customSdpMediaAttributes[LinphoneStreamTypeUnknown];
 
+	bool micEnabled = true;
+	AudioDevice* inputAudioDevice = nullptr;
+	AudioDevice* outputAudioDevice = nullptr;
+
 	L_DECLARE_PUBLIC(MediaSessionParams);
 };
 

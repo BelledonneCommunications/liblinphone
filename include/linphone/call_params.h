@@ -614,6 +614,62 @@ LINPHONE_PUBLIC bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCal
  */
 LINPHONE_PUBLIC void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value);
 
+/**
+ * Enable or disable the microphone at the call creation.
+ * @warning This method won't have any effect once the call has been created!
+ * Instead use linphone_call_set_microphone_muted() when call has been created.
+ * @param params #LinphoneCallParams object @notnil
+ * @param enable TRUE to enable the microphone, FALSE to disable it.
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_call_params_enable_mic(LinphoneCallParams *params, bool_t enable);
+
+/**
+ * Tells whether the microphone will be enabled when the call will be created.
+ * @warning This method only concerns the call creation, it doesn't reflect the actual microphone status during a call.
+ * Instead use linphone_call_get_microphone_muted() when call has been created.
+ * @param params #LinphoneCallParams object @notnil
+ * @return TRUE if the microphone will be enabled, FALSE if disabled.
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_call_params_mic_enabled(const LinphoneCallParams *params);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default input for a call to be created later.
+ * @warning This method won't have any effect once the call has been created!
+ * Instead use linphone_call_set_input_audio_device() when call has been created.
+ * @param params The #LinphoneCallParams @notnil
+ * @param audio_device The #LinphoneAudioDevice. NULL does nothing. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_call_params_set_input_audio_device(LinphoneCallParams *params, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default output for a call to be created later.
+ * @warning This method won't have any effect once the call has been created!
+ * Instead use linphone_call_set_output_audio_device() when call has been created.
+ * @param params The #LinphoneCallParams @notnil
+ * @param audio_device The #LinphoneAudioDevice. NULL does nothing. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_call_params_set_output_audio_device(LinphoneCallParams *params, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the default input audio device for a call that will be created using this call params.
+ * @warning This method only concerns the call creation, it doesn't reflect the currently used input audio device of the call.
+ * Instead use linphone_call_get_input_audio_device() when call has been created.
+ * @param params The #LinphoneCallParams @notnil
+ * @return the #LinphoneAudioDevice that will be used by default as input when the call will be created @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_params_get_input_audio_device(const LinphoneCallParams *params);
+
+/**
+ * Gets the default output audio device for a call that will be created using this call params.
+ * @warning This method only concerns the call creation, it doesn't reflect the currently used output audio device of the call.
+ * Instead use linphone_call_get_output_audio_device() when call has been created.
+ * @param params The #LinphoneCallParams @notnil
+ * @return the #LinphoneAudioDevice that will be used by default as output when the call will be created @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_params_get_output_audio_device(const LinphoneCallParams *params);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

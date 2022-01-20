@@ -78,6 +78,16 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 	recordAware = src->recordAware;
 	recordState = src->recordState;
 	videoDownloadBandwidth = src->videoDownloadBandwidth;
+
+	micEnabled = src->micEnabled;
+	if (src->inputAudioDevice) {
+		src->inputAudioDevice->ref();
+		inputAudioDevice = src->inputAudioDevice;
+	}
+	if (src->outputAudioDevice) {
+		src->outputAudioDevice->ref();
+		outputAudioDevice = src->outputAudioDevice;
+	}
 }
 
 void MediaSessionParamsPrivate::clean () {
@@ -92,6 +102,15 @@ void MediaSessionParamsPrivate::clean () {
 			sal_custom_sdp_attribute_free(customSdpMediaAttributes[i]);
 	}
 	memset(customSdpMediaAttributes, 0, sizeof(customSdpMediaAttributes));
+
+	if (inputAudioDevice) {
+		inputAudioDevice->unref();
+		inputAudioDevice = nullptr;
+	}
+	if (outputAudioDevice) {
+		outputAudioDevice->unref();
+		outputAudioDevice = nullptr;
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -288,6 +307,10 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphon
 	d->mandatoryMediaEncryptionEnabled = !!linphone_core_is_media_encryption_mandatory(cCore);
 	d->rtpBundle = linphone_core_rtp_bundle_enabled(cCore);
 	enableRecordAware(linphone_core_is_record_aware_enabled(cCore));
+
+	d->micEnabled = linphone_core_mic_enabled(cCore);
+	setInputAudioDevice(core->getDefaultInputAudioDevice());
+	setOutputAudioDevice(core->getDefaultOutputAudioDevice());
 }
 
 // -----------------------------------------------------------------------------
@@ -619,6 +642,48 @@ void MediaSessionParams::setRecordingState (SalMediaRecord recordState) {
 SalMediaRecord MediaSessionParams::getRecordingState () const {
 	L_D();
 	return d->recordState;
+}
+
+void MediaSessionParams::enableMic (bool value) {
+	L_D();
+	d->micEnabled = value;
+}
+
+bool MediaSessionParams::isMicEnabled () const {
+	L_D();
+	return d->micEnabled;
+}
+
+void MediaSessionParams::setInputAudioDevice(AudioDevice* device) {
+	L_D();
+	if (device) {
+		device->ref();
+	}
+	if (d->inputAudioDevice) {
+		d->inputAudioDevice->unref();
+	}
+	d->inputAudioDevice = device;
+}
+
+void MediaSessionParams::setOutputAudioDevice(AudioDevice* device) {
+	L_D();
+	if (device) {
+		device->ref();
+	}
+	if (d->outputAudioDevice) {
+		d->outputAudioDevice->unref();
+	}
+	d->outputAudioDevice = device;
+}
+
+AudioDevice* MediaSessionParams::getInputAudioDevice() const {
+	L_D();
+	return d->inputAudioDevice;
+}
+
+AudioDevice* MediaSessionParams::getOutputAudioDevice() const {
+	L_D();
+	return d->outputAudioDevice;
 }
 
 LINPHONE_END_NAMESPACE

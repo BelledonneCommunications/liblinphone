@@ -626,6 +626,43 @@ bool_t linphone_call_params_is_recording(const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->isRecording();
 }
 
+void linphone_call_params_enable_mic(LinphoneCallParams *params, bool_t enable) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableMic(!!enable);
+}
+
+bool_t linphone_call_params_mic_enabled(const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->isMicEnabled();
+}
+
+void linphone_call_params_set_input_audio_device(LinphoneCallParams *params, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+void linphone_call_params_set_output_audio_device(LinphoneCallParams *params, LinphoneAudioDevice *audio_device) {
+	if (audio_device) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+	}
+}
+
+const LinphoneAudioDevice* linphone_call_params_get_input_audio_device(const LinphoneCallParams *params) {
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getInputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
+
+const LinphoneAudioDevice* linphone_call_params_get_output_audio_device(const LinphoneCallParams *params) {
+	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getOutputAudioDevice();
+	if (audioDevice) {
+		return audioDevice->toC();
+	}
+	return NULL;
+}
+
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

@@ -208,38 +208,11 @@ LinphoneCallStats *Call::getPrivateStats (LinphoneStreamType type) const {
 
 void Call::initiateIncoming () {
 	getActiveSession()->initiateIncoming();
-	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
-	if (outputAudioDevice) {
-		setOutputAudioDevicePrivate(outputAudioDevice);
-	} else if(!getCore()->getCCore()->use_files){
-		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
-	}
-	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
-	if (inputAudioDevice) {
-		setInputAudioDevicePrivate(inputAudioDevice);
-	} else if(!getCore()->getCCore()->use_files){
-		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
-	}
 }
 
 bool Call::initiateOutgoing () {
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing();
-	
-	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
-	if (outputAudioDevice) {
-		setOutputAudioDevicePrivate(outputAudioDevice);
-	} else {
-		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
-	}
-
-	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
-	if (inputAudioDevice) {
-		setInputAudioDevicePrivate(inputAudioDevice);
-	} else {
-		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
-	}
-
 	session->getPrivate()->createOp();
 	return defer;
 }
@@ -901,6 +874,14 @@ Call::Call (
 	mParticipant = Participant::create(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
 	mParticipant->createSession(getCore(), msp, TRUE, this);
 	mParticipant->getSession()->configure(direction, cfg, op, from, to);
+
+	if (msp) {
+		setMicrophoneMuted(!msp->isMicEnabled());
+		setInputAudioDevicePrivate(msp->getInputAudioDevice());
+		setOutputAudioDevicePrivate(msp->getOutputAudioDevice());
+	} else {
+		configureSoundCardsFromCore();
+	}
 }
 
 Call::Call (
@@ -916,9 +897,26 @@ Call::Call (
 	mParticipant = Participant::create();
 	mParticipant->createSession(getCore(), nullptr, TRUE, this);
 	mParticipant->getSession()->configure(direction, callid);
+
+	configureSoundCardsFromCore();
 }
 
 Call::~Call () {
+}
+
+void Call::configureSoundCardsFromCore() {
+	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
+	if (outputAudioDevice) {
+		setOutputAudioDevicePrivate(outputAudioDevice);
+	} else if(!getCore()->getCCore()->use_files){
+		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
+	}
+	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
+	if (inputAudioDevice) {
+		setInputAudioDevicePrivate(inputAudioDevice);
+	} else if(!getCore()->getCCore()->use_files){
+		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+	}
 }
 
 void Call::configure (

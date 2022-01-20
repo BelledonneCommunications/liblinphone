@@ -22,6 +22,7 @@
 
 #include <ortp/payloadtype.h>
 
+#include "call/audio-device/audio-device.h"
 #include "call-session-params.h"
 #include "utils/general-internal.h"
 
@@ -135,6 +136,14 @@ public:
 	bool isRecording () const;
 	void setRecordingState (SalMediaRecord recordState);
 	SalMediaRecord getRecordingState () const;
+
+	// The following methods are only used to set some default settings for call creation!
+	void enableMic (bool value);
+	bool isMicEnabled () const;
+	void setInputAudioDevice(AudioDevice* device);
+	void setOutputAudioDevice(AudioDevice* device);
+	AudioDevice* getInputAudioDevice() const;
+	AudioDevice* getOutputAudioDevice() const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);
