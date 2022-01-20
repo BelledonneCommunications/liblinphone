@@ -204,6 +204,11 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 
 FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
 												   bool activated, string email, string phone) {
+	return adminAccountCreate(username, password, algorithm, domain, activated, email, phone, "");
+}
+
+FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
+												   bool activated, string email, string phone, string dtmfProtocol) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("password", password);
@@ -218,6 +223,9 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 	}
 	if (!domain.empty()) {
 		params.push("domain", domain);
+	}
+	if (!dtmfProtocol.empty()) {
+		params.push("dtmf_protocol", dtmfProtocol);
 	}
 	prepareRequest("accounts", "POST", params);
 	return this;

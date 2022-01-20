@@ -111,6 +111,8 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 									   bool activated, string email);
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
 									   bool activated, string email, string phone);
+	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
+									   bool activated, string email, string phone, string dtmfProtocol);
 	FlexiAPIClient *adminAccounts();
 	FlexiAPIClient *adminAccount(int id);
 	FlexiAPIClient *adminAccountDelete(int id);

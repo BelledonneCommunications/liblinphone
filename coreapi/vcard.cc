@@ -325,7 +325,6 @@ void linphone_vcard_add_phone_number(LinphoneVcard *vCard, const char *phone) {
 void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, const char *phone) {
 	if (!vCard) return;
 
-	shared_ptr<belcard::BelCardPhoneNumber> tel;
 	for (auto &phoneNumber : vCard->belCard->getPhoneNumbers()) {
 		const char *value = phoneNumber->getValue().c_str();
 		if (strcmp(value, phone) == 0) {
@@ -459,6 +458,39 @@ bool_t linphone_core_vcard_supported(void) {
 void linphone_vcard_clean_cache(LinphoneVcard *vCard) {
 	if (vCard->sip_addresses_cache) bctbx_list_free_with_data(vCard->sip_addresses_cache, (void (*)(void*))linphone_address_unref);
 	vCard->sip_addresses_cache = NULL;
+}
+
+bctbx_list_t* linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard, const char *name) {
+	bctbx_list_t *result = NULL;
+
+	for (auto &property : vCard->belCard->getExtendedProperties()) {
+		if (strcmp(property->getName().c_str(), name) == 0) {
+			const char *value = property->getValue().c_str();
+			result = bctbx_list_append(result, (char *)value);
+		}
+	}
+
+	return result;
+}
+
+void linphone_vcard_add_extended_property(LinphoneVcard *vCard, const char *name, const char *value) {
+	if (!vCard || !name || !value) return;
+
+	shared_ptr<belcard::BelCardProperty> property = belcard::BelCardGeneric::create<belcard::BelCardProperty>();
+	property->setName(name);
+	property->setValue(value);
+	vCard->belCard->addExtendedProperty(property);
+}
+
+void linphone_vcard_remove_extented_properties_by_name(LinphoneVcard *vCard, const char *name) {
+	if (!vCard) return;
+
+	for (auto &property : vCard->belCard->getExtendedProperties()) {
+		if (property->getName() == string(name)) {
+			vCard->belCard->removeExtendedProperty(property);
+			break;
+		}
+	}
 }
 
 } // extern "C"

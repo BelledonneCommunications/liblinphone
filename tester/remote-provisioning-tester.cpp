@@ -22,6 +22,7 @@
 #include "tester_utils.h"
 
 #include "FlexiAPIClient.hh"
+#include "belcard/belcard.hpp"
 
 #include <json/json.h>
 
@@ -250,7 +251,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	fetched = code = 0;
 
 	// Create the contacts accounts
-	flexiAPIClient->adminAccountCreate(usernameContact1, "1234", "MD5", true)
+	flexiAPIClient->adminAccountCreate(usernameContact1, "1234", "MD5", "", true, "", "", "sipinfo")
 		->then([&code, &fetched, &contactId1](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
@@ -262,7 +263,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 
 	fetched = code = 0;
 
-	flexiAPIClient->adminAccountCreate(usernameContact2, "1234", "MD5", true)
+	flexiAPIClient->adminAccountCreate(usernameContact2, "1234", "MD5", "", true, "", "", "rfc2833")
 		->then([&code, &fetched, &contactId2](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
@@ -305,6 +306,22 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	BC_ASSERT_PTR_NOT_NULL(friendList);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList)), 2, unsigned int, "%u");
 
+	// Check if the vCard has been properly parsed
+	LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(linphone_friend_list_get_friends(friendList));
+	LinphoneVcard *vcard = linphone_friend_get_vcard(lf);
+
+	string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
+	BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
+	BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
+							   vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
+						   "rfc2833");
+
+	linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+	linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
+	BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
+							   vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
+						   "test");
+
 	linphone_core_remove_friend_list(marie->lc, friendList);
 
 	// Reparse it with one less friend
@@ -328,7 +345,8 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	LinphoneFriendList *friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url);
 
 	BC_ASSERT_PTR_NOT_NULL(friendList3);
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, unsigned int, "%u");
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, unsigned int,
+					"%u");
 
 	// Clean up
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
