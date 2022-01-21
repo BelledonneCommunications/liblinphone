@@ -400,10 +400,10 @@ bool_t linphone_content_is_voice_recording (const LinphoneContent *content) {
 
 bool_t linphone_content_is_icalendar (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
-	if (c->isFile()) {
-		return c->getContentType().strongEqual(LinphonePrivate::ContentType::Icalendar);
-	} else if (c->isFileTransfer()) {
+	if (c->isFileTransfer()) {
 		return static_cast<const LinphonePrivate::FileTransferContent *>(c)->getFileContentType().strongEqual(LinphonePrivate::ContentType::Icalendar);
+	} else {
+		return c->getContentType().strongEqual(LinphonePrivate::ContentType::Icalendar);
 	}
 	return false;
 }

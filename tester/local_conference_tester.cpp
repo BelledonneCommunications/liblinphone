@@ -2388,7 +2388,9 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 		// chat room in created state
 		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, 1, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceived, old_stats.number_of_LinphoneMessageReceived + 1, 10000));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceivedWithFile, old_stats.number_of_LinphoneMessageReceivedWithFile + 1, 10000));
+		if (!linphone_core_conference_ics_in_message_body_enabled(organizer.getLc())) {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceivedWithFile, old_stats.number_of_LinphoneMessageReceivedWithFile + 1, 10000));
+		}
 
 		BC_ASSERT_PTR_NOT_NULL(mgr->stat.last_received_chat_message);
 		if (mgr->stat.last_received_chat_message != NULL) {

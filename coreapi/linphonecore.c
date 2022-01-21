@@ -8885,6 +8885,7 @@ void linphone_core_initialize_supported_content_types(LinphoneCore *lc) {
 	lc->sal->addContentTypeSupport("application/vnd.gsma.rcs-ft-http+xml");
 	lc->sal->addContentTypeSupport("application/im-iscomposing+xml");
 	lc->sal->addContentTypeSupport("message/imdn+xml");
+	lc->sal->addContentTypeSupport("text/calendar");
 }
 
 bool_t linphone_core_is_content_type_supported(const LinphoneCore *lc, const char *content_type) {

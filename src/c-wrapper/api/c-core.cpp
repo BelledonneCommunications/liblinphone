@@ -236,3 +236,11 @@ const char *linphone_core_get_ephemeral_version(const LinphoneCore *lc){
 bool_t linphone_core_is_in_background(const LinphoneCore *lc) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isInBackground();
 }
+
+void linphone_core_enable_conference_ics_in_message_body(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_bool(linphone_core_get_config(core), "misc", "send_conference_ics_in_message_body", enable);
+}
+
+bool_t linphone_core_conference_ics_in_message_body_enabled(const LinphoneCore *core) {
+	return linphone_config_get_bool(linphone_core_get_config(core), "misc", "send_conference_ics_in_message_body", TRUE);
+}

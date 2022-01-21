@@ -1150,6 +1150,20 @@ LINPHONE_PUBLIC const char *linphone_core_get_user_agent(LinphoneCore *core);
 LINPHONE_PUBLIC bool_t linphone_core_is_in_background(const LinphoneCore *lc);
 
 /**
+ * Enable sending conference invitations in the chat message body instead of as a file attachment.
+ * @param core the #LinphoneCore
+ * @param enable TRUE to send ICS as message body, FALSE to send it as file transfer
+ */
+LINPHONE_PUBLIC void linphone_core_enable_conference_ics_in_message_body(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets wether conference invitations will be sent in the chat message body or as a file attachment.
+ * @param core the #LinphoneCore
+ * @return TRUE if ICS will be sent in the message body (by default), FALSE if it will be sent as a file attachment.
+ */
+LINPHONE_PUBLIC bool_t linphone_core_conference_ics_in_message_body_enabled(const LinphoneCore *core);
+
+/**
  * @}
 **/
 

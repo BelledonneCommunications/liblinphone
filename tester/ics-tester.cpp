@@ -308,8 +308,13 @@ static void send_conference_invitations(bool_t enable_group, bool_t enable_encry
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_TRUE(wait_for(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceived,1));
 
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
-	BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
+	if (linphone_core_conference_ics_in_message_body_enabled(marie->lc)) {
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1, 60000));
+		BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceived,1, 60000));
+	} else {
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
+		BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&laure->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
+	}
 
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message != NULL) {

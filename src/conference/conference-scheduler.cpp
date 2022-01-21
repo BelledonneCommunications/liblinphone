@@ -200,11 +200,17 @@ void ConferenceScheduler::setConferenceAddress(const ConferenceAddress& conferen
 }
 
 shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_ptr<AbstractChatRoom> chatRoom) {
-	FileContent *content = new FileContent(); // content will be deleted by ChatMessage
-	content->setContentType(ContentType::Icalendar);
-	content->setFileName("conference.ics");
-	content->setBodyFromUtf8(mConferenceInfo->toIcsString());
-	shared_ptr<LinphonePrivate::ChatMessage> message = chatRoom->createFileTransferMessage(content);
+	shared_ptr<LinphonePrivate::ChatMessage> message;
+	if (linphone_core_conference_ics_in_message_body_enabled(chatRoom->getCore()->getCCore())) {
+		message = chatRoom->createChatMessageFromUtf8(mConferenceInfo->toIcsString());
+		message->getPrivate()->setContentType(ContentType::Icalendar);
+	} else {
+		FileContent *content = new FileContent(); // content will be deleted by ChatMessage
+		content->setContentType(ContentType::Icalendar);
+		content->setFileName("conference.ics");
+		content->setBodyFromUtf8(mConferenceInfo->toIcsString());
+		message = chatRoom->createFileTransferMessage(content);
+	}
 	message->addListener(getSharedFromThis());
 	return message;
 }
