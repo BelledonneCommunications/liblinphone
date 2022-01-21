@@ -414,18 +414,24 @@ void on_msg_written_in_user_defaults(CFNotificationCenterRef center, void *obser
 	}
 }
 
+
 // The message has been received by the main core and we will just fetch it into the user defaults
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(const string &callId) {
+	
+	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
+	if (msg) {
+		lInfo() << "[push] message was already found in user defaults, no need to subscribe to notifications";
+		return msg;
+	}
+	
 	lInfo() << "[push] subscribe to main core notif: receive a notif when msg is written in user defaults";
+	
 	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
 	CFStringRef notificationName;
 
 	notificationName = CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8);
 
 	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, notificationName, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
-
-	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
-	if (msg) return msg;
 
 	reinitTimer();
 	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && !mMsgWrittenInUserDefaults) {
