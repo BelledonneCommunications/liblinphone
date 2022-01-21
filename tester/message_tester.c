@@ -436,6 +436,78 @@ static void text_forward_message_cpim_enabled(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void text_forward_transfer_message_not_downloaded(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
+
+	const char *send_filename = "sounds/sintel_trailer_opus_h264.mkv";
+	LinphoneChatMessage* msg = msg = create_file_transfer_message_from_file(room, send_filename);
+	linphone_chat_message_send(msg);
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDelivered,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1));
+	LinphoneChatMessage *marie_recv_msg = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(marie_recv_msg);
+	if (marie_recv_msg != NULL) {
+		const LinphoneContent *content = (const LinphoneContent *)(linphone_chat_message_get_contents(marie_recv_msg)->data);
+		BC_ASSERT_TRUE(linphone_content_is_file_transfer(content));
+		// Do not download the file, transfer it as-is.
+
+		LinphoneChatRoom *marieCr;
+		const LinphoneAddress *msg_from = linphone_chat_message_get_from_address(marie_recv_msg);
+		/* We have special case for anonymous message, that of course won't come in the chatroom to pauline.*/
+		if (strcasecmp(linphone_address_get_username(msg_from), "anonymous") == 0){
+			marieCr = linphone_chat_message_get_chat_room(marie_recv_msg);
+		} else {
+			marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+		}
+		LinphoneChatMessage* fmsg = linphone_chat_room_create_forward_message(marieCr, marie_recv_msg);
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(fmsg);
+		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		linphone_chat_message_send(fmsg);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceivedWithFile,1));
+
+		LinphoneChatMessage *pauline_recv_msg = pauline->stat.last_received_chat_message;
+		BC_ASSERT_PTR_NOT_NULL(pauline_recv_msg);
+		if (pauline_recv_msg != NULL) {
+			LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(pauline_recv_msg)->data);
+			BC_ASSERT_TRUE(linphone_content_is_file_transfer(content));
+
+			cbs = linphone_chat_message_get_callbacks(pauline_recv_msg);
+			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+			linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+			linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+			char *receive_filepath = bc_tester_file("receive_file.dump");
+			remove(receive_filepath);
+			linphone_chat_message_set_file_transfer_filepath(pauline_recv_msg, receive_filepath);
+			bc_free(receive_filepath);
+			linphone_chat_message_download_file(pauline_recv_msg);
+
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
+			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,55000))) {
+				char *send_filepath = bc_tester_res(send_filename);
+				compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(pauline_recv_msg));
+				remove(linphone_chat_message_get_file_transfer_filepath(pauline_recv_msg));
+				bc_free(send_filepath);
+			}
+		}
+		linphone_chat_message_unref(fmsg);
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
+	linphone_chat_message_unref(msg);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void text_reply_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -3984,6 +4056,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Text forward message", text_forward_message),
 	TEST_NO_TAG("Text forward message with CPIM enabled with backward compat", text_forward_message_cpim_enabled_backward_compat),
 	TEST_NO_TAG("Text forward message with CPIM enabled", text_forward_message_cpim_enabled),
+	TEST_NO_TAG("Text forward transfer message not downloaded", text_forward_transfer_message_not_downloaded),
 	TEST_NO_TAG("Text reply message", text_reply_message),
 	TEST_NO_TAG("Text reply message with CPIM enabled with backward compat", text_reply_message_cpim_enabled_backward_compat),
 	TEST_NO_TAG("Text reply message with CPIM enabled", text_reply_message_cpim_enabled),

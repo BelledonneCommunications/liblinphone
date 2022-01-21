@@ -916,16 +916,26 @@ void ChatMessagePrivate::handleAutoDownload() {
 }
 
 void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
+	if (contents.size() == 0) {
+		lWarning() << "Contents list is empty, nothing to restore";
+		return;
+	}
+
 	// Restore FileContents and remove FileTransferContents
 	list<Content*>::iterator it = contents.begin();
 	while (it != contents.end()) {
 		Content *content = *it;
-		if (content->isFileTransfer()) {
+		if (content && content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
 			FileContent *fileContent = fileTransferContent->getFileContent();
-			it = contents.erase(it);
-			it = contents.insert(it, fileContent);
-			delete fileTransferContent;
+			if (fileContent) {
+				it = contents.erase(it);
+				it = contents.insert(it, fileContent);
+				delete fileTransferContent;
+			} else {
+				lWarning() << "Found FileTransferContent but no associated FileContent";
+				it++;
+			}
 		} else {
 			it++;
 		}
