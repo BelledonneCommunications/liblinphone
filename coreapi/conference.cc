@@ -539,7 +539,7 @@ LocalConference::LocalConference (
 		contactAddressStr = ms_strdup(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}
 	Address contactAddress(contactAddressStr);
-	char confId[6];
+	char confId[LinphonePrivate::MediaConference::LocalConference::confIdLength];
 	belle_sip_random_token(confId,sizeof(confId));
 	contactAddress.setUriParam("conf-id",confId);
 	if (contactAddressStr) {
@@ -558,8 +558,10 @@ LocalConference::LocalConference (
 LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	Conference(core, IdentityAddress(op->getTo()), nullptr, ConferenceParams::create(core->getCCore())) {
 
+	LinphoneCore * lc = core->getCCore();
+
 #ifdef HAVE_ADVANCED_IM
-	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE );
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
@@ -579,7 +581,7 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	//    - if the SDP has at least one active video stream, video is enabled
 	// - Subject is got from the "Subject" header in the INVITE
 	const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
-	const auto videoEnabled = (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
+	const auto videoEnabled = (linphone_core_conference_server_enabled(lc)) ? linphone_core_video_enabled(lc) : (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
 	confParams->enableAudio(audioEnabled);
 	confParams->enableVideo(videoEnabled);
 	confParams->setSubject(op->getSubject());
@@ -620,8 +622,10 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::shared_ptr<ConferenceInfo> & info) :
 	Conference(core, info->getOrganizer(), nullptr, ConferenceParams::create(core->getCCore())) {
 
+	LinphoneCore * lc = core->getCCore();
+
 #ifdef HAVE_ADVANCED_IM
-	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "conference_event_log_enabled", TRUE );
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
@@ -632,9 +636,8 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 
 	const auto & conferenceAddress = info->getUri();
 
-	// WORKAROUND: Always recreate conference with audio and video enabled. ConferenceInfo doesn't store this information
 	confParams->enableAudio(true);
-	confParams->enableVideo(true);
+	confParams->enableVideo(linphone_core_video_enabled(lc));
 	confParams->setSubject(info->getSubject());
 	confParams->enableLocalParticipant(false);
 	confParams->enableOneParticipantConference(true);
@@ -698,7 +701,7 @@ void LocalConference::confirmCreation () {
 		if (!cfg) cfg = linphone_core_get_default_proxy_config(L_GET_C_BACK_PTR(getCore()));
 		LinphoneAddress *addr = linphone_address_clone(linphone_proxy_config_get_identity_address(cfg));
 
-		char confId[6];
+		char confId[LinphonePrivate::MediaConference::LocalConference::confIdLength];
 		belle_sip_random_token(confId,sizeof(confId));
 		linphone_address_set_uri_param (addr, "conf-id", confId);
 		Address conferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
@@ -724,6 +727,7 @@ void LocalConference::confirmCreation () {
 }
 
 void LocalConference::finalizeCreation() {
+
 	if (getState() == ConferenceInterface::State::CreationPending) {
 		const ConferenceAddress & conferenceAddress = getConferenceAddress();
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
@@ -1983,6 +1987,7 @@ RemoteConference::RemoteConference (
 	invitedAddresses = invitees;
 	setConferenceId(conferenceId);
 	setConferenceAddress(confAddr);
+
 	finalizeCreation();
 }
 
@@ -2041,6 +2046,7 @@ RemoteConference::RemoteConference (
 #endif
 
 	setConferenceAddress(*conferenceAddress);
+
 	finalizeCreation();
 }
 
@@ -2052,7 +2058,8 @@ RemoteConference::~RemoteConference () {
 }
 
 void RemoteConference::finalizeCreation() {
-	if ((getState() == ConferenceInterface::State::CreationPending) && !finalized) {
+
+	if ((getState() == ConferenceInterface::State::CreationPending) && !finalized && focus->getSession() && (!static_pointer_cast<MediaSession>(focus->getSession())->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
 		if (finalized) {
 			lDebug() << "Conference " << this << " has already been finalized";
 			return;
@@ -2566,12 +2573,17 @@ bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> c
 	auto session = getMainSession();
 	Address referToAddr(*session->getRemoteContactAddress());
 	std::shared_ptr<Participant> participant = findParticipant(call->getActiveSession());
-	referToAddr.setParam("admin", Utils::toString(participant->isAdmin()));
-	if (call->transfer(referToAddr.asString()) == 0) {
-		m_transferingCalls.push_back(call);
-		return true;
+	if (participant) {
+		referToAddr.setParam("admin", Utils::toString(participant->isAdmin()));
+		if (call->transfer(referToAddr.asString()) == 0) {
+			m_transferingCalls.push_back(call);
+			return true;
+		} else {
+			lError() << "Conference: could not transfer call " << call << " to " << referToAddr.asString();
+			return false;
+		}
 	} else {
-		lError() << "Conference: could not transfer call " << call << " to " << referToAddr.asString();
+		lError() << "Conference: could not transfer call " << call << " to " << referToAddr.asString() << " because participant with session " << call->getActiveSession() << " cannot be found  - guessed address " << referToAddr;
 		return false;
 	}
 	return false;

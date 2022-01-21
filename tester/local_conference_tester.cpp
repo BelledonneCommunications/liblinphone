@@ -3217,6 +3217,7 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 			linphone_core_set_file_transfer_server(michelle.getLc(), file_transfer_url);
 			setup_conference_info_cbs(michelle.getCMgr());
 		}
+
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeOpen);
 		linphone_core_set_default_conference_layout(focus.getLc(), LinphoneConferenceLayoutNone);
 
@@ -3335,10 +3336,8 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr()}) {
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallOutgoingProgress, 2, 10000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, 3, 10000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdatedByRemote, 2, 10000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallPaused, 1, 10000));
-			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, 4, 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, ((mgr == marie.getCMgr()) ? 4 : 3), 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress, 2, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 2, 5000));
@@ -3374,8 +3373,7 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added, focus_stat.number_of_participant_devices_added + 6, 10000));
 
 		// Marie and Pauline leave conference1
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_changed, focus_stat.number_of_participant_device_media_changed + 2, 10000));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_changed, focus_stat.number_of_participant_device_left + 2, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_left, focus_stat.number_of_participant_device_left + 2, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_participant_device_media_changed, 2, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_participant_device_left, 2, 10000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_device_media_changed, 1, 10000));

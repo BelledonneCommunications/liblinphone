@@ -310,6 +310,8 @@ private:
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
+
+	static constexpr int confIdLength = 10;
 };
 
 /*
