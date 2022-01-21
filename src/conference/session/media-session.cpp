@@ -2183,7 +2183,7 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
  * @param[in]	suite	The LinphoneSrtpSuite to be converted
  * @return	the matching MSCryptoSuite value
  **/
-static MSCryptoSuite LinphoneSrtpSuite2MSCryptoSuite(const LinphoneSrtpSuite suite) {
+MSCryptoSuite LinphoneSrtpSuite2MSCryptoSuite(const LinphoneSrtpSuite suite) {
 	switch (suite) {
 		case LinphoneSrtpSuiteAESCM128HMACSHA180 : return MS_AES_128_SHA1_80;
 		case LinphoneSrtpSuiteAESCM128HMACSHA132 : return MS_AES_128_SHA1_32;
@@ -2208,7 +2208,7 @@ static MSCryptoSuite LinphoneSrtpSuite2MSCryptoSuite(const LinphoneSrtpSuite sui
  * @param[in]	suite	The list of LinphoneSrtpSuite to be converted
  * @return	the matching MSCryptoSuite list, unconvertible input are skipped
  **/
-static std::list<MSCryptoSuite> LinphoneSrtpSuite2MSCryptoSuite(const std::list<LinphoneSrtpSuite> suites) {
+std::list<MSCryptoSuite> LinphoneSrtpSuite2MSCryptoSuite(const std::list<LinphoneSrtpSuite> suites) {
 	std::list<MSCryptoSuite> ret{};
 	for (const auto suite:suites) {
 		auto MSsuite = LinphoneSrtpSuite2MSCryptoSuite(suite);

@@ -152,6 +152,26 @@ private:
 	int getRandomRtpPort (const SalStreamDescription & stream) const;
 };
 
+/**
+ * Convert enum LinphoneSrtpSuite into enum MSCryptoSuite
+ * Enums definitions are not perferctly matching
+ * any input without corresponding MSCryptoSuite value gives a MS_CRYPTO_SUITE_INVALID output
+ *
+ * @param[in]	suite	The LinphoneSrtpSuite to be converted
+ * @return	the matching MSCryptoSuite value
+ **/
+MSCryptoSuite LinphoneSrtpSuite2MSCryptoSuite(const LinphoneSrtpSuite suite);
+
+/**
+ * Convert a list of enum LinphoneSrtpSuite into a list enum MSCryptoSuite
+ * Enums definitions are not perferctly matching
+ * input giving MS_CRYPTO_SUITE_INVALID are skipped in the output list
+ *
+ * @param[in]	suite	The list of LinphoneSrtpSuite to be converted
+ * @return	the matching MSCryptoSuite list, unconvertible input are skipped
+ **/
+std::list<MSCryptoSuite> LinphoneSrtpSuite2MSCryptoSuite(const std::list<LinphoneSrtpSuite> suites);
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_MEDIA_SESSION_H_

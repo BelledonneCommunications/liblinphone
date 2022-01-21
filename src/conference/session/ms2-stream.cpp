@@ -340,7 +340,6 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						}
 					} else if (enc == LinphoneMediaEncryptionSRTP) {
 						// acap for SRTP
-						const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites_array(getCCore());
 						const std::string attrName("crypto");
 						// Copy acap crypto attributes
 						const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
@@ -363,9 +362,23 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 							}
 						} else if (cryptoCap == acaps.cend()) {
 							// If no crypto attribute is found, generate it
-							for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+							// settings from callParams have precedence over core config
+							std::list<MSCryptoSuite> suitesList{};
+							auto callParamSrtpSuites = getMediaSessionPrivate().getParams()->getSrtpSuites();
+							if (callParamSrtpSuites.empty()) { // no callParam srtp suite configuration, use core config
+								const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites_array(getCCore());
+								for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+									suitesList.push_back(suites[j]);
+								}
+							} else {
+									suitesList = LinphoneSrtpSuite2MSCryptoSuite(callParamSrtpSuites);
+							}
+
+							unsigned int cryptoId=1;
+							for (const auto &suite: suitesList) {
 								SalSrtpCryptoAlgo crypto;
-								getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
+								getMediaSessionPrivate().setupEncryptionKey(crypto, suite, cryptoId);
+								cryptoId++;
 								MSCryptoSuiteNameParams desc;
 								if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
 									const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
