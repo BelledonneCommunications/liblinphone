@@ -4624,7 +4624,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const Conferen
 		" start_time, duration, subject, description"
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id"
-		"  AND uri_sip_address.value LIKE '%%" + uri.asString() + "%%'";
+		"  AND uri_sip_address.value = '" + uri.asString() + "'";
 
 	return L_DB_TRANSACTION {
 		L_D();

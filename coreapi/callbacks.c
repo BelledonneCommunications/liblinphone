@@ -212,7 +212,7 @@ static void call_received(SalCallOp *h) {
 			if (!conference) {
 				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
 
-				if (confInfo && (sal_address_has_param(h->getToAddress(), "conf-id"))) {
+				if (confInfo) {
 						std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
 				} else {
 					auto localConference = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
