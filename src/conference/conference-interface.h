@@ -265,7 +265,14 @@ public:
 	* @param[in] event informations related to the device's participant.
 	* @param[in] device participant device that changed its media capabilities
 	*/
-	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+	virtual void onParticipantDeviceMediaCapabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+
+	/*
+	* This fonction is called each time a participant device changes its available media
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed its media availabilities
+	*/
+	virtual void onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
 
 	/*
 	* This fonction is called each time a new participant device rejoins the conference after full state notification.

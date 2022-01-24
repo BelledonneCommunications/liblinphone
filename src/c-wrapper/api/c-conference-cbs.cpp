@@ -103,12 +103,20 @@ void linphone_conference_cbs_set_participant_device_joined (LinphoneConferenceCb
 	ConferenceCbs::toCpp(cbs)->participantDeviceJoinedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceMediaChangedCb linphone_conference_cbs_get_participant_device_media_changed (const LinphoneConferenceCbs *cbs) {
-	return ConferenceCbs::toCpp(cbs)->participantDeviceMediaChangedCb;
+LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb linphone_conference_cbs_get_participant_device_media_availability_changed (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceMediaAvailabilityChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaChangedCb cb) {
-	ConferenceCbs::toCpp(cbs)->participantDeviceMediaChangedCb = cb;
+void linphone_conference_cbs_set_participant_device_media_availability_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceMediaAvailabilityChangedCb = cb;
+}
+
+LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb linphone_conference_cbs_get_participant_device_media_capability_changed (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceMediaCapabilityChangedCb;
+}
+
+void linphone_conference_cbs_set_participant_device_media_capability_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceMediaCapabilityChangedCb = cb;
 }
 
 LinphoneConferenceCbsStateChangedCb linphone_conference_cbs_get_state_changed (const LinphoneConferenceCbs *cbs) {
@@ -117,6 +125,14 @@ LinphoneConferenceCbsStateChangedCb linphone_conference_cbs_get_state_changed (c
 
 void linphone_conference_cbs_set_state_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsStateChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->stateChangedCb = cb;
+}
+
+LinphoneConferenceCbsAvailableMediaChangedCb linphone_conference_cbs_get_available_media_changed (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->availableMediaChangedCb;
+}
+
+void linphone_conference_cbs_set_available_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAvailableMediaChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->availableMediaChangedCb = cb;
 }
 
 LinphoneConferenceCbsSubjectChangedCb linphone_conference_cbs_get_subject_changed (const LinphoneConferenceCbs *cbs) {

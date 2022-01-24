@@ -143,7 +143,7 @@ typedef struct _LinphoneConference LinphoneConference;
 /**
  * @brief Object defining parameters for a #LinphoneConference.
  * 
- * Can be created by calling function linphone_core_create_conference_params().
+ * Can be created by calling function linphone_core_create_conference_params_2().
  * 
  * @ingroup conference
  */

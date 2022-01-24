@@ -62,23 +62,26 @@ Conference::~Conference () {
 // -----------------------------------------------------------------------------
 
 bool Conference::tryAddMeDevice() {
-	if (confParams->localParticipantEnabled() &&  me->getDevices().empty() && confParams->getAccount()) {
+	if (confParams->localParticipantEnabled() && me->getDevices().empty() && confParams->getAccount()) {
 		char * devAddrStr = linphone_account_get_contact_address(confParams->getAccount()) ? linphone_address_as_string(linphone_account_get_contact_address(confParams->getAccount())) : nullptr;
 		if (devAddrStr) {
 			Address devAddr(devAddrStr);
+			ms_free(devAddrStr);
 			auto meDev = me->addDevice(devAddr);
 			const auto & meSession = me->getSession();
-			ms_free(devAddrStr);
+
+			char label[Conference::labelLength];
+			belle_sip_random_token(label,sizeof(label));
+			meDev->setLayout(getLayout());
+			meDev->setLabel(label);
+			meDev->setSession(meSession);
 
 			// Initialize media directions
 			meDev->setStreamCapability((confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeAudio);
 			meDev->setStreamCapability((confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeVideo);
 			meDev->setStreamCapability((confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeText);
 
-			char label[Conference::labelLength];
-			belle_sip_random_token(label,sizeof(label));
-			meDev->setLabel(label);
-			meDev->setSession(meSession);
+			meDev->updateStreamAvailabilities();
 
 			return true;
 		}
@@ -159,8 +162,24 @@ ConferenceLayout Conference::getLayout() const {
 	return confParams ? confParams->getLayout() : (ConferenceLayout)linphone_core_get_default_conference_layout(getCore()->getCCore());
 }
 
+void Conference::updateMainSession() {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	if (session) {
+		const MediaSessionParams * params = session->getMediaParams();
+		MediaSessionParams *currentParams = params->clone();
+		if (!currentParams->rtpBundleEnabled()) {
+			currentParams->enableRtpBundle((getLayout() != ConferenceLayout::Legacy));
+		}
+		session->update(currentParams);
+		delete currentParams;
+	}
+}
+
 void Conference::setLayout(const ConferenceLayout layout) {
-	confParams->setLayout(layout);
+	if (getLayout() != layout) {
+		confParams->setLayout(layout);
+		updateMainSession();
+	}
 }
 
 const ConferenceAddress & Conference::getConferenceAddress () const {
@@ -215,19 +234,20 @@ void Conference::join () {}
 
 void Conference::leave () {}
 
+void Conference::setLocalParticipantStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type) {}
+
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
-	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
-	bool layoutChanged = (confParams) && (getLayout() != newLayout);
-	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
-	if (layoutChanged) {
-		const auto & meSession = static_pointer_cast<MediaSession>(getMainSession());
-		const MediaSessionParams * meParams = meSession->getMediaParams();
-		MediaSessionParams *clonedParams = meParams->clone();
+	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
+	if (confParams && ((confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) || (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
+		lError() << "Trying to change frozen conference parameters:";
+		lError() << " -  factory address: actual " << confParams->getConferenceFactoryAddress() << " new value " << newConfParams.getConferenceFactoryAddress();
+		lError() << " -  conference address: actual " << confParams->getConferenceAddress() << " new value " << newConfParams.getConferenceAddress();
+		return false;
+	}
+	confParams = ConferenceParams::create(newConfParams);
 
-		std::string subject(std::string("Conference layout changed to ") + newLayout);
-
-// TODO Use UPDATE instead of DEFAULT
-		return meSession->update(clonedParams, CallSession::UpdateMethod::Default, false, subject);
+	for (const auto &device : getMe()->getDevices()) {
+		device->setLayout(getLayout());
 	}
 	return true;
 };
@@ -357,7 +377,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const st
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with label " << label;
+	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with label " << label;
 
 	return nullptr;
 }
@@ -371,7 +391,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityA
 		}
 	}
 
-	lInfo() << "Unable to find participant device in conference " << getConferenceAddress() << " with address " << addr.asString();
+	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with address " << addr.asString();
 
 	return nullptr;
 }
@@ -385,9 +405,17 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 		}
 	}
 
-	lWarning() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session " << session;
+	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session " << session;
 
 	return nullptr;
+}
+
+std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() const {
+	std::map<ConferenceMediaCapabilities, bool> mediaCapabilities;
+	mediaCapabilities[ConferenceMediaCapabilities::Audio] = confParams->audioEnabled();
+	mediaCapabilities[ConferenceMediaCapabilities::Video] = confParams->videoEnabled();
+	mediaCapabilities[ConferenceMediaCapabilities::Text] = confParams->chatEnabled();
+	return mediaCapabilities;
 }
 
 // -----------------------------------------------------------------------------
@@ -594,9 +622,9 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceMediaChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
-		EventLog::Type::ConferenceParticipantDeviceAdded,
+		EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged,
 		creationTime,
 		conferenceId,
 		participant->getAddress(),
@@ -607,7 +635,25 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	event->setNotifyId(lastNotify);
 
 	for (const auto &l : confListeners) {
-		l->onParticipantDeviceMediaChanged(event, participantDevice);
+		l->onParticipantDeviceMediaCapabilityChanged(event, participantDevice);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceMediaAvailabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceMediaAvailabilityChanged(event, participantDevice);
 	}
 	return event;
 }

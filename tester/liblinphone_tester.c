@@ -418,7 +418,8 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_basic_test_suite);
 #endif
-	bc_tester_add_suite(&local_conference_test_suite);
+	bc_tester_add_suite(&local_conference_test_suite_conference);
+	bc_tester_add_suite(&local_conference_test_suite_chat);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
@@ -449,8 +450,8 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
 	bc_tester_add_suite(&audio_quality_test_suite);
-	bc_tester_add_suite(&audio_conference_basic_test_suite);
-	bc_tester_add_suite(&audio_conference_advanced_test_suite);
+	bc_tester_add_suite(&audio_video_conference_basic_test_suite);
+	bc_tester_add_suite(&audio_conference_test_suite);
 	bc_tester_add_suite(&video_conference_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);

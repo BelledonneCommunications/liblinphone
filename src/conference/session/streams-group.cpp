@@ -392,28 +392,23 @@ bool StreamsGroup::checkRtpSession() const {
 			MediaStream *ms = s->getMediaStream();
 			RtpSession *rtp_session = ms->sessions.rtp_session;
 			if (!rtp_session) {
-				lInfo() << "session empty";
+				lInfo() << "StreamsGroup::checkRtpSession(): session empty";
 				return false;
 			}
 			const rtp_stats_t *rtps = rtp_session_get_stats(rtp_session);
 			switch (media_stream_get_direction(ms)) {
 				case MediaStreamRecvOnly:
 					// Can be 0 if it's not attached with filter
-					lInfo() << "session recv true";
 					break;
 				case MediaStreamSendOnly:
 					if (rtps->packet_sent < 5) {
-						lInfo() << "session send false";
 						return false;
 					}
-					lInfo() << "session send true";
 					break;
 				case MediaStreamSendRecv:
 					if (rtps->packet_recv < 5 || rtps->packet_sent < 5) {
-						lInfo() << "session send recv false";
 						return false;
 					}
-					lInfo() << "session send recv true";
 					break;
 				default:
 					break;
@@ -603,7 +598,6 @@ void StreamsGroup::computeAndReportBandwidth(){
 		ostr << "\tStream #" << stream->getIndex() << " (" << sal_stream_type_to_string(stream->getType()) << ") | cpu: " << stream->getCpuUsage() << "% |" << " RTP : [d="
 			<< linphone_call_stats_get_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_upload_bandwidth(stats) << "] "
 			<< "RTCP: [d=" << linphone_call_stats_get_rtcp_download_bandwidth(stats) << ",u=" << linphone_call_stats_get_rtcp_upload_bandwidth(stats) << "] ";
-		ostr << "\n test   rtp " << stream->getPortConfig().rtpPort << " rtcp " << stream->getPortConfig().rtcpPort;
 		
 		float est_bw = linphone_call_stats_get_estimated_download_bandwidth(stats);
 		if (est_bw > 0.0) ostr << "Est max d=" << est_bw;

@@ -111,7 +111,7 @@ LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const Lin
  * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio, video or text).
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param stream_type A #LinphoneStreamType
- * @return the stream of type stream_type capability of the device
+ * @return the capability of stream of type stream_type of the device
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_stream_capability(const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 

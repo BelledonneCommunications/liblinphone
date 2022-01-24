@@ -57,7 +57,8 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 		type == Type::ConferenceParticipantDeviceAdded ||
 		type == Type::ConferenceParticipantDeviceRemoved ||
 		type == Type::ConferenceParticipantDeviceStatusChanged ||
-		type == Type::ConferenceParticipantDeviceMediaChanged
+		type == Type::ConferenceParticipantDeviceMediaCapabilityChanged ||
+		type == Type::ConferenceParticipantDeviceMediaAvailabilityChanged
 	);
 	d->deviceAddress = deviceAddress;
 	d->deviceName = name;

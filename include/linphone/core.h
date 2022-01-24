@@ -4317,9 +4317,11 @@ LINPHONE_PUBLIC int linphone_core_get_conference_size(LinphoneCore *core);
 /**
  * Create some default conference parameters for instanciating a conference with linphone_core_create_conference_with_params().
  * @param core the #LinphoneCore object @notnil
+ * @param conference #LinphoneConference for which the parameters are to be build, or NULL in the case where the parameters are to be used for a new conference. @maybenil
  * @return a #LinphoneConferenceParams object. @notnil
 **/
-LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_params_2(LinphoneCore *lc, LinphoneConference * conference);
+
 /**
  * Start recording the running conference
  * @param core #LinphoneCore @notnil
@@ -6264,6 +6266,13 @@ LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *c
  * @deprecated 27/10/2020. Use linphone_core_get_call_by_remote_address2() instead.
  */
 LINPHONE_PUBLIC LinphoneCall* linphone_core_find_call_from_uri(const LinphoneCore *core, const char *uri);
+
+/**
+ * Create some default conference parameters for instanciating a conference with linphone_core_create_conference_with_params().
+ * @param core the #LinphoneCore object @notnil
+ * @return a #LinphoneConferenceParams object. @notnil
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *core);
 
 /**
  * @brief Define a log handler.

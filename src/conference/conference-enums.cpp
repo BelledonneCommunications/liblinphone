@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e) {
 
 std::ostream & operator << (std::ostream & str, ConferenceLayout layout){
 	switch (layout) {
-		case ConferenceLayout::None:
+		case ConferenceLayout::Legacy:
 			str << "Legacy";
 			break;
 		case ConferenceLayout::Grid:
@@ -54,7 +54,7 @@ std::ostream & operator << (std::ostream & str, ConferenceLayout layout){
 std::string operator + (const std::string & str, ConferenceLayout layout){
 	std::string s(str);
 	switch (layout) {
-		case ConferenceLayout::None:
+		case ConferenceLayout::Legacy:
 			s.append("Legacy");
 			break;
 		case ConferenceLayout::Grid:

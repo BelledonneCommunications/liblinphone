@@ -58,6 +58,16 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream = video_stream_new2(getCCore()->factory, L_STRING_TO_C(bindIp), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 
 	initializeSessions(&mStream->ms);
+
+	const auto & content = localDesc.getContent();
+	const auto & label = localDesc.getLabel();
+
+	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
+	if (!label.empty()) {
+		video_stream_set_label(mStream, label.c_str());
+	}
+
+
 }
 
 void MS2VideoStream::sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args) {
@@ -191,9 +201,8 @@ void MS2VideoStream::finishPrepare(){
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
-	const auto & isInLocalConference = getMediaSessionPrivate().isInConference();
 	MS2VideoMixer * videoMixer = getVideoMixer();
-	const auto & stream = isInLocalConference ? ctx.getLocalStreamDescription() : ctx.getRemoteStreamDescription();
+	const auto & stream = ctx.getLocalStreamDescription();
 	const auto & label = stream.getLabel();
 	const auto & content = stream.getContent();
 	MSFilter *source = nullptr;

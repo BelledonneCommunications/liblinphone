@@ -7961,8 +7961,8 @@ int linphone_media_encryption_from_string(const char * value){
 	return -1;
 }
 
-const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
-	switch(menc){
+const char *linphone_media_encryption_to_string(LinphoneMediaEncryption media_encryption){
+	switch(media_encryption){
 		case LinphoneMediaEncryptionSRTP:
 			return "LinphoneMediaEncryptionSRTP";
 		case LinphoneMediaEncryptionDTLS:
@@ -7972,7 +7972,24 @@ const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
 		case LinphoneMediaEncryptionNone:
 			return "LinphoneMediaEncryptionNone";
 	}
-	ms_error("Invalid LinphoneMediaEncryption value %i",(int)menc);
+	ms_error("Invalid LinphoneMediaEncryption value %i",(int)media_encryption);
+	return "INVALID";
+}
+
+const char *linphone_media_direction_to_string(LinphoneMediaDirection media_direction){
+	switch(media_direction){
+		case LinphoneMediaDirectionInvalid:
+			return "Invalid";
+		case LinphoneMediaDirectionInactive:
+			return "Inactive";
+		case LinphoneMediaDirectionRecvOnly:
+			return "RecvOnly";
+		case LinphoneMediaDirectionSendOnly:
+			return "SendOnly";
+		case LinphoneMediaDirectionSendRecv:
+			return "SendRecv";
+	}
+	ms_error("Invalid LinphoneMediaDirection value %i",(int)media_direction);
 	return "INVALID";
 }
 
@@ -8279,7 +8296,7 @@ void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) 
 }
 
 LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc) {
-	return (LinphoneConferenceLayout)linphone_config_get_int(lc->config, "misc", "conference_layout", LinphoneConferenceLayoutNone);
+	return (LinphoneConferenceLayout)linphone_config_get_int(lc->config, "misc", "conference_layout", LinphoneConferenceLayoutLegacy);
 }
 
 void linphone_core_set_default_conference_layout(LinphoneCore *lc, LinphoneConferenceLayout value) {
@@ -8695,8 +8712,17 @@ LinphoneConference *linphone_core_search_conference_2(const LinphoneCore *lc, co
 	return c_conference;
 }
 
+LinphoneConferenceParams * linphone_core_create_conference_params_2(LinphoneCore *lc, LinphoneConference * conference){
+	if (!conference) return linphone_conference_params_new(lc);
+	if (linphone_conference_get_current_params(conference)){
+		return linphone_conference_params_clone(linphone_conference_get_current_params(conference));
+	}
+	ms_error("linphone_core_create_conference_params(): conference [%p] is not in a state where conference params can be created or used.", conference);
+	return NULL;
+}
+
 LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *lc){
-	return linphone_conference_params_new(lc);
+	return linphone_core_create_conference_params_2(lc, NULL);
 }
 
 LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *call) {

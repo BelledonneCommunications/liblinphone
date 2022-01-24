@@ -464,11 +464,18 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceLeftCb) (LinphoneConference
 typedef void (*LinphoneConferenceCbsParticipantDeviceJoinedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
 
 /**
- * Callback used to notify a conference that the media of a participant device has been changed.
+ * Callback used to notify a conference that the media availability of a participant device has been changed.
  * @param[in] conference #LinphoneConference object @notnil
- * @param[in] device #LinphoneParticipantDevice whose media changed has changed @notnil
+ * @param[in] device #LinphoneParticipantDevice whose media availability changed has changed @notnil
  */
-typedef void (*LinphoneConferenceCbsParticipantDeviceMediaChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+typedef void (*LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+
+/**
+ * Callback used to notify a conference that the media capability of a participant device has been changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] device #LinphoneParticipantDevice whose media capability changed has changed @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
 
 /**
  * Callback used to notify a conference that the admin status of a participant has been changed.
@@ -483,6 +490,12 @@ typedef void (*LinphoneConferenceCbsParticipantAdminStatusChangedCb) (LinphoneCo
  * @param[in] newState The new state of the conference
  */
 typedef void (*LinphoneConferenceCbsStateChangedCb) (LinphoneConference *conference, LinphoneConferenceState newState);
+
+/**
+ * Callback used to notify that the available media of a conference has changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ */
+typedef void (*LinphoneConferenceCbsAvailableMediaChangedCb) (LinphoneConference *conference);
 
 /**
  * Callback used to notify that the subject of a conference has changed.

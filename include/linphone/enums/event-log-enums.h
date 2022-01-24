@@ -44,7 +44,8 @@ typedef enum _EventLogType{
 	LinphoneEventLogTypeConferenceParticipantUnsetAdmin = 9, /**< Conference participant (unset admin) event */
 	LinphoneEventLogTypeConferenceParticipantDeviceAdded = 10, /**< Conference participant device (added) event */
 	LinphoneEventLogTypeConferenceParticipantDeviceRemoved = 11, /**< Conference participant device (removed) event */
-	LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged = 17, /**< Conference participant device (media changed) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged = 17, /**< Conference participant device (media capability changed) event */
+	LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged = 23, /**< Conference participant device (media availability changed) event */
 	LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged = 22, /**< Conference participant device (left) event */
 	LinphoneEventLogTypeConferenceSubjectChanged = 12, /**< Conference subject event */
 	LinphoneEventLogTypeConferenceAvailableMediaChanged = 18, /**< Conference available media event */

@@ -33,7 +33,6 @@ LINPHONE_BEGIN_NAMESPACE
 // =============================================================================
 
 LocalAudioVideoConferenceEventHandler::LocalAudioVideoConferenceEventHandler (MediaConference::Conference *conference) : LocalConferenceEventHandler (dynamic_cast<Conference *>(conference)) {
-
 }
 
 MediaConference::Conference *LocalAudioVideoConferenceEventHandler::getMediaConference() const {

@@ -455,6 +455,13 @@ LINPHONE_PUBLIC LinphoneConferenceLayout linphone_conference_get_layout(const Li
  */
 LINPHONE_PUBLIC void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConferenceLayout layout);
 
+ /**
+ * Set stream capability on me device of a local conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @param direction the direction of stream of type stream_type
+ * @param stream_type A #LinphoneStreamType
+ */
+LINPHONE_PUBLIC void linphone_conference_set_local_participant_stream_capability(LinphoneConference *conference, const LinphoneMediaDirection direction, const LinphoneStreamType type);
 /**
  * Get the conference duration
  * @param conference The #LinphoneConference object. @notnil

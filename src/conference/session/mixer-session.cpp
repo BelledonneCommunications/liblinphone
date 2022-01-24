@@ -55,7 +55,15 @@ void MixerSession::setFocus(StreamsGroup *sg){
 }
 
 StreamMixer *MixerSession::getMixerByType(SalStreamType type){
-	return mMixers[type].get();
+	try {
+		auto & mixer = mMixers.at(type);
+		if (mixer) {
+			return mixer.get();
+		}
+	} catch (std::out_of_range&) {
+		// Ignore
+	}
+	return nullptr;
 }
 
 Core & MixerSession::getCore() const{

@@ -477,7 +477,7 @@ public class AndroidPlatformHelper {
 
     public synchronized void setVideoRenderingView(Object view) {
         if (mVideoTextureView != null) {
-            Log.w("[Platform Helper] Found an existing video TextureView, let's destroy it first");
+            Log.w("[Platform Helper] Found an existing video TextureView [", mVideoTextureView, "], let's destroy it first");
             mVideoTextureView.setSurfaceTextureListener(null);
             mVideoTextureView = null;
         }

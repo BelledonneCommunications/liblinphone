@@ -41,6 +41,10 @@ void NotifyConferenceListener::onParticipantSetAdmin (const std::shared_ptr<Conf
 	_linphone_conference_notify_participant_admin_status_changed(conf->toC(), participant->toC());
 }
 
+void NotifyConferenceListener::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
+	_linphone_conference_notify_available_media_changed(conf->toC());
+}
+
 void NotifyConferenceListener::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
 	_linphone_conference_notify_subject_changed(conf->toC(), event->getSubject().c_str());
 }
@@ -53,8 +57,12 @@ void NotifyConferenceListener::onParticipantDeviceLeft (const std::shared_ptr<Co
 	_linphone_conference_notify_participant_device_left(conf->toC(), device->toC());
 }
 
-void NotifyConferenceListener::onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	_linphone_conference_notify_participant_device_media_changed(conf->toC(), device->toC());
+void NotifyConferenceListener::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	_linphone_conference_notify_participant_device_media_availability_changed(conf->toC(), device->toC());
+}
+
+void NotifyConferenceListener::onParticipantDeviceMediaCapabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	_linphone_conference_notify_participant_device_media_capability_changed(conf->toC(), device->toC());
 }
 
 void NotifyConferenceListener::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {

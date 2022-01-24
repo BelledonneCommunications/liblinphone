@@ -61,8 +61,12 @@ void _linphone_conference_notify_participant_removed(LinphoneConference *confere
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_removed, participant);
 }
 
-void _linphone_conference_notify_participant_device_media_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_media_changed, participant_device);
+void _linphone_conference_notify_participant_device_media_capability_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_media_capability_changed, participant_device);
+}
+
+void _linphone_conference_notify_participant_device_media_availability_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_device_media_availability_changed, participant_device);
 }
 
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
@@ -83,6 +87,10 @@ void _linphone_conference_notify_participant_device_joined(LinphoneConference *c
 
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_participant_admin_status_changed, participant);
+}
+
+void _linphone_conference_notify_available_media_changed(LinphoneConference *conference) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_available_media_changed);
 }
 
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject) {

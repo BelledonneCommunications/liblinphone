@@ -114,7 +114,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool m_allowOneParticipantConference = false;
 		ParticipantListType m_participantListType = ParticipantListType::Open;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		ConferenceLayout m_layout = ConferenceLayout::None;
+		ConferenceLayout m_layout = ConferenceLayout::Legacy;
 		Address m_factoryAddress = Address();
 		bool m_useDefaultFactoryAddress = true;
 		std::string m_subject = "";

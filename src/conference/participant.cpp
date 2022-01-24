@@ -95,13 +95,25 @@ void Participant::clearDevices () {
 	devices.clear();
 }
 
+shared_ptr<ParticipantDevice> Participant::findDevice (const std::string &label, const bool logFailure) const {
+	for (const auto &device : devices) {
+		const auto & deviceLabel = device->getLabel();
+		if (!label.empty() && !deviceLabel.empty() && (deviceLabel.compare(label) == 0))
+			return device;
+	}
+	if (logFailure) {
+		lInfo() << "Unable to find device with label " << label;
+	}
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gruu, const bool logFailure) const {
 	for (const auto &device : devices) {
 		if (device->getAddress() == gruu)
 			return device;
 	}
 	if (logFailure) {
-		lInfo() << "Unable to find device with address " << gruu.asString();
+		lInfo() << "Unable to find device with address " << gruu;
 	}
 	return nullptr;
 }

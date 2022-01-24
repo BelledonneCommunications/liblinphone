@@ -830,7 +830,7 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	linphone_call_params_unref(pauline_call_params);
 	linphone_call_params_unref(marie_call_params);
 
-	conf_params = linphone_core_create_conference_params(marie->lc);
+	conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
 	linphone_conference_params_set_layout(conf_params, layout);
 	linphone_conference_params_set_video_enabled(conf_params, TRUE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -847,7 +847,7 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 4, 10000));
 
-	if (layout != LinphoneConferenceLayoutNone) {
+	if (layout != LinphoneConferenceLayoutLegacy) {
 		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 150000, 400000, 50000);
 	} else {
 		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 810000, 1150000, 50000);
@@ -855,7 +855,7 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	
 	simparams.max_bandwidth = 300000;
 	linphone_core_set_network_simulator_params(pauline->lc, &simparams);
-	if (layout != LinphoneConferenceLayoutNone) {
+	if (layout != LinphoneConferenceLayoutLegacy) {
 		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 20000, 40000, 30000);
 		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 40000, 60000, 50000);
 	} else {
@@ -887,7 +887,7 @@ static void video_conference_with_thin_congestion_layout_active_speaker (void) {
 }
 
 static void video_conference_with_thin_congestion_layout_none (void) {
-	video_conference_with_thin_congestion_basic(LinphoneConferenceLayoutNone);
+	video_conference_with_thin_congestion_basic(LinphoneConferenceLayoutLegacy);
 }
 
 static test_t call_video_quality_tests[] = {

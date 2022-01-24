@@ -1434,7 +1434,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_core_set_default_output_audio_device(marie->lc, current_dev);
 
 	//Laure creates the conference
-	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(laure->lc);
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(laure->lc, NULL);
 	linphone_conference_params_set_video_enabled(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(laure->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
@@ -1661,7 +1661,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_core_set_default_output_audio_device(pauline->lc, pauline_current_dev);
 
 	//Laure creates the conference
-	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(pauline->lc);
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(pauline->lc, NULL);
 	linphone_conference_params_set_video_enabled(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(pauline->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
@@ -1865,7 +1865,7 @@ static void conference_with_simple_audio_device_change(void) {
 	linphone_core_set_use_files(laure->lc, FALSE);
 
 	//Laure creates the conference
-	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(laure->lc);
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(laure->lc, NULL);
 	linphone_conference_params_set_video_enabled(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(laure->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
@@ -2221,7 +2221,7 @@ static void simple_conference_with_audio_device_change_using_public_api(void) {
 	linphone_core_set_default_output_audio_device(marie->lc, current_dev);
 
 	//Laure creates the conference
-	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(marie->lc);
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
 	linphone_conference_params_set_video_enabled(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);

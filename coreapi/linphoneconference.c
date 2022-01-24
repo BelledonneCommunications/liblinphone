@@ -325,6 +325,10 @@ AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference
 	return MediaConference::Conference::toCpp(conference)->getAudioStream();
 }
 
+void linphone_conference_set_local_participant_stream_capability(LinphoneConference *conference, const LinphoneMediaDirection direction, const LinphoneStreamType type) {
+	MediaConference::Conference::toCpp(conference)->setLocalParticipantStreamCapability(direction, type);
+}
+
 void linphone_conference_set_state_changed_callback (LinphoneConference *conference, LinphoneConferenceStateChangedCb cb, void *user_data) {
 	MediaConference::Conference::toCpp(conference)->setStateChangedCallback(cb, user_data);
 }

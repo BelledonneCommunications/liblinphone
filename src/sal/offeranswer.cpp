@@ -665,6 +665,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 
 	if (!remote_offer.getLabel().empty()) {
 		// Offer made by local conference
+		result.setLabel(remote_offer.getLabel());
 		result.setContent(remote_offer.getContent());
 	} else {
 		result.setLabel(local_cap.getLabel());
@@ -776,8 +777,8 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	resultCfg.mixer_to_client_extension_id = remoteCfg.mixer_to_client_extension_id;
-	resultCfg.client_to_mixer_extension_id = remoteCfg.client_to_mixer_extension_id;
+	resultCfg.mixer_to_client_extension_id = localCfg.mixer_to_client_extension_id;
+	resultCfg.client_to_mixer_extension_id = localCfg.client_to_mixer_extension_id;
 	resultCfg.conference_ssrc = localCfg.conference_ssrc;
 
 	if (resultCfg.hasSrtp() == true) {

@@ -47,7 +47,8 @@ static bool isConferenceType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
-		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged:
 		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 		case LinphoneEventLogTypeConferenceParticipantRemoved:
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
@@ -97,7 +98,8 @@ static bool isConferenceNotifiedType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
-		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged:
 		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 		case LinphoneEventLogTypeConferenceParticipantRemoved:
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
@@ -117,7 +119,8 @@ static bool isConferenceParticipantType (LinphoneEventLogType type) {
 		case LinphoneEventLogTypeConferenceParticipantAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
-		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged:
 		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 		case LinphoneEventLogTypeConferenceParticipantRemoved:
 		case LinphoneEventLogTypeConferenceParticipantSetAdmin:
@@ -135,7 +138,8 @@ static bool isConferenceParticipantDeviceType (LinphoneEventLogType type) {
 	switch (type) {
 		case LinphoneEventLogTypeConferenceParticipantDeviceAdded:
 		case LinphoneEventLogTypeConferenceParticipantDeviceRemoved:
-		case LinphoneEventLogTypeConferenceParticipantDeviceMediaChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaCapabilityChanged:
+		case LinphoneEventLogTypeConferenceParticipantDeviceMediaAvailabilityChanged:
 		case LinphoneEventLogTypeConferenceParticipantDeviceStatusChanged:
 			return true;
 

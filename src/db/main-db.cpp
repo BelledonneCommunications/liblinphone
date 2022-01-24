@@ -222,7 +222,8 @@ namespace {
 			EventLog::Type::ConferenceParticipantDeviceAdded,
 			EventLog::Type::ConferenceParticipantDeviceRemoved,
 			EventLog::Type::ConferenceParticipantDeviceStatusChanged,
-			EventLog::Type::ConferenceParticipantDeviceMediaChanged
+			EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged,
+			EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged
 		>::get();
 
 		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
@@ -893,7 +894,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
-		case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
+		case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
+		case EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged:
 		case EventLog::Type::ConferenceParticipantDeviceStatusChanged:
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
 			break;
@@ -2944,7 +2946,8 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
-			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
+			case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
+			case EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged:
 			case EventLog::Type::ConferenceParticipantDeviceStatusChanged:
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
@@ -3016,7 +3019,8 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
-			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
+			case EventLog::Type::ConferenceParticipantDeviceMediaCapabilityChanged:
+			case EventLog::Type::ConferenceParticipantDeviceMediaAvailabilityChanged:
 			case EventLog::Type::ConferenceParticipantDeviceStatusChanged:
 			case EventLog::Type::ConferenceSecurityEvent:
 			case EventLog::Type::ConferenceAvailableMediaChanged:

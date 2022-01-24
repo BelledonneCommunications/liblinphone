@@ -131,7 +131,7 @@ private:
 	std::string mLabel;
 	std::shared_ptr<CallSession> mSession;
 	std::string mCapabilityDescriptor;
-	ConferenceLayout mLayout = ConferenceLayout::None;
+	ConferenceLayout mLayout = ConferenceLayout::Legacy;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;

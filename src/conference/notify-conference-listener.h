@@ -59,6 +59,12 @@ public:
 	virtual void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
 
 	/*
+	 * This fonction is called each time a new available media set is defined by the focus after full state notification.
+	 * @param[in] event informations related to the new available media set. @notnil
+	 */
+	virtual void onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) override;
+
+	/*
 	 * This fonction is called each time a new subject is set by the focus after full state notification.
 	 * @param[in] event informations related to the new subject. @notnil
 	 */
@@ -79,11 +85,18 @@ public:
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
-	* This fonction is called each time a new participant device changed its media direction after full state notification.
-	* @param[in] event informations related to the device's participant whose media changed. @notnil
-	* @param[in] device participant device whose media direction. @notnil
+	* This fonction is called each time a new participant device changed its media availability after full state notification.
+	* @param[in] event informations related to the device's participant whose media availability changed. @notnil
+	* @param[in] device participant device whose media availability. @notnil
 	*/
-	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	virtual void onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
+	/*
+	* This fonction is called each time a new participant device changed its media capability after full state notification.
+	* @param[in] event informations related to the device's participant whose media capability changed. @notnil
+	* @param[in] device participant device whose media capability. @notnil
+	*/
+	virtual void onParticipantDeviceMediaCapabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	* This fonction is called each time a new participant device rejoins the conference after full state notification.

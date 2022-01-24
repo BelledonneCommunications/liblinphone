@@ -71,7 +71,7 @@ public:
 	std::string createNotifyParticipantRemoved (const Address & pAddress);
 	std::string createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress);
-	std::string createNotifyParticipantDeviceMediaChanged (const Address & pAddress, const Address & dAddress);
+	std::string createNotifyParticipantDeviceMediaCapabilityChanged (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceStatusChanged (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
 	std::string createNotifySubjectChanged ();
@@ -135,7 +135,7 @@ public:
 	* @param[in] event informations related to the device's participant.
 	* @param[in] device participant device that changed its media capabilities
 	*/
-	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	virtual void onParticipantDeviceMediaCapabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 
 	/*
 	* This fonction is called each time a new participant device rejoins the conference after full state notification.

@@ -204,14 +204,12 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		if (linphone_core_zero_rtp_port_for_stream_inactive_enabled(getCCore()) && (localDesc.getDirection() == SalStreamInactive)) {
 			localDesc.rtp_port = 0;
 			localDesc.rtcp_port = 0;
-		} else {
-			if (mPortConfig.multicastRole == SalMulticastSender){
-				localDesc.rtp_port = mPortConfig.multicastRtpPort;
-				localDesc.rtcp_port = 0;
-			}else{
-				localDesc.rtp_port = mPortConfig.rtpPort;
-				localDesc.rtcp_port = mPortConfig.rtcpPort;
-			}
+		} else if (mPortConfig.multicastRole == SalMulticastSender){
+			localDesc.rtp_port = mPortConfig.multicastRtpPort;
+			localDesc.rtcp_port = 0;
+		}else{
+			localDesc.rtp_port = mPortConfig.rtpPort;
+			localDesc.rtcp_port = mPortConfig.rtcpPort;
 		}
 	}
 	if (!isTransportOwner()){

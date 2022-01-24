@@ -672,9 +672,6 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			const ConferenceId confId(confAddr, session->getLocalAddress());
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), session, confAddr, confId, invitees, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 		} else {
-			std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
-			const auto confLayout = MediaSession::computeConferenceLayout(rmd);
-			confParams->setLayout(confLayout);
 			const auto & remoteParams = session->getRemoteParams();
 			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
 			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());

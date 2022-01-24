@@ -96,6 +96,7 @@ public:
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
 	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu, const bool logFailure = true) const;
 	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session, const bool logFailure = true) const;
+	std::shared_ptr<ParticipantDevice> findDevice (const std::string &label, const bool logFailure = true) const;
 
 	inline void setAdmin (bool isAdmin) { this->isThisAdmin = isAdmin; }
 	bool isAdmin () const;

@@ -152,6 +152,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					lError() << "Unrecognized media type " << mediaType;
 				}
 			}
+			if (!isFullState) {
+				conf->notifyAvailableMediaChanged (creationTime, isFullState, conf->getMediaCapabilities());
+			}
 		}
 
 		auto & anySequence (confDescription.get().getAny());
@@ -296,67 +299,13 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				StateType state = endpoint.getState();
 
 				shared_ptr<ParticipantDevice> device = nullptr;
-				if (state == StateType::deleted) {
-
-					// Take a pointer towards the device before deleting it in order to send the notification
-					device = participant->findDevice(gruu);
-					participant->removeDevice(gruu);
-
-					if (!isFullState && device && participant) {
-						conf->notifyParticipantDeviceRemoved(
-							creationTime,
-							isFullState,
-							participant,
-							device
-						);
-					}
-
-				} else if (state == StateType::full) {
-
+				if (state == StateType::full) {
 					device = participant->addDevice(gruu);
-					lInfo() << "Participant device " << gruu.asString() << " is successfully added";
-
-					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
-
-					if (!name.empty())
-						device->setName(name);
-
-					if (conf->getMainSession())
-						device->setSession(conf->getMainSession());
-
-					if (!isFullState) {
-						conf->notifyParticipantDeviceAdded(
-							creationTime,
-							isFullState,
-							participant,
-							device
-						);
-					}
 				} else {
 					device = participant->findDevice(gruu);
-					if (device) {
-
-						if (endpoint.getStatus().present()) {
-							const auto & status = endpoint.getStatus().get();
-							if ((status == EndpointStatusType::on_hold) && (device->getState() != ParticipantDevice::State::OnHold)) {
-								conf->notifyParticipantDeviceLeft(
-									creationTime,
-									isFullState,
-									participant,
-									device);
-							} else if ((status == EndpointStatusType::connected) && (device->getState() != ParticipantDevice::State::Present)) {
-								conf->notifyParticipantDeviceJoined(
-									creationTime,
-									isFullState,
-									participant,
-									device);
-							}
-						}
-
-					} else {
-						lError() << "Unable to update media direction of device " << gruu << " because it has not been found in conference " << conf->getConferenceAddress();
-					}
 				}
+
+				const auto previousDeviceState = device->getState();
 
 				if ((state != StateType::deleted) && (device)) {
 /*
@@ -377,26 +326,19 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						}
 					}
 */
-					bool mediaChanged = false;
+					bool mediaCapabilityChanged = false;
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
 						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
 						if (mediaType.compare("audio") == 0) {
-							if(device->getStreamCapability(LinphoneStreamTypeAudio) != mediaDirection) {
-								mediaChanged = true;
-								device->setStreamCapability(mediaDirection, LinphoneStreamTypeAudio);
-							}
-
+							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeAudio);
 							if (media.getSrcId()) {
 								const std::string srcId = media.getSrcId().get();
 								unsigned long ssrc = std::stoul(srcId);
 								device->setSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("video") == 0) {
-							if(device->getStreamCapability(LinphoneStreamTypeVideo) != mediaDirection) {
-								mediaChanged = true;
-								device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
-							}
+							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
 							if (media.getLabel()) {
 								const std::string label = media.getLabel().get();
 								if (!label.empty()) {
@@ -404,17 +346,24 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								}
 							}
 						} else if (mediaType.compare("text") == 0) {
-							if(device->getStreamCapability(LinphoneStreamTypeText) != mediaDirection) {
-								mediaChanged = true;
-								device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);
-							}
+							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);
 						} else {
 							lError() << "Unrecognized media type " << mediaType;
 						}
 					}
-					device->updateStreamAvailabilities();
-					if(mediaChanged) {
-						conf->notifyParticipantDeviceMediaChanged(
+					// Do not notify media capability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
+					if(mediaCapabilityChanged && !isFullState && (state != StateType::full)) {
+						conf->notifyParticipantDeviceMediaCapabilityChanged(
+							creationTime,
+							isFullState,
+							participant,
+							device);
+					}
+
+					bool mediaAvailabilityChanged = device->updateStreamAvailabilities();
+					// Do not notify availability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
+					if(mediaAvailabilityChanged && !isFullState && (state != StateType::full)) {
+						conf->notifyParticipantDeviceMediaAvailabilityChanged(
 							creationTime,
 							isFullState,
 							participant,
@@ -423,8 +372,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 					if (endpoint.getStatus().present()) {
 						const auto & status = endpoint.getStatus().get();
-						if (status == EndpointStatusType::pending) {
+						if ((status == EndpointStatusType::dialing_in) || (status == EndpointStatusType::dialing_out)) {
 							device->setState(ParticipantDevice::State::Joining);
+						} else if (status == EndpointStatusType::pending) {
+							device->setState(ParticipantDevice::State::ScheduledForJoining);
 						} else if (status == EndpointStatusType::connected) {
 							device->setState(ParticipantDevice::State::Present);
 						} else if (status == EndpointStatusType::on_hold) {
@@ -436,6 +387,62 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						}
 					}
 				}
+
+				if (state == StateType::deleted) {
+
+					participant->removeDevice(gruu);
+
+					if (!isFullState && device && participant) {
+						conf->notifyParticipantDeviceRemoved(
+							creationTime,
+							isFullState,
+							participant,
+							device
+						);
+					}
+
+				} else if (device) {
+
+					lInfo() << "Participant device " << gruu.asString() << " is successfully added";
+
+					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
+
+					if (!name.empty())
+						device->setName(name);
+
+					if (conf->isMe(address) && conf->getMainSession())
+						device->setSession(conf->getMainSession());
+
+					if (!isFullState) {
+						conf->notifyParticipantDeviceAdded(
+							creationTime,
+							isFullState,
+							participant,
+							device
+						);
+					}
+
+					if (endpoint.getStatus().present()) {
+						const auto & status = endpoint.getStatus().get();
+						if ((status == EndpointStatusType::on_hold) && (previousDeviceState != ParticipantDevice::State::OnHold)) {
+							conf->notifyParticipantDeviceLeft(
+								creationTime,
+								isFullState,
+								participant,
+								device);
+						} else if ((status == EndpointStatusType::connected) && (previousDeviceState != ParticipantDevice::State::Present)) {
+							conf->notifyParticipantDeviceJoined(
+								creationTime,
+								isFullState,
+								participant,
+								device);
+						}
+					}
+
+				} else {
+					lError() << "Unable to update media direction of device " << gruu << " because it has not been found in conference " << conf->getConferenceAddress();
+				}
+
 			}
 		}
 	}

@@ -160,18 +160,32 @@ LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceJoinedCb linphone_conferen
 LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_joined (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceJoinedCb cb);
 
 /**
- * Get the participant device media changed callback.
+ * Get the participant device media availability changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
- * @return The current participant device media changed callback.
+ * @return The current participant device media availability changed callback.
  */
-LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceMediaChangedCb linphone_conference_cbs_get_participant_device_media_changed (const LinphoneConferenceCbs *cbs);
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb linphone_conference_cbs_get_participant_device_media_availability_changed (const LinphoneConferenceCbs *cbs);
 
 /**
- * Set the participant device media changed callback.
+ * Set the participant device media availability changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
- * @param[in] cb The participant device media changed callback to be used.
+ * @param[in] cb The participant device media availability changed callback to be used.
  */
-LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaChangedCb cb);
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_media_availability_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb cb);
+
+/**
+ * Get the participant device media capabilities changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device media capabilities changed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb linphone_conference_cbs_get_participant_device_media_capability_changed (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device media capabilities changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device media capabilities changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_media_capability_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb cb);
 
 /**
  * Get the state changed callback.
@@ -186,6 +200,20 @@ LINPHONE_PUBLIC LinphoneConferenceCbsStateChangedCb linphone_conference_cbs_get_
  * @param[in] cb The state changed callback to be used.
  */
 LINPHONE_PUBLIC void linphone_conference_cbs_set_state_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsStateChangedCb cb);
+
+/**
+ * Get the available media changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current available media changed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsAvailableMediaChangedCb linphone_conference_cbs_get_available_media_changed (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the available media changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The available media changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_available_media_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAvailableMediaChangedCb cb);
 
 /**
  * Get the subject changed callback.
