@@ -417,7 +417,7 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 	}
 }
 
-void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneConferenceLayout layout) {
+void check_video_conference_with_local_participant(bctbx_list_t *participants,LinphoneConferenceLayout layout, bool_t local_participant) {
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		LinphoneCall *call=linphone_core_get_current_call(m->lc);
@@ -426,7 +426,7 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants, L
 			const LinphoneCallParams * call_params = linphone_call_get_current_params(call);
 			const bool_t video_enabled = linphone_call_params_video_enabled(call_params);
 
-			int nb = ((layout == LinphoneConferenceLayoutNone) ? 1 : static_cast<int>((bctbx_list_size(participants)+2)));
+			int nb = ((layout == LinphoneConferenceLayoutNone) ? 1 : static_cast<int>((bctbx_list_size(participants)+(local_participant?2:1))));
 			if (!video_enabled) {
 				if ((layout == LinphoneConferenceLayoutNone) || (layout == LinphoneConferenceLayoutActiveSpeaker)) {
 					// Only thumbnail corresponding to the participant is going to be inactivated

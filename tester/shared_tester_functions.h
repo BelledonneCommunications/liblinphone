@@ -40,7 +40,7 @@ bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantD
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device);
 void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout);
-void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneConferenceLayout layout);
+void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneConferenceLayout layout, bool_t local_partifipant);
 const char * _linphone_call_get_subject(LinphoneCall * call);
 
 #ifdef __cplusplus
