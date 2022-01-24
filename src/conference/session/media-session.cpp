@@ -2219,6 +2219,33 @@ std::list<MSCryptoSuite> LinphoneSrtpSuite2MSCryptoSuite(const std::list<Linphon
 	return ret;
 }
 
+/**
+ * Convert enum MSCryptoSuite into enum LinphoneSrtpSuite
+ * Enums definitions are not perferctly matching
+ * any input without corresponding LinphoneCryptoSuite value gives a LinphoneSrtpSuiteInvalid output
+ *
+ * @param[in]	suite	The MSCryptoSuite to be converted
+ * @return	the matching LinphoneSrtpSuite value
+ **/
+static LinphoneSrtpSuite MSCryptoSuite2LinphoneSrtpSuite(const MSCryptoSuite suite) {
+	switch (suite) {
+		case MS_AES_128_SHA1_32 : return LinphoneSrtpSuiteAESCM128HMACSHA132;
+		case MS_AES_128_SHA1_80 : return LinphoneSrtpSuiteAESCM128HMACSHA180;
+		case MS_AES_256_SHA1_32 : return LinphoneSrtpSuiteAES256CMHMACSHA132;
+		case MS_AES_256_SHA1_80 :
+		case MS_AES_CM_256_SHA1_80 : return LinphoneSrtpSuiteAES256CMHMACSHA180;
+		// all these cases are not supported by the linphone enumeration
+		case MS_AES_128_SHA1_32_NO_AUTH :
+		case MS_AES_128_SHA1_80_NO_AUTH :
+		case MS_AES_128_SHA1_80_SRTP_NO_CIPHER :
+		case MS_AES_128_SHA1_80_SRTCP_NO_CIPHER :
+		case MS_AES_128_SHA1_80_NO_CIPHER :
+		case MS_CRYPTO_SUITE_INVALID :
+		default:
+			return LinphoneSrtpSuiteInvalid;
+	}
+}
+
 std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() const {
 	L_Q();
 	std::vector<SalSrtpCryptoAlgo>  cryptos;
@@ -2859,8 +2886,10 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	// In case capability negotiation is enabled, the actual encryption is the negotiated one
 	const LinphoneMediaEncryption enc = getNegotiatedMediaEncryption();
 	bool srtpEncryptionMatch = false;
+	auto srtpSuite = LinphoneSrtpSuiteInvalid;
 	if (md) {
 		srtpEncryptionMatch = true;
+		bool srtpSuiteSet = false;
 		for (size_t idx = 0; idx < md->getNbStreams(); idx++) {
 			const auto & salStream = md->getStreamIdx(static_cast<unsigned int>(idx));
 			if (salStream.hasSrtp()) {
@@ -2873,13 +2902,28 @@ void MediaSessionPrivate::updateCurrentParams () const {
 					} else {
 						srtpEncryptionMatch &= ((ms_crypto_suite_is_unencrypted(algo)) ? !stream->isEncrypted() : stream->isEncrypted());
 					}
+
+					// To have a valid SRTP suite in the current call params, all streams must be encrypted and use the same suite
+					// TODO: get the stream status and SRTP encryption from mediastreamer so we can get the suite even when using ZRTP or DTLS as key exchange
+					if (srtpSuiteSet) {
+						if (srtpSuite != MSCryptoSuite2LinphoneSrtpSuite(algo)) {
+							srtpSuite = LinphoneSrtpSuiteInvalid;
+						}
+					} else {
+						srtpSuiteSet = true;
+						srtpSuite = MSCryptoSuite2LinphoneSrtpSuite(algo);
+					}
 				}
+			} else { // No Srtp on this stream -> srtpSuite is set to invalid
+				srtpSuite = LinphoneSrtpSuiteInvalid;
+				srtpSuiteSet = true;
 			}
 		}
-		
 	} else {
 		srtpEncryptionMatch = allStreamsEncrypted();
 	}
+
+	getCurrentParams()->setSrtpSuites(std::list<LinphoneSrtpSuite>{srtpSuite});
 
 	bool updateEncryption = false;
 	bool validNegotiatedEncryption = false;
