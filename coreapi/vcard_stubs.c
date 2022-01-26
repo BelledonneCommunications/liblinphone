@@ -191,3 +191,12 @@ void *linphone_vcard_get_belcard(LinphoneVcard *vCard) {
 LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard) {
 	return NULL;
 }
+
+bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard, const char *name) {
+	return NULL;
+}
+void linphone_vcard_add_extended_property(LinphoneVcard *vCard, const char *name, const char *value) {
+}
+
+void linphone_vcard_remove_extented_properties_by_name(LinphoneVcard *vCard, const char *name) {
+}
