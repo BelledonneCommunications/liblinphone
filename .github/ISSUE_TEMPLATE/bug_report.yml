@@ -1,0 +1,131 @@
+---
+name: Bug report
+description: File a bug/issue
+title: "[Bug]: "
+labels: ["bug"]
+
+body:
+- type: markdown
+  attributes:
+    value: '# Reminder'
+- type: markdown
+  attributes:
+    value: |
+            The responses are provided by the **community** and, on a **best effort** basis, by some Belledonne Communications SARL engineers working on Linphone and its related projects.
+            The community means any people all around the world simply willing to participate to the discussions.
+
+            Belledonne Communications SARL **disclaims any WARRANTY** that the content posted on github issues or mailing lists is technically correct.
+            Responses from Belledonne Communications SARL engineers shall be considered as individual contributions and shall not be seen as Belledonne Communications's official point of view or commitment.
+
+            The Github issue tracker must be seen as a place for **collaboration**. Issues submitted should be of general interest, in the goal of improving the software. Consider that a **well documented** issue (with precise reproduction procedure, logs, stack trace if relevant, possibly a corrective patch) has a higher chance to receive interest and feedback from community members and Belledonne Communications' engineers.
+
+            __Issues poorly documented, with no facts, or asking for debugging assistance for a custom app using Linphone's libraries, or for a modified version of Linphone are unlikely to receive any kind of response.__
+
+            People using Linphone or its related projects within the scope of their company job are invited to contact [Belledonne Communications](https://linphone.org/contact#content-bottom3) in order to obtain commercial support.
+
+- type: markdown
+  attributes:
+    value: |
+            # Well ordered issues are treated issues
+            **In our apps, the [Linphone-SDK](https://github.com/BelledonneCommunications/linphone-sdk) is used.**
+            Please report your issue here **ONLY** if you are sure that the origin of the error is in this module.
+            Otherwise, open an issue in the repository of the app you are using or in the Linphone-SDK, and we will move it to the related module.
+
+- type: markdown
+  attributes:
+    value: |
+            # Useful links
+            [Linphone.org](https://linphone.org)
+            [Linphone commercial contact](https://linphone.org/contact#content-bottom3)
+            Linphone Vulnerability/Security contact: vulnerabilities@linphone.org
+            [Contributor agreement (to sign and to return to sales@belledonne-communications.com for a pull request)](https://linphone.org/sites/default/files/bc-contributor-agreement_0.pdf)
+
+- type: textarea
+  attributes:
+    label: |
+            Context
+    description: |
+                  - For which purpose do you use the project ?
+                  - With which software/hardware it is integrated ?
+                  - Did you use sip.linphone.org or a different SIP service (in this case specify which one and which version) ?
+    placeholder: |
+            I use this project in a custom app running on Linux with the sip.linphone.org service for my company. I want to do a simple call between an Android phone and a Linux client. There is an error with a method of this project and I'm sure that I followed the documentation and double checked before posting.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: General information
+    description: |
+                  Complete it multiple time if there are multiple devices involved.
+                  Please note that the issue has more chances to be read if you report a bug seen in the latest version of the module.
+
+                  Ex:
+                  - Device: [e.g. Samsung Note 20 Ultra]
+                  - OS: [e.g. Android 11]
+                  - Version of the App [e.g. 4.3.1]
+                  - Version of the SDK [e.g 4.4.16]
+  placeholder: |
+                - Device:
+                - OS:
+                - Version of the App:
+                - Version of the SDK:
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Expected behaviour
+    description: "A clear and concise description of what you expected to happen."
+    placeholder: |
+            I wanted to do a simple call with the Linux client calling the Android phone. However, the phone doesn't ring when it is asleep.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: To Reproduce
+    description: "Steps to reproduce the behavior:"
+    placeholder: |
+            1. Go to '...'
+            2. Click on '....'
+            3. Scroll down to '....'
+            4. See error
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: 'Additional context'
+    placeholder: Add any other context about the problem here.
+
+- type: markdown
+  attributes:
+    value: |
+            # Logs
+            ## Module logs
+            Enable debug logs in advanced section of the settings, restart the app, reproduce the issue and then go to About page, click on "Send logs" and copy/paste the link here.
+            If you doesn't have such an option, just provide the logs in attachments.
+
+- type: input
+  attributes:
+    label: 'SDK logs URL'
+
+- type: markdown
+  attributes:
+    value: |
+            ## Module crash logs
+            In case of a crash related to this module, please also provide the backtrace of the crash in attachments using adb logcat (Android) or the device console (iOS).
+            For desktop versions, you can get the backtrace from a core dump.
+
+- type: markdown
+  attributes:
+    value: |
+            # Screenshots
+            Please add screenshots in attachments to help us to understand your problem.
+
+- type: markdown
+  attributes:
+    value: |
+              # Pcap file
+              If this is a network issue, join a pcap file of your attempt in attachments (done with Wireshark or TCPDump, for example)
