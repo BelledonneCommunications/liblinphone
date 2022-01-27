@@ -5346,9 +5346,9 @@ static void call_logs_sqlite_storage(void) {
 	ms_free(logs_db);
 }
 
-static void call_with_http_proxy(void) {
+static void _call_with_http_proxy(bool_t use_ipv4) {
 	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_create( "pauline_rc");
 	bool_t call_ok;
 	LinphoneCall *marie_call, *pauline_call;
 	LinphoneAddress *contact_addr;
@@ -5367,6 +5367,20 @@ static void call_with_http_proxy(void) {
 	http_proxy_example_org_ip = linphone_core_manager_resolve(marie, http_proxy_fqdn);
 
 	linphone_core_set_http_proxy_host(pauline->lc,"http-proxy.example.org");
+	
+	if (use_ipv4){
+		LinphoneAddress *v4proxy = linphone_factory_create_address(linphone_factory_get(), "sip:sipv4.example.org;transport=tls");
+		LinphoneAccount *account = linphone_core_get_default_account(pauline->lc);
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		bctbx_list_t *routes = bctbx_list_append(NULL, v4proxy);
+		linphone_account_params_set_server_address(params, v4proxy);
+		linphone_account_params_set_routes_addresses(params, routes);
+		linphone_account_set_params(account, params);
+		bctbx_list_free(routes);
+		linphone_address_unref(v4proxy);
+		linphone_account_params_unref(params);
+	}
+	
 	linphone_core_manager_start(pauline, TRUE);
 
 	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
@@ -5391,6 +5405,15 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
+static void call_with_http_proxy(void) {
+	_call_with_http_proxy(FALSE);
+}
+
+static void call_with_http_proxy_v4(void){
+	_call_with_http_proxy(TRUE);
+}
+
 
 void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t with_ice,bool_t with_ice_reinvite){
 	LinphoneCoreManager * marie = linphone_core_manager_new( "marie_rc");
@@ -5986,6 +6009,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with multipart INVITE body", simple_call_with_multipart_invite_body),
 	TEST_NO_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination),
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
+	TEST_NO_TAG("Call with http proxy, forced IPv4", call_with_http_proxy_v4),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),
 	TEST_NO_TAG("Direct call over IPv6", direct_call_over_ipv6),
 	TEST_NO_TAG("Direct call well known port", direct_call_well_known_port_ipv4),
