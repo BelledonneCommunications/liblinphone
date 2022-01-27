@@ -515,18 +515,6 @@ LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference
 LINPHONE_PUBLIC void linphone_conference_set_user_data(LinphoneConference *conference, void *user_data);
 
 /**
- * Call generic OpenGL render preview for a given conference
- * @param conference The #LinphoneConference object. @notnil
- */
-LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *conference);
-
-/**
- * Call generic OpenGL render for a given conference
- * @param conference The #LinphoneConference object. @notnil
- */
-LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conference);
-
-/**
  * Change the admin status of a participant of a conference (you need to be an admin yourself to do this).
  * @param conference A #LinphoneConference object @notnil
  * @param participant The Participant for which to change the admin status @notnil

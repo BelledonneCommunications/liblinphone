@@ -4111,7 +4111,6 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 			}
 			if (iface) {
 				iface->setNativeWindowId(id);
-				iface->setDisplayMode(MSVideoDisplayHybrid);
 			}
 		} else {
 			lError() << "Unable to set window ID because no video stream has been found with label " << searchedLabel;

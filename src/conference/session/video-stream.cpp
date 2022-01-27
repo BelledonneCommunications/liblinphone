@@ -198,6 +198,19 @@ void MS2VideoStream::finishPrepare(){
 	video_stream_unprepare_video(mStream);
 }
 
+MSVideoDisplayMode stringToVideoDisplayMode(const string& mode) {
+	if (mode.compare("Hybrid")==0) {
+		return MSVideoDisplayHybrid;
+	} else if (mode.compare("BlackBars")==0) {
+		return MSVideoDisplayBlackBars;
+	} else if (mode.compare("OccupyAllSpace")==0) {
+		return MSVideoDisplayOccupyAllSpace;
+	} else {
+		lWarning() << "Video stream set display mode " << mode << " failed, available values {Hybrid, BlackBars, OccupyAllSpace}.";
+	}
+	return MSVideoDisplayHybrid;
+}
+
 void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State targetState){
 	bool reusedPreview = false;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
@@ -217,6 +230,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
+	bool isThumbnail = (content.compare("thumbnail") == 0);
 
 	if (basicChangesHandled) {
 		bool muted = mMuted;
@@ -231,7 +245,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		}
 
 		MediaStreamDir dir = media_stream_get_direction(&mStream->ms);
-		if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && (content.compare("thumbnail") != 0)) {
+		if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !isThumbnail) {
 			lInfo() << "Restarting stream because it has to be linked to ITC sink.";
 			stop();
 		} else {
@@ -333,8 +347,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_set_device_rotation(mStream, getCCore()->device_rotation);
 	video_stream_set_freeze_on_error(mStream, !!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
 	video_stream_use_video_preset(mStream, linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
+	if (isThumbnail)
+		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "thumbnail_display_mode", "OccupyAllSpace")));
+	else
+		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "display_mode", "Hybrid")));
 
-	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
+	video_stream_enable_thumbnail(mStream, isThumbnail);
 	if (!label.empty()) {
 		video_stream_set_label(mStream, label.c_str());
 	}
@@ -363,7 +381,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			if (videoMixer == nullptr && !label.empty() && dir == MediaStreamSendOnly && (content.compare("thumbnail") == 0)) {
+			if (videoMixer == nullptr && !label.empty() && dir == MediaStreamSendOnly && isThumbnail) {
 				itcStream = getGroup().lookupItcStream(mStream);
 				if (itcStream) {
 					itcFilter = itcStream->itcsink;
@@ -382,7 +400,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 
-				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && (content.compare("thumbnail") != 0)) {
+				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !isThumbnail) {
 					link_video_stream_with_itc_sink(mStream);
 					itcStream = getGroup().lookupItcStream(mStream);
 					if (itcStream){
@@ -703,15 +721,6 @@ void MS2VideoControl::zoomVideo (float zoomFactor, float cx, float cy){
 		ms_filter_call_method(vs->output, MS_VIDEO_DISPLAY_ZOOM, &zoom);
 	} else
 		lWarning() << "Could not apply zoom: video output wasn't activated";
-}
-
-void MS2VideoControl::setDisplayMode(MSVideoDisplayMode displayMode) {
-	VideoStream *vs = getVideoStream();
-	if (vs && vs->output) {
-		ms_filter_call_method(vs->output, MS_VIDEO_DISPLAY_SET_MODE, &displayMode);
-	} else {
-		lWarning() << "Could not set display mode: video output wasn't activated";
-	}
 }
 
 LINPHONE_END_NAMESPACE

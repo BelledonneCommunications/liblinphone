@@ -338,44 +338,6 @@ void linphone_conference_set_participant_admin_status (LinphoneConference *confe
 	MediaConference::Conference::toCpp(conference)->setParticipantAdminStatus(p, !!isAdmin);
 }
 
-void linphone_conference_preview_ogl_render(LinphoneConference *conference) {
-#ifdef VIDEO_ENABLED
-	std::shared_ptr<MediaConference::Conference> cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-	if (cppConference->isIn()) {// Ensure to be in conference
-		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(cppConference->getVideoControlInterface());
-		if(control) {
-			VideoStream *stream = control->getVideoStream();
-			if(stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
-				ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
-			}
-			if (stream && stream->output2) {
-				MSVideoDisplayMode mode = MSVideoDisplayHybrid;
-				ms_filter_call_method(stream->output2, MS_VIDEO_DISPLAY_SET_MODE, &mode);
-			}
-		}
-	}
-#endif
-}
-
-void linphone_conference_ogl_render(LinphoneConference *conference) {
-#ifdef VIDEO_ENABLED
-	std::shared_ptr<MediaConference::Conference> cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-	if (cppConference->isIn()) {// Ensure to be in conference
-		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(cppConference->getVideoControlInterface());
-		if(control) {
-			VideoStream *stream = control->getVideoStream();
-			if(stream && stream->output && ms_filter_get_id(stream->output) == MS_OGL_ID) {
-				ms_filter_call_method(stream->output, MS_OGL_RENDER, NULL);
-			}
-			if (stream && stream->output) {
-				MSVideoDisplayMode mode = MSVideoDisplayHybrid;
-				ms_filter_call_method(stream->output, MS_VIDEO_DISPLAY_SET_MODE, &mode);
-			}
-		}
-	}
-#endif
-}
-
 LinphoneConferenceParams *linphone_conference_params_new (const LinphoneCore *core) {
 	LinphoneConferenceParams *conference = ConferenceParams::createCObject(core);
 	return conference;
