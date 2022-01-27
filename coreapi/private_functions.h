@@ -210,6 +210,7 @@ bool_t linphone_core_should_subscribe_friends_only_when_registered(const Linphon
 void linphone_core_update_friends_subscriptions(LinphoneCore *lc);
 void _linphone_friend_list_update_subscriptions(LinphoneFriendList *list, LinphoneProxyConfig *cfg, bool_t only_when_registered);
 void linphone_core_friends_storage_init(LinphoneCore *lc);
+LINPHONE_PUBLIC int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc);
 void linphone_core_friends_storage_close(LinphoneCore *lc);
 void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf);
 void linphone_core_remove_friend_from_db(LinphoneCore *lc, LinphoneFriend *lf);

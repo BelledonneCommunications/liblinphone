@@ -1402,7 +1402,6 @@ void linphone_core_friends_storage_init(LinphoneCore *lc) {
 	int ret;
 	const char *errmsg;
 	sqlite3 *db;
-	bctbx_list_t *friends_lists = NULL;
 
 	linphone_core_friends_storage_close(lc);
 
@@ -1423,18 +1422,36 @@ void linphone_core_friends_storage_init(LinphoneCore *lc) {
 
 	lc->friends_db = db;
 
+	linphone_core_friends_storage_resync_friends_lists(lc);
+}
+
+int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
+	bctbx_list_t *friends_lists = NULL;
+	int synced_friends_lists = 0;
+
 	friends_lists = linphone_core_fetch_friends_lists_from_db(lc);
 	if (friends_lists) {
 		const bctbx_list_t *it;
 		ms_warning("Replacing current default friend list by the one(s) from the database");
 		lc->friends_lists = bctbx_list_free_with_data(lc->friends_lists, (bctbx_list_free_func)linphone_friend_list_unref);
 
+		const char *url = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", NULL);
+
 		for (it=friends_lists;it!=NULL;it=bctbx_list_next(it)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(it);
+
+			const char *list_name = linphone_friend_list_get_display_name(list);
+			if (list_name && url && strcmp(url, list_name) == 0) {
+				linphone_friend_list_set_type(list, LinphoneFriendListTypeVCard4);
+			}
+
 			linphone_core_add_friend_list(lc, list);
+			synced_friends_lists++;
 		}
 		friends_lists = bctbx_list_free_with_data(friends_lists, (bctbx_list_free_func)linphone_friend_list_unref);
 	}
+
+	return synced_friends_lists;
 }
 
 void linphone_core_friends_storage_close(LinphoneCore *lc) {
@@ -1726,8 +1743,13 @@ bctbx_list_t* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFrie
 	bctbx_list_t *result = NULL;
 	bctbx_list_t *elem = NULL;
 
-	if (!lc || lc->friends_db == NULL || list == NULL) {
-		ms_warning("Either lc (or list) is NULL or friends database wasn't initialized with linphone_core_friends_storage_init() yet");
+	if (!lc) {
+		ms_warning("lc is NULL");
+		return NULL;
+	}
+
+	if (lc->friends_db == NULL) {
+		ms_warning("Friends database wasn't initialized with linphone_core_friends_storage_init() yet");
 		return NULL;
 	}
 
@@ -1758,8 +1780,13 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 	bctbx_list_t *result = NULL;
 	bctbx_list_t *elem = NULL;
 
-	if (!lc || lc->friends_db == NULL) {
-		ms_warning("Either lc is NULL or friends database wasn't initialized with linphone_core_friends_storage_init() yet");
+	if (!lc) {
+		ms_warning("lc is NULL");
+		return NULL;
+	}
+
+	if (lc->friends_db == NULL) {
+		ms_warning("Friends database wasn't initialized with linphone_core_friends_storage_init() yet");
 		return NULL;
 	}
 
@@ -1781,7 +1808,7 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 }
 
 void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path) {
-	if (!linphone_core_conference_server_enabled(lc))
+	if (!linphone_core_conference_server_enabled(lc) && L_GET_PRIVATE(lc->cppPtr)->mainDb)
 		L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
 
 	// TODO: Remove me later.
