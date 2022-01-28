@@ -545,6 +545,16 @@ LINPHONE_PUBLIC void linphone_call_params_add_custom_sdp_attribute(LinphoneCallP
 LINPHONE_PUBLIC void linphone_call_params_add_custom_sdp_media_attribute(LinphoneCallParams *params, LinphoneStreamType type, const char *attribute_name, const char *attribute_value);
 
 /**
+ * Returns TRUE if a custom SDP attribute that is related to all the streams is present.
+ * @param params The #LinphoneCallParams to get the custom SDP attribute from. @notnil
+ * @param attribute_name The name of the attribute to get. @notnil
+ * @return Whether the attribute is present.
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_call_params_has_custom_sdp_attribute(const LinphoneCallParams *params, const char *attribute_name);
+
+
+/**
  * Get a custom SDP attribute that is related to all the streams.
  * @param params The #LinphoneCallParams to get the custom SDP attribute from. @notnil
  * @param attribute_name The name of the attribute to get. @notnil
@@ -552,6 +562,16 @@ LINPHONE_PUBLIC void linphone_call_params_add_custom_sdp_media_attribute(Linphon
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC const char * linphone_call_params_get_custom_sdp_attribute(const LinphoneCallParams *params, const char *attribute_name);
+
+/**
+ * Indicates whether a custom SDP attribute that is related to a specific stream is present or not.
+ * @param params The #LinphoneCallParams to get the custom SDP attribute from. @notnil
+ * @param type The type of the stream to add a custom SDP attribute to.
+ * @param attribute_name The name of the attribute to get. @notnil
+ * @return Whether the attribute is present.
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_call_params_has_custom_sdp_media_attribute(const LinphoneCallParams *params, LinphoneStreamType type, const char *attribute_name);
 
 /**
  * Get a custom SDP attribute that is related to a specific stream.
@@ -596,7 +616,7 @@ LINPHONE_PUBLIC void linphone_call_params_add_custom_content (LinphoneCallParams
 
 /**
  * Indicates whether RTP bundle mode (also known as Media Multiplexing) is enabled.
- * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information.
  * @param params the #LinphoneCallParams @notnil
  * @return a boolean indicating the enablement of rtp bundle mode.
  * @ingroup media_parameters
@@ -605,14 +625,15 @@ LINPHONE_PUBLIC bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCal
 
 /**
  * Enables or disables RTP bundle mode (Media Multiplexing).
- * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information about the feature.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information about the feature.
  * When enabled, liblinphone will try to negociate the use of a single port for all streams.
  * It automatically enables rtcp-mux.
  * @param params the #LinphoneCallParams @notnil
  * @param value a boolean to indicate whether the feature is to be enabled.
+ * @deprecated This property can no longer be controlled via #LinphoneCallParams. Use linphone_account_params_enable_rtp_bundle().
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value);
 
 /**
  * Enable or disable the microphone at the call creation.

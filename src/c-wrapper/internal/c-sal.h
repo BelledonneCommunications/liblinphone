@@ -489,6 +489,7 @@ SalCustomHeader *sal_custom_header_clone(const SalCustomHeader *ch);
 
 SalCustomSdpAttribute * sal_custom_sdp_attribute_append(SalCustomSdpAttribute *csa, const char *name, const char *value);
 const char * sal_custom_sdp_attribute_find(const SalCustomSdpAttribute *csa, const char *name);
+bool_t sal_custom_sdp_attribute_is_present(const SalCustomSdpAttribute *csa, const char *name);
 void sal_custom_sdp_attribute_free(SalCustomSdpAttribute *csa);
 SalCustomSdpAttribute * sal_custom_sdp_attribute_clone(const SalCustomSdpAttribute *csa);
 

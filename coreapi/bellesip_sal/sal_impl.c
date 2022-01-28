@@ -141,6 +141,13 @@ const char * sal_custom_sdp_attribute_find(const SalCustomSdpAttribute *csa, con
 	return NULL;
 }
 
+bool_t sal_custom_sdp_attribute_is_present(const SalCustomSdpAttribute *csa, const char *name) {
+	if (csa) {
+		return belle_sdp_session_description_get_attribute((belle_sdp_session_description_t *)csa, name) != NULL;
+	}
+	return FALSE;
+}
+
 void sal_custom_sdp_attribute_free(SalCustomSdpAttribute *csa) {
 	if (csa == NULL) return;
 	belle_sip_object_unref((belle_sdp_session_description_t *)csa);

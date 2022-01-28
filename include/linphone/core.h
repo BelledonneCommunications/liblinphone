@@ -5021,7 +5021,7 @@ LINPHONE_PUBLIC bool_t linphone_core_video_multicast_enabled(const LinphoneCore 
 
 /**
  * Returns whether RTP bundle mode (also known as Media Multiplexing) is enabled.
- * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information.
  * @param core the #LinphoneCore @notnil
  * @return a boolean indicating the enablement of rtp bundle mode.
  * @ingroup media_parameters
@@ -5030,7 +5030,7 @@ LINPHONE_PUBLIC bool_t linphone_core_rtp_bundle_enabled(const LinphoneCore *core
 
 /**
  * Enables or disables RTP bundle mode (Media Multiplexing).
- * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information about the feature.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information about the feature.
  * When enabled, liblinphone will try to negociate the use of a single port for all streams when doing an outgoing call.
  * It automatically enables rtcp-mux.
  * This feature can also be enabled per-call using #LinphoneCallParams.

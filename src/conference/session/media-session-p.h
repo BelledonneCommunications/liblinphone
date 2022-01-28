@@ -167,6 +167,7 @@ public:
 	int getThumbnailStreamIdx(bool useNegotiatedMediaDesc) const;
 	LinphoneMediaDirection getVideoDirFromMd (const std::shared_ptr<SalMediaDescription> & md) const;
 	void validateVideoStreamDirection(SalStreamConfiguration & cfg) const;
+	bool mandatoryRtpBundleEnabled()const;
 
 private:
 	/* IceServiceListener methods:*/
@@ -245,7 +246,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
-	void addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, SalStreamConfiguration & cfg, const std::string mid);
+	void addStreamToBundle(const std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, SalStreamConfiguration & cfg, const std::string &mid);
 
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();

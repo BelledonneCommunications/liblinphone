@@ -148,15 +148,16 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		const auto streamDesc = params.getLocalStreamDescription();
 		bool streamActive = streamDesc.enabled() && (streamDesc.getDirection() != SalStreamInactive);
 		
+		/* When rtp bundle is activated or going to be activated, we don't need ICE for the stream.*/
 		if (!params.localIsOfferer){
 			int bundleOwnerIndex = params.remoteMediaDescription->getIndexOfTransportOwner(params.getRemoteStreamDescription());
-			if (bundleOwnerIndex != -1 && bundleOwnerIndex != (int) index){
+			if (params.localMediaDescription->accept_bundles && bundleOwnerIndex != -1 && bundleOwnerIndex != (int) index){
 				lInfo() << *stream << " is part of a bundle as secondary stream, ICE not needed.";
 				streamActive = false;
 			}
 		}else{
 			RtpInterface *i = dynamic_cast<RtpInterface*>(stream.get());
-			if (i && !i->isTransportOwner()){
+			if (streamDesc.isBundleOnly() || (i && !i->isTransportOwner())){
 				lInfo() << *stream << " is currently part of a bundle as secondary stream, ICE not needed.";
 				streamActive = false;
 			}
@@ -220,18 +221,23 @@ int IceService::gatherLocalCandidates(){
 	if (getPlatformHelpers(getCCore())->getNetworkType() == PlatformHelpers::NetworkType::Wifi 
 		&& !hasLocalNetworkPermission(localAddrs)) return -1;
 #endif
-
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
 		size_t index = stream->getIndex();
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)index);
 		if (cl) {
+			if (getMediaSessionPrivate().mandatoryRtpBundleEnabled()){
+				lInfo() << "Rtp bundle is mandatory, rtcp-mux enabled and RTCP candidates skipped.";
+				rtp_session_enable_rtcp_mux(cl->rtp_session, TRUE);
+			}
 			if ((ice_check_list_state(cl) != ICL_Completed) && !ice_check_list_candidates_gathered(cl)) {
 				for (const string & addr : localAddrs){
 					int family = addr.find(':') != string::npos ? AF_INET6 : AF_INET;
 					if (family == AF_INET6 && !ipv6Allowed) continue;
 					ice_add_local_candidate(cl, "host", family, L_STRING_TO_C(addr), stream->getPortConfig().rtpPort, 1, nullptr);
-					ice_add_local_candidate(cl, "host", family, L_STRING_TO_C(addr), stream->getPortConfig().rtcpPort, 2, nullptr);
+					if (!rtp_session_rtcp_mux_enabled(cl->rtp_session)) {
+						ice_add_local_candidate(cl, "host", family, L_STRING_TO_C(addr), stream->getPortConfig().rtcpPort, 2, nullptr);
+					}
 				}
 			}
 		}

@@ -75,6 +75,8 @@ public:
 	LinphoneStatus setRoutes (const bctbx_list_t *routes);
 	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
 	void setAudioVideoConferenceFactoryAddress (const LinphoneAddress *audioVideoConferenceFactoryAddress);
+	void enableRtpBundle(bool value);
+	void enableRtpBundleAssumption(bool value);
 
 	// Getters
 	int getExpires () const;
@@ -112,6 +114,8 @@ public:
 	LinphoneNatPolicy* getNatPolicy () const;
 	PushNotificationConfig* getPushNotificationConfig () const;
 	const LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
+	bool rtpBundleEnabled()const;
+	bool rtpBundleAssumptionEnabled()const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -139,6 +143,8 @@ private:
 	bool mPushNotificationAllowed;
 	bool mRemotePushNotificationAllowed;
 	bool mUseInternationalPrefixForCallsAndChats;
+	bool mRtpBundleEnabled;
+	bool mRtpBundleAssumption;
 
 	void *mUserData;
 

@@ -105,6 +105,8 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 		mPushNotificationConfig = new PushNotificationConfig();
 		mPushNotificationConfig->readPushParamsFromString(string(lc ? linphone_config_get_default_string(lc->config, "proxy", "push_parameters", "") : ""));
 	}
+	mRtpBundleEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle", linphone_core_rtp_bundle_enabled(lc)) : false;
+	mRtpBundleAssumption = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle_assumption", false) : false;
 }
 
 AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
@@ -187,6 +189,8 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	if (!audioVideoConferenceFactoryUri.empty()) {
 		mAudioVideoConferenceFactoryAddress = linphone_address_new(audioVideoConferenceFactoryUri.c_str());
 	}
+	mRtpBundleEnabled = !!linphone_config_get_bool(config, key, "rtp_bundle", linphone_core_rtp_bundle_enabled(lc));
+	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
 }
 
 AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) {
@@ -232,6 +236,8 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	setNatPolicy(other.mNatPolicy);
 	
 	mPushNotificationConfig = other.mPushNotificationConfig->clone();
+	mRtpBundleEnabled = other.mRtpBundleEnabled;
+	mRtpBundleAssumption = other.mRtpBundleAssumption;
 }
 
 AccountParams::~AccountParams () {
@@ -487,6 +493,14 @@ void AccountParams::setAudioVideoConferenceFactoryAddress (const LinphoneAddress
 	}
 }
 
+void AccountParams::enableRtpBundle(bool value){
+	mRtpBundleEnabled = value;
+}
+
+void AccountParams::enableRtpBundleAssumption(bool value){
+	mRtpBundleAssumption = value;
+}
+
 // -----------------------------------------------------------------------------
 
 int AccountParams::getExpires () const {
@@ -641,6 +655,14 @@ const LinphoneAddress* AccountParams::getAudioVideoConferenceFactoryAddress () c
 	return mAudioVideoConferenceFactoryAddress;
 }
 
+bool AccountParams::rtpBundleEnabled() const{
+	return mRtpBundleEnabled;
+}
+
+bool AccountParams::rtpBundleAssumptionEnabled()const{
+	return mRtpBundleAssumption;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress (const LinphoneAddress *serverAddr) {
@@ -782,6 +804,8 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
 		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress));
 	}
+	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);
+	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleEnabled);
 }
 
 LINPHONE_END_NAMESPACE

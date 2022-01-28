@@ -685,6 +685,48 @@ LINPHONE_PUBLIC void linphone_account_params_set_transport(LinphoneAccountParams
 LINPHONE_PUBLIC LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccountParams *params);
 
 /**
+ * Enables or disables RTP bundle mode (Media Multiplexing).
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information about the feature.
+ * When enabled, liblinphone will try to negociate the use of a single port for all streams when doing an outgoing call.
+ * It automatically enables rtcp-mux.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param value a boolean to indicate whether the feature is to be enabled.
+ *
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_rtp_bundle(LinphoneAccountParams *params, bool_t value);
+
+/**
+ * Returns whether RTP bundle mode (also known as Media Multiplexing) is enabled.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return a boolean indicating the enablement of rtp bundle mode.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_rtp_bundle_enabled(const LinphoneAccountParams *params);
+
+/**
+ * Indicates whether support of rtp bundle is assumed.
+ * See linphone_account_params_enable_rtp_bundle() for background information about rtp bundle.
+ * Assumption that RTP bundling support allows interesting optimizations, such as
+ * not gathering RTCP candidates, and not gathering candidates for video stream when making
+ * an outgoing call.
+ * This setting is meaningful only if rtp bundle is enabled.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information about the feature.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param value a boolean to indicate whether RTP bundle support can be assumed.
+ *
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_rtp_bundle_assumption(LinphoneAccountParams *params, bool_t value);
+
+/**
+ * Returns whether RTP bundle mode is assumed.
+ * See https://datatracker.ietf.org/doc/html/rfc8843 for more information.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return a boolean indicating when rtp bundle support is assumed.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccountParams *params);
+
+
+/**
  * @}
  */
 

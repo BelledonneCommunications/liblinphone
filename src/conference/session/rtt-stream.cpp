@@ -60,7 +60,9 @@ void MS2RTTStream::sRealTimeTextCharacterReceived (void *userData, MSFilter *f, 
 
 bool MS2RTTStream::prepare(){
 	MS2Stream::prepare();
-	text_stream_prepare_text(mStream);
+	if (isTransportOwner()){
+		text_stream_prepare_text(mStream);
+	}
 	return false;
 }
 

@@ -1294,7 +1294,15 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 	return true;
 }
 
-void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, SalStreamConfiguration & cfg, const std::string mid){
+
+bool MediaSessionPrivate::mandatoryRtpBundleEnabled()const{
+	if (destProxy){
+		return Account::toCpp(destProxy->account)->getAccountParams()->rtpBundleAssumptionEnabled();
+	}
+	return false;
+}
+
+void MediaSessionPrivate::addStreamToBundle(const std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, SalStreamConfiguration & cfg, const std::string & mid){
 	if (cfg.dir != SalStreamInactive) {
 		SalStreamBundle bundle;
 		if (!md->bundles.empty()){
@@ -1306,6 +1314,13 @@ void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription>
 		cfg.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
 		/* rtcp-mux must be enabled when bundle mode is proposed.*/
 		cfg.rtcp_mux = TRUE;
+		if (mandatoryRtpBundleEnabled()){
+			// Bundle is offered inconditionnaly
+			if (bundle.getMidOfTransportOwner() != mid){
+				cfg.bundle_only = true;
+				sd.rtp_port = 0;
+			}
+		}
 		md->bundles.push_front(bundle);
 	}
 }
@@ -1363,7 +1378,7 @@ void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const
 		cfg.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled();
 		cfg.rtcp_cname = getMe()->getAddress().asString();
 
-		if (stream.rtp_port == 0) {
+		if (stream.rtp_port == 0 && !cfg.isBundleOnly()) {
 			stream.rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 		}
 
@@ -3468,6 +3483,16 @@ void MediaSession::initiateIncoming () {
 bool MediaSession::initiateOutgoing () {
 	L_D();
 	bool defer = CallSession::initiateOutgoing();
+	
+	/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
+	 * Then the value is stored and later updated into MediaSessionParams. */
+	bool rtpBundleEnabled = false;
+	if (d->destProxy){
+		rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
+	}else rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
+	
+	d->getParams()->enableRtpBundle(rtpBundleEnabled);
+	
 	if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
 		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 			lWarning() << "ICE is not supported when sending INVITE without SDP";

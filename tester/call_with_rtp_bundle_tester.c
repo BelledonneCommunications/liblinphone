@@ -35,9 +35,24 @@ static void check_rtp_bundle(LinphoneCall *call, bool_t should_be_active){
 	if (should_be_active){
 		BC_ASSERT_TRUE(linphone_call_params_rtp_bundle_enabled(remote_params));
 		BC_ASSERT_TRUE(linphone_call_params_rtp_bundle_enabled(current_params));
+		
+		if (linphone_call_params_video_enabled(current_params)){
+			if (linphone_call_params_has_custom_sdp_media_attribute(remote_params, LinphoneStreamTypeVideo, "bundle-only")){
+				// No rtcp port should be given
+				BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_sdp_media_attribute(remote_params, LinphoneStreamTypeVideo, "rtcp"));
+			}
+		}
 	}else{
 		BC_ASSERT_FALSE(linphone_call_params_rtp_bundle_enabled(remote_params));
 		BC_ASSERT_FALSE(linphone_call_params_rtp_bundle_enabled(current_params));
+	}
+}
+
+static void check_rtp_bundle_mandatory(const LinphoneCallParams *remote_params){
+	if (linphone_call_params_video_enabled(remote_params)){
+		// No rtcp port should be given
+		BC_ASSERT_PTR_NULL(linphone_call_params_get_custom_sdp_media_attribute(remote_params,LinphoneStreamTypeVideo, "rtcp"));
+		BC_ASSERT_TRUE(linphone_call_params_has_custom_sdp_media_attribute(remote_params, LinphoneStreamTypeVideo, "bundle-only"));
 	}
 }
 
@@ -56,6 +71,10 @@ static bool_t setup_dtls_srtp(LinphoneCoreManager *marie, LinphoneCoreManager *p
 	bc_free(path);
 	bctbx_mkdir(linphone_core_get_user_certificates_path(marie->lc));
 	bctbx_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+	
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed_with_dtls", TRUE);
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed_with_dtls", TRUE);
+	
 	return TRUE;
 }
 
@@ -102,6 +121,8 @@ typedef struct params{
 	bool_t with_dtls_srtp;
 	bool_t with_media_relay;
 	bool_t disable_bundle;
+	bool_t with_mandatory_bundle;
+	bool_t bundle_not_supported;
 } params_t;
 
 static void audio_video_call(const params_t *params) {
@@ -109,6 +130,7 @@ static void audio_video_call(const params_t *params) {
 	LinphoneCoreManager* pauline;
 	LinphoneCall *pauline_call, *marie_call;
 	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	bool_t bundle_expected = TRUE;
 	
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -121,7 +143,16 @@ static void audio_video_call(const params_t *params) {
 		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
 	}
 
-	linphone_core_enable_rtp_bundle(marie->lc, TRUE);
+	if (!params->with_mandatory_bundle){
+		linphone_core_enable_rtp_bundle(marie->lc, TRUE);
+	} else {
+		LinphoneAccount *account = linphone_core_get_default_account(marie->lc);
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_enable_rtp_bundle(params, TRUE);
+		linphone_account_params_enable_rtp_bundle_assumption(params, TRUE);
+		linphone_account_set_params(account, params);
+		linphone_account_params_unref(params);
+	}
 	
 	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
 	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
@@ -154,16 +185,26 @@ static void audio_video_call(const params_t *params) {
 		setup_dtls_srtp(marie, pauline);
 	}
 	
+	if (params->bundle_not_supported){
+		linphone_config_set_bool(linphone_core_get_config(pauline->lc), "rtp", "accept_bundle", FALSE);
+		bundle_expected = FALSE;
+	}
+	
 	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_set_video_activation_policy(pauline->lc, vpol);
 	linphone_video_activation_policy_unref(vpol);
+
 	
 	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	marie_call = linphone_core_get_current_call(marie->lc);
 	
-	check_rtp_bundle(pauline_call, TRUE);
-	check_rtp_bundle(marie_call, TRUE);
+	if (params->with_mandatory_bundle){
+		check_rtp_bundle_mandatory(linphone_call_get_remote_params(pauline_call));
+	}
+	
+	check_rtp_bundle(pauline_call, bundle_expected);
+	check_rtp_bundle(marie_call, bundle_expected);
 	
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
@@ -264,6 +305,13 @@ static void audio_video_call_with_ice(void) {
 	audio_video_call(&params);
 }
 
+static void simple_audio_video_call_bundle_refused(void){
+	params_t params = {0};
+	params.with_ice = TRUE;
+	params.bundle_not_supported = TRUE;
+	audio_video_call(&params);
+}
+
 static void audio_video_call_with_ice_and_dtls_srtp(void) {
 	params_t params = {0};
 	params.with_ice = TRUE;
@@ -277,13 +325,24 @@ static void audio_video_call_with_forced_media_relay(void) {
 	audio_video_call(&params);
 }
 
+static void call_with_mandatory_bundle(void){
+	params_t params = {0};
+	params.with_ice = TRUE;
+	params.with_dtls_srtp = TRUE;
+	params.with_mandatory_bundle = TRUE;
+	audio_video_call(&params);
+}
+
+
 static test_t call_with_rtp_bundle_tests[] = {
 	TEST_NO_TAG("Simple audio call", simple_audio_call),
 	TEST_NO_TAG("Simple audio call with DTLS-SRTP", simple_audio_call_with_srtp_dtls),
 	TEST_NO_TAG("Simple audio-video call", simple_audio_video_call),
+	TEST_NO_TAG("Simple audio-video call with bundle refused", simple_audio_video_call_bundle_refused),
 	TEST_NO_TAG("Simple audio-video call with bundle disable", simple_audio_video_call_with_bundle_disable),
 	TEST_NO_TAG("Audio-video call with ICE", audio_video_call_with_ice),
 	TEST_NO_TAG("Audio-video call with ICE and DTLS-SRTP", audio_video_call_with_ice_and_dtls_srtp),
+	TEST_NO_TAG("Mandatory bundle", call_with_mandatory_bundle),
 	TEST_NO_TAG("Audio-video call with forced media relay", audio_video_call_with_forced_media_relay),
 };
 

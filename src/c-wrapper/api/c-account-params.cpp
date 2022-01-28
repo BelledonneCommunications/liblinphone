@@ -366,3 +366,21 @@ void linphone_account_params_set_transport(LinphoneAccountParams *params, Linpho
 LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccountParams *params) {
 	return AccountParams::toCpp(params)->getTransport();
 }
+
+void linphone_account_params_enable_rtp_bundle(LinphoneAccountParams *params, bool_t value){
+	AccountParams::toCpp(params)->enableRtpBundle(!!value);
+}
+
+bool_t linphone_account_params_rtp_bundle_enabled(const LinphoneAccountParams *params){
+	return AccountParams::toCpp(params)->rtpBundleEnabled();
+}
+
+void linphone_account_params_enable_rtp_bundle_assumption(LinphoneAccountParams *params, bool_t value){
+	AccountParams::toCpp(params)->enableRtpBundleAssumption(!!value);
+}
+
+bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccountParams *params){
+	return AccountParams::toCpp(params)->rtpBundleAssumptionEnabled();
+}
+
+

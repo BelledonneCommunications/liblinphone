@@ -177,7 +177,9 @@ std::string MS2VideoStream::getLabel()const {
 bool MS2VideoStream::prepare(){
 	
 	MS2Stream::prepare();
-	video_stream_prepare_video(mStream);
+	if (isTransportOwner()){
+		video_stream_prepare_video(mStream);
+	}
 	return false;
 }
 

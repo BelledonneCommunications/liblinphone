@@ -520,9 +520,20 @@ SalCustomHeader *linphone_call_params_get_custom_headers (const LinphoneCallPara
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getCustomHeaders();
 }
 
+bool_t linphone_call_params_has_custom_sdp_attribute(const LinphoneCallParams *params, const char *attribute_name){
+	SalCustomSdpAttribute *csa = linphone_call_params_get_custom_sdp_attributes(params);
+	return sal_custom_sdp_attribute_is_present(csa, attribute_name);
+}
+
 SalCustomSdpAttribute *linphone_call_params_get_custom_sdp_attributes (const LinphoneCallParams *params) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getCustomSdpAttributes();
 }
+
+bool_t linphone_call_params_has_custom_sdp_media_attribute(const LinphoneCallParams *params, LinphoneStreamType type, const char *attribute_name){
+	SalCustomSdpAttribute *sdp = linphone_call_params_get_custom_sdp_media_attributes(params, type);
+	return sal_custom_sdp_attribute_is_present(sdp, attribute_name);
+}
+
 
 SalCustomSdpAttribute *linphone_call_params_get_custom_sdp_media_attributes (const LinphoneCallParams *params, LinphoneStreamType type) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getCustomSdpMediaAttributes(type);
@@ -619,6 +630,7 @@ bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCallParams *params)
 }
 
 void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value){
+	lError() << "linphone_call_params_enable_rtp_bundle(): is no longer supported. Use linphone_core_enable_rtp_bundle() or linphone_account_params_enable_rtp_bundle().";
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableRtpBundle(!!value);
 }
 
