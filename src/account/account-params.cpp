@@ -805,7 +805,7 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress));
 	}
 	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);
-	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleEnabled);
+	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleAssumption);
 }
 
 LINPHONE_END_NAMESPACE

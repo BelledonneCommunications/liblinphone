@@ -1296,6 +1296,7 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 
 
 bool MediaSessionPrivate::mandatoryRtpBundleEnabled()const{
+	if (!getParams()->rtpBundleEnabled()) return false;
 	if (destProxy){
 		return Account::toCpp(destProxy->account)->getAccountParams()->rtpBundleAssumptionEnabled();
 	}
@@ -3490,7 +3491,7 @@ bool MediaSession::initiateOutgoing () {
 	if (d->destProxy){
 		rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
 	}else rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
-	
+	lInfo() << "Rtp bundle is " << (rtpBundleEnabled ? "enabled." : "disabled.");
 	d->getParams()->enableRtpBundle(rtpBundleEnabled);
 	
 	if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
