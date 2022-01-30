@@ -902,12 +902,13 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			}
 		}
 
-		// Enable bundle mode in local parameters if remote offered it and core can accept bundle mode.
+		// Enable bundle mode in local parameters if remote offered it and core can accept bundle mode, or
+		// turn it off if the remote doesn't offer it or rejects it.
 		// In fact, we can have the scenario where bundle mode is only enabled by one of the cores in the call or conference.
 		// If bundle mode has been accepted, then future reINVITEs or UPDATEs must reoffer bundle mode unless the user has explicitely requested to disable it
-		if (rcp->rtpBundleEnabled() && linphone_config_get_bool(linphone_core_get_config(cCore), "rtp", "accept_bundle", TRUE)) {
-			getParams()->enableRtpBundle(true);
-		}
+		getParams()->enableRtpBundle(
+			fromOffer ? (rcp->rtpBundleEnabled() && linphone_config_get_bool(linphone_core_get_config(cCore), "rtp", "accept_bundle", TRUE) )
+			  : rcp->rtpBundleEnabled() );
 	}
 }
 
@@ -3405,8 +3406,12 @@ bool MediaSession::toneIndicationsEnabled()const{
 
 void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
 	L_D();
+	bool makeLocalDescription = true;
+	bool isOfferer = true;
+	Address remote;
+	
 	CallSession::configure (direction, cfg, op, from, to);
-
+	
 	if (!d->natPolicy){
 		if (d->destProxy)
 			d->natPolicy = linphone_proxy_config_get_nat_policy(d->destProxy);
@@ -3414,29 +3419,43 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 			d->natPolicy = linphone_core_get_nat_policy(getCore()->getCCore());
 		linphone_nat_policy_ref(d->natPolicy);
 	}
-
+	
 	if (direction == LinphoneCallOutgoing) {
 		d->selectOutgoingIpVersion();
-		if (!getCore()->getCCore()->sip_conf.sdp_200_ack){
-			/* Do not make a local media description when sending an empty INVITE. */
-			d->makeLocalMediaDescription(true, isCapabilityNegotiationEnabled(), false);
-		}
-		d->runStunTestsIfNeeded();
-		d->discoverMtu(to);
+		isOfferer = makeLocalDescription = !getCore()->getCCore()->sip_conf.sdp_200_ack;
+		remote = to;
 	} else if (direction == LinphoneCallIncoming) {
 		d->selectIncomingIpVersion();
 		/* Note that the choice of IP version for streams is later refined by setCompatibleIncomingCallParams() when examining the
 		 * remote offer, if any. If the remote offer contains IPv4 addresses, we should propose IPv4 as well. */
-		Address cleanedFrom = from;
-		cleanedFrom.clean();
+		remote = from;
+		remote.clean();
 		d->setParams(new MediaSessionParams());
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
-		d->makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), isCapabilityNegotiationEnabled(), false);
-		if (d->natPolicy)
-			d->runStunTestsIfNeeded();
-		d->discoverMtu(cleanedFrom);
+		isOfferer = op->getRemoteMediaDescription() ? false : true;
 	}
+		
+	/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
+	 * Then the value is stored and later updated into MediaSessionParams. */
+	bool rtpBundleEnabled = false;
+	if (d->destProxy){
+		rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
+	}else{
+		lInfo() << "No account set for this call, using rtp bundle enablement from LinphoneCore.";
+		rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
+	}
+	lInfo() << "Rtp bundle is " << (rtpBundleEnabled ? "enabled." : "disabled.");
+	d->getParams()->enableRtpBundle(rtpBundleEnabled);
+	
+	if (makeLocalDescription){
+		/* Do not make a local media description when sending an empty INVITE. */
+		d->makeLocalMediaDescription(isOfferer, isCapabilityNegotiationEnabled(), false);
+	}
+	
+	if (d->natPolicy)
+		d->runStunTestsIfNeeded();
+	d->discoverMtu(remote);
 }
 
 LinphoneStatus MediaSession::deferUpdate () {
@@ -3484,15 +3503,6 @@ void MediaSession::initiateIncoming () {
 bool MediaSession::initiateOutgoing () {
 	L_D();
 	bool defer = CallSession::initiateOutgoing();
-	
-	/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
-	 * Then the value is stored and later updated into MediaSessionParams. */
-	bool rtpBundleEnabled = false;
-	if (d->destProxy){
-		rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
-	}else rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
-	lInfo() << "Rtp bundle is " << (rtpBundleEnabled ? "enabled." : "disabled.");
-	d->getParams()->enableRtpBundle(rtpBundleEnabled);
 	
 	if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
 		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
