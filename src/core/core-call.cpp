@@ -312,46 +312,52 @@ LinphoneStatus Core::terminateAllCalls () {
 
 void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallLog> &callLog, std::shared_ptr<ConferenceInfo> confInfo) {
 	// TODO: This is a workaround that has to be removed ASAP
-	// Do not add calls made to the conference factory in the history
-	LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), callLog->getToAddress());
-	if (account) {
-		string conferenceFactoryUri = Account::toCpp(account)->getAccountParams()->getConferenceFactoryUri();
-		if (!conferenceFactoryUri.empty()) {
-			LinphoneAddress *conference_factory_addr = linphone_address_new(conferenceFactoryUri.c_str());
-			if (conference_factory_addr) {
-				if (linphone_address_weak_equal(callLog->getToAddress(), conference_factory_addr)) {
-					linphone_address_unref(conference_factory_addr);
-					return;
-				}
-				linphone_address_unref(conference_factory_addr);
-			}
-		}
-		// Do not add calls made to the audio/video conference factory in the history either
-		const LinphoneAddress *audioVideoConferenceFactoryAddress = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
-		if (audioVideoConferenceFactoryAddress != nullptr) {
-			if (linphone_address_weak_equal(callLog->getToAddress(), audioVideoConferenceFactoryAddress)) {
-				return;
-			}
-		}
-	}
-
-	// For PushIncomingState call, from and to address are unknow.
-	const char *usernameFrom = callLog->getFromAddress() ? linphone_address_get_username(callLog->getFromAddress()) : nullptr;
-	const char *usernameTo = callLog->getToAddress() ? linphone_address_get_username(callLog->getToAddress()) : nullptr;
-	if ((usernameFrom && (strstr(usernameFrom, "chatroom-") == usernameFrom))
-		|| (usernameTo && (strstr(usernameTo, "chatroom-") == usernameTo))
-	)
-		return;
-	// End of workaround
-
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
 	if (confInfo == nullptr) {
 		// Let's see if we have a conference info in db with the corresponding URI
-		confInfo = d->mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())));
+		confInfo = callLog->wasConference() ? callLog->getConferenceInfo() : d->mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())));
 	}
+#endif
 
+	// Add all calls that have been into a conference to the call logs of the core. The if below is required for calls that have been merged in a conference.
+	// In fact, in such a scenario, the client that merges calls to put them in a conference will call the conference factory or the audio video conference factory directly but still its call must be added to the call logs
+	if (!confInfo) {
+		// Do not add calls made to the conference factory in the history
+		LinphoneAccount *account = linphone_core_lookup_known_account(getCCore(), callLog->getToAddress());
+		if (account) {
+			string conferenceFactoryUri = Account::toCpp(account)->getAccountParams()->getConferenceFactoryUri();
+			if (!conferenceFactoryUri.empty()) {
+				LinphoneAddress *conference_factory_addr = linphone_address_new(conferenceFactoryUri.c_str());
+				if (conference_factory_addr) {
+					if (linphone_address_weak_equal(callLog->getToAddress(), conference_factory_addr)) {
+						linphone_address_unref(conference_factory_addr);
+						return;
+					}
+					linphone_address_unref(conference_factory_addr);
+				}
+			}
+			// Do not add calls made to the audio/video conference factory in the history either
+			const LinphoneAddress *audioVideoConferenceFactoryAddress = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
+			if (audioVideoConferenceFactoryAddress != nullptr) {
+				if (linphone_address_weak_equal(callLog->getToAddress(), audioVideoConferenceFactoryAddress)) {
+					return;
+				}
+			}
+		}
+
+		// For PushIncomingState call, from and to address are unknow.
+		const char *usernameFrom = callLog->getFromAddress() ? linphone_address_get_username(callLog->getFromAddress()) : nullptr;
+		const char *usernameTo = callLog->getToAddress() ? linphone_address_get_username(callLog->getToAddress()) : nullptr;
+		if ((usernameFrom && (strstr(usernameFrom, "chatroom-") == usernameFrom))
+			|| (usernameTo && (strstr(usernameTo, "chatroom-") == usernameTo))
+		)
+			return;
+	}
+	// End of workaround
+
+#ifdef HAVE_DB_STORAGE
 	auto event = make_shared<ConferenceCallEvent>(type, std::time(nullptr), callLog, confInfo);
 	d->mainDb->addEvent(event);
 #endif

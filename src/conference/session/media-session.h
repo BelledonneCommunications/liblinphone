@@ -67,7 +67,7 @@ public:
 	void configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) override;
 	LinphoneStatus deferUpdate () override;
 	void initiateIncoming () override;
-	bool initiateOutgoing () override;
+	bool initiateOutgoing (const std::string &subject = "", const Content *content = nullptr) override;
 	void iterate (time_t currentRealTime, bool oneSecondElapsed) override;
 	LinphoneStatus pauseFromConference ();
 	LinphoneStatus pause ();

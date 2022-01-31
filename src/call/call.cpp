@@ -210,9 +210,9 @@ void Call::initiateIncoming () {
 	getActiveSession()->initiateIncoming();
 }
 
-bool Call::initiateOutgoing () {
+bool Call::initiateOutgoing (const string &subject, const Content *content) {
 	shared_ptr<CallSession> session = getActiveSession();
-	bool defer = session->initiateOutgoing();
+	bool defer = session->initiateOutgoing(subject, content);
 	session->getPrivate()->createOp();
 	return defer;
 }
@@ -681,6 +681,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 
 			// It is expected that the core of the remote conference is the participant one
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
+			
 		}
 	}
 

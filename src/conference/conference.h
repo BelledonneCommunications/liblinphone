@@ -158,6 +158,11 @@ public:
 
 	void clearParticipants();
 
+#ifdef HAVE_DB_STORAGE
+	void updateSubjectInConferenceInfo(const std::string & subject) const;
+	void updateParticipantsInConferenceInfo(const IdentityAddress & participantAddress) const;
+#endif // HAVE_DB_STORAGE
+
 protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,
@@ -193,6 +198,11 @@ protected:
 	time_t startTime = 0;
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
+
+#ifdef HAVE_DB_STORAGE
+	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
+	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo(const IdentityAddress & organizer) const;
+#endif // HAVE_DB_STORAGE
 
 private:
 	L_DISABLE_COPY(Conference);

@@ -220,7 +220,7 @@ public:
 	// -----------------------------------------------------------------------------
 	void createPlayer () const;
 	void initiateIncoming ();
-	bool initiateOutgoing ();
+	bool initiateOutgoing (const std::string &subject = "", const Content *content = nullptr);
 	void iterate (time_t currentRealTime, bool oneSecondElapsed);
 	void notifyRinging ();
 	void startIncomingNotification ();

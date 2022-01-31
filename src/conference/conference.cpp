@@ -25,6 +25,7 @@
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "core/core.h"
+#include "core/core-p.h"
 #include "logger/logger.h"
 #include "participant.h"
 #include "private_functions.h"
@@ -679,5 +680,76 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 		l->onStateChanged(state);
 	}
 }
+
+#ifdef HAVE_DB_STORAGE
+std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
+	return nullptr;
+}
+
+std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo(const IdentityAddress & organizer) const {
+	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
+	info->setOrganizer(organizer);
+
+	std::list<IdentityAddress> participantAddresses;
+	for (const auto & p : getParticipants()) {
+		participantAddresses.push_back(p->getAddress());
+	}
+	participantAddresses.push_back(me->getAddress());
+	info->setParticipants(participantAddresses);
+
+	const auto & conferenceAddress = getConferenceAddress();
+	if (conferenceAddress.isValid()) {
+		info->setUri(conferenceAddress);
+	}
+
+	time_t startTime = confParams->getStartTime();
+	time_t endTime = confParams->getEndTime();
+	info->setDateTime(startTime);
+	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
+		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
+		info->setDuration(duration);
+	}
+
+	info->setSubject(confParams->getSubject());
+
+	return info;
+}
+
+void Conference::updateSubjectInConferenceInfo(const std::string & subject) const {
+	auto info = createOrGetConferenceInfo();
+
+	if (info) {
+		info->setSubject(subject);
+
+		// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		if (mainDb) {
+			lInfo() << "Updating conference information of conference " << getConferenceAddress() << " because its subject has been changed to " << subject;
+			mainDb->insertConferenceInfo(info);
+		}
+	}
+}
+
+void Conference::updateParticipantsInConferenceInfo(const IdentityAddress & participantAddress) const {
+	auto info = createOrGetConferenceInfo();
+
+	if (info) {
+		std::list<IdentityAddress> currentParticipants = info->getParticipants();
+		const auto participantAddressIt = std::find(currentParticipants.begin(), currentParticipants.end(), participantAddress);
+		if (participantAddressIt == currentParticipants.end()) {
+			currentParticipants.push_back(participantAddress);
+			info->setParticipants(currentParticipants);
+
+
+			// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
+			auto &mainDb = getCore()->getPrivate()->mainDb;
+			if (mainDb) {
+				lInfo() << "Updating conference information of conference " << getConferenceAddress() << " because participant " << participantAddress << " has been added";
+				mainDb->insertConferenceInfo(info);
+			}
+		}
+	}
+}
+#endif // HAVE_DB_STORAGE
 
 LINPHONE_END_NAMESPACE

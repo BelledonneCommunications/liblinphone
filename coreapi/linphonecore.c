@@ -4623,7 +4623,7 @@ LinphoneCall * linphone_core_invite_address_with_params_2(LinphoneCore *lc, cons
 	/* Unless this call is for a conference, it becomes now the current one*/
 	if (linphone_call_params_get_local_conference_mode(params) ==  FALSE)
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
-	bool defer = Call::toCpp(call)->initiateOutgoing();
+	bool defer = Call::toCpp(call)->initiateOutgoing(L_C_TO_STRING(subject), content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : NULL);
 	if (!defer) {
 		if (Call::toCpp(call)->startInvite(NULL, L_C_TO_STRING(subject), content ? L_GET_CPP_PTR_FROM_C_OBJECT(content) : NULL) != 0) {
 			/* The call has already gone to error and released state, so do not return it */

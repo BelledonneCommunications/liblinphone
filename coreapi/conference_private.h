@@ -200,8 +200,6 @@ protected:
 	void *mCbUserData = nullptr;
 	LinphoneCoreCbs *m_coreCbs;
 
-	std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
-
 	static void callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
 
@@ -306,6 +304,10 @@ private:
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 
+#ifdef HAVE_DB_STORAGE
+	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const override;
+#endif // HAVE_DB_STORAGE
+
 	static constexpr int confIdLength = 10;
 };
 
@@ -365,6 +367,8 @@ public:
 	virtual void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
 	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
+	virtual void onFullStateReceived() override;
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 	virtual void setSubject (const std::string &subject) override;
@@ -385,6 +389,9 @@ protected:
 
 private:
 	virtual const std::shared_ptr<CallSession> getMainSession() const override;
+#ifdef HAVE_DB_STORAGE
+	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const override;
+#endif // HAVE_DB_STORAGE
 
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);

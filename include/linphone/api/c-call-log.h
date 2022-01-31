@@ -161,9 +161,9 @@ LINPHONE_PUBLIC bool_t linphone_call_log_video_enabled(const LinphoneCallLog *ca
 LINPHONE_PUBLIC char * linphone_call_log_to_str(const LinphoneCallLog *call_log);
 
 /**
- * Tells whether that call was a call to a conference server
+ * Tells whether that call was part of a conference
  * @param call_log #LinphoneCallLog object @notnil
- * @return TRUE if the call was a call to a conference server, FALSE otherwise.
+ * @return TRUE if the call was part of a conference, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_call_log_was_conference(LinphoneCallLog *call_log);
 

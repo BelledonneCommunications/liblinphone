@@ -112,7 +112,7 @@ public:
 	bool isCapabilityNegotiationEnabled() const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 	virtual void initiateIncoming ();
-	virtual bool initiateOutgoing ();
+	virtual bool initiateOutgoing (const std::string &subject = "", const Content *content = nullptr);
 	virtual void iterate (time_t currentRealTime, bool oneSecondElapsed);
 	LinphoneStatus redirect (const std::string &redirectUri);
 	LinphoneStatus redirect (const Address &redirectAddr);

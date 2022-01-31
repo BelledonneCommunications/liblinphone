@@ -202,11 +202,15 @@ void CallLog::setConferenceInfoId (long long conferenceInfoId) {
 
 // =============================================================================
 
+void CallLog::setConferenceInfo (std::shared_ptr<ConferenceInfo> conferenceInfo) {
+	mConferenceInfo = conferenceInfo;
+}
+
 std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo () {
 	if (mConferenceInfo != nullptr) return mConferenceInfo;
 
 	if (mConferenceInfoId != -1) {
-		mConferenceInfo = L_GET_PRIVATE(getCore())->mainDb->getConferenceInfo(mConferenceInfoId);
+		setConferenceInfo(L_GET_PRIVATE(getCore())->mainDb->getConferenceInfo(mConferenceInfoId));
 	}
 
 	return mConferenceInfo;

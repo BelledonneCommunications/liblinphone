@@ -3500,9 +3500,9 @@ void MediaSession::initiateIncoming () {
 	}
 }
 
-bool MediaSession::initiateOutgoing () {
+bool MediaSession::initiateOutgoing (const string &subject, const Content *content) {
 	L_D();
-	bool defer = CallSession::initiateOutgoing();
+	bool defer = CallSession::initiateOutgoing(subject, content);
 	
 	if (linphone_nat_policy_ice_enabled(d->natPolicy)) {
 		if (getCore()->getCCore()->sip_conf.sdp_200_ack)
@@ -3517,10 +3517,12 @@ bool MediaSession::initiateOutgoing () {
 				 */
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 			}else{
-				d->queueIceGatheringTask([this]() {
+				auto toAddr = linphone_address_as_string(d->log->getToAddress());
+				lInfo() << "Unable to initiate call to " << std::string(toAddr) << " because ICE candidates must be gathered first";
+				d->queueIceGatheringTask([this, subject, content]() {
 					L_D();
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-					startInvite(nullptr, "");
+					startInvite(nullptr, subject, content);
 					return 0;
 				});
 			}

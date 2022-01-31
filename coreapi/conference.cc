@@ -272,7 +272,6 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, p);
 		success =  true;
-
 	} else {
 
 		lError() << "Participant with address " << call->getRemoteAddress()->asString() << " is already part of conference " << getConferenceAddress();
@@ -465,32 +464,6 @@ bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePri
 	for (const auto &p : participants)
 		soFarSoGood &= removeParticipant(p);
 	return soFarSoGood;
-}
-
-std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
-	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
-	info->setOrganizer(getMe()->getAddress());
-
-	if (!invitedAddresses.empty()) {
-		info->setParticipants(invitedAddresses);
-	}
-
-	const auto & conferenceAddress = getConferenceAddress();
-	if (conferenceAddress.isValid()) {
-		info->setUri(conferenceAddress);
-	}
-
-	time_t startTime = confParams->getStartTime();
-	time_t endTime = confParams->getEndTime();
-	info->setDateTime(startTime);
-	if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
-		unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
-		info->setDuration(duration);
-	}
-
-	info->setSubject(confParams->getSubject());
-
-	return info;
 }
 
 void Conference::callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
@@ -715,9 +688,14 @@ void LocalConference::confirmCreation () {
 #ifdef HAVE_DB_STORAGE
 		// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
 		auto &mainDb = getCore()->getPrivate()->mainDb;
+		const auto & conferenceInfo = createOrGetConferenceInfo();
 		if (mainDb) {
 			lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
-			mainDb->insertConferenceInfo(createConferenceInfo());
+			mainDb->insertConferenceInfo(conferenceInfo);
+		}
+		auto callLog = session->getLog();
+		if (callLog) {
+			callLog->setConferenceInfo(conferenceInfo);
 		}
 #endif
 
@@ -725,6 +703,21 @@ void LocalConference::confirmCreation () {
 		lError() << "Unable to confirm the creation of the conference because no session was created";
 	}
 }
+
+#ifdef HAVE_DB_STORAGE
+std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() const {
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		std::shared_ptr<ConferenceInfo> conferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
+		if (conferenceInfo) {
+			return conferenceInfo;
+		}
+	}
+
+	return createConferenceInfo(getMe()->getAddress());
+}
+#endif // HAVE_DB_STORAGE
+
 
 void LocalConference::finalizeCreation() {
 
@@ -2073,6 +2066,23 @@ void RemoteConference::finalizeCreation() {
 	}
 }
 
+#ifdef HAVE_DB_STORAGE
+std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() const {
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		std::shared_ptr<ConferenceInfo> conferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
+		if (conferenceInfo) {
+			return conferenceInfo;
+		}
+	}
+
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
+	const auto organizer = (referer) ? IdentityAddress(*referer->getRemoteAddress()) : getMe()->getAddress();
+	return createConferenceInfo(organizer);
+}
+#endif // HAVE_DB_STORAGE
+
 void RemoteConference::setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
 	if (focus) {
 		focus->setSession(session);
@@ -2853,6 +2863,9 @@ void RemoteConference::setSubject (const std::string &subject) {
 			pendingSubject = subject;
 			Conference::setSubject(subject);
 			session->update(nullptr, CallSession::UpdateMethod::Default, subject);
+#ifdef HAVE_DB_STORAGE
+			updateSubjectInConferenceInfo(subject);
+#endif // HAVE_DB_STORAGE
 		}
 	} else {
 		pendingSubject = subject;
@@ -2884,6 +2897,11 @@ bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &
 
 void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	const IdentityAddress &pAddr = event->getParticipantAddress();
+
+#ifdef HAVE_DB_STORAGE
+	const auto & participantAddress = participant->getAddress();
+	updateParticipantsInConferenceInfo(participantAddress);
+#endif
 
 	if (isMe(pAddr)) {
 	#ifdef HAVE_ADVANCED_IM
@@ -2924,6 +2942,32 @@ void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticip
 	} else {
 		lWarning() << "Removal of participant with address " << pAddr << " has been failed because the participant is still part of the conference" << getConferenceAddress();
 	}
+}
+
+void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
+#ifdef HAVE_DB_STORAGE
+	updateSubjectInConferenceInfo(event->getSubject());
+#endif // HAVE_DB_STORAGE
+}
+
+void RemoteConference::onFullStateReceived() {
+#ifdef HAVE_DB_STORAGE
+	// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		std::shared_ptr<ConferenceInfo> conferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
+
+		if (!conferenceInfo) {
+			lInfo() << "Inserting conference information to database related to conference " << getConferenceAddress();
+			const auto conferenceInfo = createOrGetConferenceInfo();
+			mainDb->insertConferenceInfo(conferenceInfo);
+			auto  callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
+			if (callLog) {
+				callLog->setConferenceInfo(conferenceInfo);
+			}
+		}
+	}
+#endif // HAVE_DB_STORAGE
 }
 
 }//end of namespace MediaConference

@@ -88,6 +88,7 @@ public:
 
 	void setConferenceInfoId (long long conferenceInfoId);
 
+	void setConferenceInfo(std::shared_ptr<ConferenceInfo> conferenceInfo);
 	std::shared_ptr<ConferenceInfo> getConferenceInfo ();
 
 	std::string toString () const override;

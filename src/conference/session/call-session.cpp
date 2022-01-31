@@ -1305,7 +1305,7 @@ bool CallSession::hasTransferPending () {
 
 void CallSession::initiateIncoming () {}
 
-bool CallSession::initiateOutgoing () {
+bool CallSession::initiateOutgoing (const string &subject, const Content *content) {
 	L_D();
 	bool defer = false;
 	d->setState(CallSession::State::OutgoingInit, "Starting outgoing call");
