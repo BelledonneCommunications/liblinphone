@@ -120,7 +120,7 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 	if (isThumbnail) {
 		io.input.type = MSResourceItc;
 		io.output.type = MSResourceDefault;
-		//io.input.camera = getVideoDevice();
+		io.input.itc = mLocalParticipantStream->itcsink;
 		
 		media_stream_set_max_network_bitrate(&vs->ms, 80000);
 		if (vdef) {
@@ -128,7 +128,7 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 			video_stream_set_sent_video_size(vs, vsize);
 		}
 
-		if (video_stream_start_from_io_and_itc_sink(vs, mLocalDummyProfile, "127.0.0.1", 65000, "127.0.0.1", 65001, sVP8PayloadTypeNumber, &io, mLocalParticipantStream->itcsink) != 0){
+		if (video_stream_start_from_io(vs, mLocalDummyProfile, "127.0.0.1", 65000, "127.0.0.1", 65001, sVP8PayloadTypeNumber, &io) != 0){
 			lError() << "Could not start video stream.";
 			video_stream_stop(vs);
 			return;

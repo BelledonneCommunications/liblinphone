@@ -363,12 +363,13 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 					lError() << "[mix to all] this thumbnail stream " << mStream << " can not find itcStream with label " << label;
 				}
 				io.input.type = MSResourceItc;
+				io.input.itc = itcFilter;
 				media_stream_set_max_network_bitrate(&mStream->ms, 80000);
 				if (vdef) {
 					MSVideoSize vsize = {160,120};
 					video_stream_set_sent_video_size(mStream, vsize);
 				}
-				video_stream_start_from_io_and_itc_sink(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io, itcFilter);
+				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 
