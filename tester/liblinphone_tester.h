@@ -489,6 +489,7 @@ void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
 void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr);
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
+void linphone_core_manager_delete_all_chat_rooms(LinphoneCoreManager *mgr, bctbx_list_t *coresList);
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
 bctbx_list_t * init_core_for_conference_with_factori_uri(bctbx_list_t *coreManagerList, const char *factoryUri);
 void start_core_for_conference(bctbx_list_t *coreManagerList);

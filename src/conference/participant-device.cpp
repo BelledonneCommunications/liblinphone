@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "account/account.h"
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
 #include "conference/params/media-session-params.h"
@@ -75,8 +76,19 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
-	if (encryptionEngine)
+	if (encryptionEngine){
+		// if the current account is this device then return Safe.
+		auto account = linphone_core_get_default_account(getCore()->getCCore());
+		if( account){
+			auto cAddr = Account::toCpp(account)->getContactAddress();
+			if( cAddr){
+				auto addr = L_GET_CPP_PTR_FROM_C_OBJECT(cAddr);
+				if( addr && mGruu == IdentityAddress(*addr))
+					return AbstractChatRoom::SecurityLevel::Safe;
+			}
+		}
 		return encryptionEngine->getSecurityLevel(mGruu.asString());
+	}
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }

@@ -311,6 +311,215 @@ static void group_chat_lime_x3dh_encrypted_chatrooms(void) {
 	group_chat_lime_x3dh_encrypted_chatrooms_curve(448);
 }
 
+/**
+ * Goal: Test the security level of 'me' on a chat room, where this 'me' has not been trusted on the same device.
+ * 
+ * - Pauline and Marie are on the same device.
+ * - Pauline have a second device to validate the first chat room.
+*/
+static void group_chat_lime_x3dh_encrypted_chatrooms_multi_account(void) {
+// Devices creation
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_pauline_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_x3dh_rc");
+// Manager list for iteration loops
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, laure);
+// Stats initialization
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	stats initialLaureStats = laure->stat;
+// Chat rooms
+	LinphoneChatRoom* mariePaulineEncryptedCr = NULL;	// Marie invite pauline from Marie device
+	LinphoneChatRoom* paulineMarieEncryptedCr = NULL;	// Pauline and Marie chat room on Pauline device
+	LinphoneChatRoom* laurePaulineEncryptedCr = NULL;	// Laure invite Pauline which is on Marie device
+	LinphoneChatRoom* paulineLaureEncryptedCr = NULL;	// Pauline's chat room with Laure
+
+// X3DH initialisation
+	set_lime_curve_list(25519,coresManagerList);
+	bctbx_list_t *coresList = init_core_for_conference_with_groupchat_version(coresManagerList, "1.0");
+	start_core_for_conference(coresManagerList);
+
+// Wait for lime users to be created on X3DH server
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_X3dhUserCreationSuccess, initialLaureStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+
+// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
+	
+// Get accounts in order to set future defaults
+	const bctbx_list_t* accounts = linphone_core_get_account_list(marie->lc);
+	LinphoneAccount* marieAccount = (LinphoneAccount*)accounts->data;
+	LinphoneAccount* paulineOnMarieAccount = (LinphoneAccount*)accounts->next->data;
+
+// Set the default account on Marie to be sure to use what we want
+	linphone_core_set_default_account(marie->lc, marieAccount);
+	
+	LinphoneAddress* marieAddress = linphone_address_new(linphone_account_params_get_identity(linphone_account_get_params(linphone_core_get_default_account(marie->lc))));
+	LinphoneAddress* paulineAddress = linphone_address_new(linphone_account_params_get_identity(linphone_account_get_params(linphone_core_get_default_account(pauline->lc))));
+	LinphoneAddress* laureAddress = linphone_address_new(linphone_account_params_get_identity(linphone_account_get_params(linphone_core_get_default_account(laure->lc))));
+	const LinphoneAddress* paulineMarieDeviceAddress = linphone_account_get_contact_address(paulineOnMarieAccount);
+	
+// Invite lists for chat room creations (Note: list will be freed on creation)
+	bctbx_list_t* mariePaulineInvite = bctbx_list_append(NULL, linphone_address_clone(paulineAddress));
+	bctbx_list_t* laurePaulineInvite = bctbx_list_append(NULL, linphone_address_clone(paulineAddress));
+	
+	
+/******		snippet test for zrtp validation
+	//simple_zrtp_call_with_sas_validation(pauline,marie, TRUE, TRUE);
+	//simple_zrtp_call_with_sas_validation(pauline,marie, FALSE, FALSE);
+	
+	linphone_core_stop(pauline->lc);
+	LinphoneCall* marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	linphone_call_ref(marie_call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1));
+	const bctbx_list_t* callList = linphone_core_get_calls(marie->lc);
+	for(const bctbx_list_t* calls = callList ; calls != NULL ; calls = calls->next){
+		if( (LinphoneCall*)calls->data != marie_call){
+			linphone_core_accept_call(marie->lc, (LinphoneCall*)calls->data);
+		}
+	}
+	wait_for_list(coresList, 0, 1, 2000);
+	for(const bctbx_list_t* calls = callList ; calls != NULL ; calls = calls->next){
+		linphone_call_set_authentication_token_verified((LinphoneCall*)calls->data, TRUE);
+		calls = calls->next;
+	}
+	wait_for_list(coresList, 0, 1, 2000);
+	for(const bctbx_list_t* calls = callList ; calls != NULL ; calls = calls->next){
+		linphone_call_set_authentication_token_verified((LinphoneCall*)calls->data, FALSE);
+		calls = calls->next;
+	}
+	//LinphoneCall* receivedCall = linphone_core_get_call_by_remote_address2(marie->lc, pauline->identity);
+	//linphone_core_accept_call(pauline->lc, receivedCall);
+	
+	//linphone_call_set_authentication_token_verified(linphone_core_get_current_call(pauline->lc), TRUE);
+	//linphone_call_set_authentication_token_verified(marie_call, TRUE);
+	//linphone_call_set_authentication_token_verified(receivedCall, TRUE);
+	
+	//linphone_call_set_authentication_token_verified(marie_call, FALSE);
+	//linphone_call_set_authentication_token_verified(receivedCall, FALSE);
+****/
+//-------------------------------------------
+// Create a chat room between Marie and Pauline
+	const char *initialSubject = "Encrypted Marie and Pauline";
+	mariePaulineEncryptedCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, mariePaulineInvite, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
+	const LinphoneAddress *mariePaulineConferenceAddress = linphone_chat_room_get_conference_address(mariePaulineEncryptedCr);
+	if(!BC_ASSERT_PTR_NOT_NULL(mariePaulineConferenceAddress))
+		goto end;
+	LinphoneAddress *encryptedConfAddr = linphone_address_clone(mariePaulineConferenceAddress);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(mariePaulineEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(mariePaulineEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
+	wait_for_list(coresList, 0, 1, 2000);	// Let more time to finalize the chat room creation
+// Check that the chat room is correctly created on Marie1's side and that the participants are added
+	paulineMarieEncryptedCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, encryptedConfAddr, initialSubject, 1, 0);
+	linphone_address_unref(encryptedConfAddr);
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineMarieEncryptedCr))
+		goto end;
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineMarieEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineMarieEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
+	
+//-------------------------------------------
+	// From the point of view of Pauline, check security level for Pauline (Encrypted) and Marie(Encrypted)
+	LinphoneParticipant* participant = linphone_chat_room_get_me(paulineMarieEncryptedCr);	// Pauline is me. Should be encrypted because one device is not trusted on Marie's device
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	participant = linphone_chat_room_get_me(mariePaulineEncryptedCr);	// Marie is me.
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelSafe, int, "%d");
+	participant = linphone_chat_room_find_participant(paulineMarieEncryptedCr, marieAddress); // Marie is a participant
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+
+// Use Pauline account on the same device as Marie.
+	linphone_core_set_default_account(marie->lc, paulineOnMarieAccount);
+	wait_for_list(coresList, 0, 1, 2000);// Let some time for switching account
+	
+//-------------------------------------------
+// Create a new secure chat room between Pauline (on Marie's device) and Laure.
+	initialSubject = "Encrypted Laure and Pauline";
+	laurePaulineEncryptedCr = create_chat_room_client_side(coresList, laure, &initialLaureStats, laurePaulineInvite, initialSubject, TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
+	const LinphoneAddress *laurePaulineConferenceAddress = linphone_chat_room_get_conference_address(laurePaulineEncryptedCr);
+	if(!BC_ASSERT_PTR_NOT_NULL(laurePaulineConferenceAddress))
+		goto end;
+	encryptedConfAddr = linphone_address_clone(laurePaulineConferenceAddress);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(laurePaulineEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(laurePaulineEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
+	wait_for_list(coresList, 0, 1, 2000);	// Let more time to finalize the chat room creation
+	// Check that the chat room is correctly created on Marie's device with Pauline account and that the participants are added
+	paulineLaureEncryptedCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats, encryptedConfAddr, initialSubject, 1, 0);
+	linphone_address_unref(encryptedConfAddr);
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineLaureEncryptedCr))
+		goto end;
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineLaureEncryptedCr) & LinphoneChatRoomCapabilitiesOneToOne);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineLaureEncryptedCr) & LinphoneChatRoomCapabilitiesEncrypted);
+//-------------------------------------------
+// From the point of view of Pauline, check security level for Pauline (Encrypted because of second device) and Laure(Encrypted)
+	participant = linphone_chat_room_get_me(paulineLaureEncryptedCr);	// Pauline is me
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+// Check local device
+	bctbx_list_t* devices = linphone_participant_get_devices(participant);
+	int deviceCount = 0;
+	for(bctbx_list_t* device = devices ; device != NULL ; device = device->next){
+		const LinphoneAddress * deviceAddress = linphone_participant_device_get_address((LinphoneParticipantDevice*)device->data);
+		if( linphone_address_equal(paulineMarieDeviceAddress, deviceAddress))
+			BC_ASSERT_EQUAL((int)linphone_participant_device_get_security_level((LinphoneParticipantDevice*)device->data), (int)LinphoneChatRoomSecurityLevelSafe, int, "%d");
+		else
+			BC_ASSERT_EQUAL((int)linphone_participant_device_get_security_level((LinphoneParticipantDevice*)device->data), (int)LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+		++deviceCount;
+	}
+	BC_ASSERT_EQUAL(deviceCount, 2, int, "%d");// For Pauline : 2 devices. On Marie and on Pauline.
+	bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+	
+	participant = linphone_chat_room_find_participant(paulineLaureEncryptedCr, laureAddress); // Laure is a participant
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	
+// Stop Pauline to not have 2 devices for Pauline
+	linphone_core_manager_delete_all_chat_rooms(pauline, coresList);	// Cleaning DB
+	linphone_core_stop(pauline->lc);
+	wait_for_list(coresList, 0, 1, 2000);// Let some time to propagate leaving events
+//-------------------------------------------
+// From the point of view of Pauline, check security level for Pauline (Safe as there is only one device and its 'me') and Laure(Encrypted)
+	participant = linphone_chat_room_get_me(paulineLaureEncryptedCr);	// Pauline is me
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelSafe, int, "%d");
+// Check local device
+	devices = linphone_participant_get_devices(participant);
+	deviceCount = 0;
+	for(bctbx_list_t* device = devices ; device != NULL ; device = device->next){
+		BC_ASSERT_EQUAL((int)linphone_participant_device_get_security_level((LinphoneParticipantDevice*)device->data), (int)LinphoneChatRoomSecurityLevelSafe, int, "%d");
+		++deviceCount;
+	}
+	BC_ASSERT_EQUAL(deviceCount, 1, int, "%d");// For Pauline : only one device left that is Marie's device.
+	bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+	
+	participant = linphone_chat_room_find_participant(paulineLaureEncryptedCr, laureAddress); // Laure is a participant
+	BC_ASSERT_PTR_NOT_NULL(participant);
+	BC_ASSERT_EQUAL((int)linphone_participant_get_security_level(participant), (int)LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	
+end:
+// Clean db from chat room. Pauline is already done
+	linphone_core_manager_delete_all_chat_rooms(laure, coresList);
+	linphone_core_manager_delete_all_chat_rooms(marie, coresList);
+	
+	linphone_address_unref(laureAddress);
+	linphone_address_unref(paulineAddress);
+	linphone_address_unref(marieAddress);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 
 /**
  * - create users
@@ -4243,6 +4452,7 @@ test_t secure_group_chat_tests[] = {
 	TEST_TWO_TAGS("LIME X3DH change server url", group_chat_lime_x3dh_change_server_url, "LimeX3DH", "LeaksMemory"),
 #endif
 	TEST_ONE_TAG("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH encrypted chatrooms multi-account", group_chat_lime_x3dh_encrypted_chatrooms_multi_account, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH basic chatrooms", group_chat_lime_x3dh_basic_chat_rooms, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH chatroom security level upgrade", group_chat_lime_x3dh_chatroom_security_level_upgrade, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade adding participant", group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant, "LimeX3DH"),

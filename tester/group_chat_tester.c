@@ -223,10 +223,15 @@ void configure_core_for_conference (LinphoneCore *core, const char* username, co
 	bctbx_free(newIdentity);
 	linphone_core_enable_conference_server(core, server);
 	char *factoryUri = linphone_address_as_string(factoryAddr);
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);
-	linphone_proxy_config_edit(proxy);
-	linphone_proxy_config_set_conference_factory_uri(proxy, factoryUri);
-	linphone_proxy_config_done(proxy);
+	
+	for (const bctbx_list_t* accounts = linphone_core_get_account_list(core); accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount* account = (LinphoneAccount*)accounts->data;
+		LinphoneAccountParams * newParams = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_set_conference_factory_uri(newParams, factoryUri);
+		linphone_account_set_params(account, newParams);
+		linphone_account_params_unref(newParams);
+	}
+
 	bctbx_free(factoryUri);
 }
 

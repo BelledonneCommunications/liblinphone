@@ -159,6 +159,7 @@ set(RC_FILES
 	rcfiles/marie_lime_x3dh_no_server_rc
 	rcfiles/marie_lime_x3dh_rc
 	rcfiles/marie_nat64_rc
+	rcfiles/marie_pauline_lime_x3dh_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
 	rcfiles/marie_rtp_port_range_rc

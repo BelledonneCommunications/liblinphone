@@ -1941,6 +1941,18 @@ void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneC
 	}
 }
 
+void linphone_core_manager_delete_all_chat_rooms(LinphoneCoreManager *mgr, bctbx_list_t *coresList) {
+	LinphoneConfig *config = linphone_core_get_config(mgr->lc);
+// store old value to not change current configuration after exiting the procedure.
+	int oldValue = linphone_config_get_int(config, "misc", "hide_empty_chat_rooms", 1);
+	linphone_config_set_int(config, "misc", "hide_empty_chat_rooms", 0);
+	for(const bctbx_list_t* crs =  linphone_core_get_chat_rooms(mgr->lc) ; crs != NULL ; crs = crs->next) {
+		linphone_core_manager_delete_chat_room(mgr, (LinphoneChatRoom*)crs->data, coresList);
+	}
+// Restore config value
+	linphone_config_set_int(config, "misc", "hide_empty_chat_rooms", oldValue);
+}
+
 int liblinphone_tester_ipv6_available(void){
 	if (liblinphonetester_ipv6) {
 		struct addrinfo *ai=bctbx_ip_address_to_addrinfo(AF_INET6,SOCK_STREAM,liblinphone_tester_ipv6_probing_address,53);
