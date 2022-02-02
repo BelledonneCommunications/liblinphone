@@ -2361,7 +2361,12 @@ static void misc_config_read (LinphoneCore *lc) {
 
 	const char *contacts_vcard_list_uri = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", NULL);
 	if (contacts_vcard_list_uri) {
-		lc->base_contacts_list_for_synchronization = linphone_core_create_friend_list(lc);
+		lc->base_contacts_list_for_synchronization = linphone_core_get_friend_list_by_name(lc, contacts_vcard_list_uri);
+
+		if (!lc->base_contacts_list_for_synchronization) {
+			// The name (display_name) will be set when the synchronisation is done.
+			lc->base_contacts_list_for_synchronization = linphone_core_create_friend_list(lc);
+		}
 
 		linphone_friend_list_set_type(lc->base_contacts_list_for_synchronization, LinphoneFriendListTypeVCard4);
 		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);

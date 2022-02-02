@@ -162,6 +162,16 @@ FlexiAPIClient *FlexiAPIClient::accountDevice(string uuid) {
 	return this;
 }
 
+FlexiAPIClient *FlexiAPIClient::accountContacts() {
+	prepareRequest("accounts/me/contacts");
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountContact(string sip) {
+	prepareRequest(string("accounts/me/contacts/").append(urlEncode(sip)));
+	return this;
+}
+
 FlexiAPIClient *FlexiAPIClient::accountPhoneChangeRequest(string phone) {
 	JsonParams params;
 	params.push("phone", phone);

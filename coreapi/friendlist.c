@@ -950,15 +950,14 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 			if (body) {
 				const char *url = linphone_config_get_string(list->lc->config, "misc", "contacts-vcard-list", NULL);
 
+				char *buf;
 				/**
 				 * We directly remove from the SQLite database the friends, then the friends_lists
-				 * - Because the linphone_core_remove_friends_list_from_db doesn't remove the corresponding friends
 				 * - Because we doesn't have a foreign key between the two tables
 				 * - Because removing friends can only be done using linphone_friend_list_remove_friend and requires a loop
 				 * - Because the primary key is id (autoincrement) we can have several friends_lists that have the same display_name
 				 * - Because doing the following lines using the current C API would require to load the full friends_lists table in memory and do the where manually, then delete one by one each linked friends
 				 */
-				char *buf;
 
 				buf = sqlite3_mprintf("delete from friends where friend_list_id in (select id from friends_lists where display_name = %Q)", url);
 				linphone_sql_request_generic(list->lc->friends_db, buf);
@@ -969,7 +968,7 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 				sqlite3_free(buf);
 
 				/**
-				 * And then we clear and resync the complete database in memory
+				 * And then we clean, clear and resync the complete database in memory
 				 */
 				linphone_core_friends_storage_resync_friends_lists(list->lc);
 
@@ -984,7 +983,19 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 				linphone_friend_list_import_friends_from_vcard4_buffer(list, body);
 
 				linphone_core_add_friend_list(list->lc, list);
+
+				NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncSuccessful, NULL)
 			}
+		};
+
+		belle_request_listener.process_io_error = [](void *ctx, const belle_sip_io_error_event_t *event) {
+			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
+			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL)
+		};
+
+		belle_request_listener.process_timeout = [](void *ctx, const belle_sip_timeout_event_t *event) {
+			LinphoneFriendList *list = (LinphoneFriendList *)ctx;
+			NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list, LinphoneFriendListSyncFailure, NULL)
 		};
 
 		/**

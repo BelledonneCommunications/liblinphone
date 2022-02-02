@@ -1425,9 +1425,27 @@ void linphone_core_friends_storage_init(LinphoneCore *lc) {
 	linphone_core_friends_storage_resync_friends_lists(lc);
 }
 
+static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
+	char* errmsg = NULL;
+	int ret;
+	ret = sqlite3_exec(db, stmt, NULL, NULL, &errmsg);
+	if (ret != SQLITE_OK) {
+		ms_error("linphone_sql_request: statement %s -> error sqlite3_exec(): %s.", stmt, errmsg);
+		sqlite3_free(errmsg);
+	}
+	return ret;
+}
+
 int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
 	bctbx_list_t *friends_lists = NULL;
 	int synced_friends_lists = 0;
+
+	/**
+	 * First lets remove all the orphan friends from the DB
+	 */
+	char *buf = sqlite3_mprintf("delete from friends where friend_list_id not in (select id from friends_lists)");
+	linphone_sql_request_generic(lc->friends_db, buf);
+	sqlite3_free(buf);
 
 	friends_lists = linphone_core_fetch_friends_lists_from_db(lc);
 	if (friends_lists) {
@@ -1564,17 +1582,6 @@ static int linphone_sql_request_friends_list(sqlite3* db, const char *stmt, bctb
 	return ret;
 }
 
-static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
-	char* errmsg = NULL;
-	int ret;
-	ret = sqlite3_exec(db, stmt, NULL, NULL, &errmsg);
-	if (ret != SQLITE_OK) {
-		ms_error("linphone_sql_request: statement %s -> error sqlite3_exec(): %s.", stmt, errmsg);
-		sqlite3_free(errmsg);
-	}
-	return ret;
-}
-
 void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 	if (lc && lc->friends_db) {
 		char *buf;
@@ -1592,6 +1599,9 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 			return;
 		}
 
+		/**
+		 * The friends_list store logic is hidden into the friend store logic
+		 */
 		if (lf->friend_list->storage_id == 0) {
 			ms_warning("Trying to add a friend in db, but friend list isn't, let's do that first");
 			linphone_core_store_friends_list_in_db(lc, lf->friend_list);
@@ -1694,6 +1704,10 @@ void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendL
 			ms_error("Friends list doesn't have a storage_id !");
 			return;
 		}
+
+		buf = sqlite3_mprintf("DELETE FROM friends WHERE friend_list_id in (select id from friends_lists where id = %u)", list->storage_id);
+		linphone_sql_request_generic(lc->friends_db, buf);
+		sqlite3_free(buf);
 
 		buf = sqlite3_mprintf("DELETE FROM friends_lists WHERE id = %u", list->storage_id);
 		linphone_sql_request_generic(lc->friends_db, buf);

@@ -97,6 +97,8 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountPasswordChange(string algorithm, string password, string oldPassword);
 	FlexiAPIClient *accountDevices();
 	FlexiAPIClient *accountDevice(string uuid);
+	FlexiAPIClient *accountContacts();
+	FlexiAPIClient *accountContact(string sip);
 	FlexiAPIClient *accountEmailChangeRequest(string email);
 	FlexiAPIClient *accountPhoneChangeRequest(string phone);
 	FlexiAPIClient *accountPhoneChange(string code);
