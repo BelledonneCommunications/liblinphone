@@ -878,8 +878,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 					const std::shared_ptr<SalMediaDescription> remote_answer){
 	size_t i;
 
-	auto result = std::make_shared<SalMediaDescription>(local_offer->supportCapabilityNegotiation(), local_offer->tcapLinesMerged());
-	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
+	auto result = std::make_shared<SalMediaDescription>(local_offer->getParams());
+	const bool capabilityNegotiation = result->getParams().capabilityNegotiationSupported();
 
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
@@ -950,14 +950,14 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 					std::shared_ptr<SalMediaDescription> remote_offer,
 					bool one_matching_codec){
 
-	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation(), local_capabilities->tcapLinesMerged());
+	auto result = std::make_shared<SalMediaDescription>(local_capabilities->getParams());
 	size_t i = 0;
 
 	if (remote_offer->record != SalMediaRecordNone && local_capabilities->record != SalMediaRecordNone) {
 		result->record = local_capabilities->record;
 	}
 
-	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
+	const bool capabilityNegotiation = result->getParams().capabilityNegotiationSupported();
 	for(auto & rs : remote_offer->streams){
 
 		SalStreamDescription & ls = local_capabilities->streams[i];

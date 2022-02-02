@@ -8243,6 +8243,19 @@ void linphone_core_set_tag_100rel_support_level(LinphoneCore *lc, LinphoneSuppor
 	}
 }
 
+bool_t linphone_core_cfg_lines_merging_enabled(const LinphoneCore *lc) {
+	bool_t capability_negotiation_supported = linphone_core_capability_negociation_enabled(lc);
+	if (capability_negotiation_supported) {
+		return (bool_t)!!linphone_config_get_int(lc->config, "sip", "cfg_lines_merge", 1);
+	}
+
+	return FALSE;
+}
+
+void linphone_core_enable_cfg_lines_merging(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "cfg_lines_merge", (int)enable);
+}
+
 bool_t linphone_core_tcap_lines_merging_enabled(const LinphoneCore *lc) {
 	bool_t capability_negotiation_supported = linphone_core_capability_negociation_enabled(lc);
 	if (capability_negotiation_supported) {

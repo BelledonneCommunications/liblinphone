@@ -327,7 +327,7 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
 
-			// Update expected encryotion
+			// Update expected encryption
 			get_expected_encryption_from_call_params(calleeCall, callerCall, &expectedEncryption, &potentialConfigurationChosen);
 
 			const bool_t capabilityNegotiationReinviteEnabledAfterUpdate = linphone_core_sdp_200_ack_enabled(callee->lc) ? linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(callerCall)) : linphone_call_params_capability_negotiation_reinvite_enabled(linphone_call_get_params(calleeCall));
@@ -1126,6 +1126,94 @@ void call_with_video_and_capability_negotiation_base(const LinphoneMediaEncrypti
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_cfg_lines_merge_base(const bool_t caller_cfg_merge, const bool_t callee_cfg_merge) {
+	encryption_params caller_enc_mgr_params;
+	caller_enc_mgr_params.encryption = LinphoneMediaEncryptionZRTP;
+	caller_enc_mgr_params.level = E_OPTIONAL;
+	caller_enc_mgr_params.preferences = set_encryption_preference(TRUE);
+
+	encryption_params callee_enc_mgr_params;
+	callee_enc_mgr_params.encryption = LinphoneMediaEncryptionDTLS;
+	callee_enc_mgr_params.level = E_OPTIONAL;
+	callee_enc_mgr_params.preferences = set_encryption_preference(FALSE);
+
+	LinphoneCoreManager * caller = create_core_mgr_with_capability_negotiation_setup("marie_rc", caller_enc_mgr_params, TRUE, FALSE, TRUE);
+	LinphoneCoreManager * callee = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), callee_enc_mgr_params, TRUE, FALSE, TRUE);
+
+	// Caller call params:
+	// - RFC5939 is supported
+	// - Merge pcfg lines
+	// - Default encryption SRTP
+	// - No mandatory encryption
+	// - Supported optional encryptions: DTLS, ZRTP
+	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (caller_params, TRUE);
+	bctbx_list_t * caller_cfg_enc = NULL;
+	caller_cfg_enc = bctbx_list_append(caller_cfg_enc, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionSRTP));
+	caller_cfg_enc = bctbx_list_append(caller_cfg_enc, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionDTLS));
+	caller_cfg_enc = bctbx_list_append(caller_cfg_enc, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionZRTP));
+	linphone_call_params_set_supported_encryptions(caller_params,caller_cfg_enc);
+	bctbx_list_free(caller_cfg_enc);
+	linphone_call_params_set_media_encryption (caller_params, LinphoneMediaEncryptionNone);
+	linphone_call_params_enable_mandatory_media_encryption(caller_params,0);
+	linphone_call_params_enable_cfg_lines_merging(caller_params, caller_cfg_merge);
+
+	// Callee call params:
+	// - RFC5939 is supported
+	// - Merge pcfg lines
+	// - Default encryption SRTP
+	// - No mandatory encryption
+	// - Supported optional encryptions: SRTP, ZRTP, DTLS
+	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (callee_params, TRUE);
+	bctbx_list_t * callee_cfg_enc = NULL;
+	callee_cfg_enc = bctbx_list_append(callee_cfg_enc, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionZRTP));
+	callee_cfg_enc = bctbx_list_append(callee_cfg_enc, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionSRTP));
+	linphone_call_params_set_supported_encryptions(callee_params,callee_cfg_enc);
+	bctbx_list_free(callee_cfg_enc);
+	linphone_call_params_set_media_encryption (callee_params, LinphoneMediaEncryptionDTLS);
+	linphone_call_params_enable_mandatory_media_encryption(callee_params,0);
+	linphone_call_params_enable_cfg_lines_merging(callee_params, callee_cfg_merge);
+
+	const LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionSRTP;
+	encrypted_call_with_params_base(caller, callee, expectedEncryption, caller_params, callee_params, TRUE);
+
+	LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
+	BC_ASSERT_PTR_NOT_NULL(callee_call);
+	if (callee_call) {
+		BC_ASSERT_TRUE(linphone_call_params_cfg_lines_merged(linphone_call_get_params(callee_call)) == callee_cfg_merge);
+	}
+
+	LinphoneCall * caller_call = linphone_core_get_current_call(caller->lc);
+	BC_ASSERT_PTR_NOT_NULL(caller_call);
+	if (caller_call) {
+		BC_ASSERT_TRUE(linphone_call_params_cfg_lines_merged(linphone_call_get_params(caller_call)) == caller_cfg_merge);
+		end_call(caller, callee);
+	}
+
+	linphone_call_params_unref(caller_params);
+	linphone_call_params_unref(callee_params);
+
+	linphone_core_manager_destroy(caller);
+	linphone_core_manager_destroy(callee);
+}
+
+static void call_with_no_cfg_lines_merge(void) {
+	call_with_cfg_lines_merge_base(FALSE, FALSE);
+}
+
+static void call_with_cfg_lines_merge_on_caller(void) {
+	call_with_cfg_lines_merge_base(TRUE, FALSE);
+}
+
+static void call_with_cfg_lines_merge_on_callee(void) {
+	call_with_cfg_lines_merge_base(FALSE, TRUE);
+}
+
+static void call_with_cfg_lines_merge_on_both_sides(void) {
+	call_with_cfg_lines_merge_base(TRUE, TRUE);
+}
+
 static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const bool_t callee_tcap_merge) {
 	encryption_params caller_enc_mgr_params;
 	caller_enc_mgr_params.encryption = LinphoneMediaEncryptionZRTP;
@@ -1155,7 +1243,7 @@ static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const
 	bctbx_list_free(caller_cfg_enc);
 	linphone_call_params_set_media_encryption (caller_params, LinphoneMediaEncryptionSRTP);
 	linphone_call_params_enable_mandatory_media_encryption(caller_params,0);
-	linphone_call_params_enable_tcap_line_merging(caller_params, TRUE);
+	linphone_call_params_enable_tcap_line_merging(caller_params, caller_tcap_merge);
 
 	// Callee call params:
 	// - RFC5939 is supported
@@ -1173,11 +1261,21 @@ static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const
 	bctbx_list_free(callee_cfg_enc);
 	linphone_call_params_set_media_encryption (callee_params, LinphoneMediaEncryptionNone);
 	linphone_call_params_enable_mandatory_media_encryption(callee_params,0);
-	linphone_call_params_enable_tcap_line_merging(callee_params, TRUE);
+	linphone_call_params_enable_tcap_line_merging(callee_params, callee_tcap_merge);
 
 	const LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionDTLS;
 	encrypted_call_with_params_base(caller, callee, expectedEncryption, caller_params, callee_params, TRUE);
-	if (linphone_core_get_current_call(caller->lc)) {
+
+	LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
+	BC_ASSERT_PTR_NOT_NULL(callee_call);
+	if (callee_call) {
+		BC_ASSERT_TRUE(linphone_call_params_tcap_lines_merged(linphone_call_get_params(callee_call)) == callee_tcap_merge);
+	}
+
+	LinphoneCall * caller_call = linphone_core_get_current_call(caller->lc);
+	BC_ASSERT_PTR_NOT_NULL(caller_call);
+	if (caller_call) {
+		BC_ASSERT_TRUE(linphone_call_params_tcap_lines_merged(linphone_call_get_params(caller_call)) == caller_tcap_merge);
 		end_call(caller, callee);
 	}
 
@@ -2975,6 +3073,10 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with tcap line merge on caller", call_with_tcap_line_merge_on_caller),
 	TEST_NO_TAG("Call with tcap line merge on callee", call_with_tcap_line_merge_on_callee),
 	TEST_NO_TAG("Call with tcap line merge on both sides", call_with_tcap_line_merge_on_both_sides),
+	TEST_NO_TAG("Call with no cfg line merge", call_with_no_cfg_lines_merge),
+	TEST_NO_TAG("Call with cfg line merge on caller", call_with_cfg_lines_merge_on_caller),
+	TEST_NO_TAG("Call with cfg line merge on callee", call_with_cfg_lines_merge_on_callee),
+	TEST_NO_TAG("Call with cfg line merge on both sides", call_with_cfg_lines_merge_on_both_sides),
 	TEST_NO_TAG("Call with AVPF and capability negotiations on caller", call_with_avpf_and_cap_neg_on_caller),
 	TEST_NO_TAG("Call with AVPF and capability negotiations on callee", call_with_avpf_and_cap_neg_on_callee),
 	TEST_NO_TAG("Call with AVPF and capability negotiations on both sides", call_with_avpf_and_cap_neg_on_both_sides),

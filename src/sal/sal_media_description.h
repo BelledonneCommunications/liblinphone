@@ -30,6 +30,7 @@
 #include "ortp/rtpsession.h"
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_stream_description.h"
+#include "sal/params/sal_media_description_params.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -45,7 +46,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		// number of seconds: (70*365 + 17)*86400 = 2208988800
 		static constexpr long long ntpToUnix = 2208988800;
 
-		SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps);
+		SalMediaDescription(const SalMediaDescriptionParams & descParams);
 		SalMediaDescription(belle_sdp_session_description_t  *sdp);
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
@@ -98,8 +99,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasZrtp() const;
 		bool hasLimeIk() const;
 		bool hasIpv6() const;
-		bool supportCapabilityNegotiation() const;
-		bool tcapLinesMerged() const;
+		const SalMediaDescriptionParams & getParams() const;
 
 		SalMediaDescription &operator=(const SalMediaDescription & other);
 		bool operator==(const SalMediaDescription & other) const;
@@ -155,15 +155,14 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		SalMediaRecord record = SalMediaRecordNone;
 
-		bool mergeTcapLines = false;
-
 		std::list<std::pair<time_t, time_t>> times;
 	private:
 
 		SalStreamDescription::acap_map_t acaps;
 		SalStreamDescription::tcap_map_t tcaps;
 
-		mutable bool capabilityNegotiationSupported = false; /* Set to true if the stream allows capability negotiation */
+		mutable SalMediaDescriptionParams params;
+
 		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> & attributes) const;
 		std::vector<SalStreamDescription>::const_iterator findStreamItWithSdpAttribute(const SalStreamType type, const std::vector<std::pair<std::string, std::string>> & attributes) const;
 		std::vector<SalStreamDescription>::const_iterator findStreamIt(SalMediaProto proto, SalStreamType type) const;
@@ -177,8 +176,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool containsStreamWithDir(const SalStreamDir & stream_dir, const SalStreamType & type) const;
 
 		bool isNullAddress(const std::string & addr) const;
-
-		void addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const PotentialCfgGraph::media_description_config::value_type & cfg) const;
 
 };
 

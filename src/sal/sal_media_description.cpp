@@ -27,9 +27,8 @@
 LINPHONE_BEGIN_NAMESPACE
 
 // Called by makeLocalMediaDescription to create the local media decription
-SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps){
-	capabilityNegotiationSupported = capabilityNegotiation;
-	mergeTcapLines = mergeTcaps;
+SalMediaDescription::SalMediaDescription(const SalMediaDescriptionParams & descParams){
+	params = descParams;
 
 	streams.clear();
 	bundles.clear();
@@ -96,8 +95,7 @@ SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & 
 
 	set_nortpproxy = other.set_nortpproxy;
 
-	capabilityNegotiationSupported = other.capabilityNegotiationSupported;
-	mergeTcapLines = other.mergeTcapLines;
+	params = other.params;
 
 	haveLimeIk = other.haveLimeIk;
 
@@ -106,7 +104,7 @@ SalMediaDescription &SalMediaDescription::operator=(const SalMediaDescription & 
 	return *this;
 }
 
-SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false, false) {
+SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(SalMediaDescriptionParams()) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_session_name_t *sname;
 	belle_sip_list_t *custom_attribute_it;
@@ -117,7 +115,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	PotentialCfgGraph potentialCfgGraph(sdp);
 
 	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
-	capabilityNegotiationSupported = !potentialCfgGraph.empty();
+	params.enableCapabilityNegotiationSupport(!potentialCfgGraph.empty());
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
@@ -206,7 +204,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	// Initialize currentStreamIdx to the size of vector streams as streams build from SDP media descriptions are appended.
 	// Generally, at this point, vector streams should be empty
-	if (capabilityNegotiationSupported) {
+	if (params.capabilityNegotiationSupported()) {
 		for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
 		}
@@ -221,7 +219,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
 
 		SalStreamDescription stream;
-		if (capabilityNegotiationSupported) {
+		if (params.capabilityNegotiationSupported()) {
 			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
 			attrs.unparsed_cfgs =  potentialCfgGraph.getUnparsedCfgForStream(currentStreamIdx);
 			attrs.cfgs =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
@@ -250,6 +248,10 @@ bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {
 		else return true;
 	}
 	return false;
+}
+
+const SalMediaDescriptionParams & SalMediaDescription::getParams() const {
+	return params;
 }
 
 bool SalMediaDescription::containsStreamWithDir(const SalStreamDir & stream_dir, const SalStreamType & type) const{
@@ -686,14 +688,6 @@ bool SalMediaDescription::hasIpv6() const {
 	return true;
 }
 
-bool SalMediaDescription::supportCapabilityNegotiation() const {
-	return capabilityNegotiationSupported;
-}
-
-bool SalMediaDescription::tcapLinesMerged() const {
-	return mergeTcapLines;
-}
-
 bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
 	return (equal(other) == SAL_MEDIA_DESCRIPTION_UNCHANGED);
 }
@@ -921,7 +915,7 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		}
 	}
 
-	if (supportCapabilityNegotiation()) {
+	if (params.capabilityNegotiationSupported()) {
 		for (const auto & acap : acaps) {
 			const auto & idx = acap.first;
 			const auto & nameValuePair = acap.second;
@@ -943,7 +937,7 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		for (const auto & tcap : tcaps) {
 			const auto & idx = tcap.first;
 			const auto & value = tcap.second;
-			if (mergeTcapLines) {
+			if (params.tcapLinesMerged()) {
 				if (tcapValue.empty()) {
 					tcapValue = std::to_string(idx) + " " + value;
 					prevIdx = idx;
@@ -962,7 +956,7 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 			}
 		}
 
-		if (mergeTcapLines && !tcapValue.empty()) {
+		if (params.tcapLinesMerged() && !tcapValue.empty()) {
 			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 		}
 	}
@@ -1058,11 +1052,11 @@ void SalMediaDescription::createPotentialConfigurationsForStream(const unsigned 
 		if (!allStreamAcaps.empty() || !allStreamTcaps.empty()) {
 			if (allStreamTcaps.empty()) {
 				const SalStreamDescription::tcap_map_t proto;
-				stream.createPotentialConfiguration(proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
+				stream.createPotentialConfiguration(proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes, params.cfgLinesMerged());
 			} else {
 				for (const auto & protoPair : allStreamTcaps) {
 					const SalStreamDescription::tcap_map_t proto{{protoPair}};
-					stream.createPotentialConfiguration(proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
+					stream.createPotentialConfiguration(proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes, params.cfgLinesMerged());
 				}
 			}
 		} else {
@@ -1102,61 +1096,6 @@ unsigned int SalMediaDescription::getFreeAcapIdx() const {
 	}
 
 	return PotentialCfgGraph::getFreeIdx(acapIndexes);
-}
-
-void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const PotentialCfgGraph::media_description_config::value_type & cfg) const {
-	const auto & cfgIdx = cfg.first;
-	const auto & cfgAttr = cfg.second;
-
-	// Sets of optional configuration
-	const auto & cfgAcapSets = cfgAttr.acap;
-	std::string acapString;
-	// Iterate over all acaps sets. For every set, get the index of all its members
-	for (const auto & acapSet : cfgAcapSets) {
-		// Do not append | on first element
-		if (!acapString.empty()) {
-			acapString.append("|");
-		}
-		for (const auto & cfgAcap : acapSet) {
-			const auto & firstAcap = acapSet.front().cap.lock();
-			const auto & firstAcapIdx = firstAcap->index;
-			const auto & acap = cfgAcap.cap.lock();
-			const auto & acapIdx = acap->index;
-			if (acapIdx != firstAcapIdx) {
-				acapString.append(",");
-			}
-			if (acap) {
-				acapString.append(std::to_string(acapIdx));
-			}
-		}
-	}
-
-	std::string tcapString;
-	const auto & cfgTcaps = cfgAttr.tcap;
-	for (const auto & cfgTcap : cfgTcaps) {
-		// Do not append | on first element
-		if (!tcapString.empty()) {
-			tcapString.append("|");
-		}
-		const auto tcap = cfgTcap.cap.lock();
-		if (tcap) {
-			tcapString.append(std::to_string(tcap->index));
-		}
-	}
-
-	std::string deleteAttrs;
-	if (cfgAttr.delete_media_attributes && cfgAttr.delete_session_attributes) {
-		deleteAttrs = "-ms:";
-	} else if (cfgAttr.delete_session_attributes) {
-		deleteAttrs = "-s:";
-	} else if (cfgAttr.delete_media_attributes) {
-		deleteAttrs = "-m:";
-	}
-
-	char buffer[1024];
-	snprintf ( buffer, sizeof ( buffer )-1, "%d a=%s%s t=%s", cfgIdx, deleteAttrs.c_str(), acapString.c_str(), tcapString.c_str());
-	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),buffer));
-	capabilityNegotiationSupported = true;
 }
 
 LINPHONE_END_NAMESPACE

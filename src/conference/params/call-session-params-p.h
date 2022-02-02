@@ -48,6 +48,8 @@ public:
 	bool capabilityNegotiationReInviteEnabled () const;
 	void enableCapabilityNegotiation (const bool enable);
 	bool capabilityNegotiationEnabled () const;
+	void enableCfgLinesMerging (const bool enable);
+	bool cfgLinesMerged () const;
 	void enableTcapLineMerging (const bool enable);
 	bool tcapLinesMerged () const;
 	bool isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const;
@@ -80,6 +82,7 @@ public:
 private:
 	bool capabilityNegotiation = false;
 	bool capabilityNegotiationReInvite = true;
+	bool mergeCfgLines = false;
 	bool mergeTcapLines = false;
 	std::list<LinphoneMediaEncryption> supportedEncryptions;
 	// This parameter is used to disallow ZRTP if capability negotiation is not enabled.

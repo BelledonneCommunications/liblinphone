@@ -4655,6 +4655,22 @@ LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_supported(LinphoneCore 
 LINPHONE_PUBLIC void linphone_core_set_media_encryption_mandatory(LinphoneCore *core, bool_t mandatory);
 
 /**
+ * Check if cfg lines are going to the merged if the capability negotiation (RFC5939) is supported or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if acfg and pcfg lines with consecutive indexes are going to be merged; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_cfg_lines_merging_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether cfg lines are going to be merged if capability negotiation (RFC5939) is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param merge TRUE to merge acfg and pcfg lines with consecutive indexes; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_cfg_lines_merging(LinphoneCore *core, bool_t merge);
+
+/**
  * Check if tcap lines are going to the merged if the capability negotiation (RFC5939) is supported or not.
  * @param core #LinphoneCore object. @notnil
  * @return TRUE if tcap lines with consecutive indexes are going to be merged; FALSE otherwise.

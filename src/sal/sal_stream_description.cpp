@@ -173,7 +173,7 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	// Populate stream global parameters and actual configuration
 	fillStreamDescriptionFromSdp(salMediaDesc, sdp, media_desc);
 
-	if (salMediaDesc->supportCapabilityNegotiation()) {
+	if (salMediaDesc->getParams().capabilityNegotiationSupported()) {
 
 		for (const auto & acap : attrs.acaps) {
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
@@ -307,14 +307,15 @@ void SalStreamDescription::createPotentialConfigurationAtIdx(const unsigned int 
 			haveZrtpHash |= (zrtpHashIt != attrs.cend());
 		}
 		const LinphoneMediaEncryption enc = sal_media_proto_to_linphone_media_encryption(proto, haveZrtpHash);
-		auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
+		auto cfgList = addAcapsToConfiguration(baseCfg, enc, attrList, true);
+		auto cfg = cfgList.front();
 
 		cfg.index = idx;
 		insertOrMergeConfiguration(idx, cfg);
 	}
 }
 
-void SalStreamDescription::createPotentialConfiguration(const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes) {
+void SalStreamDescription::createPotentialConfiguration(const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes, bool mergeCfgLines) {
 
 	auto baseCfg = createBasePotentialCfg();
 
@@ -358,10 +359,12 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 							baseCfg.disableAvpfForStream();
 							break;
 					}
-					auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
-					cfg.index = idx;
-					cfgList.push_back(cfg);
-					idx++;
+					auto cfgListForEnc = addAcapsToConfiguration(baseCfg, enc, attrList, mergeCfgLines);
+					for (auto cfg : cfgListForEnc) {
+						cfg.index = idx;
+						cfgList.push_back(cfg);
+						idx++;
+					}
 				}
 			}
 		}
@@ -415,8 +418,9 @@ void SalStreamDescription::insertOrMergeConfiguration(const unsigned & idx, cons
 	}
 }
 
-SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalStreamConfiguration & baseCfg, const LinphoneMediaEncryption & enc, const std::list<SalStreamDescription::acap_map_t> & attrList) const {
+std::list<SalStreamConfiguration> SalStreamDescription::addAcapsToConfiguration(const SalStreamConfiguration & baseCfg, const LinphoneMediaEncryption & enc, const std::list<SalStreamDescription::acap_map_t> & attrList, bool mergeCfgLines) const {
 
+	std::list<SalStreamConfiguration> cfgList;
 	auto cfg = baseCfg;
 
 	for (const auto & attrs : attrList) {
@@ -435,6 +439,10 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 					const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(capValue);
 					if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
 						cfg.crypto.push_back(keyEnc);
+						if (!mergeCfgLines) {
+							cfgList.push_back(cfg);
+							cfg = baseCfg;
+						}
 					}
 				}
 			}
@@ -454,10 +462,26 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 				} else if (capName.compare("rtcp-mux") == 0) {
 					cfg.rtcp_mux=true;
 					cfgAcaps.push_back(capIndex);
+				} else if (capName.compare("ssrc") == 0) {
+					unsigned int rtpSsrc;
+					char rtcpName[256]={0};
+					const auto nb = sscanf ( capValue.c_str(), "%u cname:%s", &rtpSsrc, rtcpName);
+					if (nb == 2) {
+						cfgAcaps.push_back(capIndex);
+						cfg.rtp_ssrc = rtpSsrc;
+						cfg.rtcp_cname = rtcpName;
+					} else {
+						lError() << "Unable to retrieve rtp ssrc and rtcp cname from atribute " << capValue;
+					}
 				}
 
 			}
 			cfg.acapIndexes.push_back(cfgAcaps);
+			if (!mergeCfgLines && !cfg.dtls_fingerprint.empty() && (cfg.dtls_role != SalDtlsRoleInvalid) && (cfg.rtp_ssrc != 0)) {
+				cfgList.push_back(cfg);
+				cfg = baseCfg;
+			}
+
 		} else if (enc == LinphoneMediaEncryptionZRTP) {
 			for (const auto & attr : attrs) {
 				const auto & capNameValue = attr.second;
@@ -471,6 +495,9 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 					cfg.haveZrtpHash = true;
 					const auto & capValue = capNameValue.second;
 					strncpy((char *)cfg.zrtphash, capValue.c_str(), capValue.size());
+
+					cfgList.push_back(cfg);
+					cfg = baseCfg;
 				}
 			}
 		} else if (enc == LinphoneMediaEncryptionNone) {
@@ -483,10 +510,20 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 				cfgAcaps.push_back(capIndex);
 			}
 			cfg.acapIndexes.push_back(cfgAcaps);
+
+			if (!mergeCfgLines) {
+				cfgList.push_back(cfg);
+				cfg = baseCfg;
+			}
+
 		}
 	}
 
-	return cfg;
+	if (cfgList.empty()) {
+		cfgList.push_back(cfg);
+	}
+
+	return cfgList;
 }
 
 const SalStreamDescription::cfg_map SalStreamDescription::getAllCfgs() const {
@@ -1195,7 +1232,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		}
 	}
 
-	if (salMediaDesc->supportCapabilityNegotiation()) {
+	if (salMediaDesc->getParams().capabilityNegotiationSupported()) {
 		for (const auto & acap : acaps) {
 			const auto & idx = acap.first;
 			const auto & nameValuePair = acap.second;
@@ -1215,7 +1252,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		for (const auto & tcap : tcaps) {
 			const auto & idx = tcap.first;
 			const auto & value = tcap.second;
-			if (salMediaDesc->tcapLinesMerged()) {
+			if (salMediaDesc->getParams().tcapLinesMerged()) {
 				if (tcapValue.empty()) {
 					tcapValue = std::to_string(idx) + " " + value;
 					prevIdx = idx;
@@ -1234,7 +1271,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 			}
 		}
 
-		if (salMediaDesc->tcapLinesMerged() && !tcapValue.empty()) {
+		if (salMediaDesc->getParams().tcapLinesMerged() && !tcapValue.empty()) {
 			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 		}
 

@@ -101,6 +101,14 @@ void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *pa
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiation(!!enable);
 }
 
+bool_t linphone_call_params_cfg_lines_merged (const LinphoneCallParams *params) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(params)->cfgLinesMerged();
+}
+
+void linphone_call_params_enable_cfg_lines_merging (LinphoneCallParams *params, bool_t enable) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCfgLinesMerging(!!enable);
+}
+
 bool_t linphone_call_params_tcap_lines_merged (const LinphoneCallParams *params) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->tcapLinesMerged();
 }

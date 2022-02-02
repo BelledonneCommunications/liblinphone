@@ -85,14 +85,16 @@ static void simple_srtp_call_with_capability_negotiations_with_resume_and_media_
 	linphone_core_manager_destroy(pauline);
 }
 
-static void unencrypted_srtp_call_with_capability_negotiations(void) {
+static void unencrypted_srtp_call_with_capability_negotiations_base(bool_t cfg_lines_merge) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
 	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
+	linphone_core_enable_cfg_lines_merging(marie->lc, cfg_lines_merge);
 
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	// AES_CM_256_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP and AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP are not supported hence they should not be put in the offer or accepted as answer
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_256_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNAUTHENTICATED_SRTP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 ,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
+	linphone_core_enable_cfg_lines_merging(pauline->lc, cfg_lines_merge);
 
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
 
@@ -103,6 +105,14 @@ static void unencrypted_srtp_call_with_capability_negotiations(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void unencrypted_srtp_call_with_capability_negotiations_without_cfg_lines_merge(void) {
+	unencrypted_srtp_call_with_capability_negotiations_base(FALSE);
+}
+
+static void unencrypted_srtp_call_with_capability_negotiations_with_cfg_lines_merge(void) {
+	unencrypted_srtp_call_with_capability_negotiations_base(TRUE);
 }
 
 static void srtp_call_with_capability_negotiations_caller_unencrypted(void) {
@@ -554,7 +564,8 @@ test_t srtp_capability_negotiation_basic_tests[] = {
 	TEST_NO_TAG("Call with default SRTP encryption", call_with_srtp_default_encryption),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with reINVITE", simple_srtp_call_with_capability_negotiations_with_reinvite),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations without reINVITE", simple_srtp_call_with_capability_negotiations_without_reinvite),
-	TEST_NO_TAG("SRTP unencrypted call and capability negotiations", unencrypted_srtp_call_with_capability_negotiations),
+	TEST_NO_TAG("SRTP unencrypted call and capability negotiations without cfg line merge", unencrypted_srtp_call_with_capability_negotiations_without_cfg_lines_merge),
+	TEST_NO_TAG("SRTP unencrypted call and capability negotiations with cfg line merge", unencrypted_srtp_call_with_capability_negotiations_with_cfg_lines_merge),
 	TEST_NO_TAG("SRTP call and capability negotiations (caller unencrypted)", srtp_call_with_capability_negotiations_caller_unencrypted),
 	TEST_NO_TAG("SRTP call and capability negotiations (callee unencrypted)", srtp_call_with_capability_negotiations_callee_unencrypted),
 	TEST_NO_TAG("Unencrypted call with capability negotiations and unsupported crypto in SDP", unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),

@@ -200,7 +200,7 @@ private:
 	void addConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs);
 	void copyOldStreams(std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalMediaDescription> & oldMd, const std::shared_ptr<SalMediaDescription> & refMd, PayloadTypeHandler & pth, const std::list<LinphoneMediaEncryption> & encs);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
-	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration);
+	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration, bool addOnlyAcceptedKeys);
 	void setupRtcpFb (std::shared_ptr<SalMediaDescription> & md);
 	void setupRtcpXr (std::shared_ptr<SalMediaDescription> & md);
 	void setupZrtpHash (std::shared_ptr<SalMediaDescription> & md);

@@ -43,6 +43,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	capabilityNegotiation = src->capabilityNegotiation;
 	capabilityNegotiationReInvite = src->capabilityNegotiationReInvite;
 	mergeTcapLines = src->mergeTcapLines;
+	mergeCfgLines = src->mergeCfgLines;
 	supportedEncryptions = src->supportedEncryptions;
 	disallowZrtp = src->disallowZrtp;
 	startTime = src->startTime;
@@ -95,13 +96,24 @@ void CallSessionParamsPrivate::enableCapabilityNegotiationReInvite (const bool e
 	capabilityNegotiationReInvite = enable;
 }
 
-
 bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
 	return capabilityNegotiation;
 }
 
 void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
 	capabilityNegotiation = enable;
+}
+
+bool CallSessionParamsPrivate::cfgLinesMerged() const {
+	if (capabilityNegotiationEnabled()) {
+		return mergeCfgLines;
+	}
+
+	return false;
+}
+
+void CallSessionParamsPrivate::enableCfgLinesMerging (const bool enable) {
+	mergeCfgLines = enable;
 }
 
 bool CallSessionParamsPrivate::tcapLinesMerged() const {
@@ -200,6 +212,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	d->capabilityNegotiation = !!linphone_core_capability_negociation_enabled(cCore);
 	d->capabilityNegotiationReInvite = !!linphone_core_capability_negotiation_reinvite_enabled(cCore);
 	d->mergeTcapLines = !!linphone_core_tcap_lines_merging_enabled(cCore);
+	d->mergeCfgLines = !!linphone_core_cfg_lines_merging_enabled(cCore);
 	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
 	d->conferenceId = "";

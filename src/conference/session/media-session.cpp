@@ -32,6 +32,10 @@
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
 #include "core/core-p.h"
+#include "c-wrapper/c-wrapper.h"
+#include "sal/sal_stream_bundle.h"
+#include "sal/sal_media_description.h"
+#include "sal/params/sal_media_description_params.h"
 #include "sal/call-op.h"
 #include "sal/sal.h"
 #include "sal/sal_media_description.h"
@@ -297,9 +301,9 @@ void MediaSessionPrivate::accepted () {
 			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning) && localIsOfferer && capabilityNegotiationReInviteEnabled) {
+			if (localDesc->getParams().capabilityNegotiationSupported() && (nextState == CallSession::State::StreamsRunning) && localIsOfferer && capabilityNegotiationReInviteEnabled) {
 				// If no ICE session or checklist has completed, then send re-INVITE
-				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
+				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarios:
 				// - no ICE session is found in th stream group
 				// - an ICE sesson is found and its checklist has already completed
 				// - an ICE sesson is found and ICE reINVITE is not sent upon completition if the checklist (This case is the default one for DTLS SRTP negotiation as it was observed that webRTC gateway did not correctly support SIP ICE reINVITEs)
@@ -1748,9 +1752,11 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const auto & core = q->getCore()->getCCore();
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 
-	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
-	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
+	SalMediaDescriptionParams descParams(getParams());
+	descParams.enableCapabilityNegotiationSupport(supportsCapabilityNegotiationAttributes);
+	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(descParams);
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
+	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	const std::shared_ptr<SalMediaDescription> & refMd = (conference) ? 
 		((isInLocalConference) ? oldMd : op->getRemoteMediaDescription()) :
 		((localIsOfferer) ? oldMd : op->getRemoteMediaDescription())
@@ -2001,7 +2007,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 #endif // HAVE_ADVANCED_IM
 	copyOldStreams(md, oldMd, refMd, pth, encList);
 
-	setupEncryptionKeys(md, forceCryptoKeyGeneration);
+	setupEncryptionKeys(md, forceCryptoKeyGeneration, offerNegotiatedMediaProtocolOnly);
 	setupImEncryptionEngineParameters(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
@@ -2135,7 +2141,7 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters (std::shared_ptr<Sal
 	}
 }
 
-void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration) {
+void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration, bool addOnlyAcceptedKeys) {
 	L_Q();
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
@@ -2167,10 +2173,22 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 						// If old stream actual configuration supported SRTP, then copy crypto parameters
 						lInfo() << "Keeping same crypto keys when making new local stream description";
 						newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
-					} else if (oldMd->supportCapabilityNegotiation()) {
+					} else if (oldMd->getParams().capabilityNegotiationSupported()) {
+						const std::list<std::list<unsigned int>> acapIdx = oldStream.getChosenConfiguration().getAcapIndexes();
 						// Search crypto attributes in acaps if previous media description did support capability negotiations
 						// Copy acap crypto attributes if old stream supports it as potential configuration
 						for (const auto & cap : oldStream.acaps) {
+							const auto & idx = cap.first;
+							// If only negotiated keys should be added, then check acaps in the chosen configuration
+							if (addOnlyAcceptedKeys) {
+								bool found = false;
+								for (const auto & acapSet : acapIdx) {
+									 found |= (std::find(acapSet.cbegin(), acapSet.cend(), idx) != acapSet.end());
+								}
+								if (!found) {
+									continue;
+								}
+							}
 							const auto & nameValuePair = cap.second;
 							const auto & name = nameValuePair.first;
 							if (name.compare(attrName) == 0) {
@@ -2188,10 +2206,10 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 				}
 
 				// If capability negotiation is enabled, search keys among acaps
-				if (md->supportCapabilityNegotiation()) {
+				if (md->getParams().capabilityNegotiationSupported()) {
 					// If both old and new stream support SRTP as potential configuration
 					if (newStreamSupportsSrtp && !forceKeyGeneration) {
-						if (oldStreamSupportsSrtp && oldMd->supportCapabilityNegotiation()) {
+						if (oldStreamSupportsSrtp && oldMd->getParams().capabilityNegotiationSupported()) {
 							// Copy acap crypto attributes if old stream supports it as potential configuration
 							for (const auto & cap : oldStream.acaps) {
 								const auto & nameValuePair = cap.second;
