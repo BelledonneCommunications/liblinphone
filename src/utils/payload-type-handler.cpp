@@ -179,7 +179,7 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::createTelephoneEventPayloadTypes
 		// Let it choose the number dynamically as for normal codecs.
 		payload_type_set_number(tev, -1);
 		// But for first telephone-event, prefer the number that was configured in the core.
-		if (!result.empty() && isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
+		if (result.empty() && isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
 			payload_type_set_number(tev, getCore()->getCCore()->codecs_conf.telephone_event_pt);
 		result.push_back(tev);
 	}
