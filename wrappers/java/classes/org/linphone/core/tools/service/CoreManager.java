@@ -28,9 +28,12 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.Display;
+import android.view.Surface;
 
 import org.linphone.core.AudioDevice;
 import org.linphone.core.Call;
@@ -81,6 +84,10 @@ public class CoreManager {
     private BluetoothHelper mBluetoothHelper;
     private ShutdownReceiver mShutdownReceiver;
 
+    private Handler mHandler;
+    private DisplayManager mDisplayManager;
+    private DisplayManager.DisplayListener mDisplayListener;
+
     // These methods will make sure the real core.<method> will be called on the same thread as the core.iterate()
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
     private native void stopCore(long ptr);
@@ -123,6 +130,28 @@ public class CoreManager {
         }
         mBluetoothHelper = new BluetoothHelper(mContext);
 
+        mDisplayListener = new DisplayManager.DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {
+                Log.d("[Core Manager] Display added: ", displayId);
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {
+                Log.d("[Core Manager] Display changed: ", displayId);
+                updateOrientation(displayId);
+            }
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                Log.d("[Core Manager] Display removed: ", displayId);
+            }
+        };
+        mDisplayManager = (DisplayManager) mContext.getSystemService(Context.DISPLAY_SERVICE);
+        mHandler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(mDisplayListener, mHandler);
+        updateOrientation(Display.DEFAULT_DISPLAY);
+
         IntentFilter shutdownIntentFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
         // Without that the broadcast timeout might be reached before we were called
         shutdownIntentFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
@@ -158,6 +187,12 @@ public class CoreManager {
         if (mAudioHelper != null) {
             mAudioHelper.destroy(mContext);
             mAudioHelper = null;
+        }
+
+        if (mDisplayManager != null && mDisplayListener != null) {
+            mDisplayManager.unregisterDisplayListener(mDisplayListener);
+            mDisplayListener = null;
+            mDisplayManager = null;
         }
 
         mServiceClass = null;
@@ -357,8 +392,7 @@ public class CoreManager {
         GlobalState globalState = mCore.getGlobalState();
         if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
             Log.i("[Core Manager] Bluetooth headset state changed, waiting for 500ms before reloading sound devices");
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(new Runnable() {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     Log.i("[Core Manager] Reloading sound devices");
@@ -376,8 +410,7 @@ public class CoreManager {
         GlobalState globalState = mCore.getGlobalState();
         if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
             Log.i("[Core Manager] Headset state changed, waiting for 500ms before reloading sound devices");
-            final Handler handler = new Handler(Looper.getMainLooper());
-            handler.postDelayed(new Runnable() {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     Log.i("[Core Manager] Reloading sound devices");
@@ -506,5 +539,22 @@ public class CoreManager {
         Log.i("PACKAGE=", org.linphone.core.BuildConfig.LIBRARY_PACKAGE_NAME);
         Log.i("BUILD TYPE=", org.linphone.core.BuildConfig.BUILD_TYPE);
         Log.i("=========================================");
+    }
+
+    private void updateOrientation(int displayId) {
+        int degrees = 270;
+        int orientation = mDisplayManager.getDisplay(displayId).getRotation();
+        if (orientation == Surface.ROTATION_0) {
+            degrees = 0;
+        } else if (orientation == Surface.ROTATION_90) {
+            degrees = 270;
+        } else if (orientation == Surface.ROTATION_180) {
+            degrees = 180;
+        } else if (orientation == Surface.ROTATION_270) {
+            degrees = 90;
+        }
+        Log.i("[Core Manager] Device orientation is ", degrees, " (raw value is ", orientation, ")");
+        int rotation = (360 - degrees) % 360;
+        mCore.setDeviceRotation(rotation);
     }
 }

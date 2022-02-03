@@ -77,6 +77,8 @@ public:
 	void onRecordingPaused () const override;
 	void stopRinging () const override;
 
+	void setDeviceRotation (int orientation) const override;
+
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
 	string getDownloadPath() override;
@@ -112,6 +114,7 @@ private:
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jmethodID mIsActiveNetworkWifiOnlyCompliantId = nullptr;
 	jmethodID mUpdateNetworkReachabilityId = nullptr;
+	jmethodID mRotateVideoPreviewId = nullptr;
 
 	// CoreManager methods
 	jmethodID mCoreManagerDestroyId = nullptr;
@@ -227,6 +230,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 	mIsActiveNetworkWifiOnlyCompliantId = getMethodId(env, klass, "isActiveNetworkWifiOnlyCompliant", "()Z");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
+	mRotateVideoPreviewId = getMethodId(env, klass, "rotateVideoPreview", "()V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -514,6 +518,13 @@ void AndroidPlatformHelpers::stopRinging () const {
 				env->CallVoidMethod(mJavaCoreManager, mStopRingingId);
 			}
 		}
+	}
+}
+
+void AndroidPlatformHelpers::setDeviceRotation (int orientation) const {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mRotateVideoPreviewId);
 	}
 }
 

@@ -109,6 +109,8 @@ public:
 	void onRecordingPaused () const override;
 	void stopRinging () const override;
 
+	void setDeviceRotation (int orientation) const override;
+
 private:
 	string toUTF8String(CFStringRef str);
 	void kickOffConnectivity();
@@ -234,6 +236,10 @@ void IosPlatformHelpers::onRecordingPaused() const {
 
 void IosPlatformHelpers::stopRinging () const {
 	
+}
+
+void IosPlatformHelpers::setDeviceRotation (int orientation) const {
+
 }
 
 //Safely get an UTF-8 string from the given CFStringRef

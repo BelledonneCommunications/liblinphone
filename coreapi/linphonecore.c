@@ -6584,6 +6584,7 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 		}
 	}
 #endif
+	if (lc->platform_helper) getPlatformHelpers(lc)->setDeviceRotation(rotation);
 }
 
 int linphone_core_get_camera_sensor_rotation(LinphoneCore *lc) {
