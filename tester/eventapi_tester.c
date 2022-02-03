@@ -104,6 +104,10 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,1,1000));
+	
+	/* make sure transport used for the subscribe is the same as the one used for REGISTER*/
+	belle_sip_header_via_t *via = BELLE_SIP_HEADER_VIA(belle_sip_header_create("Via",linphone_event_get_custom_header(lev, "Via")));
+	BC_ASSERT_STRING_EQUAL(belle_sip_header_via_get_transport_lowercase(via), linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)));
 
 	/*make sure marie receives first notification before terminating*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
@@ -138,7 +142,21 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 }
 
 static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTestType refresh_type) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	//Purpose of this settigs is to make sure subscribe is sent using the same connection as the register only based on the domain name of both marie identity and pauline identity regardless of the sip proxy address
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneAccount *account = linphone_core_get_default_account(marie->lc);
+	const LinphoneAccountParams *params = linphone_account_get_params(account);
+	LinphoneAddress *addr = linphone_address_clone(linphone_account_params_get_server_address(params));
+	linphone_address_set_domain(addr, "sipv4.example.org");
+	LinphoneAccountParams *new_params = linphone_account_params_clone(linphone_account_get_params(account));
+	linphone_account_params_set_server_address(new_params,addr);
+	//remove route to force fonction linphone_configure_op_with_account to make a choice
+	linphone_account_params_set_routes_addresses(new_params,NULL);
+	linphone_account_set_params(account,new_params);
+	linphone_account_params_unref(new_params);
+	linphone_address_unref(addr);
+	linphone_core_manager_start(marie, TRUE);
+
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneContent* content;
 	LinphoneEvent *lev;
@@ -151,6 +169,7 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 		linphone_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_subscribe",0);
 	}
 
+	
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml");
@@ -160,9 +179,14 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 	linphone_event_add_custom_header(lev,"My-Header","pouet");
 	linphone_event_add_custom_header(lev,"My-Header2","pimpon");
 	linphone_event_send_subscribe(lev,content);
-
+	
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));
+
+	/* make sure transport used for the subscribe is the same as the one used for REGISTER*/
+	BC_ASSERT_STRING_NOT_EQUAL(linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)), "udp");
+	belle_sip_header_via_t *via = BELLE_SIP_HEADER_VIA(belle_sip_header_create("Via",linphone_event_get_custom_header(lev, "Via")));
+	BC_ASSERT_STRING_EQUAL(belle_sip_header_via_get_transport_lowercase(via), linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)));
 
 	if (pauline->stat.number_of_LinphoneSubscriptionIncomingReceived == 1) {
 		/*check good receipt of custom headers*/

@@ -816,7 +816,7 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 	linphone_chat_message_send(msg);
 
 	if (expect_auth_failure_up) {
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageFileTransferError,1));
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 0, int, "%d");
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferError, 1, int, "%d");
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferDone, 0, int, "%d");
@@ -921,7 +921,7 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.progress_of_LinphoneFileTransfer, 50));
 					/* and simulate network error */
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
-					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
+					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageFileTransferError,1, 10000));
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));

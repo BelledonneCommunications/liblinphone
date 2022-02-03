@@ -4238,13 +4238,13 @@ static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const Lin
 	if (srv_route){
 		ret = bctbx_list_append(ret, sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(srv_route)->getInternalAddress()));
 	}
-	if (ret == NULL) {
-		/*if the account address matches the domain part of the destination, then use the same transport
+	if (ret == NULL && linphone_account_params_get_server_addr(linphone_account_get_params(account))) {
+		/*if the account identity address matches the domain part of the destination, then use the same transport
 		 * as the one used for registration. This is done by forcing a route to this account.*/
 		SalAddress *account_addr = sal_address_new(linphone_account_params_get_server_addr(linphone_account_get_params(account)));
-		const char *account_addr_domain = sal_address_get_domain(account_addr);
+		const char *account_identity_domain = linphone_address_get_domain(linphone_account_params_get_identity_address(linphone_account_get_params(account)));
 		const char *linphone_addr_domain = linphone_address_get_domain(dest);
-		if (account_addr_domain && linphone_addr_domain && strcmp(account_addr_domain, linphone_addr_domain) == 0) {
+		if (account_identity_domain && linphone_addr_domain && strcmp(account_identity_domain, linphone_addr_domain) == 0) {
 			ret = bctbx_list_append(ret,account_addr);
 		} else sal_address_unref(account_addr);
 	}

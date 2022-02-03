@@ -2893,7 +2893,6 @@ bool_t liblinphone_tester_chat_message_msg_update_stats(stats * counters, Linpho
 			counters->number_of_LinphoneMessageInProgress++;
 			break;
 		case LinphoneChatMessageStateFileTransferError:
-			counters->number_of_LinphoneMessageNotDelivered++;
 			counters->number_of_LinphoneMessageFileTransferError++;
 			break;
 		case LinphoneChatMessageStateFileTransferDone:
