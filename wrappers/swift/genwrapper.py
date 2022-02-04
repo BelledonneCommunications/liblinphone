@@ -374,7 +374,12 @@ class SwiftTranslator:
         methodDict['has_property'] = True
         methodDict['has_getter'] = True
         methodDict['has_setter'] = False
-        methodDict['isDeprecated'] = prop.deprecated
+        methodDict['getter_deprecated'] = prop.deprecated
+        try:
+            methodDict['getter_doc'] = prop.briefDescription.translate(self.docTranslator, tagAsBrief=True) if prop.briefDescription is not None else None
+            methodDict['getter_detailedDoc'] = prop.detailedDescription.translate(self.docTranslator) if prop.detailedDescription is not None else None
+        except metadoc.TranslationError as e:
+            logging.error(e.msg())
         methodDict['isAllocated'] = prop.returnAllocatedObject
         namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
         methodDict['return'] = prop.returnType.translate(self.langTranslator, namespace=namespace)
@@ -414,10 +419,15 @@ class SwiftTranslator:
 
         methodDict['property_name'] = name
         methodDict['func_name'] = "set" + name.capitalize()
-        methodDict['isDeprecated'] = prop.deprecated
+        methodDict['setter_deprecated'] = prop.deprecated
 
         methodDict['has_getter'] = False
         methodDict['has_setter'] = True
+        try:
+            methodDict['setter_doc'] = prop.briefDescription.translate(self.docTranslator, tagAsBrief=True) if prop.briefDescription is not None else None
+            methodDict['setter_detailedDoc'] = prop.detailedDescription.translate(self.docTranslator) if prop.detailedDescription is not None else None
+        except metadoc.TranslationError as e:
+            logging.error(e.msg())
         namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
         methodDict['return'] = prop.args[0].type.translate(self.langTranslator, namespace=namespace)
         methodDict['returnCType'] = prop.args[0].type.name
@@ -465,6 +475,10 @@ class SwiftTranslator:
         methodDict['int_method'] = methodDictSet['int_method']
         methodDict['func_name'] = methodDictSet['func_name']
         methodDict['returnCType'] = methodDictSet['returnCType']
+        methodDict['setter_deprecated'] = methodDictSet['setter_deprecated']
+        methodDict['setter_doc'] = methodDictSet['setter_doc']
+        methodDict['setter_detailedDoc'] = methodDictSet['setter_detailedDoc']
+
 
         return methodDict
 

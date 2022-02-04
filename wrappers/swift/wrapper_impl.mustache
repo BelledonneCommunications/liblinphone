@@ -24,12 +24,11 @@ import SwiftUI
 #endif
 
 {{#enums}}
+
 {{#enum}}
 {{#doc}}
 {{#lines}}
-///{{{line}}}
-{{/lines}}
-{{/doc}}
+///{{{line}}}{{/lines}}{{/doc}}
 {{#isFlag}}
 public struct {{enumName}}:OptionSet
 {
@@ -40,11 +39,8 @@ public struct {{enumName}}:OptionSet
 	}
 
 	{{#values}}
-	{{#doc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/doc}}
+	{{#doc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/doc}}
 	public static let {{name}} = {{enumName}}({{#isNone}}[]{{/isNone}}{{^isNone}}rawValue: {{{value}}}{{/isNone}})
 	{{/values}}
 }
@@ -53,11 +49,8 @@ public struct {{enumName}}:OptionSet
 public enum {{enumName}}:Int
 {
 	{{#values}}
-	{{#doc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/doc}}
+	{{#doc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/doc}}
 	case {{name}} = {{{value}}}
 	{{/values}}
 }
@@ -74,12 +67,9 @@ func charArrayToString(charPointer: UnsafePointer<CChar>?) -> String {
 public class LinphoneObject {
 	var cPtr:OpaquePointer?
 
-	/*!
-     Initializes a new LinphoneObject with the provided cPointer.
-
+	/* Initializes a new LinphoneObject with the provided cPointer.
      - Parameters:
-        - cPointer: The OpaquePointer of c lib
-
+     - cPointer: The OpaquePointer of c lib
      - Returns: new LinphoneObject
   */
 	init(cPointer:OpaquePointer) {
@@ -155,32 +145,17 @@ enum LinphoneError: Error {
 {{#interface}}
 
 public protocol {{interfaceName}} : AnyObject {
-	{{#methods}}
-	{{#delegate}}
-	{{#doc}}
-	{{#lines}}
-	///	{{{line}}}
-	{{/lines}}
-	{{/doc}}
-	{{#detailedDoc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/detailedDoc}}
-	{{#isDeprecated}}
-	@available(*, deprecated)
-	{{/isDeprecated}}
-	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}?{{/return_class}}
-	{{/delegate}}
-	{{/methods}}
+	{{#methods}}{{#delegate}}
+	{{#doc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/doc}}{{#detailedDoc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/detailedDoc}}{{#isDeprecated}}
+	@available(*, deprecated){{/isDeprecated}}
+	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}?{{/return_class}}{{/delegate}}{{/methods}}
 }
 
 public extension {{interfaceName}} {
 	{{#methods}}
-	{{#delegate}}
-	{{#isDeprecated}}
-	@available(*, deprecated)
-	{{/isDeprecated}}
+	{{#delegate}}{{#isDeprecated}}@available(*, deprecated){{/isDeprecated}}
 	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
 	{{/delegate}}
 	{{/methods}}
@@ -195,10 +170,7 @@ public final class {{interfaceName}}Stub : {{interfaceName}}
 	{{/methods}}
 
 	{{#methods}}
-	{{#delegate}}
-	{{#isDeprecated}}
-	@available(*, deprecated)
-	{{/isDeprecated}}
+	{{#delegate}}{{#isDeprecated}}@available(*, deprecated){{/isDeprecated}}
 	public func {{cb_name}}({{{params_public}}}){_{{cb_name}}.map{$0({{{params_private}}})}}
 	{{/delegate}}
 	{{/methods}}
@@ -265,16 +237,8 @@ class {{interfaceName}}Manager
 {{#classes}}
 {{#_class}}
 
-{{#doc}}
-{{#lines}}
-/// {{{line}}}
-{{/lines}}
-{{/doc}}
-{{#detailedDoc}}
-{{#lines}}
-/// {{{line}}}
-{{/lines}}
-{{/detailedDoc}}
+{{#doc}}{{#lines}}/// {{{line}}}{{/lines}}{{/doc}}{{#detailedDoc}}{{#lines}}
+/// {{{line}}}{{/lines}}{{/detailedDoc}}
 public class {{className}} : LinphoneObject
 {
 	{{#hasListener}}
@@ -286,10 +250,8 @@ public class {{className}} : LinphoneObject
 		if (result != nil) {
 			return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
 		}
-
 		let sObject = {{className}}(cPointer: cObject)
 		belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
-
 		return sObject
 	}
 
@@ -343,11 +305,8 @@ public class {{className}} : LinphoneObject
 	{{/isLinphoneCore}}
 	{{#classEnums}}
 
-	{{#doc}}
-	{{#lines}}
-	///{{{line}}}
-	{{/lines}}
-	{{/doc}}
+	{{#doc}}{{#lines}}
+	///{{{line}}}{{/lines}}{{/doc}}
 	{{#isFlag}}
 	public struct {{enumName}}:OptionSet
 	{
@@ -357,65 +316,41 @@ public class {{className}} : LinphoneObject
 			self.rawValue = rawValue
 		}
 
-		{{#values}}
-		{{#doc}}
-		{{#lines}}
-		/// {{{line}}}
-		{{/lines}}
-		{{/doc}}
-		public static let {{name}} = {{enumName}}({{#isNone}}[]{{/isNone}}{{^isNone}}rawValue: {{{value}}}{{/isNone}})
-		{{/values}}
+		{{#values}}{{#doc}}{{#lines}}
+		/// {{{line}}}{{/lines}}{{/doc}}
+		public static let {{name}} = {{enumName}}({{#isNone}}[]{{/isNone}}{{^isNone}}rawValue: {{{value}}}{{/isNone}}){{/values}}
 	}
 	{{/isFlag}}
 	{{^isFlag}}
 	public enum {{enumName}}:Int
 	{
-		{{#values}}
-		{{#doc}}
-		{{#lines}}
-		/// {{{line}}}
-		{{/lines}}
-		{{/doc}}
-		case {{name}} = {{{value}}}
-		{{/values}}
+		{{#values}}{{#doc}}{{#lines}}
+		/// {{{line}}}{{/lines}}{{/doc}}
+		case {{name}} = {{{value}}}{{/values}}
 	}
 	{{/isFlag}}
 	{{/classEnums}}
 	{{#properties}}
-
-	{{#doc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/doc}}
-	{{#detailedDoc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/detailedDoc}}
-	{{#isDeprecated}}
-	@available(*, deprecated)
-	{{/isDeprecated}}
-	{{#has_property}}
+	{{#has_setter}}{{#setter_doc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/setter_doc}}{{#setter_detailedDoc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/setter_detailedDoc}}{{/has_setter}}
+	{{#has_getter}}{{#getter_doc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/getter_doc}}{{#getter_detailedDoc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/getter_detailedDoc}}{{/has_getter}}{{#exception}}{{#has_getter}}{{#getter_deprecated}}
+	@available(*, deprecated){{/getter_deprecated}}{{/has_getter}}{{/exception}}{{^exception}}{{#has_getter}}{{^has_setter}}{{#getter_deprecated}}
+	@available(*, deprecated){{/getter_deprecated}}{{/has_setter}}{{/has_getter}}{{/exception}}{{#has_property}}
 	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
-	{{#has_getter}}
-	{{#has_setter}}
-	{{^exception}}
+	{{#has_getter}}{{#has_setter}}{{^exception}}{{#getter_deprecated}}@available(*, deprecated){{/getter_deprecated}}
 		get
-		{
-	{{/exception}}
-	{{/has_setter}}
-			{{#is_callbacks}}
+		{ {{/exception}}{{/has_setter}}{{#is_callbacks}}
 			let cObject = {{getter_c_name}}(cPtr)
 			let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
 			if (result != nil) {
 				return Unmanaged<{{{return}}}Manager>.fromOpaque(result!).takeUnretainedValue().delegate
 				}
-			return nil
-			{{/is_callbacks}}
-			{{^is_callbacks}}
-			{{#is_string}}
+			return nil{{/is_callbacks}}
+			{{^is_callbacks}}{{#is_string}}
 			let cPointer = {{getter_c_name}}({{cPtr}})
 			{{#maybenil}}
 			if (cPointer == nil) {
@@ -485,12 +420,8 @@ public class {{className}} : LinphoneObject
 			{{/is_callbacks}}
 	{{#has_setter}}
 	{{^exception}}
-		}
-	{{/exception}}
-  {{/has_setter}}
-	{{/has_getter}}
-	{{#has_setter}}
-	{{^exception}}
+		}{{/exception}}{{/has_setter}}{{/has_getter}}{{#has_setter}}{{^exception}}{{#setter_deprecated}}
+	@available(*, deprecated){{/setter_deprecated}}
 	{{#has_getter}}
 		set
 	{{/has_getter}}
@@ -531,14 +462,9 @@ public class {{className}} : LinphoneObject
 			}
 			{{setter_c_name}}(cPtr, cList)
 			{{/is_class_list}}
-		}
-	{{/exception}}
-	{{/has_setter}}
-	}
-	{{/has_property}}
-	{{#has_setter}}
-	{{#exception}}
-
+		}{{/exception}}{{/has_setter}}
+	}{{/has_property}}{{#has_setter}}{{#exception}}{{#setter_deprecated}}
+	@available(*, deprecated){{/setter_deprecated}}
 	public func {{func_name}}(newValue: {{{return}}}) throws
 	{
 		{{#is_string}}
@@ -579,10 +505,9 @@ public class {{className}} : LinphoneObject
 		guard exception_result == 0 else {
 			throw LinphoneError.exception(result: "username setter returned value \(exception_result)")
 		}
-	}
-	{{/exception}}
-	{{/has_setter}}
-	{{#listener}}
+	}{{/exception}}{{/has_setter}}
+	{{#listener}}{{#isDeprecated}}
+	@available(*, deprecated){{/isDeprecated}}
 	public func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
 	{
 		{{#addListener}}
@@ -600,9 +525,10 @@ public class {{className}} : LinphoneObject
 			belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
 		}
 		{{/removeListener}}
-	}
-	{{/listener}}
-	{{#impl}}
+	}{{/listener}}{{#impl}}{{#doc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/doc}}{{#detailedDoc}}{{#lines}}
+	/// {{{line}}}{{/lines}}{{/detailedDoc}}{{#isDeprecated}}
+	@available(*, deprecated){{/isDeprecated}}
 	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
 		{{#is_string}}
