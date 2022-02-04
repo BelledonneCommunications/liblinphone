@@ -129,10 +129,10 @@ class SwiftTranslator:
                     methodDict['impl']['c_args'] += argName + "?.cPtr" if arg.maybenil else argName + ".cPtr"
                 elif isinstance(arg.type, AbsApi.EnumType):
                     argType = arg.type.translate(self.langTranslator, namespace=namespace)
-                    if methodDict['impl']['type'] == "Int":
-                        methodDict['impl']['c_args'] += arg.type.name + "(rawValue: CInt(" + argName + ".rawValue))"
-                    else:
+                    if arg.type.desc.isUnsigned:
                         methodDict['impl']['c_args'] += arg.type.name + "(rawValue: CUnsignedInt(" + argName + ".rawValue))"
+                    else:
+                        methodDict['impl']['c_args'] += arg.type.name + "(rawValue: CInt(" + argName + ".rawValue))"
                 elif arg.type.name == "size" or arg.type.name == "time":
                     methodDict['impl']['c_args'] += argName
                 elif argType == "Int":
