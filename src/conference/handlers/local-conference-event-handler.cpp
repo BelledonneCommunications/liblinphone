@@ -437,7 +437,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address 
 
 	user.setRoles(roles);
 	user.setEntity(pAddress.asStringUriOnly());
-	user.getRoles()->getEntry().push_back("participant");
+	user.getRoles()->getEntry().push_back((participant && participant->isAdmin()) ? "admin" : "participant");
 	user.setState(StateType::full);
 
 	confInfo.getUsers()->getUser().push_back(user);
@@ -980,6 +980,10 @@ void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<Confer
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}
+}
+
+void LocalConferenceEventHandler::onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &device, bool isSpeaking) {
+	
 }
 
 void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {

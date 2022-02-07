@@ -79,7 +79,7 @@ public:
 	std::shared_ptr<Participant> getParticipant () const;
 	void setSession (std::shared_ptr<CallSession> session);
 	inline State getState () const { return mState; }
-	inline void setState (State newState) { mState = newState; }
+	void setState (State newState);
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
 
 	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
@@ -112,7 +112,7 @@ public:
 	void enableAdminModeSupport(bool support);
 
 	void * createWindowId() const;
-	void setWindowId(void * newWindowId);
+	void setWindowId(void * newWindowId) const;
 	void * getWindowId() const;
 
 	bool setStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type);
@@ -137,7 +137,7 @@ private:
 	time_t mTimeOfJoining;
 	uint32_t mSsrc = 0;
 	bool mSupportAdminMode = false;
-	void * mWindowId = NULL;
+	mutable void * mWindowId = NULL;
 
 	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
 	std::map<LinphoneStreamType, bool> streamAvailabilities;

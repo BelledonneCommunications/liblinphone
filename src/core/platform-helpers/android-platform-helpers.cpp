@@ -56,7 +56,7 @@ public:
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
-	void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) override;
+	void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) override;
 	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
@@ -80,7 +80,7 @@ public:
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
-	void _setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, jobject windowId);
+	void _setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, jobject windowId);
 	string getDownloadPath() override;
 
 private:
@@ -352,7 +352,7 @@ void AndroidPlatformHelpers::setVideoWindow (void *windowId) {
 	}
 }
 
-void AndroidPlatformHelpers::setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) {
+void AndroidPlatformHelpers::setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) {
 	JNIEnv *env = ms_get_jni_env();
 	if (env && mJavaHelper) {
 		string displayFilter = L_C_TO_STRING(linphone_core_get_video_display_filter(getCore()->getCCore()));
@@ -554,7 +554,7 @@ void AndroidPlatformHelpers::_setVideoWindow(jobject window) {
 	_linphone_core_set_native_video_window_id(lc, (void *)mVideoWindow);
 }
 
-void AndroidPlatformHelpers::_setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, jobject window) {
+void AndroidPlatformHelpers::_setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, jobject window) {
 	JNIEnv *env = ms_get_jni_env();
 
 	long key = (long) participantDevice;

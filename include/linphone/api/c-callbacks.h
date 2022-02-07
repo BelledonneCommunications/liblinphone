@@ -505,6 +505,14 @@ typedef void (*LinphoneConferenceCbsAvailableMediaChangedCb) (LinphoneConference
 typedef void (*LinphoneConferenceCbsSubjectChangedCb) (LinphoneConference *conference, const char *subject);
 
 /**
+ * Callback used to notify that a participant device is speaking or isn't speaking anymore.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device the participant device @notnil
+ * @param[in] is_speaking TRUE if is speaking, FALSE otherwise @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_speaking);
+
+/**
  * Callback used to notify that the audio device of a conference has changed.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] audio_device audio device of the conference @notnil

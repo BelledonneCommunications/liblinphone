@@ -71,6 +71,13 @@ public:
 	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
 
 	/*
+	 * This function is called each time a participant device starts or stops speaking.
+	 * @param[in] device the participant device.
+	 * @param[in] isSpeaking true if participant device is currently speaking, false otherwise.
+	 */
+	virtual void onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &device, bool isSpeaking) override;
+
+	/*
 	* This fonction is called each time a new participant device is added by the focus after full state notification.
 	* @param[in] event informations related to the added participant's device. @notnil
 	* @param[in] device participant device added to the conference or chat room. @notnil

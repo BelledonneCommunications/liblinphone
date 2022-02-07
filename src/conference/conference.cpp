@@ -324,6 +324,9 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 		for (const auto &device : participant->getDevices()) {
 			if (device->getSsrc() == ssrc) {
 				_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
+				for (const auto &l : confListeners) {
+					l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
+				}
 				return;
 			}
 		}
@@ -331,6 +334,9 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 	for (const auto &device : getMe()->getDevices()) {
 		if (device->getSsrc() == ssrc) {
 			_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
+			for (const auto &l : confListeners) {
+				l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
+			}
 			return;
 		}
 	}
@@ -595,9 +601,6 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceAdded(event, participantDevice);
 	}
-	if (participantDevice) {
-		_linphone_participant_device_notify_conference_joined(participantDevice->toC());
-	}
 	return event;
 }
 
@@ -615,9 +618,6 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceRemoved(event, participantDevice);
-	}
-	if (participantDevice) {
-		_linphone_participant_device_notify_conference_left(participantDevice->toC());
 	}
 	return event;
 }

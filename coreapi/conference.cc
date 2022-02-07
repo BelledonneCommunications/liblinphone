@@ -372,6 +372,7 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	// Delete all devices of a participant
 	auto deviceIt = participant->getDevices().begin();
 	while (deviceIt != participant->getDevices().end()) {
+
 		auto device = (*deviceIt);
 		LinphoneEvent * event = device->getConferenceSubscribeEvent();
 		if (event) {
@@ -1062,6 +1063,7 @@ bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
+
 	const auto & remoteAddress = call->getRemoteAddress();
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
 		lError() << "Call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is already in conference " << getConferenceAddress();
@@ -1112,10 +1114,24 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 
 	// Add participant only if creation is successful or call was previously part of the conference
 	bool canAddParticipant = ((callConfId.compare(confId) == 0) || (getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created));
+
 	if (canAddParticipant) {
 		auto session = call->getMediaSession();
-		auto contactAddress = session->getContactAddress();
+		const auto & remoteContactAddress = session->getRemoteContactAddress();
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
+
+		auto participantDevice = (remoteContactAddress && remoteContactAddress->isValid()) ? findParticipantDevice(*remoteContactAddress) : nullptr;
+		if (participantDevice) {
+			auto deviceSession = participantDevice->getSession();
+			if (deviceSession) {
+				if (session == deviceSession) {
+					lWarning() << "Try to add again a participant device with session " << session;
+				} else {
+					lInfo() << "Already found a participant device with address " << *remoteContactAddress << ". Recreating it";
+					deviceSession->terminate();
+				}
+			}
+		}
 
 		if (!confParams->getAccount()) {
 			// Set proxy configuration used for the conference
@@ -1128,6 +1144,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			}
 		}
 
+		// Get contact address here because it may be modified by a change in the local parameters. As the participant enters the conference, in fact attributes conf-id and isfocus are added later on (based on local parameters) therefore there is no way to know if the remote client already knew that the call was in a conference or not.
+		auto contactAddress = session->getContactAddress();
 		tryAddMeDevice();
 
 		// Add participant to the conference participant list
@@ -1159,6 +1177,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				} else {
 					const_cast<LinphonePrivate::MediaSessionParams*>(call->getParams())->enableVideo(false);
 				}
+
 				Conference::addParticipant(call);
 
 			break;
@@ -1526,7 +1545,6 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 
 int LocalConference::terminate () {
 	lInfo() << "Terminate conference " << getConferenceAddress();
-
 	// Take a ref because the conference may be immediately go to deleted state if terminate is called when there are 0 participants
 	const auto ref = getSharedFromThis();
 	setState(ConferenceInterface::State::TerminationPending);

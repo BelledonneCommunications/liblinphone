@@ -139,8 +139,8 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 	L_Q();
 	if (q->getCCore()->conf_ctx){
 		MediaConference::Conference *conf = MediaConference::Conference::toCpp(q->getCCore()->conf_ctx);
-		if (conf->isIn()){
-			lInfo() << "There is a conference, video window " << id << "is assigned to the conference.";
+		if (conf->isIn() && conf->getVideoControlInterface()){
+			lInfo() << "There is a conference " << conf->getConferenceAddress() << ", video window " << id << "is assigned to the conference.";
 			if (!preview){
 				conf->getVideoControlInterface()->setNativeWindowId(id);
 			}else{

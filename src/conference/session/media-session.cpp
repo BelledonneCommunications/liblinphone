@@ -2598,7 +2598,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 			auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
 			if (callConference) {
 				auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
-				lInfo() << "Removing participant with session " << q << " from conference " << conference->getConferenceAddress();
+				lInfo() << "Removing participant with session " << q << " (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ")  from conference " << conference->getConferenceAddress();
 				// Do not preserve conference after removing the participant
 				conference->removeParticipant(q->getSharedFromThis(), false);
 				return 0;
@@ -4042,6 +4042,8 @@ void MediaSession::setNativeVideoWindowId (void *id) {
 	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
 		iface->setNativeWindowId(id);
+	} else {
+		lError() << "Unable to set window ID because video control interface cannot be found";
 	}
 }
 

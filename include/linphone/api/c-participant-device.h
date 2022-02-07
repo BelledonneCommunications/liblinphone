@@ -158,7 +158,7 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbs *linphone_participant_device_get_cu
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param window_id the window ID of the device @maybenil
  */
-LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void * window_id);
+LINPHONE_PUBLIC void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device, void * window_id);
 
 /**
  * Get window ID.

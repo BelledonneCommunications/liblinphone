@@ -150,6 +150,13 @@ void ParticipantDevice::setUserData (void *ud) {
 	mUserData = ud;
 }
 
+void ParticipantDevice::setState (State newState) {
+	if (mState != newState) {
+		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
+		mState = newState;
+	}
+}
+
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	switch (state) {
 		case ParticipantDevice::State::ScheduledForJoining:
@@ -361,7 +368,7 @@ void * ParticipantDevice::createWindowId() const {
 		return nullptr;
 }
 
-void ParticipantDevice::setWindowId(void * newWindowId) {
+void ParticipantDevice::setWindowId(void * newWindowId) const {
 #ifdef VIDEO_ENABLED
 	mWindowId = newWindowId;
 	const auto & conference = getConference();
@@ -369,7 +376,7 @@ void ParticipantDevice::setWindowId(void * newWindowId) {
 	if (!mLabel.empty() && session) {
 		static_pointer_cast<MediaSession>(session)->setNativeVideoWindowId(mWindowId, mLabel);
 	} else {
-		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual" << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual " << session << ")";
+		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual " << session << ")";
 	}
 #endif
 }

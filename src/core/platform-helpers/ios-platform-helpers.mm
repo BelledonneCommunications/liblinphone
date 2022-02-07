@@ -78,7 +78,7 @@ public:
 	void setVideoPreviewWindow (void *windowId) override {}
 	string getDownloadPath () override {return Utils::getEmptyConstRefObject<string>();}
 	void setVideoWindow (void *windowId) override {}
-	void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) override {};
+	void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) override {};
 	void resizeVideoPreview (int width, int height) override {}
 
 	void onWifiOnlyEnabled (bool enabled) override;

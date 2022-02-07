@@ -99,7 +99,7 @@ void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
 void GenericPlatformHelpers::setVideoWindow (void *windowId) {}
 
-void GenericPlatformHelpers::setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) {}
+void GenericPlatformHelpers::setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) {}
 
 void GenericPlatformHelpers::resizeVideoPreview (int width, int height) {}
 

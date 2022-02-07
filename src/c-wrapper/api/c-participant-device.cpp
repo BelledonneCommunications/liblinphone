@@ -107,7 +107,7 @@ void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipant
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
 }
 
-void linphone_participant_device_set_native_video_window_id(LinphoneParticipantDevice *participant_device, void* window_id){
+void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device, void* window_id){
 #ifdef __ANDROID__
 	shared_ptr<LinphonePrivate::Core> core = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCore();
 	if (core) {

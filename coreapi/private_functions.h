@@ -342,6 +342,7 @@ void _linphone_conference_notify_participant_device_left(LinphoneConference *con
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_available_media_changed(LinphoneConference *conference);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
+void _linphone_conference_notify_participant_device_is_speaking_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 void _linphone_participant_device_notify_conference_joined(LinphoneParticipantDevice *participant_device);

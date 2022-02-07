@@ -230,6 +230,20 @@ LINPHONE_PUBLIC LinphoneConferenceCbsSubjectChangedCb linphone_conference_cbs_ge
 LINPHONE_PUBLIC void linphone_conference_cbs_set_subject_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsSubjectChangedCb cb);
 
 /**
+ * Get the participant device is speaking changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device is speaking changed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb linphone_conference_cbs_get_participant_device_is_speaking_changed (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device is speaking changed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device is speaking changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_is_speaking_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb cb);
+
+/**
  * Get the audio device changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current audio device changed callback.

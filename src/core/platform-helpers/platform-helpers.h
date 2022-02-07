@@ -74,7 +74,7 @@ public:
 	virtual void setVideoPreviewWindow (void *windowId) = 0;
 	virtual std::string getDownloadPath () = 0;
 	virtual void setVideoWindow (void *windowId) = 0;
-	virtual void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) = 0;
+	virtual void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) = 0;
 	virtual void resizeVideoPreview (int width, int height) = 0;
 
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
@@ -141,7 +141,7 @@ public:
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
-	void setParticipantDeviceVideoWindow(LinphoneParticipantDevice *participantDevice, void* windowId) override;
+	void setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, void* windowId) override;
 	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;

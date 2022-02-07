@@ -49,6 +49,10 @@ void NotifyConferenceListener::onSubjectChanged (const std::shared_ptr<Conferenc
 	_linphone_conference_notify_subject_changed(conf->toC(), event->getSubject().c_str());
 }
 
+void NotifyConferenceListener::onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &device, bool isSpeaking) {
+	_linphone_conference_notify_participant_device_is_speaking_changed(conf->toC(), device->toC(), isSpeaking);
+}
+
 void NotifyConferenceListener::onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_joined(conf->toC(), device->toC());
 }

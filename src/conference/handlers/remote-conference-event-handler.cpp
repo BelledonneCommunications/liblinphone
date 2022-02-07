@@ -305,7 +305,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					device = participant->findDevice(gruu);
 				}
 
-				const auto previousDeviceState = device->getState();
+				const auto previousDeviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 
 				if ((state != StateType::deleted) && (device)) {
 /*
@@ -413,7 +413,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					if (conf->isMe(address) && conf->getMainSession())
 						device->setSession(conf->getMainSession());
 
-					if (!isFullState) {
+					if(!isFullState && (state == StateType::full)) {
 						conf->notifyParticipantDeviceAdded(
 							creationTime,
 							isFullState,
@@ -424,13 +424,13 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 					if (endpoint.getStatus().present()) {
 						const auto & status = endpoint.getStatus().get();
-						if ((status == EndpointStatusType::on_hold) && (previousDeviceState != ParticipantDevice::State::OnHold)) {
+						if ((status == EndpointStatusType::on_hold) && ((previousDeviceState != ParticipantDevice::State::OnHold) || (state == StateType::full))) {
 							conf->notifyParticipantDeviceLeft(
 								creationTime,
 								isFullState,
 								participant,
 								device);
-						} else if ((status == EndpointStatusType::connected) && (previousDeviceState != ParticipantDevice::State::Present)) {
+						} else if ((status == EndpointStatusType::connected) && ((previousDeviceState != ParticipantDevice::State::Present) || (state == StateType::full))) {
 							conf->notifyParticipantDeviceJoined(
 								creationTime,
 								isFullState,
