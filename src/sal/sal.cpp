@@ -213,8 +213,13 @@ void Sal::processRequestEventCb (void *userCtx, const belle_sip_request_event_t 
 	}
 
 	auto subjectHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Subject");
-	if (subjectHeader)
-		op->setSubject(belle_sip_header_get_unparsed_value(subjectHeader));
+	if (subjectHeader){
+		const char *value = belle_sip_header_get_unparsed_value(subjectHeader);
+		if (value) op->setSubject(value);
+		else{
+			lWarning() << "Empty subject in SIP request.";
+		}
+	}
 
 	if(!op->mDiversionAddress) {
 		auto diversionHeader = belle_sip_message_get_header_by_type(BELLE_SIP_MESSAGE(request), belle_sip_header_diversion_t);
