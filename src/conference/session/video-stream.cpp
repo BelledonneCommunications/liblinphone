@@ -298,7 +298,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	} else if (videoMixer && getMediaSession().getParticipantWindowId(label)) {
+	} else if (isThumbnail || (videoMixer && getMediaSession().getParticipantWindowId(label))) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
