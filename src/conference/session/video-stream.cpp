@@ -563,7 +563,6 @@ void * MS2VideoControl::createNativeWindowId() const{
 void MS2VideoControl::setNativeWindowId(void *w){
 	VideoStream *vs = getVideoStream();
 	mNativeWindowId = w;
-lInfo() << __func__ << " DEBUG DEBUG window ID " << w << " video stream " << vs;
 	if (vs) video_stream_set_native_window_id(vs, w);
 }
 

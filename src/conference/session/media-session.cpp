@@ -4041,6 +4041,7 @@ void * MediaSession::getNativeVideoWindowId () const {
 void MediaSession::setNativeVideoWindowId (void *id) {
 	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
+		lInfo() << "Set native window ID " << id << " to video control interface " << iface;
 		iface->setNativeWindowId(id);
 	} else {
 		lError() << "Unable to set window ID because video control interface cannot be found";
@@ -4112,6 +4113,7 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 				return;
 			}
 			if (iface) {
+				lInfo() << "Set window ID " << id << " to video stream with label " << searchedLabel;
 				iface->setNativeWindowId(id);
 			}
 		} else {

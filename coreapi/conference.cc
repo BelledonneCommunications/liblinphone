@@ -290,7 +290,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		// If device is not found, then add it
 		if (p->findDevice(session, false) == nullptr) {
 			shared_ptr<ParticipantDevice> device = p->addDevice(session);
-			device->setSession(session);
 			device->updateMediaCapabilities();
 			device->updateStreamAvailabilities();
 			auto op = session->getPrivate()->getOp();
@@ -1049,9 +1048,8 @@ bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call
 	if (success) {
 		call->setConference(toC());
 		auto device = findParticipantDevice (call->getActiveSession());
-		const auto & p = findParticipant(call->getActiveSession());
 
-		if (device && p) {
+		if (device) {
 			char label[LinphonePrivate::Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
 			device->setLabel(label);
@@ -2120,7 +2118,10 @@ bool RemoteConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Cal
 
 	if (success) {
 		auto device = findParticipantDevice (call->getActiveSession());
-		const auto & p = findParticipant(call->getActiveSession());
+		const auto & p = device->getParticipant();
+
+		// In a remote conference, the participant has no session attached ot it.
+		device->setSession(nullptr);
 		device->setState(ParticipantDevice::State::Present);
 
 		if (device && p) {
@@ -2498,6 +2499,8 @@ bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> c
 	std::shared_ptr<Participant> participant = findParticipant(call->getActiveSession());
 	if (participant) {
 		referToAddr.setParam("admin", Utils::toString(participant->isAdmin()));
+		const auto & remoteAddress = call->getRemoteAddress();
+		lInfo() << "Transfering call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") to focus " << referToAddr;
 		if (call->transfer(referToAddr.asString()) == 0) {
 			m_transferingCalls.push_back(call);
 			return true;

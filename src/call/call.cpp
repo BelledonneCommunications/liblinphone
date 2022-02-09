@@ -248,9 +248,7 @@ int Call::startInvite (const Address *destination, const std::string subject, co
 }
 
 shared_ptr<Call> Call::startReferredCall (const MediaSessionParams *params) {
-	if (getState() != CallSession::State::Paused) {
-		pauseForTransfer();
-	}
+	// Create and initiate parameters before pausing the call because initialization of some settings requires knowlege of the current call held by the core
 	MediaSessionParams msp;
 	if (params)
 		msp = *params;
@@ -258,6 +256,10 @@ shared_ptr<Call> Call::startReferredCall (const MediaSessionParams *params) {
 		msp.initDefault(getCore(), LinphoneCallOutgoing);
 		msp.enableAudio(getCurrentParams()->audioEnabled());
 		msp.enableVideo(getCurrentParams()->videoEnabled());
+	}
+
+	if (getState() != CallSession::State::Paused) {
+		pauseForTransfer();
 	}
 	lInfo() << "Starting new call to referred address " << getActiveSession()->getReferTo();
 	L_GET_PRIVATE(&msp)->setReferer(getActiveSession());
