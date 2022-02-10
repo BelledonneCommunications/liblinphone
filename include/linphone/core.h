@@ -6232,6 +6232,14 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_afte
  */
 LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info);
 
+/**
+ * Tells if LDAP is available
+ * @param core LinphoneCore object @notnil
+ * @ingroup misc
+ * @return TRUE if LDAP is available, FALSE otherwise
+**/
+LINPHONE_PUBLIC bool_t linphone_core_ldap_available(LinphoneCore *core);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

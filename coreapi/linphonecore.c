@@ -9014,3 +9014,11 @@ void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneCon
 	mainDb->deleteConferenceInfo(LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
 #endif
 }
+
+bool_t linphone_core_ldap_available(LinphoneCore *core) {
+#ifdef LDAP_ENABLED
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
