@@ -3999,7 +3999,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice) {
 		BC_ASSERT_PTR_NOT_NULL(marie_call_pauline);
 		LinphoneCall* pauline_called_by_marie=linphone_core_get_current_call(pauline.getLc());
 		BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie);
-		linphone_call_set_microphone_muted (pauline_called_by_marie, TRUE);
+		//linphone_call_set_microphone_muted (pauline_called_by_marie, TRUE);
 		BC_ASSERT_TRUE(pause_call_1(marie.getCMgr(),marie_call_pauline,pauline.getCMgr(),pauline_called_by_marie));
 
 		BC_ASSERT_TRUE(call(marie.getCMgr(),laure.getCMgr()));
@@ -4065,7 +4065,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice) {
 			if (participant_call) {
 				BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
 				BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
-				BC_ASSERT_TRUE(linphone_call_get_microphone_muted(participant_call) == (mgr == pauline.getCMgr()));
+				//BC_ASSERT_TRUE(linphone_call_get_microphone_muted(participant_call) == (mgr == pauline.getCMgr()));
 			}
 
 			if (confAddr) {
