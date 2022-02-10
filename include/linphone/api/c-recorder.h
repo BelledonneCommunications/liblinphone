@@ -101,6 +101,13 @@ LINPHONE_PUBLIC LinphoneRecorderState linphone_recorder_get_state(const Linphone
 LINPHONE_PUBLIC int linphone_recorder_get_duration(const LinphoneRecorder *recorder);
 
 /**
+ * Get linear volume when capturing audio.
+ * @param recorder The #LinphoneRecorder object. @notnil
+ * @return Linear volume.
+ */
+LINPHONE_PUBLIC float linphone_recorder_get_capture_volume(const LinphoneRecorder *recorder);
+
+/**
  * Create a content from the recording, for example to send it in a chat message.
  * @warning Recorder must be in Closed state!
  * @param recorder The #LinphoneRecorder object. @notnil

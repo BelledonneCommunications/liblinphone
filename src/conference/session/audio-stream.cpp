@@ -223,6 +223,52 @@ void MS2AudioStream::setupMediaLossCheck(){
 		}, 1000, "Audio stream alive check");
 }
 
+
+void MS2AudioStream::audioRouteChangeCb (void* userData, bool_t needReloadSoundDevices, char* newInputDevice, char* newOutputDevice) {
+	Core *core = static_cast<Core*>(userData);
+
+	std::string newInput, newOutput;
+	if (newInputDevice) newInput = std::string(newInputDevice);
+	if (newOutputDevice) newOutput = std::string(newOutputDevice);
+	
+	core->doLater([core, newInput, newOutput, needReloadSoundDevices]() {
+		if (needReloadSoundDevices) {
+			linphone_core_reload_sound_devices(core->getCCore());
+		}
+		
+		// Make sure that the current device the core is using match the reality of the IOS audio route. If not, set it properly
+		bool inputRequiresUpdate = !newInput.empty();
+		bool outputRequiresUpdate = !newOutput.empty();
+		
+		bctbx_list_t * deviceIt = linphone_core_get_extended_audio_devices(core->getCCore());
+		while ( deviceIt != NULL && (inputRequiresUpdate || outputRequiresUpdate) ) {
+			LinphoneAudioDevice * pDevice = (LinphoneAudioDevice *) deviceIt->data;
+			std::string deviceName(linphone_audio_device_get_device_name(pDevice));
+			
+			if (inputRequiresUpdate && newInput == deviceName) {
+				linphone_core_set_input_audio_device(core->getCCore(), pDevice);
+				inputRequiresUpdate = false;
+			}
+			if (outputRequiresUpdate && newOutput == deviceName) {
+				linphone_core_set_output_audio_device(core->getCCore(), pDevice);
+				outputRequiresUpdate = false;
+			}
+			deviceIt = deviceIt->next;
+		}
+		bctbx_list_free_with_data(deviceIt, (void (*)(void *))linphone_audio_device_unref);
+		
+		if (inputRequiresUpdate) {
+			ms_warning("Current audio route input is '%s', but we could not find the matching device in the linphone devices list", newInput.c_str());
+		}
+		if (outputRequiresUpdate) {
+			ms_warning("Current audio route output is '%s', but we could not find the matching device in the linphone devices list", newOutput.c_str());
+		}
+		
+		// Notify the filter that the audio route changed
+		core->soundcardAudioRouteChanged();
+	});
+}
+
 void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const auto & stream = params.getResultStreamDescription();
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
@@ -230,6 +276,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 
 	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	MS2AudioMixer *audioMixer = getAudioMixer();
 	MSSndCard *playcard = nullptr;
 	// try to get currently used playcard if it was already set
 	if (outputAudioDevice) {
@@ -244,8 +291,13 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			bool muted = mMuted;
 			MS2Stream::render(params, targetState); // MS2Stream::render() may decide to unmute.
 			if (muted && !mMuted) {
-				lInfo() << "Early media finished, unmuting audio input...";
-				enableMic(micEnabled());
+				if (audioMixer){
+					lInfo() << "Early media finished, unmuting audio input and will connect audio to conference.";
+					mRestartStreamRequired = true;
+				}else{
+					lInfo() << "Early media finished, unmuting audio input...";
+					enableMic(micEnabled());
+				}
 			}
 
 			if (playcard) {
@@ -265,7 +317,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 
-	MS2AudioMixer *audioMixer = getAudioMixer();
+	
 	int usedPt = -1;
 	string onHoldFile = "";
 	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, stream, &usedPt);
@@ -342,6 +394,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
 		captcard = playcard = nullptr;
+		if (targetState == CallSession::State::OutgoingEarlyMedia){
+			// Restart will be required upon transitionning to StreamsRunning state to take into account that sound resources
+			// may have been released meanwhile.
+			mRestartStreamRequired = true;
+			lInfo() << "Soundcard usage will be checked again when moving to StreamsRunning.";
+		}
 	}
 
 	if (playcard) {
@@ -411,6 +469,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if (mCurrentPlaybackCard) mCurrentPlaybackCard = ms_snd_card_ref(mCurrentPlaybackCard);
 
 		const auto & streamCfg = stream.getActualConfiguration();
+
 		if (streamCfg.getMixerToClientExtensionId() > 0) {
 			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters properly
 			audio_stream_set_mixer_to_client_extension_id(mStream, streamCfg.getMixerToClientExtensionId());
@@ -421,6 +480,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 
 		audio_stream_set_is_speaking_callback(mStream, audioStreamIsSpeakingCb, this);
+		
+		audio_stream_set_audio_route_changed_callback(mStream, &MS2AudioStream::audioRouteChangeCb, &getCore());
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();
@@ -437,7 +498,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
 		setupRingbackPlayer();
 	
-	if (audioMixer){
+	if (audioMixer && !mMuted){
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
@@ -605,8 +666,14 @@ void MS2AudioStream::configureFlowControl(AudioStream *as, LinphoneCore *lc){
 	}
 }
 
+void MS2AudioStream::enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, bool enabled){
+	enabled = enabled && linphone_core_mic_enabled(lc);
+	if (!enabled) bctbx_message("AudioStream[%p]: mic is muted.", as);
+	audio_stream_enable_mic(as, enabled);
+}
+
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
-	audio_stream_enable_mic(as, !muted);
+	enableMicOnAudioStream(as, lc, !muted);
 	
 	float recvGain = lc->sound_conf.soft_play_lev;
 	if (static_cast<int>(recvGain)){
@@ -707,7 +774,7 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 
 void MS2AudioStream::enableMic(bool value){
 	mMicMuted = !value;
-	audio_stream_enable_mic(mStream, value);
+	enableMicOnAudioStream(mStream, getCCore(), value);
 }
 
 bool MS2AudioStream::micEnabled()const{

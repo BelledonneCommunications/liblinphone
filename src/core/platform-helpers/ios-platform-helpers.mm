@@ -108,6 +108,9 @@ public:
 
 	void onRecordingStarted () const override;
 	void onRecordingPaused () const override;
+	void stopRinging () const override;
+
+	void setDeviceRotation (int orientation) const override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -229,6 +232,14 @@ void IosPlatformHelpers::onRecordingStarted() const {
 }
 
 void IosPlatformHelpers::onRecordingPaused() const {
+
+}
+
+void IosPlatformHelpers::stopRinging () const {
+	
+}
+
+void IosPlatformHelpers::setDeviceRotation (int orientation) const {
 
 }
 

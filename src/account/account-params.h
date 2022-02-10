@@ -55,6 +55,7 @@ public:
 	void setPushNotificationAllowed (bool allow);
 	void setRemotePushNotificationAllowed (bool allow);
 	void setUseInternationalPrefixForCallsAndChats (bool enable);
+	void setCpimMessagesAllowedInBasicChatRooms (bool allow);
 	void setUserData (void *userData);
 	void setInternationalPrefix (const std::string &internationalPrefix);
 	void setProxy (const std::string &proxy);
@@ -92,6 +93,7 @@ public:
 	bool getRemotePushNotificationAllowed () const;
 	bool getUseInternationalPrefixForCallsAndChats () const;
 	bool isPushNotificationAvailable () const;
+	bool isCpimMessagesAllowedInBasicChatRooms () const;
 	void* getUserData () const;
 	const std::string& getInternationalPrefix () const;
 	const std::string& getProxy () const;
@@ -145,6 +147,7 @@ private:
 	bool mUseInternationalPrefixForCallsAndChats;
 	bool mRtpBundleEnabled;
 	bool mRtpBundleAssumption;
+	bool mAllowCpimMessagesInBasicChatRooms;
 
 	void *mUserData;
 

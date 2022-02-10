@@ -714,13 +714,15 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 		if (message->getState() != ChatMessage::State::FileTransferError) {
 			// Remove the FileTransferContent from the message and store the FileContent
 			FileContent *fileContent = currentFileContentToTransfer;
-			message->getPrivate()->addContent(fileContent);
 			
 			if (currentFileTransferContent != nullptr) {
 				lInfo() << "Found downloaded file transfer content [" << currentFileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
-				message->getPrivate()->removeContent(currentFileTransferContent);
+				message->getPrivate()->replaceContent(currentFileTransferContent, fileContent);
 				delete currentFileTransferContent;
 				currentFileTransferContent = nullptr;
+			} else {
+				lWarning() << "Download seems successful but file transfer content not found, adding file content [" << fileContent << "] anyway...";
+				message->getPrivate()->addContent(fileContent);
 			}
 
 			releaseHttpRequest();
@@ -933,7 +935,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 	}
 
 	lastNotifiedPercentage = 0;
-	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
+	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], result will be available in file content [" << fileContent << "]";
 
 	belle_http_request_listener_callbacks_t cbs = { 0 };
 	cbs.process_response_headers = _chat_process_response_headers_from_get_file;
@@ -1129,9 +1131,11 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
 							xmlChar *content_type = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							ContentType contentType((char*)content_type);
-							fileTransferContent->setFileContentType(contentType);
-							ms_free(content_type);
+							if (content_type) {
+								ContentType contentType((char*)content_type);
+								fileTransferContent->setFileContentType(contentType);
+								ms_free(content_type);
+							}
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"playing-length")) {
 							xmlChar *fileDuration = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);

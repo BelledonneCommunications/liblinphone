@@ -104,6 +104,9 @@ public:
 
 	virtual void onRecordingStarted () const = 0;
 	virtual void onRecordingPaused () const = 0;
+	virtual void stopRinging () const = 0;
+
+	virtual void setDeviceRotation (int orientation) const = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -171,6 +174,8 @@ public:
 
 	void onRecordingStarted () const override {};
 	void onRecordingPaused () const override {};
+	void stopRinging () const override {};
+	void setDeviceRotation (int orientation) const override {};
 
 protected:
 	bool checkIpAddressChanged();

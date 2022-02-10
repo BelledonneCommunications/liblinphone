@@ -831,6 +831,11 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
+	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
+		setDirection(ChatMessage::Direction::Outgoing);
+	}
+
 	// Check if this is a duplicate message.
 	if (chatRoom->findChatMessage(imdnId, direction)) {
 		lInfo() << "Duplicated SIP MESSAGE, ignored.";
@@ -857,12 +862,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 		}
 	}
 
-	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
-		setDirection(ChatMessage::Direction::Outgoing);
-		markAsRead();
-	}
-
 	if (errorCode > 0) {
 		reason = linphone_error_code_to_reason(errorCode);
 		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDeliveryErrorNotification(
@@ -872,8 +871,19 @@ LinphoneReason ChatMessagePrivate::receive () {
 		return reason;
 	}
 
+	// If message was outgoing, mark it as read
+	if (direction == ChatMessage::Direction::Outgoing) {
+		markAsRead();
+	}
+
 	if (getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
-		_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		// If we receive a message that is Outgoing it means we are in a flexisip based chat room and this message was sent by us from another device, storing it
+		if (direction == ChatMessage::Direction::Outgoing) {
+			toBeStored = true;
+		} else {
+			_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		}
+
 		if (toBeStored) {
 			storeInDb();
 		}
@@ -954,16 +964,26 @@ void ChatMessagePrivate::handleAutoDownload() {
 }
 
 void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
+	if (contents.size() == 0) {
+		lWarning() << "Contents list is empty, nothing to restore";
+		return;
+	}
+
 	// Restore FileContents and remove FileTransferContents
 	list<Content*>::iterator it = contents.begin();
 	while (it != contents.end()) {
 		Content *content = *it;
-		if (content->isFileTransfer()) {
+		if (content && content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
 			FileContent *fileContent = fileTransferContent->getFileContent();
-			it = contents.erase(it);
-			it = contents.insert(it, fileContent);
-			delete fileTransferContent;
+			if (fileContent) {
+				it = contents.erase(it);
+				it = contents.insert(it, fileContent);
+				delete fileTransferContent;
+			} else {
+				lWarning() << "Found FileTransferContent but no associated FileContent";
+				it++;
+			}
 		} else {
 			it++;
 		}
@@ -1080,6 +1100,8 @@ void ChatMessagePrivate::send () {
 				}
 				currentSendStep |= ChatMessagePrivate::Step::Multipart;
 			}
+		} else {
+			lInfo() << "Chat room doesn't support multipart, skipping this modifier";
 		}
 
 		if (chatRoom->canHandleCpim()) {
@@ -1090,6 +1112,8 @@ void ChatMessagePrivate::send () {
 				ccmm.encode(q->getSharedFromThis(), errorCode);
 				currentSendStep |= ChatMessagePrivate::Step::Cpim;
 			}
+		} else {
+			lInfo() << "Chat room doesn't support CPIM, skipping this modifier";
 		}
 
 		if ((currentSendStep & ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
@@ -1110,6 +1134,8 @@ void ChatMessagePrivate::send () {
 				} else if (result == ChatMessageModifier::Result::Suspended) {
 					return;
 				}
+			} else {
+				lInfo() << "Encryption has been prevented, skipping this modifier";
 			}
 		}
 	}
@@ -1412,18 +1438,7 @@ void ChatMessagePrivate::loadContentsFromDatabase () const {
 
 bool ChatMessage::isRead () const {
 	L_D();
-
-	LinphoneImNotifPolicy *policy = linphone_core_get_im_notif_policy(getCore()->getCCore());
-	if (linphone_im_notif_policy_get_recv_imdn_displayed(policy) && d->state == State::Displayed)
-		return true;
-
-	if (
-		linphone_im_notif_policy_get_recv_imdn_delivered(policy) &&
-		(d->state == State::DeliveredToUser || d->state == State::Displayed)
-	)
-		return true;
-
-	return d->state == State::Delivered || d->state == State::Displayed || d->state == State::DeliveredToUser;
+	return d->markedAsRead || d->state == State::Displayed;
 }
 
 const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
@@ -1579,7 +1594,11 @@ void ChatMessage::cancelFileTransfer () {
 	L_D();
 	if (d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid()) {
 		lWarning() << "Canceling file transfer on message [" << getSharedFromThis() << "]";
+		d->fileTransferChatMessageModifier.cancelFileTransfer();
+		lInfo() << "File transfer on message [" << getSharedFromThis() << "] has been cancelled";
+
 		if (d->state == State::FileTransferInProgress) {
+			lInfo() << "File transfer on message [" << getSharedFromThis() << "] was in progress, updating state";
 			// For auto download messages, set the state back to Delivered
 			if (d->isAutoFileTransferDownloadInProgress()) {
 				d->setState(State::Delivered);
@@ -1588,7 +1607,6 @@ void ChatMessage::cancelFileTransfer () {
 				d->setState(State::NotDelivered);
 			}
 		}
-		d->fileTransferChatMessageModifier.cancelFileTransfer();
 	} else {
 		lInfo() << "No existing file transfer - nothing to cancel";
 	}

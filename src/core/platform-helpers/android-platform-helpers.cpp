@@ -77,6 +77,9 @@ public:
 
 	void onRecordingStarted () const override;
 	void onRecordingPaused () const override;
+	void stopRinging () const override;
+
+	void setDeviceRotation (int orientation) const override;
 
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
@@ -116,6 +119,7 @@ private:
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jmethodID mIsActiveNetworkWifiOnlyCompliantId = nullptr;
 	jmethodID mUpdateNetworkReachabilityId = nullptr;
+	jmethodID mRotateVideoPreviewId = nullptr;
 
 	// CoreManager methods
 	jmethodID mCoreManagerDestroyId = nullptr;
@@ -127,6 +131,7 @@ private:
 	jmethodID mStopAutoIterateId = nullptr;
 	jmethodID mSetAudioManagerCommunicationMode = nullptr;
 	jmethodID mSetAudioManagerNormalMode = nullptr;
+	jmethodID mStopRingingId = nullptr;
 
 	bool mNetworkReachable = false;
 };
@@ -179,6 +184,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	mStopAutoIterateId = getMethodId(env, klass, "stopAutoIterate", "()V");
 	mSetAudioManagerCommunicationMode = getMethodId(env, klass, "setAudioManagerInCommunicationMode", "()V");
 	mSetAudioManagerNormalMode = getMethodId(env, klass, "setAudioManagerInNormalMode", "()V");
+	mStopRingingId = getMethodId(env, klass, "stopRinging", "()V");
 
 	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
 }
@@ -230,6 +236,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mOnWifiOnlyEnabledId = getMethodId(env, klass, "onWifiOnlyEnabled", "(Z)V");
 	mIsActiveNetworkWifiOnlyCompliantId = getMethodId(env, klass, "isActiveNetworkWifiOnlyCompliant", "()Z");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
+	mRotateVideoPreviewId = getMethodId(env, klass, "rotateVideoPreview", "()V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -520,6 +527,25 @@ void AndroidPlatformHelpers::onRecordingStarted() const {
 
 void AndroidPlatformHelpers::onRecordingPaused() const {
 	
+}
+
+void AndroidPlatformHelpers::stopRinging () const {
+	LinphoneCore *lc = getCore()->getCCore();
+	if (linphone_core_is_native_ringing_enabled(lc) == TRUE) {
+		JNIEnv *env = ms_get_jni_env();
+		if (env) {
+			if (mJavaCoreManager) {
+				env->CallVoidMethod(mJavaCoreManager, mStopRingingId);
+			}
+		}
+	}
+}
+
+void AndroidPlatformHelpers::setDeviceRotation (int orientation) const {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mRotateVideoPreviewId);
+	}
 }
 
 // -----------------------------------------------------------------------------

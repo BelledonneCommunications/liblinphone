@@ -685,6 +685,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_transport(LinphoneAccountParams
 LINPHONE_PUBLIC LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccountParams *params);
 
 /**
+<<<<<<< HEAD
  * Enables or disables RTP bundle mode (Media Multiplexing).
  * See https://datatracker.ietf.org/doc/html/rfc8843 for more information about the feature.
  * When enabled, liblinphone will try to negociate the use of a single port for all streams when doing an outgoing call.
@@ -724,6 +725,22 @@ LINPHONE_PUBLIC void linphone_account_params_enable_rtp_bundle_assumption(Linpho
  * @return a boolean indicating when rtp bundle support is assumed.
  */
 LINPHONE_PUBLIC bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccountParams *params);
+
+/*
+ * Indicates whether chat messages sent by this account in a #LinphoneChatRoomBackendBasic chat room will be using CPIM format or not.
+ * By default SIP SIMPLE format is used for "basic" chat rooms, CPIM is only used for #LinphoneChatRoomBackendFlexisipChat chat rooms.
+ * @see https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Instant%20Messaging/Reply%20to%20a%20specific%20message/
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if chat messages will be sent out in CPIM format, FALSE if chat messages will be sent out as SIP SIMPLE.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_cpim_in_basic_chat_room_enabled(const LinphoneAccountParams *params);
+
+/**
+ * Indicates whether chat messages sent by this account in a #LinphoneChatRoomBackendBasic chat room will be using CPIM format or not.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param enable TRUE to send messages in CPIM format, FALSE to keep using the SIP SIMPLE format.
+ */
+LINPHONE_PUBLIC void linphone_account_params_enable_cpim_in_basic_chat_room(LinphoneAccountParams *params, bool_t enable);
 
 
 /**

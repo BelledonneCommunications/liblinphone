@@ -235,7 +235,7 @@ static void shared_executor_core_get_message_with_user_defaults_multi_thread(voi
 	ms_sleep(1);
 
 	shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, secondText);
-	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 1, 50000));
+	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, sender_mgr->lc, &main_mgr->stat.number_of_LinphoneMessageReceived, 2, 50000));
 
 	if (pthread_join(executor, NULL)) {
 		ms_fatal("Error joining thread executor");

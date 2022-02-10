@@ -101,6 +101,14 @@ LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enab
 LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 
 /**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
+
+/**
  * Define whether capability negotiation (RFC5939) reINVITE is enabled
  * @param params the #LinphoneCallParams @notnil
  * @param enable TRUE to enable capability negotiation reINVITE; FALSE otherwise.

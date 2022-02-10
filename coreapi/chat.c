@@ -216,8 +216,13 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 ) {
 	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)participant_addr);
 	LinphoneChatRoomParams *params = _linphone_core_create_default_chat_room_params();
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, FALSE);
 	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, NULL, paricipants);
+	if (!result) {
+		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+		result = linphone_core_search_chat_room(lc, params, local_addr, participant_addr, NULL);
+	}
 	linphone_chat_room_params_unref(params);
 	bctbx_list_free(paricipants);
 	return result;
@@ -232,9 +237,14 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
 ) {
 	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)participant_addr);
 	LinphoneChatRoomParams *params = _linphone_core_create_default_chat_room_params();
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, FALSE);
 	linphone_chat_room_params_enable_encryption(params, encrypted);
 	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, NULL, paricipants);
+	if (!result && !encrypted) {
+		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+		result = linphone_core_search_chat_room(lc, params, local_addr, participant_addr, NULL);
+	}
 	linphone_chat_room_params_unref(params);
 	bctbx_list_free(paricipants);
 	return result;

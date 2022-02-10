@@ -437,7 +437,7 @@ void linphone_conference_params_set_one_participant_conference_enabled(LinphoneC
 	linphone_conference_params_enable_one_participant_conference(params, enable);
 }
 
-void linphone_conference_params_enable_one_participant_conference(LinphoneConferenceParams *params, bool_t enable){
+void linphone_conference_params_enable_one_participant_conference(LinphoneConferenceParams *params, bool_t enable) {
 	ConferenceParams::toCpp(params)->enableOneParticipantConference(!!enable);
 }
 
@@ -445,7 +445,7 @@ bool_t linphone_conference_params_is_one_participant_conference_enabled(const Li
 	return linphone_conference_params_one_participant_conference_enabled(params);
 }
 
-bool_t linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params){
+bool_t linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
 }
 

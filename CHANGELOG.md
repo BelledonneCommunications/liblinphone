@@ -9,20 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
 
+
 ## [5.2.0] Unreleased
 
 ### Added
 - Rtp bundle can be enabled per LinphoneAccount, superseeding the setting at LinphoneCore level.
 
-## [5.1.0] Unreleased
+
+
+## [5.1.0] 2022-02-14
 
 ### Added
 - LinphoneRecorder API added to record voice messages, that can later be sent in a LinphoneChatMessage.
 - A recommended video definitions list that filter the supported video definitions list.
 - 1080p is added to the list of supported definitions for Android and iOS targets.
+- Android device rotation is now handled by PlatformHelper, apps no longer need to do it.
+- LDAP connectivity into LinphoneMagicSearch API (to lookup contacts by number or name).
 
 ### Changed
-- Java wrapper no longer catches app exceptions that happens in listener
+- Java wrapper no longer catches app exceptions that happen in listeners.
+- linphone_core_enable_mic() is changed to be persistent accross calls and conference. It no longer
+  resets after each call or conference. An AND operation with enablement given by linphone_call_set_microphone_muted() and 
+  linphone_conference_set_microphone_muted() is made to determine the actual microphone state.
 
 ### Security fixes
 - To protect against "SIP digest leak", MD5 and digestion without qop=auth can be disabled by configuration

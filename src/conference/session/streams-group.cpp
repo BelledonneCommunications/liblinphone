@@ -203,8 +203,8 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	mPostRenderHooks.clear();
 	
 	mIceService->render(params, targetState);
-	
-	if (getIceService().hasCompleted()){
+	const char *mode = linphone_config_get_string(linphone_core_get_config(getCore().getCCore()), "rtp", "dtls_srtp_start", "ice");
+	if (strcmp(mode, "immediate") == 0 || getIceService().hasCompleted()){
 		/* Should not start dtls until ice is completed */
 		startDtls(params);
 	}

@@ -381,7 +381,7 @@ void ToneManager::freeAudioResources(){
 		linphone_ringtoneplayer_stop(lc->ringtoneplayer);
 	}
 	destroyRingStream();
-	
+	getPlatformHelpers(lc)->stopRinging();
 }
 
 
@@ -578,7 +578,7 @@ shared_ptr<CallSession> ToneManager::lookupRingingSession() const{
 void ToneManager::cleanPauseTone(){
 	if (mSessionPaused){
 		stopTone();
-		destroyRingStream();
+		destroyRingStream(); // the "pause" tone is exclusively played by the RingStream API.
 		mSessionPaused = nullptr;
 	}
 }
@@ -663,6 +663,9 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 			cleanPauseTone();
 			notifyIncomingCall(session);
 		break;
+		case CallSession::State::OutgoingProgress:
+			cleanPauseTone();
+		break;
 		case CallSession::State::OutgoingRinging:
 			cleanPauseTone();
 			notifyOutgoingCallRinging(session);
@@ -683,7 +686,13 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 		break;
 		case CallSession::State::End:
 		case CallSession::State::Error:
-			notifyToneIndication(session->getReason());
+		{
+			LinphoneReason reason = session->getReason();
+			// Do not play tone for incoming calls when declining them with Busy or DoNotDisturb reason
+			if (session->getDirection() == LinphoneCallOutgoing || (reason != LinphoneReasonBusy && reason != LinphoneReasonDoNotDisturb)) {
+				notifyToneIndication(reason);
+			}
+		}
 		break;
 		default:
 		break;

@@ -333,8 +333,7 @@ bool_t linphone_factory_is_download_dir_set(const LinphoneFactory *factory){
 
 void linphone_factory_set_download_dir(LinphoneFactory *factory, const char *path) {
 	Factory::toCpp(factory)->setDownloadDir(
-				path ? path : ""
-  );
+				path ? path : "");
 }
 
 const char *linphone_factory_get_cache_dir(LinphoneFactory *factory, void *context) {
@@ -347,8 +346,7 @@ bool_t linphone_factory_is_cache_dir_set(const LinphoneFactory *factory){
 
 void linphone_factory_set_cache_dir(LinphoneFactory *factory, const char *path) {
 	Factory::toCpp(factory)->setCacheDir(
-				path ? path : ""
-  );
+				path ? path : "");
 }
 
 LinphoneErrorInfo *linphone_factory_create_error_info(LinphoneFactory *factory){

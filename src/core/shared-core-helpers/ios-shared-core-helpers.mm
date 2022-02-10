@@ -419,18 +419,24 @@ void on_msg_written_in_user_defaults(CFNotificationCenterRef center, void *obser
 	}
 }
 
+
 // The message has been received by the main core and we will just fetch it into the user defaults
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(const string &callId) {
+	
+	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
+	if (msg) {
+		lInfo() << "[push] message was already found in user defaults, no need to subscribe to notifications";
+		return msg;
+	}
+	
 	lInfo() << "[push] subscribe to main core notif: receive a notif when msg is written in user defaults";
+	
 	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
 	CFStringRef notificationName;
 
 	notificationName = CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8);
 
 	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, notificationName, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
-
-	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
-	if (msg) return msg;
 
 	reinitTimer();
 	while (ms_get_cur_time_ms() - mTimer < mMaxIterationTimeMs && !mMsgWrittenInUserDefaults) {
@@ -586,6 +592,14 @@ void IosSharedCoreHelpers::reinitTimer() {
 	mTimer = ms_get_cur_time_ms();
 }
 
+static void on_push_notification_chat_room_joined(LinphoneChatRoom *cr, const LinphoneEventLog *evlog){
+	LinphoneCore *lc = linphone_chat_room_get_core(cr);
+	PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
+	IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
+	lInfo() << "[push] the chat room associated with the push is joined.";
+	shared_core_helper->setChatRoomInvite(static_pointer_cast<ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)));
+}
+
 static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 	if (state == LinphoneChatRoomStateCreated) {
 		PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
@@ -596,8 +610,11 @@ static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, Lin
 		lInfo() << "[push] we are added to the chat room " << cr_peer_addr;
 
 		if (cr_peer_addr && strcmp(cr_peer_addr, shared_core_helper->getChatRoomAddr().c_str()) == 0) {
-			lInfo() << "[push] the chat room associated with the push is found";
-			shared_core_helper->setChatRoomInvite(static_pointer_cast<ChatRoom>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)));
+			lInfo() << "[push] the chat room associated with the push is found, now waiting for being joined.";
+			LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+			linphone_chat_room_cbs_set_conference_joined(cbs, on_push_notification_chat_room_joined);
+			linphone_chat_room_add_callbacks(cr, cbs);
+			linphone_chat_room_cbs_unref(cbs);
 		}
 	}
 }
@@ -621,7 +638,7 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crA
 	uint64_t iterationTimer = ms_get_cur_time_ms();
 
 	/* if the chatroom is received, iterate for 2 sec otherwise iterate mMaxIterationTimeMs seconds*/
-	while ((ms_get_cur_time_ms() - iterationTimer < mMaxIterationTimeMs && !mChatRoomInvite) || (mChatRoomInvite && ms_get_cur_time_ms() - mTimer < 2000)) {
+	while ((ms_get_cur_time_ms() - iterationTimer < mMaxIterationTimeMs) && !mChatRoomInvite) {
 		lInfo() << "[push] wait chatRoom";
 		linphone_core_iterate(getCore()->getCCore());
 
@@ -630,7 +647,7 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getChatRoomFromAddr(const string &crA
 			return nullptr;
 		}
 
-		ms_usleep(50000);
+		ms_usleep(20000);
 	}
 
 	return mChatRoomInvite;

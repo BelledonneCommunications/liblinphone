@@ -763,6 +763,42 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 	}
 }
 
+void MS2Stream::configureRtpTransport(RtpSession *session){
+	if (getCCore()->rtptf) {
+		RtpTransport *meta_rtp;
+		RtpTransport *meta_rtcp;
+		rtp_session_get_transports(session, &meta_rtp, &meta_rtcp);
+		LinphoneCoreRtpTransportFactoryFunc rtpFunc = nullptr, rtcpFunc = nullptr;
+		void *rtpFuncData = nullptr, *rtcpFuncData = nullptr;
+		
+		switch(getType()){
+			case SalAudio:
+				rtpFunc = getCCore()->rtptf->audio_rtp_func;
+				rtpFuncData = getCCore()->rtptf->audio_rtp_func_data;
+				rtcpFunc = getCCore()->rtptf->audio_rtcp_func;
+				rtcpFuncData = getCCore()->rtptf->audio_rtcp_func_data;
+			break;
+			case SalVideo:
+				rtpFunc = getCCore()->rtptf->video_rtp_func;
+				rtpFuncData = getCCore()->rtptf->video_rtp_func_data;
+				rtcpFunc = getCCore()->rtptf->video_rtcp_func;
+				rtcpFuncData = getCCore()->rtptf->video_rtcp_func_data;
+			break;
+			case SalText:
+			break;
+			case SalOther:
+			break;
+		}
+		
+		if (!meta_rtp_transport_get_endpoint(meta_rtp)) {
+			lInfo() << *this << " using custom RTP transport endpoint";
+			meta_rtp_transport_set_endpoint(meta_rtp, rtpFunc(rtpFuncData, mPortConfig.rtpPort));
+		}
+		if (!meta_rtp_transport_get_endpoint(meta_rtcp))
+			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
+	}
+}
+
 void MS2Stream::initializeSessions(MediaStream *stream){
 	if (mPortConfig.multicastRole == SalMulticastReceiver){
 		if (!mPortConfig.multicastIp.empty())
@@ -779,6 +815,7 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 		mPortConfig.rtpPort = rtp_session_get_local_port(stream->sessions.rtp_session);
 		mPortConfig.rtcpPort = rtp_session_get_local_rtcp_port(stream->sessions.rtp_session);
 	}
+	configureRtpTransport(stream->sessions.rtp_session);
 	int dscp = -1;
 	switch(getType()){
 		case SalAudio:
@@ -887,39 +924,6 @@ void MS2Stream::stopEventHandling(){
 }
 
 bool MS2Stream::prepare(){
-	if (getCCore()->rtptf) {
-		RtpTransport *meta_rtp;
-		RtpTransport *meta_rtcp;
-		rtp_session_get_transports(mSessions.rtp_session, &meta_rtp, &meta_rtcp);
-		LinphoneCoreRtpTransportFactoryFunc rtpFunc = nullptr, rtcpFunc = nullptr;
-		void *rtpFuncData = nullptr, *rtcpFuncData = nullptr;
-		
-		switch(getType()){
-			case SalAudio:
-				rtpFunc = getCCore()->rtptf->audio_rtp_func;
-				rtpFuncData = getCCore()->rtptf->audio_rtp_func_data;
-				rtcpFunc = getCCore()->rtptf->audio_rtcp_func;
-				rtcpFuncData = getCCore()->rtptf->audio_rtcp_func_data;
-			break;
-			case SalVideo:
-				rtpFunc = getCCore()->rtptf->video_rtp_func;
-				rtpFuncData = getCCore()->rtptf->video_rtp_func_data;
-				rtcpFunc = getCCore()->rtptf->video_rtcp_func;
-				rtcpFuncData = getCCore()->rtptf->video_rtcp_func_data;
-			break;
-			case SalText:
-			break;
-			case SalOther:
-			break;
-		}
-		
-		if (!meta_rtp_transport_get_endpoint(meta_rtp)) {
-			lInfo() << this << " using custom RTP transport endpoint";
-			meta_rtp_transport_set_endpoint(meta_rtp, rtpFunc(rtpFuncData, mPortConfig.rtpPort));
-		}
-		if (!meta_rtp_transport_get_endpoint(meta_rtcp))
-			meta_rtp_transport_set_endpoint(meta_rtcp, rtcpFunc(rtcpFuncData, mPortConfig.rtcpPort));
-	}
 	setIceCheckList(mIceCheckList);
 	startEventHandling();
 	Stream::prepare();
@@ -1165,7 +1169,7 @@ void MS2Stream::dtlsEncryptionChanged(){
 }
 
 void MS2Stream::handleEvents () {
-	MediaStream *ms = getMediaStream(), *newMs = ms;
+	MediaStream *ms = getMediaStream();
 	if (ms) {
 		switch(ms->type){
 			case MSAudio:
@@ -1218,8 +1222,11 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
-				getIceService().handleIceEvent(ev);
-				newMs = getMediaStream();// Ice can change the stream and free the old one. Ensure to have an existing stream.
+				getCore().doLater([this, ev](){
+					getIceService().handleIceEvent(ev);
+					ortp_event_destroy(ev);
+				});
+				continue; // Go to next event.
 			break;
 		}
 		notifyStatsUpdated();
@@ -1227,10 +1234,6 @@ void MS2Stream::handleEvents () {
 		/* Let subclass handle the event.*/
 		handleEvent(ev);
 		ortp_event_destroy(ev);
-		if( newMs != ms){// Stream have been changed. Rehandle events with this one
-			handleEvents();
-			return;
-		}
 	}
 }
 

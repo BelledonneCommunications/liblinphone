@@ -109,12 +109,7 @@ LINPHONE_PUBLIC LinphonePlayer *linphone_core_create_local_player(LinphoneCore *
 * Create a recorder params that will hold parameters.
 * This recorder support WAVE and MATROSKA formats.
 * @param lc A #LinphoneCore object @notnil
-* @param device Recording #LinphoneAudioDevice. If NULL, the audio device set in #LinphoneCore will be used @maybenil
-* @param web_cam_name Recording web cam. If NULL, no video will be recorded. @maybenil
-* @param window_id Id of the drawing window. Depend of video out @maybenil
-* @param format #LinphoneRecorderFileFormat File format we want to record to.
-* @param video_codec Codec of the video if we record video. "vp8" or "h264" @maybenil
-* @return A pointer on the new instance. NULL if failed. @notnil
+* @return A pointer on the newly created instance. @notnil
 */
 LINPHONE_PUBLIC LinphoneRecorderParams *linphone_core_create_recorder_params(const LinphoneCore *lc);
 
@@ -3073,6 +3068,8 @@ bool_t linphone_core_agc_enabled(const LinphoneCore *core);
 
 /**
  * Enable or disable the microphone.
+ * This effectively enable or disable microphone (mute) for currently the running call or conference if any,
+ * as well as it applies to future currently running calls or conferences.
  * @param core #LinphoneCore object @notnil
  * @param enable TRUE to enable the microphone, FALSE to disable it.
  * @ingroup media_parameters
@@ -4550,15 +4547,6 @@ LINPHONE_PUBLIC void linphone_core_enable_tcap_line_merging(LinphoneCore *core, 
  * @param core #LinphoneCore object. @notnil
  * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
  * @ingroup media_parameters
- * @deprecated 16/12/2021 Use linphone_core_capability_negotiation_reinvite_enabled() instead.
- */
-LINPHONE_PUBLIC bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
-
-/**
- * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
- * @param core #LinphoneCore object. @notnil
- * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
- * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
 
@@ -4569,15 +4557,6 @@ LINPHONE_PUBLIC bool_t linphone_core_capability_negotiation_reinvite_enabled(con
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_zero_rtp_port_for_stream_inactive(LinphoneCore *lc, bool_t enable);
-
-/**
- * Check if RTP port is set to 0 when a stream is inactive
- * @param core #LinphoneCore object. @notnil
- * @return TRUE if the RTP port is set to 0 if the stream direction is inactive; FALSE otherwise.
- * @ingroup media_parameters
- * @deprecated 16/12/2021 Use linphone_core_zero_rtp_port_for_stream_inactive_enabled() instead.
- */
-LINPHONE_PUBLIC bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
 
 /**
  * Check if RTP port is set to 0 when a stream is inactive
@@ -7657,23 +7636,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char * linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
-/**
- * Check if RTP port is set to 0 when a stream is inactive
- * @param core #LinphoneCore object. @notnil
- * @return TRUE if the RTP port is set to 0 if the stream direction is inactive; FALSE otherwise.
- * @ingroup media_parameters
- * @deprecated 16/12/2021. Use linphone_core_zero_rtp_port_for_stream_inactive_enabled() instead.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc);
-
-/**
- * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
- * @param core #LinphoneCore object. @notnil
- * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
- * @ingroup media_parameters
- * @deprecated 16/12/2021. Use linphone_core_capability_negotiation_reinvite_enabled() instead.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
 
 #ifdef __cplusplus
 }

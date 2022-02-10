@@ -159,6 +159,10 @@ RtpTransport *TunnelManager::createRtpTransport(int port){
 	return t;
 }
 
+bool TunnelManager::isTunnelRtpTransport(const RtpTransport *tp)const{
+	return tp->t_recvfrom == customRecvfrom && tp->t_sendto == customSendto;
+}
+
 void TunnelManager::setUsername(const char* username) {
 	mUsername = std::string(username == NULL ? "" : username);
 }

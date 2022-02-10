@@ -102,6 +102,8 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 		// up in the list and the user won't know why
 	} else {
 		setLastUpdateTime(eventLog->getCreationTime());
+		q->getCore()->getPrivate()->mainDb->updateChatRoomLastUpdatedTime(q->getConferenceId(), lastUpdateTime);
+		
 		if (type == EventLog::Type::ConferenceChatMessage) {
 			setIsEmpty(false);
 		}
@@ -370,6 +372,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 
 	// Don't do it for flexisip backend chat rooms, we need to know if the real message id from CPIM was retrieved or not
 	// Based on that we will send IMDNs or not
+	// In case CPIM was enabled on a Basic chat room, IMDN message ID will be overwritten by real one
 	if (q->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
 		msg->getPrivate()->setImdnMessageId(messageId.str());
 	}

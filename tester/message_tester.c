@@ -159,7 +159,30 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	return create_file_transfer_message_from_file(chat_room, "sounds/sintel_trailer_opus_h264.mkv");
 }
 
-void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type, bool_t forward_message, bool_t reply_message) {
+void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type, bool_t forward_message, bool_t reply_message, bool_t allow_cpim_in_basic_chat_room_sender, bool_t allow_cpim_in_basic_chat_room_receiver) {
+	if (allow_cpim_in_basic_chat_room_sender) {
+		LinphoneCore *marieCore = marie->lc;
+		LinphoneAccount *marieAccount = linphone_core_get_default_account(marieCore);
+		const LinphoneAccountParams *marieAccountParams = linphone_account_get_params(marieAccount);
+		bool_t cpim_enabled = linphone_account_params_cpim_in_basic_chat_room_enabled(marieAccountParams);
+		BC_ASSERT_FALSE(cpim_enabled);
+		LinphoneAccountParams *clonedMarieAccountParams = linphone_account_params_clone(marieAccountParams);
+		linphone_account_params_enable_cpim_in_basic_chat_room(clonedMarieAccountParams, TRUE);
+		linphone_account_set_params(marieAccount, clonedMarieAccountParams);
+		linphone_account_params_unref(clonedMarieAccountParams);
+	}
+	if (allow_cpim_in_basic_chat_room_receiver) {
+		LinphoneCore *paulineCore = pauline->lc;
+		LinphoneAccount *paulineAccount = linphone_core_get_default_account(paulineCore);
+		const LinphoneAccountParams *paulineAccountParams = linphone_account_get_params(paulineAccount);
+		bool_t cpim_enabled = linphone_account_params_cpim_in_basic_chat_room_enabled(paulineAccountParams);
+		BC_ASSERT_FALSE(cpim_enabled);
+		LinphoneAccountParams *clonedPaulineAccountParams = linphone_account_params_clone(paulineAccountParams);
+		linphone_account_params_enable_cpim_in_basic_chat_room(clonedPaulineAccountParams, TRUE);
+		linphone_account_set_params(paulineAccount, clonedPaulineAccountParams);
+		linphone_account_params_unref(clonedPaulineAccountParams);
+	}
+
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
 
@@ -228,8 +251,17 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 						if (linphone_chat_room_get_history_size(paulineCr) > 1) {
 							LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
 							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recv_msg), text);
-							// basic chatroom as receiver, does no have forward information
-							BC_ASSERT_FALSE(linphone_chat_message_is_forward(recv_msg));
+							if (allow_cpim_in_basic_chat_room_sender) {
+								BC_ASSERT_TRUE(linphone_chat_message_is_forward(recv_msg));
+								BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(recv_msg), "Anonymous");
+								// Because of CPIM
+								BC_ASSERT_STRING_NOT_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
+							} else {
+								// On a basic chat room we won't have this information unless CPIM has been enabled, see linphone_account_params_cpim_in_basic_chat_room_enabled()
+								BC_ASSERT_FALSE(linphone_chat_message_is_forward(recv_msg));
+								// Because of no CPIM
+								BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
+							}
 							linphone_chat_message_unref(recv_msg);
 						}
 					}
@@ -243,8 +275,6 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 					BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
 														linphone_chat_message_get_from_address(recv_msg)));
 					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_reply_message_id(rmsg), linphone_chat_message_get_message_id(recv_msg));
-
-					// On a basic chat room we won't have the contents from the original message
 					const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
 					BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
 
@@ -260,11 +290,30 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 						if (linphone_chat_room_get_history_size(paulineCr) > 1) {
 							LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
 							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recv_msg), "<3");
-							BC_ASSERT_FALSE(linphone_chat_message_is_reply(recv_msg));
-							BC_ASSERT_PTR_NULL(linphone_chat_message_get_reply_message(recv_msg));
-							BC_ASSERT_FALSE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
-														linphone_chat_message_get_from_address(recv_msg)));
-							BC_ASSERT_TRUE(linphone_chat_message_get_reply_message_id(recv_msg) == NULL);
+
+							if (allow_cpim_in_basic_chat_room_sender) {
+								BC_ASSERT_TRUE(linphone_chat_message_is_reply(recv_msg));
+								BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
+															linphone_chat_message_get_from_address(msg)));
+								LinphoneChatMessage *replied_message = linphone_chat_message_get_reply_message(recv_msg);
+								BC_ASSERT_PTR_NOT_NULL(replied_message);
+								BC_ASSERT_PTR_EQUAL(replied_message, msg);
+								if (replied_message) {
+									linphone_chat_message_unref(replied_message);
+								}
+								// Because of CPIM
+								BC_ASSERT_STRING_NOT_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
+							} else {
+								// On a basic chat room we won't have this information unless CPIM has been enabled, see linphone_account_params_cpim_in_basic_chat_room_enabled()
+								BC_ASSERT_FALSE(linphone_chat_message_is_reply(recv_msg));
+								BC_ASSERT_PTR_NULL(linphone_chat_message_get_reply_message(recv_msg));
+								BC_ASSERT_FALSE(linphone_address_weak_equal(linphone_chat_message_get_reply_message_sender_address(rmsg), 
+															linphone_chat_message_get_from_address(recv_msg)));
+								BC_ASSERT_TRUE(linphone_chat_message_get_reply_message_id(recv_msg) == NULL);
+								// Because of no CPIM
+								BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_message_id(recv_msg), linphone_chat_message_get_call_id(recv_msg));
+							}
+
 							contents = linphone_chat_message_get_contents(recv_msg);
 							BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int , "%d");
 							linphone_chat_message_unref(recv_msg);
@@ -284,7 +333,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 }
 
 void text_message_base_with_text(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type) {
-	text_message_base_with_text_and_forward(marie, pauline, text, content_type, FALSE, FALSE);
+	text_message_base_with_text_and_forward(marie, pauline, text, content_type, FALSE, FALSE, FALSE, FALSE);
 }
 
 void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline) {
@@ -361,7 +410,99 @@ static void text_forward_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	
-	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", TRUE, FALSE);
+	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", TRUE, FALSE, FALSE, FALSE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_forward_message_cpim_enabled_backward_compat(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", TRUE, FALSE, TRUE, FALSE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_forward_message_cpim_enabled(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", TRUE, FALSE, TRUE, TRUE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_forward_transfer_message_not_downloaded(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
+
+	const char *send_filename = "sounds/sintel_trailer_opus_h264.mkv";
+	LinphoneChatMessage* msg = msg = create_file_transfer_message_from_file(room, send_filename);
+	linphone_chat_message_send(msg);
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDelivered,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1));
+	LinphoneChatMessage *marie_recv_msg = marie->stat.last_received_chat_message;
+	BC_ASSERT_PTR_NOT_NULL(marie_recv_msg);
+	if (marie_recv_msg != NULL) {
+		const LinphoneContent *content = (const LinphoneContent *)(linphone_chat_message_get_contents(marie_recv_msg)->data);
+		BC_ASSERT_TRUE(linphone_content_is_file_transfer(content));
+		// Do not download the file, transfer it as-is.
+
+		LinphoneChatRoom *marieCr;
+		const LinphoneAddress *msg_from = linphone_chat_message_get_from_address(marie_recv_msg);
+		/* We have special case for anonymous message, that of course won't come in the chatroom to pauline.*/
+		if (strcasecmp(linphone_address_get_username(msg_from), "anonymous") == 0){
+			marieCr = linphone_chat_message_get_chat_room(marie_recv_msg);
+		} else {
+			marieCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+		}
+		LinphoneChatMessage* fmsg = linphone_chat_room_create_forward_message(marieCr, marie_recv_msg);
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(fmsg);
+		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		linphone_chat_message_send(fmsg);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageDelivered,1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceivedWithFile,1));
+
+		LinphoneChatMessage *pauline_recv_msg = pauline->stat.last_received_chat_message;
+		BC_ASSERT_PTR_NOT_NULL(pauline_recv_msg);
+		if (pauline_recv_msg != NULL) {
+			LinphoneContent *content = (LinphoneContent *)(linphone_chat_message_get_contents(pauline_recv_msg)->data);
+			BC_ASSERT_TRUE(linphone_content_is_file_transfer(content));
+
+			cbs = linphone_chat_message_get_callbacks(pauline_recv_msg);
+			linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+			linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+			linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+			char *receive_filepath = bc_tester_file("receive_file.dump");
+			remove(receive_filepath);
+			linphone_chat_message_set_file_transfer_filepath(pauline_recv_msg, receive_filepath);
+			bc_free(receive_filepath);
+			linphone_chat_message_download_file(pauline_recv_msg);
+
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
+			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,55000))) {
+				char *send_filepath = bc_tester_res(send_filename);
+				compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(pauline_recv_msg));
+				remove(linphone_chat_message_get_file_transfer_filepath(pauline_recv_msg));
+				bc_free(send_filepath);
+			}
+		}
+		linphone_chat_message_unref(fmsg);
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
+	linphone_chat_message_unref(msg);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -371,7 +512,27 @@ static void text_reply_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	
-	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", FALSE, TRUE);
+	text_message_base_with_text_and_forward(marie, pauline, "Bli bli bli \n blu", "text/plain", FALSE, TRUE, FALSE, FALSE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_reply_message_cpim_enabled_backward_compat(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", FALSE, TRUE, TRUE, FALSE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void text_reply_message_cpim_enabled(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	
+	text_message_base_with_text_and_forward(marie, pauline, "Bla bla bla \n blu", "text/plain", FALSE, TRUE, TRUE, TRUE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -3893,7 +4054,12 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Create two basic chat rooms with same remote", create_two_basic_chat_room_with_same_remote),
 	TEST_NO_TAG("Text message", text_message),
 	TEST_NO_TAG("Text forward message", text_forward_message),
+	TEST_NO_TAG("Text forward message with CPIM enabled with backward compat", text_forward_message_cpim_enabled_backward_compat),
+	TEST_NO_TAG("Text forward message with CPIM enabled", text_forward_message_cpim_enabled),
+	TEST_NO_TAG("Text forward transfer message not downloaded", text_forward_transfer_message_not_downloaded),
 	TEST_NO_TAG("Text reply message", text_reply_message),
+	TEST_NO_TAG("Text reply message with CPIM enabled with backward compat", text_reply_message_cpim_enabled_backward_compat),
+	TEST_NO_TAG("Text reply message with CPIM enabled", text_reply_message_cpim_enabled),
 	TEST_NO_TAG("Text message UTF8", text_message_with_utf8),
 	TEST_NO_TAG("Text message with credentials from auth callback", text_message_with_credential_from_auth_callback),
 	TEST_NO_TAG("Text message with privacy", text_message_with_privacy),

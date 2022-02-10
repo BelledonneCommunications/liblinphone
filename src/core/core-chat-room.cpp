@@ -242,6 +242,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatR
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
 
 		if (params) {
+			if (params->getChatRoomBackend() != chatRoom->getCurrentParams()->getChatRoomBackend())
+				continue;
+
 			if (!params->isGroup() && !(capabilities & ChatRoom::Capabilities::OneToOne))
 				continue;
 
@@ -561,7 +564,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 				&& */capabilities & ChatRoom::Capabilities::Conference
 				&& capabilities & ChatRoom::Capabilities::OneToOne
 				&& encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
-			if (localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
+			if (chatRoom->getParticipants().size() > 0 
+					&& localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
 					&& participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress().getAddressWithoutGruu()) {
 				return chatRoom;
 			}

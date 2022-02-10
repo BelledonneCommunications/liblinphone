@@ -1002,6 +1002,8 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 				op->resetDescriptions();
 				if (op->processBodyForInvite(request) == SalReasonNone)
 					op->mRoot->mCallbacks.call_updating(op, true);
+			} else if (method == "NOTIFY") {
+				op->processNotify(event, serverTransaction);
 			} else {
 				lError() << "Unexpected method [" << method << "] for dialog state BELLE_SIP_DIALOG_EARLY";
 				unsupportedMethod(serverTransaction, request);

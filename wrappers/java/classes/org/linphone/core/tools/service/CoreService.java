@@ -25,6 +25,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -60,6 +61,7 @@ public class CoreService extends Service {
     private CoreListenerStub mListener;
     private Vibrator mVibrator;
     private boolean mIsVibrating;
+    private AudioManager mAudioManager;
 
     @Override
     public void onCreate() {
@@ -74,6 +76,7 @@ public class CoreService extends Service {
         }
 
         mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
         mListener = new CoreListenerStub() {
             @Override
@@ -88,13 +91,7 @@ public class CoreService extends Service {
                 Call call = core.getCurrentCall();
                 if (call != null) {
                     if (call.getDir() == Call.Dir.Incoming && core.isVibrationOnIncomingCallEnabled()) {
-                        if (mVibrator.hasVibrator()) {
-                            Log.i("[Core Service] Starting vibrator");
-                            DeviceUtils.vibrate(mVibrator);
-                            mIsVibrating = true;
-                        } else {
-                            Log.e("[Core Service] Device doesn't have a vibrator");
-                        }
+                        vibrate();
                     }
                 } else {
                     Log.w("[Core Service] Couldn't find current call...");
@@ -135,13 +132,7 @@ public class CoreService extends Service {
                     if (call != null) {
                         // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
                         if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
-                            if (mVibrator.hasVibrator()) {
-                                Log.i("[Core Service] Starting vibrator");
-                                DeviceUtils.vibrate(mVibrator);
-                                mIsVibrating = true;
-                            } else {
-                                Log.e("[Core Service] Device doesn't have a vibrator");
-                            }
+                            vibrate();
                         }
                     } else {
                         Log.w("[Core Service] Couldn't find current call...");
@@ -257,5 +248,19 @@ public class CoreService extends Service {
         Log.i("[Core Service] Stopping service as foreground");
         hideForegroundServiceNotification();
         mIsInForegroundMode = false;
+    }
+
+    private void vibrate() {
+        if (mVibrator != null && mVibrator.hasVibrator()) {
+            if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
+                Log.i("[Core Service] Do not vibrate as ringer mode is set to silent");
+            } else {
+                Log.i("[Core Service] Starting vibrator");
+                DeviceUtils.vibrate(mVibrator);
+                mIsVibrating = true;
+            }
+        } else {
+            Log.e("[Core Service] Device doesn't have a vibrator");
+        }
     }
 }

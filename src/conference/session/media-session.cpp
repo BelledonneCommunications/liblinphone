@@ -2330,7 +2330,10 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 		}
 	}
 	runIceCompletionTasks();
-	startDtlsOnAllStreams();
+	const char *mode = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "dtls_srtp_start", "ice");
+	if (strcmp(mode, "ice") == 0) {
+		startDtlsOnAllStreams();
+	}
 }
 
 void MediaSessionPrivate::onLosingPairsCompleted(IceService &service){

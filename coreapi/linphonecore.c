@@ -1475,6 +1475,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	linphone_core_enable_agc(lc, !!linphone_config_get_int(lc->config,"sound","agc",0));
 
 	linphone_core_set_playback_gain_db (lc,linphone_config_get_float(lc->config,"sound","playback_gain_db",0));
+	linphone_core_enable_mic(lc, TRUE);
 	linphone_core_set_mic_gain_db (lc,linphone_config_get_float(lc->config,"sound","mic_gain_db",0));
 	linphone_core_set_disable_record_on_mute(lc, linphone_config_get_bool(lc->config,"sound","disable_record_on_mute", FALSE));
 	linphone_core_set_remote_ringback_tone (lc,linphone_config_get_string(lc->config,"sound","ringback_tone",NULL));
@@ -2904,8 +2905,12 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
-	// MS Factory MUST be created after Android has been set, otherwise no camera will be detected !
-	lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
+	// MS Factory MUST be created after Android context has been set, otherwise no camera will be detected !
+	
+	// The ms2 factory must survive to linphone_core_stop(), otherwise it invalidates resources created by LinphonePlayer/LinphoneRecorder.
+	if (!lc->factory){
+		lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
+	}
 	lc->sal->setFactory(lc->factory);
 
 	belr::GrammarLoader::get().addPath(std::string(linphone_factory_get_top_resources_dir(lfactory)).append("/belr/grammars"));
@@ -4255,16 +4260,15 @@ static bctbx_list_t *make_routes_for_account(LinphoneAccount *account, const Lin
 	}
 	return ret;
 }
-
 /*
  * Returns a proxy config matching the given identity address
  * Prefers registered, then first registering matching, otherwise first matching
+ * returns NULL if none is found
  */
-LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri){
 	LinphoneProxyConfig *found_cfg = NULL;
 	LinphoneProxyConfig *found_reg_cfg = NULL;
 	LinphoneProxyConfig *found_noreg_cfg = NULL;
-	LinphoneProxyConfig *default_cfg=lc->default_proxy;
 	const bctbx_list_t *elem;
 
 	for (elem=linphone_core_get_proxy_config_list(lc);elem!=NULL;elem=elem->next){
@@ -4282,19 +4286,31 @@ LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, c
 	}
 	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
 	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-	if (!found_cfg) found_cfg=default_cfg; /*when no matching proxy config is found, use the default proxy config*/
+	
+	return found_cfg;
+}
+
+
+/*
+ * Returns a proxy config matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
+ * returns default proxy config if none is found
+ */
+LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+	LinphoneProxyConfig *found_cfg = linphone_core_lookup_proxy_by_identity_strict(lc, uri);
+	if (!found_cfg) found_cfg = lc->default_proxy;
 	return found_cfg;
 }
 
 /*
  * Returns an account matching the given identity address
  * Prefers registered, then first registering matching, otherwise first matching
+ * returns NULL if none is found
  */
-LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+LinphoneAccount * linphone_core_lookup_account_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri){
 	LinphoneAccount *found_acc = NULL;
 	LinphoneAccount *found_reg_acc= NULL;
 	LinphoneAccount *found_noreg_acc = NULL;
-	LinphoneAccount *default_acc=lc->default_account;
 	const bctbx_list_t *elem;
 
 	for (elem=linphone_core_get_account_list(lc);elem!=NULL;elem=elem->next){
@@ -4312,7 +4328,17 @@ LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, con
 	}
 	if (!found_acc && found_reg_acc)    found_acc = found_reg_acc;
 	else if (!found_acc && found_noreg_acc) found_acc = found_noreg_acc;
-	if (!found_acc) found_acc=default_acc; /*when no matching account is found, use the default account*/
+	return found_acc;
+}
+
+/*
+ * Returns an account matching the given identity address
+ * Prefers registered, then first registering matching, otherwise first matching
+ * returns default account if none is found
+ */
+LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri){
+	LinphoneAccount *found_acc = linphone_core_lookup_account_by_identity_strict(lc, uri);
+	if (!found_acc) found_acc = lc->default_account;
 	return found_acc;
 }
 
@@ -5436,13 +5462,13 @@ void linphone_core_reload_sound_devices(LinphoneCore* lc) {
 			input_dev_id_copy = ms_strdup(input_dev_id);
 		}
 	}
-
-// Reload
+	
+	// Reload
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
-
-// Set selection
-
+	
+	// Set selection
+	
 	linphone_core_set_ringer_device(lc, ringer_copy);
 	if (ringer_copy != NULL)
 		ms_free(ringer_copy);
@@ -5646,18 +5672,6 @@ bool_t linphone_core_echo_limiter_enabled(const LinphoneCore *lc){
 	return lc->sound_conf.ea;
 }
 
-static void linphone_core_mute_audio_stream(LinphoneCore *lc, AudioStream *st, bool_t val) {
-	if (val) {
-		audio_stream_set_mic_gain(st, 0);
-	} else {
-		audio_stream_set_mic_gain_db(st, lc->sound_conf.soft_mic_lev);
-	}
-
-	if ( linphone_core_get_rtp_no_xmit_on_audio_mute(lc) ){
-		audio_stream_mute_rtp(st,val);
-	}
-}
-
 void linphone_core_mute_mic(LinphoneCore *lc, bool_t val){
 	linphone_core_enable_mic(lc, !val);
 }
@@ -5671,28 +5685,20 @@ void linphone_core_enable_mic(LinphoneCore *lc, bool_t enable) {
 	const bctbx_list_t *list;
 	const bctbx_list_t *elem;
 
+	lc->sound_conf.mic_enabled = enable; /* this is a global switch read everywhere the microphone is used. */
+	/* apply to conference and calls */
 	if (linphone_core_is_in_conference(lc)){
-		linphone_conference_mute_microphone(lc->conf_ctx, !enable);
+		linphone_conference_mute_microphone(lc->conf_ctx, linphone_conference_microphone_is_muted(lc->conf_ctx));
 	}
 	list = linphone_core_get_calls(lc);
 	for (elem = list; elem != NULL; elem = elem->next) {
 		call = (LinphoneCall *)elem->data;
-		linphone_call_set_microphone_muted(call, !enable);
-		AudioStream *astream = reinterpret_cast<AudioStream *>(linphone_call_get_stream(call, LinphoneStreamTypeAudio));
-		if (astream)
-			linphone_core_mute_audio_stream(lc, astream, linphone_call_get_microphone_muted(call));
+		linphone_call_set_microphone_muted(call, linphone_call_get_microphone_muted(call));
 	}
 }
 
 bool_t linphone_core_mic_enabled(LinphoneCore *lc) {
-	LinphoneCall *call=linphone_core_get_current_call(lc);
-	if (linphone_core_is_in_conference(lc)){
-		return !linphone_conference_microphone_is_muted(lc->conf_ctx);
-	}else if (call==NULL){
-		ms_warning("%s(): No current call!", __FUNCTION__);
-		return TRUE;
-	}
-	return !linphone_call_get_microphone_muted(call);
+	return lc->sound_conf.mic_enabled;
 }
 
 bool_t linphone_core_is_rtp_muted(LinphoneCore *lc){
@@ -6600,6 +6606,7 @@ void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 		}
 	}
 #endif
+	if (lc->platform_helper) getPlatformHelpers(lc)->setDeviceRotation(rotation);
 }
 
 int linphone_core_get_camera_sensor_rotation(LinphoneCore *lc) {
@@ -7302,8 +7309,6 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	}
 #endif
 
-	lc->msevq=NULL;
-
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
 #if TARGET_OS_IPHONE
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStarted();
@@ -7401,8 +7406,6 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
 		lc->callsCache = NULL;
 	}
-	ms_factory_destroy(lc->factory);
-	lc->factory = NULL;
 
 #if TARGET_OS_IPHONE
 	if (lc->platform_helper) {
@@ -7482,6 +7485,12 @@ void _linphone_core_uninit(LinphoneCore *lc)
 
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
+	if (lc->msevq){
+		ms_factory_destroy_event_queue(lc->factory);
+		lc->msevq=NULL;
+	}
+	ms_factory_destroy(lc->factory);
+	lc->factory = NULL;
 	bctbx_uninit_logger();
 }
 
@@ -8086,9 +8095,6 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
-bool_t linphone_core_is_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
-	return linphone_core_zero_rtp_port_for_stream_inactive_enabled(lc);
-}
 
 bool_t linphone_core_zero_rtp_port_for_stream_inactive_enabled(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", 0);
@@ -8098,12 +8104,9 @@ void linphone_core_enable_zero_rtp_port_for_stream_inactive(LinphoneCore *lc, bo
 	linphone_config_set_int(lc->config, "sip", "zero_rtp_port_for_stream_inactive", (int)enable);
 }
 
+
 bool_t linphone_core_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
-}
-
-bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
-	return linphone_core_capability_negotiation_reinvite_enabled(lc);
 }
 
 void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *lc, bool_t enable) {

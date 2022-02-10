@@ -35,9 +35,7 @@ using namespace std;
 using namespace LinphonePrivate;
 
 
-// =============================================================================
-// TODO: To remove!
-// =============================================================================
+
 
 /*This function is not static because used internally in linphone-daemon project*/
 void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t muted) {

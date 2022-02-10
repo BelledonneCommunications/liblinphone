@@ -23,6 +23,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
+
 # CMP0077 policy is required by Flexisip build. Remove it once the CMake required
 # version is higer or equal to 3.13.
 if(NOT CMAKE_VERSION VERSION_LESS 3.13)

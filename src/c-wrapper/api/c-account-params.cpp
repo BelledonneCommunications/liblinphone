@@ -383,4 +383,11 @@ bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccou
 	return AccountParams::toCpp(params)->rtpBundleAssumptionEnabled();
 }
 
+bool_t linphone_account_params_cpim_in_basic_chat_room_enabled(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->isCpimMessagesAllowedInBasicChatRooms();
+}
+
+void linphone_account_params_enable_cpim_in_basic_chat_room(LinphoneAccountParams *params, bool_t enable) {
+	AccountParams::toCpp(params)->setCpimMessagesAllowedInBasicChatRooms(enable);
+}
 

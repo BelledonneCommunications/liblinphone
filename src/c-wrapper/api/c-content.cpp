@@ -511,7 +511,24 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 		size_t size = linphone_content_get_size(content);
 		char *buffer = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(content)->getBodyAsUtf8String().c_str());
 		const char *boundary = L_STRING_TO_C(contentType.getParameter("boundary").getValue());
-		belle_sip_multipart_body_handler_t *bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundary);
+		belle_sip_multipart_body_handler_t *bh = NULL;
+		if( boundary)
+			bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundary);
+		else if (size > 2){
+			size_t startIndex = 2, index;
+			while(startIndex < size && (buffer[startIndex] != '-' || buffer[startIndex-1] != '-' // Take accout of first "--"
+					|| (startIndex > 2 && buffer[startIndex-2] != '\n') ))	// Must be at the beginning of the line
+				++startIndex;
+			index = startIndex;
+			while(index < size && buffer[index] != '\n' && buffer[index] != '\r')
+				++index;
+			if( startIndex != index){
+				char * boundaryStr = bctbx_strndup(buffer+startIndex, (int)(index-startIndex));
+				bh = belle_sip_multipart_body_handler_new_from_buffer(buffer, size, boundaryStr);
+				bctbx_free(boundaryStr);
+			}
+		}
+		
 		bodyHandler = reinterpret_cast<SalBodyHandler *>(BELLE_SIP_BODY_HANDLER(bh));
 		bctbx_free(buffer);
 	} else {

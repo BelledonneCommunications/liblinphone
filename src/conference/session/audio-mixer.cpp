@@ -123,11 +123,12 @@ void MS2AudioMixer::addLocalParticipant(){
 				captcard,
 				linphone_core_echo_cancellation_enabled(core)
 				);
-	_post_configure_audio_stream(st, core, FALSE);
+	MS2AudioStream::postConfigureAudioStream(st, core, FALSE);
 	mLocalParticipantStream = st;
 	mLocalEndpoint = ms_audio_endpoint_get_from_stream(st, FALSE);
 	ms_message("Conference: adding local endpoint");
 	ms_audio_conference_add_member(mConference, mLocalEndpoint);
+	enableMic(mLocalMicEnabled);
 }
 
 void MS2AudioMixer::removeLocalParticipant(){
@@ -159,7 +160,7 @@ void MS2AudioMixer::setRecordPath(const std::string &path){
 void MS2AudioMixer::enableMic(bool value){
 	mLocalMicEnabled = value;
 	if (mLocalEndpoint)
-		ms_audio_conference_mute_member(mConference, mLocalEndpoint, !value);
+		ms_audio_conference_mute_member(mConference, mLocalEndpoint, !(value && linphone_core_mic_enabled(mSession.getCore().getCCore())));
 }
 
 bool MS2AudioMixer::micEnabled()const{

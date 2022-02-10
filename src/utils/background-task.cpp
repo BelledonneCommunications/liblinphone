@@ -75,11 +75,13 @@ void BackgroundTask::stop () {
 	if (sal) {
 		if (mTimeout) {
 			sal->cancelTimer(mTimeout);
-			belle_sip_object_unref(mTimeout);
-			mTimeout = nullptr;
 		}
 	} else {
 		lInfo() << "Sal already null";
+	}
+	if (mTimeout) {
+		belle_sip_object_unref(mTimeout);
+		mTimeout = nullptr;
 	}
 	mId = 0;
 }

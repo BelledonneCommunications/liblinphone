@@ -63,7 +63,17 @@ void BasicChatRoom::allowMultipart (bool value) {
 
 bool BasicChatRoom::canHandleCpim () const {
 	L_D();
-	return d->cpimAllowed;
+	bool cpimAllowedInBasicChatRooms = false;
+
+	LinphoneCore *lc = getCore()->getCCore();
+	Address addr(conferenceId.getLocalAddress().asAddress());
+	LinphoneAccount *account = linphone_core_lookup_account_by_identity(lc, L_GET_C_BACK_PTR(&addr));
+	if (account) {
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		cpimAllowedInBasicChatRooms = linphone_account_params_cpim_in_basic_chat_room_enabled(params);
+	}
+
+	return d->cpimAllowed || cpimAllowedInBasicChatRooms;
 }
 
 bool BasicChatRoom::canHandleMultipart () const {

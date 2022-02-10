@@ -167,24 +167,22 @@ class JavaTranslator:
         properties = []
         if _property.getter is not None:
             property = self.translate_method(_property.getter, _hasCoreAccessor)
-            properties.append(property)
             name = property["name"]
             if name.endswith("Enabled") and not (name.startswith("is") or name.startswith("get")):
                 newName = self.fix_getter_property_name(name)
-                #print('Fixme getter: {0}, using {1} instead'.format(name, newName))
                 property = self.translate_method(_property.getter, _hasCoreAccessor, newName)
-                property['briefDoc']["hidden"] = True
+                properties.append(property)
+            else:
                 properties.append(property)
                 
         if _property.setter is not None:
             property = self.translate_method(_property.setter, _hasCoreAccessor)
-            properties.append(property)
             name = property["name"]
             if name.startswith("enable"):
                 newName = self.fix_setter_property_name(name)
-                #print('Fixme setter: {0}, using {1} instead'.format(name, newName))
                 property = self.translate_method(_property.setter, _hasCoreAccessor, newName)
-                property['briefDoc']["hidden"] = True
+                properties.append(property)
+            else:
                 properties.append(property)
 
         return properties
@@ -193,20 +191,22 @@ class JavaTranslator:
         properties = []
         if _property.getter is not None:
             property = self.translate_jni_method(class_, _property.getter)
-            properties.append(property)
             name = property["methodName"]
             if property["name"].endswith("Enabled") and not (name.startswith("is") or name.startswith("get")):
                 newName = self.fix_getter_property_name(name)
                 property = self.translate_jni_method(class_, _property.getter, False, newName)
                 properties.append(property)
+            else:
+                properties.append(property)
 
         if _property.setter is not None:
             property = self.translate_jni_method(class_, _property.setter)
-            properties.append(property)
             if property["notEmpty"] == True and property["methodName"].startswith("enable"):
                 name = property["methodName"]
                 newName = self.fix_setter_property_name(name)
                 property = self.translate_jni_method(class_, _property.setter, False, newName)
+                properties.append(property)
+            else:
                 properties.append(property)
 
         return properties

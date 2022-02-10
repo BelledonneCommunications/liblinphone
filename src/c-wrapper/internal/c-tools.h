@@ -818,8 +818,13 @@ LINPHONE_END_NAMESPACE
 // -----------------------------------------------------------------------------
 
 // String conversions between C/C++.
-#define L_STRING_TO_C(STR) ((STR).empty() ? NULL : (STR).c_str())
-#define L_C_TO_STRING(STR) ((STR) == NULL ? std::string() : (STR))
+inline const char * L_STRING_TO_C(const std::string& input) {
+	return input.empty() ? NULL : input.c_str();
+}
+
+inline std::string L_C_TO_STRING(const char *input) {
+	return (input == NULL) ? std::string() : std::string(input);
+}
 
 // Call the init function of wrapped C object.
 #define L_INIT(C_TYPE) _linphone_ ## C_TYPE ## _init()

@@ -82,6 +82,7 @@ set(SIPP_FILES
 	sipp/call_with_multiple_video_mline_in_sdp.xml
 	sipp/call_with_video_mline_before_audio_in_sdp.xml
 	sipp/sip_update_within_icoming_reinvite_with_no_sdp.xml
+	sipp/call_with_transfer_incoming_ringing_call.xml
 )
 
 set(CERTIFICATE_ALT_FILES
@@ -151,6 +152,7 @@ set(RC_FILES
 	rcfiles/marie2_rc
 	rcfiles/marie_bodyless_rc
 	rcfiles/marie_dependent_proxy_rc
+	rcfiles/marie_dtls_srtp_immediate_rc
 	rcfiles/marie_dual_proxy_2_rc
 	rcfiles/marie_dual_proxy_rc
 	rcfiles/marie_early_rc
@@ -189,6 +191,7 @@ set(RC_FILES
 	rcfiles/multi_account_rc
 	rcfiles/pauline_alt_rc
 	rcfiles/pauline_as_friend_rc
+	rcfiles/pauline_dtls_srtp_immediate_rc
 	rcfiles/pauline_external_rc
 	rcfiles/pauline_h264_rc
 	rcfiles/pauline_lime_x3dh_rc

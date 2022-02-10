@@ -1210,11 +1210,6 @@ long long MainDbPrivate::insertConferenceEvent (const shared_ptr<EventLog> &even
 		*session << "INSERT INTO conference_event (event_id, chat_room_id)"
 			" VALUES (:eventId, :chatRoomId)", soci::use(eventId), soci::use(curChatRoomId);
 
-		const tm &lastUpdateTime = Utils::getTimeTAsTm(eventLog->getCreationTime());
-		*session << "UPDATE chat_room SET last_update_time = :lastUpdateTime"
-			" WHERE id = :chatRoomId", soci::use(lastUpdateTime),
-			soci::use(curChatRoomId);
-
 		if (eventLog->getType() == EventLog::Type::ConferenceTerminated)
 			*session << "UPDATE chat_room SET flags = 1, last_notify_id = 0 WHERE id = :chatRoomId", soci::use(curChatRoomId);
 		else if (eventLog->getType() == EventLog::Type::ConferenceCreated)
@@ -4314,6 +4309,24 @@ void MainDb::updateChatRoomConferenceId (const ConferenceId oldConferenceId, con
 		tr.commit();
 
 		d->cache(newConferenceId, dbChatRoomId);
+	};
+#endif
+}
+
+
+
+void MainDb::updateChatRoomLastUpdatedTime (const ConferenceId &conferenceId, time_t lastUpdatedTime) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		const tm &lastUpdateTimeTm = Utils::getTimeTAsTm(lastUpdatedTime);
+
+		*d->dbSession.getBackendSession() << "UPDATE chat_room SET last_update_time = :lastUpdateTime"
+			" WHERE id = :chatRoomId", soci::use(lastUpdateTimeTm),
+			soci::use(dbChatRoomId);
+
+		tr.commit();
 	};
 #endif
 }

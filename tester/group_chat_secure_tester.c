@@ -350,6 +350,7 @@ static void group_chat_lime_x3dh_stop_start_core_curve(const int curveId) {
 	linphone_core_stop(marie->lc);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalShutdown, initialMarieStats.number_of_LinphoneGlobalShutdown + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalOff, initialMarieStats.number_of_LinphoneGlobalOff + 1, 5000));
+	initialMarieStats = marie->stat;
 	linphone_core_start(marie->lc);
 
 	// restore dns setup, proxy and auth info

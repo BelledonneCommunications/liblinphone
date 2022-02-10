@@ -125,7 +125,7 @@ SalCustomSdpAttribute * sal_custom_sdp_attribute_append(SalCustomSdpAttribute *c
 		desc = (belle_sdp_session_description_t *)belle_sdp_session_description_new();
 		belle_sip_object_ref(desc);
 	}
-	attr = BELLE_SDP_ATTRIBUTE(belle_sdp_raw_attribute_create(name, value));
+	attr = BELLE_SDP_ATTRIBUTE(belle_sdp_attribute_create(name, value));
 	if (attr == NULL) {
 		belle_sip_error("Fail to create custom SDP attribute.");
 		return (SalCustomSdpAttribute*)desc;

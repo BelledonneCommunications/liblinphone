@@ -110,6 +110,7 @@ private:
 	void updateStats();
 	void initMulticast(const OfferAnswerContext &params);
 	void configureRtpSession(RtpSession *session);
+	void configureRtpTransport(RtpSession *session);
 	void applyJitterBufferParams (RtpSession *session);
 	void setupSrtp(const OfferAnswerContext &params);
 	void setupDtlsParams(MediaStream *ms);
@@ -183,6 +184,7 @@ public:
 	
 	/* Yeah quite ugly: this function is used externally to configure raw mediastreamer2 AudioStreams.*/
 	static void postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted);
+	static void enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, bool enabled);
 	MSSndCard *getCurrentPlaybackCard()const{ return mCurrentPlaybackCard; }
 	MSSndCard *getCurrentCaptureCard()const{ return mCurrentCaptureCard; }
 	
@@ -216,6 +218,8 @@ private:
 	bool mRestartStreamRequired = false;	// Set to true if the stream need to stop on render().
 	static constexpr const int ecStateMaxLen = 1048576; /* 1Mo */
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
+	
+	static void audioRouteChangeCb(void* userData, bool_t needReloadSoundDevices, char* newInputDevice, char* newOutputDevice);
 };
 
 class MS2VideoControl : public VideoControlInterface{
