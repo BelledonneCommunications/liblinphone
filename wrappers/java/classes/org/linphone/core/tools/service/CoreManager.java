@@ -542,8 +542,14 @@ public class CoreManager {
     }
 
     private void updateOrientation(int displayId) {
+        Display display = mDisplayManager.getDisplay(displayId);
+        if (display == null) {
+            Log.e("[Core Manager] Failed to get display from id: ", displayId);
+            return;
+        }
+
         int degrees = 270;
-        int orientation = mDisplayManager.getDisplay(displayId).getRotation();
+        int orientation = display.getRotation();
         if (orientation == Surface.ROTATION_0) {
             degrees = 0;
         } else if (orientation == Surface.ROTATION_90) {
