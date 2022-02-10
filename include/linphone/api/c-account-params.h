@@ -726,7 +726,7 @@ LINPHONE_PUBLIC void linphone_account_params_enable_rtp_bundle_assumption(Linpho
  */
 LINPHONE_PUBLIC bool_t linphone_account_params_rtp_bundle_assumption_enabled(const LinphoneAccountParams *params);
 
-/*
+/**
  * Indicates whether chat messages sent by this account in a #LinphoneChatRoomBackendBasic chat room will be using CPIM format or not.
  * By default SIP SIMPLE format is used for "basic" chat rooms, CPIM is only used for #LinphoneChatRoomBackendFlexisipChat chat rooms.
  * @see https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Instant%20Messaging/Reply%20to%20a%20specific%20message/

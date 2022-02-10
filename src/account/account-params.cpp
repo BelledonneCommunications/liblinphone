@@ -185,7 +185,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 		mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
 	}
 
-	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
+	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", "");
 	string audioVideoConferenceFactoryUri = linphone_config_get_string(config, key, "audio_video_conference_factory_uri", "");
 	mAudioVideoConferenceFactoryAddress = nullptr;
 	if (!audioVideoConferenceFactoryUri.empty()) {
