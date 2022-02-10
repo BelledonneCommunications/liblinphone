@@ -46,7 +46,7 @@ static void flexiapiPing() {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 2000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 
 	BC_ASSERT_STRING_EQUAL(resolvedContent.c_str(), "pong");
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
@@ -71,7 +71,7 @@ static void flexiapiAccounts() {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 2000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 
 	// The internal resolver will handle a 401 and then try to re-send
 	// the request with a proper DIGEST authentication
@@ -89,7 +89,7 @@ static void flexiapiAccounts() {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 2000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 	BC_ASSERT_STRING_EQUAL(resolvedDomain.c_str(), "sip.example.org");
 
@@ -112,7 +112,7 @@ static void flexiapiChangeEmail() {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
@@ -145,7 +145,7 @@ static void flexiapiCreateAccount() {
 			id = response.json()["id"].asInt();
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	code = 0;
@@ -163,7 +163,7 @@ static void flexiapiCreateAccount() {
 			resolvedActivated = response.json()["activated"].asBool();
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 	BC_ASSERT_TRUE(resolvedActivated);
 	BC_ASSERT_STRING_EQUAL(resolvedUsername.c_str(), username.c_str());
@@ -179,7 +179,7 @@ static void flexiapiCreateAccount() {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
@@ -213,7 +213,7 @@ static void flexiapiChangePassword() {
 			fetched = 1;
 		});
 
-	wait_for_until(pauline->lc, NULL, &fetched, 1, 3000);
+	wait_for_until(pauline->lc, NULL, &fetched, 1, 10000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_address_unref(identityAddress);
