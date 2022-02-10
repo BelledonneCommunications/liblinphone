@@ -23,6 +23,9 @@
 #include "ldap-contact-search.h"
 #include "ldap-contact-fields.h"
 #include "contact_providers_priv.h"
+#include "linphone/api/c-types.h"
+#include "ldap.h"
+#include "ldap-params.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -86,7 +89,15 @@ LdapContactProvider::~LdapContactProvider(){
 
 std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(const std::shared_ptr<Core> &core){
 	std::vector<std::shared_ptr<LdapContactProvider> > providers;
-	LpConfig * lConfig = linphone_core_get_config(core->getCCore());
+	auto ldapList = core->getLdapList();
+
+	for(auto itLdap : ldapList){
+		auto params = itLdap->getLdapParams();
+		if(params->getEnabled())
+			providers.push_back(std::make_shared<LdapContactProvider>(core, params->getConfig()));
+	}
+/*
+ * LpConfig * lConfig = linphone_core_get_config(core->getCCore());
 // Read configuration
 	const bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lConfig);
 	for(auto itSections = bcSections; itSections; itSections=itSections->next) {
@@ -109,7 +120,7 @@ std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(c
 			if(config["enable"] == "1")
 				providers.push_back(std::make_shared<LdapContactProvider>(core, config));
 		}
-	}
+	}*/
 	return providers;
 }
 
@@ -121,7 +132,7 @@ void LdapContactProvider::initializeLdap(){
 	if( ret != LDAP_SUCCESS )
 		ms_error( "[LDAP] Problem initializing default Protocol version to 3 : %x (%s)", ret, ldap_err2string(ret));
 // Setting global options for the next initialization. These options cannot be done with the LDAP instance directly.
-	if(mConfig.count("debug")>0 && mConfig["debug"] == "1")
+	if(mConfig.count("debug")>0 && LinphoneLdapDebugLevelVerbose == static_cast<LinphoneLdapDebugLevel>(atoi(mConfig["debug"].c_str())))
 		debLevel = 7;
 	ret = ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, &debLevel);
 	if( ret != LDAP_SUCCESS )
@@ -368,11 +379,11 @@ bool LdapContactProvider::iterate(void *data) {
 
 		if(provider->mCurrentAction == ACTION_BIND){ // Careful : Binds are not thread-safe
 			ms_debug("[LDAP] ACTION_BIND");
-			std::string auth_mechanism = provider->mConfig.at("auth_method");
+			LinphoneLdapAuthMethod auth_mechanism = static_cast<LinphoneLdapAuthMethod>(atoi(provider->mConfig.at("auth_method").c_str()));
 			int ret=0;
-			if( (auth_mechanism == "ANONYMOUS") || (auth_mechanism == "SIMPLE") ) {
+			if( (auth_mechanism == LinphoneLdapAuthMethodAnonymous) || (auth_mechanism == LinphoneLdapAuthMethodSimple) ) {
 				std::string bindDn, password;
-				if( auth_mechanism == "SIMPLE" && provider->mConfig.count("bind_dn") > 0) {
+				if( auth_mechanism == LinphoneLdapAuthMethodSimple && provider->mConfig.count("bind_dn") > 0) {
 					bindDn = provider->mConfig.at("bind_dn");
 					password = provider->mConfig.at("password");
 				}//else : anonymous connection
@@ -384,7 +395,7 @@ bool LdapContactProvider::iterate(void *data) {
 				} else {
 					int err=0;
 					ldap_get_option(provider->mLd, LDAP_OPT_RESULT_CODE, &err);
-					ms_error("[LDAP] ldap_sasl_bind error returned %x, err %x (%s), auth_method: %s", ret, err, ldap_err2string(err), auth_mechanism.c_str() );
+					ms_error("[LDAP] ldap_sasl_bind error returned %x, err %x (%s), auth_method: %d", ret, err, ldap_err2string(err), auth_mechanism );
 					provider->mCurrentAction = ACTION_ERROR;
 					provider->mAwaitingMessageId = 0;
 				}
