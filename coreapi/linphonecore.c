@@ -8882,3 +8882,11 @@ void linphone_core_send_conference_information(LinphoneCore *core, const Linphon
 	linphone_content_unref(content);
 	bctbx_list_free(participants_copy);
 }
+
+bool_t linphone_core_ldap_available(LinphoneCore *core) {
+#ifdef LDAP_ENABLED
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}

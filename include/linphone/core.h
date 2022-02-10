@@ -6152,6 +6152,14 @@ LINPHONE_PUBLIC long linphone_core_get_default_ephemeral_lifetime(const Linphone
  */
 LINPHONE_PUBLIC void linphone_core_send_conference_information(LinphoneCore *core, const LinphoneConferenceInfo *conference_information, const char *text);
 
+/**
+ * Tells if LDAP is available
+ * @param core LinphoneCore object @notnil
+ * @ingroup misc
+ * @return TRUE if LDAP is available, FALSE otherwise
+**/
+LINPHONE_PUBLIC bool_t linphone_core_ldap_available(LinphoneCore *core);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
