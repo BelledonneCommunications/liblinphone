@@ -1768,7 +1768,7 @@ static void transfer_message_download_cancelled(void) {
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferError, 1, int, "%d");
 
 	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
