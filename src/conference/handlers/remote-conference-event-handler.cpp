@@ -351,6 +351,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							lError() << "Unrecognized media type " << mediaType;
 						}
 					}
+
 					// Do not notify media capability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
 					if(mediaCapabilityChanged && !isFullState && (state != StateType::full)) {
 						conf->notifyParticipantDeviceMediaCapabilityChanged(
@@ -361,6 +362,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					}
 
 					bool mediaAvailabilityChanged = device->updateStreamAvailabilities();
+
 					// Do not notify availability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
 					if(mediaAvailabilityChanged && !isFullState && (state != StateType::full)) {
 						conf->notifyParticipantDeviceMediaAvailabilityChanged(

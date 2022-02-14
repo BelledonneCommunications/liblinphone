@@ -292,10 +292,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 			shared_ptr<ParticipantDevice> device = p->addDevice(session);
 			device->updateMediaCapabilities();
 			device->updateStreamAvailabilities();
-			auto op = session->getPrivate()->getOp();
-			if (op) {
-				device->setLayout(MediaSession::computeConferenceLayout(op->getRemoteMediaDescription()));
-			}
 			device->setState(ParticipantDevice::State::ScheduledForJoining);
 			lInfo() << "Participant with address " << call->getRemoteAddress()->asString() << " has added device with session " << session << " (address " << device->getAddress() << ") to conference " << getConferenceAddress();
 			return true;
@@ -2895,7 +2891,7 @@ void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubject
 }
 
 void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	if (getLayout() != ConferenceLayout::Legacy) {
+	if ((getLayout() != ConferenceLayout::Legacy) && (!isMe(device->getAddress()))) {
 		lInfo() << "Sending re-INVITE because device " << device->getAddress() << " has changed its stream availability";
 		updateMainSession();
 	}

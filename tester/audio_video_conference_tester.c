@@ -3203,6 +3203,9 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	stats initial_pauline_stat;
 	stats initial_laure_stat;
 
+	linphone_core_set_default_conference_layout(pauline->lc, layout);
+	linphone_core_set_default_conference_layout(laure->lc, layout);
+
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall* marie_call_laure;

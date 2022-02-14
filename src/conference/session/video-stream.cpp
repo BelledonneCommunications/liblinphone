@@ -448,9 +448,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
 		if (isRemote && dir == MediaStreamSendOnly) {
 			MS2Stream *videoMainStream = dynamic_cast<MS2Stream *>(getGroup().lookupMainStream(SalVideo));
-			MediaStream *ms = videoMainStream->getMediaStream();
-			lInfo() << "[mix to all] main stream dir " << media_stream_get_direction(ms);
-			video_stream_enable_thumbnail(mStream, (media_stream_get_direction(ms) == MediaStreamSendRecv));
+			if (videoMainStream) {
+				MediaStream *ms = videoMainStream->getMediaStream();
+				lInfo() << "[mix to all] main stream dir " << media_stream_get_direction(ms);
+				video_stream_enable_thumbnail(mStream, (media_stream_get_direction(ms) == MediaStreamSendRecv));
+			}
 		}
 		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_thumbnail_enabled(mStream));
 	}

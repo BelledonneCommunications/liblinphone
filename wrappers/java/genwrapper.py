@@ -869,7 +869,6 @@ class GenWrapper:
             'linphone_core_set_session_expires_enabled',
             'linphone_core_get_session_expires_enabled',
             'linphone_core_is_capability_negotiation_reinvite_enabled',
-            'linphone_core_is_zero_rtp_port_for_stream_inactive_enabled',
             'linphone_core_is_friend_list_subscription_enabled',
             'linphone_core_set_auto_download_voice_recordings_enabled',
             'linphone_core_is_auto_download_voice_recordings_enabled',

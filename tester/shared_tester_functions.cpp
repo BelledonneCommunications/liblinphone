@@ -200,7 +200,6 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 		if (stats2)
 			linphone_call_stats_unref(stats2);
 	}
-
 	linphone_call_unref(c1);
 	linphone_call_unref(c2);
 	if (audio_enabled) global_success = global_success && audio_success;
@@ -349,7 +348,6 @@ int _linphone_call_get_nb_text_steams(const LinphoneCall * call) {
 bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device) {
 
 	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
-	
 	if (session) {
 		return (session->getCurrentParams()->audioEnabled()) ? TRUE : FALSE;
 	}
@@ -359,7 +357,6 @@ bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantD
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device) {
 
 	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
-	
 	if (session) {
 		return (session->getCurrentParams()->videoEnabled()) ? TRUE : FALSE;
 	}
@@ -369,7 +366,6 @@ bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantD
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device) {
 
 	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
-	
 	if (session) {
 		return (session->getCurrentParams()->realtimeTextEnabled()) ? TRUE : FALSE;
 	}
@@ -401,7 +397,7 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 		}
 
 		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
-		
+
 		int nb = layout == LinphoneConferenceLayoutLegacy ? 1 : 3;
 		BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");

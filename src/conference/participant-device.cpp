@@ -195,7 +195,6 @@ LinphoneMediaDirection ParticipantDevice::getStreamCapability(const LinphoneStre
 
 bool ParticipantDevice::setStreamCapability(const LinphoneMediaDirection & direction, const LinphoneStreamType type) {
 	const bool idxFound = (mediaCapabilities.find(type) != mediaCapabilities.cend());
-
 	if (!idxFound || (mediaCapabilities[type] != direction)) {
 		mediaCapabilities[type] = direction;
 		_linphone_participant_device_notify_stream_capability_changed(toC(), direction, type);
@@ -273,8 +272,8 @@ bool ParticipantDevice::updateMediaCapabilities() {
 				audioDir = participantParams->getAudioDirection();
 				videoDir = participantParams->getVideoDirection();
 			}
-
 		}
+
 		textDir = LinphoneMediaDirectionSendRecv;
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled, videoDir), LinphoneStreamTypeVideo);
@@ -289,7 +288,8 @@ bool ParticipantDevice::updateMediaCapabilities() {
 }
 
 bool ParticipantDevice::computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const {
-	return (computeDeviceMediaDirection(conferenceEnable, callEnable, dir) != LinphoneMediaDirectionInactive);
+	const auto & resultDir = computeDeviceMediaDirection(conferenceEnable, callEnable, dir);
+	return ((resultDir == LinphoneMediaDirectionSendOnly) || (resultDir == LinphoneMediaDirectionSendRecv));
 }
 
 bool ParticipantDevice::updateStreamAvailabilities() {

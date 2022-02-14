@@ -177,6 +177,7 @@ void Conference::updateMainSession() {
 
 void Conference::setLayout(const ConferenceLayout layout) {
 	if (getLayout() != layout) {
+		lInfo() << "Changing layout of conference " << getConferenceAddress() << " from " << getLayout() << " to " << layout;
 		confParams->setLayout(layout);
 		updateMainSession();
 	}

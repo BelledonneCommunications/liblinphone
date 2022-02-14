@@ -2504,7 +2504,7 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 	return conference_address;
 }
 
-static void create_conference_base (time_t start_time, int duration, bool_t add_uninvited_participant, LinphoneConferenceParticipantListType participant_list_type, bool_t remove_participant, const LinphoneMediaEncryption encryption, bool_t enable_video, LinphoneConferenceLayout layout, bool_t enable_ice, bool_t enable_stun, bool_t audio_only_participant, bool_t server_restart, bool_t client_restart, bool_t do_not_use_proxy) {
+static void create_conference_base (time_t start_time, int duration, bool_t add_uninvited_participant, LinphoneConferenceParticipantListType participant_list_type, bool_t remove_participant, const LinphoneMediaEncryption encryption, bool_t enable_video, LinphoneConferenceLayout layout, bool_t enable_ice, bool_t enable_stun, bool_t audio_only_participant, bool_t server_restart, bool_t client_restart, bool_t do_not_use_proxy, LinphoneMediaDirection video_direction) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
@@ -2604,6 +2604,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 			} else {
 				linphone_call_params_set_media_encryption (new_params, encryption);
 			}
+			linphone_call_params_set_video_direction (new_params, video_direction);
 			linphone_core_invite_address_with_params_2(mgr->lc, confAddr, new_params, NULL, nullptr);
 			linphone_call_params_unref(new_params);
 		}
@@ -2667,7 +2668,48 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 						BC_ASSERT_EQUAL((int)linphone_call_get_state(current_call), (int)LinphoneCallStateStreamsRunning, int, "%0d");
 					}
 					if (enable_ice) {
-						BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
+						if ((video_direction == LinphoneMediaDirectionSendRecv) || !enable_video) {
+							BC_ASSERT_TRUE(check_ice(mgr, focus.getCMgr(), LinphoneIceStateHostConnection));
+						} else {
+							LinphoneCall *c1,*c2;
+							MSTimeSpec ts;
+
+							c1=linphone_core_get_call_by_remote_address2(mgr->lc, focus.getCMgr()->identity);
+							c2=linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
+
+							BC_ASSERT_PTR_NOT_NULL(c1);
+							BC_ASSERT_PTR_NOT_NULL(c2);
+							if (!c1 || !c2) {
+								BC_ASSERT_EQUAL(linphone_call_params_video_enabled(linphone_call_get_current_params(c1)),linphone_call_params_video_enabled(linphone_call_get_current_params(c2)), int, "%d");
+								BC_ASSERT_EQUAL(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(c1)),linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(c2)), int, "%d");
+								bool_t audio_enabled=linphone_call_params_audio_enabled(linphone_call_get_current_params(c1));
+								if (audio_enabled) {
+									liblinphone_tester_clock_start(&ts);
+									LinphoneCallStats *stats1 = NULL;
+									LinphoneCallStats *stats2 = NULL;
+									do {
+										if ((c1 != NULL) && (c2 != NULL)) {
+											stats1 = linphone_call_get_audio_stats(c1);
+											stats2 = linphone_call_get_audio_stats(c2);
+											if (linphone_call_stats_get_ice_state(stats1)==LinphoneIceStateHostConnection &&
+												linphone_call_stats_get_ice_state(stats2)==LinphoneIceStateHostConnection){
+												break;
+											}
+											linphone_core_iterate(mgr->lc);
+											linphone_core_iterate(focus.getLc());
+											linphone_call_stats_unref(stats1);
+											linphone_call_stats_unref(stats2);
+											stats1 = stats2 = NULL;
+										}
+										ms_usleep(20000);
+									} while (!liblinphone_tester_clock_elapsed(&ts,10000));
+									if (stats1)
+										linphone_call_stats_unref(stats1);
+									if (stats2)
+										linphone_call_stats_unref(stats2);
+								}
+							}
+						}
 					}
 
 					LinphoneVideoActivationPolicy * pol = linphone_core_get_video_activation_policy(mgr->lc);
@@ -2862,9 +2904,12 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 				stats pauline_stat2=pauline.getStats();
 				stats laure_stat2=laure.getStats();
 
+				ms_message("Pauline %s video with direction %s", (enable ? "enables" : "disables"), linphone_media_direction_to_string(video_direction));
+
 				if (pauline_call) {
 					LinphoneCallParams * new_params = linphone_core_create_call_params(pauline.getLc(), pauline_call);
 					linphone_call_params_enable_video (new_params, enable);
+					linphone_call_params_set_video_direction (new_params, video_direction);
 					linphone_call_update(pauline_call, new_params);
 					linphone_call_params_unref (new_params);
 				}
@@ -2878,10 +2923,12 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdating, pauline_stat2.number_of_LinphoneCallUpdating + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallUpdating, marie_stat2.number_of_LinphoneCallUpdating + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallUpdating, laure_stat2.number_of_LinphoneCallUpdating + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallStreamsRunning, laure_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+				if (video_direction == LinphoneMediaDirectionSendRecv) {
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallUpdating, marie_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallUpdating, laure_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallStreamsRunning, laure_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+				}
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_capability_changed, focus_stat2.number_of_participant_device_media_capability_changed + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_device_media_capability_changed, marie_stat2.number_of_participant_device_media_capability_changed + 1, 10000));
@@ -2901,7 +2948,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 							for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 								LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
 								if (enable == TRUE) {
-									BC_ASSERT_TRUE(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == LinphoneMediaDirectionSendRecv);
+									BC_ASSERT_TRUE(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == video_direction);
 								} else {
 									BC_ASSERT_TRUE(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == LinphoneMediaDirectionInactive);
 								}
@@ -2939,7 +2986,15 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 					bctbx_list_t *devices = linphone_conference_get_participant_device_list(paulineConference);
 					for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
 						LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
-						BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == enable);
+						if (enable) {
+							if (linphone_conference_is_me(paulineConference, linphone_participant_device_get_address(d))) {
+								BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == (video_direction == LinphoneMediaDirectionSendRecv));
+							} else {
+								BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == LinphoneMediaDirectionSendRecv));
+							}
+						} else {
+							BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == enable);
+						}
 					}
 
 					if (devices) {
@@ -3279,79 +3334,79 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 }
 
 static void create_simple_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_conference_no_proxy (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_conference_with_server_restart (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_conference_with_client_restart (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_ice_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_stun_ice_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_simple_srtp_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_ice_srtp_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_simple_stun_ice_srtp_conference (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_conference_with_uninvited_participant (void) {
-	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_conference_with_uninvited_participant_not_allowed (void) {
-	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_conference_starting_immediately (void) {
-	create_conference_base (ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutLegacy, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutLegacy, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_conference_starting_in_the_past (void) {
-	create_conference_base (ms_time(NULL) - 600, 900, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	create_conference_base (ms_time(NULL) - 600, 900, FALSE, LinphoneConferenceParticipantListTypeClosed, TRUE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_simple_conference_with_audio_only_participant (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_simple_ice_conference_with_audio_only_participant (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_simple_stun_ice_conference_with_audio_only_participant (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_simple_stun_ice_srtp_conference_with_audio_only_participant (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionSRTP, TRUE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_conference_with_audio_only_and_uninvited_participant (void) {
-	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, TRUE, LinphoneConferenceParticipantListTypeOpen, TRUE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 static void create_simple_conference_with_audio_only_participant_enabling_video (void) {
-	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+	create_conference_base (-1, -1, FALSE, LinphoneConferenceParticipantListTypeOpen, FALSE, LinphoneMediaEncryptionNone, TRUE, LinphoneConferenceLayoutGrid, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaDirectionSendRecv);
 }
 
 #if 0
@@ -4008,7 +4063,7 @@ static void two_overlapping_conferences_from_difference_organizers (void) {
 	two_overlapping_conferences_base(FALSE);
 }
 
-static void create_simple_conference_merging_calls_base(bool_t enable_ice) {
+static void create_simple_conference_merging_calls_base(bool_t enable_ice, LinphoneConferenceLayout layout, bool_t toggle_video, bool_t toggle_all_mananger_video, bool_t change_layout) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
@@ -4030,6 +4085,24 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice) {
 		linphone_proxy_config_edit(marie_proxy);
 		linphone_proxy_config_set_conference_factory_uri(marie_proxy, focus_uri);
 		linphone_proxy_config_done(marie_proxy);
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
+			if (toggle_video) {
+				LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+				linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+				linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+				linphone_core_set_video_activation_policy(mgr->lc, pol);
+				linphone_video_activation_policy_unref(pol);
+
+				linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
+				linphone_core_enable_video_capture(mgr->lc, TRUE);
+				linphone_core_enable_video_display(mgr->lc, TRUE);
+			}
+
+			if (mgr != focus.getCMgr()) {
+				linphone_core_set_default_conference_layout(mgr->lc, layout);
+			}
+		}
 
 		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
 		coresList = bctbx_list_append(coresList, marie.getLc());
@@ -4185,6 +4258,180 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice) {
 			check_conference_ssrc(fconference, pconference);
 		}
 
+		std::list<LinphoneCoreManager *> mgrList = {pauline.getCMgr()};
+		if (toggle_all_mananger_video) {
+			mgrList.push_back(marie.getCMgr());
+			mgrList.push_back(laure.getCMgr());
+		}
+
+		if (toggle_video) {
+			for (int i = 0; i < 4; i++) {
+				for (auto mgr : mgrList) {
+					stats focus_stat2=focus.getStats();
+					stats marie_stat2=marie.getStats();
+					stats pauline_stat2=pauline.getStats();
+					stats laure_stat2=laure.getStats();
+
+					LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
+					BC_ASSERT_PTR_NOT_NULL(participant_call);
+
+					LinphoneMediaDirection video_direction = LinphoneMediaDirectionSendRecv;
+
+					if (participant_call) {
+						const LinphoneCallParams* call_lparams = linphone_call_get_params(participant_call);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+						video_direction = linphone_call_params_get_video_direction(call_lparams);
+
+						if (video_direction == LinphoneMediaDirectionRecvOnly) {
+							video_direction = LinphoneMediaDirectionSendRecv;
+						} else if (video_direction == LinphoneMediaDirectionSendRecv) {
+							video_direction = LinphoneMediaDirectionRecvOnly;
+						}
+
+						ms_message("%s enables video with direction %s", linphone_core_get_identity(mgr->lc), linphone_media_direction_to_string(video_direction));
+
+						LinphoneCallParams * new_params = linphone_core_create_call_params(mgr->lc, participant_call);
+						linphone_call_params_enable_video (new_params, TRUE);
+						linphone_call_params_set_video_direction (new_params, video_direction);
+						linphone_call_update(participant_call, new_params);
+						linphone_call_params_unref (new_params);
+					}
+
+					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdating, pauline_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallUpdating, marie_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallUpdating, laure_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallStreamsRunning, laure_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote, focus_stat2.number_of_LinphoneCallUpdatedByRemote + 3, 5000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat2.number_of_LinphoneCallStreamsRunning + 3, 5000));
+
+					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_device_media_capability_changed, focus_stat2.number_of_participant_device_media_capability_changed + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_device_media_capability_changed, marie_stat2.number_of_participant_device_media_capability_changed + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_device_media_capability_changed, pauline_stat2.number_of_participant_device_media_capability_changed + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_participant_device_media_capability_changed, laure_stat2.number_of_participant_device_media_capability_changed + 1, 10000));
+
+					for (auto mgr2 : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
+						LinphoneAddress *uri2 = linphone_address_new(linphone_core_get_identity(mgr2->lc));
+						LinphoneConference * pconference = linphone_core_search_conference(mgr2->lc, NULL, uri2, confAddr, NULL);
+						linphone_address_unref(uri2);
+						BC_ASSERT_PTR_NOT_NULL(pconference);
+						if (pconference) {
+							LinphoneParticipant * p = (mgr2 == mgr) ? linphone_conference_get_me(pconference) : linphone_conference_find_participant(pconference, mgr->identity);
+							BC_ASSERT_PTR_NOT_NULL(p);
+							if (p) {
+								bctbx_list_t *devices = linphone_participant_get_devices (p);
+								for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
+									LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+									BC_ASSERT_TRUE(linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == video_direction);
+								}
+								if (devices) {
+									bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+								}
+							}
+						}
+					}
+
+					LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
+					BC_ASSERT_PTR_NOT_NULL(pcall);
+					if (pcall) {
+						const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+						const LinphoneCallParams* call_params = linphone_call_get_current_params(pcall);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+					}
+					LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(mgr->lc));
+					LinphoneCall * ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), uri);
+					BC_ASSERT_PTR_NOT_NULL(ccall);
+					if (ccall) {
+						const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+						const LinphoneCallParams* call_cparams = linphone_call_get_current_params(ccall);
+						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_cparams));
+					}
+
+					LinphoneConference * pconference = linphone_core_search_conference(mgr->lc, NULL, uri, confAddr, NULL);
+					linphone_address_unref(uri);
+					BC_ASSERT_PTR_NOT_NULL(pconference);
+
+					if (pconference) {
+						bctbx_list_t *devices = linphone_conference_get_participant_device_list(pconference);
+						for (bctbx_list_t *itd = devices; itd; itd = bctbx_list_next(itd)) {
+							LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(itd);
+							if (linphone_conference_is_me(pconference, linphone_participant_device_get_address(d))) {
+								BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == (video_direction == LinphoneMediaDirectionSendRecv));
+							} else {
+								BC_ASSERT_TRUE(linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo) == (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) == LinphoneMediaDirectionSendRecv));
+							}
+						}
+
+						if (devices) {
+							bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+						}
+
+						if (change_layout) {
+							stats mgr_stat2=mgr->stat;
+							LinphoneConferenceLayout conference_layout = linphone_conference_get_layout(pconference);
+							LinphoneConferenceLayout new_layout = LinphoneConferenceLayoutLegacy;
+							if (conference_layout == LinphoneConferenceLayoutGrid) {
+								new_layout = LinphoneConferenceLayoutActiveSpeaker;
+							} else {
+								new_layout = LinphoneConferenceLayoutGrid;
+							}
+
+							linphone_conference_set_layout(pconference, new_layout);
+							BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating, mgr_stat2.number_of_LinphoneCallUpdating + 1, 5000));
+							BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote, focus_stat2.number_of_LinphoneCallUpdatedByRemote + 4, 5000));
+							BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, mgr_stat2.number_of_LinphoneCallStreamsRunning + 1, 5000));
+							BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat2.number_of_LinphoneCallStreamsRunning + 4, 5000));
+							const LinphoneConferenceParams * remote_conf_params = linphone_conference_get_current_params(pconference);
+							LinphoneConferenceLayout remote_conf_layout = linphone_conference_params_get_layout(remote_conf_params);
+							BC_ASSERT_EQUAL(new_layout, remote_conf_layout, int, "%d");
+							LinphoneConference * fconference = linphone_core_search_conference(focus.getLc(), NULL, NULL, confAddr, NULL);
+							LinphoneParticipant * participant = linphone_conference_find_participant(fconference, mgr->identity);
+							BC_ASSERT_PTR_NOT_NULL(participant);
+							if (participant) {
+								bctbx_list_t *devices = linphone_participant_get_devices(participant);
+
+								for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+									LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
+									LinphoneConferenceLayout device_layout = linphone_participant_device_get_layout(d);
+									BC_ASSERT_EQUAL(device_layout, new_layout, int, "%d");
+								}
+								bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+							}
+
+							if (pcall) {
+								const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
+								BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+								const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
+								BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+								const LinphoneCallParams* call_params = linphone_call_get_current_params(pcall);
+								BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_params));
+							}
+							if (ccall) {
+								const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
+								BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+								const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
+								BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+								const LinphoneCallParams* call_cparams = linphone_call_get_current_params(ccall);
+								BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_cparams));
+							}
+
+						}
+
+					}
+
+					// Wait a little bit
+					wait_for_list(coresList, NULL, 0, 1000);
+				}
+			}
+		}
+
 		const int total_marie_calls = marie.getStats().number_of_LinphoneCallEnd + (int)bctbx_list_size(linphone_core_get_calls(marie.getLc()));
 		const int total_focus_calls = focus.getStats().number_of_LinphoneCallEnd + (int)bctbx_list_size(linphone_core_get_calls(focus.getLc()));
 		const int total_pauline_calls = pauline.getStats().number_of_LinphoneCallEnd + (int)bctbx_list_size(linphone_core_get_calls(pauline.getLc()));
@@ -4247,11 +4494,15 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice) {
 }
 
 static void create_simple_conference_merging_calls (void) {
-	create_simple_conference_merging_calls_base(FALSE);
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutLegacy, FALSE, FALSE, FALSE);
+}
+
+static void create_simple_conference_merging_calls_with_video_toggling (void) {
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutGrid, TRUE, TRUE, TRUE);
 }
 
 static void create_simple_ice_conference_merging_calls (void) {
-	create_simple_conference_merging_calls_base(TRUE);
+	create_simple_conference_merging_calls_base(TRUE, LinphoneConferenceLayoutActiveSpeaker, TRUE, FALSE, TRUE);
 }
 
 }
@@ -4300,6 +4551,7 @@ static test_t local_conference_conference_tests[] = {
 	TEST_NO_TAG("Organizer schedules 2 conferences", LinphoneTest::organizer_schedule_two_conferences),
 	TEST_NO_TAG("2 overlapping conferences from difference organizers", LinphoneTest::two_overlapping_conferences_from_difference_organizers),
 	TEST_NO_TAG("Create simple conference by merging calls", LinphoneTest::create_simple_conference_merging_calls),
+	TEST_NO_TAG("Create simple conference by merging calls with video toggling", LinphoneTest::create_simple_conference_merging_calls_with_video_toggling),
 	TEST_NO_TAG("Create simple ICE conference by merging calls", LinphoneTest::create_simple_ice_conference_merging_calls)
 };
 

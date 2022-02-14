@@ -248,7 +248,7 @@ int Call::startInvite (const Address *destination, const std::string subject, co
 }
 
 shared_ptr<Call> Call::startReferredCall (const MediaSessionParams *params) {
-	// Create and initiate parameters before pausing the call because initialization of some settings requires knowlege of the current call held by the core
+	// Create and initiate parameters before pausing the call because initialization of some settings requires knowledge of the current call held by the core
 	MediaSessionParams msp;
 	if (params)
 		msp = *params;
