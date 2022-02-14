@@ -474,6 +474,7 @@ bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePri
 void Conference::callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	LinphoneCoreVTable *vtable = linphone_core_get_current_vtable(lc);
 	Conference *conf = static_cast<Conference *>(linphone_core_v_table_get_user_data(vtable));
+
 	if (conf) {
 		conf->callStateChangedCb(lc, call, cstate, message);
 	}
@@ -1364,8 +1365,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	auto op = session->getPrivate()->getOp();
 	shared_ptr<Call> call = getCore()->getCallByCallId (op->getCallId());
 	if (call) {
-		const auto & remoteAddress = call->getRemoteAddress();
 		if (linphone_call_get_conference(call->toC()) != toC()){
+			const auto & remoteAddress = call->getRemoteAddress();
 			lError() << "Call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") is not part of conference " << getConferenceAddress();
 			return -1;
 		}

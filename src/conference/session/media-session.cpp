@@ -1875,8 +1875,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				if (!isVideoConferenceEnabled) {
 					enableVideoStream = false;
 					videoDir = SalStreamInactive;
-				} else if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present)) {
-					enableVideoStream = (localIsOfferer && (deviceState == ParticipantDevice::State::Present)) ? callVideoEnabled : true;
+				} else if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold)) {
+					enableVideoStream = (localIsOfferer && ((deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) ? callVideoEnabled : true;
 					// Enable video based on conference capabilities if:
 					// - joining conference
 					// - receiving an offer
@@ -1948,7 +1948,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-	if (addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present))) {
+	if (addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) {
 		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	}
 	copyOldStreams(md, oldMd, refMd, pth, encList);
