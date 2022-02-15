@@ -1578,7 +1578,7 @@ Address CallSession::getContactAddress() const {
 	char * contactAddressStr = NULL;
 	if (op->getContactAddress()) {
 		contactAddressStr = sal_address_as_string(op->getContactAddress());
-	} else if (d->getDestProxy() && linphone_core_conference_server_enabled(getCore()->getCCore())) {
+	} else if (d->getDestProxy() && linphone_core_conference_server_enabled(getCore()->getCCore()) && linphone_proxy_config_get_contact(d->getDestProxy())) {
 		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->getDestProxy()));
 	} else {
 		lError() << "Unable to retrieve contact address from proxy confguration for call " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
