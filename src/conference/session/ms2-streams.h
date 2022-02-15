@@ -82,6 +82,7 @@ protected:
 	RtpSession* createRtpIoSession();
 	void updateCryptoParameters(const OfferAnswerContext &params);
 	void updateDestinations(const OfferAnswerContext &params);
+	bool canIgnorePtimeChange(const OfferAnswerContext &params);
 	bool handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState);
 	struct RtpAddressInfo{
 		std::string rtpAddr;
