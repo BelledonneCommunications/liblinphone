@@ -5745,6 +5745,95 @@ static void call_avpf_mismatch(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void enable_specific_payloads(LinphoneCore *lc) {
+	bctbx_list_t *payloads = linphone_core_get_audio_payload_types(lc);
+	LinphonePayloadType *type;
+
+	for(bctbx_list_t *it = payloads; it != NULL; it = it->next){
+		type = (LinphonePayloadType *) it->data;
+		linphone_payload_type_enable(type, FALSE);
+	}
+
+	type = linphone_core_get_payload_type(lc, "speex", 8000, -1);
+	if (BC_ASSERT_PTR_NOT_NULL(type)) {
+		linphone_payload_type_enable(type, TRUE);
+	}
+
+	type = linphone_core_get_payload_type(lc, "pcmu", 8000, -1);
+	if (BC_ASSERT_PTR_NOT_NULL(type)) {
+		linphone_payload_type_enable(type, TRUE);
+	}
+
+	type = linphone_core_get_payload_type(lc, "pcma", 8000, -1);
+	if (BC_ASSERT_PTR_NOT_NULL(type)) {
+		linphone_payload_type_enable(type, TRUE);
+	}
+
+	bctbx_list_free(payloads);
+}
+
+static void call_with_same_codecs_ordered_differently(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	int dummy = 0;
+
+	// We have to test this feature with only codecs that have the same clock rate
+	// Because we generate telephone-events for each clock rate and their payload type number
+	// is not fixed. Which makes the isSamePayload function fail.
+
+	// Set speex the first payload of marie
+	LinphonePayloadType *speex = linphone_core_get_payload_type(marie->lc, "speex", 8000, -1);
+	if (BC_ASSERT_PTR_NOT_NULL(speex)) {
+		bctbx_list_t *new_order = bctbx_list_new(speex);
+		linphone_core_set_audio_payload_types(marie->lc, new_order);
+		bctbx_list_free(new_order);
+	}
+
+	// Set Pauline audio payloads with the same list but inverted with speex still in first
+	bctbx_list_t *payloads = linphone_core_get_audio_payload_types(pauline->lc);
+	bctbx_list_t *inverted = NULL;
+
+	for (bctbx_list_t *it = payloads; it != NULL; it = it->next) {
+		LinphonePayloadType *type = (LinphonePayloadType *) bctbx_list_get_data(it);
+
+		if (strcmp(linphone_payload_type_get_mime_type(type), "speex") == 0 && linphone_payload_type_get_clock_rate(type) == 8000) {
+			speex = type;
+		} else {
+			inverted = bctbx_list_prepend(inverted, type);
+		}
+	}
+	inverted = bctbx_list_prepend(inverted, speex);
+
+	linphone_core_set_audio_payload_types(pauline->lc, inverted);
+
+	bctbx_list_free(inverted);
+	bctbx_list_free(payloads);
+
+	enable_specific_payloads(marie->lc);
+	enable_specific_payloads(pauline->lc);
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 2000);
+
+	// Disconnect pauline to trigger a reINVITE
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationProgress,2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,NULL,&pauline->stat.number_of_LinphoneRegistrationOk,2));
+
+	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 2000);
+
+	// It should not trigger an audio stream restart
+	check_nb_media_starts(AUDIO_START, marie, pauline, 1, 1);
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+	end_call(marie, pauline);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Early declined call", early_declined_call),
 	TEST_NO_TAG("Call declined", call_declined),
@@ -5853,7 +5942,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with GRUU", simple_call_with_gruu),
 	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
 	TEST_NO_TAG("Async core stop", async_core_stop_after_call),
-	TEST_NO_TAG("Call AVPF mismatch", call_avpf_mismatch)
+	TEST_NO_TAG("Call AVPF mismatch", call_avpf_mismatch),
+	TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently)
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
