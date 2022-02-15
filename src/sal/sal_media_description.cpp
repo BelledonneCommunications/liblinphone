@@ -736,7 +736,7 @@ int SalMediaDescription::globalEqual(const SalMediaDescription & otherMd) const 
 	if (addr.empty() == false && otherMd.addr.empty() == false && ms_is_multicast(L_STRING_TO_C(addr)) != ms_is_multicast(L_STRING_TO_C(otherMd.addr)))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (streams.size() != otherMd.streams.size()) result |= SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
-	if (bandwidth != otherMd.bandwidth) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if (bandwidth != otherMd.bandwidth) result |= SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
 
 	/* ICE */
 	if (ice_ufrag.compare(otherMd.ice_ufrag) != 0 && !otherMd.ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
@@ -787,13 +787,21 @@ const std::string SalMediaDescription::printDifferences(int result) {
 		out.append("STREAM_CONFIGURATION_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
 	}
-	if (result & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED){
+	if (result & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED) {
 		out.append("MIXER_TO_CLIENT_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
 	}
-	if (result & SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED){
+	if (result & SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED) {
 		out.append("CLIENT_TO_MIXER_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED;
+	}
+	if (result & SAL_MEDIA_DESCRIPTION_PTIME_CHANGED) {
+		out.append("PTIME_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
+	}
+	if (result & SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED) {
+		out.append("BANDWIDTH_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
 	}
 	if (result){
 		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::printDifferences(), fix it");

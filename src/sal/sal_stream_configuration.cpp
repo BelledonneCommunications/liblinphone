@@ -141,23 +141,33 @@ bool SalStreamConfiguration::isSamePayloadType(const PayloadType *p1, const Payl
 }
 
 bool SalStreamConfiguration::isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) {
+	if (l1.size() != l2.size())
+		return false;
+
 	auto p1 = l1.cbegin();
 	auto p2 = l2.cbegin();
-	for(; (p1 != l1.cend() && p2 != l2.cend()); ++p1, ++p2){
-		if (!isSamePayloadType(*p1,*p2))
-			return false;
-	}
-	if (p1!=l1.cend()){
-		/*skip possible recv-only payloads*/
-		for(;p1!=l1.cend() && isRecvOnly(*p1);++p1){
+
+	// First payloads must match
+	if (p1 != l1.cend() && p2 != l2.cend() && !isSamePayloadType(*p1,*p2))
+		return false;
+
+	// Subsequent payloads are considered equal irrespective of order
+	bool matching = true;
+	for (p1 = l1.cbegin(); p1 != l1.cend() && matching; ++p1) {
+		if (!isRecvOnly(*p1)) {
+			matching = false;
+			for (p2 = l2.cbegin(); p2 != l2.cend(); ++p2) {
+				if (isSamePayloadType(*p1,*p2)) {
+					matching = true;
+					break;
+				}
+			}
+		} else {
 			ms_message("Skipping recv-only payload type...");
 		}
 	}
-	if (p1!=l1.cend() || p2!=l2.cend()){
-		/*means one list is longer than the other*/
-		return false;
-	}
-	return true;
+
+	return matching;
 }
 
 bool SalStreamConfiguration::operator==(const SalStreamConfiguration & other) const {
@@ -195,11 +205,18 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED;
 	}
 
-	if (!isSamePayloadList(payloads, other.payloads)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	// Codec changed of either ptim eis valid (i.e. greater than 0) and the other is not
-	if (((ptime>0) ^ (other.ptime>0))) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if (!isSamePayloadList(payloads, other.payloads)) {
+		auto printPayloads = [](const PayloadType *p) { ms_message("%s", p->mime_type); };
+		ms_message("TEST: not same playload list first one ->");
+		std::for_each(payloads.cbegin(), payloads.cend(), printPayloads);
+		ms_message("TEST: second one ->");
+		std::for_each(other.payloads.cbegin(), other.payloads.cend(), printPayloads);
+		result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	}
+	// Codec changed if either ptime is valid (i.e. greater than 0) and the other is not
+	if (((ptime>0) ^ (other.ptime>0))) result |= SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
 	// If both ptimes are valid, check that their valid is the same
-	if ((ptime>0) && (other.ptime>0) && (ptime != other.ptime)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if ((ptime>0) && (other.ptime>0) && (ptime != other.ptime)) result |= SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
 	if (dir != other.dir) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
 	/*DTLS*/
