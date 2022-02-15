@@ -244,6 +244,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/events.h
 	factory/factory.h
 	hacks/hacks.h
+	ldap/ldap.h
+	ldap/ldap-config-keys.h
+	ldap/ldap-params.h
 	logger/logger.h
 	nat/ice-service.h
 	nat/stun-client.h
@@ -310,7 +313,6 @@ endif()
 
 if(ENABLE_LDAP)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-		ldap/ldap-config-keys.h
 		ldap/ldap-contact-fields.h
 		ldap/ldap-contact-provider.h
 		ldap/ldap-contact-search.h
@@ -363,6 +365,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-factory.cpp
+	c-wrapper/api/c-ldap.cpp
+	c-wrapper/api/c-ldap-params.cpp
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-magic-search-cbs.cpp
 	c-wrapper/api/c-participant.cpp
@@ -463,6 +467,9 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/event-log.cpp
 	factory/factory.cpp
 	hacks/hacks.cpp
+	ldap/ldap.cpp
+	ldap/ldap-config-keys.cpp
+	ldap/ldap-params.cpp
 	logger/logger.cpp
 	nat/ice-service.cpp
 	nat/stun-client.cpp
@@ -504,7 +511,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 
 if(ENABLE_LDAP)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
-		ldap/ldap-config-keys.cpp
 		ldap/ldap-contact-fields.cpp
 		ldap/ldap-contact-provider.cpp
 		ldap/ldap-contact-search.cpp

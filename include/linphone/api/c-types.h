@@ -417,6 +417,71 @@ typedef struct _LinphoneChatRoomCbs LinphoneChatRoomCbs;
 typedef struct _LinphoneEventLog LinphoneEventLog;
 
 // -----------------------------------------------------------------------------
+// LDAP.
+// -----------------------------------------------------------------------------
+
+/**
+ * Object that represents a Linphone Ldap.
+ * Use a #LinphoneLdapParams object to configure it.
+ * @ingroup ldap
+ */
+typedef struct _LinphoneLdap LinphoneLdap;
+
+/**
+ * Object that is used to set the different parameters of a #LinphoneLdap.
+ * @ingroup ldap
+ */
+typedef struct _LinphoneLdapParams LinphoneLdapParams;
+
+/**
+ * @brief Enum Debug verbosity for OpenLdap
+ * @ingroup ldap
+**/
+typedef enum _LinphoneLdapDebugLevel {
+	LinphoneLdapDebugLevelOff = 0, /**< Set OpenLdap verbosity to none */
+	LinphoneLdapDebugLevelVerbose = 1, /**< Set OpenLdap verbosity to debug level */
+} LinphoneLdapDebugLevel;
+
+/**
+ * @brief Enum describing how the authentification will be made.
+ * @ingroup ldap
+**/
+typedef enum _LinphoneLdapAuthMethod {
+	LinphoneLdapAuthMethodAnonymous = 0, /**< Connection without passwords */
+	LinphoneLdapAuthMethodSimple = 1, /**< Connection with username/password */
+} LinphoneLdapAuthMethod;
+
+/**
+ * @brief Enum describing server certificates verification modes.
+ * @ingroup ldap
+**/
+typedef enum _LinphoneLdapCertVerificationMode {
+	LinphoneLdapCertVerificationDefault = -1, /**< Use default value defined on core */
+	LinphoneLdapCertVerificationDisabled = 0, /**< Verification is disabled*/
+	LinphoneLdapCertVerificationEnabled = 1 /**< Verification is enabled*/
+} LinphoneLdapCertVerificationMode;
+
+/**
+ * @brief Enum describing errors in LDAP parameters.
+ * @ingroup ldap
+**/
+typedef enum _LinphoneLdapCheck{
+	LinphoneLdapCheckOk = 0,						/**< No error */
+
+	LinphoneLdapCheckServerEmpty = 1,				/**< Server field is empty */
+	LinphoneLdapCheckServerNotUrl = 2,				/**< The server is not an url*/
+	LinphoneLdapCheckServerNoScheme = 4,			/**< The server doesn't contain a scheme*/
+	LinphoneLdapCheckServerNotLdap = 8,				/**< The server is not a LDAP scheme */
+	LinphoneLdapCheckServerLdaps = 16,				/**< LDAP over SSL is non-standardized and deprecated: ldaps has been specified */
+
+	LinphoneLdapCheckBaseObjectEmpty = 32,			/**< Base Object has been specified */
+
+	LinphoneLdapCheckMissingFields = 64,			/**< Some required fields are missing*/
+
+}LinphoneLdapCheck;
+
+
+// -----------------------------------------------------------------------------
 // Misc.
 // -----------------------------------------------------------------------------
 

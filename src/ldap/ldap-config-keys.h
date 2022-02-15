@@ -59,9 +59,9 @@ public:
 	 * Check these attributes to build Name Friend, separated by a comma and the first is the highest priority.
 	 *   - "sip_attribute" : "mobile,telephoneNumber,homePhone,sn".
 	 * Check these attributes to build the SIP username in address of Friend. Attributes are separated by a comma.
-	 *   - "sip_domain" : "sip.linphone.org".
-	 * Add the domain to the sip address(sip:username@domain).
-	 *   - "enable" : "1".
+	 *   - "sip_domain" : "".
+	 * Add the domain to the sip address(sip:username@domain). If empty, the domain will be specify while searching on the current proxy account.
+	 *   - "enable" : "0".
 	 * If this config is enabled.
 	 *   - "use_sal" : "0".
 	 * The dns resolution is done by Linphone using Sal. It will pass an IP to LDAP. By doing that, the TLS negociation could not check the hostname. 
@@ -93,10 +93,7 @@ public:
 	/**
 	 * Load a full configuration from an existant. The return value is the config with default value and a parsing is done to give attributes arrays.
 	 * @param config The configuration <name,value>
-	 * @param nameAttributes All values attributes from 'name_attribute' key
-	 * @param sipAttributes All values attributes from 'sip_attribute' key
-	 * @param attributes All unique attributes from keys'name_attribute' and 'sip_attribute' both
-	 * @return The #LinphoneAccountCbs object. @notnil
+	 * @return If the configuration is valid. @notnil
 	**/
 	static bool_t validConfig(const std::map<std::string, std::string>& config);
 	/**
@@ -105,12 +102,12 @@ public:
 	 * @param nameAttributes All values attributes from 'name_attribute' key
 	 * @param sipAttributes All values attributes from 'sip_attribute' key
 	 * @param attributes All unique attributes from keys'name_attribute' and 'sip_attribute' both
-	 * @return The #LinphoneAccountCbs object. @notnil
+	 * @return The configuration map keys. @notnil
 	**/
-	static std::map<std::string,std::string> loadConfig(const std::map<std::string, std::string>& config
-																  , std::vector<std::string> * nameAttributes
-																  , std::vector<std::string> * sipAttributes
-																  , std::vector<std::string> * attributes);
+	static std::map<std::string,std::string> loadConfig(const std::map<std::string, std::string>& config = std::map<std::string, std::string>()
+																  , std::vector<std::string> * nameAttributes = nullptr
+																  , std::vector<std::string> * sipAttributes = nullptr
+																  , std::vector<std::string> * attributes = nullptr);
 };
 LINPHONE_END_NAMESPACE
 

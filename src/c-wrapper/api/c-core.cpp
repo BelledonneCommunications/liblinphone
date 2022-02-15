@@ -29,6 +29,7 @@
 #include "chat/encryption/legacy-encryption-engine.h"
 #include "linphone/api/c-types.h"
 #include "call/audio-device/audio-device.h"
+#include "../../ldap/ldap.h"
 
 // =============================================================================
 
@@ -244,3 +245,31 @@ void linphone_core_enable_conference_ics_in_message_body(LinphoneCore *core, boo
 bool_t linphone_core_conference_ics_in_message_body_enabled(const LinphoneCore *core) {
 	return linphone_config_get_bool(linphone_core_get_config(core), "misc", "send_conference_ics_in_message_body", TRUE);
 }
+
+LinphoneLdapParams * linphone_core_create_ldap_params(LinphoneCore *core) {
+	return linphone_ldap_params_new(core);
+}
+
+LinphoneLdap * linphone_core_create_ldap(LinphoneCore *core) {
+	return linphone_ldap_new(core);
+}
+
+LinphoneLdap * linphone_core_create_ldap_with_params(LinphoneCore *core, LinphoneLdapParams *params) {
+	return linphone_ldap_new_with_params(core, params);
+}
+
+void linphone_core_clear_ldaps(LinphoneCore *core) {
+	auto list = L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLdapList();
+	for(auto ldap : list){
+			ldap->removeFromConfigFile();
+	}
+}
+
+void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap * ldap){
+	Ldap::toCpp(ldap)->removeFromConfigFile();
+}
+
+bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *lc){
+	return Ldap::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getLdapList());
+}
+

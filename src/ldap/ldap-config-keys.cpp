@@ -19,7 +19,7 @@
 
 
 #include "ldap-config-keys.h"
-
+#include "linphone/utils/utils.h"
 #include <algorithm>
 #include <fstream>
 
@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys={
 	{"timeout", LdapConfigKeys("5")},
 	{"max_results", LdapConfigKeys("5")},
-	{"auth_method", LdapConfigKeys("SIMPLE")},
+	{"auth_method", LdapConfigKeys(Utils::toString((int)LinphoneLdapAuthMethodSimple))},
 	{"password", LdapConfigKeys("")},
 	{"bind_dn", LdapConfigKeys("")},
 	{"base_object", LdapConfigKeys("dc=example,dc=com", TRUE)},
@@ -37,11 +37,11 @@ static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys={
 	{"name_attribute", LdapConfigKeys("sn")},
 	{"sip_attribute", LdapConfigKeys("mobile,telephoneNumber,homePhone,sn")},
 	{"sip_domain", LdapConfigKeys("")},
-	{"enable", LdapConfigKeys("1")},
+	{"enable", LdapConfigKeys("0")},
 	{"use_sal", LdapConfigKeys("0")},
 	{"use_tls", LdapConfigKeys("1")},
-	{"debug", LdapConfigKeys("0")},
-	{"verify_server_certificates", LdapConfigKeys("-1")}// -1:auto from core, 0:deactivate, 1:activate
+	{"debug", LdapConfigKeys(Utils::toString((int)LinphoneLdapDebugLevelOff))},
+	{"verify_server_certificates", LdapConfigKeys(Utils::toString((int)LinphoneLdapCertVerificationDefault))}// -1:auto from core, 0:deactivate, 1:activate
 };
 
 LdapConfigKeys::LdapConfigKeys(const std::string& pValue, const bool_t& pRequired) : value(pValue), required(pRequired){}
@@ -74,13 +74,17 @@ std::map<std::string,std::string>  LdapConfigKeys::loadConfig(const std::map<std
 	std::map<std::string,std::string> finalConfig;
 	for(auto it = gLdapConfigKeys.begin() ; it != gLdapConfigKeys.end() ; ++it)
 		finalConfig[it->first] = (config.count(it->first)>0 ? config.at(it->first) : it->second.value);
-	*pNameAttributes = LdapConfigKeys::split(finalConfig["name_attribute"]);
-	*pSipAttributes = LdapConfigKeys::split(finalConfig["sip_attribute"]);
+	if(pNameAttributes)
+		*pNameAttributes = LdapConfigKeys::split(finalConfig["name_attribute"]);
+	if(pSipAttributes)
+		*pSipAttributes = LdapConfigKeys::split(finalConfig["sip_attribute"]);
 // Get first array and then keep only unique
-	*pAttributes = *pNameAttributes;
-	for(auto it = pSipAttributes->begin() ; it != pSipAttributes->end() ; ++it)
-		if( std::find(pAttributes->begin(), pAttributes->end(), *it) == pAttributes->end())
-			pAttributes->push_back(*it);
+	if(pAttributes) {
+		*pAttributes = *pNameAttributes;
+		for(auto it = pSipAttributes->begin() ; it != pSipAttributes->end() ; ++it)
+			if( std::find(pAttributes->begin(), pAttributes->end(), *it) == pAttributes->end())
+				pAttributes->push_back(*it);
+	}
 	return finalConfig;
 }
 

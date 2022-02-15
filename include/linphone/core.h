@@ -6233,12 +6233,76 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_conference_information_list_afte
 LINPHONE_PUBLIC void linphone_core_delete_conference_information(LinphoneCore *core, LinphoneConferenceInfo *conference_info);
 
 /**
- * Tells if LDAP is available
- * @param core LinphoneCore object @notnil
- * @ingroup misc
- * @return TRUE if LDAP is available, FALSE otherwise
+* Tells if LDAP is available
+* @param core LinphoneCore object @notnil
+* @ingroup misc
+* @return TRUE if LDAP is available, FALSE otherwise
 **/
 LINPHONE_PUBLIC bool_t linphone_core_ldap_available(LinphoneCore *core);
+
+/**
+ * @addtogroup ldap
+ * @{
+ */
+
+/**
+ * Create a LDAP params using default values from Linphone core.
+ * Check #linphone_ldap_params to update values.
+ * In order to add a new LDAP configuration to Magic search, these parameters must be passed to linphone_core_create_ldap_with_params.
+ * Or, use linphone_ldap_set_params().
+ *
+ * The newly created LDAP from linphone_core_create_ldap().
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return #LinphoneLdapParams with default values set. @notnil @tobefreed
+ */
+LINPHONE_PUBLIC LinphoneLdapParams * linphone_core_create_ldap_params(LinphoneCore *core);
+
+/**
+ * Create an empty LDAP search.
+ *
+ * linphone_ldap_set_params() must be call to save the parameters in the configuration file.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @param params #LinphoneLdapParams object @notnil
+ * @return #LinphoneLdap with default values set @notnil @tobefreed
+ */
+LINPHONE_PUBLIC LinphoneLdap * linphone_core_create_ldap(LinphoneCore *core);
+
+/**
+ * Create a LDAP search using given parameters and store them in the configuration file.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @param params #LinphoneLdapParams object @notnil
+ * @return #LinphoneLdap with default values set @notnil @tobefreed
+ */
+LINPHONE_PUBLIC LinphoneLdap * linphone_core_create_ldap_with_params(LinphoneCore *core, LinphoneLdapParams *params);
+
+/**
+ * Erase all LDAP from the configuration.
+ * @param core #LinphoneCore object @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_clear_ldaps(LinphoneCore *core);
+
+/**
+ * Remove a LDAP from the configuration.
+ * @param core #LinphoneCore object @notnil
+ * @param ldap The LDAP to remove. @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap * ldap);
+
+/**
+ * Returns a list of entered LDAPs. Items must be freed with linphone_ldap_unref()
+ * @param core The #LinphoneCore object @notnil
+ * @return \bctbx_list{LinphoneLdap} @maybenil @tobefreed
+**/
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *core);
+
+
+
+/**
+ * @}
+ */
 
 /************ */
 /* DEPRECATED */

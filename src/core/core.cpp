@@ -49,6 +49,7 @@
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "../ldap/ldap.h"
 #include "logger/logger.h"
 #include "paths/paths.h"
 #include "linphone/utils/utils.h"
@@ -1242,6 +1243,28 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string 
 	L_D();
 	std::list<std::shared_ptr<ChatMessage>> chatMessages = d->mainDb->findChatMessagesFromCallId(callId);
 	return chatMessages.empty() ? nullptr : chatMessages.front();
+}
+
+// -----------------------------------------------------------------------------
+// Ldap.
+// -----------------------------------------------------------------------------
+
+std::list<std::shared_ptr<Ldap>> Core::getLdapList() {
+	std::list<std::shared_ptr<Ldap>> ldapList;
+	auto lpConfig = linphone_core_get_config(getCCore());
+	const bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lpConfig);
+	// Loop on all sections and load configuration. If this is not a LDAP configuration, the model is discarded.
+	for(auto itSections = bcSections; itSections; itSections=itSections->next) {
+		std::string section = static_cast<char *>(itSections->data);
+		std::shared_ptr<Ldap> ldap = Ldap::create(getSharedFromThis(), section);
+		if( ldap)
+			ldapList.push_back(ldap);
+	}
+	ldapList.sort([](std::shared_ptr<Ldap> a, std::shared_ptr<Ldap> b) {
+		return a->getIndex() < b->getIndex();
+	});
+
+	return ldapList;
 }
 
 // -----------------------------------------------------------------------------

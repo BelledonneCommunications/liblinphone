@@ -96,6 +96,8 @@ set(C_API_HEADER_FILES
 	c-dial-plan.h
 	c-event-log.h
 	c-factory.h
+	c-ldap.h
+	c-ldap-params.h
 	c-magic-search.h
 	c-magic-search-cbs.h
 	c-participant.h

@@ -56,6 +56,7 @@ class IdentityAddress;
 class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
+class Ldap;
 class PushNotificationMessage;
 class SalMediaDescription;
 class ConferenceScheduler;
@@ -266,6 +267,12 @@ public:
 	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage (const std::string &callId) const;
 	std::shared_ptr<ChatRoom> getPushNotificationChatRoom (const std::string &chatRoomAddr) const;
 	std::shared_ptr<ChatMessage> findChatMessageFromCallId (const std::string &callId) const;
+
+	// ---------------------------------------------------------------------------
+	// Ldap.
+	// ---------------------------------------------------------------------------
+
+	std::list<std::shared_ptr<Ldap>> getLdapList();
 
 	Address interpretUrl (const std::string &url) const;
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.

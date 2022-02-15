@@ -74,6 +74,44 @@ static void _create_call_log(LinphoneCore *lc, LinphoneAddress *addrFrom, Linpho
 	);
 }
 
+static LinphoneLdap * _create_default_ldap_server(LinphoneCoreManager * manager, const char * password, const char* bind_dn){
+	LinphoneLdap * ldap = NULL;
+	if(linphone_core_ldap_available(manager->lc)){
+// 1) Create LDAP params and set values
+		LinphoneLdapParams * params = linphone_core_create_ldap_params(manager->lc);
+	// Custom
+		linphone_ldap_params_set_password(params, "secret");
+		linphone_ldap_params_set_bind_dn(params, bind_dn);
+	// Defaults
+		linphone_ldap_params_set_timeout(params, 10);
+		linphone_ldap_params_set_max_results(params, 50);
+		linphone_ldap_params_set_auth_method(params, LinphoneLdapAuthMethodSimple);
+		linphone_ldap_params_set_base_object(params, "dc=bc,dc=com");
+		linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");
+		linphone_ldap_params_set_filter(params, "(sn=%s)");
+		linphone_ldap_params_set_name_attribute(params, "sn");
+		linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
+		linphone_ldap_params_set_sip_domain(params, "ldap.example.org");
+		linphone_ldap_params_set_server_certificates_verification_mode(params, LinphoneLdapCertVerificationDisabled);
+		linphone_ldap_params_enable_tls(params, TRUE);
+		linphone_ldap_params_enable_sal(params, TRUE);
+		linphone_ldap_params_set_debug_level(params, LinphoneLdapDebugLevelVerbose);
+		linphone_ldap_params_set_enabled(params, TRUE);
+
+// No error after modifications
+		BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);
+
+// 2) Create LDAP with parameters and add it to the configuration
+		ldap = linphone_core_create_ldap_with_params(manager->lc, params);
+		linphone_ldap_params_unref(params);
+// Or :
+//		ldap = linphone_core_create_ldap(manager->lc);
+//		linphone_ldap_set_params(ldap, params);
+	}
+	return ldap;
+}
+
+
 static void linphone_version_test(void){
 	const char *version=linphone_core_get_version();
 	/*make sure the git version is always included in the version number*/
@@ -1323,6 +1361,8 @@ static void search_friend_with_presence(void) {
 	LinphonePresenceModel *chloePresence = linphone_core_create_presence_model(manager->lc);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(manager->lc);
 
+	LinphoneLdap * ldap = _create_default_ldap_server(manager, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com");
+
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
@@ -1353,16 +1393,16 @@ static void search_friend_with_presence(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "chloe", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-#ifdef LDAP_ENABLED
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
-		_check_friend_result_list(manager->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);// From LDAP
-		_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 2, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
-#else
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
-		_check_friend_result_list(manager->lc, resultList, 0, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 1, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
-#endif
+		if(linphone_core_ldap_available(manager->lc)) {
+			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
+			_check_friend_result_list(manager->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);// From LDAP
+			_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
+			_check_friend_result_list(manager->lc, resultList, 2, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
+		}else {
+			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+			_check_friend_result_list(manager->lc, resultList, 0, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
+			_check_friend_result_list(manager->lc, resultList, 1, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
+		}
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -1373,6 +1413,12 @@ static void search_friend_with_presence(void) {
 
 	linphone_presence_model_unref(chloePresence);
 	if (chloeFriend) linphone_friend_unref(chloeFriend);
+
+	if(ldap) {
+		linphone_core_clear_ldaps(manager->lc);
+		BC_ASSERT_PTR_NULL(linphone_core_get_ldap_list(manager->lc));
+		linphone_ldap_unref(ldap);
+	}
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
@@ -1941,12 +1987,15 @@ static void search_friend_get_capabilities(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+
+
 static void search_friend_chat_room_remote(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneLdap * ldap = _create_default_ldap_server(marie, "secret", "cn=Marie Laroueverte,ou=people,dc=bc,dc=com");
+
 	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	BC_ASSERT_PTR_NOT_NULL(room);
 
@@ -1954,25 +2003,32 @@ static void search_friend_chat_room_remote(void) {
 	magicSearch = linphone_magic_search_new(marie->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-#ifdef LDAP_ENABLED
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 9, int, "%d");// Sorted by display names
-		_check_friend_result_list(marie->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);	// "Chloe"
-		_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org", NULL);	// "Laure" mobile
-		_check_friend_result_list(marie->lc, resultList, 2, "sip:Laure@ldap.example.org", NULL);	// "Laure"	sn
-		_check_friend_result_list(marie->lc, resultList, 3, "sip:0212345678@ldap.example.org", NULL);	//"Marie" telephoneNumber
-		_check_friend_result_list(marie->lc, resultList, 4, "sip:0601234567@ldap.example.org", NULL);	// "Marie" mobile
-		_check_friend_result_list(marie->lc, resultList, 5, "sip:Marie@ldap.example.org", NULL);	// "Marie" sn
-		_check_friend_result_list(marie->lc, resultList, 6, "sip:Pauline@ldap.example.org", NULL);	//"Pauline" sn
-		_check_friend_result_list(marie->lc, resultList, 7, addr, NULL);	// "pauline_***" *** is dynamic
-		_check_friend_result_list(marie->lc, resultList, 8, "sip:pauline@sip.example.org", NULL);	// "Paupoche"
-		// marie_rc has an hardcoded friend for pauline
-#else
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
-		_check_friend_result_list(marie->lc, resultList, 0, addr, NULL);
-		_check_friend_result_list(marie->lc, resultList, 1, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
-#endif
+		if(linphone_core_ldap_available(marie->lc)) {
+			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 9, int, "%d");// Sorted by display names
+			_check_friend_result_list(marie->lc, resultList, 0, "sip:Chloe@ldap.example.org", NULL);	// "Chloe"
+			_check_friend_result_list(marie->lc, resultList, 1, "sip:+33655667788@ldap.example.org", NULL);	// "Laure" mobile
+			_check_friend_result_list(marie->lc, resultList, 2, "sip:Laure@ldap.example.org", NULL);	// "Laure"	sn
+			_check_friend_result_list(marie->lc, resultList, 3, "sip:0212345678@ldap.example.org", NULL);	//"Marie" telephoneNumber
+			_check_friend_result_list(marie->lc, resultList, 4, "sip:0601234567@ldap.example.org", NULL);	// "Marie" mobile
+			_check_friend_result_list(marie->lc, resultList, 5, "sip:Marie@ldap.example.org", NULL);	// "Marie" sn
+			_check_friend_result_list(marie->lc, resultList, 6, "sip:Pauline@ldap.example.org", NULL);	//"Pauline" sn
+			_check_friend_result_list(marie->lc, resultList, 7, addr, NULL);	// "pauline_***" *** is dynamic
+			_check_friend_result_list(marie->lc, resultList, 8, "sip:pauline@sip.example.org", NULL);	// "Paupoche"
+			// marie_rc has an hardcoded friend for pauline
+		}else{
+			BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+			_check_friend_result_list(marie->lc, resultList, 0, addr, NULL);
+			_check_friend_result_list(marie->lc, resultList, 1, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
+		}
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
+
+	if(ldap) {
+		linphone_core_clear_ldaps(marie->lc);
+		BC_ASSERT_PTR_NULL(linphone_core_get_ldap_list(marie->lc));
+		linphone_ldap_unref(ldap);
+	}
+
 	ms_free(addr);
 	linphone_magic_search_reset_search_cache(magicSearch);
 	linphone_magic_search_unref(magicSearch);
@@ -2373,6 +2429,80 @@ static void migration_from_call_history_db (void) {
 	bctbx_free(tmp_db);
 }
 
+static void ldap_params_edition_with_check(void){
+	LinphoneCoreManager *manager = linphone_core_manager_new(NULL);
+	if(linphone_core_ldap_available(manager->lc)){
+		const char* password = "secret";
+		const char* bind_dn = "cn=Marie Laroueverte,ou=people,dc=bc,dc=com";
+
+		LinphoneLdap * ldap = _create_default_ldap_server(manager, password, bind_dn);
+		LinphoneLdapParams * params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
+		BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);
+
+		linphone_ldap_params_set_base_object(params, "");
+		linphone_ldap_params_set_server(params, "ldaps://ldap.example.org/");	// ldaps is not supported
+
+// Check errors //
+// Double errors
+		int check = linphone_ldap_params_check(params);
+		BC_ASSERT_FALSE(check == LinphoneLdapCheckOk);
+		BC_ASSERT_TRUE((check & LinphoneLdapCheckServerLdaps) == LinphoneLdapCheckServerLdaps);
+		BC_ASSERT_TRUE((check & LinphoneLdapCheckBaseObjectEmpty) == LinphoneLdapCheckBaseObjectEmpty);
+
+// Server error
+		linphone_ldap_params_set_server(params, "");
+		BC_ASSERT_TRUE((linphone_ldap_params_check(params) & LinphoneLdapCheckServerEmpty) == LinphoneLdapCheckServerEmpty);
+		linphone_ldap_params_set_server(params, "ldap.example.org");
+		BC_ASSERT_TRUE((linphone_ldap_params_check(params) & LinphoneLdapCheckServerNotUrl) == LinphoneLdapCheckServerNotUrl);
+		linphone_ldap_params_set_server(params, "http://ldap.example.org");
+		BC_ASSERT_TRUE((linphone_ldap_params_check(params) & LinphoneLdapCheckServerNotLdap) == LinphoneLdapCheckServerNotLdap);
+
+		linphone_ldap_params_set_server(params, "ldap://ldap.example.org/");	// Ok
+		BC_ASSERT_TRUE((check & LinphoneLdapCheckBaseObjectEmpty) == LinphoneLdapCheckBaseObjectEmpty);
+// No error after modification
+		linphone_ldap_params_set_base_object(params, "dc=bc,dc=org");	// Ok
+		BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);
+		linphone_ldap_params_set_custom_value(params, "custo_field", "toto");
+		BC_ASSERT_TRUE(linphone_ldap_params_check(params) == LinphoneLdapCheckOk);	// Just to be sure after editing a custom field
+
+// Update parameters
+		linphone_ldap_set_params(ldap, params);
+		linphone_ldap_params_unref(params);
+
+	// Check if the created ldap is in the core's list
+		bctbx_list_t *ldap_list = linphone_core_get_ldap_list(manager->lc);
+		bctbx_list_t *it_ldap = ldap_list;
+		while(it_ldap != NULL && it_ldap->data != ldap)
+			it_ldap = it_ldap->next;
+		if( it_ldap != NULL){
+			const LinphoneLdapParams * const_params = linphone_ldap_get_params(ldap);
+
+			BC_ASSERT_EQUAL(linphone_ldap_params_get_timeout(const_params), 10, int, "%d");
+			BC_ASSERT_EQUAL(linphone_ldap_params_get_max_results(const_params), 50, int, "%d");
+			BC_ASSERT_EQUAL(linphone_ldap_params_get_auth_method(const_params), LinphoneLdapAuthMethodSimple, int, "%d");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_custom_value(const_params, "custo_field"), "toto");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_password(const_params), password);
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_bind_dn(const_params), bind_dn);
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_base_object(const_params), "dc=bc,dc=org");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_server(const_params), "ldap://ldap.example.org/");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_filter(const_params), "(sn=%%s)");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_name_attribute(const_params), "sn");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_sip_attribute(const_params), "mobile,telephoneNumber,homePhone,sn");
+			BC_ASSERT_STRING_EQUAL(linphone_ldap_params_get_sip_domain(const_params), "ldap.example.org");
+			BC_ASSERT_EQUAL(linphone_ldap_params_get_server_certificates_verification_mode(const_params), LinphoneLdapCertVerificationDisabled, int, "%d");
+			BC_ASSERT_EQUAL(linphone_ldap_params_get_debug_level(const_params), LinphoneLdapDebugLevelVerbose, int, "%d");
+
+			BC_ASSERT_TRUE(linphone_ldap_params_tls_enabled(const_params));
+			BC_ASSERT_TRUE(linphone_ldap_params_sal_enabled(const_params));
+			BC_ASSERT_TRUE(linphone_ldap_params_get_enabled(const_params));
+
+		}
+		bctbx_list_free_with_data(ldap_list, (void (*)(void *))linphone_ldap_unref);
+		linphone_ldap_unref(ldap);
+	}
+	linphone_core_manager_destroy(manager);
+}
+
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),
 	TEST_NO_TAG("Version update check", linphone_version_update_test),
@@ -2427,7 +2557,8 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
 	TEST_NO_TAG("Dialplan", dial_plan),
 	TEST_NO_TAG("Audio devices", audio_devices),
-	TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db)
+	TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db),
+	TEST_NO_TAG("Ldap params edition with check", ldap_params_edition_with_check),
 };
 
 test_suite_t setup_test_suite = {"Setup", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
