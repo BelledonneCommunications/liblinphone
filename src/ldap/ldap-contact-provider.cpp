@@ -67,8 +67,6 @@ LdapContactProvider::~LdapContactProvider(){
 		mCore->destroyTimer(mIteration);
 		mIteration = nullptr;
 	}
-// Wait for bind thread to end
-	mLock.lock();
 	if (mSalContext) {
 		belle_sip_resolver_context_cancel(mSalContext);
 		belle_sip_object_unref(mSalContext);
@@ -84,7 +82,6 @@ LdapContactProvider::~LdapContactProvider(){
 		belle_sip_object_unref(mServerUri);
 		mServerUri = NULL;
 	}
-	mLock.unlock();
 }
 
 std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(const std::shared_ptr<Core> &core){
@@ -96,41 +93,91 @@ std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(c
 		if(params->getEnabled())
 			providers.push_back(std::make_shared<LdapContactProvider>(core, params->getConfig()));
 	}
-/*
- * LpConfig * lConfig = linphone_core_get_config(core->getCCore());
-// Read configuration
-	const bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lConfig);
-	for(auto itSections = bcSections; itSections; itSections=itSections->next) {
-		std::string section = static_cast<char *>(itSections->data);
-		std::string sectionName;
-		size_t sectionNameIndex = section.length()-1;
-		while(sectionNameIndex > 0 && section[sectionNameIndex] != '_')// Get the name strip number
-			--sectionNameIndex;
-		if( sectionNameIndex > 0 ){
-			sectionName = section.substr(0,sectionNameIndex);
-		}else
-			sectionName = section;
-		if(sectionName == "ldap"){
-			std::map<std::string, std::string> config;
-			const bctbx_list_t * keys = linphone_config_get_keys_names_list(lConfig, section.c_str());
-			for(auto itKeys = keys ; itKeys ; itKeys=itKeys->next){
-				std::string key = static_cast<char *>(itKeys->data);
-				config[key] = linphone_config_get_string(lConfig, section.c_str(), key.c_str(), "");
-			}
-			if(config["enable"] == "1")
-				providers.push_back(std::make_shared<LdapContactProvider>(core, config));
-		}
-	}*/
 	return providers;
+}
+
+void LdapContactProvider::ldapTlsConnection(){
+	std::string srText;
+	void * value = LDAP_OPT_ON;
+	int ldapReturnStatus;
+	int resultStatus;
+	
+// 1) Start TLS 
+	if(mTlsConnectionId < 0) {// Start TLS
+		ldap_set_option(mLd, LDAP_OPT_CONNECT_ASYNC, value);// If not Async, ldap_start_tls can block on connect.
+		ldapReturnStatus = ldap_start_tls( mLd, NULL, NULL, &mTlsConnectionId );
+		if( ldapReturnStatus != LDAP_SUCCESS ) {
+			ms_error("[LDAP] Cannot start TLS connection");
+			mCurrentAction = ACTION_ERROR;
+			mTlsConnectionId = -1;
+		}else
+			mTlsConnectionTimeout = time(NULL);
+	}// Not 'else' : we try to get a result without having to wait an iteration
+// 2) Wait for connection
+	if( mTlsConnectionId >= 0){
+		LDAPMessage	*resultMessage = NULL;
+		struct timeval	tv = {0,0};// Do not block
+		ldapReturnStatus = ldap_result( mLd, mTlsConnectionId, LDAP_MSG_ALL, &tv, &resultMessage );
+		switch ( ldapReturnStatus ) {
+		case -1:
+			ms_error("[LDAP] Cannot start TLS connection : Remote server is down");
+			mCurrentAction = ACTION_ERROR;
+			break;
+		case 0: {	// Retry on the next iteration.
+			int timeout = getTimeout() ;
+			if( difftime(time(NULL),mTlsConnectionTimeout) > timeout){
+				ms_error("[LDAP] Cannot start TLS connection : timeout (%ds)", timeout );
+				mCurrentAction = ACTION_ERROR;
+			}
+			return;
+		}
+		case LDAP_RES_EXTENDED :
+			ldapReturnStatus = ldap_parse_extended_result( mLd, resultMessage, NULL, NULL , 0 );
+			if ( ldapReturnStatus == LDAP_SUCCESS ) {
+				ldapReturnStatus = ldap_parse_result( mLd, resultMessage, &resultStatus, NULL, NULL, NULL, NULL, 1 );
+				resultMessage = NULL; // Freed by ldap_parse_result
+	
+				if ( ldapReturnStatus == LDAP_SUCCESS ) {
+					ldapReturnStatus = resultStatus;
+				}
+				if ( ldapReturnStatus == LDAP_SUCCESS ) {
+					ldapReturnStatus = ldap_install_tls( mLd );
+					if( ldapReturnStatus == LDAP_SUCCESS || ldapReturnStatus == LDAP_LOCAL_ERROR){
+						mCurrentAction = ACTION_BIND;
+					}else{
+						ldap_get_option(mLd, LDAP_OPT_RESULT_CODE, &resultStatus);
+						ms_error("[LDAP] Cannot install the TLS handler (%s), resultStatus %x (%s)", ldap_err2string(ldapReturnStatus), resultStatus, ldap_err2string(resultStatus));
+						mCurrentAction = ACTION_ERROR;
+					}
+	
+				} else if ( ldapReturnStatus == LDAP_REFERRAL ) {
+					ms_error("[LDAP] Unwilling to chase referral returned by Start TLS exop");
+					mCurrentAction = ACTION_ERROR;
+				}
+			}
+			break;
+		default:
+			ms_warning("[LDAP] Unknown response to StartTLS request : ExtendedResponse is expected");
+			break;
+		}
+		if ( resultMessage != NULL ) {
+			ldap_msgfree( resultMessage );
+		}
+	}
 }
 
 void LdapContactProvider::initializeLdap(){
 	int proto_version = LDAP_VERSION3;
 	int ret = ldap_set_option(NULL, LDAP_OPT_PROTOCOL_VERSION, &proto_version);
 	int debLevel = 0;
+	struct timeval timeout = { getTimeout(), 0 };
 	mCurrentAction = ACTION_NONE;
+	
 	if( ret != LDAP_SUCCESS )
 		ms_error( "[LDAP] Problem initializing default Protocol version to 3 : %x (%s)", ret, ldap_err2string(ret));
+	ret = ldap_set_option(NULL, LDAP_OPT_NETWORK_TIMEOUT, &timeout);
+	if( ret != LDAP_SUCCESS )
+		ms_error( "[LDAP] Problem initializing default timeout to %d : %x (%s)", (int)timeout.tv_sec, ret, ldap_err2string(ret));
 // Setting global options for the next initialization. These options cannot be done with the LDAP instance directly.
 	if(mConfig.count("debug")>0 && LinphoneLdapDebugLevelVerbose == static_cast<LinphoneLdapDebugLevel>(atoi(mConfig["debug"].c_str())))
 		debLevel = 7;
@@ -166,26 +213,22 @@ void LdapContactProvider::initializeLdap(){
 	} else if( (ret = ldap_set_option(mLd, LDAP_OPT_PROTOCOL_VERSION, &proto_version)) != LDAP_SUCCESS ){
 		ms_error( "[LDAP] Problem setting protocol version %d: %x (%s)", proto_version,ret, ldap_err2string(ret));
 		mCurrentAction = ACTION_ERROR;
-	} else {
-		
-		if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
-			if(mConfig.count("use_sal")>0 && mConfig["use_sal"] == "1"){// Using Sal give an IP for a domain. So check the domain rather than the IP.
-				belle_generic_uri_t *serverUri = belle_generic_uri_parse(mConfig["server"].c_str());
-				std::string hostname = belle_generic_uri_get_host(serverUri);
-				std::vector<char> cHostname(hostname.c_str(), hostname.c_str() + hostname.size() + 1);
-				ldap_set_option(mLd, LDAP_OPT_X_TLS_PEER_CN, &cHostname[0]);
-			}
-			ret = ldap_start_tls_s(mLd, NULL, NULL);
+	} else if( ret != LDAP_SUCCESS){
+		int err;
+		ldap_get_option(mLd, LDAP_OPT_RESULT_CODE, &err);
+		ms_error("[LDAP] Cannot initialize address to %s : %x (%s), err %x (%s)",mConfig["server"].c_str(), ret, ldap_err2string(ret), err, ldap_err2string(err));
+		mCurrentAction = ACTION_ERROR;
+	}else if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
+		if(mConfig.count("use_sal")>0 && mConfig["use_sal"] == "1"){// Using Sal give an IP for a domain. So check the domain rather than the IP.
+			belle_generic_uri_t *serverUri = belle_generic_uri_parse(mConfig["server"].c_str());
+			std::string hostname = belle_generic_uri_get_host(serverUri);
+			ldap_set_option(mLd, LDAP_OPT_X_TLS_PEER_CN, &hostname[0]);
 		}
-		if( ret == LDAP_SUCCESS ) {
-			ms_debug("[LDAP] Initialization success");
-			mConnected = 1;
-		}else {
-			int err;
-			ldap_get_option(mLd, LDAP_OPT_RESULT_CODE, &err);
-			ms_error("[LDAP] Cannot initialize address to %s : %x (%s), err %x (%s)",mConfig["server"].c_str(), ret, ldap_err2string(ret), err, ldap_err2string(err));
-			mCurrentAction = ACTION_ERROR;
-		}
+		mTlsConnectionId = -1;
+		mCurrentAction = ACTION_WAIT_TLS_CONNECT;
+	}else {
+		ms_debug("[LDAP] Initialization success");
+		mConnected = 1;
 	}
 }
 
@@ -205,11 +248,9 @@ int LdapContactProvider::getCurrentAction()const{
 // Create a search object and store the request to be used when the provider is ready
 void LdapContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData){
 	std::shared_ptr<LdapContactSearch> request = std::make_shared<LdapContactSearch>(this, predicate, cb, cbData );
-	mLock.lock();
 	if( request != NULL ) {
 		mRequests.push_back(request);
 	}
-	mLock.unlock();
 }
 
 // Start the search
@@ -304,7 +345,7 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 }
 
 //*******************************************	ASYNC PROCESSING
-// ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST
+// ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => (ACTION_WAIT_TLS_CONNECT) => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST
 bool LdapContactProvider::iterate(void *data) {
 	struct timeval pollTimeout = {0,0};
 	LDAPMessage* results = NULL;
@@ -316,7 +357,6 @@ bool LdapContactProvider::iterate(void *data) {
 		// not using switch is wanted : we can do severals steps in one iteration if wanted.
 		if(provider->mCurrentAction == ACTION_NONE){
 			ms_debug("[LDAP] ACTION_NONE");
-			provider->mLock.lock();
 			if( provider->mRequests.size() > 0){
 				if( provider->mCurrentAction != ACTION_ERROR){
 					if( provider->mConnected != 1)
@@ -325,7 +365,6 @@ bool LdapContactProvider::iterate(void *data) {
 						provider->mCurrentAction = ACTION_BIND;
 				}
 			}
-			provider->mLock.unlock();
 		}
 
 		if(provider->mCurrentAction == ACTION_INIT){
@@ -340,7 +379,8 @@ bool LdapContactProvider::iterate(void *data) {
 					std::string domain = belle_generic_uri_get_host(provider->mServerUri);
 					int port = belle_generic_uri_get_port(provider->mServerUri);
 					if(port  <= 0){
-						if( belle_generic_uri_get_scheme(provider->mServerUri) == std::string("ldap"))
+						std::string scheme = Utils::stringToLower(belle_generic_uri_get_scheme(provider->mServerUri));
+						if( scheme == "ldap")
 							port = 389;
 						else
 							port = 636;
@@ -376,6 +416,9 @@ bool LdapContactProvider::iterate(void *data) {
 				provider->mServerUri = NULL;
 			}
 		}
+		
+		if( provider->mCurrentAction == ACTION_WAIT_TLS_CONNECT )
+			provider->ldapTlsConnection();
 
 		if(provider->mCurrentAction == ACTION_BIND){ // Careful : Binds are not thread-safe
 			ms_debug("[LDAP] ACTION_BIND");
@@ -428,7 +471,6 @@ bool LdapContactProvider::iterate(void *data) {
 			size_t requestSize = 0;
 			if( provider->mLd && provider->mConnected ){
 				// check for pending searches
-				provider->mLock.lock();
 				for(auto it = provider->mRequests.begin() ; it != provider->mRequests.end() ; ){
 					if(!(*it))
 						it = provider->mRequests.erase(it);
@@ -444,7 +486,6 @@ bool LdapContactProvider::iterate(void *data) {
 						++it;
 				}
 				requestSize = provider->mRequests.size();
-				provider->mLock.unlock();
 			}
 			if( requestSize > 0 ){// No need to check connectivity as it is checked before
 				// never block
@@ -510,19 +551,14 @@ void LdapContactProvider::ldapServerResolved(void *data, belle_sip_resolver_resu
 		}else{
 			provider->mServerUrl = provider->mConfig["server"];
 		}
-		provider->mLock.lock();
 		provider->mCurrentAction = ACTION_INITIALIZE;
-		provider->mLock.unlock();
 	} else {
 		ms_error("[LDAP] Server resolution failed, no address can be found.");
-		provider->mLock.lock();
 		provider->mCurrentAction = ACTION_ERROR;
-		provider->mLock.unlock();
 	}
 }
 
 void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
-	mLock.lock();
 	if(message){
 		int msgtype = ldap_msgtype(message);
 		LdapContactSearch* req = requestSearch(ldap_msgid(message));
@@ -579,7 +615,6 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 		}
 		mRequests.clear();
 	}
-	mLock.unlock();
 }
 
 

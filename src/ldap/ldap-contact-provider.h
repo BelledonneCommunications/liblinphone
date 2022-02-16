@@ -24,6 +24,7 @@
 #include "linphone/types.h"
 #include "linphone/contactprovider.h"
 #include "belle-sip/object++.hh"
+#include "bctoolbox/port.h"
 #include "core/core.h"
 #include "core/core-accessor.h"
 #include <map>
@@ -44,17 +45,18 @@ public:
 	
 	/**
 	 * Current action of the provider following this flow:
-	 * ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST =>]
+	 * ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => (ACTION_WAIT_TLS_CONNECT) => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST =>]
 	 */	
 	enum{
-		ACTION_ERROR = -1,	// Error State
-		ACTION_NONE = 0,	// Do nothing
-		ACTION_INIT,		// First step of initialization. Check domain and use Sal if requested.
-		ACTION_WAIT_DNS,	// Sal is processing : wait till a result
-		ACTION_INITIALIZE,	// Initialize the connection to the server
-		ACTION_BIND,		// Bind to the server
-		ACTION_WAIT_BIND,	// Wait for binding
-		ACTION_WAIT_REQUEST	// Wait for processing search requests
+		ACTION_ERROR = -1,			// Error State
+		ACTION_NONE = 0,			// Do nothing
+		ACTION_INIT,				// First step of initialization. Check domain and use Sal if requested.
+		ACTION_WAIT_DNS,			// Sal is processing : wait till a result
+		ACTION_INITIALIZE,			// Initialize the connection to the server
+		ACTION_WAIT_TLS_CONNECT,	// Wait TLS connection
+		ACTION_BIND,				// Bind to the server
+		ACTION_WAIT_BIND,			// Wait for binding
+		ACTION_WAIT_REQUEST			// Wait for processing search requests
 	};
 //	CREATION
 	/**
@@ -83,7 +85,7 @@ public:
 //	CONFIGURATION
 	/**
 	 * @brief getTimeout it's a convertor from configuration 'timeout' to integer
-	 * @return The timeout
+	 * @return The timeout in seconds
 	 */
 	int getTimeout() const;
 
@@ -155,12 +157,18 @@ public:
 	 * @param results The address from Sal
 	 */
 	static void ldapServerResolved(void *data, belle_sip_resolver_results_t *results);
+
 private:
 	/**
 	 * @brief handleSearchResult Parse the LDAPMessage to get contacts and fill Search entries.
 	 * @param message LDAPMessage to parse
 	 */
 	void handleSearchResult( LDAPMessage* message );
+	
+	/**
+	 * @brief ldapTlsConnection Procedure to Start a TLS connection using mTlsConnectionTimeout.
+	 */
+	void ldapTlsConnection();
 
 	std::shared_ptr<Core> mCore;
 	std::map<std::string,std::string>  mConfig;
@@ -168,7 +176,6 @@ private:
 	std::vector<std::string> mNameAttributes;// Optimization to avoid split each times
 	std::vector<std::string> mSipAttributes;// Optimization to avoid split each times
 	LDAP *mLd;
-	std::mutex mLock;
 	std::list<std::shared_ptr<LdapContactSearch> > mRequests;
 
 	int mAwaitingMessageId; // Waiting Message for ldap_abandon_ext on bind
@@ -178,6 +185,10 @@ private:
 	belle_sip_resolver_context_t * mSalContext;	// Sal Context for DNS
 	belle_generic_uri_t *mServerUri;//Used to optimized query on SAL
 	std::string mServerUrl;	// URL to use for connection. It can be different from configuration
+
+// TLS connection
+	int mTlsConnectionId = -1;	// Used for getting async results from a start_tls
+	time_t mTlsConnectionTimeout;
 };
 
 LINPHONE_END_NAMESPACE
