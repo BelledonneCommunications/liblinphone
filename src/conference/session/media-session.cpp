@@ -3555,8 +3555,8 @@ LinphoneStatus MediaSession::pauseFromConference () {
 		if (linphone_proxy_config_get_op(d->destProxy)) {
 			/* Give a chance to update the contact address if connectivity has changed */
 			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
-		} else if (linphone_core_conference_server_enabled(getCore()->getCCore())) {
-			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->destProxy));
+		} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && linphone_proxy_config_get_contact(d->getDestProxy())) {
+			contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->getDestProxy()));
 		}
 	} else if (d->op && d->op->getContactAddress()) {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
