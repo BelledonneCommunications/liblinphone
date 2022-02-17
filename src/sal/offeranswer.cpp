@@ -168,11 +168,11 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 	// When a stream is inactive, refpt->mime_type might be null
 	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
-		bctbx_list_t* remote_payload_list = Utils::listToBctbxList(remote_payloads);
-		bctbx_list_t* local_payload_list = Utils::listToBctbxList(local_payloads);
-		ret = ms_offer_answer_context_match_payload(ctx, local_payload_list, refpt, remote_payload_list, reading_response);
-		bctbx_list_free(local_payload_list);
-		bctbx_list_free(remote_payload_list);
+		auto local_payloads_list =  Utils::listToBctbxList(local_payloads);
+		auto remote_payloads_list =  Utils::listToBctbxList(remote_payloads);
+		ret = ms_offer_answer_context_match_payload(ctx, local_payloads_list, refpt, remote_payloads_list, reading_response);
+		bctbx_list_free(local_payloads_list);
+		bctbx_list_free(remote_payloads_list);
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
@@ -241,22 +241,24 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 	}
 	if (reading_response){
 		/* add remaning local payload as CAN_RECV only so that if we are in front of a non-compliant equipment we are still able to decode the RTP stream*/
+		bool found=false;
 		for (const auto & p1 : local) {
-			bool found=false;
 			for (const auto & p2 : remote) {
 				if (payload_type_get_number(p2)==payload_type_get_number(p1)){
 					found=true;
 					break;
 				}
 			}
-			if (!found){
-				ms_message("Adding %s/%i for compatibility, just in case.",p1->mime_type,p1->clock_rate);
-				PayloadType *cloned_p1=payload_type_clone(p1);
-				payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FLAG_CAN_RECV);
-				payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FROZEN_NUMBER);
-				res.push_back(cloned_p1);
-			}
 		}
+		if (!found){
+			const auto & p1 = local.front();
+			ms_message("Adding %s/%i for compatibility, just in case.",p1->mime_type,p1->clock_rate);
+			PayloadType *cloned_p1=payload_type_clone(p1);
+			payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FLAG_CAN_RECV);
+			payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FROZEN_NUMBER);
+			res.push_back(cloned_p1);
+		}
+
 	}
 	return res;
 }
