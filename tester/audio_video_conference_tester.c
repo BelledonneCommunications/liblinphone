@@ -742,6 +742,8 @@ end:
 	if (marie_conference_address) {
 		linphone_address_unref(marie_conference_address);
 	}
+
+	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 }
 
 static void on_speaking_notified(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
