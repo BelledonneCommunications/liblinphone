@@ -22,6 +22,7 @@
 
 #include "linphone/utils/general.h"
 #include "linphone/enums/conference-enums.h"
+#include <string>
 
 LINPHONE_BEGIN_NAMESPACE
 
