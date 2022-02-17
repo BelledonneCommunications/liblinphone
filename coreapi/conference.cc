@@ -366,6 +366,10 @@ void Conference::checkIfTerminated() {
 			setState(ConferenceInterface::State::Terminated);
 		} else {
 			setState(ConferenceInterface::State::TerminationPending);
+			bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+			if (!eventLogEnabled) {
+				setState(ConferenceInterface::State::Terminated);
+			}
 		}
 	}
 }
@@ -958,6 +962,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 			setState(ConferenceInterface::State::Terminated);
 		} else {
 			setState(ConferenceInterface::State::TerminationPending);
+#ifdef HAVE_ADVANCED_IM
+			if (!eventHandler) {
+#endif // HAVE_ADVANCED_IM
+				setState(ConferenceInterface::State::Terminated);
+#ifdef HAVE_ADVANCED_IM
+			}
+#endif // HAVE_ADVANCED_IM
 		}
 	}
 	
@@ -1019,6 +1030,14 @@ int LocalConference::terminate () {
 			session->terminate();
 		}
 	}
+
+#ifdef HAVE_ADVANCED_IM
+	if (!eventHandler) {
+#endif // HAVE_ADVANCED_IM
+		setState(ConferenceInterface::State::Terminated);
+#ifdef HAVE_ADVANCED_IM
+	}
+#endif // HAVE_ADVANCED_IM
 
 	return 0;
 }
