@@ -216,7 +216,13 @@ LinphoneCore *IceService::getCCore()const{
 int IceService::gatherLocalCandidates(){
 	list<string> localAddrs = IfAddrs::fetchLocalAddresses();
 	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
-	
+	const auto & mediaLocalIp = getMediaSessionPrivate().getMediaLocalIp();
+	const auto it = std::find(localAddrs.cbegin(), localAddrs.cend(), mediaLocalIp);
+	if (it == localAddrs.cend()) {
+		// Add media local IP address if not already in the list in order to always include the default candidate
+		localAddrs.push_back(mediaLocalIp);
+	}
+
 #if defined(__APPLE__) && TARGET_OS_IPHONE
 	if (getPlatformHelpers(getCCore())->getNetworkType() == PlatformHelpers::NetworkType::Wifi 
 		&& !hasLocalNetworkPermission(localAddrs)) return -1;

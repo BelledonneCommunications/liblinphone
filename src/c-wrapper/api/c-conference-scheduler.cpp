@@ -22,6 +22,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-conference-scheduler.h"
 #include "linphone/api/c-address.h"
+#include "account/account.h"
 
 // =============================================================================
 
@@ -36,8 +37,17 @@ void linphone_conference_scheduler_unref(LinphoneConferenceScheduler *conference
 	ConferenceScheduler::toCpp(conference_scheduler)->unref();
 }
 
-LinphoneCore* linphone_scheduler_get_core(const LinphoneConferenceScheduler *conference_scheduler) {
+LinphoneCore* linphone_conference_scheduler_get_core(const LinphoneConferenceScheduler *conference_scheduler) {
 	return ConferenceScheduler::toCpp(conference_scheduler)->getCore()->getCCore();
+}
+
+void linphone_conference_scheduler_set_account(LinphoneConferenceScheduler *conference_scheduler, LinphoneAccount *account) {
+	ConferenceScheduler::toCpp(conference_scheduler)->setAccount(LinphonePrivate::Account::toCpp(account)->getSharedFromThis());
+}
+
+LinphoneAccount *linphone_conference_scheduler_get_account(const LinphoneConferenceScheduler *conference_scheduler) {
+	auto account = ConferenceScheduler::toCpp(conference_scheduler)->getAccount();
+	return account != nullptr ? account->toC() : NULL;
 }
 
 const LinphoneConferenceInfo* linphone_conference_scheduler_get_info(const LinphoneConferenceScheduler *conference_scheduler) {

@@ -190,7 +190,7 @@ protected:
 	bool tryAddMeDevice();
 	std::map<ConferenceMediaCapabilities, bool> getMediaCapabilities() const;
 
-	void updateMainSession();
+	LinphoneStatus updateMainSession();
 
 	ConferenceId conferenceId;
 
@@ -207,7 +207,7 @@ protected:
 
 #ifdef HAVE_DB_STORAGE
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
-	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo(const IdentityAddress & organizer) const;
+	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo(const IdentityAddress & organizer, const std::list<IdentityAddress> invitedParticipants) const;
 #endif // HAVE_DB_STORAGE
 
 private:

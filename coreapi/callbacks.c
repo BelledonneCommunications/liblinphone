@@ -205,15 +205,16 @@ static void call_received(SalCallOp *h) {
 		ms_warning("Advanced IM such as group chat is disabled!");
 		return;
 #endif
-	} else if ((sal_address_has_param(h->getToAddress(), "conf-id")) || ((sal_address_has_param(h->getRemoteContactAddress(), "admin") && (strcmp(sal_address_get_param(h->getRemoteContactAddress(), "admin"), "1") == 0)))) {
+	} else if ((sal_address_has_uri_param(h->getToAddress(), "conf-id")) || ((sal_address_has_param(h->getRemoteContactAddress(), "admin") && (strcmp(sal_address_get_param(h->getRemoteContactAddress(), "admin"), "1") == 0)))) {
 		// Create a conference if remote is trying to schedule one or it is calling a conference focus
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(h->getTo()), ConferenceAddress(h->getTo())));
+			const auto & resourceList = h->getContentInRemote(ContentType::ResourceLists);
 			if (!conference) {
 				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
 
 				if (confInfo) {
-						std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
+					std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
 				} else {
 					auto localConference = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
 					localConference->confirmCreation();
@@ -221,6 +222,9 @@ static void call_received(SalCallOp *h) {
 					linphone_address_unref(fromAddr);
 					return;
 				}
+			} else if (!resourceList.isEmpty()) {
+				auto localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
+				localConference->updateConferenceInformation(h);
 			}
 		}
 	}

@@ -245,6 +245,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 			} else {
 				participant = Participant::create(conf,address);
 				conf->participants.push_back(participant);
+				conf->updateParticipantsInConferenceInfo(address);
 				lInfo() << "Participant " << *participant << " is successfully added - conference " << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount() << " participants";
 
 				if (!isFullState) {
@@ -451,10 +452,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	if (isFullState) {
 		confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
 		conf->notifyFullState();
-		if (conf->getState() == ConferenceInterface::State::CreationPending) {
-			// Move to Created state when the list of participants is received
-			conf->setState(ConferenceInterface::State::Created);
-		}
 	}
 }
 

@@ -75,6 +75,7 @@ LINPHONE_PUBLIC belle_http_provider_t *linphone_core_get_http_provider(const Lin
 LINPHONE_PUBLIC IceSession * linphone_call_get_ice_session(const LinphoneCall *call);
 LINPHONE_PUBLIC const struct addrinfo *linphone_core_get_stun_server_addrinfo(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_core_enable_send_call_stats_periodical_updates(LinphoneCore *lc, bool_t enabled);
+LINPHONE_PUBLIC LinphoneAccount * linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
 
 LINPHONE_PUBLIC int linphone_run_stun_tests(LinphoneCore *lc, int audioPort, int videoPort, int textPort,
 	char *audioCandidateAddr, int *audioCandidatePort, char *videoCandidateAddr, int *videoCandidatePort, char *textCandidateAddr, int *textCandidatePort);

@@ -173,13 +173,13 @@ static void build_ics () {
 }
 
 static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
-	stats *stat = get_stats(linphone_scheduler_get_core(scheduler));
+	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 	BC_ASSERT_PTR_NULL(failed_addresses);
 }
 
 static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceScheduler *scheduler, const bctbx_list_t *failed_addresses) {
-	stats *stat = get_stats(linphone_scheduler_get_core(scheduler));
+	stats *stat = get_stats(linphone_conference_scheduler_get_core(scheduler));
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 	BC_ASSERT_PTR_NOT_NULL(failed_addresses);
 	if (failed_addresses) {

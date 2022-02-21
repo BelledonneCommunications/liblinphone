@@ -1708,6 +1708,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
+	if (conference && !isInLocalConference) {
+		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		const auto & conferenceState = cppConference->getState();
+		if ((conferenceState == ConferenceInterface::State::Instantiated) || (conferenceState == ConferenceInterface::State::CreationPending)) {
+			// If conference is not ready, then there is no point in adding participant streams
+			conference = nullptr;
+		}
+	}
 
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
@@ -4488,6 +4496,11 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 			lError() << "MediaSession::setParams(): Invalid state " << Utils::toString(d->state);
 		break;
 	}
+}
+
+void MediaSession::queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda) {
+	L_D();
+	d->queueIceCompletionTask(lambda);
 }
 
 StreamsGroup & MediaSession::getStreamsGroup()const{

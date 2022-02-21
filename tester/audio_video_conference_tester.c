@@ -245,7 +245,6 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 	unsigned int local_conf_participants = linphone_conference_get_participant_count(l_conference);
 	BC_ASSERT_EQUAL(local_conf_participants, no_participants, int, "%d");
 
-
 	idx = 0;
 	int update_cnt = 1;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
@@ -932,43 +931,46 @@ static void simple_conference_with_admin_changed(void) {
 	if (!marie_conference) goto end;
 
 	stats* initial_participants_stats = NULL;
+	int idx = 0;
+	int counter = 0;
 
 	// Marie change Pauline's status to admin
 	LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	LinphoneParticipant * pauline_participant = linphone_conference_find_participant(marie_conference, pauline_uri);
 	BC_ASSERT_PTR_NOT_NULL(pauline_participant);
-	BC_ASSERT_FALSE(linphone_participant_is_admin(pauline_participant));
+	if (pauline_participant) {
+		BC_ASSERT_FALSE(linphone_participant_is_admin(pauline_participant));
 
-	int counter = 1;
-	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		counter = 1;
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
-		// Allocate memory
-		initial_participants_stats = (stats*)realloc(initial_participants_stats, counter * sizeof(stats));
+			// Allocate memory
+			initial_participants_stats = (stats*)realloc(initial_participants_stats, counter * sizeof(stats));
 
-		// Append element
-		initial_participants_stats[counter - 1] = m->stat;
+			// Append element
+			initial_participants_stats[counter - 1] = m->stat;
 
-		// Increment counter
-		counter++;
+			// Increment counter
+			counter++;
+		}
+		stats initial_marie = marie->stat;
+
+		linphone_conference_set_participant_admin_status(marie_conference, pauline_participant, TRUE);
+		// Participants should receive the admin changed notification:
+		idx = 0;
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_admin_statuses_changed,(initial_participants_stats[idx].number_of_participant_admin_statuses_changed + 1),3000));
+			idx++;
+		}
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_admin_statuses_changed,initial_marie.number_of_participant_admin_statuses_changed+1,3000));
+
+		ms_free(initial_participants_stats);
+		initial_participants_stats = NULL;
+
+		BC_ASSERT_TRUE(linphone_participant_is_admin(pauline_participant));
 	}
-	stats initial_marie = marie->stat;
-
-
-	linphone_conference_set_participant_admin_status(marie_conference, pauline_participant, TRUE);
-	// Participants should receive the admin changed notification:
-	int idx = 0;
-	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_admin_statuses_changed,(initial_participants_stats[idx].number_of_participant_admin_statuses_changed + 1),3000));
-		idx++;
-	}
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_admin_statuses_changed,initial_marie.number_of_participant_admin_statuses_changed+1,3000));
-
-	ms_free(initial_participants_stats);
-	initial_participants_stats = NULL;
-
-	BC_ASSERT_TRUE(linphone_participant_is_admin(pauline_participant));
 
 	// Pauline removes Marie as admin
 	const LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(marie_conference);
@@ -976,43 +978,45 @@ static void simple_conference_with_admin_changed(void) {
 	linphone_address_unref(pauline_uri);
 	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
 
-	bctbx_list_t *participants_before_removal = linphone_conference_get_participant_list(marie_conference);
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants_before_removal), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
-	bctbx_list_free_with_data(participants_before_removal, (void(*)(void *))linphone_participant_unref);
+	if (pauline_conference) {
+		bctbx_list_t *participants_before_removal = linphone_conference_get_participant_list(marie_conference);
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants_before_removal), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+		bctbx_list_free_with_data(participants_before_removal, (void(*)(void *))linphone_participant_unref);
 
-	const char *marie_uri = linphone_core_get_identity(marie->lc);
-	LinphoneAddress *marie_address = linphone_address_new(marie_uri);
-	LinphoneParticipant * marie_participant = linphone_conference_find_participant(pauline_conference, marie_address);
-	BC_ASSERT_PTR_NOT_NULL(marie_participant);
+		const char *marie_uri = linphone_core_get_identity(marie->lc);
+		LinphoneAddress *marie_address = linphone_address_new(marie_uri);
+		LinphoneParticipant * marie_participant = linphone_conference_find_participant(pauline_conference, marie_address);
+		BC_ASSERT_PTR_NOT_NULL(marie_participant);
 
-	counter = 1;
-	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		counter = 1;
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
-		// Allocate memory
-		initial_participants_stats = (stats*)realloc(initial_participants_stats, counter * sizeof(stats));
+			// Allocate memory
+			initial_participants_stats = (stats*)realloc(initial_participants_stats, counter * sizeof(stats));
 
-		// Append element
-		initial_participants_stats[counter - 1] = m->stat;
+			// Append element
+			initial_participants_stats[counter - 1] = m->stat;
 
-		// Increment counter
-		counter++;
+			// Increment counter
+			counter++;
+		}
+
+		linphone_conference_set_participant_admin_status(pauline_conference, marie_participant, FALSE);
+		// Participants should receive the admin changed notification:
+		idx = 0;
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_admin_statuses_changed,(initial_participants_stats[idx].number_of_participant_admin_statuses_changed + 1),3000));
+			idx++;
+		}
+
+		ms_free(initial_participants_stats);
+		initial_participants_stats = NULL;
+
+		BC_ASSERT_FALSE(linphone_participant_is_admin(marie_participant));
+		linphone_address_unref(marie_address);
 	}
-
-	linphone_conference_set_participant_admin_status(pauline_conference, marie_participant, FALSE);
-	// Participants should receive the admin changed notification:
-	idx = 0;
-	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_admin_statuses_changed,(initial_participants_stats[idx].number_of_participant_admin_statuses_changed + 1),3000));
-		idx++;
-	}
-
-	ms_free(initial_participants_stats);
-	initial_participants_stats = NULL;
-
-	BC_ASSERT_FALSE(linphone_participant_is_admin(marie_participant));
-	linphone_address_unref(marie_address);
 
 	participants=bctbx_list_remove(participants,pauline);
 

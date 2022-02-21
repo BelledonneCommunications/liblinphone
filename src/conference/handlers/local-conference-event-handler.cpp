@@ -976,7 +976,6 @@ void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<Confer
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAll(createNotifySubjectChanged(event->getSubject()));
-		conf->updateSubjectInConferenceInfo(event->getSubject());
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}

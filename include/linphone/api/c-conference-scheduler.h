@@ -49,7 +49,23 @@ LINPHONE_PUBLIC void linphone_conference_scheduler_unref(LinphoneConferenceSched
  * @param conference_scheduler The #LinphoneConferenceScheduler object. @notnil
  * @return the #LinphoneCore object. @notnil
  */
-LINPHONE_PUBLIC LinphoneCore* linphone_scheduler_get_core(const LinphoneConferenceScheduler *conference_scheduler);
+LINPHONE_PUBLIC LinphoneCore* linphone_conference_scheduler_get_core(const LinphoneConferenceScheduler *conference_scheduler);
+
+/**
+ * Set the #LinphoneAccount to use for the conference scheduler
+ *
+ * @param conference_scheduler The #LinphoneConferenceScheduler object. @notnil
+ * @param account The #LinphoneAccount to use, or NULL if none has been selected. The #LinphoneCallParams keeps a reference to it and removes the previous one, if any. @maybenil
+ **/
+LINPHONE_PUBLIC void linphone_conference_scheduler_set_account(LinphoneConferenceScheduler *conference_scheduler, LinphoneAccount *account);
+
+/**
+ * Get the #LinphoneAccount that is used for the conference scheduler
+ *
+ * @param conference_scheduler The #LinphoneConferenceScheduler object. @notnil
+ * @return The selected #LinphoneAccount for the call, or NULL if none has been selected. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneAccount *linphone_conference_scheduler_get_account(const LinphoneConferenceScheduler *conference_scheduler);
 
 /**
  * Returns the #LinphoneConferenceInfo currently set in this scheduler.

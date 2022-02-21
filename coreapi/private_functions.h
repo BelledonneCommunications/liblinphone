@@ -295,7 +295,9 @@ void linphone_account_update(LinphoneAccount *account);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
-LinphoneAccount * linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
+
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
+LINPHONE_PUBLIC LinphoneAccount * linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneAccount * linphone_core_lookup_account_by_identity_strict(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);

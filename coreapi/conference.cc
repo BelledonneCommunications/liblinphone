@@ -500,12 +500,18 @@ LocalConference::LocalConference (
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
+	} else {
+#endif // HAVE_ADVANCED_IM
+		lInfo() << "Unable to add listener to local conference as conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+#ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
 
 	mMixerSession.reset(new MixerSession(*core.get()));
 
 	setState(ConferenceInterface::State::Instantiated);
+
+	organizer = myAddress;
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
@@ -544,6 +550,10 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
+	} else {
+#endif // HAVE_ADVANCED_IM
+		lInfo() << "Unable to add listener to local conference as conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+#ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
 
@@ -568,6 +578,8 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	confParams->enableOneParticipantConference(true);
 	confParams->setStatic(true);
 
+	organizer = IdentityAddress(op->getFrom());
+
 	MediaSessionParams msp;
 	msp.enableAudio(audioEnabled);
 	msp.enableVideo(videoEnabled);
@@ -585,12 +597,11 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	shared_ptr<CallSession> session = getMe()->createSession(*this, &msp, true, nullptr);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 
-	const auto resourceList = op->getContentInRemote (ContentType::ResourceLists);
+	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 	if (!resourceList.isEmpty()) {
 		auto invitee = Conference::parseResourceLists(resourceList);
 		invitedAddresses.insert(invitedAddresses.begin(), invitee.begin(), invitee.end());
 	}
-	invitedAddresses.push_back(IdentityAddress(op->getFrom()));
 
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
@@ -599,7 +610,7 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 }
 
 LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::shared_ptr<ConferenceInfo> & info) :
-	Conference(core, info->getOrganizer(), nullptr, ConferenceParams::create(core->getCCore())) {
+	Conference(core, info->getUri(), nullptr, ConferenceParams::create(core->getCCore())) {
 
 	LinphoneCore * lc = core->getCCore();
 
@@ -608,6 +619,10 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
+	} else {
+#endif // HAVE_ADVANCED_IM
+		lInfo() << "Unable to add listener to local conference as conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+#ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
 
@@ -622,6 +637,8 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 	confParams->enableOneParticipantConference(true);
 	confParams->setStatic(true);
 
+	organizer = info->getOrganizer();
+
 	time_t startTime = info->getDateTime();
 	confParams->setStartTime(startTime);
 
@@ -635,7 +652,6 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 	for (const auto & p : participants) {
 		invitedAddresses.push_back(p);
 	}
-	invitedAddresses.push_back(info->getOrganizer());
 
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
@@ -654,6 +670,75 @@ LocalConference::~LocalConference() {
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
 	mMixerSession.reset();
+}
+
+void LocalConference::updateConferenceInformation(SalCallOp *op) {
+
+	const auto & remoteMd = op->getRemoteMediaDescription();
+
+	const auto times = remoteMd->times;
+
+	// The following informations are retrieved from the received INVITE:
+	// - start and end time from the SDP active time attribute
+	// - conference active media:
+	//    - if the SDP has at least one active audio stream, audio is enabled
+	//    - if the SDP has at least one active video stream, video is enabled
+	// - Subject is got from the "Subject" header in the INVITE
+	const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
+	const auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore())) ? linphone_core_video_enabled(getCore()->getCCore()) : (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
+	confParams->enableAudio(audioEnabled);
+	confParams->enableVideo(videoEnabled);
+	confParams->setSubject(op->getSubject());
+	confParams->enableLocalParticipant(false);
+	confParams->enableOneParticipantConference(true);
+	confParams->setStatic(true);
+
+	auto session = const_pointer_cast<LinphonePrivate::MediaSession>(static_pointer_cast<LinphonePrivate::MediaSession>(getMe()->getSession()));
+	auto msp = session->getPrivate()->getParams();
+	msp->enableAudio(audioEnabled);
+	msp->enableVideo(videoEnabled);
+	msp->getPrivate()->setInConference(true);
+
+	if (times.size() > 0) {
+		const auto startTime = times.front().first;
+		const auto endTime = times.front().second;
+		confParams->setStartTime(startTime);
+		confParams->setEndTime(endTime);
+		msp->getPrivate()->setStartTime(startTime);
+		msp->getPrivate()->setEndTime(endTime);
+	}
+
+	invitedAddresses.clear();
+	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
+	if (!resourceList.isEmpty()) {
+		auto invitee = Conference::parseResourceLists(resourceList);
+		invitedAddresses.insert(invitedAddresses.begin(), invitee.begin(), invitee.end());
+	}
+
+	getMe()->setAdmin(true);
+	getMe()->setFocus(true);
+
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	const auto & conferenceInfo = createConferenceInfo(organizer, invitedAddresses);
+	if (mainDb) {
+		lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
+		mainDb->insertConferenceInfo(conferenceInfo);
+	}
+	auto callLog = session->getLog();
+	if (callLog) {
+		callLog->setConferenceInfo(conferenceInfo);
+	}
+#endif
+}
+
+std::list<IdentityAddress> LocalConference::getAllowedAddresses() const {
+	auto allowedAddresses = invitedAddresses;
+	auto organizerIt = std::find(invitedAddresses.begin(), invitedAddresses.end(), organizer);
+	if (organizerIt == invitedAddresses.end()) {
+		allowedAddresses.push_back(organizer);
+	}
+	return allowedAddresses;
 }
 
 void LocalConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
@@ -719,10 +804,21 @@ std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() con
 		}
 	}
 
-	return createConferenceInfo(getMe()->getAddress());
+	std::list<IdentityAddress> participantAddresses;
+	if (!invitedAddresses.empty()) {
+		participantAddresses = invitedAddresses;
+	}
+	for (const auto & p : getParticipants()) {
+		const auto & pAddress = p->getAddress();
+		auto pIt = std::find(participantAddresses.begin(), participantAddresses.end(), pAddress);
+		if (pIt == invitedAddresses.end()) {
+			participantAddresses.push_back(pAddress);
+		}
+	}
+
+	return createConferenceInfo(organizer, participantAddresses);
 }
 #endif // HAVE_DB_STORAGE
-
 
 void LocalConference::finalizeCreation() {
 
@@ -755,6 +851,10 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 	if (eventHandler) {
 		eventHandler->subscribeReceived(event);
 		return;
+	} else {
+#endif // HAVE_ADVANCED_IM
+		lInfo() << "Unable to accept SUBSCRIBE because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+#ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
 	linphone_event_deny_subscription(event, LinphoneReasonNotAcceptable);
@@ -1068,8 +1168,9 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	}
 
 	if (confParams->getParticipantListType() == ConferenceParams::ParticipantListType::Closed) {
-		auto p = std::find(invitedAddresses.begin(), invitedAddresses.end(), IdentityAddress(*remoteAddress));
-		if (p == invitedAddresses.end()) {
+		const auto allowedAddresses = getAllowedAddresses();
+		auto p = std::find(allowedAddresses.begin(), allowedAddresses.end(), IdentityAddress(*remoteAddress));
+		if (p == allowedAddresses.end()) {
 			lError() << "Unable to add call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") because participant " << *remoteAddress << " is not in the list of allowed participants of conference " << getConferenceAddress();
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, NULL, LinphoneReasonUnknown, 403, "Call forbidden to join the conference", NULL);
@@ -1251,8 +1352,9 @@ bool LocalConference::addParticipant (const IdentityAddress &participantAddress)
 #if 0
 	if (!isConferenceEnded() && isConferenceStarted()) {
 		if (confParams->getParticipantListType() == ConferenceParams::ParticipantListType::Closed) {
-			auto p = std::find(invitedAddresses.begin(), invitedAddresses.end(), participantAddress);
-			if (p == invitedAddresses.end()) {
+			const auto allowedAddresses = getAllowedAddresses();
+			auto p = std::find(allowedAddresses.begin(), allowedAddresses.end(), IdentityAddress(*remoteAddress));
+			if (p == allowedAddresses.end()) {
 				lError() << "Unable to add participant " << participantAddress << " because it is not in the list of allowed participants of conference " << getConferenceAddress();
 				return false;
 			}
@@ -1491,14 +1593,15 @@ void LocalConference::checkIfTerminated() {
 			setState(ConferenceInterface::State::Terminated);
 		} else {
 			setState(ConferenceInterface::State::TerminationPending);
-			bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
-			if (!eventLogEnabled
 #ifdef HAVE_ADVANCED_IM
-			|| !eventHandler
-#endif // HAVE_ADVANCED_IM
+			bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+			if (!eventLogEnabled || !eventHandler
 			) {
+#endif // HAVE_ADVANCED_IM
 				setState(ConferenceInterface::State::Terminated);
+#ifdef HAVE_ADVANCED_IM
 			}
+#endif // HAVE_ADVANCED_IM
 		}
 	}
 }
@@ -1544,6 +1647,10 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
 		eventHandler->subscriptionStateChanged(event, state);
+	} else {
+#endif // HAVE_ADVANCED_IM
+		lInfo() << "Unable to handle subscription state change because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+#ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
 }
@@ -1956,7 +2063,7 @@ void RemoteConference::finalizeCreation() {
 		if (finalized) {
 			lDebug() << "Conference " << this << " has already been finalized";
 			return;
-		} else if (focus->getSession() && (!static_pointer_cast<MediaSession>(focus->getSession())->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
+		} else {
 			finalized = true;
 			addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 		#ifdef HAVE_ADVANCED_IM
@@ -1964,6 +2071,10 @@ void RemoteConference::finalizeCreation() {
 			if (eventLogEnabled) {
 				eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 				eventHandler->subscribe(getConferenceId());
+			} else {
+		#endif // HAVE_ADVANCED_IM
+				lInfo() << "Unable to send SUBSCRIBE because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+		#ifdef HAVE_ADVANCED_IM
 			}
 		#endif // HAVE_ADVANCED_IM
 		}
@@ -1985,7 +2096,20 @@ std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() co
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
 	const auto organizer = (referer) ? IdentityAddress(*referer->getRemoteAddress()) : getMe()->getAddress();
-	return createConferenceInfo(organizer);
+
+	std::list<IdentityAddress> participantAddresses;
+	if (!invitedAddresses.empty()) {
+		participantAddresses = invitedAddresses;
+	}
+	for (const auto & p : getParticipants()) {
+		const auto & pAddress = p->getAddress();
+		auto pIt = std::find(participantAddresses.begin(), participantAddresses.end(), pAddress);
+		if (pIt == invitedAddresses.end()) {
+			participantAddresses.push_back(pAddress);
+		}
+	}
+
+	return createConferenceInfo(organizer, participantAddresses);
 }
 #endif // HAVE_DB_STORAGE
 
@@ -2177,6 +2301,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 		LinphoneAddress *addr;
 		LinphoneCallParams *params;
 		std::shared_ptr<LinphonePrivate::Call> focusCall = nullptr;
+		const auto & remoteAddress = call->getRemoteAddress();
 		switch (state) {
 			case ConferenceInterface::State::None:
 			case ConferenceInterface::State::Instantiated:
@@ -2192,24 +2317,38 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				linphone_call_params_enable_video(params, confParams->videoEnabled());
 				Conference::setSubject(pendingSubject);
 				auto focusCallC = linphone_core_invite_address_with_params_2(getCore()->getCCore(), addr, params, L_STRING_TO_C(pendingSubject), nullptr);
+				linphone_call_params_unref(params);
 				if(focusCallC) {
 					focusCall = Call::toCpp(focusCallC)->getSharedFromThis();
 					focusCall->setConference(toC());
 					focus->setSession(focusCall->getActiveSession());
 				}
-				m_pendingCalls.push_back(call);
-				linphone_call_params_unref(params);
-				Conference::addParticipant(call);
+				auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
+				if (callIt == m_pendingCalls.end()) {
+					lInfo() << "Adding call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") to the list of call to add to conference " << getConferenceAddress() << " (" << this << ")";
+					m_pendingCalls.push_back(call);
+					Conference::addParticipant(call);
+				} else {
+					lError() << "Trying to add call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") twice to conference " << getConferenceAddress() << " (" << this << ")";
+				}
 			}
 				return true;
 			case ConferenceInterface::State::CreationPending:
 			case ConferenceInterface::State::Created:
-				Conference::addParticipant(call);
 				if (focus->getSession()) {
-					if(focusIsReady())
+					if(focusIsReady()) {
+						Conference::addParticipant(call);
 						transferToFocus(call);
-					else
-						m_pendingCalls.push_back(call);
+					} else {
+						auto callIt = std::find(m_pendingCalls.begin(), m_pendingCalls.end(), call);
+						if (callIt == m_pendingCalls.end()) {
+							lInfo() << "Adding call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") to the list of call to add to conference " << getConferenceAddress() << " (" << this << ")";
+							m_pendingCalls.push_back(call);
+							Conference::addParticipant(call);
+						} else {
+							lError() << "Trying to add call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") twice to conference " << getConferenceAddress() << " (" << this << ")";
+						}
+					}
 				} else {
 					lInfo() << "Calling the conference focus (" << focus->getAddress() << ")";
 					addr = L_GET_C_BACK_PTR(&(focus->getAddress().asAddress()));
@@ -2521,6 +2660,10 @@ bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> c
 		referToAddr.setParam("admin", Utils::toString(participant->isAdmin()));
 		const auto & remoteAddress = call->getRemoteAddress();
 		lInfo() << "Transfering call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") to focus " << referToAddr;
+#ifdef HAVE_DB_STORAGE
+		const auto & participantAddress = participant->getAddress();
+		updateParticipantsInConferenceInfo(participantAddress);
+#endif
 		if (call->transfer(referToAddr.asString()) == 0) {
 			m_transferingCalls.push_back(call);
 			return true;
@@ -2752,20 +2895,20 @@ void RemoteConference::multipartNotifyReceived (const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
 		eventHandler->multipartNotifyReceived(content);
+		return;
 	}
-#else
-	lInfo() << "Advanced IM such as conferencing events is disabled!";
 #endif // HAVE_ADVANCED_IM
+	lInfo() << "Unable to handle multi part NOTIFY because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
 }
 
 void RemoteConference::notifyReceived (const Content &content) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
 		eventHandler->notifyReceived(content);
+		return;
 	}
-#else
-	lInfo() << "Advanced IM such as conferencing events is disabled!";
 #endif // HAVE_ADVANCED_IM
+	lInfo() << "Unable to handle NOTIFY because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
 }
 
 void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::State state) {
@@ -2850,23 +2993,17 @@ void RemoteConference::setSubject (const std::string &subject) {
 
 	auto session = getMainSession();
 	if (session) {
-
 		if (subject.compare(pendingSubject) != 0) {
 			pendingSubject = subject;
 			Conference::setSubject(subject);
 			session->update(nullptr, CallSession::UpdateMethod::Default, subject);
-#ifdef HAVE_DB_STORAGE
-			updateSubjectInConferenceInfo(subject);
-#endif // HAVE_DB_STORAGE
+
+			time_t creationTime = time(nullptr);
+			notifySubjectChanged(creationTime, false, subject);
 		}
 	} else {
 		pendingSubject = subject;
 		lInfo() << "Unable to update subject right now because the focus session has not been established yet.";
-	}
-
-
-	if (getState() != ConferenceInterface::State::Created) {
-		return;
 	}
 }
 
@@ -2906,6 +3043,10 @@ void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipan
 			}
 			lInfo() << "Subscribing me (address " << pAddr << ") to conference " << getConferenceAddress();
 			eventHandler->subscribe(getConferenceId());
+		} else {
+	#endif // HAVE_ADVANCED_IM
+			lInfo() << "Unable to send SUBSCRIBE because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+	#ifdef HAVE_ADVANCED_IM
 		}
 	#endif // HAVE_ADVANCED_IM
 	} else if (findParticipant(pAddr)) {
@@ -2942,7 +3083,7 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy)) {
+	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Sending re-INVITE in order to get streams for newly added participant device " << device->getAddress();
 		updateMainSession();
 	}
@@ -2952,20 +3093,14 @@ void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<Confere
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy)) {
+	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Sending re-INVITE in order to get streams for recently removed participant device " << device->getAddress();
 		updateMainSession();
 	}
 }
 
-void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
-#ifdef HAVE_DB_STORAGE
-	updateSubjectInConferenceInfo(event->getSubject());
-#endif // HAVE_DB_STORAGE
-}
-
 void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	if ((getLayout() != ConferenceLayout::Legacy) && (!isMe(device->getAddress()))) {
+	if ((getLayout() != ConferenceLayout::Legacy) && (!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Sending re-INVITE because device " << device->getAddress() << " has changed its stream availability";
 		updateMainSession();
 	}
@@ -2976,21 +3111,28 @@ void RemoteConference::onFullStateReceived() {
 	// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
-		std::shared_ptr<ConferenceInfo> conferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
-
-		if (!conferenceInfo) {
-			lInfo() << "Inserting conference information to database related to conference " << getConferenceAddress();
-			const auto conferenceInfo = createOrGetConferenceInfo();
-			mainDb->insertConferenceInfo(conferenceInfo);
-			auto  callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-			if (callLog) {
-				callLog->setConferenceInfo(conferenceInfo);
-			}
+		lInfo() << "Inserting conference information to database related to conference " << getConferenceAddress();
+		const auto conferenceInfo = createOrGetConferenceInfo();
+		mainDb->insertConferenceInfo(conferenceInfo);
+		auto  callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
+		if (callLog) {
+			callLog->setConferenceInfo(conferenceInfo);
 		}
 	}
 #endif // HAVE_DB_STORAGE
-	lInfo() << "Sending re-INVITE in order to get streams after joining conference " << getConferenceAddress();
-	updateMainSession();
+
+	auto requestStreams = [this]() -> LinphoneStatus{
+		lInfo() << "Sending re-INVITE in order to get streams after joining conference " << getConferenceAddress();
+		setState(ConferenceInterface::State::Created);
+		return updateMainSession();
+	};
+
+	if (focus->getSession() && (!static_pointer_cast<MediaSession>(focus->getSession())->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
+		requestStreams();
+	} else {
+		lInfo() << "Delaying re-INVITE in order to get streams after joining conference " << getConferenceAddress() << " because ICE negotiations didn't end yet";
+		static_pointer_cast<MediaSession>(focus->getSession())->queueIceCompletionTask(requestStreams);
+	}
 }
 
 }//end of namespace MediaConference

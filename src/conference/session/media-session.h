@@ -145,6 +145,8 @@ public:
 	bool pausedByApp()const;
 	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking);
 
+	void queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda);
+
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

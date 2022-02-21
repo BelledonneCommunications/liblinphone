@@ -427,6 +427,8 @@ typedef struct _stats {
 	int number_of_LinphoneParticipantDeviceStopSpeaking;
 
 	int number_of_ConferenceSchedulerStateReady;
+	int number_of_ConferenceSchedulerStateUpdating;
+	int number_of_ConferenceSchedulerStateError;
 	int number_of_ConferenceSchedulerInvitationsSent;
 	
 	int number_of_LinphoneMagicSearchResultReceived;
@@ -584,8 +586,6 @@ void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, Lin
 void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
 void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
 bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats);	// Return all LinphoneChatMessage and count states
-
-
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);

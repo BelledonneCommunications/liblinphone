@@ -24,6 +24,7 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "core/core-p.h"
 #include "content/file-content.h"
+#include "account/account.h"
 
 // =============================================================================
 
@@ -34,12 +35,31 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceScheduler::ConferenceScheduler (
 	const shared_ptr<Core> &core
 	) : CoreAccessor(core) {
-		mState = State::Idle;
+	mState = State::Idle;
+	auto default_account = linphone_core_get_default_account(core->getCCore());
+	if (default_account) {
+		mAccount =  Account::toCpp(default_account)->getSharedFromThis();
+	}
 }
 
 ConferenceScheduler::~ConferenceScheduler () {
 	if (mSession != nullptr) {
 		mSession->setListener(nullptr);
+	}
+	if (mAccount) {
+		mAccount = nullptr;
+	}
+}
+
+const std::shared_ptr<Account> & ConferenceScheduler::getAccount() const {
+	return mAccount;
+}
+
+void ConferenceScheduler::setAccount(std::shared_ptr<Account> account) {
+	if ((mState == State::Idle) || (mState == State::AllocationPending) || (mState == State::Error)) {
+		mAccount = account;
+	} else {
+		lWarning() << "[Conference Scheduler] Unable to change account because scheduler is in state " << mState;
 	}
 }
 
@@ -57,12 +77,47 @@ const std::shared_ptr<ConferenceInfo> ConferenceScheduler::getInfo () const {
 }
 
 void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
-	if (info->getParticipants().empty()) {
+
+	if (!mAccount) {
+		auto default_account = linphone_core_get_default_account(getCore()->getCCore());
+		if (default_account) {
+			mAccount =  Account::toCpp(default_account)->getSharedFromThis();
+		}
+	}
+
+	const auto creator =  mAccount ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(mAccount->getAccountParams()->getIdentityAddress())) : IdentityAddress(linphone_core_get_identity(getCore()->getCCore()));
+	if (!creator.isValid()) {
+		lWarning() << "[Conference Scheduler] Core address attempting to set conference information!";
+		return;
+	}
+
+	const auto & participants = info->getParticipants();
+	if (participants.empty()) {
 		lWarning() << "[Conference Scheduler] Can't create a scheduled conference if no participants are added!";
 		setState(State::Error);
 		return;
 	}
 
+	const auto & organizer = info->getOrganizer();
+	const bool participantFound = (std::find(participants.cbegin(), participants.cend(), creator) != participants.cend());
+	if ((creator != organizer) && !participantFound) {
+		lWarning() << "[Conference Scheduler] Unable to find the address " << creator << " setting the conference information among the list of participants or the organizer (" << info->getOrganizer() << ") of conference " << info->getUri();
+		setState(State::Error);
+		return;
+	}
+
+	LinphoneConferenceInfo * foundConferenceInfo = nullptr;
+#ifdef HAVE_DB_STORAGE
+	auto conference_address = linphone_address_clone(linphone_conference_info_get_uri(info->toC()));
+	foundConferenceInfo = linphone_core_find_conference_information_from_uri(getCore()->getCCore(), conference_address);
+	linphone_address_unref(conference_address);
+	if (foundConferenceInfo) {
+		mConferenceInfo = ConferenceInfo::toCpp(foundConferenceInfo)->getSharedFromThis();
+	}
+#endif // HAVE_DB_STORAGE
+
+
+	ConferenceAddress conferenceAddress;
 	if (mConferenceInfo == nullptr) {
 		setState(State::AllocationPending);
 		if (info->getUri().isValid()) {
@@ -73,44 +128,49 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 			return;
 		}
 	} else {
+		conferenceAddress = mConferenceInfo->getUri();
+		info->setUri(conferenceAddress);
 		setState(State::Updating);
 	}
 	mConferenceInfo = info;
+	if (foundConferenceInfo) {
+		linphone_conference_info_unref(foundConferenceInfo);
+	}
 
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
 	const auto identityAddress = mConferenceInfo->getOrganizer();
+	conferenceParams->enableAudio(true);
 	conferenceParams->enableVideo(true);
 	conferenceParams->setSubject(mConferenceInfo->getSubject());
 
 	if (mConferenceInfo->getDateTime() <= 0) {
-		mConferenceInfo->setDateTime(ms_time(NULL));
-	}
-	if (mConferenceInfo->getDateTime() > -1) {
-		conferenceParams->setStartTime(mConferenceInfo->getDateTime());
-		if (mConferenceInfo->getDuration() > 0) {
-			conferenceParams->setEndTime(mConferenceInfo->getDateTime() + (static_cast<time_t>(mConferenceInfo->getDuration()) * 60)); // duration is in minutes
+		if (!foundConferenceInfo) {
+			// Set start time only if a conference is going to be created
+			mConferenceInfo->setDateTime(ms_time(NULL));
+		}
+	} else {
+		const auto & startTime = info->getDateTime();
+		conferenceParams->setStartTime(startTime);
+		const auto & duration = info->getDuration();
+		if (duration > 0) {
+			const auto endTime = startTime + static_cast<time_t>(duration) * 60; // duration is in minutes
+			conferenceParams->setEndTime(endTime);
 		}
 	}
 
-	mSession = getCore()->createConferenceOnServer(conferenceParams, identityAddress, mConferenceInfo->getParticipants());
+	if (foundConferenceInfo) {
+		// Updating an existing conference
+		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, mConferenceInfo->getParticipants(), conferenceAddress);
+	} else {
+		// Creating conference
+		mSession = getCore()->createConferenceOnServer(conferenceParams, identityAddress, mConferenceInfo->getParticipants());
+	}
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] createConferenceOnServer returned a null session!";
 		setState(State::Error);
 		return;
 	}
 	mSession->setListener(this);
-}
-
-void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
-	const Address *remoteAddress = session->getRemoteContactAddress();
-	if (remoteAddress == nullptr) {
-		lError() << "[Conference Scheduler] Cannot update conference info focus URI because the remote contact address is invalid.";
-		setState(State::Error);
-	} else {
-		auto conferenceAddress = ConferenceAddress(*remoteAddress);
-		lInfo () << "[Conference Scheduler] Conference has been succesfully created: " << conferenceAddress;
-		setConferenceAddress(conferenceAddress);
-	}
 }
 
 void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
@@ -199,6 +259,28 @@ void ConferenceScheduler::setConferenceAddress(const ConferenceAddress& conferen
 	setState(State::Ready);
 }
 
+void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
+	const Address *remoteAddress = session->getRemoteContactAddress();
+	if (remoteAddress == nullptr) {
+		lError() << "[Conference Scheduler] Cannot update conference info focus URI because the remote contact address is invalid.";
+		setState(State::Error);
+	} else {
+		auto conferenceAddress = ConferenceAddress(*remoteAddress);
+		lInfo () << "[Conference Scheduler] Conference has been succesfully created: " << conferenceAddress;
+		setConferenceAddress(conferenceAddress);
+	}
+}
+
+void ConferenceScheduler::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
+	switch(state) {
+		case CallSession::State::StreamsRunning:
+			session->terminate();
+			break;
+		default:
+			break;
+	}
+}
+
 shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_ptr<AbstractChatRoom> chatRoom) {
 	shared_ptr<LinphonePrivate::ChatMessage> message;
 	if (linphone_core_conference_ics_in_message_body_enabled(chatRoom->getCore()->getCCore())) {
@@ -217,7 +299,27 @@ shared_ptr<ChatMessage> ConferenceScheduler::createInvitationChatMessage(shared_
 
 void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomParams) {
 	if (mState != State::Ready) {
-		lWarning() << "[Conference Scheduler] Can't send conference invitation if state ins't Ready, current state is " << stateToString(mState);
+		lWarning() << "[Conference Scheduler] Can't send conference invitation if state ins't Ready, current state is " << mState;
+		return;
+	}
+
+	if (!mAccount) {
+		auto default_account = linphone_core_get_default_account(getCore()->getCCore());
+		if (default_account) {
+			mAccount =  Account::toCpp(default_account)->getSharedFromThis();
+		}
+	}
+
+	const auto sender =  mAccount ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(mAccount->getAccountParams()->getIdentityAddress())) : IdentityAddress(linphone_core_get_identity(getCore()->getCCore()));
+	if (!sender.isValid()) {
+		lWarning() << "[Conference Scheduler] Core address attempting to send invitation isn't valid!";
+		return;
+	}
+
+	const auto & participants = mConferenceInfo->getParticipants();
+	const bool participantFound = (std::find(participants.cbegin(), participants.cend(), sender) != participants.cend());
+	if ((sender != mConferenceInfo->getOrganizer()) && !participantFound) {
+		lWarning() << "[Conference Scheduler] Unable to find the address " << sender << " sending invitations among the list of participants or the organizer (" << mConferenceInfo->getOrganizer() << ") of conference " << mConferenceInfo->getUri();
 		return;
 	}
 
@@ -226,17 +328,32 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		return;
 	}
 
+	std::list<IdentityAddress> addresses;
+	for (auto participant : participants) {
+		if (participant != sender) {
+			addresses.push_back(Address(participant.asAddress()));
+		}
+	}
+
+	const auto & organizer = mConferenceInfo->getOrganizer();
+	if (sender != organizer) {
+		const bool organizerFound = (std::find(addresses.cbegin(), addresses.cend(), organizer) != addresses.cend());
+		if (!organizerFound) {
+			addresses.push_back(Address(organizer.asAddress()));
+		}
+	}
+
 	mInvitationsInError.clear();
 	mInvitationsSent = 0;
 
 	if (chatRoomParams->isGroup()) {
 		shared_ptr<AbstractChatRoom> chatRoom = getCore()->getPrivate()->createChatRoom(
 			chatRoomParams,
-			mConferenceInfo->getOrganizer(),
+			sender,
 			mConferenceInfo->getParticipants());
 		if (!chatRoom) {
 			lError() << "[Conference Scheduler] Failed to create group chat room using given chat room params & conference information";
-			for (auto participant : mConferenceInfo->getParticipants()) {
+			for (auto participant : addresses) {
 				mInvitationsInError.push_back(Address(participant.asAddress()));
 			}
 			linphone_conference_scheduler_notify_invitations_sent(toC(), L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(mInvitationsInError));
@@ -247,28 +364,28 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		}
 	} else {
 		// Sending the ICS once for each participant in a separated chat room each time.
-		for (auto participant : mConferenceInfo->getParticipants()) {
+		for (auto participant : addresses) {
 			list<IdentityAddress> participantList;
 			participantList.push_back(participant);
 
 			shared_ptr<AbstractChatRoom> chatRoom = getCore()->getPrivate()->searchChatRoom(
 				chatRoomParams,
-				mConferenceInfo->getOrganizer(),
+				sender,
 				IdentityAddress(),
 				participantList);
 
 			if (!chatRoom) {
-				lInfo() << "[Conference Scheduler] Existing chat room between [" << mConferenceInfo->getOrganizer() << "] and [" << participant << "] wasn't found, creating it.";
+				lInfo() << "[Conference Scheduler] Existing chat room between [" << sender << "] and [" << participant << "] wasn't found, creating it.";
 				chatRoom = getCore()->getPrivate()->createChatRoom(
 					chatRoomParams,
-					mConferenceInfo->getOrganizer(),
+					sender,
 					participantList);
 			} else {
-				lInfo() << "[Conference Scheduler] Found existing chat room [" << chatRoom->getPeerAddress() << "] between [" << mConferenceInfo->getOrganizer() << "] and [" << participant << "], using it";
+				lInfo() << "[Conference Scheduler] Found existing chat room [" << chatRoom->getPeerAddress() << "] between [" << sender << "] and [" << participant << "], using it";
 			}
 
 			if (!chatRoom) {
-				lError() << "[Conference Scheduler] Couldn't find nor create a chat room between [" << mConferenceInfo->getOrganizer() << "] and [" << participant << "]";
+				lError() << "[Conference Scheduler] Couldn't find nor create a chat room between [" << sender << "] and [" << participant << "]";
 				mInvitationsInError.push_back(Address(participant.asAddress()));
 				continue;
 			}
@@ -291,11 +408,26 @@ string ConferenceScheduler::stateToString (ConferenceScheduler::State state) {
 		case ConferenceScheduler::State::Updating:
 			return "Updating";
 		case ConferenceScheduler::State::Idle:
-		default:
 			return "Idle";
 	}
+	return "<unknown>";
 }
 
+std::ostream& operator<<(std::ostream& lhs, ConferenceScheduler::State s) {
+	switch (s) {
+		case ConferenceScheduler::State::AllocationPending:
+			return lhs << "AllocationPending";
+		case ConferenceScheduler::State::Error:
+			return lhs << "Error";
+		case ConferenceScheduler::State::Ready:
+			return lhs << "Ready";
+		case ConferenceScheduler::State::Updating:
+			return lhs << "Updating";
+		case ConferenceScheduler::State::Idle:
+			return lhs << "Idle";
+	}
+	return lhs;
+}
 
 LinphoneConferenceSchedulerCbsStateChangedCb ConferenceSchedulerCbs::getStateChanged() const {
 	return mStateChangedCb;

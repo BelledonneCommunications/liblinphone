@@ -58,16 +58,20 @@ public:
 	virtual ~ConferenceScheduler ();
 
 	void onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state, const std::string &message) override;
 	void onChatMessageStateChanged (const std::shared_ptr<ChatMessage> &message, ChatMessage::State state) override;
 
 	State getState () const;
 
 	const std::shared_ptr<ConferenceInfo> getInfo () const;
-	void setInfo (std::shared_ptr<ConferenceInfo> info);
+	void setInfo(const std::shared_ptr<ConferenceInfo> info);
 
 	void setConferenceAddress(const ConferenceAddress& conferenceAddress);
 
 	void sendInvitations (std::shared_ptr<ChatRoomParams> chatRoomParams);
+
+	const std::shared_ptr<Account> & getAccount() const;
+	void setAccount(std::shared_ptr<Account> account);
 
 private:
 	void setState (State newState);
@@ -78,6 +82,7 @@ private:
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
 	std::shared_ptr<CallSession> mSession = nullptr;
+	std::shared_ptr<Account> mAccount = nullptr;
 
 	unsigned long mInvitationsSent = 0;
 	std::list<Address> mInvitationsInError;
@@ -94,6 +99,8 @@ private:
 	LinphoneConferenceSchedulerCbsStateChangedCb mStateChangedCb = nullptr;
 	LinphoneConferenceSchedulerCbsInvitationsSentCb mInvitationsSent = nullptr;
 };
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceScheduler::State s);
 
 LINPHONE_END_NAMESPACE
 

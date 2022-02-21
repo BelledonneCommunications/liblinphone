@@ -162,7 +162,8 @@ ConferenceLayout Conference::getLayout() const {
 	return confParams ? confParams->getLayout() : (ConferenceLayout)linphone_core_get_default_conference_layout(getCore()->getCCore());
 }
 
-void Conference::updateMainSession() {
+LinphoneStatus Conference::updateMainSession() {
+	LinphoneStatus ret = -1;
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	if (session) {
 		const MediaSessionParams * params = session->getMediaParams();
@@ -170,9 +171,10 @@ void Conference::updateMainSession() {
 		if (!currentParams->rtpBundleEnabled()) {
 			currentParams->enableRtpBundle((getLayout() != ConferenceLayout::Legacy));
 		}
-		session->update(currentParams);
+		ret = session->update(currentParams);
 		delete currentParams;
 	}
+	return ret;
 }
 
 void Conference::setLayout(const ConferenceLayout layout) {
@@ -276,6 +278,9 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 
 void Conference::setSubject (const string &subject) {
 	confParams->setSubject(subject);
+#ifdef HAVE_DB_STORAGE
+	updateSubjectInConferenceInfo(subject);
+#endif // HAVE_DB_STORAGE
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceLeft (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
@@ -733,16 +738,10 @@ std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
 	return nullptr;
 }
 
-std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo(const IdentityAddress & organizer) const {
+std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo(const IdentityAddress & organizer, const std::list<IdentityAddress> invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
 	info->setOrganizer(organizer);
-
-	std::list<IdentityAddress> participantAddresses;
-	for (const auto & p : getParticipants()) {
-		participantAddresses.push_back(p->getAddress());
-	}
-	participantAddresses.push_back(me->getAddress());
-	info->setParticipants(participantAddresses);
+	info->setParticipants(invitedParticipants);
 
 	const auto & conferenceAddress = getConferenceAddress();
 	if (conferenceAddress.isValid()) {
@@ -763,36 +762,40 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo(const IdentityA
 }
 
 void Conference::updateSubjectInConferenceInfo(const std::string & subject) const {
-	auto info = createOrGetConferenceInfo();
+	if ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created)) {
+		auto info = createOrGetConferenceInfo();
 
-	if (info) {
-		info->setSubject(subject);
+		if (info) {
+			info->setSubject(subject);
 
-		// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
-		auto &mainDb = getCore()->getPrivate()->mainDb;
-		if (mainDb) {
-			lInfo() << "Updating conference information of conference " << getConferenceAddress() << " because its subject has been changed to " << subject;
-			mainDb->insertConferenceInfo(info);
+			// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
+			auto &mainDb = getCore()->getPrivate()->mainDb;
+			if (mainDb) {
+				lInfo() << "Updating conference information of conference " << getConferenceAddress() << " because its subject has been changed to " << subject;
+				mainDb->insertConferenceInfo(info);
+			}
 		}
 	}
 }
 
 void Conference::updateParticipantsInConferenceInfo(const IdentityAddress & participantAddress) const {
-	auto info = createOrGetConferenceInfo();
+	if ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created)) {
+		auto info = createOrGetConferenceInfo();
 
-	if (info) {
-		std::list<IdentityAddress> currentParticipants = info->getParticipants();
-		const auto participantAddressIt = std::find(currentParticipants.begin(), currentParticipants.end(), participantAddress);
-		if (participantAddressIt == currentParticipants.end()) {
-			currentParticipants.push_back(participantAddress);
-			info->setParticipants(currentParticipants);
+		if (info) {
+			std::list<IdentityAddress> currentParticipants = info->getParticipants();
+			const auto participantAddressIt = std::find(currentParticipants.begin(), currentParticipants.end(), participantAddress);
+			if (participantAddressIt == currentParticipants.end()) {
+				currentParticipants.push_back(participantAddress);
+				info->setParticipants(currentParticipants);
 
 
-			// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
-			auto &mainDb = getCore()->getPrivate()->mainDb;
-			if (mainDb) {
-				lInfo() << "Updating conference information of conference " << getConferenceAddress() << " because participant " << participantAddress << " has been added";
-				mainDb->insertConferenceInfo(info);
+				// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
+				auto &mainDb = getCore()->getPrivate()->mainDb;
+				if (mainDb) {
+					lInfo() << "Updating conference information of conference " << getConferenceAddress() << " because participant " << participantAddress << " has been added";
+					mainDb->insertConferenceInfo(info);
+				}
 			}
 		}
 	}

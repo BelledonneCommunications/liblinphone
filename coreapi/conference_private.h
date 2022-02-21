@@ -264,7 +264,6 @@ public:
 	virtual int participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
 	virtual int participantDeviceLeft (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
-
 	virtual int getParticipantDeviceVolume(const std::shared_ptr<LinphonePrivate::ParticipantDevice> & device) override;
 
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
@@ -285,6 +284,7 @@ public:
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 	void confirmCreation();
+	void updateConferenceInformation(SalCallOp *op);
 
 protected:
 	virtual void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;
@@ -299,11 +299,13 @@ private:
 	std::shared_ptr<CallSession> makeSession(const std::shared_ptr<ParticipantDevice> &device);
 	void chooseAnotherAdminIfNoneInConference();
 	void checkIfTerminated();
+	std::list<IdentityAddress> getAllowedAddresses() const;
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
+	IdentityAddress organizer;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
@@ -378,7 +380,6 @@ public:
 
 	virtual void onParticipantDeviceAdded(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	virtual void onParticipantDeviceRemoved(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
-	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
 	virtual void onParticipantDeviceMediaAvailabilityChanged(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	virtual void onFullStateReceived() override;
 

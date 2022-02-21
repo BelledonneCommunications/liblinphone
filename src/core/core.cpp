@@ -1447,21 +1447,30 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const C
 }
 
 shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+	return createOrUpdateConferenceOnServer(confParams, localAddr, participants, ConferenceAddress());
+}
+
+shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants, const ConferenceAddress &confAddr) {
 	L_D()
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
 		return nullptr;
 	}
 
-	LinphoneAddress *factoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
-	if (factoryUri == nullptr) {
-		lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
-		return nullptr;
+	Address conferenceFactoryUri;
+	if (confAddr == ConferenceAddress()) {
+		LinphoneAddress *factoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
+		if (factoryUri == nullptr) {
+			lWarning() << "Not creating conference: no conference factory uri for local address [" << localAddr << "]";
+			return nullptr;
+		}
+		auto conferenceFactoryUriStr = linphone_address_as_string_uri_only(factoryUri);
+		linphone_address_unref(factoryUri);
+		conferenceFactoryUri = Address(conferenceFactoryUriStr);
+		ms_free(conferenceFactoryUriStr);
+	} else {
+		conferenceFactoryUri = confAddr.asAddress();
 	}
-	auto conferenceFactoryUriStr = linphone_address_as_string_uri_only(factoryUri);
-	linphone_address_unref(factoryUri);
-	Address conferenceFactoryUri = Address(conferenceFactoryUriStr);
-	ms_free(conferenceFactoryUriStr);
 
 	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
 	if (!localAddr.hasGruu()) {

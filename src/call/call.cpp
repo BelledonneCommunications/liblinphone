@@ -448,7 +448,13 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(to), ConferenceAddress(to)));
 					// If the call is for a conference stored in the core, then accept it automatically without video
 					if (conference) {
-						conference->addParticipant(getSharedFromThis());
+						const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
+						if (resourceList.isEmpty()) {
+							conference->addParticipant(getSharedFromThis());
+						} else {
+							const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(getParams()))->setInConference(true);
+							setConferenceId(to.getUriParamValue("conf-id"));
+						}
 						auto params = linphone_core_create_call_params(getCore()->getCCore(), toC());
 						linphone_call_params_enable_audio(params, TRUE);
 						linphone_call_params_enable_video(params, (getRemoteParams()->videoEnabled() && conference->getCurrentParams().videoEnabled()) ? TRUE : FALSE);
@@ -502,7 +508,10 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
 				const auto & confId = session->getPrivate()->getConferenceId();
 				if (!op->getTo().empty() && conference) {
-					tryToAddToConference(conference, session);
+					const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
+					if (resourceList.isEmpty()) {
+						tryToAddToConference(conference, session);
+					}
 				} else if (op->getRemoteContactAddress()) {
 					char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 					Address remoteContactAddress(remoteContactAddressStr);
