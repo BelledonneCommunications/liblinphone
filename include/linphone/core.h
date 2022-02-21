@@ -2080,7 +2080,7 @@ LINPHONE_PUBLIC void linphone_core_clear_all_auth_info(LinphoneCore *core);
 
 /**
  * Setup a new digest authentication policy applicable for SIP and HTTP.
- * 
+ *
  * Setup a new digest authentication policy applicable for SIP and HTTP.
  * @param core the #LinphoneCore @notnil
  * @param policy a #LinphoneDigestAuthenticationPolicy @notnil
@@ -2090,7 +2090,7 @@ LINPHONE_PUBLIC void linphone_core_set_digest_authentication_policy(LinphoneCore
 
 /**
  * Get the current digest authentication policy applicable for SIP and HTTP.
- * 
+ *
  * Get the current digest authentication policy applicable for SIP and HTTP.
  * @param core the #LinphoneCore @notnil
  * @return The current digest authentication policy. @notnil

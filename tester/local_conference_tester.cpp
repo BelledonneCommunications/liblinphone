@@ -275,6 +275,8 @@ private:
 //		setup_mgr_for_conference(getCMgr());
 		LinphoneCoreCbs * cbs = linphone_core_get_first_callbacks(getLc());
 		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_empty_chat_rooms", 0);
+		linphone_config_set_int(linphone_core_get_config(getLc()), "sip", "reject_duplicated_calls", 0);
+		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
 		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(getLc());

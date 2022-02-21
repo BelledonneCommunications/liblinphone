@@ -471,7 +471,7 @@ bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *lf) {
 bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *phoneNumber) {
 	if (!lf || !phoneNumber) return FALSE;
 
-	LinphoneAccount *account = linphone_core_get_default_account(lf->lc); 
+	LinphoneAccount *account = linphone_core_get_default_account(lf->lc);
 	// Account can be null, both linphone_account_is_phone_number and linphone_account_normalize_phone_number can handle it
 	if (phoneNumber == NULL || !linphone_account_is_phone_number(account, phoneNumber)) {
 		ms_warning("Phone number [%s] isn't valid", phoneNumber);
@@ -1402,7 +1402,6 @@ void linphone_core_friends_storage_init(LinphoneCore *lc) {
 	int ret;
 	const char *errmsg;
 	sqlite3 *db;
-	bctbx_list_t *friends_lists = NULL;
 
 	linphone_core_friends_storage_close(lc);
 
@@ -1423,18 +1422,54 @@ void linphone_core_friends_storage_init(LinphoneCore *lc) {
 
 	lc->friends_db = db;
 
+	linphone_core_friends_storage_resync_friends_lists(lc);
+}
+
+static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
+	char* errmsg = NULL;
+	int ret;
+	ret = sqlite3_exec(db, stmt, NULL, NULL, &errmsg);
+	if (ret != SQLITE_OK) {
+		ms_error("linphone_sql_request: statement %s -> error sqlite3_exec(): %s.", stmt, errmsg);
+		sqlite3_free(errmsg);
+	}
+	return ret;
+}
+
+int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
+	bctbx_list_t *friends_lists = NULL;
+	int synced_friends_lists = 0;
+
+	/**
+	 * First lets remove all the orphan friends from the DB
+	 */
+	char *buf = sqlite3_mprintf("delete from friends where friend_list_id not in (select id from friends_lists)");
+	linphone_sql_request_generic(lc->friends_db, buf);
+	sqlite3_free(buf);
+
 	friends_lists = linphone_core_fetch_friends_lists_from_db(lc);
 	if (friends_lists) {
 		const bctbx_list_t *it;
 		ms_warning("Replacing current default friend list by the one(s) from the database");
 		lc->friends_lists = bctbx_list_free_with_data(lc->friends_lists, (bctbx_list_free_func)linphone_friend_list_unref);
 
+		const char *url = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", NULL);
+
 		for (it=friends_lists;it!=NULL;it=bctbx_list_next(it)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(it);
+
+			const char *list_name = linphone_friend_list_get_display_name(list);
+			if (list_name && url && strcmp(url, list_name) == 0) {
+				linphone_friend_list_set_type(list, LinphoneFriendListTypeVCard4);
+			}
+
 			linphone_core_add_friend_list(lc, list);
+			synced_friends_lists++;
 		}
 		friends_lists = bctbx_list_free_with_data(friends_lists, (bctbx_list_free_func)linphone_friend_list_unref);
 	}
+
+	return synced_friends_lists;
 }
 
 void linphone_core_friends_storage_close(LinphoneCore *lc) {
@@ -1547,17 +1582,6 @@ static int linphone_sql_request_friends_list(sqlite3* db, const char *stmt, bctb
 	return ret;
 }
 
-static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
-	char* errmsg = NULL;
-	int ret;
-	ret = sqlite3_exec(db, stmt, NULL, NULL, &errmsg);
-	if (ret != SQLITE_OK) {
-		ms_error("linphone_sql_request: statement %s -> error sqlite3_exec(): %s.", stmt, errmsg);
-		sqlite3_free(errmsg);
-	}
-	return ret;
-}
-
 void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 	if (lc && lc->friends_db) {
 		char *buf;
@@ -1575,6 +1599,9 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 			return;
 		}
 
+		/**
+		 * The friends_list store logic is hidden into the friend store logic
+		 */
 		if (lf->friend_list->storage_id == 0) {
 			ms_warning("Trying to add a friend in db, but friend list isn't, let's do that first");
 			linphone_core_store_friends_list_in_db(lc, lf->friend_list);
@@ -1678,6 +1705,10 @@ void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendL
 			return;
 		}
 
+		buf = sqlite3_mprintf("DELETE FROM friends WHERE friend_list_id in (select id from friends_lists where id = %u)", list->storage_id);
+		linphone_sql_request_generic(lc->friends_db, buf);
+		sqlite3_free(buf);
+
 		buf = sqlite3_mprintf("DELETE FROM friends_lists WHERE id = %u", list->storage_id);
 		linphone_sql_request_generic(lc->friends_db, buf);
 		sqlite3_free(buf);
@@ -1726,8 +1757,13 @@ bctbx_list_t* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFrie
 	bctbx_list_t *result = NULL;
 	bctbx_list_t *elem = NULL;
 
-	if (!lc || lc->friends_db == NULL || list == NULL) {
-		ms_warning("Either lc (or list) is NULL or friends database wasn't initialized with linphone_core_friends_storage_init() yet");
+	if (!lc) {
+		ms_warning("lc is NULL");
+		return NULL;
+	}
+
+	if (lc->friends_db == NULL) {
+		ms_warning("Friends database wasn't initialized with linphone_core_friends_storage_init() yet");
 		return NULL;
 	}
 
@@ -1758,8 +1794,13 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 	bctbx_list_t *result = NULL;
 	bctbx_list_t *elem = NULL;
 
-	if (!lc || lc->friends_db == NULL) {
-		ms_warning("Either lc is NULL or friends database wasn't initialized with linphone_core_friends_storage_init() yet");
+	if (!lc) {
+		ms_warning("lc is NULL");
+		return NULL;
+	}
+
+	if (lc->friends_db == NULL) {
+		ms_warning("Friends database wasn't initialized with linphone_core_friends_storage_init() yet");
 		return NULL;
 	}
 
@@ -1781,7 +1822,7 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 }
 
 void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path) {
-	if (!linphone_core_conference_server_enabled(lc))
+	if (!linphone_core_conference_server_enabled(lc) && L_GET_PRIVATE(lc->cppPtr)->mainDb)
 		L_GET_PRIVATE(lc->cppPtr)->mainDb->import(LinphonePrivate::MainDb::Sqlite3, path);
 
 	// TODO: Remove me later.

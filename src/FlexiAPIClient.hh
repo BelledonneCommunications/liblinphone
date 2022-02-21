@@ -97,6 +97,8 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountPasswordChange(string algorithm, string password, string oldPassword);
 	FlexiAPIClient *accountDevices();
 	FlexiAPIClient *accountDevice(string uuid);
+	FlexiAPIClient *accountContacts();
+	FlexiAPIClient *accountContact(string sip);
 	FlexiAPIClient *accountEmailChangeRequest(string email);
 	FlexiAPIClient *accountPhoneChangeRequest(string phone);
 	FlexiAPIClient *accountPhoneChange(string code);
@@ -111,11 +113,18 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 									   bool activated, string email);
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
 									   bool activated, string email, string phone);
+	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
+									   bool activated, string email, string phone, string dtmfProtocol);
 	FlexiAPIClient *adminAccounts();
 	FlexiAPIClient *adminAccount(int id);
 	FlexiAPIClient *adminAccountDelete(int id);
 	FlexiAPIClient *adminAccountActivate(int id);
 	FlexiAPIClient *adminAccountDeactivate(int id);
+	FlexiAPIClient *adminAccountSearch(string sip);
+
+	FlexiAPIClient *adminAccountContacts(int id);
+	FlexiAPIClient *adminAccountContactAdd(int id, int contactId);
+	FlexiAPIClient *adminAccountContactDelete(int id, int contactId);
 
 	// Authentication
 	FlexiAPIClient *setApiKey(const char *key);

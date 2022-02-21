@@ -2140,7 +2140,7 @@ static void video_config_read(LinphoneCore *lc){
 
 	str = linphone_config_get_string(lc->config, "video", "device", NULL);
 	linphone_core_set_video_device(lc, str);
-	
+
 
 	str = linphone_config_get_string(lc->config, "video", "size", "vga");
 	if (str && str[0] != 0) linphone_core_set_preferred_video_definition_by_name(lc, str);
@@ -2374,6 +2374,19 @@ static void misc_config_read (LinphoneCore *lc) {
 	lc->user_certificates_path = bctbx_strdup(linphone_config_get_string(config, "misc", "user_certificates_path", linphone_factory_get_data_dir(linphone_factory_get(), lc->system_context)));
 
 	lc->send_call_stats_periodical_updates = !!linphone_config_get_int(config, "misc", "send_call_stats_periodical_updates", 0);
+
+	const char *contacts_vcard_list_uri = linphone_config_get_string(lc->config, "misc", "contacts-vcard-list", NULL);
+	if (contacts_vcard_list_uri) {
+		lc->base_contacts_list_for_synchronization = linphone_core_get_friend_list_by_name(lc, contacts_vcard_list_uri);
+
+		if (!lc->base_contacts_list_for_synchronization) {
+			// The name (display_name) will be set when the synchronisation is done.
+			lc->base_contacts_list_for_synchronization = linphone_core_create_friend_list(lc);
+		}
+
+		linphone_friend_list_set_type(lc->base_contacts_list_for_synchronization, LinphoneFriendListTypeVCard4);
+		linphone_friend_list_synchronize_friends_from_server(lc->base_contacts_list_for_synchronization);
+	}
 }
 
 void linphone_core_reload_ms_plugins(LinphoneCore *lc, const char *path){
@@ -2441,7 +2454,6 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 	linphone_core_set_state(lc, LinphoneGlobalOn, "On");
 }
-
 
 static int linphone_core_serialization_ref = 0;
 
@@ -2816,7 +2828,7 @@ bool_t linphone_core_auto_iterate_enabled(LinphoneCore *core) {
 }
 
 void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable) {
-	linphone_core_enable_vibration_on_incoming_call(core, enable);	
+	linphone_core_enable_vibration_on_incoming_call(core, enable);
 }
 
 void linphone_core_enable_vibration_on_incoming_call(LinphoneCore *core, bool_t enable) {
@@ -2908,7 +2920,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
 	// MS Factory MUST be created after Android context has been set, otherwise no camera will be detected !
-	
+
 	// The ms2 factory must survive to linphone_core_stop(), otherwise it invalidates resources created by LinphonePlayer/LinphoneRecorder.
 	if (!lc->factory){
 		lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
@@ -4127,7 +4139,8 @@ void linphone_core_iterate(LinphoneCore *lc){
 		}
 		for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-			if (list->dirty_friends_to_update) {
+			if (list->dirty_friends_to_update
+			&& list->type == LinphoneFriendListTypeCardDAV) {
 				linphone_friend_list_update_dirty_friends(list);
 			}
 		}
@@ -4287,7 +4300,7 @@ LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity_strict(LinphoneCore
 	}
 	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
 	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-	
+
 	return found_cfg;
 }
 
@@ -5455,13 +5468,13 @@ void linphone_core_reload_sound_devices(LinphoneCore* lc) {
 			input_dev_id_copy = ms_strdup(input_dev_id);
 		}
 	}
-	
+
 	// Reload
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
-	
+
 	// Set selection
-	
+
 	linphone_core_set_ringer_device(lc, ringer_copy);
 	if (ringer_copy != NULL)
 		ms_free(ringer_copy);
@@ -7219,7 +7232,21 @@ void friends_config_uninit(LinphoneCore* lc)
 		linphone_presence_model_unref(lc->presence_model);
 		lc->presence_model = NULL;
 	}
+
 	ms_message("Destroying friends done.");
+}
+
+void misc_config_uninit(LinphoneCore *lc)
+{
+	if (lc->base_contacts_list_http_listener != NULL) {
+		belle_sip_object_unref(lc->base_contacts_list_http_listener);
+		lc->base_contacts_list_http_listener = NULL;
+	}
+
+	if (lc->base_contacts_list_for_synchronization != NULL) {
+		linphone_friend_list_unref(lc->base_contacts_list_for_synchronization);
+		lc->base_contacts_list_for_synchronization = NULL;
+	}
 }
 
 void linphone_core_enter_background(LinphoneCore *lc) {
@@ -7299,6 +7326,7 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	sound_config_uninit(lc);
 	video_config_uninit(lc);
 	codecs_config_uninit(lc);
+	misc_config_uninit(lc);
 
 	sip_setup_unregister_all();
 

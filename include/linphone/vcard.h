@@ -23,8 +23,7 @@
 #include "linphone/types.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /**
@@ -62,7 +61,7 @@ LINPHONE_PUBLIC LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard);
  * @param vCard the #LinphoneVcard @notnil
  * @return a const char * that represents the vCard. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_as_vcard4_string(LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_as_vcard4_string(LinphoneVcard *vCard);
 
 /**
  * Sets the FN attribute of the vCard (which is mandatory).
@@ -76,7 +75,7 @@ LINPHONE_PUBLIC void linphone_vcard_set_full_name(LinphoneVcard *vCard, const ch
  * @param vCard the #LinphoneVcard @notnil
  * @return the display name of the vCard, or NULL. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_full_name(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_full_name(const LinphoneVcard *vCard);
 
 /**
  * Sets the skipFieldValidation property of the vcard
@@ -104,7 +103,7 @@ LINPHONE_PUBLIC void linphone_vcard_set_family_name(LinphoneVcard *vCard, const 
  * @param vCard the #LinphoneVcard @notnil
  * @return the family name of the vCard, or NULL @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_family_name(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_family_name(const LinphoneVcard *vCard);
 
 /**
  * Sets the given name in the N attribute of the vCard.
@@ -118,7 +117,7 @@ LINPHONE_PUBLIC void linphone_vcard_set_given_name(LinphoneVcard *vCard, const c
  * @param vCard the #LinphoneVcard @notnil
  * @return the given name of the vCard, or NULL @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_given_name(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_given_name(const LinphoneVcard *vCard);
 
 /**
  * Adds a SIP address in the vCard, using the IMPP property
@@ -142,11 +141,12 @@ LINPHONE_PUBLIC void linphone_vcard_remove_sip_address(LinphoneVcard *vCard, con
 LINPHONE_PUBLIC void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_address);
 
 /**
- * Returns the list of SIP addresses in the vCard (all the IMPP attributes that has an URI value starting by "sip:") or NULL
+ * Returns the list of SIP addresses in the vCard (all the IMPP attributes that has an URI value starting by "sip:") or
+ * NULL
  * @param vCard the #LinphoneVcard @notnil
  * @return The SIP addresses. \bctbx_list{LinphoneAddress} @maybenil
  */
-LINPHONE_PUBLIC const bctbx_list_t* linphone_vcard_get_sip_addresses(LinphoneVcard *vCard);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_vcard_get_sip_addresses(LinphoneVcard *vCard);
 
 /**
  * Adds a phone number in the vCard, using the TEL property
@@ -167,7 +167,7 @@ LINPHONE_PUBLIC void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, co
  * @param vCard the #LinphoneVcard @notnil
  * @return The phone numbers as string. \bctbx_list{const char *} @maybenil @tobefreed
  */
-LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 
 /**
  * Fills the Organization field of the vCard
@@ -181,7 +181,7 @@ LINPHONE_PUBLIC void linphone_vcard_set_organization(LinphoneVcard *vCard, const
  * @param vCard the #LinphoneVcard @notnil
  * @return the Organization of the vCard or NULL. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_organization(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_organization(const LinphoneVcard *vCard);
 
 /**
  * Removes the Organization field of the vCard
@@ -209,21 +209,21 @@ LINPHONE_PUBLIC void linphone_vcard_set_uid(LinphoneVcard *vCard, const char *ui
  * @param vCard the #LinphoneVcard @notnil
  * @return the UID of the vCard, otherwise NULL. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_uid(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_uid(const LinphoneVcard *vCard);
 
 /**
  * Sets the eTAG of the vCard
  * @param vCard the #LinphoneVcard @notnil
  * @param etag the eTAG. @maybenil
  */
-LINPHONE_PUBLIC void linphone_vcard_set_etag(LinphoneVcard *vCard, const char * etag);
+LINPHONE_PUBLIC void linphone_vcard_set_etag(LinphoneVcard *vCard, const char *etag);
 
 /**
  * Gets the eTag of the vCard
  * @param vCard the #LinphoneVcard @notnil
  * @return the eTag of the vCard in the CardDAV server, otherwise NULL. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_etag(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_etag(const LinphoneVcard *vCard);
 
 /**
  * Sets the URL of the vCard
@@ -237,7 +237,31 @@ LINPHONE_PUBLIC void linphone_vcard_set_url(LinphoneVcard *vCard, const char *ur
  * @param vCard the #LinphoneVcard @notnil
  * @return the URL of the vCard in the CardDAV server, otherwise NULL. @maybenil
  */
-LINPHONE_PUBLIC const char* linphone_vcard_get_url(const LinphoneVcard *vCard);
+LINPHONE_PUBLIC const char *linphone_vcard_get_url(const LinphoneVcard *vCard);
+
+/**
+ * Get the vCard extended properties values per property name
+ * @param vCard the #LinphoneVcard @notnil
+ * @param name the name to filter the extended properties on. @notnil
+ * @return The extended properties values as string. \bctbx_list{const char *} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_extended_properties_values_by_name(const LinphoneVcard *vCard,
+																					const char *name);
+
+/**
+ * Adds an extended property to the vCard
+ * @param vCard the #LinphoneVcard @notnil
+ * @param name the name of the extended property to add @notnil
+ * @param value the value of the extended property to add @notnil
+ */
+LINPHONE_PUBLIC void linphone_vcard_add_extended_property(LinphoneVcard *vCard, const char *name, const char *value);
+
+/**
+ * Remove all the extend properties per property name
+ * @param vCard the #LinphoneVcard @notnil
+ * @param name the name to remove the extended properties on. @notnil
+ */
+LINPHONE_PUBLIC void linphone_vcard_remove_extented_properties_by_name(LinphoneVcard *vCard, const char *name);
 
 /**
  * @}
