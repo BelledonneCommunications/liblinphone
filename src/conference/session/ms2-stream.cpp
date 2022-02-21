@@ -33,7 +33,6 @@
 
 #include "linphone/core.h"
 
-
 using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -74,6 +73,7 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 	 * interaction between streams from different connected participants.
 	 */
 	sg.installSharedService<BandwithControllerService>();
+	mZrtpState = ZrtpState::Off;
 }
 
 void MS2Stream::removeFromBundle(){
@@ -260,6 +260,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		/* set the hello hash */
 		uint8_t enableZrtpHash = false;
 		uint8_t zrtphash[128];
+		mZrtpState = ZrtpState::Started;
 		// Initialize ZRTP if not already done
 		// This may happen when adding a stream through a reINVITE
 		if (!mSessions.zrtp_context) {
@@ -345,6 +346,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 								MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(stream);
 								msa->initZrtp();
 							}
+							mZrtpState = ZrtpState::Started;
 							// Copy newly created zrtp context into mSessions
 							media_stream_reclaim_sessions(ms, &mSessions);
 						}
@@ -929,8 +931,19 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 			// Copy newly created zrtp context into mSessions
 			media_stream_reclaim_sessions(ms, &mSessions);
 		}
-	} else if (mSessions.zrtp_context) {
-		media_stream_reset_zrtp_context(ms);
+		if (mZrtpState == ZrtpState::TurnedOff) {
+			ms_zrtp_back_to_secure_mode(mSessions.zrtp_context);
+			mZrtpState = ZrtpState::Restarted;
+		} else {
+			mZrtpState = ZrtpState::Started;
+		}
+	} else {
+		if ((mZrtpState == ZrtpState::Started) || (mZrtpState == ZrtpState::Restarted)) {
+			if (mSessions.zrtp_context) {
+				ms_zrtp_send_go_clear(mSessions.zrtp_context);
+			}
+			mZrtpState = ZrtpState::TurnedOff;
+		}
 	}
 
 	if (resultStreamDesc.hasDtls()) {
@@ -944,9 +957,6 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 		startDtls(params);
 	} else {
 		mDtlsStarted = false;
-		if (mSessions.dtls_context) {
-			ms_dtls_srtp_reset_context(mSessions.dtls_context);
-		}
 	}
 
 }
@@ -1232,7 +1242,17 @@ void MS2Stream::updateIceInStats(){
 	}
 }
 
-void MS2Stream::dtlsEncryptionChanged(){
+void MS2Stream::goClearAckSent(){
+	getGroup().goClearAckSent();
+}
+
+void MS2Stream::confirmGoClear(){
+	if (mSessions.zrtp_context) {
+		ms_zrtp_confirm_go_clear(mSessions.zrtp_context);
+	}
+}
+
+void MS2Stream::encryptionChanged(){
 	getGroup().propagateEncryptionChanged();
 }
 
@@ -1280,11 +1300,11 @@ void MS2Stream::handleEvents () {
 		switch(evt){
 			case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
 				if (getType() != SalAudio || !isMain()){
-					getGroup().propagateEncryptionChanged();
+					encryptionChanged();
 				}
 			break;
 			case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
-				dtlsEncryptionChanged();
+				encryptionChanged();
 			break;
 			case ORTP_EVENT_ICE_CHECK_LIST_DEFAULT_CANDIDATE_VERIFIED:
 				mInternalStats.number_of_ice_check_list_relay_pair_verified++;
@@ -1303,6 +1323,9 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				isIceEvent = true;
+			break;
+			case ORTP_EVENT_ZRTP_PEER_ACK_GOCLEAR:
+				goClearAckSent();
 			break;
 		}
 		if (isIceEvent){

@@ -357,6 +357,7 @@ typedef struct _stats {
 	int number_of_LinphoneConfiguringFailed;
 	int number_of_LinphoneConfiguringSuccessful;
 
+	int number_of_LinphoneCallGoClearAckSent;
 	int number_of_LinphoneCallEncryptedOn;
 	int number_of_LinphoneCallEncryptedOff;
 	int number_of_NetworkReachableTrue;
@@ -549,6 +550,7 @@ void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, Linphon
 void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content);
 void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content);
 void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);
+void linphone_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call);
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token);
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);

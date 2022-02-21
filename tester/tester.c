@@ -1956,6 +1956,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	linphone_core_cbs_set_publish_state_changed(mgr->cbs, linphone_publish_state_changed);
 	linphone_core_cbs_set_configuring_status(mgr->cbs, linphone_configuration_status);
 	linphone_core_cbs_set_call_encryption_changed(mgr->cbs, linphone_call_encryption_changed);
+	linphone_core_cbs_set_call_goclear_ack_sent(mgr->cbs, linphone_call_goclear_ack_sent);
 	linphone_core_cbs_set_network_reachable(mgr->cbs, network_reachable);
 	linphone_core_cbs_set_dtmf_received(mgr->cbs, dtmf_received);
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
@@ -2897,6 +2898,13 @@ void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState st
 	} else if (status == LinphoneConfiguringSuccessful) {
 		counters->number_of_LinphoneConfiguringSuccessful++;
 	}
+}
+
+void linphone_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call) {
+	stats* counters;
+	counters = get_stats(lc);
+	counters->number_of_LinphoneCallGoClearAckSent++;
+	linphone_call_confirm_go_clear(call);
 }
 
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {

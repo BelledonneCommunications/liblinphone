@@ -932,6 +932,13 @@ LINPHONE_PUBLIC void linphone_call_set_video_source(LinphoneCall *call, const Li
  */
 LINPHONE_PUBLIC const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const LinphoneCall *call);
 
+/**
+ * Method to be called after the user confirm that he/she is notifed of the on going Go Clear procedure.
+ * @warning this operation must be imperatevely initiate by a user action on sending of the GoClear ACK
+ * @param call The #LinphoneCall @notnil
+ */
+LINPHONE_PUBLIC void linphone_call_confirm_go_clear(const LinphoneCall *call);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

@@ -318,6 +318,10 @@ bool StreamsGroup::allStreamsEncrypted () const {
 	return activeStreamsCount > 0;
 }
 
+void StreamsGroup::goClearAckSent () {
+	getMediaSession().onGoClearAckSent();
+}
+
 void StreamsGroup::propagateEncryptionChanged () {
 	getMediaSessionPrivate().propagateEncryptionChanged();
 }
@@ -568,6 +572,13 @@ void StreamsGroup::unjoinMixerSession(){
 	if (!mMixerSession) lFatal() << "StreamsGroup::unjoinMixerSession() not joined !";
 	detachMixers();
 	mMixerSession = nullptr;
+}
+
+void StreamsGroup::confirmGoClear() {
+	for (auto & stream : mStreams){
+		if (!stream) continue;
+		stream->confirmGoClear();
+	}
 }
 
 LINPHONE_END_NAMESPACE

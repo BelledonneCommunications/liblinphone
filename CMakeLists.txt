@@ -79,9 +79,12 @@ option(ENABLE_VIDEO "Build with video support." YES)
 option(ENABLE_ASSETS "Package sound assets." YES)
 option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making (CMake >= 3.11)" OFF)
 
-
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
+
+option(ENABLE_SRTP "Build with the SRTP transport support." YES)
+cmake_dependent_option(ENABLE_ZRTP "Build with ZRTP support." YES "ENABLE_SRTP" NO)
+cmake_dependent_option(ENABLE_GOCLEAR "Build with ZRTP GoClear message support (RFC 6189 - section 5.11)." YES "ENABLE_ZRTP" NO)
 
 # Hidden non-cache options:
 # * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
@@ -150,6 +153,17 @@ if(ENABLE_ADVANCED_IM)
 	set(HAVE_ADVANCED_IM 1)
 	set(LIBXSD_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/libxsd")
 	set(XercesC_TARGET "XercesC::XercesC")
+endif()
+
+if(ENABLE_SRTP)
+	set(HAVE_SRTP 1)
+endif()
+
+if(ENABLE_ZRTP)
+	set(HAVE_ZRTP 1)
+	if(ENABLE_GOCLEAR)
+		set(HAVE_GOCLEAR 1)
+	endif()
 endif()
 
 find_package(Sqlite3 REQUIRED)
@@ -224,7 +238,7 @@ if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_
 	endif()
 endif()
 if(ENABLE_LDAP)
-		find_package(OpenLDAP REQUIRED)
+	find_package(OpenLDAP REQUIRED)
 endif()
 
 if (ENABLE_FLEXIAPI)

@@ -4632,6 +4632,12 @@ void MediaSession::notifyMutedDevice(uint32_t ssrc, bool muted) {
 	}
 }
 
+void MediaSession::onGoClearAckSent() {
+	L_D();
+	if (d->listener)
+		d->listener->onGoClearAckSent();
+}
+
 void * MediaSession::getParticipantWindowId(const std::string label) {
 	L_D();
 
@@ -4667,6 +4673,10 @@ std::shared_ptr<const VideoSourceDescriptor> MediaSession::getVideoSource () con
 	lError() << "Cannot retrieve the video source as video support is not enabled";
 	return nullptr;
 #endif
+}
+
+void MediaSession::confirmGoClear() {
+	getStreamsGroup().confirmGoClear();
 }
 
 LINPHONE_END_NAMESPACE

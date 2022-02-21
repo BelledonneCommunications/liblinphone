@@ -60,6 +60,12 @@ typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *ac
 typedef void (*LinphoneCallCbsDtmfReceivedCb)(LinphoneCall *call, int dtmf);
 
 /**
+ * GoClear ACK sent callback.
+ * @param call the #LinphoneCall on which the GoClear ACK was sent. @notnil
+ */
+typedef void (*LinphoneCallCbsGoClearAckSentCb)(LinphoneCall *call);
+
+/**
  * Call encryption changed callback.
  * @param call #LinphoneCall object whose encryption is changed. @notnil
  * @param on Whether encryption is activated.

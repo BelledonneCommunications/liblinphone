@@ -57,6 +57,7 @@ namespace MediaConference {
 class CallCbs : public bellesip::HybridObject<LinphoneCallCbs, CallCbs>, public Callbacks{
 public:
 	LinphoneCallCbsDtmfReceivedCb dtmfReceivedCb;
+	LinphoneCallCbsGoClearAckSentCb goClearAckSentCb;
 	LinphoneCallCbsEncryptionChangedCb encryptionChangedCb;
 	LinphoneCallCbsInfoMessageReceivedCb infoMessageReceivedCb;
 	LinphoneCallCbsStateChangedCb stateChangedCb;
@@ -282,6 +283,7 @@ public:
 	void onInfoReceived (const std::shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) override;
 	void onLossOfMediaDetected (const std::shared_ptr<CallSession> &session) override;
 	void onEncryptionChanged (const std::shared_ptr<CallSession> &session, bool activated, const std::string &authToken) override;
+	void onGoClearAckSent() override;
 	void onCallSessionStateChangedForReporting (const std::shared_ptr<CallSession> &session) override;
 	void onRtcpUpdateForReporting (const std::shared_ptr<CallSession> &session, SalStreamType type) override;
 	void onStatsUpdated (const std::shared_ptr<CallSession> &session, const LinphoneCallStats *stats) override;
@@ -299,6 +301,8 @@ public:
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
 	void onStartRingtone(const std::shared_ptr<CallSession> &session) override;
 	void onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording) override;
+
+	void confirmGoClear() const override;
 
 	LinphoneConference *getConference () const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);

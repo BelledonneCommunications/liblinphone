@@ -76,6 +76,20 @@ LINPHONE_PUBLIC LinphoneCallCbsDtmfReceivedCb linphone_call_cbs_get_dtmf_receive
 LINPHONE_PUBLIC void linphone_call_cbs_set_dtmf_received (LinphoneCallCbs *cbs, LinphoneCallCbsDtmfReceivedCb cb);
 
 /**
+ * Get the GoClear Ack sent callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @return The GoClear Ack sent callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsGoClearAckSentCb linphone_call_cbs_get_goclear_ack_sent (LinphoneCallCbs *cbs);
+
+/**
+ * Set the GoClear Ack sent callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @param[in] cb The GoClear Ack sent callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_goclear_ack_sent (LinphoneCallCbs *cbs, LinphoneCallCbsGoClearAckSentCb cb);
+
+/**
  * Get the encryption changed callback.
  * @param cbs #LinphoneCallCbs object. @notnil
  * @return The current encryption changed callback.

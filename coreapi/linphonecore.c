@@ -381,6 +381,14 @@ void linphone_core_cbs_set_refer_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsR
 	cbs->vtable->refer_received = cb;
 }
 
+LinphoneCoreCbsCallGoClearAckSentCb linphone_core_cbs_get_call_goclear_ack_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->call_goclear_ack_sent;
+}
+
+void linphone_core_cbs_set_call_goclear_ack_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallGoClearAckSentCb cb) {
+	cbs->vtable->call_goclear_ack_sent = cb;
+}
+
 LinphoneCoreCbsCallEncryptionChangedCb linphone_core_cbs_get_call_encryption_changed(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->call_encryption_changed;
 }
@@ -8017,6 +8025,20 @@ bool_t linphone_core_sound_resources_locked(LinphoneCore *lc) {
 
 void linphone_core_set_srtp_enabled(LinphoneCore *lc, bool_t enabled) {
 	linphone_config_set_int(lc->config,"sip","srtp",(int)enabled);
+}
+
+void linphone_core_enable_zrtp_go_clear(LinphoneCore *lc, bool_t enabled) {
+#ifdef HAVE_GOCLEAR
+	linphone_config_set_int(linphone_core_get_config(lc), "sip", "enable_go_clear", (int)enabled);
+#endif // HAVE_GOCLEAR
+}
+
+bool_t linphone_core_zrtp_go_clear_enabled(const LinphoneCore *lc) {
+#ifdef HAVE_GOCLEAR
+	return linphone_config_get_bool(linphone_core_get_config(lc), "sip", "enable_go_clear", FALSE);
+#else
+	return FALSE;
+#endif // HAVE_GOCLEAR
 }
 
 int linphone_media_encryption_from_string(const char * value){

@@ -52,6 +52,14 @@ void linphone_call_cbs_set_dtmf_received (LinphoneCallCbs *cbs, LinphoneCallCbsD
 	CallCbs::toCpp(cbs)->dtmfReceivedCb = cb;
 }
 
+LinphoneCallCbsGoClearAckSentCb linphone_call_cbs_get_goclear_ack_sent (LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->goClearAckSentCb;
+}
+
+void linphone_call_cbs_set_goclear_ack_sent (LinphoneCallCbs *cbs, LinphoneCallCbsGoClearAckSentCb cb) {
+	CallCbs::toCpp(cbs)->goClearAckSentCb = cb;
+}
+
 LinphoneCallCbsEncryptionChangedCb linphone_call_cbs_get_encryption_changed (LinphoneCallCbs *cbs) {
 	return CallCbs::toCpp(cbs)->encryptionChangedCb;
 }

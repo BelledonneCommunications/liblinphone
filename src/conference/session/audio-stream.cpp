@@ -53,7 +53,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
-	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
+	if (!mSessions.zrtp_context && getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
 		initZrtp();
 	}
 	initializeSessions((MediaStream*)mStream);
@@ -93,6 +93,7 @@ void MS2AudioStream::initZrtp() {
 	zrtpParams.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
 	zrtpParams.peerUri = peerUri;
 	zrtpParams.selfUri = selfUri;
+	zrtpParams.acceptGoClear = !!linphone_core_zrtp_go_clear_enabled(getCCore());
 	/* Get key lifespan from config file, default is 0:forever valid */
 	zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
 	setZrtpCryptoTypesParameters(&zrtpParams, isOfferer);

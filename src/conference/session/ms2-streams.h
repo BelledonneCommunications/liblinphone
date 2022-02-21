@@ -36,6 +36,13 @@ class MS2VideoMixer;
  */
 class MS2Stream : public Stream, public RtpInterface {
 public:
+	enum class ZrtpState {
+		Off = 0,
+		Started = 1,
+		TurnedOff = 2,
+		Restarted = 3
+	};
+
 	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
 	virtual bool prepare() override;
 	virtual void finishPrepare() override;
@@ -58,6 +65,8 @@ public:
 	virtual float getCpuUsage()const override;
 	virtual void setIceCheckList(IceCheckList *cl) override;
 	virtual void iceStateChanged() override;
+	virtual void goClearAckSent() override;
+	virtual void confirmGoClear() override;
 	virtual void connectToMixer(StreamMixer *mixer) override;
 	virtual void disconnectFromMixer()override;
 
@@ -91,7 +100,7 @@ protected:
 		int rtpPort, rtcpPort;
 	};
 	void getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info);
-	void dtlsEncryptionChanged();
+	void encryptionChanged();
 	std::string mDtlsFingerPrint;
 	RtpProfile *mRtpProfile = nullptr;
 	RtpProfile *mRtpIoProfile = nullptr;
@@ -130,6 +139,7 @@ private:
 	RtpBundle *mRtpBundle = nullptr;
 	MS2Stream *mBundleOwner = nullptr;
 	bool mOwnsBundle = false;
+	ZrtpState mZrtpState = ZrtpState::Off;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;
 };

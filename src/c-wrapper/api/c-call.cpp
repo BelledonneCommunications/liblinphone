@@ -89,6 +89,11 @@ void linphone_call_notify_dtmf_received (LinphoneCall *call, int dtmf) {
 	linphone_core_notify_dtmf_received(linphone_call_get_core(call), call, dtmf);
 }
 
+void linphone_call_notify_goclear_ack_sent (LinphoneCall *call) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(Call, Call::toCpp(call), linphone_call_cbs_get_goclear_ack_sent);
+	linphone_core_notify_call_goclear_ack_sent(linphone_call_get_core(call), call);
+}
+
 void linphone_call_notify_encryption_changed (LinphoneCall *call, bool_t on, const char *authentication_token) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_encryption_changed, on, authentication_token);
 	linphone_core_notify_call_encryption_changed(linphone_call_get_core(call), call, on, authentication_token);
@@ -672,4 +677,10 @@ void linphone_call_set_video_source(LinphoneCall *call, const LinphoneVideoSourc
 const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const LinphoneCall *call) {
 	auto descriptor = Call::toCpp(call)->getVideoSource();
 	return descriptor == nullptr ? NULL : descriptor->toC();
+}
+
+void linphone_call_confirm_go_clear(const LinphoneCall *call) {
+#ifdef HAVE_GOCLEAR
+	Call::toCpp(call)->confirmGoClear();
+#endif // HAVE_GOCLEAR
 }

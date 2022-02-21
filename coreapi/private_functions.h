@@ -45,6 +45,7 @@ LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
+void linphone_call_notify_goclear_ack_sent (LinphoneCall *call);
 void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, const char *authentication_token);
 void linphone_call_notify_transfer_state_changed(LinphoneCall *call, LinphoneCallState cstate);
 void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallStats *stats);
@@ -605,6 +606,7 @@ LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_video_activation_policy_
 
 void linphone_core_notify_global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
 void linphone_core_notify_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
+void linphone_core_notify_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call);
 void linphone_core_notify_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token);
 void linphone_core_notify_registration_state_changed(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message);
 void linphone_core_notify_account_registration_state_changed(LinphoneCore *core, LinphoneAccount *account, LinphoneRegistrationState state, const char *message);

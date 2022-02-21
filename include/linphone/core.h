@@ -232,6 +232,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreIsComposingReceivedCb is_composing_received; /**< An is-composing notification has been received */
 	LinphoneCoreDtmfReceivedCb dtmf_received; /**< A dtmf has been received received */
 	LinphoneCoreReferReceivedCb refer_received; /**< An out of call refer was received */
+	LinphoneCoreCbsCallGoClearAckSentCb call_goclear_ack_sent; /**<Notifies on sending of GoClear Ack */
 	LinphoneCoreCallEncryptionChangedCb call_encryption_changed; /**<Notifies on change in the encryption of call streams */
 	LinphoneCoreTransferStateChangedCb transfer_state_changed; /**<Notifies when a transfer is in progress */
 	LinphoneCoreBuddyInfoUpdatedCb buddy_info_updated; /**< a LinphoneFriend's BuddyInfo has changed*/
@@ -619,6 +620,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_refer_received(LinphoneCoreCbs *cbs, 
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsReferReceivedCb linphone_core_cbs_get_refer_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsCallGoClearAckSentCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_call_goclear_ack_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallGoClearAckSentCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsCallGoClearAckSentCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsCallGoClearAckSentCb linphone_core_cbs_get_call_goclear_ack_sent(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallEncryptionChangedCb callback.
@@ -4509,6 +4524,23 @@ LINPHONE_PUBLIC void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, co
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core);
+
+/**
+ * Check if the ZRTP go clear is enabled or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if ZTRP go clear is enabled; FALSE otherwise.
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC bool_t linphone_core_zrtp_go_clear_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether ZRTP go clear is enabled
+ * @param core #LinphoneCore object. @notnil
+ * @param enable TRUE to enable ZRTP go clear; FALSE otherwise.
+ * @ingroup initializing
+ */
+LINPHONE_PUBLIC void linphone_core_enable_zrtp_go_clear(LinphoneCore *core, bool_t enabled);
+
 
 /**
  * Check if a media encryption type is supported

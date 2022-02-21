@@ -78,7 +78,9 @@ static void simple_zrtp_call_with_capability_negotiations_with_dtls_srtp_encrypt
 
 static void simple_zrtp_call_with_capability_negotiations_with_resume_and_media_change(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_enable_zrtp_go_clear(marie->lc, TRUE);
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_zrtp_go_clear(pauline->lc, TRUE);
 	simple_call_with_capability_negotiations_with_resume_and_media_change_base(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionNone);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);

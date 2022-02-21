@@ -144,11 +144,14 @@ public:
 	bool isTerminator()const;
 	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking);
 	void notifyMutedDevice(uint32_t ssrc, bool muted);
+	void onGoClearAckSent();
 
 	void queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda);
 
 	void setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor);
 	std::shared_ptr<const VideoSourceDescriptor> getVideoSource () const;
+
+	void confirmGoClear();
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

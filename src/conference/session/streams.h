@@ -119,6 +119,8 @@ public:
 	 * Called by the IceService to notify the stream of a state change in the ICE check list or the ICE session.
 	 */
 	virtual void iceStateChanged();
+	virtual void goClearAckSent();
+	virtual void confirmGoClear();
 	virtual bool isEncrypted() const = 0;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) = 0;
 	virtual void finishEarlyMediaForking() = 0;
@@ -442,6 +444,9 @@ public:
 	int getAvpfRrInterval()const;
 	void tryEarlyMediaForking(const OfferAnswerContext &ctx);
 	void finishEarlyMediaForking();
+	void goClearAckSent();
+	void confirmGoClear();
+
 	/*
 	 * Iterates over streams, trying to cast them to the _requestedInterface type. If they do cast,
 	 * invoke the lambda expression on them.

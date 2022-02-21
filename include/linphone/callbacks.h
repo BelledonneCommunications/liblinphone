@@ -74,6 +74,13 @@ typedef void (*LinphoneCoreCbsCallStateChangedCb)(LinphoneCore *core, LinphoneCa
 typedef LinphoneCoreCbsCallStateChangedCb LinphoneCoreCallStateChangedCb;
 
 /**
+ * GoClear ACK sent on call callback.
+ * @param core the #LinphoneCore @notnil
+ * @param call the #LinphoneCall on which the GoClear ACK was sent. @notnil
+ */
+typedef void (*LinphoneCoreCbsCallGoClearAckSentCb)(LinphoneCore *core, LinphoneCall *call);
+
+/**
  * Call encryption changed callback.
  * @param core the #LinphoneCore @notnil
  * @param call the #LinphoneCall on which encryption is changed. @notnil

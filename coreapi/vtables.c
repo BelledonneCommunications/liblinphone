@@ -123,6 +123,11 @@ void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc) {
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_call_goclear_ack_sent(LinphoneCore *lc, LinphoneCall *call) {
+	NOTIFY_IF_EXIST(call_goclear_ack_sent, lc,call);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
 	NOTIFY_IF_EXIST(call_encryption_changed, lc,call,on,authentication_token);
 	cleanup_dead_vtable_refs(lc);

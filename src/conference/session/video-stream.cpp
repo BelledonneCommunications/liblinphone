@@ -36,6 +36,7 @@
 #include "linphone/core.h"
 #include "mediastreamer2/msitc.h"
 
+#include "bzrtp/bzrtp.h"
 
 using namespace::std;
 
@@ -161,9 +162,11 @@ void MS2VideoStream::initZrtp() {
 	if (audioStream){
 		MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
 		video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
-
 		// Copy newly created zrtp context into mSessions
 		media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
+		if (mSessions.zrtp_context) {
+			ms_zrtp_enable_go_clear(mSessions.zrtp_context, linphone_core_zrtp_go_clear_enabled(getCCore()));
+		}
 	} else {
 		lError() << "Unable to initiate ZRTP session because no audio stream is attached to video stream " << this << ".";
 	}

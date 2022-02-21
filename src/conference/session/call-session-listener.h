@@ -60,6 +60,7 @@ public:
 	virtual void onRemoteRecording(const std::shared_ptr<CallSession> &session, bool recording){}
 
 	virtual void onEncryptionChanged (const std::shared_ptr<CallSession> &session, bool activated, const std::string &authToken) {}
+	virtual void onGoClearAckSent() {}
 
 	virtual void onCallSessionStateChangedForReporting (const std::shared_ptr<CallSession> &session) {}
 	virtual void onRtcpUpdateForReporting (const std::shared_ptr<CallSession> &session, SalStreamType type) {}
@@ -79,7 +80,8 @@ public:
 	virtual LinphoneConference * getCallSessionConference (const std::shared_ptr<CallSession> &session) const { return nullptr; }
 
 	virtual void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {}
-	
+
+	virtual void confirmGoClear() const {};
 };
 
 LINPHONE_END_NAMESPACE

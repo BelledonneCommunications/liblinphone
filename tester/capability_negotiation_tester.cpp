@@ -2465,7 +2465,6 @@ void simple_call_with_capability_negotiations_with_different_encryption_after_re
 			BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
 
 			bool potentialConfigurationChosen = false;
-
 			get_expected_encryption_from_call_params(calleeCall, callerCall, &encryption, &potentialConfigurationChosen);
 
 			int expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
@@ -2600,6 +2599,10 @@ void simple_call_with_capability_negotiations_with_resume_and_media_change_base(
 		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
 		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
 
+		if (optionalEncryption == LinphoneMediaEncryptionZRTP) {
+			BC_ASSERT_TRUE(wait_for_until(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallGoClearAckSent,callee_stat.number_of_LinphoneCallGoClearAckSent+1,10000));
+		}
+
 		bool potentialConfigurationChosen = false;
 		LinphoneMediaEncryption encryption =  LinphoneMediaEncryptionNone;
 		get_expected_encryption_from_call_params(calleeCall, callerCall, &encryption, &potentialConfigurationChosen);
@@ -2622,7 +2625,6 @@ void simple_call_with_capability_negotiations_with_resume_and_media_change_base(
 		linphone_call_stats_unref(calleeStats);
 		calleeStats = NULL;
 
-		BC_ASSERT_EQUAL(encryptionAfterResume, encryption, int, "%i");
 		if (calleeCall) {
 			check_stream_encryption(calleeCall);
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
@@ -2635,6 +2637,61 @@ void simple_call_with_capability_negotiations_with_resume_and_media_change_base(
 		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
 		const rtp_stats_t * stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
 		BC_ASSERT_LOWER((int)stats->cum_packet_loss, 10, int, "%d");
+
+		callerParams = linphone_core_create_call_params(caller->lc, callerCall);
+		encryption_list = bctbx_list_append(NULL, LINPHONE_INT_TO_PTR(optionalEncryption));
+		linphone_call_params_set_supported_encryptions(callerParams,encryption_list);
+		if (encryption_list) {
+			bctbx_list_free(encryption_list);
+			encryption_list = NULL;
+		}
+		linphone_call_update(callerCall, callerParams);
+		linphone_call_params_unref(callerParams);
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallUpdating,(caller_stat.number_of_LinphoneCallUpdating+1)));
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallUpdatedByRemote,(callee_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
+
+		potentialConfigurationChosen = false;
+		encryption = LinphoneMediaEncryptionNone;
+		get_expected_encryption_from_call_params(callerCall, calleeCall, &encryption, &potentialConfigurationChosen);
+
+		expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		if ((encryptionAfterResume == LinphoneMediaEncryptionNone) && ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP))) {
+			BC_ASSERT_TRUE(wait_for_until(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallEncryptedOn,caller_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+			BC_ASSERT_TRUE(wait_for_until(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallEncryptedOn,callee_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+		}
+
+		BC_ASSERT_EQUAL(optionalEncryption, encryption, int, "%i");
+
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
+		calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+		linphone_call_stats_unref(calleeStats);
+		calleeStats = NULL;
+
+		if (calleeCall) {
+			check_stream_encryption(calleeCall);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
+		}
+		if (callerCall) {
+			check_stream_encryption(callerCall);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), encryption, int, "%i");
+		}
+
+		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+		stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
+		BC_ASSERT_LOWER((int)stats->cum_packet_loss, 10, int, "%d");
+
 
 		end_call(caller, callee);
 	}

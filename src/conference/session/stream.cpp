@@ -105,6 +105,12 @@ void Stream::setIceCheckList(IceCheckList *cl){
 void Stream::iceStateChanged(){
 }
 
+void Stream::goClearAckSent(){
+}
+
+void Stream::confirmGoClear(){
+}
+
 void Stream::connectToMixer(StreamMixer *mixer){
 	mMixer = mixer;
 }

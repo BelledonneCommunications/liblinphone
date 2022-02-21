@@ -644,6 +644,10 @@ void Call::onEncryptionChanged (const shared_ptr<CallSession> &session, bool act
 	linphone_call_notify_encryption_changed(this->toC(), activated, authToken.empty() ? nullptr : authToken.c_str());
 }
 
+void Call::onGoClearAckSent() {
+	linphone_call_notify_goclear_ack_sent(this->toC());
+}
+
 void Call::onCallSessionStateChangedForReporting (const shared_ptr<CallSession> &session) {
 	linphone_reporting_call_state_updated(this->toC());
 }
@@ -1276,6 +1280,10 @@ AudioDevice* Call::getOutputAudioDevice() const {
 
 const std::list<LinphoneMediaEncryption> Call::getSupportedEncryptions() const {
 	return getActiveSession()->getSupportedEncryptions();
+}
+
+void Call::confirmGoClear() const {
+	getMediaSession()->confirmGoClear();
 }
 
 // -----------------------------------------------------------------------------
