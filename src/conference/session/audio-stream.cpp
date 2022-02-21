@@ -673,23 +673,11 @@ void MS2AudioStream::enableMicOnAudioStream(AudioStream *as, LinphoneCore *lc, b
 }
 
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
+	/* Set soft gains */
+	audio_stream_set_mic_gain_db(as, lc->sound_conf.soft_mic_lev);
+	audio_stream_set_spk_gain_db(as, lc->sound_conf.soft_play_lev);
+	/* Set microphone enablement */
 	enableMicOnAudioStream(as, lc, !muted);
-	
-	float recvGain = lc->sound_conf.soft_play_lev;
-	if (static_cast<int>(recvGain)){
-		if (as->volrecv)
-			ms_filter_call_method(as->volrecv, MS_VOLUME_SET_DB_GAIN, &recvGain);
-		else
-			lWarning() << "Could not apply playback gain: gain control wasn't activated";
-	}
-
-	float micGain = lc->sound_conf.soft_mic_lev;
-	if (static_cast<int>(micGain)){
-		if (as->volsend)
-			ms_filter_call_method(as->volsend, MS_VOLUME_SET_DB_GAIN, &micGain);
-		else
-			lWarning() << "Could not apply microphone gain: gain control wasn't activated";
-	}
 
 	LinphoneConfig *config = linphone_core_get_config(lc);
 	float ngThres = linphone_config_get_float(config, "sound", "ng_thres", 0.05f);
@@ -720,7 +708,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 	}
 	if (as->volrecv) {
 		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
-		float floorGain = (float)(1 / pow(10, micGain / 10));
+		float floorGain = (float)(1 / pow(10, lc->sound_conf.soft_mic_lev / 10));
 		int spkAgc = linphone_config_get_int(config, "sound", "speaker_agc_enabled", 0);
 		MSFilter *f = as->volrecv;
 		ms_filter_call_method(f, MS_VOLUME_ENABLE_AGC, &spkAgc);

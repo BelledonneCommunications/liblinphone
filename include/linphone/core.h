@@ -2387,7 +2387,11 @@ LINPHONE_PUBLIC bool_t linphone_core_get_use_rfc2833_for_dtmf(LinphoneCore *core
 /**
  * Sets the ports to be used for each of transport (UDP or TCP)
  * A zero value port for a given transport means the transport
- * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be choosen randomly by the system.
+ * is not used.
+ * A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be choosen randomly by the system.
+ * A value of LC_SIP_TRANSPORT_DONTBIND (-2) means that the socket will not be bound explicitely, in other
+ * words liblinphone won't listen for incoming connections at all. This mode is suitable for a pure client
+ * application (ex: a mobile application).
  * @param core #LinphoneCore object @notnil
  * @param transports A #LinphoneSipTransports structure giving the ports to use @notnil
  * @return 0
@@ -2398,7 +2402,11 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_transports(LinphoneCore *core, 
 /**
  * Retrieves the port configuration used for each transport (udp, tcp, tls).
  * A zero value port for a given transport means the transport
- * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be chosen randomly by the system.
+ * is not used.
+ * A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be chosen randomly by the system.
+ * A value of LC_SIP_TRANSPORT_DONTBIND (-2) means that the socket will not be bound explicitely, in other
+ * words liblinphone won't listen for incoming connections at all. This mode is suitable for a pure client
+ * application (ex: a mobile application).
  * @param core #LinphoneCore object @notnil
  * @return A #LinphoneTransports structure with the configured ports @notnil @tobefreed
  * @ingroup network_parameters
