@@ -2431,6 +2431,71 @@ static void imdn_notifications_with_lime(void) {
 static void im_notification_policy_with_lime(void) {
 	_im_notification_policy(TRUE);
 }
+
+
+static void aggregated_imdns(void) {
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+	LinphoneChatRoom *pauline_chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatRoom *marie_chat_room;
+	LinphoneChatMessage *sent_cm;
+	bctbx_list_t *messages = NULL;
+
+	/*set marie in airplaine mode: */
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+	
+	sent_cm = linphone_chat_room_create_message_from_utf8(pauline_chat_room, "Coucou");
+	linphone_chat_message_cbs_set_msg_state_changed(linphone_chat_message_get_callbacks(sent_cm), liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(sent_cm);
+	messages = bctbx_list_append(messages, sent_cm);
+	
+	sent_cm = linphone_chat_room_create_message_from_utf8(pauline_chat_room, "ça va ?");
+	linphone_chat_message_cbs_set_msg_state_changed(linphone_chat_message_get_callbacks(sent_cm), liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(sent_cm);
+	messages = bctbx_list_append(messages, sent_cm);
+	
+	sent_cm = linphone_chat_room_create_message_from_utf8(pauline_chat_room, "tu fais quoi ce soir ?");
+	linphone_chat_message_cbs_set_msg_state_changed(linphone_chat_message_get_callbacks(sent_cm), liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(sent_cm);
+	messages = bctbx_list_append(messages, sent_cm);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 3));
+	
+	/* Marie shall not receive them */
+	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	
+	/* Marie is now online */
+	linphone_core_set_network_reachable(marie->lc, TRUE);
+	
+	/* Marie should receive them all */
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 3));
+	
+	/* Pauline should be notified of good delivery */
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDeliveredToUser, 3));
+	
+	marie_chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	
+	linphone_chat_room_mark_as_read(marie_chat_room); /* This sends the display notification */
+	
+	/* Pauline should be notified of messages being displayed */
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 3));
+
+	bctbx_list_free_with_data(messages, (bctbx_list_free_func) linphone_chat_message_unref);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+
+
 #endif
 
 static void _im_error_delivery_notification(bool_t online) {
@@ -4114,6 +4179,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
 	TEST_NO_TAG("IMDN notifications", imdn_notifications),
 	TEST_NO_TAG("IM notification policy", im_notification_policy),
+	TEST_NO_TAG("Aggregated IMDNs", aggregated_imdns),
 #endif
 	TEST_NO_TAG("Unread message count", unread_message_count),
 	TEST_NO_TAG("Unread message count in callback", unread_message_count_callback),

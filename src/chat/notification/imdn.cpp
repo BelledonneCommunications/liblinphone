@@ -42,6 +42,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 Imdn::Imdn (ChatRoom *chatRoom) : chatRoom(chatRoom) {
 	chatRoom->getCore()->getPrivate()->registerListener(this);
+	auto config = linphone_core_get_config(chatRoom->getCore()->getCCore());
+	aggregationAllowed = linphone_config_get_bool(config, "misc", "aggregate_imdn", TRUE);
 }
 
 Imdn::~Imdn () {
@@ -314,8 +316,7 @@ int Imdn::timerExpired (void *data, unsigned int revents) {
 // -----------------------------------------------------------------------------
 
 bool Imdn::aggregationEnabled () const {
-	auto config = linphone_core_get_config(chatRoom->getCore()->getCCore());
-	return (chatRoom->canHandleCpim() && linphone_config_get_bool(config, "misc", "aggregate_imdn", TRUE));
+	return chatRoom->canHandleCpim() && chatRoom->canHandleMultipart() && aggregationAllowed;
 }
 
 LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
