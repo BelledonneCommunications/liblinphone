@@ -1101,7 +1101,9 @@ void ChatMessagePrivate::send () {
 				currentSendStep |= ChatMessagePrivate::Step::Multipart;
 			}
 		} else {
-			lInfo() << "Chat room doesn't support multipart, skipping this modifier";
+			if (contents.size() > 1) {
+				lError() << "Chat room doesn't support multipart, but has multiple parts !";
+			}else lInfo() << "Chat room doesn't support multipart, skipping this modifier";
 		}
 
 		if (chatRoom->canHandleCpim()) {

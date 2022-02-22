@@ -91,6 +91,7 @@ private:
 	std::list<std::shared_ptr<ImdnMessage>> sentImdnMessages;
 	belle_sip_source_t *timer = nullptr;
 	BackgroundTask bgTask { "IMDN sending" };
+	bool aggregationAllowed;
 };
 
 LINPHONE_END_NAMESPACE
