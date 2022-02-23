@@ -112,7 +112,7 @@ func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointe
 
 #if canImport(SwiftUI) && (os(iOS) || os(tvOS)) && (arch(arm64) || arch(x86_64)) ///does not compile on armv7 nor macOS
 @available(iOS 13.0, tvOS 13.0, *)
-@available(OSX, unavailable)
+@available(macOS, unavailable)
 @available(watchOS, unavailable)
 /// Add this object in your SwiftUI while giving him the callback necessary to link its view to the Core (using Core.nativeVideoWindowId for example).
 public struct LinphoneVideoViewHolder: UIViewRepresentable {
@@ -261,6 +261,7 @@ public class {{className}} : LinphoneObject
 	{{#isLinphoneCore}}
 	/// Get the UIView in which the video is be rendered. Use nativeVideoWindowId for direct pointer management.
 	/// - Returns: The UIView in which the video will be rendered.
+#if os(iOS) || os(tvOS)
 	public var nativeVideoWindow: UIView?
 	{
 		get
@@ -280,9 +281,23 @@ public class {{className}} : LinphoneObject
 			}
 		}
 	}
+#else
+	public var nativeVideoWindow: UnsafeMutableRawPointer?
 
+	{
+		get
+		{
+			return linphone_core_get_native_video_window_id(cPtr)
+		}
+		set
+		{
+			linphone_core_set_native_video_window_id(cPtr, newValue)
+		}
+	}
+#endif
 	/// Get the UIView in which the camera preview is be rendered. Use nativePreviewWindowId for direct pointer management.
 	/// - Returns: The UIView in which the camera preview will be rendered.
+#if os(iOS) || os(tvOS)
 	public var nativePreviewWindow: UIView?
 	{
 		get
@@ -302,6 +317,20 @@ public class {{className}} : LinphoneObject
 			}
 		}
 	}
+#else
+	public var nativePreviewWindow: UnsafeMutableRawPointer?
+
+	{
+		get
+		{
+			return linphone_core_get_native_preview_window_id(cPtr)
+		}
+		set
+		{
+			linphone_core_set_native_preview_window_id(cPtr, newValue)
+		}
+	}
+#endif
 	{{/isLinphoneCore}}
 	{{#classEnums}}
 
