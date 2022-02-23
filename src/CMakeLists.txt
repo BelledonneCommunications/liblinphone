@@ -276,6 +276,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	search/search-async-data.h
 	search/magic-search-p.h
 	search/magic-search.h
+	search/search-request.h
 	search/search-result.h
 	utils/background-task.h
 	utils/general-internal.h
@@ -498,6 +499,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	sal/potential_config_graph.cpp
 	search/magic-search.cpp
 	search/search-async-data.cpp
+	search/search-request.cpp
 	search/search-result.cpp
 	utils/background-task.cpp
 	utils/fs.cpp

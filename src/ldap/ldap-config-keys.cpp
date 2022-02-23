@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -28,6 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys={
 	{"timeout", LdapConfigKeys("5")},
 	{"max_results", LdapConfigKeys("5")},
+	{"delay", LdapConfigKeys("500")},
 	{"auth_method", LdapConfigKeys(Utils::toString((int)LinphoneLdapAuthMethodSimple))},
 	{"password", LdapConfigKeys("")},
 	{"bind_dn", LdapConfigKeys("")},

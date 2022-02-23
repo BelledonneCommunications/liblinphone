@@ -33,6 +33,7 @@ private:
 	unsigned int mMinWeight;
 	unsigned int mSearchLimit; // Number of ResultSearch maximum when the search is limited
 	bool mLimitedSearch; // Limit the search
+	int mRequestDelay = 500;	// Delay the first request in ms
 	std::string mDelimiter; // Delimiter use for the search
 	bool mUseDelimiter;
 	std::string mFilter;
@@ -42,7 +43,7 @@ private:
 
 	std::shared_ptr< std::list<SearchResult>> mCacheResult;
 	SearchAsyncData mAsyncData;
-
+	
 	L_DECLARE_PUBLIC(MagicSearch);
 };
 

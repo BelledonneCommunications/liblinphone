@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -36,11 +36,11 @@ void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t
 		LinphoneAddress *addr = static_cast<LinphoneAddress*>(f->data);
 		if (addr) {
 			if (cbData->mFilter.empty() && cbData->mWithDomain.empty()) {
-				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr));
+				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr, cbData->mSourceFlags));
 			} else {// We have constraints : add result with weight
 				unsigned int weight = cbData->mParent->searchInAddress(addr, cbData->mFilter, cbData->mWithDomain);
 				if( weight > cbData->mParent->getMinWeight())
-					cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr));
+					cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr, cbData->mSourceFlags));
 			}
 		}
 	}
@@ -60,7 +60,7 @@ std::list<SearchResult> *SearchAsyncData::createResult(std::list<SearchResult> d
 	return &mProviderResults.back();
 }
 
-bool SearchAsyncData::getCurrentRequest(std::pair<std::string, std::string> * result){
+bool SearchAsyncData::getCurrentRequest(SearchRequest * result){
 	bool haveRequest = true;
 	ms_mutex_lock(&mLockQueue);
 	if( mRequests.size())
@@ -69,6 +69,10 @@ bool SearchAsyncData::getCurrentRequest(std::pair<std::string, std::string> * re
 		haveRequest = false;
 	ms_mutex_unlock(&mLockQueue);
 	return haveRequest;
+}
+
+const std::list<SearchRequest>& SearchAsyncData::getRequestHistory() const{
+	return mRequestHistory;
 }
 
 bool SearchAsyncData::keepOneRequest(){
@@ -82,7 +86,7 @@ bool SearchAsyncData::keepOneRequest(){
 	return haveRequest;
 }
 
-int SearchAsyncData::pushRequest(const std::pair<std::string, std::string>& request){
+int SearchAsyncData::pushRequest(const SearchRequest& request){
 	int currentSize = (int)mRequests.size()+1;
 	ms_mutex_lock(&mLockQueue);
 	mRequests.push(request);
@@ -96,6 +100,10 @@ void SearchAsyncData::pushData(std::shared_ptr<CbData> data){
 		
 void SearchAsyncData::initStartTime(){
 	bctbx_get_cur_time(&mStartTime);
+	ms_mutex_lock(&mLockQueue);
+	mRequests.front().initStartTime();
+	mRequestHistory.push_back(mRequests.front());
+	ms_mutex_unlock(&mLockQueue);
 }
 
 bctoolboxTimeSpec SearchAsyncData::getStartTime() const{
@@ -111,6 +119,10 @@ std::vector<std::shared_ptr<SearchAsyncData::CbData> >& SearchAsyncData::getData
 void SearchAsyncData::clear(){
 	mProvidersCbData.clear();
 	mProviderResults.clear();
+}
+
+void SearchAsyncData::setSearchRequest(const SearchRequest& request) {
+	mSearchRequest = request;
 }
 
 bool SearchAsyncData::setSearchResults(std::shared_ptr<list<SearchResult> > resultList){

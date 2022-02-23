@@ -1321,4 +1321,19 @@ typedef int LinphoneStatus;
 **/
 typedef struct _LinphoneHeaders LinphoneHeaders;
 
+/**
+* @brief Enum describing the search categories for Magic Search
+* @ingroup buddy_list
+**/
+typedef enum _LinphoneMagicSearchSource {
+	LinphoneMagicSearchSourceAll = -1, /**< Search in all sources */
+	LinphoneMagicSearchSourceNone = 0, /**< no Source specified. If requested in search, the list should be empty */
+	LinphoneMagicSearchSourceFriends = 1 << 0, /**< Search in friends only */
+	LinphoneMagicSearchSourceCallLogs = 1 << 1, /**< Search in Call Logs */
+	LinphoneMagicSearchSourceLdapServers = 1 << 2, /**< Search in LDAP servers */
+	LinphoneMagicSearchSourceChatRooms = 1 << 3, /**< Search in Chat rooms participants */
+	LinphoneMagicSearchSourceRequest = 1 << 4 /**< Search from request : it is usually an address built from the request */
+} LinphoneMagicSearchSource;
+
+
 #endif /* LINPHONE_TYPES_H_ */
