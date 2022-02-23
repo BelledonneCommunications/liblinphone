@@ -420,6 +420,15 @@ const Content* ChatMessagePrivate::getTextContent() const {
 	return &Utils::getEmptyConstRefObject<Content>();
 }
 
+bool ChatMessagePrivate::hasConferenceInvitationContent() const {
+	for (const Content *c : getContents()) {
+		if (c->getContentType().strongEqual(ContentType::Icalendar)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool ChatMessagePrivate::hasFileTransferContent() const {
 	for (const Content *c : contents) {
 		if (c->isFileTransfer()) {

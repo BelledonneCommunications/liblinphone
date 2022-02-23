@@ -456,6 +456,13 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_sta
  * @return the call Id @notnil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *message);
+	
+/**
+ * Returns wether the chat message has a conference invitation content or not.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return TRUE if it has one, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_has_conference_invitation_content (const LinphoneChatMessage *message);
 
 /************ */
 /* DEPRECATED */

@@ -430,6 +430,9 @@ const char *linphone_chat_message_get_text_content (const LinphoneChatMessage *m
 	return L_STRING_TO_C(msg->cache.textContentBody);
 }
 
+bool_t linphone_chat_message_has_conference_invitation_content (const LinphoneChatMessage *message) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(message)->hasConferenceInvitationContent();
+}
 
 bool_t linphone_chat_message_is_file_transfer_in_progress (const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isFileTransferInProgress();

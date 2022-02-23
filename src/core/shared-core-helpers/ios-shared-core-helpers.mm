@@ -198,7 +198,8 @@ IosSharedCoreHelpers::IosSharedCoreHelpers (shared_ptr<LinphonePrivate::Core> co
 }
 
 static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
-	if (linphone_chat_message_is_text(message) || linphone_chat_message_get_file_transfer_information(message) != NULL) {
+	if (linphone_chat_message_has_text_content(message) || linphone_chat_message_get_file_transfer_information(message) != NULL ||
+		linphone_chat_message_has_conference_invitation_content(message)) {
 		lInfo() << "[push] msg [" << message << "] received from chat room [" << room << "]";
 
 		PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
@@ -207,6 +208,8 @@ static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChat
 		shared_core_helper->putMsgInUserDefaults(message);
 		const char *callId = linphone_chat_message_get_call_id(message);
 		static_cast<LinphonePrivate::IosSharedCoreHelpers*>(lc->platform_helper)->removeCallIdFromList(callId);
+	} else {
+		lInfo() << "[push] don't put msg [" << message << "] in UserDefaults because its content type is " << linphone_chat_message_get_content_type(message) ;
 	}
 }
 
@@ -349,8 +352,7 @@ void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
 	NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
 	NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
 	NSNumber *ttl = [NSNumber numberWithUnsignedLongLong:ms_get_cur_time_ms()];
-	const char *type = linphone_chat_message_get_content_type(msg) ;
-	NSNumber *isIcalendar = [NSNumber numberWithBool: strcmp(type, "text/calendar;conference-event=yes") == 0 ? true : false];
+	NSNumber *isIcalendar = [NSNumber numberWithBool: linphone_chat_message_has_conference_invitation_content(msg)];
 
 	NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, isIcalendar, nil]
 							forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", @"ttl", @"isIcalendar", nil]];

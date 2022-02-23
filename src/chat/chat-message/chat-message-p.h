@@ -201,6 +201,7 @@ public:
 
 	bool hasTextContent () const;
 	const Content *getTextContent () const;
+	bool hasConferenceInvitationContent() const;
 
 	bool hasFileTransferContent () const;
 	const Content *getFileTransferContent () const;
