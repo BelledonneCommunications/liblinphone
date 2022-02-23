@@ -54,3 +54,7 @@ bool_t linphone_search_result_has_capability (const LinphoneSearchResult *search
 unsigned int linphone_search_result_get_weight (const LinphoneSearchResult *searchResult) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getWeight();
 }
+
+int linphone_search_result_get_source_flags (const LinphoneSearchResult *searchResult) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getSourceFlags();
+}

@@ -88,6 +88,13 @@ LINPHONE_PUBLIC bool_t linphone_search_result_has_capability(const LinphoneSearc
 LINPHONE_PUBLIC unsigned int linphone_search_result_get_weight(const LinphoneSearchResult *search_result);
 
 /**
+ * Gets source flags of the search result.
+ * @param search_result the #LinphoneSearchResult object @notnil
+ * @return the source flags from #LinphoneMagicSearchSource
+ **/
+LINPHONE_PUBLIC int linphone_search_result_get_source_flags(const LinphoneSearchResult *search_result);
+
+/**
  * @}
  */
 

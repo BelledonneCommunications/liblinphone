@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -34,6 +34,7 @@ class SearchResultPrivate : public ClonableObjectPrivate {
 private:
 	void updateCapabilities ();
 
+	int mSourceFlags;
 	const LinphoneFriend *mFriend;
 	const LinphoneAddress *mAddress;
 	std::string mPhoneNumber;
@@ -69,7 +70,8 @@ SearchResult::SearchResult (
 	const unsigned int weight,
 	const LinphoneAddress *address,
 	const string &phoneNumber,
-	const LinphoneFriend *linphoneFriend
+	const LinphoneFriend *linphoneFriend,
+	int sourceFlags
 ) : ClonableObject(*new SearchResultPrivate) {
 	L_D();
 	d->mWeight = weight;
@@ -78,6 +80,7 @@ SearchResult::SearchResult (
 	d->mPhoneNumber = phoneNumber;
 	d->mFriend = linphoneFriend;
 	if (d->mFriend) linphone_friend_ref(const_cast<LinphoneFriend *>(d->mFriend));
+	d->mSourceFlags = sourceFlags;
 	d->updateCapabilities();
 }
 
@@ -89,6 +92,7 @@ SearchResult::SearchResult (const SearchResult &sr) : ClonableObject(*new Search
 	d->mPhoneNumber = sr.getPhoneNumber();
 	d->mFriend = sr.getFriend();
 	if (d->mFriend) linphone_friend_ref(const_cast<LinphoneFriend *>(d->mFriend));
+	d->mSourceFlags = sr.getSourceFlags();
 	d->mCapabilities = sr.getCapabilities();
 }
 
@@ -111,7 +115,7 @@ bool SearchResult::operator>= (const SearchResult &other) const {
 	return getWeight() >= other.getWeight();
 }
 
-bool SearchResult::operator= (const SearchResult &other) const {
+bool SearchResult::operator== (const SearchResult &other) const {
 	return getWeight() == other.getWeight();
 }
 
@@ -145,4 +149,40 @@ unsigned int SearchResult::getWeight () const {
 	return d->mWeight;
 }
 
+int SearchResult::getSourceFlags() const {
+	L_D();
+	return d->mSourceFlags;
+}
+
+void SearchResult::merge(const SearchResult& withResult) {
+	L_D();
+	bool doOverride = d->mWeight <= withResult.getWeight();
+	
+	if(doOverride)
+		d->mWeight = withResult.getWeight();
+	d->mSourceFlags |= withResult.getSourceFlags();
+	
+	if( withResult.getAddress()){// There is a new data
+		if( doOverride && d->mAddress)
+			linphone_address_unref(const_cast<LinphoneAddress *>(d->mAddress));
+		if(doOverride || !d->mAddress) {
+			d->mAddress = withResult.getAddress();
+			linphone_address_ref(const_cast<LinphoneAddress *>(d->mAddress));
+		}
+	}
+	
+	if(doOverride || d->mPhoneNumber.empty())
+		d->mPhoneNumber = withResult.getPhoneNumber();
+		
+	if( withResult.getFriend()){// There is a new data
+		if( doOverride && d->mFriend)
+			linphone_friend_unref(const_cast<LinphoneFriend *>(d->mFriend));
+		if(doOverride || !d->mFriend) {
+			d->mFriend = withResult.getFriend();
+			linphone_friend_ref(const_cast<LinphoneFriend *>(d->mFriend));
+		}
+	}	
+	
+	d->updateCapabilities();
+}
 LINPHONE_END_NAMESPACE

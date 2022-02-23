@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -49,6 +49,8 @@ public:
 	 * Timeout in seconds
 	 *   - "max_results" : "5".
 	 * The max results when requesting searches.
+	 *   - "delay" : "500".
+	 * The delay between each search in milliseconds.
 	 *   - "auth_method" : "SIMPLE".
 	 * Authentification method. Only "SIMPLE" and "ANONYMOUS" are supported.
 	 *   - "password" : "".

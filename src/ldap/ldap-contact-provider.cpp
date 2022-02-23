@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -235,6 +235,10 @@ int LdapContactProvider::getTimeout() const{
 	return atoi(mConfig.at("timeout").c_str());
 }
 
+int LdapContactProvider::getDelay() const{
+	return mConfig.count("delay") > 0 ? atoi(mConfig.at("delay").c_str()) : 500;
+}
+
 std::string LdapContactProvider::getFilter()const{
 	return mConfig.at("filter");
 }
@@ -242,14 +246,38 @@ std::string LdapContactProvider::getFilter()const{
 int LdapContactProvider::getCurrentAction()const{
 	return mCurrentAction;
 }
+
+void LdapContactProvider::computeLastRequestTime(const std::list<SearchRequest>& requestHistory) {
+// Find the first LDAP search.
+	std::list<SearchRequest>::const_iterator itRequest = requestHistory.begin();
+	mLastRequestTime = 0; // No search in history: do not delay
+	
+	do{
+		itRequest = std::find_if(itRequest, requestHistory.end(), [](const SearchRequest& r){
+			return (r.getSourceFlags() & LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceLdapServers;
+		});
+		if(itRequest != requestHistory.end()){
+			if( mLastRequestTime == 0)
+				mLastRequestTime = itRequest->getStartTime(); // There was one search. Store the time and loop on next LDAP searches.
+			else{
+				uint64_t t = itRequest->getStartTime();
+				if( t - mLastRequestTime > (uint64_t) getDelay())	// This last search should be start as it's superior from timeout. Take it account.
+					mLastRequestTime = t;
+			}
+			// Continue with the next LDAP search
+			++itRequest;
+		}
+	}while(itRequest != requestHistory.end() );
+}
 //*******************************************	SEARCH
 
 // Create a search object and store the request to be used when the provider is ready
-void LdapContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData){
+void LdapContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData, const std::list<SearchRequest>& requestHistory){
 	std::shared_ptr<LdapContactSearch> request = std::make_shared<LdapContactSearch>(this, predicate, cb, cbData );
 	if( request != NULL ) {
 		mRequests.push_back(request);
 	}
+	computeLastRequestTime(requestHistory);
 }
 
 // Start the search
@@ -356,7 +384,7 @@ bool LdapContactProvider::iterate(void *data) {
 		// not using switch is wanted : we can do severals steps in one iteration if wanted.
 		if(provider->mCurrentAction == ACTION_NONE){
 			ms_debug("[LDAP] ACTION_NONE");
-			if( provider->mRequests.size() > 0){
+			if( provider->mRequests.size() > 0 && provider->isReadyForStart()){
 				if( provider->mCurrentAction != ACTION_ERROR){
 					if( provider->mConnected != 1)
 						provider->mCurrentAction = ACTION_INIT;
@@ -616,5 +644,8 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 	}
 }
 
+bool LdapContactProvider::isReadyForStart(){
+	return mLastRequestTime + (uint64_t)getDelay() < bctbx_get_cur_time_ms();
+}
 
 LINPHONE_END_NAMESPACE

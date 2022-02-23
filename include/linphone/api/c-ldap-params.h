@@ -181,6 +181,25 @@ LINPHONE_PUBLIC int linphone_ldap_params_get_max_results(const LinphoneLdapParam
 /*************************************************************************************/
 
 /**
+ * @brief Delay between each search in milliseconds
+ * Default value : 500.
+ * 
+ * @param params The #LinphoneLdapParams object. @notnil
+ * @param delay The timeout in milliseconds.
+**/
+LINPHONE_PUBLIC void linphone_ldap_params_set_delay(LinphoneLdapParams *params, int delay);
+
+/**
+ * @brief Get the delay between each search in milliseconds
+ * 
+ * @param params The #LinphoneLdapParams object. @notnil
+ * @return The delay in milliseconds.
+**/
+LINPHONE_PUBLIC int  linphone_ldap_params_get_delay(const LinphoneLdapParams *params);
+
+/*************************************************************************************/
+
+/**
  * @brief Authentification method. Check #LinphoneLdapAuthMethod for authentification values.
  * Default value : LinphoneLdapAuthMethodSimple
  * 

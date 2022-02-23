@@ -87,6 +87,10 @@ void LdapParams::setMaxResults(const int& maxResults){
 	mConfig["max_results"] = Utils::toString(maxResults >= 1 ? maxResults : 1 );
 }
 
+void LdapParams::setDelay(const int& ms) {
+	mConfig["delay"] = Utils::toString(ms >= 0 ? ms : 0 );
+}
+
 void LdapParams::setPassword(const std::string& password){
 	mConfig["password"] = password;
 }
@@ -159,6 +163,10 @@ int LdapParams::getTimeout() const{
 
 int LdapParams::getMaxResults() const{
 	return atoi(mConfig.at("max_results").c_str());
+}
+
+int LdapParams::getDelay() const{
+	return atoi(mConfig.at("delay").c_str());
 }
 
 const std::string& LdapParams::getPassword() const{

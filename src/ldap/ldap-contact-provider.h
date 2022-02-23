@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -34,6 +34,7 @@
 #include <mutex>
 
 #include <ldap.h>
+#include "../search/search-request.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -88,6 +89,12 @@ public:
 	 * @return The timeout in seconds
 	 */
 	int getTimeout() const;
+	
+	/**
+	 * @brief getDelay it's a convertor from configuration 'delay' to integer. Default is 500.
+	 * @return The timeout in ms
+	 */
+	int getDelay() const;
 
 	/**
 	 * @brief getFilter Get filter key from Configuration
@@ -105,12 +112,13 @@ public:
 	/**
 	 * @brief search Make a search to the provider. Results are retrieved from the callback #ContactSearchCallback.
 	 * This function is thread-safe.
-	 * @param mPredicate A value to be used to replace a format specifier in the format string : 'filter' configuration key.
+	 * @param predicate A value to be used to replace a format specifier in the format string : 'filter' configuration key.
 	 * This key is a string that contains a format string that follows the same specifications as format in printf.
-	 * @param mCb The callback where to get results in the form of 'static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );'
-	 * @param mCbData The data to pass to the callback
+	 * @param cb The callback where to get results in the form of 'static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );'
+	 * @param cbData The data to pass to the callback
+	 * @param requestHistory The list of search that have been requested. It is used to make a delay between the same kind of searchs.
 	 */
-	void search(const std::string& mPredicate, ContactSearchCallback mCb, void* mCbData);
+	void search(const std::string& predicate, ContactSearchCallback cb, void* cbData, const std::list<SearchRequest>& requestHistory = std::list<SearchRequest>());
 	
 	/**
 	 * @brief search Start the search to LDAP
@@ -169,6 +177,16 @@ private:
 	 * @brief ldapTlsConnection Procedure to Start a TLS connection using mTlsConnectionTimeout.
 	 */
 	void ldapTlsConnection();
+	
+	/**
+	 * @brief isReadyForStart check if the search can be started from mLastRequestTime.
+	 */
+	bool isReadyForStart();
+	
+	/**
+	 * @brief computeLastRequestTime Compute the last request time on LDAP servers, from a list of request.
+	 */
+	void computeLastRequestTime(const std::list<SearchRequest>& requestHistory);
 
 	std::shared_ptr<Core> mCore;
 	std::map<std::string,std::string>  mConfig;
@@ -189,6 +207,8 @@ private:
 // TLS connection
 	int mTlsConnectionId = -1;	// Used for getting async results from a start_tls
 	time_t mTlsConnectionTimeout;
+	
+	uint64_t mLastRequestTime; // Store bctbx_get_cur_time_ms and use it as reference to make a delay between LDAP requests. 
 };
 
 LINPHONE_END_NAMESPACE

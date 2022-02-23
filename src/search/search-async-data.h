@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -25,6 +25,7 @@
 #include <queue>
 
 #include "search-result.h"
+#include "search-request.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -41,6 +42,11 @@ public:
 	 * @brief mProviderResults All results stored for each providers.
 	 */
 	std::list<std::list<SearchResult> > mProviderResults;
+	
+	/**
+	 * @brief mSearchRequest Search criteria.
+	 */
+	SearchRequest mSearchRequest;
 
 	/**
 	 * @brief The CbData class. Callback interface that can be inherit to allow adding more providers.
@@ -90,11 +96,18 @@ public:
 		 * @brief mWithDomain Domain Request
 		 */
 		std::string mWithDomain;
+		
+		/**
+		 * @brief SurceFlags Flags for searching on specific sources : #LinphoneMagicSearchSource
+		 */
+		int mSourceFlags = LinphoneMagicSearchSourceNone;
+		
 		/**
 		 * @brief mParent Used to get searchInAddress of parent but may be usefull for anything else if needed.
 		 */
 		const MagicSearch * mParent;
 	};
+
 
 	SearchAsyncData();
 	~SearchAsyncData();
@@ -111,7 +124,9 @@ public:
 	 * @param[out] result Current request.
 	 * @return true if the queue is not empty.
 	 */
-	bool getCurrentRequest(std::pair<std::string, std::string> * result);
+	bool getCurrentRequest(SearchRequest * result);
+	
+	const std::list<SearchRequest>& getRequestHistory() const;
 
 	/**
 	 * @brief keepOneRequest Remove all request in queue and keep only the last entered.
@@ -121,10 +136,10 @@ public:
 
 	/**
 	 * @brief pushRequest Add a request in the queue (FIFO): Thread-safe. 
-	 * @param request Pair of <Filter, withDomain>.
+	 * @param request SearchRequest that define filter, domain and search sources.
 	 * @return The queue size.
 	 */
-	int pushRequest(const std::pair<std::string, std::string>& request);
+	int pushRequest(const SearchRequest& request);
 
 	/**
 	 * @brief pushData Add a provider in the vector.
@@ -143,6 +158,12 @@ public:
 	 */
 	bctoolboxTimeSpec getStartTime() const;
 
+	/**
+	 * @brief setSearchRequest Set the search request criteria
+	 * @param request : #SearchRequest that define filter, domain which we want to search only and source flags where to search (#LinphoneMagicSearchSource)
+	 */
+	void setSearchRequest(const SearchRequest& request);
+	
 	/**
 	 * @brief setSearchResults Set the final search result
 	 * @param resultList The search result list.
@@ -171,9 +192,10 @@ private:
 
 	/**
 	 * @brief mRequests Queue of requests. Not very useful yet but can be used for historic search
-	 * pair <Filter/WithDomain>
+	 * SearchRequest that define filter, domain and sources where to search.
 	 */
-	std::queue<std::pair<std::string, std::string> > mRequests;	
+	std::queue<SearchRequest > mRequests;	
+	std::list<SearchRequest > mRequestHistory;
 
 	/**
 	 * @brief mLockQueue Protect the queue for read/write : we can add requests on any threads. All requests are removed from the main iteration.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -34,7 +34,7 @@ class SearchResultPrivate;
 class LINPHONE_PUBLIC SearchResult : public ClonableObject {
 public:
 	// TODO: Use C++ Address! Not LinphoneAddress.
-	SearchResult (const unsigned int weight, const LinphoneAddress *a, const std::string &pn, const LinphoneFriend *f = nullptr);
+	SearchResult (const unsigned int weight, const LinphoneAddress *a, const std::string &pn, const LinphoneFriend *f, int sourceFlags);
 	SearchResult (const SearchResult &other);
 	~SearchResult ();
 
@@ -45,7 +45,7 @@ public:
 	bool operator< (const SearchResult &other) const;
 	bool operator> (const SearchResult &other) const;
 	bool operator>= (const SearchResult &other) const;
-	bool operator= (const SearchResult &other) const;
+	bool operator== (const SearchResult &other) const;
 
 	/**
 	 * @return LinphoneFriend associed
@@ -76,6 +76,16 @@ public:
 	 * @return the result weight
 	 **/
 	unsigned int getWeight () const;
+	
+	/**
+	 * @return the source flags associated to the result
+	 **/
+	int getSourceFlags() const;
+	
+	/**
+	 * @brief Merge the results with withResult : add sourceFlags, complete missing field (no override if weight is lesser than current weight)
+	 **/
+	void merge(const SearchResult& withResult);
 
 private:
 	L_DECLARE_PRIVATE(SearchResult);
