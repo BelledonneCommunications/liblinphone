@@ -441,6 +441,7 @@ public:
 	template <typename _requestedInterface, typename _lambda>
 	void forEach(const _lambda &l){
 		for (auto & stream : mStreams){
+			if (!stream) continue;
 			_requestedInterface * iface = dynamic_cast<_requestedInterface*>(stream.get());
 			if (iface) l(iface);
 		}

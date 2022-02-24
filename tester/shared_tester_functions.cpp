@@ -32,6 +32,8 @@
 #include "mediastreamer2/msmire.h"
 
 using namespace std;
+#include <sstream>
+
 using namespace LinphonePrivate;
 
 static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStreamType stream_type) {
@@ -444,3 +446,43 @@ const char * _linphone_call_get_subject(LinphoneCall * call) {
 	SalCallOp * op = Call::toCpp(call)->getOp();
 	return L_STRING_TO_C(op->getSubject());
 }
+
+
+int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type){
+	struct addrinfo hints;
+	struct addrinfo *res = NULL;
+	int err = 0;
+	std::ostringstream service;
+	bctbx_socket_t sock;
+	
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = sock_type;
+	service << dest_port;
+	
+	err = bctbx_getaddrinfo(dest_ip, service.str().c_str(), &hints, &res);
+	if (err != 0){
+		bctbx_error("liblinphone_tester_send_data: bctbx_getaddrinfo() failed: %s", gai_strerror(err));
+		return -1;
+	}
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock == (bctbx_socket_t)-1){
+		bctbx_error("liblinphone_tester_send_data: socket creation failed.");
+		return -1;
+	}
+	err = bctbx_connect(sock, (struct sockaddr *)res->ai_addr, (socklen_t)res->ai_addrlen);
+	if (err != 0){
+		bctbx_error("liblinphone_tester_send_data: connection failed: %s", getSocketError());
+		goto end;
+	}
+	err = bctbx_send(sock, buffer, length, 0);
+	if (err == -1){
+		bctbx_error("liblinphone_tester_send_data: send() failed: %s", getSocketError());
+		goto end;
+	}
+end:
+	bctbx_freeaddrinfo(res);
+	bctbx_socket_close(sock);
+	return err;
+}
+

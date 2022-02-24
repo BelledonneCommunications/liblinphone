@@ -43,6 +43,9 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneConferenceLayout layout, bool_t local_partifipant);
 const char * _linphone_call_get_subject(LinphoneCall * call);
 
+
+int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type);
+
 #ifdef __cplusplus
 }
 #endif

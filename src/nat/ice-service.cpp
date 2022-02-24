@@ -223,6 +223,7 @@ int IceService::gatherLocalCandidates(){
 #endif
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
+		if (!stream) continue;
 		size_t index = stream->getIndex();
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)index);
 		if (cl) {
@@ -781,6 +782,7 @@ void IceService::handleIceEvent(const OrtpEvent *ev){
 	}
 	/* Notify all the streams of the ICE state change, so that they can update their stats and so on. */
 	for(auto & stream : mStreamsGroup.getStreams()){
+		if (!stream) continue;
 		stream->iceStateChanged();
 	}
 }

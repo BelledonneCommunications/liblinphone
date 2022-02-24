@@ -61,6 +61,11 @@ IceService & StreamsGroup::getIceService()const{
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
 	const auto & payloads = params.getLocalStreamDescription().getPayloads();
+	if (!params.getLocalStreamDescription().enabled()) {
+		lInfo() << "Disabled stream at index " << params.streamIndex;
+		return nullptr;
+	}
+	
 	SalStreamType type = params.getLocalStreamDescription().type;
 	// Do not create video stream if no payload is in local media description
 	if (!payloads.empty()) {
@@ -287,7 +292,8 @@ int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> 
 
 void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
 	for (auto &stream : mStreams){
-		if (stream && stream.get() != mainZrtpStream) stream->zrtpStarted(mainZrtpStream);
+		if (!stream) continue;
+		if (stream.get() != mainZrtpStream) stream->zrtpStarted(mainZrtpStream);
 	}
 	propagateEncryptionChanged();
 }
@@ -420,7 +426,8 @@ bool StreamsGroup::checkRtpSession() const {
 
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
-		if (stream && stream->isMain() && stream->getType() == type){
+		if (!stream) continue;
+		if (stream->isMain() && stream->getType() == type){
 			return stream.get();
 		}
 	}
@@ -477,13 +484,15 @@ void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 
 void StreamsGroup::finishEarlyMediaForking(){
 	for (auto &stream : mStreams){
-		if (stream) stream->finishEarlyMediaForking();
+		if (!stream) continue;
+		stream->finishEarlyMediaForking();
 	}
 }
 
 bool StreamsGroup::isStarted()const{
 	for( auto & stream : mStreams){
-		if (stream && (stream->getState() == Stream::Running)) return true;
+		if (!stream) continue;
+		if (stream->getState() == Stream::Running) return true;
 	}
 	return false;
 }
@@ -498,14 +507,16 @@ void StreamsGroup::clearStreams(){
 size_t StreamsGroup::getActiveStreamsCount() const{
 	size_t ret = 0;
 	for( auto & stream : mStreams){
-		if (stream && (stream->getState() == Stream::Running)) ++ret;
+		if (!stream) continue;
+		if (stream->getState() == Stream::Running) ++ret;
 	}
 	return ret;
 }
 
 bool StreamsGroup::isMuted() const{
 	for (auto & stream : mStreams){
-		if (stream && (stream->getState() == Stream::Running)){
+		if (!stream) continue;
+		if (stream->getState() == Stream::Running){
 			if (stream->isMuted() == false) return false;
 		}
 	}
@@ -517,19 +528,18 @@ float StreamsGroup::computeOverallQuality(_functor func){
 	float globalRating = -1.0f;
 	int countedStreams = 0;
 	for (auto &stream : mStreams){
-		if (stream){
-			float streamRating = func(stream.get());
-			if (streamRating != -1.0f){
-				if (globalRating == -1.0f){
-					globalRating = streamRating;
-				}else{
-					globalRating += streamRating;
-				}
-				countedStreams++;
+		if (!stream) continue;
+		countedStreams++;
+		float streamRating = func(stream.get());
+		if (streamRating != -1.0f){
+			if (globalRating == -1.0f){
+				globalRating = streamRating;
+			}else{
+				globalRating += streamRating;
 			}
 		}
 	}
-	return globalRating / (float)countedStreams;
+	return countedStreams != 0 ? (globalRating / (float)countedStreams) : globalRating;
 }
 
 float StreamsGroup::getAverageQuality(){

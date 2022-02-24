@@ -6030,6 +6030,83 @@ static void call_with_early_media_accepted_state_changed_callback(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void _call_with_unknown_stream(bool_t accepted){
+	const char * crashing_invite = 
+	"INVITE sip:3827m@192.168.50.222:54989;transport=udp SIP/2.0\r\n"
+"Via: SIP/2.0/UDP 5.135.31.160:5060;branch=z9hG4bKsAOMEtSQmuUlZRFV268653\r\n"
+"Accept-Language: en\r\n"
+"Call-ID: 20220209215755041746-3e68c7f9f40b7da9df92cf4b0e08742e\r\n"
+"Contact: <sip:5.135.31.160:5060;transport=udp>\r\n"
+"CSeq: 201 INVITE\r\n"
+"From: \"Donald duck\" <sip:7956@example.com>;tag=gOobZHXFNJsMD6aT268645\r\n"
+"Max-Forwards: 19\r\n"
+"To: <sip:mickey@example.com>\r\n"
+"Date: Wed, 09 Feb 2022 21:57:58 GMT\r\n"
+"Server: unknown server\r\n"
+"Allow: INVITE,ACK,BYE,CANCEL,OPTIONS,INFO,MESSAGE,SUBSCRIBE,NOTIFY,PRACK,UPDATE,REFER\r\n"
+"Allow-Events: conference,talk,hold\r\n"
+"Supported: timer\r\n"
+"Content-Type: application/sdp\r\n"
+"Content-Length: 908\r\n"
+"\r\n"
+"v=0\r\n"
+"o=PouetPouet_Tra 1644443875 1644443878181 IN IP4 5.135.31.160\r\n"
+"s=kokokok IP Phone\r\n"
+"c=IN IP4 5.135.31.160\r\n"
+"b=AS:2048\r\n"
+"t=0 0\r\n"
+"a=sendrecv\r\n"
+"m=audio 26192 RTP/AVP 0 8 9 18 101\r\n"
+"a=rtpmap:0 PCMU/8000\r\n"
+"a=rtpmap:8 PCMA/8000\r\n"
+"a=rtpmap:9 G722/8000\r\n"
+"a=rtpmap:18 G729/8000\r\n"
+"a=fmtp:18 annexb=no\r\n"
+"a=rtpmap:101 telephone-event/8000\r\n"
+"m=application 2244 RTP/AVP 124\r\n"
+"a=rtpmap:124 H224/4800\r\n"
+"m=video 26592 RTP/AVP 100 113 109 99\r\n"
+"a=rtcp-fb:* ccm fir\r\n"
+"a=rtpmap:100 H264/90000\r\n"
+"a=fmtp:100 profile-level-id=64001f; packetization-mode=1; max-mbps=108000; max-fs=3600\r\n"
+"a=rtpmap:113 H264/90000\r\n"
+"a=fmtp:113 profile-level-id=64001f; packetization-mode=0; max-mbps=108000; max-fs=3600\r\n"
+"a=rtpmap:109 H264/90000\r\n"
+"a=fmtp:109 profile-level-id=42801f; packetization-mode=1; max-mbps=108000; max-fs=3600\r\n"
+"a=rtpmap:99 H264/90000\r\n"
+"a=fmtp:99 profile-level-id=42801f; packetization-mode=0; max-mbps=108000; max-fs=3600\r\n"
+"a=rtcp-fb:* ccm fir\r\n";
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_rc_udp");
+	
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(crashing_invite, strlen(crashing_invite), "127.0.0.1", linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+	
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+	
+	if (accepted){
+		linphone_call_accept(linphone_core_get_current_call(laure->lc));
+		BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
+		linphone_call_terminate(linphone_core_get_current_call(laure->lc));
+	}else{
+		linphone_call_decline(linphone_core_get_current_call(laure->lc), LinphoneReasonDeclined);
+	}
+	
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	linphone_core_manager_destroy(laure);
+}
+
+
+static void call_with_unknown_stream(void){
+	_call_with_unknown_stream(FALSE);
+}
+
+static void call_with_unknown_stream_accepted(void){
+	_call_with_unknown_stream(TRUE);
+}
+
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -6148,7 +6225,9 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Unsuccessful call with transport change after released", unsucessfull_call_with_transport_change_after_released),
 	TEST_NO_TAG("Call with rtcp-mux not accepted", call_with_rtcp_mux_not_accepted),
 	TEST_NO_TAG("Call cancelled with reason", cancel_call_with_error),
-	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline)
+	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
+	TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream),
+	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted)
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
