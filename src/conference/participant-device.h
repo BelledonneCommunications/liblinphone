@@ -146,6 +146,7 @@ private:
 
 	LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 	bool computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
+	LinphoneMediaDirection getStreamDirectionFromSession(const LinphoneStreamType type) const;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };

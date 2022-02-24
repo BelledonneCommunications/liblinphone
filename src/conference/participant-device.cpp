@@ -203,6 +203,36 @@ bool ParticipantDevice::setStreamCapability(const LinphoneMediaDirection & direc
 	return false;
 }
 
+LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const LinphoneStreamType type) const {
+	const MediaSessionParams* participantParams = mSession ? static_pointer_cast<MediaSession>(mSession)->getCurrentParams() : nullptr;
+	LinphoneMediaDirection dir = LinphoneMediaDirectionInvalid;
+
+	if (participantParams) {
+		switch (type) {
+			case LinphoneStreamTypeAudio:
+				dir = participantParams->getAudioDirection();
+				break;
+			case LinphoneStreamTypeVideo:
+				dir = participantParams->getVideoDirection();
+				break;
+			case LinphoneStreamTypeText:
+				dir = LinphoneMediaDirectionSendRecv;
+				break;
+			case LinphoneStreamTypeUnknown:
+				break;
+		}
+	}
+
+	// Current params stores the negotiated media direction from the local standpoint, hence it must be flipped if it is unidirectional
+	if (dir == LinphoneMediaDirectionSendOnly) {
+		dir = LinphoneMediaDirectionRecvOnly;
+	} else if (dir == LinphoneMediaDirectionRecvOnly) {
+		dir = LinphoneMediaDirectionSendOnly;
+	}
+
+	return dir;
+}
+
 bool ParticipantDevice::getStreamAvailability(const LinphoneStreamType type) const {
 	try {
 		return streamAvailabilities.at(type);
@@ -263,18 +293,20 @@ bool ParticipantDevice::updateMediaCapabilities() {
 			} else {
 				videoDir = LinphoneMediaDirectionInactive;
 			}
+
+			textDir = LinphoneMediaDirectionSendRecv;
 		} else if (mSession) {
-			const MediaSessionParams* participantParams = static_pointer_cast<MediaSession>(mSession)->getRemoteParams();
+			const MediaSessionParams* participantParams = static_pointer_cast<MediaSession>(mSession)->getCurrentParams();
 			if (participantParams) {
 				audioEnabled = participantParams->audioEnabled();
 				videoEnabled = participantParams->videoEnabled();
 				textEnabled = participantParams->realtimeTextEnabled();
-				audioDir = participantParams->getAudioDirection();
-				videoDir = participantParams->getVideoDirection();
+				audioDir = getStreamDirectionFromSession(LinphoneStreamTypeAudio);
+				videoDir = getStreamDirectionFromSession(LinphoneStreamTypeVideo);
+				textDir = getStreamDirectionFromSession(LinphoneStreamTypeText);
 			}
 		}
 
-		textDir = LinphoneMediaDirectionSendRecv;
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled, videoDir), LinphoneStreamTypeVideo);
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceTextEnabled, textEnabled, textDir), LinphoneStreamTypeText);

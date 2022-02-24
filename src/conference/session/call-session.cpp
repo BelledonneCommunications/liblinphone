@@ -756,16 +756,16 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 		if (listener) {
 			conference = listener->getCallSessionConference(q->getSharedFromThis());
 		}
-		if (conference) {
-			newSubject = MediaConference::Conference::toCpp(conference)->getSubject();
-		} else if (isInConference())
-			newSubject = "Conference";
-		else if (q->getParams()->getPrivate()->getInternalCallUpdate())
-			newSubject = "ICE processing concluded";
-		else if (q->getParams()->getPrivate()->getNoUserConsent())
-			newSubject = "Refreshing";
-		else
-			newSubject = "Media change";
+		if (!conference) {
+			if (isInConference())
+				newSubject = "Conference";
+			else if (q->getParams()->getPrivate()->getInternalCallUpdate())
+				newSubject = "ICE processing concluded";
+			else if (q->getParams()->getPrivate()->getNoUserConsent())
+				newSubject = "Refreshing";
+			else
+				newSubject = "Media change";
+		}
 	}
 	char * contactAddressStr = NULL;
 	if (destProxy) {

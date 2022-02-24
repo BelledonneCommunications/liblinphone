@@ -1877,7 +1877,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 					enableVideoStream = false;
 					videoDir = SalStreamInactive;
 				} else if ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold)) {
-					enableVideoStream = (localIsOfferer && ((deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) ? callVideoEnabled : true;
+					enableVideoStream = (deviceState == ParticipantDevice::State::Joining) ? true : callVideoEnabled;
 					// Enable video based on conference capabilities if:
 					// - joining conference
 					// - receiving an offer
@@ -2703,16 +2703,16 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	if (listener) {
 		conference = listener->getCallSessionConference(q->getSharedFromThis());
 	}
-	if (conference) {
-		subject = MediaConference::Conference::toCpp(conference)->getSubject();
-	} else if (resultDesc->hasDir(SalStreamSendRecv)) {
-		subject = "Call on hold";
-	} else if (resultDesc->hasDir(SalStreamRecvOnly)
-				 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote)) {	// Stream is inactive from Remote
-		subject = "Call on hold for me too";
-	} else {
-		lError() << "No reason to pause this call, it is already paused or inactive";
-		return -1;
+	if (!conference) {
+		if (resultDesc->hasDir(SalStreamSendRecv)) {
+			subject = "Call on hold";
+		} else if (resultDesc->hasDir(SalStreamRecvOnly)
+					 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote)) {	// Stream is inactive from Remote
+			subject = "Call on hold for me too";
+		} else {
+			lError() << "No reason to pause this call, it is already paused or inactive";
+			return -1;
+		}
 	}
 	broken = false;
 	stopStreams();
