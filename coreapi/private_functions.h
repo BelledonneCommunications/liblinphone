@@ -334,6 +334,7 @@ LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj);
 
 /* conference */
+LINPHONE_PUBLIC bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_removed(LinphoneConference *conference, const LinphoneParticipant *participant);
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);

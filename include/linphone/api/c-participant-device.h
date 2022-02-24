@@ -79,13 +79,6 @@ LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_get_address (
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device);
 
 /**
- * Get layout used by a participant's device.
- * @param participant_device A #LinphoneParticipantDevice object @notnil
- * @return The #LinphoneConferenceLayout of the device
-*/
-LINPHONE_PUBLIC LinphoneConferenceLayout linphone_participant_device_get_layout (const LinphoneParticipantDevice *participant_device);
-
-/**
  * Return the name of the device or NULL.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return the name of the device or NULL. @maybenil

@@ -5213,22 +5213,35 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 
 						if (change_layout) {
 							stats mgr_stat2=mgr->stat;
-							LinphoneConferenceLayout conference_layout = linphone_conference_get_layout(pconference);
+
 							LinphoneConferenceLayout new_layout = LinphoneConferenceLayoutLegacy;
-							if (conference_layout == LinphoneConferenceLayoutGrid) {
-								new_layout = LinphoneConferenceLayoutActiveSpeaker;
-							} else {
-								new_layout = LinphoneConferenceLayoutGrid;
+							LinphoneCall * pcall2 = linphone_conference_get_call(pconference);
+							BC_ASSERT_PTR_NOT_NULL(pcall2);
+							if (pcall2) {
+								const LinphoneCallParams * pcall2_local_params = linphone_call_get_params(pcall2);
+								const LinphoneConferenceLayout conference_layout = linphone_call_params_get_conference_video_layout(pcall2_local_params);
+
+								if (conference_layout == LinphoneConferenceLayoutGrid) {
+									new_layout = LinphoneConferenceLayoutActiveSpeaker;
+								} else {
+									new_layout = LinphoneConferenceLayoutGrid;
+								}
+
+								LinphoneCallParams * call_params = linphone_core_create_call_params(mgr->lc, pcall2);
+								linphone_call_params_set_conference_video_layout(call_params, new_layout);
+								linphone_call_update(pcall2, call_params);
+								linphone_call_params_unref(call_params);
 							}
 
-							linphone_conference_set_layout(pconference, new_layout);
 							BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating, mgr_stat2.number_of_LinphoneCallUpdating + 1, 5000));
 							BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote, focus_stat2.number_of_LinphoneCallUpdatedByRemote + 4, 5000));
 							BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, mgr_stat2.number_of_LinphoneCallStreamsRunning + 1, 5000));
 							BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat2.number_of_LinphoneCallStreamsRunning + 4, 5000));
-							const LinphoneConferenceParams * remote_conf_params = linphone_conference_get_current_params(pconference);
-							LinphoneConferenceLayout remote_conf_layout = linphone_conference_params_get_layout(remote_conf_params);
-							BC_ASSERT_EQUAL(new_layout, remote_conf_layout, int, "%d");
+							if (pcall2) {
+								const LinphoneCallParams * pcall2_local_params = linphone_call_get_params(pcall2);
+								const LinphoneConferenceLayout remote_conf_layout = linphone_call_params_get_conference_video_layout(pcall2_local_params);
+								BC_ASSERT_EQUAL(new_layout, remote_conf_layout, int, "%d");
+							}
 							LinphoneConference * fconference = linphone_core_search_conference(focus.getLc(), NULL, NULL, confAddr, NULL);
 							LinphoneParticipant * participant = linphone_conference_find_participant(fconference, mgr->identity);
 							BC_ASSERT_PTR_NOT_NULL(participant);
@@ -5237,8 +5250,15 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 
 								for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
 									LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
-									LinphoneConferenceLayout device_layout = linphone_participant_device_get_layout(d);
-									BC_ASSERT_EQUAL(device_layout, new_layout, int, "%d");
+									BC_ASSERT_PTR_NOT_NULL(d);
+									LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(focus.getLc(), linphone_participant_device_get_address(d));
+									BC_ASSERT_PTR_NOT_NULL(participant_call);
+									if (participant_call) {
+										const LinphoneCallParams * call_remote_params = linphone_call_get_remote_params(participant_call);
+										const LinphoneConferenceLayout device_layout = linphone_call_params_get_conference_video_layout(call_remote_params);
+										BC_ASSERT_EQUAL(device_layout, new_layout, int, "%d");
+									}
+
 								}
 								bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
 							}

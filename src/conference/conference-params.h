@@ -89,9 +89,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
 		const IdentityAddress &getMe() const { return m_me; };
 
-		void setLayout(const ConferenceLayout l) { m_layout = l; };
-		const ConferenceLayout & getLayout() const { return m_layout; };
-
 		void setAccount(LinphoneAccount * a);
 		LinphoneAccount * getAccount() const { return m_account; };
 
@@ -114,7 +111,6 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool m_allowOneParticipantConference = false;
 		ParticipantListType m_participantListType = ParticipantListType::Open;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
-		ConferenceLayout m_layout = ConferenceLayout::Legacy;
 		Address m_factoryAddress = Address();
 		bool m_useDefaultFactoryAddress = true;
 		std::string m_subject = "";

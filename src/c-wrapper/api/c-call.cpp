@@ -228,11 +228,11 @@ int linphone_call_get_duration (const LinphoneCall *call) {
 	return Call::toCpp(call)->getDuration();
 }
 
-const LinphoneCallParams *linphone_call_get_current_params (LinphoneCall *call) {
+const LinphoneCallParams *linphone_call_get_current_params (const LinphoneCall *call) {
 	return L_GET_C_BACK_PTR(Call::toCpp(call)->getCurrentParams());
 }
 
-const LinphoneCallParams *linphone_call_get_remote_params(LinphoneCall *call) {
+const LinphoneCallParams *linphone_call_get_remote_params(const LinphoneCall *call) {
 	const LinphonePrivate::MediaSessionParams *remoteParams = Call::toCpp(call)->getRemoteParams();
 	return remoteParams ? L_GET_C_BACK_PTR(remoteParams) : nullptr;
 }
@@ -572,7 +572,7 @@ void linphone_call_set_params (LinphoneCall *call, const LinphoneCallParams *par
 	Call::toCpp(call)->setParams(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 }
 
-const LinphoneCallParams *linphone_call_get_params (LinphoneCall *call) {
+const LinphoneCallParams *linphone_call_get_params (const LinphoneCall *call) {
 	return L_GET_C_BACK_PTR(Call::toCpp(call)->getParams());
 }
 

@@ -161,6 +161,8 @@ public:
 	LinphonePrivate::ConferenceInterface::State getState() const override {return state;}
 	virtual void setState(LinphonePrivate::ConferenceInterface::State state) override;
 
+	virtual std::shared_ptr<Call> getCall() const = 0;
+
 	void clearParticipants();
 
 #ifdef HAVE_DB_STORAGE

@@ -62,6 +62,14 @@ bool RemoteConference::isIn() const{
 	return true;
 }
 
+std::shared_ptr<Call> RemoteConference::getCall() const {
+	auto session = getMainSession();
+	if (session) {
+		return getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
+	}
+	return nullptr;
+}
+
 // -----------------------------------------------------------------------------
 
 void RemoteConference::onConferenceCreated (const ConferenceAddress &) {}

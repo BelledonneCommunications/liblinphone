@@ -339,8 +339,10 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 
 int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
-	if (!p)
+	if (!p) {
+		lDebug() << "Unable to participant with session " << call->getActiveSession();
 		return -1;
+	}
 	return removeParticipant(p);
 }
 
@@ -507,6 +509,10 @@ LocalConference::LocalConference (
 	}
 #endif // HAVE_ADVANCED_IM
 
+	if(!linphone_core_conference_server_enabled(core->getCCore())) {
+		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
+		confParams->enableVideo(false);
+	}
 	mMixerSession.reset(new MixerSession(*core.get()));
 
 	setState(ConferenceInterface::State::Instantiated);
@@ -570,9 +576,14 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	//    - if the SDP has at least one active video stream, video is enabled
 	// - Subject is got from the "Subject" header in the INVITE
 	const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
-	const auto videoEnabled = (linphone_core_conference_server_enabled(lc)) ? linphone_core_video_enabled(lc) : (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
+	auto videoEnabled = (linphone_core_conference_server_enabled(lc)) ? (linphone_core_video_enabled(lc) && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0)) : (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
+	if(!linphone_core_conference_server_enabled(core->getCCore())) {
+		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
+		videoEnabled = false;
+	}
 	confParams->enableAudio(audioEnabled);
 	confParams->enableVideo(videoEnabled);
+
 	confParams->setSubject(op->getSubject());
 	confParams->enableLocalParticipant(false);
 	confParams->enableOneParticipantConference(true);
@@ -630,8 +641,14 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 
 	const auto & conferenceAddress = info->getUri();
 
+	auto videoEnabled = linphone_core_video_enabled(lc);
+	if(!linphone_core_conference_server_enabled(core->getCCore())) {
+		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
+		videoEnabled = false;
+	}
+
 	confParams->enableAudio(true);
-	confParams->enableVideo(linphone_core_video_enabled(lc));
+	confParams->enableVideo(videoEnabled);
 	confParams->setSubject(info->getSubject());
 	confParams->enableLocalParticipant(false);
 	confParams->enableOneParticipantConference(true);
@@ -685,11 +702,13 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 	//    - if the SDP has at least one active video stream, video is enabled
 	// - Subject is got from the "Subject" header in the INVITE
 	const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
-	const auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore())) ? linphone_core_video_enabled(getCore()->getCCore()) : (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
+	auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore())) ? linphone_core_video_enabled(getCore()->getCCore()) : false;
+	if(!linphone_core_conference_server_enabled(getCore()->getCCore())) {
+		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
+	}
 	confParams->enableAudio(audioEnabled);
 	confParams->enableVideo(videoEnabled);
 	confParams->setSubject(op->getSubject());
-	confParams->enableLocalParticipant(false);
 	confParams->enableOneParticipantConference(true);
 	confParams->setStatic(true);
 
@@ -1399,15 +1418,18 @@ void LocalConference::setLocalParticipantStreamCapability(const LinphoneMediaDir
 			const auto & meDev = me->findDevice(devAddr);
 			if (meDev) {
 				lInfo() << "Setting direction of stream of type " << std::string(linphone_stream_type_to_string(type)) << " to " << std::string(linphone_media_direction_to_string(direction)) << " of device " << meDev->getAddress();
-				meDev->setStreamCapability(direction, type);
+				const auto mediaChanged = meDev->setStreamCapability(direction, type);
 				meDev->updateStreamAvailabilities();
 				for (const auto & p : getParticipants()) {
 					for (const auto & d : p->getDevices()) {
 						d->updateStreamAvailabilities();
 					}
 				}
-				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, me, meDev);
+
+				if (mediaChanged) {
+					time_t creationTime = time(nullptr);
+					notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, me, meDev);
+				}
 			} else {
 				lError() << "Unable to find device with address " << devAddr << " among those in the local participant " << me->getAddress();
 			}
@@ -1726,30 +1748,48 @@ void LocalConference::leave () {
 }
 
 bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
-	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = confParams->videoEnabled();
 	bool previousAudioEnablement = confParams->audioEnabled();
 	bool previousChatEnablement = confParams->chatEnabled();
-	bool ret = MediaConference::Conference::update(newParameters);
-	if (ret) {
-		// Update endpoints only if audio or video settings have changed
-		if ((newConfParams.videoEnabled() != previousVideoEnablement) || (newConfParams.audioEnabled() != previousAudioEnablement)){
-			/* Don't forget the local participant. For simplicity, a removeLocalEndpoint()/addLocalEndpoint() does the job. */
-			removeLocalEndpoint();
-			addLocalEndpoint();
-		}
-		if ((newConfParams.chatEnabled() != previousChatEnablement) || (newConfParams.videoEnabled() != previousVideoEnablement) || (newConfParams.audioEnabled() != previousAudioEnablement)){
+	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
+	if (confParams && ((confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) || (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
+		lError() << "Trying to change frozen conference parameters:";
+		lError() << " -  factory address: actual " << confParams->getConferenceFactoryAddress() << " new value " << newConfParams.getConferenceFactoryAddress();
+		lError() << " -  conference address: actual " << confParams->getConferenceAddress() << " new value " << newConfParams.getConferenceAddress();
+		return false;
+	}
+	confParams = ConferenceParams::create(newConfParams);
+
+	if(!linphone_core_conference_server_enabled(getCore()->getCCore()) && confParams->videoEnabled()) {
+		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
+		confParams->enableVideo(false);
+	}
+
+	// Update endpoints only if audio or video settings have changed
+	if ((confParams->videoEnabled() != previousVideoEnablement) || (confParams->audioEnabled() != previousAudioEnablement)){
+		/* Don't forget the local participant. For simplicity, a removeLocalEndpoint()/addLocalEndpoint() does the job. */
+		removeLocalEndpoint();
+		addLocalEndpoint();
+	}
+	if ((confParams->chatEnabled() != previousChatEnablement) || (confParams->videoEnabled() != previousVideoEnablement) || (confParams->audioEnabled() != previousAudioEnablement)){
+		time_t creationTime = time(nullptr);
+		notifyAvailableMediaChanged(creationTime, false, getMediaCapabilities());
+	}
+
+	bool mediaChanged = false;
+	for (auto & meDev : me->getDevices()) {
+		mediaChanged = false;
+		mediaChanged |= meDev->setStreamCapability((confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeAudio);
+		mediaChanged |= meDev->setStreamCapability((confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeVideo);
+		mediaChanged |= meDev->setStreamCapability((confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeText);
+
+		if (mediaChanged) {
 			time_t creationTime = time(nullptr);
-			notifyAvailableMediaChanged(creationTime, false, getMediaCapabilities());
-		}
-		for (auto & meDev : me->getDevices()) {
-			meDev->setStreamCapability((this->confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeAudio);
-			meDev->setStreamCapability((this->confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeVideo);
-			meDev->setStreamCapability((this->confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeText);
+			notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, me, meDev);
 		}
 	}
-	return ret;
+	return true;
 }
 
 int LocalConference::startRecording (const char *path) {
@@ -1804,6 +1844,10 @@ AudioStream *LocalConference::getAudioStream(){
 void LocalConference::notifyFullState () {
 	++lastNotify;
 	Conference::notifyFullState();
+}
+
+std::shared_ptr<Call> LocalConference::getCall() const {
+	return nullptr;
 }
 
 void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
@@ -2706,41 +2750,6 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 
 	list<std::shared_ptr<LinphonePrivate::Call>>::iterator it;
 	switch (state) {
-		case LinphoneCallConnected:
-		case LinphoneCallUpdatedByRemote:
-			if (focusContactAddress.hasParam("isfocus") && !finalized) {
-				setConferenceAddress(focusContactAddress);
-				if (!peerAddress.hasUriParam("conf-id")) {
-					it = m_pendingCalls.begin();
-					while (it != m_pendingCalls.end()) {
-						std::shared_ptr<LinphonePrivate::Call> pendingCall = *it;
-						LinphoneCallState pendingCallState = static_cast<LinphoneCallState>(pendingCall->getState());
-						if ((pendingCallState == LinphoneCallStreamsRunning) || (pendingCallState == LinphoneCallPaused)) {
-							it = m_pendingCalls.erase(it);
-							transferToFocus(pendingCall);
-						} else
-							it++;
-					}
-				}
-
-				setConferenceId(ConferenceId(ConferenceAddress(focusContactAddress), getConferenceId().getLocalAddress()));
-				if (call) {
-					if (focusContactAddress.hasUriParam("conf-id")) {
-						call->setConferenceId(focusContactAddress.getUriParamValue("conf-id"));
-					}
-					if (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
-						finalizeCreation();
-					}
-				}
-			}
-			BCTBX_NO_BREAK; /* Intentional no break */
-		case LinphoneCallPausedByRemote:
-			if (!focusContactAddress.hasParam("isfocus") && (state != LinphoneCallConnected)) {
-				// The call was in conference and the focus removed its attribute to show that the call exited the conference
-				lInfo() << "Ending conference " << this << "(" << getConferenceAddress() << ") because server removed isfocus attribute from its remote address " << focusContactAddress;
-				endConference();
-			}
-			break;
 		case LinphoneCallStreamsRunning:
 		{
 			const auto & previousState = session->getPreviousState();
@@ -2753,15 +2762,48 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 			for (const auto & device : getParticipantDevices()) {
 				device->updateStreamAvailabilities();
 			}
-			if (focusContactAddress.hasParam("isfocus") && (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
-				if (!finalized) {
-					finalizeCreation();
-				} else if (fullStateReceived && (getState() == ConferenceInterface::State::CreationPending)) {
-					setState(ConferenceInterface::State::Created);
-					updateMainSession();
-				}
+
+			if (focusContactAddress.hasParam("isfocus") && (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)) && finalized && fullStateReceived && (getState() == ConferenceInterface::State::CreationPending)) {
+				setState(ConferenceInterface::State::Created);
+				updateMainSession();
 			}
 		}
+			BCTBX_NO_BREAK; /* Intentional no break */
+		case LinphoneCallConnected:
+		case LinphoneCallPaused:
+		case LinphoneCallUpdatedByRemote:
+			if (focusContactAddress.hasParam("isfocus")) {
+				setConferenceAddress(focusContactAddress);
+				it = m_pendingCalls.begin();
+				while (it != m_pendingCalls.end()) {
+					std::shared_ptr<LinphonePrivate::Call> pendingCall = *it;
+					LinphoneCallState pendingCallState = static_cast<LinphoneCallState>(pendingCall->getState());
+					if ((pendingCallState == LinphoneCallStreamsRunning) || (pendingCallState == LinphoneCallPaused)) {
+						it = m_pendingCalls.erase(it);
+						transferToFocus(pendingCall);
+					} else
+						it++;
+				}
+
+				if (!finalized) {
+					setConferenceId(ConferenceId(ConferenceAddress(focusContactAddress), getConferenceId().getLocalAddress()));
+					if (call) {
+						if (focusContactAddress.hasUriParam("conf-id")) {
+							call->setConferenceId(focusContactAddress.getUriParamValue("conf-id"));
+						}
+						if (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)){
+							finalizeCreation();
+						}
+					}
+				}
+			}
+			BCTBX_NO_BREAK; /* Intentional no break */
+		case LinphoneCallPausedByRemote:
+			if (!focusContactAddress.hasParam("isfocus") && (state != LinphoneCallConnected)) {
+				// The call was in conference and the focus removed its attribute to show that the call exited the conference
+				lInfo() << "Ending conference " << this << "(" << getConferenceAddress() << ") because server removed isfocus attribute from its remote address " << focusContactAddress;
+				endConference();
+			}
 			break;
 		case LinphoneCallError:
 			setState(ConferenceInterface::State::CreationFailed);
@@ -3014,21 +3056,22 @@ void RemoteConference::setSubject (const std::string &subject) {
 
 bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
 	// Any remote participant can change the layout of the conference
-	const auto & newLayout = static_cast<const ConferenceParams&>(newParameters).getLayout();
-	bool layoutChanged =  confParams && (getLayout() != newLayout);
 	bool ret = false;
 	if (getMe()->isAdmin()) {
 		ret = Conference::update(newParameters);
-	} else if (layoutChanged) {
-		auto newParametersWithLayoutChanged = ConferenceParams::create(getCurrentParams());
-		newParametersWithLayoutChanged->setLayout(newLayout);
-		ret = Conference::update(*newParametersWithLayoutChanged);
-		updateMainSession();
 	} else {
-		lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin and layout keeps being " << getLayout();
+		lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin";
 	}
 
 	return ret;
+}
+
+std::shared_ptr<Call> RemoteConference::getCall() const {
+	auto session = getMainSession();
+	if (session) {
+		return getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
+	}
+	return nullptr;
 }
 
 void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
@@ -3051,7 +3094,7 @@ void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipan
 				eventHandler->subscribe(getConferenceId());
 			} else {
 		#endif // HAVE_ADVANCED_IM
-				lInfo() << "Unable to send SUBSCRIBE following me being added because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+				lInfo() << "Unable to send SUBSCRIBE following me " << participant->getAddress() << " being added because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
 		#ifdef HAVE_ADVANCED_IM
 			}
 		#endif // HAVE_ADVANCED_IM
@@ -3090,7 +3133,14 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress())) {
+	auto callIt = std::find_if(m_pendingCalls.cbegin(), m_pendingCalls.cend(), [&device] (const auto & call) {
+		if (!call) return false;
+		const auto & devAddr = device->getAddress().asAddress();
+		const auto & contactAddress = *(call->getActiveSession()->getRemoteContactAddress());
+		return (devAddr == contactAddress);
+	});
+
+	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress()) && (callIt == m_pendingCalls.cend())) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE in order to get streams for newly added participant device " << device->getAddress();
 			auto ret = updateMainSession();

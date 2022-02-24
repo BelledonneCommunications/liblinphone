@@ -806,6 +806,7 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	LinphoneCallParams * laure_call_params=linphone_core_create_call_params(laure->lc, NULL);
 	LinphoneCallParams * pauline_call_params=linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_enable_video(marie_call_params,TRUE);
+	linphone_call_params_set_conference_video_layout(marie_call_params, layout);
 	linphone_call_params_enable_video(pauline_call_params,TRUE);
 	linphone_call_params_enable_video(laure_call_params,TRUE);
 
@@ -831,7 +832,6 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	linphone_call_params_unref(marie_call_params);
 
 	conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
-	linphone_conference_params_set_layout(conf_params, layout);
 	linphone_conference_params_set_video_enabled(conf_params, TRUE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);

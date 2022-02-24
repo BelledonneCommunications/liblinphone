@@ -168,10 +168,10 @@ MediaStream *Call::getVideoStream (MediaStreamDir dir) const {
 	return s->getMediaStream();
 }
 
-bool Call::compareVideoColor (MSMireControl &cl, MediaStreamDir dir) const {
+bool Call::compareVideoColor (MSMireControl &cl, MediaStreamDir dir, const string &label) const {
 	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
 	StreamsGroup & sg = ms->getStreamsGroup();
-	return sg.compareVideoColor(cl, dir);
+	return sg.compareVideoColor(cl, dir, label);
 }
 
 bool Call::checkRtpSession() const {

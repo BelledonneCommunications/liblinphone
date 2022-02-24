@@ -667,7 +667,7 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 			}
 			break;
 		case BELLE_SIP_DIALOG_TERMINATED:
-			if ((code >= 300) && ((method == "INVITE") || (method == "BYE")))
+			if ((code >= 300) && (code != 491) && ((method == "INVITE") || (method == "BYE")))
 				op->setError(response, true);
 			break;
 		default:
@@ -1123,7 +1123,6 @@ void SalCallOp::processDialogTerminatedCb (void *userCtx, const belle_sip_dialog
 	auto op = static_cast<SalCallOp *>(userCtx);
 	if (op->mDialog && (op->mDialog == belle_sip_dialog_terminated_event_get_dialog(event))) {
 		lInfo() << "Dialog [" << belle_sip_dialog_terminated_event_get_dialog(event) << "] terminated for op [" << op << "]";
-
 		op->haltSessionTimersTimer();
 
 		switch(belle_sip_dialog_get_previous_state(op->mDialog)) {
@@ -1388,6 +1387,9 @@ int SalCallOp::decline (SalReason reason, const string &redirectionUri) {
 	if (contactHeader)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(contactHeader));
 	belle_sip_server_transaction_send_response(BELLE_SIP_SERVER_TRANSACTION(transaction), response);
+	if (reason == SalReasonRedirect) {
+		mState = State::Terminating;
+	}
 	return 0;
 }
 
@@ -1439,6 +1441,9 @@ int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress 
 	if (retryAfterHeader)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(retryAfterHeader));
 	belle_sip_server_transaction_send_response(BELLE_SIP_SERVER_TRANSACTION(transaction), response);
+	if (info->reason == SalReasonRedirect) {
+		mState = State::Terminating;
+	}
 	return 0;
 }
 

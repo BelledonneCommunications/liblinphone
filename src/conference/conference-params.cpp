@@ -33,7 +33,6 @@ ConferenceParams::ConferenceParams(const LinphoneCore *core) {
 	if(core) {
 		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
 		enableVideo(policy->automatically_initiate);
-		setLayout((ConferenceLayout)linphone_core_get_default_conference_layout(core));
 		setParticipantListType(static_cast<ParticipantListType>(linphone_core_get_conference_participant_list_type(core)));
 		updateFromAccount(linphone_core_get_default_account(core));
 	}
@@ -50,7 +49,6 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_factoryAddress = params.m_factoryAddress;
 	m_subject = params.m_subject;
 	m_description = params.m_description;
-	m_layout = params.m_layout;
 	m_me = params.m_me;
 	m_startTime = params.m_startTime;
 	m_endTime = params.m_endTime;

@@ -329,20 +329,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_conference_params_is_one_par
 LINPHONE_PUBLIC bool_t linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params);
 
 /**
- * Set video layout for conference.
- * @param params A #LinphoneConferenceParams @notnil
- * @param layout #LinphoneConferenceLayout to use for the conference
- */
-LINPHONE_PUBLIC void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout);
-
-/**
- * Get video layout for conference.
- * @param params A #LinphoneConferenceParams @notnil
- * @return #LinphoneConferenceLayout to use for the conference
- */
-LINPHONE_PUBLIC LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params);
-
-/**
  * Take a reference on a #LinphoneConference.
  * @param conference The #LinphoneConference to ref. @notnil
  * @return The same #LinphoneConference object. @notnil
@@ -495,20 +481,6 @@ LINPHONE_PUBLIC const char *linphone_conference_get_username(const LinphoneConfe
  * @param username conference subject @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_set_username(LinphoneConference *conference, const char *username);
-
-/**
- * Get the conference layout
- * @param conference The #LinphoneConference object. @notnil
- * @return conference layout. @maybenil
- */
-LINPHONE_PUBLIC LinphoneConferenceLayout linphone_conference_get_layout(const LinphoneConference *conference);
-
-/**
- * Set the conference layout
- * @param conference The #LinphoneConference object. @notnil
- * @param layout conference layout @maybenil
- */
-LINPHONE_PUBLIC void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConferenceLayout layout);
 
  /**
  * Set stream capability on me device of a local conference
@@ -668,6 +640,16 @@ LINPHONE_PUBLIC int linphone_conference_stop_recording(LinphoneConference *confe
  */
 LINPHONE_PUBLIC bool_t linphone_conference_is_recording(const LinphoneConference *conference);
 
+/**
+ * Gets the call that is controlling a conference.
+ * - for the local conference, it will return NULL
+ * - for the remote conference, it will return call associated to the conference
+ *
+ * @param conference The #LinphoneConference @notnil
+ * @return the #LinphoneCall controlling the conference or NULL if none or local conference @maybenil
+ */
+LINPHONE_PUBLIC LinphoneCall* linphone_conference_get_call(const LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -692,7 +674,6 @@ LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAd
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params);
-
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);

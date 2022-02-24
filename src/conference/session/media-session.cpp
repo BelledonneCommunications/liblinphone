@@ -377,6 +377,7 @@ void MediaSessionPrivate::dtmfReceived (char dtmf) {
 
 bool MediaSessionPrivate::failure () {
 	L_Q();
+
 	const SalErrorInfo *ei = op->getErrorInfo();
 	
 	if (CallSession::isEarlyState(state) && getStreamsGroup().isStarted()){
@@ -883,6 +884,14 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			if (conference) {
 				const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
 				isConferenceVideoCapabilityOn = !!linphone_conference_params_video_enabled(params);
+
+				const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+				const auto & participantDevice = cppConference->findParticipantDevice(q->getSharedFromThis());
+
+				if (participantDevice && fromOffer) {
+					participantDevice->setLayout(MediaSession::computeConferenceLayout(rmd));
+				}
+
 				if (rcp->videoEnabled() && !!linphone_core_video_enabled(cCore) && !getParams()->videoEnabled()) {
 					getParams()->enableVideo(isConferenceVideoCapabilityOn);
 				}
@@ -1845,13 +1854,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(contactAddress);
 
 		if (participantDevice) {
-			if (!localIsOfferer && isInLocalConference) {
-				participantDevice->setLayout(MediaSession::computeConferenceLayout(op->getRemoteMediaDescription()));
-			}
 			deviceState = participantDevice->getState();
 		}
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
-		confLayout = (participantDevice && isInLocalConference) ? participantDevice->getLayout() : cppConference->getLayout();
+		confLayout = (participantDevice && isInLocalConference) ? getRemoteParams()->getConferenceVideoLayout() : getParams()->getConferenceVideoLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 		isConferenceLayoutLegacy = (confLayout == ConferenceLayout::Legacy);
 	}
@@ -1926,7 +1932,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 					enableVideoStream = (localIsOfferer) ? callVideoEnabled : isVideoConferenceEnabled;
 				}
 			} else {
-				enableVideoStream = addVideoStream;
+				enableVideoStream = callVideoEnabled;
 				switch (confLayout) {
 					case ConferenceLayout::ActiveSpeaker:
 					case ConferenceLayout::Legacy:
@@ -2088,9 +2094,10 @@ void MediaSessionPrivate::setupRtcpXr (std::shared_ptr<SalMediaDescription> & md
 		if (md->rtcp_xr.stat_summary_enabled)
 			md->rtcp_xr.stat_summary_flags = OrtpRtcpXrStatSummaryLoss | OrtpRtcpXrStatSummaryDup | OrtpRtcpXrStatSummaryJitt | OrtpRtcpXrStatSummaryTTL;
 		md->rtcp_xr.voip_metrics_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_voip_metrics_enabled", 1);
-	}
-	for (auto & stream : md->streams) {
-		stream.setupRtcpXr(md->rtcp_xr);
+
+		for (auto & stream : md->streams) {
+			stream.setupRtcpXr(md->rtcp_xr);
+		}
 	}
 }
 
@@ -3358,14 +3365,7 @@ ConferenceLayout MediaSession::computeConferenceLayout(const std::shared_ptr<Sal
 		} else if (md->findIdxStreamWithContent("speaker") != -1) {
 			layout = ConferenceLayout::ActiveSpeaker;
 		} else {
-			size_t recvOnlyStreams = 0;
-			const auto videoStreams = md->findAllStreamsOfType(SalVideo);
-			for (const auto & s : videoStreams) {
-				if (s.getDirection() == SalStreamRecvOnly) {
-					recvOnlyStreams++;
-				}
-			}
-			layout = (recvOnlyStreams == videoStreams.size()) ? ConferenceLayout::Grid : ConferenceLayout::Legacy;
+			layout = ConferenceLayout::Legacy;
 		}
 	}
 	return layout;
@@ -4387,6 +4387,10 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 		MediaSessionParams * params = nullptr;
 		if (md) {
 			params = new MediaSessionParams();
+
+			if (d->isInConference()) {
+				params->setConferenceVideoLayout(MediaSession::computeConferenceLayout(md));
+			}
 
 			const SalStreamDescription &audioStream = md->findBestStream(SalAudio);
 			if (audioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()){

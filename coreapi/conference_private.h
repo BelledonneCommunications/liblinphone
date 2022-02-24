@@ -286,6 +286,7 @@ public:
 
 	void confirmCreation();
 	void updateConferenceInformation(SalCallOp *op);
+	virtual std::shared_ptr<Call> getCall() const override;
 
 protected:
 	virtual void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;
@@ -391,6 +392,7 @@ public:
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 	void setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> & session);
+	virtual std::shared_ptr<Call> getCall() const override;
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 

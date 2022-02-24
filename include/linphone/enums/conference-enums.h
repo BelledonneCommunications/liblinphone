@@ -42,9 +42,9 @@ typedef enum _LinphoneConferenceState{
  * @ingroup conference
  */
 typedef enum _LinphoneConferenceLayout{
-	LinphoneConferenceLayoutLegacy,          /**< None - participant who speaks is prominently displayed in the center of the screen */
-	LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
-	LinphoneConferenceLayoutGrid,          /**< Grid - each participant is given an equal sized image size */
+	LinphoneConferenceLayoutLegacy = 0,        /**< None - participant who speaks is prominently displayed in the center of the screen */
+	LinphoneConferenceLayoutActiveSpeaker = 1, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
+	LinphoneConferenceLayoutGrid = 2,          /**< Grid - each participant is given an equal sized image size */
 } LinphoneConferenceLayout;
 
 /**

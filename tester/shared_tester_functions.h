@@ -36,10 +36,11 @@ void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audi
 int _linphone_call_get_nb_audio_steams(const LinphoneCall * call);
 int _linphone_call_get_nb_video_steams(const LinphoneCall * call);
 int _linphone_call_get_nb_text_steams(const LinphoneCall * call);
+LinphoneConferenceLayout _linphone_participant_device_get_layout(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device);
-void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout);
+void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout);
 void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneConferenceLayout layout, bool_t local_partifipant);
 const char * _linphone_call_get_subject(LinphoneCall * call);
 

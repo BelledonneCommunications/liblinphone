@@ -204,6 +204,20 @@ LINPHONE_PUBLIC void linphone_call_params_enable_video(LinphoneCallParams *call_
 LINPHONE_PUBLIC const char *linphone_call_params_get_custom_header(const LinphoneCallParams *call_params, const char *header_name);
 
 /**
+ * Set video layout for conference.
+ * @param call_params The #LinphoneCallParams to get the custom SIP header from. @notnil
+ * @param layout Preferred #LinphoneConferenceLayout to use at the start of a conference
+ */
+LINPHONE_PUBLIC LinphoneConferenceLayout linphone_call_params_get_conference_video_layout (const LinphoneCallParams *params);
+
+/**
+ * Set video layout for conference.
+ * @param call_params The #LinphoneCallParams to get the custom SIP header from. @notnil
+ * @param layout #LinphoneConferenceLayout to use as default when creating a conference
+ */
+LINPHONE_PUBLIC void linphone_call_params_set_conference_video_layout(LinphoneCallParams *params, LinphoneConferenceLayout layout);
+
+/**
  * Tell whether the call is part of the locally managed conference.
  * @warning If a conference server is used to manage conferences,
  * that function does not return TRUE even if the conference is running.<br/>

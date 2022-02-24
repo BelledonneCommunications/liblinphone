@@ -57,6 +57,7 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
 	virtual void notifyFullState () override;
+	virtual std::shared_ptr<Call> getCall() const override;
 
 protected:
 #ifdef HAVE_ADVANCED_IM

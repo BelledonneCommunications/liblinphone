@@ -20,6 +20,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "core/core.h"
+#include "conference/conference-enums.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/call-session.h"
@@ -703,6 +704,13 @@ const LinphoneAudioDevice* linphone_call_params_get_output_audio_device(const Li
 	return NULL;
 }
 
+void linphone_call_params_set_conference_video_layout(LinphoneCallParams *params, LinphoneConferenceLayout layout) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setConferenceVideoLayout((LinphonePrivate::ConferenceLayout)layout);
+}
+
+LinphoneConferenceLayout linphone_call_params_get_conference_video_layout (const LinphoneCallParams *params) {
+	return (LinphoneConferenceLayout)L_GET_CPP_PTR_FROM_C_OBJECT(params)->getConferenceVideoLayout();
+}
 
 // =============================================================================
 // Reference and user data handling functions.

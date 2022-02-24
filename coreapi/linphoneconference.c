@@ -305,14 +305,6 @@ void linphone_conference_set_username(LinphoneConference *conference, const char
 	MediaConference::Conference::toCpp(conference)->setUsername(L_C_TO_STRING(subject));
 }
 
-LinphoneConferenceLayout linphone_conference_get_layout (const LinphoneConference *conference) {
-	return (LinphoneConferenceLayout)MediaConference::Conference::toCpp(conference)->getLayout();
-}
-
-void linphone_conference_set_layout(LinphoneConference *conference, LinphoneConferenceLayout layout) {
-	MediaConference::Conference::toCpp(conference)->setLayout((ConferenceLayout)layout);
-}
-
 int linphone_conference_get_duration (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getDuration();
 }
@@ -323,6 +315,14 @@ time_t linphone_conference_get_start_time (const LinphoneConference *conference)
 
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference){
 	return MediaConference::Conference::toCpp(conference)->getAudioStream();
+}
+
+LinphoneCall* linphone_conference_get_call(const LinphoneConference *conference) {
+	const std::shared_ptr<Call> call = MediaConference::Conference::toCpp(conference)->getCall();
+	if (call) {
+		return call->toC();
+	}
+	return NULL;
 }
 
 void linphone_conference_set_local_participant_stream_capability(LinphoneConference *conference, const LinphoneMediaDirection direction, const LinphoneStreamType type) {
@@ -447,14 +447,6 @@ bool_t linphone_conference_params_is_one_participant_conference_enabled(const Li
 
 bool_t linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->oneParticipantConferenceEnabled();
-}
-
-void linphone_conference_params_set_layout(LinphoneConferenceParams *params, const LinphoneConferenceLayout layout){
-	ConferenceParams::toCpp(params)->setLayout((ConferenceLayout)layout);
-}
-
-LinphoneConferenceLayout linphone_conference_params_get_layout(const LinphoneConferenceParams *params){
-	return (LinphoneConferenceLayout)ConferenceParams::toCpp(params)->getLayout();
 }
 
 void linphone_conference_params_set_subject(LinphoneConferenceParams *params, const char * subject){

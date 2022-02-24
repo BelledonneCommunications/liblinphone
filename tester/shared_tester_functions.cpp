@@ -347,8 +347,15 @@ int _linphone_call_get_nb_text_steams(const LinphoneCall * call) {
 	return (int)call_local_desc->nbStreamsOfType(SalText);
 }
 
-bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device) {
+LinphoneConferenceLayout _linphone_participant_device_get_layout(const LinphoneParticipantDevice * participant_device) {
+	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
+	if (session) {
+		return (LinphoneConferenceLayout)session->getRemoteParams()->getConferenceVideoLayout();
+	}
+	return LinphoneConferenceLayoutGrid;
+}
 
+bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device) {
 	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
 	if (session) {
 		return (session->getCurrentParams()->audioEnabled()) ? TRUE : FALSE;
@@ -357,7 +364,6 @@ bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantD
 }
 
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device) {
-
 	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
 	if (session) {
 		return (session->getCurrentParams()->videoEnabled()) ? TRUE : FALSE;
@@ -366,7 +372,6 @@ bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantD
 }
 
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device) {
-
 	const auto & session = static_pointer_cast<MediaSession>(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSession());
 	if (session) {
 		return (session->getCurrentParams()->realtimeTextEnabled()) ? TRUE : FALSE;
@@ -374,17 +379,15 @@ bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphonePar
 	return FALSE;
 }
 
-void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout) {
+void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout) {
 	LinphoneCall *call1=linphone_core_get_current_call(lc1->lc);
 	LinphoneCall *call2=linphone_core_get_current_call(lc2->lc);
 	BC_ASSERT_PTR_NOT_NULL(call1);
 	BC_ASSERT_PTR_NOT_NULL(call2);
 	if (call1 && call2) {
 		VideoStream *vstream1s = (VideoStream *)linphone_call_get_stream(call1, LinphoneStreamTypeVideo);
-		//VideoStream *vstream1s = (VideoStream *)linphone_call_get_video_stream(call1, MediaStreamSendOnly);
 		BC_ASSERT_PTR_NOT_NULL(vstream1s);
 		VideoStream *vstream2s = (VideoStream *)linphone_call_get_stream(call2, LinphoneStreamTypeVideo);
-		//VideoStream *vstream2s = (VideoStream *)linphone_call_get_video_stream(call2, MediaStreamSendOnly);
 		BC_ASSERT_PTR_NOT_NULL(vstream2s);
 		BC_ASSERT_TRUE(vstream1s && vstream1s->source && ms_filter_get_id(vstream1s->source)== MS_MIRE_ID);
 		BC_ASSERT_TRUE(vstream2s && vstream2s->source && ms_filter_get_id(vstream2s->source)== MS_MIRE_ID);
@@ -398,19 +401,30 @@ void check_video_conference(LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, 
 			ms_filter_call_method(vstream2s->source, MS_MIRE_SET_COLOR, &c2);
 		}
 
-		wait_for_until(lc1->lc, lc2->lc, NULL, 5, 5000);
+		wait_for_list(lcs, NULL, 5, 5000);
 
-		int nb = layout == LinphoneConferenceLayoutLegacy ? 1 : 3;
-		BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
-		BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		LinphoneConference * conference1 = linphone_call_get_conference(call1);
+		BC_ASSERT_PTR_NOT_NULL(conference1);
+		if (conference1) {
+			int nb = layout == LinphoneConferenceLayoutLegacy ? 1 : (linphone_conference_get_participant_count(conference1) + 2);
+			BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		}
+
+		LinphoneConference * conference2 = linphone_call_get_conference(call1);
+		BC_ASSERT_PTR_NOT_NULL(conference2);
+		if (conference2) {
+			int nb = layout == LinphoneConferenceLayoutLegacy ? 1 : (linphone_conference_get_participant_count(conference2) + 2);
+			BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+		}
+
 		BC_ASSERT_TRUE(Call::toCpp(call1)->checkRtpSession());
 		BC_ASSERT_TRUE(Call::toCpp(call2)->checkRtpSession());
 		if (layout != LinphoneConferenceLayoutLegacy) {
-			BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly));
-			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly));
+			BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly, vstream2s->label));
+			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly, vstream1s->label));
 		}
 		if (layout != LinphoneConferenceLayoutGrid) {
-			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv));
+			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv, ""));
 		}
 	}
 }

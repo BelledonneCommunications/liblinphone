@@ -42,7 +42,7 @@ std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e);
  * Conference layout
  */
 enum class ConferenceLayout{
-	Legacy = LinphoneConferenceLayoutLegacy,                   /**< Legacy - participant who speaks is prominently displayed in the center of the screen */
+	Legacy = LinphoneConferenceLayoutLegacy,               /**< Legacy - participant who speaks is prominently displayed in the center of the screen */
 	ActiveSpeaker = LinphoneConferenceLayoutActiveSpeaker, /**< Active speaker - participant who speaks is prominently displayed in the center of the screen and other participants are minimized */
 	Grid = LinphoneConferenceLayoutGrid,                   /**< Grid - each participant is given an equal sized image size */
 };

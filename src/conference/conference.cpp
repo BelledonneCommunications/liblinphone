@@ -159,10 +159,6 @@ bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls)
 	return soFarSoGood;
 }
 
-ConferenceLayout Conference::getLayout() const {
-	return confParams ? confParams->getLayout() : (ConferenceLayout)linphone_core_get_default_conference_layout(getCore()->getCCore());
-}
-
 LinphoneStatus Conference::updateMainSession() {
 	LinphoneStatus ret = -1;
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
@@ -179,10 +175,16 @@ LinphoneStatus Conference::updateMainSession() {
 	return ret;
 }
 
+ConferenceLayout Conference::getLayout() const {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	return session ? session->getParams()->getConferenceVideoLayout() : (ConferenceLayout)linphone_core_get_default_conference_layout(getCore()->getCCore());
+}
+
 void Conference::setLayout(const ConferenceLayout layout) {
-	if (getLayout() != layout) {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	if (session && (getLayout() != layout)) {
 		lInfo() << "Changing layout of conference " << getConferenceAddress() << " from " << getLayout() << " to " << layout;
-		confParams->setLayout(layout);
+		const_cast<LinphonePrivate::CallSessionParams *>(session->getParams())->setConferenceVideoLayout(layout);
 		updateMainSession();
 	}
 }

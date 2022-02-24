@@ -47,6 +47,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	disallowZrtp = src->disallowZrtp;
 	startTime = src->startTime;
 	endTime = src->endTime;
+	conferenceVideoLayout = src->conferenceVideoLayout;
 	description = src->description;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
@@ -207,6 +208,8 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	d->privacy = LinphonePrivacyDefault;
 	d->startTime = (time_t)-1;
 	d->endTime = (time_t)-1;
+	setAccount(nullptr);
+	setConferenceVideoLayout((ConferenceLayout)linphone_core_get_default_conference_layout(cCore));
 }
 
 // -----------------------------------------------------------------------------
@@ -322,5 +325,15 @@ void CallSessionParams::setAccount(shared_ptr<Account> account) {
 	L_D();
 	d->account = account;
 }
+
+void CallSessionParams::setConferenceVideoLayout(const ConferenceLayout l) {
+	L_D();
+	d->conferenceVideoLayout = l;
+}
+
+const ConferenceLayout & CallSessionParams::getConferenceVideoLayout() const {
+	L_D();
+	return d->conferenceVideoLayout;
+};
 
 LINPHONE_END_NAMESPACE

@@ -86,6 +86,7 @@ private:
 	// Currently it is not possible to set it by the user nor get its value. It is initialized by initDefault and it is a copy of LinphoneCore member zrtp_not_available_simulation. It can only be set to TRUE for testing purposes.
 	bool disallowZrtp = false;
 	bool inConference = false;
+	ConferenceLayout conferenceVideoLayout = ConferenceLayout::Legacy;
 	bool internalCallUpdate = false;
 	bool noUserConsent = false; /* When set to true an UPDATE request will be used instead of reINVITE */
 	SalCustomHeader *customHeaders = nullptr;

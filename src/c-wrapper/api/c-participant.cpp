@@ -89,3 +89,7 @@ LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParti
 time_t linphone_participant_get_creation_time (const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->getCreationTime();
 }
+
+bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant) {
+	return LinphonePrivate::Participant::toCpp(participant)->getPreserveSession();
+}

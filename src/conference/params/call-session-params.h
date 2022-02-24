@@ -25,6 +25,7 @@
 
 #include "linphone/types.h"
 #include "content/content.h"
+#include "conference/conference-enums.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/sal.h"
 
@@ -81,6 +82,9 @@ public:
 
 	std::shared_ptr<Account> getAccount() const;
 	void setAccount(std::shared_ptr<Account> account);
+
+	void setConferenceVideoLayout(const ConferenceLayout l);
+	const ConferenceLayout & getConferenceVideoLayout() const;
 
 protected:
 	explicit CallSessionParams (CallSessionParamsPrivate &p);

@@ -224,6 +224,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_ephemeral_version(const LinphoneCo
 
 LINPHONE_PUBLIC size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr);
 LINPHONE_PUBLIC void linphone_conference_info_set_uri(LinphoneConferenceInfo *conference_info, LinphoneAddress *uri);
+LINPHONE_PUBLIC bool_t linphone_participant_preserve_session(const LinphoneParticipant *participant);
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params);
 
 #ifndef __cplusplus

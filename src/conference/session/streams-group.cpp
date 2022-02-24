@@ -375,7 +375,7 @@ VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
 }
 
 
-bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) const {
+bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir, const string &label) const {
 	for (auto &stream : mStreams){
 		if (!stream) continue;
 		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
@@ -383,7 +383,7 @@ bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir) cons
 			MediaStream *ms = s->getMediaStream();
 			if (ms && media_stream_get_direction(ms) == dir) {
 				VideoStream *vs = (VideoStream *)ms;
-				if (vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
+				if ((label.empty() || label.compare(vs->label)==0) && vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
 					return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
 				}
 			}

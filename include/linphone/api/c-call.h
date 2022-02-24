@@ -187,7 +187,7 @@ LINPHONE_PUBLIC int linphone_call_get_duration (const LinphoneCall *call);
  * @param call #LinphoneCall object. @notnil
  * @return the current #LinphoneCallParams of this call. @notnil
 **/
-LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_current_params (LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_current_params (const LinphoneCall *call);
 
 /**
  * Returns call parameters proposed by remote.
@@ -198,7 +198,7 @@ LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_current_params (Linp
  * @param call #LinphoneCall object. @notnil
  * @return the #LinphoneCallParams suggested by the remote or NULL. @maybenil
 **/
-LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_remote_params (LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_remote_params (const LinphoneCall *call);
 
 /**
  * Indicate whether camera input should be sent to remote end.
@@ -869,7 +869,7 @@ LINPHONE_PUBLIC void linphone_call_set_params(LinphoneCall *call, const Linphone
  * @param call the #LinphoneCall object @notnil
  * @return the call's local parameters. @notnil
  **/
-LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_params(LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneCallParams *linphone_call_get_params(const LinphoneCall *call);
 
 /**
  * Sets the given #LinphoneAudioDevice as input for this call only.

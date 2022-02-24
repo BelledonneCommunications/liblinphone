@@ -1357,7 +1357,7 @@ LinphoneStatus CallSession::redirect (const string &redirectUri) {
 LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 	L_D();
 	if (d->state != CallSession::State::IncomingReceived && d->state != CallSession::State::PushIncomingReceived) {
-		lError() << "Bad state for CallSession redirection " << d->state;
+		lError() << "Unable to redirect call when in state " << d->state;
 		return -1;
 	}
 	SalErrorInfo sei;

@@ -383,7 +383,7 @@ public:
 	VideoStream *lookupItcStream(VideoStream *refStream) const;
 	Stream * lookupVideoStream (MediaStreamDir dir);
 	Stream * lookupVideoStream ( MSFilterId id);
-	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir) const;
+	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir, const std::string &label) const;
 	bool checkRtpSession() const;
 
 	/*

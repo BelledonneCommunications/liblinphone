@@ -244,7 +244,7 @@ public:
 	int getMediaStreamIndex (LinphoneStreamType type) const;
 	int getMediaStreamsNb (LinphoneStreamType type) const;
 	MediaStream *getVideoStream (MediaStreamDir dir) const;
-	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir) const;
+	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir, const std::string &label) const;
 	bool checkRtpSession() const;
 	SalCallOp *getOp () const;
 	bool getSpeakerMuted () const;

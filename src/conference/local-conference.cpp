@@ -70,6 +70,10 @@ bool LocalConference::isIn() const{
 	return true;
 }
 
+std::shared_ptr<Call> LocalConference::getCall() const {
+	return nullptr;
+}
+
 // -----------------------------------------------------------------------------
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
