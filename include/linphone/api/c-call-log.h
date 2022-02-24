@@ -47,7 +47,7 @@ LINPHONE_PUBLIC void linphone_call_log_unref(LinphoneCallLog *call_log);
 /**
  * Get the call ID used by the call.
  * @param call_log #LinphoneCallLog object @notnil
- * @return The call ID used by the call as a string. @notnil
+ * @return The call ID used by the call as a string. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_call_log_get_call_id(const LinphoneCallLog *call_log);
 
