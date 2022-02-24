@@ -58,6 +58,11 @@ IceService & StreamsGroup::getIceService()const{
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
+	if (!params.getLocalStreamDescription().enabled()) {
+		lInfo() << "Disabled stream at index " << params.streamIndex;
+		return nullptr;
+	}
+	
 	SalStreamType type = params.getLocalStreamDescription().type;
 	switch(type){
 		case SalAudio:
@@ -92,6 +97,7 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 
 void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		params.scopeStreamToIndex(stream->getIndex());
 		stream->fillLocalMediaDescription(params);
 	}
@@ -135,6 +141,7 @@ bool StreamsGroup::prepare(){
 		return false;
 	}
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Stopped){
 			stream->prepare();
 		}
@@ -144,6 +151,7 @@ bool StreamsGroup::prepare(){
 
 void StreamsGroup::finishPrepare(){
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Preparing){
 			stream->finishPrepare();
 		}
@@ -204,6 +212,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 
 void StreamsGroup::sessionConfirmed(const OfferAnswerContext &params){
 	for (auto &stream  : mStreams){
+		if (!stream) continue;
 		mCurrentOfferAnswerState.scopeStreamToIndex(stream->getIndex());
 		stream->sessionConfirmed(mCurrentOfferAnswerState);
 	}
@@ -275,7 +284,8 @@ int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> 
 
 void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
 	for (auto &stream : mStreams){
-		if (stream && stream.get() != mainZrtpStream) stream->zrtpStarted(mainZrtpStream);
+		if (!stream) continue;
+		if (stream.get() != mainZrtpStream) stream->zrtpStarted(mainZrtpStream);
 	}
 	propagateEncryptionChanged();
 }
@@ -283,6 +293,7 @@ void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
 bool StreamsGroup::allStreamsEncrypted () const {
 	int activeStreamsCount = 0;
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Running){
 			++activeStreamsCount;
 			if (!stream->isEncrypted()){
@@ -325,6 +336,7 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		if (stream->isMain() && stream->getType() == type){
 			return stream.get();
 		}
@@ -355,12 +367,14 @@ void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 
 void StreamsGroup::finishEarlyMediaForking(){
 	for (auto &stream : mStreams){
-		if (stream) stream->finishEarlyMediaForking();
+		if (!stream) continue;
+		stream->finishEarlyMediaForking();
 	}
 }
 
 bool StreamsGroup::isStarted()const{
 	for( auto & stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Running) return true;
 	}
 	return false;
@@ -376,6 +390,7 @@ void StreamsGroup::clearStreams(){
 size_t StreamsGroup::getActiveStreamsCount() const{
 	size_t ret = 0;
 	for( auto & stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Running) ++ret;
 	}
 	return ret;
@@ -383,6 +398,7 @@ size_t StreamsGroup::getActiveStreamsCount() const{
 
 bool StreamsGroup::isMuted() const{
 	for (auto & stream : mStreams){
+		if (!stream) continue;
 		if (stream->getState() == Stream::Running){
 			if (stream->isMuted() == false) return false;
 		}
@@ -395,6 +411,7 @@ float StreamsGroup::computeOverallQuality(_functor func){
 	float globalRating = -1.0f;
 	int countedStreams = 0;
 	for (auto &stream : mStreams){
+		if (!stream) continue;
 		float streamRating = func(stream.get());
 		if (streamRating != -1.0f){
 			if (globalRating == -1.0f){
