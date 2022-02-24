@@ -101,17 +101,16 @@ void LdapContactProvider::ldapTlsConnection(){
 	void * value = LDAP_OPT_ON;
 	int ldapReturnStatus;
 	int resultStatus;
-	
+	int timeout = getTimeout() ;
 // 1) Start TLS 
 	if(mTlsConnectionId < 0) {// Start TLS
 		ldap_set_option(mLd, LDAP_OPT_CONNECT_ASYNC, value);// If not Async, ldap_start_tls can block on connect.
-		ldapReturnStatus = ldap_start_tls( mLd, NULL, NULL, &mTlsConnectionId );
-		if( ldapReturnStatus != LDAP_SUCCESS ) {
-			ms_error("[LDAP] Cannot start TLS connection");
+		ldapReturnStatus = ldap_start_tls( mLd, NULL, NULL, &mTlsConnectionId );// Try to open a socket.
+		if( ldapReturnStatus != LDAP_SUCCESS && difftime(time(NULL),mTlsConnectionTimeout) > timeout ) {
+			ms_error("[LDAP] Cannot start TLS connection (%s)", ldap_err2string(ldapReturnStatus));
 			mCurrentAction = ACTION_ERROR;
 			mTlsConnectionId = -1;
-		}else
-			mTlsConnectionTimeout = time(NULL);
+		}// mTlsConnectionId is not -1 only on success.
 	}// Not 'else' : we try to get a result without having to wait an iteration
 // 2) Wait for connection
 	if( mTlsConnectionId >= 0){
@@ -124,7 +123,6 @@ void LdapContactProvider::ldapTlsConnection(){
 			mCurrentAction = ACTION_ERROR;
 			break;
 		case 0: {	// Retry on the next iteration.
-			int timeout = getTimeout() ;
 			if( difftime(time(NULL),mTlsConnectionTimeout) > timeout){
 				ms_error("[LDAP] Cannot start TLS connection : timeout (%ds)", timeout );
 				mCurrentAction = ACTION_ERROR;
@@ -226,6 +224,7 @@ void LdapContactProvider::initializeLdap(){
 		}
 		mTlsConnectionId = -1;
 		mCurrentAction = ACTION_WAIT_TLS_CONNECT;
+		mTlsConnectionTimeout = time(NULL);
 	}else {
 		ms_debug("[LDAP] Initialization success");
 		mConnected = 1;
