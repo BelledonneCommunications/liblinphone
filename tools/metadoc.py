@@ -515,11 +515,11 @@ class Translator:
 					# Do not break a line in the middle of a { }
 					while (not line[0:cutIndex].count('{') == line[0:cutIndex].count('}')) and (not line[cutIndex:].count('{') == line[cutIndex:].count('}')):
 						cutIndex += 1
-				if self.langCode == 'CSharp':
+				elif self.langCode == 'CSharp':
 					# Do not break a line in the middle of a xml tag
 					while not line[0:cutIndex].count('<') == line[0:cutIndex].count('>'):
 						cutIndex += 1
-				if line[cutIndex] == ' ':
+				if cutIndex < len(line) and line[cutIndex] == ' ':
 					# Don't keep a whitespace at the start of the next line if you cut on one
 					lines.append(line[0:cutIndex])
 					line = line[cutIndex+1:]
