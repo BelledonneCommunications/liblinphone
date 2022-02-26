@@ -39,7 +39,7 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public synchronized void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-        Log.i("[Activity Monitor] Activity created:" + activity);
+        Log.i("[Activity Monitor] Activity created:" + activity + ", task ID is " + activity.getTaskId() + ", is root? " + activity.isTaskRoot());
         if (!activities.contains(activity)) activities.add(activity);
     }
 
@@ -50,7 +50,7 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public synchronized void onActivityResumed(Activity activity) {
-        Log.i("[Activity Monitor] Activity resumed:" + activity);
+        Log.i("[Activity Monitor] Activity resumed:" + activity + ", task ID is " + activity.getTaskId() + ", is root? " + activity.isTaskRoot());
         if (!activities.contains(activity)) {
             Log.w("[Activity Monitor] Activity wasn't registered yet...");
             activities.add(activity);
@@ -63,7 +63,7 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        Log.i("[Activity Monitor] Activity paused:" + activity);
+        Log.i("[Activity Monitor] Activity paused:" + activity + ", task ID is " + activity.getTaskId() + ", is root? " + activity.isTaskRoot());
         if (!activities.contains(activity)) {
             Log.w("[Activity Monitor] Activity wasn't registered yet...");
             activities.add(activity);
@@ -76,12 +76,12 @@ public class ActivityMonitor implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public void onActivityStopped(Activity activity) {
-        Log.i("[Activity Monitor] Activity stopped:" + activity);
+        Log.i("[Activity Monitor] Activity stopped:" + activity + ", task ID is " + activity.getTaskId() + ", is root? " + activity.isTaskRoot());
     }
 
     @Override
     public synchronized void onActivityDestroyed(Activity activity) {
-        Log.i("[Activity Monitor] Activity destroyed:" + activity);
+        Log.i("[Activity Monitor] Activity destroyed:" + activity + ", task ID is " + activity.getTaskId() + ", is root? " + activity.isTaskRoot());
         activities.remove(activity);
     }
 
