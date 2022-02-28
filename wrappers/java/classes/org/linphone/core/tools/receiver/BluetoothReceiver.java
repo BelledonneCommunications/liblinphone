@@ -53,7 +53,7 @@ public class BluetoothReceiver extends BroadcastReceiver {
                     break;
                 case BluetoothAdapter.STATE_ON:
                     Log.i("[Bluetooth] Adapter has been turned on");
-                    if (CoreManager.isReady()) CoreManager.instance().onBluetoothHeadsetStateChanged();
+                    if (CoreManager.isReady()) CoreManager.instance().onBluetoothAdapterTurnedOn();
                     break;
                 case BluetoothAdapter.STATE_TURNING_ON:
                     Log.i("[Bluetooth] Adapter is being turned on");

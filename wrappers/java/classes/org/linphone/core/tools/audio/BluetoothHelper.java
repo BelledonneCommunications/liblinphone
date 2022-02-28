@@ -56,6 +56,7 @@ public class BluetoothHelper {
             IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
             filter.addAction(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
             context.registerReceiver(mBluetoothReceiver, filter);
+            Log.i("[Bluetooth] Bluetooth broadcast receiver registered");
         }
         
         Log.i("[Bluetooth] Bluetooth helper created");
@@ -65,6 +66,7 @@ public class BluetoothHelper {
         if (mBluetoothReceiver != null) {
             context.unregisterReceiver(mBluetoothReceiver);
             mBluetoothReceiver = null;
+            Log.i("[Bluetooth] Bluetooth broadcast receiver unregistered");
         }
 
         mBluetoothAdapter = null;
