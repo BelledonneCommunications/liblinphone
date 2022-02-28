@@ -405,10 +405,24 @@ public class CoreManager {
         }
     }
 
+    public void onBluetoothAdapterTurnedOn() {
+        if (DeviceUtils.isBluetoothConnectPermissionGranted(mContext)) {
+            onBluetoothHeadsetStateChanged();
+        } else {
+            Log.w("[Core Manager] Bluetooth Connect permission isn't granted, waiting longer before reloading sound devices to increase chances to get bluetooth device");
+            onBluetoothHeadsetStateChanged(5000);
+        }
+    }
+
+
     public void onBluetoothHeadsetStateChanged() {
+        onBluetoothHeadsetStateChanged(500);
+    }
+
+    private void onBluetoothHeadsetStateChanged(int delay) {
         GlobalState globalState = mCore.getGlobalState();
         if (globalState == GlobalState.On || globalState == GlobalState.Ready) {
-            Log.i("[Core Manager] Bluetooth headset state changed, waiting for 500ms before reloading sound devices");
+            Log.i("[Core Manager] Bluetooth headset state changed, waiting for " + delay + " ms before reloading sound devices");
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -417,7 +431,7 @@ public class CoreManager {
                         reloadSoundDevices(mCore.getNativePointer());
                     }
                 }
-            }, 500);
+            }, delay);
         } else {
             Log.w("[Core Manager] Bluetooth headset state changed but current global state is ", globalState.name(), ", skipping...");
         }

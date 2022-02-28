@@ -22,7 +22,9 @@ package org.linphone.core.tools.compatibility;
 import android.app.ActivityManager;
 import android.app.ApplicationExitInfo;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.text.format.DateFormat;
+import android.Manifest;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -75,5 +77,9 @@ public class DeviceUtils31 {
 
 	public static int getPerformanceClass() {
 		return android.os.Build.VERSION.MEDIA_PERFORMANCE_CLASS;
+	}
+
+	public static boolean isBluetoothConnectPermissionGranted(Context context) {
+		return context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
 	}
 }
