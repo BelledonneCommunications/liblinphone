@@ -32,6 +32,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Account;
 class CallSessionParamsPrivate;
 class Core;
 
@@ -78,8 +79,8 @@ public:
 	void addCustomContent (const Content& content);
 	const std::list<Content>& getCustomContents () const;
 
-	LinphoneProxyConfig *getProxyConfig() const;
-	void setProxyConfig(LinphoneProxyConfig *proxyConfig);
+	std::shared_ptr<Account> getAccount() const;
+	void setAccount(std::shared_ptr<Account> account);
 
 protected:
 	explicit CallSessionParams (CallSessionParamsPrivate &p);

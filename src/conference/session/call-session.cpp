@@ -22,6 +22,7 @@
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 
+#include "account/account.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
@@ -816,7 +817,7 @@ void CallSessionPrivate::updateCurrentParams () const {}
 
 void CallSessionPrivate::setDestProxy (LinphoneProxyConfig *proxy){
 	destProxy = proxy;
-	currentParams->setProxyConfig(proxy);
+	currentParams->setAccount(proxy ? Account::toCpp(proxy->account)->getSharedFromThis() : nullptr);
 }
 
 // -----------------------------------------------------------------------------

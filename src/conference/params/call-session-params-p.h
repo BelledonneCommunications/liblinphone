@@ -75,7 +75,7 @@ public:
 	std::string sessionName;
 
 	LinphonePrivacyMask privacy = LinphonePrivacyNone;
-	LinphoneProxyConfig * proxyConfig = NULL;
+	std::shared_ptr<Account> account = nullptr;
 
 private:
 	bool capabilityNegotiation = false;

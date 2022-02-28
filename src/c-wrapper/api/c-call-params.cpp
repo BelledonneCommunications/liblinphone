@@ -24,6 +24,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/call-session.h"
 
+#include "account/account.h"
 #include "linphone/call_params.h"
 
 // =============================================================================
@@ -404,11 +405,21 @@ void linphone_call_params_set_video_direction (LinphoneCallParams *params, Linph
 }
 
 void linphone_call_params_set_proxy_config (LinphoneCallParams *params, LinphoneProxyConfig *proxy_config) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setProxyConfig(proxy_config);
+	linphone_call_params_set_account(params, proxy_config->account);
 }
 
 LinphoneProxyConfig *linphone_call_params_get_proxy_config (const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getProxyConfig();
+	auto account = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getAccount();
+	return account != nullptr ? account->getConfig() : NULL;
+}
+
+void linphone_call_params_set_account(LinphoneCallParams *params, LinphoneAccount *account) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setAccount(LinphonePrivate::Account::toCpp(account)->getSharedFromThis());
+}
+
+LinphoneAccount *linphone_call_params_get_account(const LinphoneCallParams *params) {
+	auto account = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getAccount();
+	return account != nullptr ? account->toC() : NULL;
 }
 
 void linphone_call_params_enable_audio_multicast (LinphoneCallParams *params, bool_t yesno) {

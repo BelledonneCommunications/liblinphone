@@ -394,20 +394,20 @@ LINPHONE_PUBLIC void linphone_call_params_set_audio_direction(LinphoneCallParams
 LINPHONE_PUBLIC void linphone_call_params_set_video_direction(LinphoneCallParams *call_params, LinphoneMediaDirection direction);
 
 /**
- * Set the #LinphoneProxyConfig to use for the call
+ * Set the #LinphoneAccount to use for the call
  *
  * @param params the #LinphoneCallParams @notnil
- * @param proxy_config The #LinphoneProxyConfig to use, or NULL if none has been selected. The #LinphoneCallParams keep a reference on it and remove the older if it exists. @maybenil
+ * @param account The #LinphoneAccount to use, or NULL if none has been selected. The #LinphoneCallParams keeps a reference to it and removes the previous one, if any. @maybenil
  **/
-LINPHONE_PUBLIC void linphone_call_params_set_proxy_config(LinphoneCallParams *params, LinphoneProxyConfig *proxy_config);
+LINPHONE_PUBLIC void linphone_call_params_set_account(LinphoneCallParams *params, LinphoneAccount *account);
 
 /**
- * Get the #LinphoneProxyConfig that is used for the call
+ * Get the #LinphoneAccount that is used for the call
  *
  * @param params the #LinphoneCallParams @notnil
- * @return The selected #LinphoneProxyConfig for the call, or NULL if none has been selected. @maybenil
+ * @return The selected #LinphoneAccount for the call, or NULL if none has been selected. @maybenil
  **/
-LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_params_get_proxy_config(const LinphoneCallParams *params);
+LINPHONE_PUBLIC LinphoneAccount *linphone_call_params_get_account(const LinphoneCallParams *params);
 
 /**
  * Set the video stream direction.
@@ -772,6 +772,26 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const OrtpPayloadType *linphone_call_params_
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const OrtpPayloadType *linphone_call_params_get_used_text_codec(const LinphoneCallParams *call_params);
+
+/**
+ * Set the #LinphoneProxyConfig to use for the call
+ *
+ * @param params the #LinphoneCallParams @notnil
+ * @param proxy_config The #LinphoneProxyConfig to use, or NULL if none has been selected. The #LinphoneCallParams keep a reference on it and remove the older if it exists. @maybenil
+ * @deprecated 28/02/2021 Use linphone_call_params_set_account() instead.
+ * @donotwrap
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_params_set_proxy_config(LinphoneCallParams *params, LinphoneProxyConfig *proxy_config);
+
+/**
+ * Get the #LinphoneProxyConfig that is used for the call
+ *
+ * @param params the #LinphoneCallParams @notnil
+ * @return The selected #LinphoneProxyConfig for the call, or NULL if none has been selected. @maybenil
+ * @deprecated 28/02/2021 Use linphone_call_params_get_account() instead.
+ * @donotwrap
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneProxyConfig *linphone_call_params_get_proxy_config(const LinphoneCallParams *params);
 
 /**
  * @}

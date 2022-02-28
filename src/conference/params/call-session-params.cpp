@@ -58,9 +58,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	customContactParameters = src->customContactParameters;
 	referer = src->referer;
 	customContents = src->customContents;
-	proxyConfig = src->proxyConfig;
-	if( proxyConfig)
-		linphone_proxy_config_ref(proxyConfig);
+	account = src->account;
 }
 
 // -----------------------------------------------------------------------------
@@ -170,9 +168,7 @@ CallSessionParams::CallSessionParams () : ClonableObject(*new CallSessionParamsP
 
 CallSessionParams::CallSessionParams (CallSessionParamsPrivate &p) : ClonableObject(p) {
 	L_D();
-	d->proxyConfig = p.proxyConfig;
-	if( d->proxyConfig )
-		linphone_proxy_config_ref(d->proxyConfig);
+	d->account = p.account;
 }
 
 CallSessionParams::CallSessionParams (const CallSessionParams &other)
@@ -185,8 +181,6 @@ CallSessionParams::~CallSessionParams () {
 	L_D();
 	if (d->customHeaders)
 		sal_custom_header_free(d->customHeaders);
-	if( d->proxyConfig )
-		linphone_proxy_config_unref(d->proxyConfig);
 }
 
 CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other) {
@@ -213,7 +207,6 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	d->privacy = LinphonePrivacyDefault;
 	d->startTime = (time_t)-1;
 	d->endTime = (time_t)-1;
-	setProxyConfig(NULL);
 }
 
 // -----------------------------------------------------------------------------
@@ -320,18 +313,14 @@ const std::list<LinphoneSrtpSuite>& CallSessionParams::getSrtpSuites () const {
 	return d->srtpSuites;
 }
 
-LinphoneProxyConfig *CallSessionParams::getProxyConfig() const {
+shared_ptr<Account> CallSessionParams::getAccount() const {
 	L_D();
-	return d->proxyConfig;
+	return d->account;
 }
 
-void CallSessionParams::setProxyConfig(LinphoneProxyConfig *proxyConfig) {
+void CallSessionParams::setAccount(shared_ptr<Account> account) {
 	L_D();
-	if( proxyConfig )
-		linphone_proxy_config_ref(proxyConfig);
-	if( d->proxyConfig )
-		linphone_proxy_config_unref(d->proxyConfig);
-	d->proxyConfig = proxyConfig;
+	d->account = account;
 }
 
 LINPHONE_END_NAMESPACE
