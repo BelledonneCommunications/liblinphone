@@ -120,7 +120,7 @@ func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointe
 	return cList
 }
 
-#if canImport(SwiftUI) && (os(iOS) || os(tvOS) )
+#if canImport(SwiftUI) && (os(iOS) || os(tvOS)) && (arch(arm64) || arch(x86_64)) ///does not compile on armv7 nor macOS
 @available(iOS 13.0, tvOS 13.0, *)
 @available(macOS, unavailable)
 @available(watchOS, unavailable)
