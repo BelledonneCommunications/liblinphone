@@ -779,7 +779,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const OrtpPayloadType *linphone_call_params_
  * @param params the #LinphoneCallParams @notnil
  * @param proxy_config The #LinphoneProxyConfig to use, or NULL if none has been selected. The #LinphoneCallParams keep a reference on it and remove the older if it exists. @maybenil
  * @deprecated 28/02/2021 Use linphone_call_params_set_account() instead.
- * @donotwrap
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_params_set_proxy_config(LinphoneCallParams *params, LinphoneProxyConfig *proxy_config);
 
@@ -789,7 +788,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_call_params_set_proxy_config(L
  * @param params the #LinphoneCallParams @notnil
  * @return The selected #LinphoneProxyConfig for the call, or NULL if none has been selected. @maybenil
  * @deprecated 28/02/2021 Use linphone_call_params_get_account() instead.
- * @donotwrap
  **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneProxyConfig *linphone_call_params_get_proxy_config(const LinphoneCallParams *params);
 
