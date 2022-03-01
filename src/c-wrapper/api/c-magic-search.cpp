@@ -105,6 +105,10 @@ void _linphone_magic_search_notify_search_results_received(LinphoneMagicSearch *
 	NOTIFY_IF_EXIST(SearchResultsReceived, search_results_received, magic_search)
 }
 
+void _linphone_magic_search_notify_ldap_have_more_results(LinphoneMagicSearch *magic_search, LinphoneLdap *ldap) {
+	NOTIFY_IF_EXIST(LdapHaveMoreResults, ldap_have_more_results, magic_search, ldap)
+}
+
 // =============================================================================
 // Getter and setters
 // =============================================================================

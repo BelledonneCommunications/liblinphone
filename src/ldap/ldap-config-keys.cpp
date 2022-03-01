@@ -28,6 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 static const std::map<std::string, LdapConfigKeys> gLdapConfigKeys={
 	{"timeout", LdapConfigKeys("5")},
 	{"max_results", LdapConfigKeys("5")},
+	{"min_chars", LdapConfigKeys("0")},
 	{"delay", LdapConfigKeys("500")},
 	{"auth_method", LdapConfigKeys(Utils::toString((int)LinphoneLdapAuthMethodSimple))},
 	{"password", LdapConfigKeys("")},

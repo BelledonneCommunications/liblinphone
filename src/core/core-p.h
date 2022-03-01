@@ -91,6 +91,8 @@ public:
 	std::shared_ptr<AbstractChatRoom> createBasicChatRoom (const ConferenceId &conferenceId, AbstractChatRoom::CapabilitiesMask capabilities, const std::shared_ptr<ChatRoomParams> &params);
 
 	ToneManager & getToneManager();
+	
+	void reloadLdapList();
 
 	//Base
 	std::shared_ptr<AbstractChatRoom> createClientGroupChatRoom (
@@ -200,6 +202,9 @@ private:
 	std::list<AudioDevice *> audioDevices;
 	bool stopAsyncEndEnabled = false;
 	ExtraBackgroundTask bgTask {"Stop core async end"};
+	
+	std::list<std::shared_ptr<Ldap>> mLdapServers;	// Persistent list of LDAP servers
+	
 	L_DECLARE_PUBLIC(Core);
 };
 

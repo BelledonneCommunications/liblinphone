@@ -428,6 +428,9 @@ typedef struct _stats {
 
 	int number_of_ConferenceSchedulerStateReady;
 	int number_of_ConferenceSchedulerInvitationsSent;
+	
+	int number_of_LinphoneMagicSearchResultReceived;
+	int number_of_LinphoneMagicSearchLdapHaveMoreResults;
 }stats;
 
 typedef struct _LinphoneCoreManager {

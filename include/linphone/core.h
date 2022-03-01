@@ -4728,7 +4728,7 @@ LINPHONE_PUBLIC void linphone_core_set_echo_canceller_filter_name(LinphoneCore *
 /** Contact Providers
   */
 
-typedef void (*ContactSearchCallback)( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );
+typedef void (*ContactSearchCallback)( LinphoneContactSearch* id, bctbx_list_t* friends, void* data, bool_t haveMoreResults );
 
 /**
  * Set URI where to download xml configuration file at startup.
@@ -6291,6 +6291,13 @@ LINPHONE_PUBLIC LinphoneLdap * linphone_core_create_ldap_with_params(LinphoneCor
  * @param core #LinphoneCore object @notnil
 **/
 LINPHONE_PUBLIC void linphone_core_clear_ldaps(LinphoneCore *core);
+
+/**
+ * Add or update a LDAP server and save it to the configuration..
+ * @param core #LinphoneCore object @notnil
+ * @param ldap The LDAP to add/update. @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap * ldap);
 
 /**
  * Remove a LDAP from the configuration.

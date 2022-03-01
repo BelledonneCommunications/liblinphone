@@ -31,6 +31,7 @@ LdapContactSearch::LdapContactSearch(const int& msgId){
 	mFoundCount = 0;
 	mFoundEntries = NULL;
 	complete = 0;
+	mHaveMoreResults = FALSE;
 }
 LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData){
 	mPredicate = predicate;
@@ -40,6 +41,7 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, const std::st
 	mFoundCount = 0;
 	mFoundEntries = NULL;
 	complete = 0;
+	mHaveMoreResults = 0;
 	char temp[FILTER_MAX_SIZE];
 	snprintf(temp, FILTER_MAX_SIZE-1, parent->getFilter().c_str(), predicate.c_str());
 	temp[FILTER_MAX_SIZE-1] = '\0';
@@ -65,6 +67,6 @@ LdapContactSearch::~LdapContactSearch(){
 }
 
 void LdapContactSearch::callCallback(){
-	mCb(NULL, mFoundEntries, mCbData);
+	mCb(NULL, mFoundEntries, mCbData, mHaveMoreResults);
 }
 LINPHONE_END_NAMESPACE

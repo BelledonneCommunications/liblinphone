@@ -408,13 +408,40 @@ typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom
  */
 typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message, const LinphoneParticipantImdnState *state);
 
+/**
+* @}
+**/	
 	
-	
+/**
+ * @addtogroup misc
+ * @{
+ */
+
+/**
+ * Callback used to notify when results are received.
+ * @param magic_search #LinphoneMagicSearch object @notnil
+ */
+typedef void (*LinphoneMagicSearchCbsSearchResultsReceivedCb)(LinphoneMagicSearch* magic_search);
+
+/**
+ * Callback used to notify when LDAP have more results available.
+ * @param magic_search #LinphoneMagicSearch object @notnil
+ * @param ldap #LinphoneLdap object @notnil
+ */
+typedef void (*LinphoneMagicSearchCbsLdapHaveMoreResultsCb)(LinphoneMagicSearch* magic_search, LinphoneLdap * ldap);
+
+/**
+* @}
+**/	
 	
 /************ */
 /* DEPRECATED */
 /* ********** */
-
+/**
+ * @addtogroup chatroom
+ * @{
+ */
+ 
  /**
  * Call back used to notify message delivery status
  * @param message #LinphoneChatMessage object @notnil
@@ -586,20 +613,7 @@ typedef void (*LinphoneConferenceSchedulerCbsInvitationsSentCb) (LinphoneConfere
  * @}
 **/
 
-/**
- * @addtogroup misc
- * @{
- */
 
-/**
- * Callback used to notify message delivery status
- * @param magic_search #LinphoneChatMessage object @notnil
- */
-typedef void (*LinphoneMagicSearchCbsSearchResultsReceivedCb)(LinphoneMagicSearch* magic_search);
-
-/**
-* @}
-**/	
 	
 	
 #ifdef __cplusplus

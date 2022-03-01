@@ -105,6 +105,16 @@ int linphone_ldap_params_get_max_results(const LinphoneLdapParams *params) {
 
 /*************************************************************************************/
 
+void linphone_ldap_params_set_min_chars(LinphoneLdapParams *params, int min_chars) {
+	LdapParams::toCpp(params)->setMinChars(min_chars);
+}
+
+int linphone_ldap_params_get_min_chars(const LinphoneLdapParams *params) {
+	return LdapParams::toCpp(params)->getMinChars();
+}
+
+/*************************************************************************************/
+
 void linphone_ldap_params_set_delay(LinphoneLdapParams *params, int delay) {
 	LdapParams::toCpp(params)->setDelay(delay);
 }

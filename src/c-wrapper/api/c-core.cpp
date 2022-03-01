@@ -255,18 +255,24 @@ LinphoneLdap * linphone_core_create_ldap(LinphoneCore *core) {
 }
 
 LinphoneLdap * linphone_core_create_ldap_with_params(LinphoneCore *core, LinphoneLdapParams *params) {
-	return linphone_ldap_new_with_params(core, params);
+	LinphoneLdap* ldap = linphone_ldap_new_with_params(core, params);
+	linphone_core_add_ldap(core, ldap);
+	return ldap;
 }
 
 void linphone_core_clear_ldaps(LinphoneCore *core) {
 	auto list = L_GET_CPP_PTR_FROM_C_OBJECT(core)->getLdapList();
 	for(auto ldap : list){
-			ldap->removeFromConfigFile();
+		L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeLdap(ldap);
 	}
 }
 
+void linphone_core_add_ldap(LinphoneCore *core, LinphoneLdap * ldap){
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->addLdap(Ldap::toCpp(ldap)->getSharedFromThis());
+}
+
 void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap * ldap){
-	Ldap::toCpp(ldap)->removeFromConfigFile();
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->removeLdap(Ldap::toCpp(ldap)->getSharedFromThis());
 }
 
 bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *lc){

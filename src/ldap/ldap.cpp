@@ -49,7 +49,7 @@ Ldap::Ldap (const std::shared_ptr<Core>& lc, int id) : CoreAccessor(lc) {
 
 Ldap::Ldap (const std::shared_ptr<Core>& lc, std::shared_ptr<LdapParams> params, int id) : CoreAccessor(lc) {
 	setIndex(id);
-	setLdapParams(params);
+	mParams = params;
 	bctbx_message("LinphoneLdap[%p] created with params", toC());
 }
 
@@ -87,7 +87,7 @@ int Ldap::getIdFromSectionName(std::string sectionKey){
 
 void Ldap::setLdapParams (std::shared_ptr<LdapParams> params) {
 	mParams = params;
-	writeToConfigFile ();
+	getCore()->addLdap(this->getSharedFromThis());
 }
 
 std::shared_ptr<const LdapParams> Ldap::getLdapParams () const {

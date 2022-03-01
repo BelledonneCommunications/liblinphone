@@ -153,6 +153,7 @@ void CorePrivate::init () {
 			} else lWarning() << "ZRTP secrets database explicitely not requested";
 		}
 	}
+	reloadLdapList();
 
 #ifdef __ANDROID__
 	// On Android assume Core has been started in background,
@@ -315,6 +316,7 @@ void CorePrivate::uninit() {
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
 	pushReceivedBackgroundTaskEnded();
+	mLdapServers.clear();
 
 #ifdef HAVE_ADVANCED_IM
 	remoteListEventHandler.reset();
@@ -1250,23 +1252,54 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string 
 // -----------------------------------------------------------------------------
 
 std::list<std::shared_ptr<Ldap>> Core::getLdapList() {
+	return getPrivate()->mLdapServers;
+}
+
+std::list<std::shared_ptr<Ldap>>::iterator Core::getLdapIterator(int index){
+	return std::find_if( getPrivate()->mLdapServers.begin(), getPrivate()->mLdapServers.end(), [index](std::shared_ptr<Ldap> a){
+		return a->getIndex() == index;
+	});
+}
+
+void CorePrivate::reloadLdapList() {
 	std::list<std::shared_ptr<Ldap>> ldapList;
 	auto lpConfig = linphone_core_get_config(getCCore());
 	const bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lpConfig);
 	// Loop on all sections and load configuration. If this is not a LDAP configuration, the model is discarded.
 	for(auto itSections = bcSections; itSections; itSections=itSections->next) {
 		std::string section = static_cast<char *>(itSections->data);
-		std::shared_ptr<Ldap> ldap = Ldap::create(getSharedFromThis(), section);
+		std::shared_ptr<Ldap> ldap = Ldap::create(getPublic()->getSharedFromThis(), section);
 		if( ldap)
 			ldapList.push_back(ldap);
 	}
 	ldapList.sort([](std::shared_ptr<Ldap> a, std::shared_ptr<Ldap> b) {
 		return a->getIndex() < b->getIndex();
 	});
-
-	return ldapList;
+	mLdapServers = ldapList;
 }
 
+void Core::addLdap(std::shared_ptr<Ldap> ldap) {
+	if(ldap->getLdapParams()) {
+		ldap->writeToConfigFile();
+		auto itLdapStored = getLdapIterator(ldap->getIndex());
+		if(itLdapStored == getPrivate()->mLdapServers.end()) {	// New
+			getPrivate()->mLdapServers.push_back(ldap);
+			getPrivate()->mLdapServers.sort([](std::shared_ptr<Ldap> a, std::shared_ptr<Ldap> b) {
+				return a->getIndex() < b->getIndex();
+			});
+		}else{	// Update
+			*itLdapStored = ldap;
+		}
+	}
+}
+
+void Core::removeLdap(std::shared_ptr<Ldap> ldap){
+	auto itLdapStored = getLdapIterator(ldap->getIndex());
+	if(itLdapStored != getPrivate()->mLdapServers.end()){
+		getPrivate()->mLdapServers.erase(itLdapStored);
+		ldap->removeFromConfigFile();
+	}
+}
 // -----------------------------------------------------------------------------
 
 Address Core::interpretUrl (const std::string &url) const {

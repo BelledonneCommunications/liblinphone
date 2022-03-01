@@ -50,6 +50,7 @@ public:
 	int mMsgId;
 	std::string mFilter;
 	bool_t  complete;
+	bool_t mHaveMoreResults = FALSE;
 	bctbx_list_t* mFoundEntries;
 	unsigned int mFoundCount;
 	

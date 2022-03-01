@@ -27,6 +27,7 @@ struct _LinphoneMagicSearchCbs {
 	belle_sip_object_t base;
 	void *userData;
 	LinphoneMagicSearchCbsSearchResultsReceivedCb search_results_received;
+	LinphoneMagicSearchCbsLdapHaveMoreResultsCb ldap_have_more_results;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneMagicSearchCbs);
@@ -73,4 +74,16 @@ void linphone_magic_search_cbs_set_search_results_received (
 	LinphoneMagicSearchCbsSearchResultsReceivedCb cb
 ) {
 	cbs->search_results_received = cb;
+}
+
+LinphoneMagicSearchCbsLdapHaveMoreResultsCb linphone_magic_search_cbs_get_ldap_have_more_results(
+	const LinphoneMagicSearchCbs *cbs
+) {
+	return cbs->ldap_have_more_results;
+}
+void linphone_magic_search_cbs_set_ldap_have_more_results (
+	LinphoneMagicSearchCbs *cbs,
+	LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb
+) {
+	cbs->ldap_have_more_results = cb;
 }
