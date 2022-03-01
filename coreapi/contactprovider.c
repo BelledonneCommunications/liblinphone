@@ -52,9 +52,9 @@ const char*linphone_contact_search_get_predicate(LinphoneContactSearch* obj)
 	return obj->predicate;
 }
 
-void linphone_contact_search_invoke_cb(LinphoneContactSearch* req, MSList* friends)
+void linphone_contact_search_invoke_cb(LinphoneContactSearch* req, MSList* friends, bool_t haveMoreResults)
 {
-	if( req->cb ) req->cb(req, friends, req->data);
+	if( req->cb ) req->cb(req, friends, req->data, haveMoreResults);
 }
 
 int linphone_contact_search_compare(const void* a, const void* b) {

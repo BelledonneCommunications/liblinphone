@@ -87,6 +87,10 @@ void LdapParams::setMaxResults(const int& maxResults){
 	mConfig["max_results"] = Utils::toString(maxResults >= 1 ? maxResults : 1 );
 }
 
+void LdapParams::setMinChars(const int& minChars) {
+	mConfig["min_chars"] = Utils::toString(minChars >= 0 ? minChars : 0 );
+}
+
 void LdapParams::setDelay(const int& ms) {
 	mConfig["delay"] = Utils::toString(ms >= 0 ? ms : 0 );
 }
@@ -163,6 +167,10 @@ int LdapParams::getTimeout() const{
 
 int LdapParams::getMaxResults() const{
 	return atoi(mConfig.at("max_results").c_str());
+}
+
+int LdapParams::getMinChars() const{
+	return atoi(mConfig.at("min_chars").c_str());
 }
 
 int LdapParams::getDelay() const{

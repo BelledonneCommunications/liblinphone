@@ -43,14 +43,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 //*******************************************	CREATION
 
-LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config ){
+LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap) {
 	mAwaitingMessageId = 0;
 	mConnected = FALSE;
 	mCore = core;
 	mLd = nullptr;
+	mLdapServer = ldap;
 	mSalContext = NULL;
 	mServerUri = NULL;
-
+	const std::map<std::string,std::string> &config = ldap->getLdapParams()->getConfig();
 	// register our hook into iterate so that LDAP can do its magic asynchronously.
 	mIteration = mCore->createTimer(std::bind(&LdapContactProvider::iterate, this), 50, "LdapContactProvider");
 	if( !LdapConfigKeys::validConfig(config) ) {
@@ -60,6 +61,7 @@ LdapContactProvider::LdapContactProvider(const std::shared_ptr<Core> &core, cons
 		mConfig = LdapConfigKeys::loadConfig(config, &mNameAttributes, &mSipAttributes, &mAttributes);
 		mCurrentAction = ACTION_NONE;
 	}
+	
 }
 
 LdapContactProvider::~LdapContactProvider(){
@@ -91,7 +93,7 @@ std::vector<std::shared_ptr<LdapContactProvider> > LdapContactProvider::create(c
 	for(auto itLdap : ldapList){
 		auto params = itLdap->getLdapParams();
 		if(params->getEnabled())
-			providers.push_back(std::make_shared<LdapContactProvider>(core, params->getConfig()));
+			providers.push_back(std::make_shared<LdapContactProvider>(core, itLdap));
 	}
 	return providers;
 }
@@ -231,6 +233,10 @@ void LdapContactProvider::initializeLdap(){
 	}
 }
 
+int LdapContactProvider::getMinChars() const {
+	return mConfig.count("min_chars") > 0 ? atoi(mConfig.at("min_chars").c_str()) : 0;
+}
+
 int LdapContactProvider::getTimeout() const{
 	return atoi(mConfig.at("timeout").c_str());
 }
@@ -245,6 +251,10 @@ std::string LdapContactProvider::getFilter()const{
 
 int LdapContactProvider::getCurrentAction()const{
 	return mCurrentAction;
+}
+
+std::shared_ptr<Ldap> LdapContactProvider::getLdapServer(){
+	return mLdapServer;
 }
 
 void LdapContactProvider::computeLastRequestTime(const std::list<SearchRequest>& requestHistory) {
@@ -272,19 +282,24 @@ void LdapContactProvider::computeLastRequestTime(const std::list<SearchRequest>&
 //*******************************************	SEARCH
 
 // Create a search object and store the request to be used when the provider is ready
-void LdapContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData, const std::list<SearchRequest>& requestHistory){
-	std::shared_ptr<LdapContactSearch> request = std::make_shared<LdapContactSearch>(this, predicate, cb, cbData );
-	if( request != NULL ) {
-		mRequests.push_back(request);
-	}
-	computeLastRequestTime(requestHistory);
+bool LdapContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData, const std::list<SearchRequest>& requestHistory){
+	if( getMinChars() <= (int)predicate.length()){
+		std::shared_ptr<LdapContactSearch> request = std::make_shared<LdapContactSearch>(this, predicate, cb, cbData );
+		if( request != NULL ) {
+			mRequests.push_back(request);
+		}
+		computeLastRequestTime(requestHistory);
+		return true;
+	}else
+		return false;
 }
 
 // Start the search
 int LdapContactProvider::search(std::shared_ptr<LdapContactSearch> request){
 	int ret = -1;
 	struct timeval timeout = { atoi(mConfig["timeout"].c_str()), 0 };
-
+	int maxResults = atoi(mConfig["max_results"].c_str());
+	if( maxResults > 0) ++maxResults;	// +1 to know if there is more than limit
 	if( request->mMsgId == 0 ){
 		ret = ldap_search_ext(mLd,
 						mConfig["base_object"].c_str(),// base from which to start
@@ -295,7 +310,7 @@ int LdapContactProvider::search(std::shared_ptr<LdapContactSearch> request){
 						NULL,
 						NULL,
 						&timeout,        // server timeout for the search
-						atoi(mConfig["max_results"].c_str()),// max result number
+						maxResults,
 						&request->mMsgId );
 		if( ret != LDAP_SUCCESS ){
 			ms_error("[LDAP] Error ldap_search_ext returned %d (%s)", ret, ldap_err2string(ret));
@@ -616,9 +631,15 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 					for(auto sipAddress : ldapData.mSip) {
 						LinphoneAddress* la = linphone_core_interpret_url(lc, sipAddress.first.c_str());
 						if( la ){
-							linphone_address_set_display_name(la, ldapData.mName.first.c_str());
-							req->mFoundEntries = bctbx_list_append(req->mFoundEntries, la);
-							++req->mFoundCount;
+							int maxResults = atoi(mConfig["max_results"].c_str());
+							if( maxResults == 0 || req->mFoundCount < (unsigned int) maxResults) {
+								linphone_address_set_display_name(la, ldapData.mName.first.c_str());
+								req->mFoundEntries = bctbx_list_append(req->mFoundEntries, la);
+								++req->mFoundCount;
+							}else{// Have more result (requested max_results+1). Do not store this result to avoid missunderstanding from user.
+								linphone_address_unref(la);
+								req->mHaveMoreResults = TRUE;
+							}
 						}
 					}
 				}

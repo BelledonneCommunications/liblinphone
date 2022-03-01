@@ -33,8 +33,9 @@
 #include <list>
 #include <mutex>
 
-#include <ldap.h>
+#include <ldap.h>	// OpenLDAP
 #include "../search/search-request.h"
+#include "ldap.h"	// Linphone
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -64,10 +65,12 @@ public:
 	 * @brief LdapContactProvider Instance to make searches on a LDAP server. Use create() to get all usable #LdapContactProvider.
 	 * Only LDAP/STARTTLS is supported.
 	 * @param core The Linphone core for Configurations, thread processing and callbacks
-	 * @param config The configuration to used. It can contains only required fields, all others will be filled by default values. Check #LdapConfigKeys to know what fields are requiered
+	 * @param ldap The LDAP server to use from linphone_core_get_ldap_list()
 	 */
 	
-	LdapContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config );
+	LdapContactProvider(const std::shared_ptr<Core> &core, std::shared_ptr<Ldap> ldap);
+	
+	
 	virtual ~LdapContactProvider();
 	
 	/**
@@ -84,6 +87,12 @@ public:
 	void initializeLdap();
 	
 //	CONFIGURATION
+	/**
+	 * @brief getMinChars it's a convertor from configuration 'min_chars' to integer
+	 * @return The minimum characters for one search.
+	 */
+	int getMinChars() const;
+	
 	/**
 	 * @brief getTimeout it's a convertor from configuration 'timeout' to integer
 	 * @return The timeout in seconds
@@ -107,6 +116,12 @@ public:
 	 * @return Return ACTION_ERROR in case of error.
 	 */
 	int getCurrentAction()const;
+	
+	/**
+	 * @brief getLdapServer Get the LDAP server that is coming from core
+	 * @return The LDAP server. Return nullptr if not set.
+	 */
+	std::shared_ptr<Ldap> getLdapServer();
 
 //	SEARCH
 	/**
@@ -117,8 +132,9 @@ public:
 	 * @param cb The callback where to get results in the form of 'static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );'
 	 * @param cbData The data to pass to the callback
 	 * @param requestHistory The list of search that have been requested. It is used to make a delay between the same kind of searchs.
+	 * @return true if the request can be processed.
 	 */
-	void search(const std::string& predicate, ContactSearchCallback cb, void* cbData, const std::list<SearchRequest>& requestHistory = std::list<SearchRequest>());
+	bool search(const std::string& predicate, ContactSearchCallback cb, void* cbData, const std::list<SearchRequest>& requestHistory = std::list<SearchRequest>());
 	
 	/**
 	 * @brief search Start the search to LDAP
@@ -189,6 +205,7 @@ private:
 	void computeLastRequestTime(const std::list<SearchRequest>& requestHistory);
 
 	std::shared_ptr<Core> mCore;
+	std::shared_ptr<Ldap> mLdapServer;		// The LDAP server coming from core if set. Useful to know what server is using.
 	std::map<std::string,std::string>  mConfig;
 	std::vector<std::string> mAttributes;	// Request optimization to limit attributes
 	std::vector<std::string> mNameAttributes;// Optimization to avoid split each times

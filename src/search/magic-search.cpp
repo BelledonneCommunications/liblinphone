@@ -31,6 +31,7 @@
 #include "linphone/dictionary.h"
 #include "logger/logger.h"
 #include "private.h"
+#include "../ldap/ldap.h"
 
 //#include "linphone/belle-sip/object.h"
 
@@ -184,8 +185,17 @@ bool MagicSearch::iterate(void){
 		if( mState == STATE_SEND) {
 			processResults (d->mAsyncData.mSearchResults);
 			_linphone_magic_search_notify_search_results_received(L_GET_C_BACK_PTR(this));
+#ifdef LDAP_ENABLED
+			for(size_t i = 0 ; i < d->mAsyncData.getData().size() ; ++i){
+				auto data = d->mAsyncData.getData()[i];
+				if( data->mHaveMoreResults && (data->mSourceFlags & LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceLdapServers){
+					std::shared_ptr<Ldap> ldap = dynamic_cast<LdapCbData*>(data.get())->mProvider->getLdapServer();
+					_linphone_magic_search_notify_ldap_have_more_results(L_GET_C_BACK_PTR(this), ldap->toC());
+				}
+			}
+#endif
 		}else{
-			ms_message("[LDAP] Cancelling : %s", request.getFilter().c_str());
+			ms_message("[MagicSearch] Cancelling : %s", request.getFilter().c_str());
 		}
 		d->mAsyncData.clear();
 		if(d->mAsyncData.keepOneRequest()){
@@ -418,7 +428,7 @@ void MagicSearch::getAddressFromLDAPServerStartAsync (
 			data->mParent = this;
 			data->mFilter = filter;
 			data->mWithDomain = withDomain;
-			data->mProvider->search(predicate, LdapCbData::resultsCb, data.get(), asyncData->getRequestHistory());
+			data->mEnd = !data->mProvider->search(predicate, LdapCbData::resultsCb, data.get(), asyncData->getRequestHistory());
 		}else
 			data->mEnd = TRUE;
 		asyncData->pushData(data);

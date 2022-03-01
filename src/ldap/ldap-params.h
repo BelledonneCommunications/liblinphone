@@ -49,6 +49,7 @@ public:
 	void setBaseObject(const std::string& baseObject);
 	void setTimeout(const int& timeout);
 	void setMaxResults(const int& maxResults);
+	void setMinChars(const int& minChars);
 	void setDelay(const int& ms);
 	void setPassword(const std::string& password);
 	void setFilter(const std::string& filter);
@@ -69,6 +70,7 @@ public:
 	const std::string& getBaseObject() const;
 	int getTimeout() const;
 	int getMaxResults() const;
+	int getMinChars() const;
 	int getDelay() const;
 	const std::string& getPassword() const;
 	const std::string& getFilter() const;

@@ -47,6 +47,8 @@ public:
 	 * No entries above it will be considered.
 	 *   - "timeout" : "5".
 	 * Timeout in seconds
+	 *   - "min_chars" : "0"
+	 * The minimum characters needed for doing a search.
 	 *   - "max_results" : "5".
 	 * The max results when requesting searches.
 	 *   - "delay" : "500".

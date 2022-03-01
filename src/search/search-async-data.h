@@ -55,6 +55,7 @@ public:
 	public:
 		CbData(){
 			mEnd = FALSE;
+			mHaveMoreResults = FALSE;
 			mTimeout = 5;// 5s is the default
 		}
 		virtual ~CbData();
@@ -71,7 +72,7 @@ public:
 		 * @param friends List of address as results. Data depends of the provider.
 		 * @param data User data coming from Callback binding.
 		 */
-		static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );
+		static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data, bool_t haveMoreResults );
 
 		/**
 		 * @brief mEnd Search is over.
@@ -98,9 +99,14 @@ public:
 		std::string mWithDomain;
 		
 		/**
-		 * @brief SurceFlags Flags for searching on specific sources : #LinphoneMagicSearchSource
+		 * @brief mSourceFlags Flags for searching on specific sources : #LinphoneMagicSearchSource
 		 */
 		int mSourceFlags = LinphoneMagicSearchSourceNone;
+		
+		/**
+		 * @brief mHaveMoreResults True if there are more results available for this data.
+		 */
+		bool_t mHaveMoreResults;
 		
 		/**
 		 * @brief mParent Used to get searchInAddress of parent but may be usefull for anything else if needed.

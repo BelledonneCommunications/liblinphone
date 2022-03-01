@@ -181,6 +181,25 @@ LINPHONE_PUBLIC int linphone_ldap_params_get_max_results(const LinphoneLdapParam
 /*************************************************************************************/
 
 /**
+ * @brief The minimum characters needed for doing a search on LDAP servers.
+ * Default value : 0. 
+ * 
+ * @param params The #LinphoneLdapParams object. @notnil
+ * @param min_chars The minimum characters needed by a search.
+**/
+LINPHONE_PUBLIC void linphone_ldap_params_set_min_chars(LinphoneLdapParams *params, int min_chars);
+
+/**
+ * @brief Get the minimum characters needed for doing a search on LDAP servers.
+ * 
+ * @param params The #LinphoneLdapParams object. @notnil
+ * @return The minimum characters needed by a search.
+**/
+LINPHONE_PUBLIC int linphone_ldap_params_get_min_chars(const LinphoneLdapParams *params);
+
+/*************************************************************************************/
+
+/**
  * @brief Delay between each search in milliseconds
  * Default value : 500.
  * 

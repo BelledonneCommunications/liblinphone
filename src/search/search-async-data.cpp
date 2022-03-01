@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 SearchAsyncData::CbData::~CbData(){
 }
 
-void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data ){
+void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data, bool_t haveMoreResults ){
 	SearchAsyncData::CbData * cbData = (SearchAsyncData::CbData*)data;
 	for (const bctbx_list_t *f = friends ; f != nullptr ; f = bctbx_list_next(f)) {
 		LinphoneAddress *addr = static_cast<LinphoneAddress*>(f->data);
@@ -44,6 +44,7 @@ void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t
 			}
 		}
 	}
+	cbData->mHaveMoreResults = haveMoreResults;
 	cbData->mEnd = TRUE;
 }
 

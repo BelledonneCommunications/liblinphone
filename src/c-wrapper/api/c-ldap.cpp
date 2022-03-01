@@ -68,11 +68,3 @@ void linphone_ldap_set_index(LinphoneLdap *ldap, int index){
 int linphone_ldap_get_index(const LinphoneLdap *ldap){
 	return Ldap::toCpp(ldap)->getIndex();
 }
-
-void linphone_ldap_write_to_config_file(LinphoneLdap *ldap){
-	Ldap::toCpp(ldap)->writeToConfigFile();
-}
-
-void linphone_ldap_remove_from_config_file(LinphoneLdap *ldap) {
-	Ldap::toCpp(ldap)->removeFromConfigFile();
-}

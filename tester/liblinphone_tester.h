@@ -422,6 +422,9 @@ typedef struct _stats {
 	
 	int number_of_LinphoneParticipantDeviceStartSpeaking;
 	int number_of_LinphoneParticipantDeviceStopSpeaking;
+	
+	int number_of_LinphoneMagicSearchResultReceived;
+	int number_of_LinphoneMagicSearchLdapHaveMoreResults;
 }stats;
 
 typedef struct _LinphoneCoreManager {

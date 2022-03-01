@@ -33,7 +33,7 @@ extern "C" {
 void linphone_contact_search_init(LinphoneContactSearch *obj, const char *predicate, ContactSearchCallback cb, void *cb_data);
 LinphoneContactSearchID linphone_contact_search_get_id(LinphoneContactSearch *obj);
 const char* linphone_contact_search_get_predicate(LinphoneContactSearch *obj);
-void linphone_contact_search_invoke_cb(LinphoneContactSearch *req, MSList *friends);
+void linphone_contact_search_invoke_cb(LinphoneContactSearch *req, MSList *friends, bool_t haveMoreResults);
 LINPHONE_PUBLIC LinphoneContactSearch* linphone_contact_search_ref(void *obj);
 LINPHONE_PUBLIC void linphone_contact_search_unref(void *obj);
 LinphoneContactSearch* linphone_contact_search_cast(void *obj);

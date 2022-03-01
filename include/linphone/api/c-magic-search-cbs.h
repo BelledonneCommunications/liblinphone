@@ -64,18 +64,34 @@ LINPHONE_PUBLIC void * linphone_magic_search_cbs_get_user_data (const LinphoneMa
 LINPHONE_PUBLIC void linphone_magic_search_cbs_set_user_data (LinphoneMagicSearchCbs *cbs, void *user_data);
 
 /**
- * Get the message state changed callback.
+ * Get the received results callback.
  * @param cbs #LinphoneMagicSearchCbs object. @notnil
- * @return The current message state changed callback.
+ * @return The current result received callback.
  */
 LINPHONE_PUBLIC LinphoneMagicSearchCbsSearchResultsReceivedCb linphone_magic_search_cbs_get_search_results_received (const LinphoneMagicSearchCbs *cbs);
 
 /**
- * Set the message state changed callback.
+ * Set the received results  callback.
  * @param cbs #LinphoneMagicSearchCbs object. @notnil
- * @param cb The message state changed callback to be used.
+ * @param cb The received results callback to be used.
  */
 LINPHONE_PUBLIC void linphone_magic_search_cbs_set_search_results_received (LinphoneMagicSearchCbs *cbs, LinphoneMagicSearchCbsSearchResultsReceivedCb cb);
+
+
+/**
+ * Get the ldap callback on having more results.
+ * @param cbs #LinphoneMagicSearchCbs object. @notnil
+ * @return The ldap callback on having more results.
+ */
+LINPHONE_PUBLIC LinphoneMagicSearchCbsLdapHaveMoreResultsCb linphone_magic_search_cbs_get_ldap_have_more_results(const LinphoneMagicSearchCbs *cbs);
+
+/**
+ * Set the ldap callback on having more results.
+ * @param cbs #LinphoneMagicSearchCbs object. @notnil
+ * @param cb The ldap callback on having more results.
+ */
+LINPHONE_PUBLIC void linphone_magic_search_cbs_set_ldap_have_more_results (LinphoneMagicSearchCbs *cbs, LinphoneMagicSearchCbsLdapHaveMoreResultsCb cb);
+
 
 /**
  * @}

@@ -103,18 +103,6 @@ LINPHONE_PUBLIC void linphone_ldap_set_index(LinphoneLdap *ldap, int index);
 **/
 LINPHONE_PUBLIC int linphone_ldap_get_index(const LinphoneLdap *ldap);
 
-/**
- * Save Ldap to the file configuration.
- * @param ldap The #LinphoneLdap object. @notnil
-**/
-LINPHONE_PUBLIC void linphone_ldap_write_to_config_file(LinphoneLdap *ldap);
-
-/**
- * Remove the Ldap from the file configuration.
- * @param ldap The #LinphoneLdap object. @notnil
-**/
-LINPHONE_PUBLIC void linphone_ldap_remove_from_config_file(LinphoneLdap *ldap);
-
 
 /**
  * @}
