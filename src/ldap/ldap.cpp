@@ -109,7 +109,7 @@ int Ldap::check() const{
 int Ldap::getNewId() const{
 	LpConfig * lConfig = linphone_core_get_config(getCore()->getCCore());
 // Read configuration
-	const bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lConfig);
+	bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lConfig);
 	std::vector<int> allIds;
 	for(auto itSections = bcSections; itSections; itSections=itSections->next) {
 		std::string section = static_cast<char *>(itSections->data);
@@ -117,6 +117,8 @@ int Ldap::getNewId() const{
 		if( id >=0)
 			allIds.push_back(id);
 	}
+	if( bcSections)
+		bctbx_list_free(bcSections);
 	int id = 0;
 	while(std::find(allIds.begin(), allIds.end(), id) != allIds.end())
 		++id;

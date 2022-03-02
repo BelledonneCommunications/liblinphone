@@ -369,7 +369,7 @@ LINPHONE_PUBLIC void linphone_config_clean_entry(LinphoneConfig *config, const c
  * @param config The #LinphoneConfig object @notnil
  * @return A list of strings. \bctbx_list{char *} @maybenil
 **/
-LINPHONE_PUBLIC const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *config);
+LINPHONE_PUBLIC bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *config);
 
 /**
  * Returns the list of keys' names for a section in the LinphoneConfig.
@@ -377,7 +377,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_config_get_sections_names_list(Lin
  * @param section The section name @notnil
  * @return A list of strings. \bctbx_list{char *} @maybenil
 **/
-LINPHONE_PUBLIC const bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *config, const char *section );
+LINPHONE_PUBLIC bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *config, const char *section );
 
 /**
  * @brief Call a function for each section present in the configuration.

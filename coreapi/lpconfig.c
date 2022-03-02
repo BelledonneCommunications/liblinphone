@@ -1204,7 +1204,7 @@ const char** linphone_config_get_sections_names(LpConfig *lpconfig) {
 	return sections_names;
 }
 
-const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
+bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
 	const bctbx_list_t *sections = lpconfig->sections;
 	bctbx_list_t *sections_names = NULL;
 	int i;
@@ -1217,7 +1217,7 @@ const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpc
 	return sections_names;
 }
 
-const bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, const char *section ) {
+bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, const char *section ) {
 	LpSection *sec;
 	bctbx_list_t *keys_names = NULL, *items;
 	sec=linphone_config_find_section(lpconfig,section);
@@ -1227,6 +1227,8 @@ const bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfi
 			LpItem *item = (LpItem *)items->data;
 			keys_names = bctbx_list_append(keys_names, item->key);
 		}
+		if( items)
+			bctbx_list_free(items);
 	}
 	return keys_names;
 }
