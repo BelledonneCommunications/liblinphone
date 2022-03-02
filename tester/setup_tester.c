@@ -1379,6 +1379,11 @@ static void search_friend_with_presence(void) {
 	linphone_friend_list_add_friend(lfl, chloeFriend);
 
 	magicSearch = linphone_magic_search_new(manager->lc);
+	
+	stats * stat = get_stats(manager->lc);
+	
+	linphone_core_set_network_reachable(manager->lc, TRUE);	// For LDAP
+	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_NetworkReachableTrue,1));
 
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "33", "");
 
