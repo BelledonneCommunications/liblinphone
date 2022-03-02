@@ -44,11 +44,13 @@ LdapParams::LdapParams () {
 
 LdapParams::LdapParams (LinphoneConfig *lConfig, const std::string& sectionKey) : LdapParams() {
 	std::map<std::string, std::string> config;
-	const bctbx_list_t * keys = linphone_config_get_keys_names_list(lConfig, sectionKey.c_str());
+	bctbx_list_t * keys = linphone_config_get_keys_names_list(lConfig, sectionKey.c_str());
 	for(auto itKeys = keys ; itKeys ; itKeys=itKeys->next){
 		std::string key = static_cast<char *>(itKeys->data);
 		mConfig[key] = linphone_config_get_string(lConfig, sectionKey.c_str(), key.c_str(), "");
 	}
+	if(keys)
+		bctbx_list_free(keys);
 }
 
 LdapParams::LdapParams (const LdapParams &other) : HybridObject(other) {

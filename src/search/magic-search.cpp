@@ -494,7 +494,7 @@ void MagicSearch::beginNewSearchAsync (const SearchRequest& request, SearchAsync
 		asyncData->createResult(friendsList);
 	}
 #ifdef LDAP_ENABLED
-	if( (request.getSourceFlags() & LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceLdapServers)
+	if( (request.getSourceFlags() & LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceLdapServers && linphone_core_is_network_reachable(this->getCore()->getCCore()))
 		getAddressFromLDAPServerStartAsync(request.getFilter(), request.getWithDomain(), asyncData);
 #endif
 	if( (request.getSourceFlags() & LinphoneMagicSearchSourceCallLogs) == LinphoneMagicSearchSourceCallLogs)
@@ -569,7 +569,7 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 		}
 	}
 #ifdef LDAP_ENABLED
-	if( (sourceFlags & LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceLdapServers){
+	if( (sourceFlags & LinphoneMagicSearchSourceLdapServers) == LinphoneMagicSearchSourceLdapServers && linphone_core_is_network_reachable(this->getCore()->getCCore())){
 		multiClResults = getAddressFromLDAPServer(filter, withDomain);
 		for(auto it = multiClResults.begin() ; it != multiClResults.end() ; ++it)
 			addResultsToResultsList(*it, *resultList, filter, withDomain);

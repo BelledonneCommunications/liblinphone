@@ -1258,7 +1258,7 @@ std::list<std::shared_ptr<Ldap>>::iterator Core::getLdapIterator(int index){
 void CorePrivate::reloadLdapList() {
 	std::list<std::shared_ptr<Ldap>> ldapList;
 	auto lpConfig = linphone_core_get_config(getCCore());
-	const bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lpConfig);
+	bctbx_list_t * bcSections = linphone_config_get_sections_names_list(lpConfig);
 	// Loop on all sections and load configuration. If this is not a LDAP configuration, the model is discarded.
 	for(auto itSections = bcSections; itSections; itSections=itSections->next) {
 		std::string section = static_cast<char *>(itSections->data);
@@ -1266,6 +1266,8 @@ void CorePrivate::reloadLdapList() {
 		if( ldap)
 			ldapList.push_back(ldap);
 	}
+	if( bcSections)
+		bctbx_list_free(bcSections);
 	ldapList.sort([](std::shared_ptr<Ldap> a, std::shared_ptr<Ldap> b) {
 		return a->getIndex() < b->getIndex();
 	});
