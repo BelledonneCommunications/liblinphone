@@ -46,6 +46,14 @@ public:
 	bool operator> (const SearchResult &other) const;
 	bool operator>= (const SearchResult &other) const;
 	bool operator== (const SearchResult &other) const;
+	std::ostream & operator << (std::ostream & str) const {
+		str << this->toString();
+		return str;
+	}
+
+	std::string toString() const;
+
+	const char* getDisplayName() const;
 
 	/**
 	 * @return LinphoneFriend associed
