@@ -33,8 +33,8 @@ LdapContactSearch::LdapContactSearch(const int& msgId){
 	complete = 0;
 	mHaveMoreResults = FALSE;
 }
-LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData){
-	mPredicate = predicate;
+LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string predicate, ContactSearchCallback cb, void* cbData){
+	mPredicate = predicate; // Save original predicate
 	mCb = cb;
 	mCbData = cbData;
 	mMsgId = 0;
@@ -42,6 +42,9 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, const std::st
 	mFoundEntries = NULL;
 	complete = 0;
 	mHaveMoreResults = 0;
+// Replace space into star first
+	std::replace( predicate.begin(), predicate.end(), ' ', '*');
+// Apply predicate into requested filter
 	char temp[FILTER_MAX_SIZE];
 	snprintf(temp, FILTER_MAX_SIZE-1, parent->getFilter().c_str(), predicate.c_str());
 	temp[FILTER_MAX_SIZE-1] = '\0';

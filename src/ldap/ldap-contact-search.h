@@ -40,7 +40,7 @@ class LdapContactProvider;
 class LINPHONE_PUBLIC LdapContactSearch {
 public:
 	LdapContactSearch(const int& msgId);
-	LdapContactSearch(LdapContactProvider * parent, const std::string& predicate, ContactSearchCallback cb, void* cbData);
+	LdapContactSearch(LdapContactProvider * parent, std::string predicate, ContactSearchCallback cb, void* cbData);
 	virtual ~LdapContactSearch();
 	
 	void callCallback();
