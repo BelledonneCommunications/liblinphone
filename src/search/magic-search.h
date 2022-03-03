@@ -277,7 +277,7 @@ private:
 
 	void addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const;
 
-	void uniqueItemsList (std::list<SearchResult> &list) const;
+	void uniqueItemsList (std::shared_ptr<std::list<SearchResult>> list) const;
 	enum{
 		STATE_START,
 		STATE_WAIT,

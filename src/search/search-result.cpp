@@ -119,6 +119,38 @@ bool SearchResult::operator== (const SearchResult &other) const {
 	return getWeight() == other.getWeight();
 }
 
+std::string SearchResult::toString() const {
+	std::ostringstream ss;
+	ss << getDisplayName();
+
+	const LinphoneAddress* addr = getAddress();
+	if (addr) {
+		ss << " address [" << linphone_address_as_string(addr) << "]";
+	}
+
+	const string & phoneNumber = getPhoneNumber();
+	if (!phoneNumber.empty()) {
+		ss << " phone number [" << phoneNumber << "]";
+	}
+	
+	return ss.str();
+}
+
+const char* SearchResult::getDisplayName() const {
+	const char *name = NULL;
+	if (getFriend()) {
+		name = linphone_friend_get_name(getFriend());
+	}
+	if (!name && getAddress()){
+		name = linphone_address_get_display_name(getAddress()) ?
+			linphone_address_get_display_name(getAddress()) : linphone_address_get_username(getAddress());
+	}
+	if (!name) {
+		return getPhoneNumber().c_str();
+	}
+	return name;
+}
+
 const LinphoneFriend *SearchResult::getFriend () const {
 	L_D();
 	return d->mFriend;
