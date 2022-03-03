@@ -39,7 +39,7 @@ void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t
 				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr, cbData->mSourceFlags));
 			} else {// We have constraints : add result with weight
 				unsigned int weight = cbData->mParent->searchInAddress(addr, cbData->mFilter, cbData->mWithDomain);
-				if( weight > cbData->mParent->getMinWeight())
+				if( weight >= cbData->mParent->getMinWeight())
 					cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr, cbData->mSourceFlags));
 			}
 		}

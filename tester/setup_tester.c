@@ -2369,6 +2369,72 @@ static void async_search_friend_in_sources(void){
 	linphone_core_manager_destroy(manager);
 }
 
+static void ldap_search(void){
+// Prepare datas : Friends, Call logs, Chat rooms, ldap
+	LinphoneCoreManager* manager = linphone_core_manager_new("marie_rc");
+	LinphoneLdap * ldap;
+	
+	prepare_friends(manager, &ldap);
+	
+// Init Magic search
+	LinphoneMagicSearch *magicSearch = NULL;
+	LinphoneMagicSearchCbs * searchHandler = linphone_factory_create_magic_search_cbs(linphone_factory_get());
+	linphone_magic_search_cbs_set_search_results_received(searchHandler, _onMagicSearchResultsReceived);
+	magicSearch = linphone_magic_search_new(manager->lc);
+	linphone_magic_search_add_callbacks(magicSearch, searchHandler);
+
+	bctbx_list_t *resultList = NULL;
+	stats *stat = get_stats(manager->lc);
+	linphone_magic_search_cbs_set_user_data(searchHandler, stat);
+//------------------------------------------------------------------------
+// Note on LDAP search: "*", " ", "" shouud get the same results  :all
+	for(int i = 0 ; i < 3 ; ++i){
+		linphone_magic_search_get_contacts_async(magicSearch, i == 0 ? "*" : (i == 1 ? " " : ""), "", LinphoneMagicSearchSourceLdapServers);
+		BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
+		stat->number_of_LinphoneMagicSearchResultReceived = 0;
+		resultList = linphone_magic_search_get_last_search(magicSearch);
+		check_results(manager, resultList, LinphoneMagicSearchSourceLdapServers);
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+
+// Use cn for testing on display names
+	LinphoneLdapParams * params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
+	linphone_ldap_params_set_filter(params, "(cn=*%s*)");
+	linphone_ldap_set_params(ldap, params);
+	linphone_ldap_params_unref(params);
+
+// Test wild character
+	linphone_magic_search_get_contacts_async(magicSearch, "pa*ine", "", LinphoneMagicSearchSourceLdapServers);
+	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),1 , int, "%d");
+	_check_friend_result_list(manager->lc, resultList, 0, "sip:Pauline@ldap.example.org", NULL);
+	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	
+// Test space character
+	linphone_magic_search_get_contacts_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers);// Laure Ardy
+	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	resultList = linphone_magic_search_get_last_search(magicSearch);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),2 , int, "%d");
+	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", NULL);
+	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	
+//------------------------------------------------------------------------
+	linphone_magic_search_cbs_unref(searchHandler);
+	linphone_magic_search_unref(magicSearch);
+
+	if(ldap) {
+		linphone_core_clear_ldaps(manager->lc);
+		BC_ASSERT_PTR_NULL(linphone_core_get_ldap_list(manager->lc));
+		linphone_ldap_unref(ldap);
+	}
+	
+	linphone_core_manager_destroy(manager);
+}
+
 static void ldap_params_edition_with_check(void){
 	LinphoneCoreManager *manager = linphone_core_manager_new(NULL);
 	if(linphone_core_ldap_available(manager->lc)){
@@ -2938,6 +3004,7 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
 	TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
 	TEST_ONE_TAG("Async search friend in sources", async_search_friend_in_sources, "MagicSearch"),
+	TEST_ONE_TAG("Ldap search", ldap_search, "MagicSearch"),
 	TEST_ONE_TAG("Ldap features delay", ldap_features_delay, "MagicSearch"),
 	TEST_ONE_TAG("Ldap features min characters", ldap_features_min_characters, "MagicSearch"),
 	TEST_ONE_TAG("Ldap features more results", ldap_features_more_results, "MagicSearch"),
