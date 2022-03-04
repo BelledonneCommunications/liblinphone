@@ -21,6 +21,7 @@
 #include "ldap-contact-provider.h"
 
 #include <algorithm>
+#include <bctoolbox/utils.hh>
 
 #define FILTER_MAX_SIZE      512
 
@@ -33,6 +34,7 @@ LdapContactSearch::LdapContactSearch(const int& msgId){
 	complete = 0;
 	mHaveMoreResults = FALSE;
 }
+
 LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string predicate, ContactSearchCallback cb, void* cbData){
 	mPredicate = predicate; // Save original predicate
 	mCb = cb;
@@ -42,23 +44,24 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string p
 	mFoundEntries = NULL;
 	complete = 0;
 	mHaveMoreResults = 0;
-// Replace space into star first
+	
+// Replace specials characters first : manual characters should be encoded
+	bctoolbox::Utils::replace( predicate, "\\", "\\5c");
+	bctoolbox::Utils::replace( predicate, "*", "\\2a");
+	bctoolbox::Utils::replace( predicate, "(", "\\28");
+	bctoolbox::Utils::replace( predicate, ")", "\\29");
+	bctoolbox::Utils::replace( predicate, "/", "\\2f");
+	
+// Replace space characters into wild characters
 	std::replace( predicate.begin(), predicate.end(), ' ', '*');
 // Apply predicate into requested filter
 	char temp[FILTER_MAX_SIZE];
 	snprintf(temp, FILTER_MAX_SIZE-1, parent->getFilter().c_str(), predicate.c_str());
 	temp[FILTER_MAX_SIZE-1] = '\0';
-	if(predicate == "*"){// Full search : replace all "***" by "*"
-		mFilter = temp;
-		std::string from = "***";
-		std::string to = "*";
-		size_t start_pos = 0;
-		while((start_pos = mFilter.find(from, start_pos)) != std::string::npos) {
-			mFilter.replace(start_pos, from.length(), to);
-			start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-		}
-	}else
-		mFilter = temp;
+	
+// Replace all '**' by '*' in filter.
+	mFilter = temp;
+	bctoolbox::Utils::replace( mFilter, "**", "*", false);// Do not step as replacement can still contain double stars.
 }
 
 static void destroy_address( void* entry ){
