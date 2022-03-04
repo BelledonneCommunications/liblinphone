@@ -443,7 +443,6 @@ void MagicSearch::getAddressFromLDAPServerStartAsync (
 	const string &withDomain,
 	SearchAsyncData * asyncData
 )const {
-	std::string predicate = (filter.empty()?"*":filter);
 	std::vector<std::shared_ptr<LdapContactProvider> > providers = LdapContactProvider::create(this->getCore());
 // Requests
 	for(size_t i = 0 ; i < providers.size() ; ++i){
@@ -455,7 +454,7 @@ void MagicSearch::getAddressFromLDAPServerStartAsync (
 			data->mParent = this;
 			data->mFilter = filter;
 			data->mWithDomain = withDomain;
-			data->mEnd = !data->mProvider->search(predicate, LdapCbData::resultsCb, data.get(), asyncData->getRequestHistory());
+			data->mEnd = !data->mProvider->search(filter, LdapCbData::resultsCb, data.get(), asyncData->getRequestHistory());
 		}else
 			data->mEnd = TRUE;
 		asyncData->pushData(data);
