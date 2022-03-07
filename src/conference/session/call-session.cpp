@@ -994,10 +994,13 @@ void CallSessionPrivate::repairByInviteWithReplaces () {
 	string callId = op->getCallId();
 	string fromTag = op->getLocalTag();
 	string toTag = op->getRemoteTag();
+	// Restore INVITE body if any, for example while creating a chat room
+	Content content = Content(op->getLocalBody());
+
 	op->killDialog();
 	createOp();
 	op->setReplaces(callId.c_str(), fromTag, toTag.empty()?"0":toTag); // empty tag is set to 0 as defined by rfc3891
-	q->startInvite(nullptr);
+	q->startInvite(nullptr, subject, &content); // Don't forget to set subject from call-session (and not from OP)
 }
 
 void CallSessionPrivate::repairIfBroken () {

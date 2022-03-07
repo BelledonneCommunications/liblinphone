@@ -37,6 +37,7 @@ public:
 	int setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc);
 	int setLocalBody (const Content &body);
 	int setLocalBody (Content &&body);
+	const Content& getLocalBody() const { return mLocalBody; }
 	void addAdditionalLocalBody (const Content &content);
 	const std::list<Content>& getAdditionalRemoteBodies () const;
 	bool isContentInRemote (const ContentType &contentType) const;
