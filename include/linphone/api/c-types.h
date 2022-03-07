@@ -94,6 +94,8 @@ typedef struct _LinphoneAccount LinphoneAccount;
 
 /**
  * Object that is used to set the different parameters of a #LinphoneAccount.
+ *
+ * Note that authenticated accounts should have a corresponding #LinphoneAuthInfo added to the #LinphoneCore to register properly.
  * @ingroup account
  */
 typedef struct _LinphoneAccountParams LinphoneAccountParams;
