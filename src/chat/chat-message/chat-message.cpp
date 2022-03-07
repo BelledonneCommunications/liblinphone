@@ -606,6 +606,8 @@ void ChatMessagePrivate::replaceContent (Content *contentToRemove, Content *cont
 	while (it != contents.end()) {
 		Content *content = *it;
 		if (content == contentToRemove) {
+			if (!contentToRemove->getAppData("legacy").empty() && contentToAdd->getAppData("legacy").empty())// Keep appdata from losing it on replacing
+				contentToAdd->setAppData("legacy", contentToRemove->getAppData("legacy"));
 			it = contents.erase(it);
 			it = contents.insert(it, contentToAdd);
 			break;
