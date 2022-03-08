@@ -1121,6 +1121,7 @@ void Core::pushNotificationReceived () {
 		bool_t isWifiOnlyCompliant = static_cast<PlatformHelpers *>(lc->platform_helper)->isActiveNetworkWifiOnlyCompliant();
 		if (!isWifiOnlyCompliant) {
 			lError() << "Android Platform Helpers says current network isn't compliant with WiFi only policy, aborting push notification processing!";
+			d->pushReceivedBackgroundTaskEnded();
  			return;
 		}
 	}
@@ -1182,7 +1183,7 @@ void Core::pushNotificationReceived () {
 		 */
 		lc->sal->cleanUnreliableConnections();
 	}
-	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers. 
+	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers.
 }
 
 int Core::getUnreadChatMessageCount () const {

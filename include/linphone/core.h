@@ -6027,7 +6027,7 @@ LINPHONE_PUBLIC void linphone_core_enable_auto_iterate(LinphoneCore *core, bool_
  * @ingroup misc
  * @deprecated 16/12/2021 Use linphone_core_auto_iterate_enabled() instead.
  */
-LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(const LinphoneCore *core);
 
 /**
  * Gets whether auto iterate is enabled or not (Android & iOS only).
@@ -6035,7 +6035,41 @@ LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core)
  * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
  * @ingroup misc
  */
-LINPHONE_PUBLIC bool_t linphone_core_auto_iterate_enabled(LinphoneCore *core);
+LINPHONE_PUBLIC bool_t linphone_core_auto_iterate_enabled(const LinphoneCore *core);
+
+/**
+ * Gets the timer used to schedule the call to core.iterate() method when in foreground (Android only).
+ * This is only used when #linphone_core_auto_iterate_enabled() returns TRUE.
+ * @param core The #LinphoneCore @notnil
+ * @return The timing in milliseconds used to schedule the call while in foreground (default is 20ms).
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC int linphone_core_get_auto_iterate_foreground_schedule(const LinphoneCore *core);
+
+/**
+ * Sets the timer used to schedule the call to core.iterate() method when in foreground (Android only).
+ * @param core The #LinphoneCore @notnil
+ * @param schedule The timing in milliseconds used to schedule the call while in foreground.
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_auto_iterate_foreground_schedule(LinphoneCore *core, int schedule);
+
+/**
+ * Gets the timer used to schedule the call to core.iterate() method when in background (Android only).
+ * This is only used when #linphone_core_auto_iterate_enabled() returns TRUE.
+ * @param core The #LinphoneCore @notnil
+ * @return The timing in milliseconds used to schedule the call while in background (default is 500ms).
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC int linphone_core_get_auto_iterate_background_schedule(const LinphoneCore *core);
+
+/**
+ * Sets the timer used to schedule the call to core.iterate() method when in background (Android only).
+ * @param core The #LinphoneCore @notnil
+ * @param schedule The timing in milliseconds used to schedule the call while in background.
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_auto_iterate_background_schedule(LinphoneCore *core, int schedule);
 
 /**
  * Enable vibration will incoming call is ringing (Android only).

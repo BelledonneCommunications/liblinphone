@@ -2805,12 +2805,28 @@ void linphone_core_enable_auto_iterate(LinphoneCore *core, bool_t enable) {
 	getPlatformHelpers(core)->enableAutoIterate(enable);
 }
 
-bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core) {
+bool_t linphone_core_is_auto_iterate_enabled(const LinphoneCore *core) {
 	return linphone_core_auto_iterate_enabled(core);
 }
 
-bool_t linphone_core_auto_iterate_enabled(LinphoneCore *core) {
+bool_t linphone_core_auto_iterate_enabled(const LinphoneCore *core) {
 	return core->auto_iterate_enabled;
+}
+
+int linphone_core_get_auto_iterate_foreground_schedule(const LinphoneCore *core) {
+	return linphone_config_get_int(core->config, "misc", "auto_iterate_foreground_schedule", 20);
+}
+
+void linphone_core_set_auto_iterate_foreground_schedule(LinphoneCore *core, int schedule) {
+	linphone_config_set_int(core->config, "misc", "auto_iterate_foreground_schedule", schedule);
+}
+
+int linphone_core_get_auto_iterate_background_schedule(const LinphoneCore *core) {
+	return linphone_config_get_int(core->config, "misc", "auto_iterate_background_schedule", 500);
+}
+
+void linphone_core_set_auto_iterate_background_schedule(LinphoneCore *core, int schedule) {
+	linphone_config_set_int(core->config, "misc", "auto_iterate_background_schedule", schedule);
 }
 
 void linphone_core_set_vibration_on_incoming_call_enabled(LinphoneCore *core, bool_t enable) {

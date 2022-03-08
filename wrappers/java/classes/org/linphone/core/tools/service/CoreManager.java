@@ -77,6 +77,7 @@ public class CoreManager {
 
     private Timer mTimer;
     private Runnable mIterateRunnable;
+    private int mIterateSchedule;
     private Application.ActivityLifecycleCallbacks mActivityCallbacks;
 
     private CoreListenerStub mListener;
@@ -210,6 +211,8 @@ public class CoreManager {
     }
 
     public void onLinphoneCoreStart() {
+        Log.i("[Core Manager] Starting");
+
         if (mCore.isAutoIterateEnabled()) {
             startAutoIterate();
         } else {
@@ -329,6 +332,20 @@ public class CoreManager {
     }
 
     public void startAutoIterate() {
+        if (mCore.isInBackground()) {
+            Log.i("[Core Manager] Start core.iterate() scheduling with background timer");
+            startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+        } else {
+            Log.i("[Core Manager] Start core.iterate() scheduling with foreground timer");
+            startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+        }
+    }
+
+    private void startAutoIterate(int schedule) {
+        stopAutoIterate();
+
+        mIterateSchedule = schedule;
+
         mIterateRunnable =
             new Runnable() {
                 @Override
@@ -347,14 +364,14 @@ public class CoreManager {
             };
 
         /*use schedule instead of scheduleAtFixedRate to avoid iterate from being call in burst after cpu wake up*/
-        mTimer = new Timer("Linphone Core iterate scheduler");
-        mTimer.schedule(lTask, 0, 20);
-        Log.i("[Core Manager] Call to core.iterate() scheduled every 20ms");
+        mTimer = new Timer("Linphone core.iterate() scheduler");
+        mTimer.schedule(lTask, 0, mIterateSchedule);
+        Log.i("[Core Manager] Call to core.iterate() scheduled every " + mIterateSchedule + " ms");
     }
 
     public void stopAutoIterate() {
         if (mTimer != null) {
-            Log.w("[Core Manager] Stopping scheduling of core.iterate() every 20ms");
+            Log.w("[Core Manager] Stopping scheduling of core.iterate() every " + mIterateSchedule + " ms");
             mTimer.cancel();
             mTimer = null;
         }
@@ -428,6 +445,10 @@ public class CoreManager {
         Log.i("[Core Manager] App has entered background mode");
         if (mCore != null) {
             enterBackground(mCore.getNativePointer());
+            if (mCore.isAutoIterateEnabled()) {
+                Log.i("[Core Manager] Restarting core.iterate() schedule with background timer");
+                startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+            }
         }
     }
 
@@ -435,6 +456,10 @@ public class CoreManager {
         Log.i("[Core Manager] App has left background mode");
         if (mCore != null) {
             enterForeground(mCore.getNativePointer());
+            if (mCore.isAutoIterateEnabled()) {
+                Log.i("[Core Manager] Restarting core.iterate() schedule with foreground timer");
+                startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+            }
         }
     }
 

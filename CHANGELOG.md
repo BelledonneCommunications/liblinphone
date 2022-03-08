@@ -15,6 +15,9 @@ This changelog file was started on October 2019. Previous changes were more or l
 ### Added
 - Rtp bundle can be enabled per LinphoneAccount, superseeding the setting at LinphoneCore level.
 
+### Changed
+- Auto schedule of core.iterate() method now uses a higher delay for timer if app is in background
+- Foreground & background delays for core.iterate() scheduling can be configured in linphonerc & using API
 
 
 ## [5.1.0] 2022-02-14
