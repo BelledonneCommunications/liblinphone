@@ -42,6 +42,17 @@ LINPHONE_BEGIN_NAMESPACE
 int CorePrivate::addCall (const shared_ptr<Call> &call) {
 	L_Q();
 	L_ASSERT(call);
+
+	auto callLog = call->getLog();
+	if (callLog) {
+		const auto &callId = callLog->getCallId();
+		if (!callId.empty() && lastPushReceivedCallId == callId) {
+			lInfo() << "Call ID matches last push received Call-ID, stopping push background task";
+			lastPushReceivedCallId = "";
+			pushReceivedBackgroundTask.stop();
+		}
+	}
+
 	if (!canWeAddCall())
 		return -1;
 

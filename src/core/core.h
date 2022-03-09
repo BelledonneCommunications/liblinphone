@@ -60,6 +60,7 @@ class Ldap;
 class PushNotificationMessage;
 class SalMediaDescription;
 class ConferenceScheduler;
+class SalOp;
 
 namespace MediaConference {
 	class LocalConference;
@@ -187,6 +188,8 @@ public:
 
 	static const std::string ephemeralVersionAsString();
 	static const std::string groupChatVersionAsString();
+
+	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *sal_msg);
 
 	// ---------------------------------------------------------------------------
 	// Audio Video Conference.

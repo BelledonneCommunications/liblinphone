@@ -193,7 +193,9 @@ private:
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 	belle_sip_source_t *ephemeralTimer = nullptr;
+
 	BackgroundTask pushReceivedBackgroundTask {"Push received background task"};
+	std::string lastPushReceivedCallId = "";
 
 	std::list<AudioDevice *> audioDevices;
 	bool stopAsyncEndEnabled = false;

@@ -1069,10 +1069,36 @@ void Core::pushNotificationReceived (const string& callId) {
 	L_D();
 
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
-
-	// Start a background task for 20 seconds to ensure we have time to process the push
+	// Stop any previous background task we might already have
 	d->pushReceivedBackgroundTask.stop();
-	d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
+
+	if (!callId.empty()) {
+		bool found = false;
+
+		for (const auto &call : d->calls) {
+			auto callLog = call->getLog();
+			if (callLog) {
+				const auto &id = callLog->getCallId();
+				if (id == callId) {
+					lInfo() << "Call with matching Call-ID found, no need for a background task";
+					found = true;
+					break;
+				}
+			}
+		}
+
+		auto chatMessage = findChatMessageFromCallId(callId);
+		if (chatMessage) {
+			lInfo() << "Chat message with matching Call-ID found, no need for a background task";
+			found = true;
+		}
+
+		if (!found) {
+			d->lastPushReceivedCallId = callId;
+			// Start a background task for 20 seconds to ensure we have time to process the push
+			d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
+		}
+	}
 
 	LinphoneCore *lc = getCCore();
 

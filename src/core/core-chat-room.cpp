@@ -845,4 +845,52 @@ const std::string Core::ephemeralVersionAsString() {
 	return os.str();
 }
 
+LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) {
+	L_D();
+
+	LinphoneReason reason = LinphoneReasonNotAcceptable;
+	string peerAddress;
+	string localAddress;
+
+	const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
+
+	if (linphone_core_conference_server_enabled(getCCore())) {
+		localAddress = peerAddress = op->getTo();
+	} else {
+		peerAddress = op->getFrom();
+		localAddress = op->getTo();
+	}
+
+	ConferenceId conferenceId {
+		ConferenceAddress(peerAddress),
+		ConferenceAddress(localAddress)
+	};
+	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
+	if (chatRoom)
+		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+	else if (!linphone_core_conference_server_enabled(getCCore())) {
+		/* Client mode but check that it is really for basic chatroom before creating it.*/
+		if (session_mode && strcasecmp(session_mode, "true") == 0) {
+			lError() << "Message is received in the context of a client chatroom for which we have no context.";
+			reason = LinphoneReasonNotAcceptable;
+		} else {
+			chatRoom = getOrCreateBasicChatRoom(conferenceId);
+			if (chatRoom)
+				reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+		}
+	} else {
+		/* Server mode but chatroom not found. */
+		reason = LinphoneReasonNotFound;
+	}
+
+	auto callId = op->getCallId();
+	if (!callId.empty() && d->lastPushReceivedCallId == callId) {
+		lInfo() << "Chat message Call-ID matches last push received Call-ID, stopping push background task";
+		d->lastPushReceivedCallId = "";
+		d->pushReceivedBackgroundTask.stop();
+	}
+
+	return reason;
+}
+
 LINPHONE_END_NAMESPACE
