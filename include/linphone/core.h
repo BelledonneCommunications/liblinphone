@@ -5912,8 +5912,19 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *core, cons
  * so the call or the message will be correctly delivered.
  * @param core The #LinphoneCore @notnil
  * @ingroup misc
+ * @deprecated 09/03/2022 See #linphone_core_process_push_notification() instead.
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *core);
+
+/**
+ * Call this method when you receive a push notification (if you handle push notifications manually).
+ * It will ensure the proxy configs are correctly registered to the proxy server,
+ * so the call or the message will be correctly delivered.
+ * @param core The #LinphoneCore @notnil
+ * @param call_id the Call-ID of the MESSAGE or INVITE for which the push was received and to wait for. @maybenil
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC void linphone_core_process_push_notification(LinphoneCore *lc, const char *call_id);
 
 /**
  * Get the chat message with the call_id included in the push notification body

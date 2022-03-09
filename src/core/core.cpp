@@ -1105,10 +1105,10 @@ void CorePrivate::startPushReceivedBackgroundTask() {
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
  * If not, we must start or restart them.
  */
-void Core::pushNotificationReceived () {
+void Core::pushNotificationReceived (const string& callId) {
 	L_D();
 
-	lInfo() << "Push notification received";
+	lInfo() << "Push notification received for Call-ID [" << callId << "]";
 
 	// Start a background task for 20 seconds to ensure we have time to process the push
 	d->startPushReceivedBackgroundTask();

@@ -32,6 +32,7 @@ import org.linphone.core.tools.Log;
 import org.linphone.core.tools.service.CoreManager;
 import org.linphone.core.tools.service.AndroidDispatcher;
 
+import java.lang.StringBuilder;
 import java.util.List;
 
 
@@ -56,21 +57,24 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         Runnable pushRunnable = new Runnable() {
             @Override
             public void run() {
-                onPushReceived();
+                onPushReceived(remoteMessage);
             }
         };
         AndroidDispatcher.dispatchOnUIThread(pushRunnable);
     }
 
-    private void onPushReceived() {
+    private void onPushReceived(RemoteMessage remoteMessage) {
         if (!CoreManager.isReady()) {
             notifyAppPushReceivedWithoutCoreAvailable();
         } else {
+            Log.i("[Push Notification] " + remoteMessageToString(remoteMessage));
+
             if (CoreManager.instance() != null) {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
-                    Log.i("[Push Notification] Notifying Core");
-                    CoreManager.instance().ensureRegistered();
+                    String callId = remoteMessage.getData().getOrDefault("call-id", "");
+                    Log.i("[Push Notification] Notifying Core we have received a push for Call-ID: " + callId);
+                    CoreManager.instance().processPushNotification(callId);
                 } else {
                     Log.i("[Push Notification] Notifying application");
                     notifyAppPushReceivedWithoutCoreAvailable();
@@ -96,5 +100,25 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 break;
             }
         }
+    }
+
+    private String remoteMessageToString(RemoteMessage remoteMessage) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("From [");
+        builder.append(remoteMessage.getFrom());
+        builder.append("], Message Id [");
+        builder.append(remoteMessage.getMessageId());
+        builder.append("], TTL [");
+        builder.append(remoteMessage.getTtl());
+        builder.append("], Original Priority [");
+        builder.append(remoteMessage.getOriginalPriority());
+        builder.append("], Received Priority [");
+        builder.append(remoteMessage.getPriority());
+        builder.append("], Sent Time [");
+        builder.append(remoteMessage.getSentTime());
+        builder.append("], Data [");
+        builder.append(remoteMessage.getData());
+        builder.append("]");
+        return builder.toString();
     }
 }

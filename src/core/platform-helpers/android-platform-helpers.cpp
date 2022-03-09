@@ -759,11 +759,15 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_ensureRegistered(JNIEnv *env, jobject thiz, jlong ptr) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_processPushNotification(JNIEnv *env, jobject thiz, jlong ptr, jstring callId) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	const char* c_callId = GetStringUTFChars(env, callId);
+	char *call_id = ms_strdup(c_callId);
+	ReleaseStringUTFChars(env, callId, c_callId);
 	
-	const std::function<void ()> fun = [core]() {
-		linphone_core_ensure_registered(core);
+	const std::function<void ()> fun = [core, call_id]() {
+		linphone_core_process_push_notification(core, call_id);
+		ms_free(call_id);
 	};
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }

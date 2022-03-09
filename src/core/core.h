@@ -260,7 +260,7 @@ public:
 	// Misc.
 	// ---------------------------------------------------------------------------
 
-	void pushNotificationReceived ();
+	void pushNotificationReceived (const std::string& callId);
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;

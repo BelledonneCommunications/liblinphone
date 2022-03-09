@@ -138,7 +138,11 @@ bool_t linphone_core_friend_list_subscription_enabled(LinphoneCore *core) {
 }
 
 void linphone_core_ensure_registered(LinphoneCore *lc) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived();
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived("");
+}
+
+void linphone_core_process_push_notification(LinphoneCore *lc, const char *call_id) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->pushNotificationReceived(call_id);
 }
 
 LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id) {
