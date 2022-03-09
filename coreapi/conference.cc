@@ -1558,6 +1558,11 @@ bool RemoteConference::focusIsReady () const {
 }
 
 bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> call) {
+	if (!m_focusContact) {
+		lError() << "Conference: could not transfer call " << call << " to empty address";
+		return false;
+	}
+	lInfo() << "conference: focus contact " << m_focusContact;
 	Address referToAddr(m_focusContact);
 	//std::string referToAddr(m_focusCall->getRemoteContact());
 	std::shared_ptr<Participant> participant = findParticipant(call->getActiveSession());
