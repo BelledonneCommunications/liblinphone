@@ -166,9 +166,6 @@ public:
 	
 	/* called by linphone_core_set_video_device() to update the video device in the running call or conference.*/
 	void updateVideoDevice();
-
-	void startPushReceivedBackgroundTask ();
-	void pushReceivedBackgroundTaskEnded ();
 	
 	static const Utils::Version groupChatProtocolVersion;
 	static const Utils::Version ephemeralProtocolVersion;
@@ -196,8 +193,7 @@ private:
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 	belle_sip_source_t *ephemeralTimer = nullptr;
-	belle_sip_source_t *pushTimer = nullptr;
-	unsigned long pushReceivedBackgroundTaskId;
+	BackgroundTask pushReceivedBackgroundTask {"Push received background task"};
 
 	std::list<AudioDevice *> audioDevices;
 	bool stopAsyncEndEnabled = false;

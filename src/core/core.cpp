@@ -268,9 +268,7 @@ void CorePrivate::shutdown() {
 		}
 	}
 
-	if (pushReceivedBackgroundTaskId != 0) {
-		pushReceivedBackgroundTaskEnded();
-	}
+	pushReceivedBackgroundTask.stop();
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.
@@ -315,7 +313,7 @@ void CorePrivate::uninit() {
 
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
-	pushReceivedBackgroundTaskEnded();
+	pushReceivedBackgroundTask.stop();
 	mLdapServers.clear();
 
 #ifdef HAVE_ADVANCED_IM
@@ -447,7 +445,7 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
-CorePrivate::CorePrivate() : authStack(*this), pushReceivedBackgroundTaskId(0) {
+CorePrivate::CorePrivate() : authStack(*this) {
 }
 
 ToneManager & CorePrivate::getToneManager() {
@@ -1062,44 +1060,6 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
 // Misc.
 // -----------------------------------------------------------------------------
 
-static void push_received_background_task_ended(CorePrivate *corePrivate) {
-	corePrivate->pushReceivedBackgroundTaskEnded();
-}
-
-void CorePrivate::pushReceivedBackgroundTaskEnded() {
-	L_Q();
-
-	lWarning() << "Ending push received background task [" << pushReceivedBackgroundTaskId << "]";
-	belle_sip_end_background_task(pushReceivedBackgroundTaskId);
-	pushReceivedBackgroundTaskId = 0;
-
-	if (pushTimer) {
-		q->destroyTimer(pushTimer);
-		pushTimer = nullptr;
-	}
-}
-
-void CorePrivate::startPushReceivedBackgroundTask() {
-	L_Q();
-
-	if (pushTimer) {
-		q->destroyTimer(pushTimer);
-		pushTimer = nullptr;
-	}
-
-	if (pushReceivedBackgroundTaskId == 0) {
-		pushReceivedBackgroundTaskId = belle_sip_begin_background_task("Push received",(void (*)(void*))push_received_background_task_ended, this);
-		lInfo() << "Started push notif background task [" << pushReceivedBackgroundTaskId << "]";
-	} else {
-		lWarning() << "Found existing push notif background task [" << pushReceivedBackgroundTaskId << "]";
-	}
-
-	pushTimer = q->createTimer([this]() -> bool {
-		push_received_background_task_ended(this);
-		return false;
-	}, 20000, "push received background task timeout");
-}
-
 /*
  * pushNotificationReceived() is a critical piece of code.
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
@@ -1111,7 +1071,8 @@ void Core::pushNotificationReceived (const string& callId) {
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
 
 	// Start a background task for 20 seconds to ensure we have time to process the push
-	d->startPushReceivedBackgroundTask();
+	d->pushReceivedBackgroundTask.stop();
+	d->pushReceivedBackgroundTask.start(getSharedFromThis(), 20);
 
 	LinphoneCore *lc = getCCore();
 
@@ -1121,7 +1082,7 @@ void Core::pushNotificationReceived (const string& callId) {
 		bool_t isWifiOnlyCompliant = static_cast<PlatformHelpers *>(lc->platform_helper)->isActiveNetworkWifiOnlyCompliant();
 		if (!isWifiOnlyCompliant) {
 			lError() << "Android Platform Helpers says current network isn't compliant with WiFi only policy, aborting push notification processing!";
-			d->pushReceivedBackgroundTaskEnded();
+			d->pushReceivedBackgroundTask.stop();
  			return;
 		}
 	}
