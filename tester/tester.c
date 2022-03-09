@@ -2065,7 +2065,7 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 		incomingCall = linphone_call_new_incoming_with_callid(mgr->lc, callid);
 		linphone_call_start_basic_incoming_notification(incomingCall);
 		linphone_call_start_push_incoming_notification(incomingCall);
-		linphone_core_ensure_registered(mgr->lc);
+		linphone_core_process_push_notification(mgr->lc, callid);
 	}
 }
 
