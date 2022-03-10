@@ -100,8 +100,45 @@ list<string> IfAddrs::fetchWithGetIfAddrs(){
 }
 #else
 #if defined(_WIN32) || defined(_WIN32_WCE)
+class AddressData{
+public:
+	AddressData(){}
+	AddressData(const std::string& addr, const bool& isIpv6=false, const bool& isRandom=false, const ULONG& preferredLifetime=0) 
+		: mAddress(addr), mIsIpv6(isIpv6), mIsRandom(isRandom), mPreferredLifetime(preferredLifetime)
+	{}
+	AddressData(const AddressData& data)
+		: mAddress(data.mAddress), mIsIpv6(data.mIsIpv6), mIsRandom(data.mIsRandom), mPreferredLifetime(data.mPreferredLifetime)
+	{}
+	std::string mAddress;
+	bool mIsIpv6 = false;
+	bool mIsRandom = false;
+	ULONG mPreferredLifetime = 0;
 
-void getAddress(SOCKET_ADDRESS * pAddr, std::list<std::string> * pList, int *ipv6CountForInterface){
+	static std::list<std::string> toStringList(const std::list<AddressData>& addresses){
+		std::list<std::string> addressesStr;
+		for(auto itAddr = addresses.begin() ; itAddr != addresses.end() ; ++itAddr) {
+			if( !itAddr->mIsIpv6)
+				addressesStr.push_back(itAddr->mAddress);
+			else {
+				// Return only the first IPV6
+				if(!itAddr->mIsRandom){	// The first IPV6 is not a random : check if there is a second and pick it if exists : a temporary address have less time life
+					auto nextIt = itAddr;
+					++nextIt;
+					if(nextIt != addresses.end())
+						addressesStr.push_back(nextIt->mAddress);
+					else // there is no other addresses
+						addressesStr.push_back(itAddr->mAddress);
+				}else
+					addressesStr.push_back(itAddr->mAddress);
+				return addressesStr;
+			}
+		}
+		return addressesStr;
+	}
+};
+
+void getAddress(IP_ADAPTER_UNICAST_ADDRESS * unicastAddress, std::list<AddressData> * pList){
+	SOCKET_ADDRESS * pAddr = &unicastAddress->Address;
 	char szAddr[INET6_ADDRSTRLEN];
 	DWORD dwSize = INET6_ADDRSTRLEN;
 
@@ -113,7 +150,7 @@ void getAddress(SOCKET_ADDRESS * pAddr, std::list<std::string> * pList, int *ipv
 			return;
 		}
 		if (string(szAddr) != string("127.0.0.1")){
-			pList->push_back(szAddr);
+			pList->push_back(AddressData(szAddr));
 		}
 	}else if (pAddr->lpSockaddr->sa_family == AF_INET6 && !IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
 		&& !IN6_IS_ADDR_LOOPBACK(&((struct sockaddr_in6 *)pAddr->lpSockaddr)->sin6_addr)
@@ -123,11 +160,7 @@ void getAddress(SOCKET_ADDRESS * pAddr, std::list<std::string> * pList, int *ipv
 			lInfo() << "ICE on fetchLocalAddresses cannot read IPV6 : " << WSAGetLastError();
 			return;
 		}
-		if (*ipv6CountForInterface == 0){
-			/* We just keep the first IPv6 address for this interface, to filter out temporary and deprecated addresses. */
-			pList->push_back(szAddr);
-		}
-		*ipv6CountForInterface++;
+		pList->push_back(AddressData(szAddr, true, unicastAddress->SuffixOrigin == IpSuffixOriginRandom, unicastAddress->PreferredLifetime));
 	}
 }
 
@@ -140,7 +173,7 @@ list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 	ULONG outBufLen = INET6_ADDRSTRLEN * 64;
 	PIP_ADAPTER_ADDRESSES pAddresses = (IP_ADAPTER_ADDRESSES *)bctbx_malloc(outBufLen);
 	ULONG Iterations = 0;
-	PIP_ADAPTER_ADDRESSES pCurrAddresses = nullptr;
+	PIP_ADAPTER_ADDRESSES pCurrAdapters = nullptr;
 	PIP_ADAPTER_UNICAST_ADDRESS pUnicast = nullptr; 
 	//PIP_ADAPTER_ANYCAST_ADDRESS pAnycast = nullptr;	// Commented just in case we need it
 	//PIP_ADAPTER_MULTICAST_ADDRESS pMulticast = nullptr;
@@ -152,19 +185,24 @@ list<string> IfAddrs::fetchWithGetAdaptersAddresses() {
 		dwRetVal = GetAdaptersAddresses(AF_UNSPEC, flags, nullptr, pAddresses, &outBufLen);
 	}
 	if (dwRetVal == NO_ERROR) {
-		pCurrAddresses = pAddresses;
-		while (pCurrAddresses) {
-			int ipv6CountForInterface = 0;
-			for (pUnicast = pCurrAddresses->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next){
-				getAddress(&pUnicast->Address, &ret, &ipv6CountForInterface);
+		pCurrAdapters = pAddresses;
+		while (pCurrAdapters) {
+			if( pCurrAdapters->OperStatus == IfOperStatusUp ) {
+				std::list<AddressData> addresses;
+				for (pUnicast = pCurrAdapters->FirstUnicastAddress; pUnicast != nullptr; pUnicast = pUnicast->Next){
+					getAddress(pUnicast, &addresses);
+				}
+// Sort list : IPV4 first, then IPV6, Random, PreferredLifeTime
+				addresses.sort([](const AddressData& a, const AddressData& b) {
+					return !a.mIsIpv6 
+							|| ( b.mIsIpv6 && (
+								(a.mIsRandom && !b.mIsRandom)
+								|| ((a.mIsRandom || !a.mIsRandom && !b.mIsRandom) && (a.mPreferredLifetime > b.mPreferredLifetime))
+							));
+				});
+				ret.splice(ret.end(), AddressData::toStringList(addresses));
 			}
-//			pAnycast = pCurrAddresses->FirstAnycastAddress;
-//			for (int i = 0; pAnycast != nullptr; i++, pAnycast = pAnycast->Next)
-//				getAddress(&pAnycast->Address, &ret);
-//			pMulticast = pCurrAddresses->FirstMulticastAddress;
-//			for (int i = 0; pMulticast != nullptr; i++, pMulticast = pMulticast->Next)
-//				getAddress(&pMulticast->Address, &ret);
-			pCurrAddresses = pCurrAddresses->Next;
+			pCurrAdapters = pCurrAdapters->Next;
 		}
 	}
 	bctbx_free(pAddresses);
