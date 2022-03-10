@@ -2846,27 +2846,31 @@ bool_t linphone_core_vibration_on_incoming_call_enabled(LinphoneCore *core) {
 	return core->vibrate_on_incoming_call;
 }
 
-static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig *config, void * userdata, void *system_context, bool_t automatically_start) {
+static void linphone_core_init(LinphoneCore *lc, LinphoneCoreCbs *cbs, LpConfig *config, void *userdata,
+							   void *system_context, bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
 	const char *msplugins_dir;
 	const char *image_resources_dir;
 
 	bctbx_init_logger(FALSE);
-	if (liblinphone_user_log_func && liblinphone_current_log_func == NULL)
-		bctbx_set_log_handler(liblinphone_current_log_func=liblinphone_user_log_func); /*default value*/
+	if (!linphone_config_get_bool(config, "logging", "disable_stdout", FALSE) && liblinphone_user_log_func &&
+		liblinphone_current_log_func == NULL) {
+		bctbx_set_log_handler(liblinphone_current_log_func = liblinphone_user_log_func); /*default value*/
+	}
 
 	ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
 
 	lc->is_unreffing = FALSE;
-	lc->supported_encryptions=NULL;
-	lc->config=linphone_config_ref(config);
-	lc->data=userdata;
+	lc->supported_encryptions = NULL;
+	lc->config = linphone_config_ref(config);
+	lc->data = userdata;
 
 	// We need the Sal on the Android platform helper init
 	lc->sal = std::make_shared<LinphonePrivate::Sal>(nullptr);
 #if defined(PACKAGE_NAME) && defined(LIBLINPHONE_VERSION)
-	lc->sal->setUserAgent(linphone_config_get_string(lc->config, "sip", "user_agent", PACKAGE_NAME "/" LIBLINPHONE_VERSION));
+	lc->sal->setUserAgent(
+		linphone_config_get_string(lc->config, "sip", "user_agent", PACKAGE_NAME "/" LIBLINPHONE_VERSION));
 #else
 	lc->sal->setUserAgent(linphone_config_get_string(lc->config, "sip", "user_agent", "Unknown"));
 #endif
