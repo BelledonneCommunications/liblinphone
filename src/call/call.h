@@ -297,7 +297,6 @@ public:
 
 	LinphoneConference *getConference () const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
-	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	bool attachedToLocalConference() const;
 	bool attachedToRemoteConference() const;
 	void setConference (LinphoneConference *ref);
@@ -317,7 +316,6 @@ private:
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
-	void terminateConference();
 	void cleanupSessionAndUnrefCObjectCall();
 
 	void updateRecordState(SalMediaRecord state);

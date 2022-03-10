@@ -3539,6 +3539,7 @@ bool MediaSession::initiateOutgoing (const string &subject, const Content *conte
 			}else{
 				auto toAddr = linphone_address_as_string(d->log->getToAddress());
 				lInfo() << "Unable to initiate call to " << std::string(toAddr) << " because ICE candidates must be gathered first";
+				ms_free(toAddr);
 				d->queueIceGatheringTask([this, subject, content]() {
 					L_D();
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);

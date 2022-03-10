@@ -390,6 +390,8 @@ public:
 
 	void setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> & session);
 
+	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
+
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
@@ -407,6 +409,7 @@ private:
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();
+	void endConference();
 
 	void onFocusCallStateChanged(LinphoneCallState state);
 	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState);

@@ -382,10 +382,6 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 		getCore()->getPrivate()->setCurrentCall(nullptr);
 	}
 
-	// Terminating or removing participant from conference
-	// Do not wait for 200Ok reponse of BYE because it may take a long time to come back
-	exitFromConference(session);
-
 	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
 #if 0
@@ -414,39 +410,6 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 			lInfo() << "Unable to add participant because conference is in state " << conf_state;
 			ms_free(conf_state);
 		}
-	}
-}
-
-void Call::terminateConference() {
-	auto cConference = getConference();
-	if (cConference) {
-		// If conference is found, start termination
-		// In the case of a local conference, the following lines wil trigger the deletion of the remote conference created for every call added to the local conference
-		auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
-		conference->setState(ConferenceInterface::State::TerminationPending);
-		setConference(nullptr);
-		setConferenceId("");
-	}
-}
-
-void Call::exitFromConference (const shared_ptr<CallSession> &session) {
-	auto cConference = getConference();
-	if (cConference) {
-		if (attachedToLocalConference()) {
-			// Remove participant from local conference
-			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-			CallSession::State sessionState = session->getState();
-			auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
-			conference->removeParticipant(session, (sessionState != LinphonePrivate::CallSession::State::End));
-		} else if (attachedToRemoteConference() && (getTransferState() == LinphonePrivate::CallSession::State::Idle)) {
-			auto cConference = getConference();
-			if (cConference) {
-				auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
-				lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-				terminateConference();
-			}
-		}
-		setConference (nullptr);
 	}
 }
 
@@ -513,39 +476,15 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				}
 			}
 			break;
-		case CallSession::State::PausedByRemote:
-		{
-			if (attachedToRemoteConference() && op && op->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-				Address remoteContactAddress(remoteContactAddressStr);
-				ms_free(remoteContactAddressStr);
-
-				// The call was in conference and the focus removed its attribute to show that the call exited the conference
-				if (!remoteContactAddress.hasParam("isfocus")) {
-					terminateConference();
-				}
-			}
-		}
-		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-			if (op && op->getRemoteContactAddress() && !attachedToLocalConference()) {
+			if (op && op->getRemoteContactAddress() && !getConference()) {
 
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
-				if (attachedToRemoteConference()) {
-					if (!remoteContactAddress.hasParam("isfocus")) {
-						terminateConference();
-					} else {
-						// The conference has sent the reINVITE confirm the joining of the conference
-						auto conference = MediaConference::Conference::toCpp(getConference());
-						if (conference->getState() == ConferenceInterface::State::CreationPending) {
-							conference->finalizeCreation();
-						}
-					}
-				} else if (remoteContactAddress.hasParam("isfocus")) {
+				if (remoteContactAddress.hasParam("isfocus")) {
 					// Check if the request was sent by the focus (remote conference)
 					createRemoteConference(session);
 					auto conference = getConference() ? MediaConference::Conference::toCpp(getConference()) : nullptr;
@@ -559,24 +498,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning:
 		{
-			if (attachedToRemoteConference()) {
-				// The participant rejoins the conference
-				auto conference = MediaConference::Conference::toCpp(getConference());
-				const auto & previousState = getActiveSession()->getPreviousState();
-				// NOTIFY that a participant has been added only if we hit this code following an update from the conference
-				if (previousState != CallSession::State::UpdatedByRemote) {
-					// The participant rejoins the conference
-					time_t creationTime = time(nullptr);
-					conference->notifyParticipantAdded(creationTime, false, conference->getMe());
-				}
-				for (const auto & device : conference->getParticipantDevices()) {
-					device->updateStreamAvailabilities();
-				}
-
-				if (conference->getState() == ConferenceInterface::State::CreationPending) {
-					conference->finalizeCreation();
-				}
-			} else if (op && !attachedToLocalConference()) {
+			if (op && !getConference()) {
 				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
 				const auto & confId = session->getPrivate()->getConferenceId();
 				if (!op->getTo().empty() && conference) {

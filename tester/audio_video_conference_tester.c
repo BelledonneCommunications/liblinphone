@@ -399,10 +399,13 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	bool_t is_remote_conf;
 	bool_t focus_is_up = (focus && ((LinphoneConferenceServer *)focus)->reg_state == LinphoneRegistrationOk);
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
-
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
 	if (focus) lcs=bctbx_list_append(lcs,focus->lc);
+
+	setup_mgr_for_conference(marie);
+	setup_mgr_for_conference(pauline);
+	setup_mgr_for_conference(laure);
 
 	is_remote_conf = (strcmp(linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "conference_type", "local"), "remote") == 0);
 	if(is_remote_conf) BC_ASSERT_PTR_NOT_NULL(focus);
@@ -462,6 +465,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_participant_devices_removed, 1, 5000));
 
 			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -499,6 +503,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_participant_devices_removed, 2, 5000));
 	}
 	bctbx_list_free(new_participants);
 
@@ -549,7 +554,6 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
 
-
 	/*
 	 * FIXME: check_ice() cannot work as it is today because there is no current call for the party that hosts the conference
 	if (linphone_core_get_firewall_policy(marie->lc) == LinphonePolicyUseIce) {
@@ -567,8 +571,8 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	}
 
 	BC_ASSERT_PTR_NOT_NULL(conference = linphone_core_get_conference(marie->lc));
-	marie_conference_address = linphone_address_clone(linphone_conference_get_conference_address(conference));
 	if(conference) {
+		marie_conference_address = linphone_address_clone(linphone_conference_get_conference_address(conference));
 		bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
 		bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
@@ -594,22 +598,25 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 				remove_participant_from_local_conference(lcs, marie, laure, NULL);
 
-				LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
-				LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
-				BC_ASSERT_PTR_NULL(pauline_conference);
-				linphone_address_unref(pauline_uri);
-				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, pauline_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
+				BC_ASSERT_PTR_NOT_NULL(marie_conference_address);
+				if (marie_conference_address) {
+					LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
+					LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
+					BC_ASSERT_PTR_NULL(pauline_conference);
+					linphone_address_unref(pauline_uri);
+					BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, pauline_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
-				LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
-				LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
-				BC_ASSERT_PTR_NULL(laure_conference);
-				linphone_address_unref(laure_uri);
-				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated, laure_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
+					LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
+					LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
+					BC_ASSERT_PTR_NULL(laure_conference);
+					linphone_address_unref(laure_uri);
+					BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated, laure_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
-				LinphoneAddress *marie_uri = linphone_address_new(linphone_core_get_identity(marie->lc));
-				LinphoneConference * marie_conference = linphone_core_search_conference(marie->lc, NULL, marie_uri, marie_conference_address, NULL);
-				BC_ASSERT_PTR_NULL(marie_conference);
-				linphone_address_unref(marie_uri);
+					LinphoneAddress *marie_uri = linphone_address_new(linphone_core_get_identity(marie->lc));
+					LinphoneConference * marie_conference = linphone_core_search_conference(marie->lc, NULL, marie_uri, marie_conference_address, NULL);
+					BC_ASSERT_PTR_NULL(marie_conference);
+					linphone_address_unref(marie_uri);
+				}
 
 			} else {
 				// Call between Marie and Laure
@@ -10676,8 +10683,8 @@ test_t video_conference_tests[] = {
 test_suite_t audio_video_conference_basic_test_suite = {"Audio video conference (Basic)", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 									  sizeof(audio_video_conference_basic_tests) / sizeof(audio_video_conference_basic_tests[0]), audio_video_conference_basic_tests};
 
-test_suite_t video_conference_test_suite = {"Video conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-									  sizeof(video_conference_tests) / sizeof(video_conference_tests[0]), video_conference_tests};
-
 test_suite_t audio_conference_test_suite = {"Audio conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 									  sizeof(audio_conference_tests) / sizeof(audio_conference_tests[0]), audio_conference_tests};
+
+test_suite_t video_conference_test_suite = {"Video conference", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+									  sizeof(video_conference_tests) / sizeof(video_conference_tests[0]), video_conference_tests};
