@@ -713,7 +713,7 @@ void SalCallOp::processTransactionTerminatedCb (void *userCtx, const belle_sip_t
 
 	string method = belle_sip_request_get_method(request);
 	if ((op->mState == State::Terminating)
-		&& (method == "BYE")
+		&& (method == "BYE" || method == "INVITE")
 		&& (!response
 			|| ((belle_sip_response_get_status_code(response) != 401)
 				&& (belle_sip_response_get_status_code(response) != 407)

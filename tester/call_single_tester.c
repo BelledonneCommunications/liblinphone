@@ -1451,6 +1451,31 @@ static void call_with_dns_time_out(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void udp_call_early_cancelled_with_sal_error(void) {
+	LinphoneCoreManager* laure;
+	laure = linphone_core_manager_new( "laure_rc_udp");
+	sal_set_send_error(linphone_core_get_sal(laure->lc), -1);
+	linphone_core_invite(laure->lc, "toto@sip.example.org");
+	BC_ASSERT_TRUE(wait_for(laure->lc,NULL,&laure->stat.number_of_LinphoneCallOutgoingInit,1));
+	BC_ASSERT_TRUE(wait_for(laure->lc,NULL,&laure->stat.number_of_LinphoneCallOutgoingProgress,1));
+	linphone_core_terminate_all_calls(laure->lc);
+	BC_ASSERT_TRUE(wait_for(laure->lc,NULL,&laure->stat.number_of_LinphoneCallEnd,1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc,NULL,&laure->stat.number_of_LinphoneCallReleased,1, 50000));
+	linphone_core_manager_destroy(laure);
+}
+
+static void udp_call_terminated_with_sal_error(void) {
+	LinphoneCoreManager* laure;
+	laure = linphone_core_manager_new( "laure_rc_udp");
+	sal_set_send_error(linphone_core_get_sal(laure->lc), -1);
+	linphone_core_invite(laure->lc, "toto@sip.example.org");
+	BC_ASSERT_TRUE(wait_for(laure->lc,NULL,&laure->stat.number_of_LinphoneCallOutgoingInit,1));
+	BC_ASSERT_TRUE(wait_for(laure->lc,NULL,&laure->stat.number_of_LinphoneCallOutgoingProgress,1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc,NULL,&laure->stat.number_of_LinphoneCallError,1,50000));
+	BC_ASSERT_TRUE(wait_for(laure->lc,NULL,&laure->stat.number_of_LinphoneCallReleased,1));
+	linphone_core_manager_destroy(laure);
+}
+
 static void early_cancelled_call(void) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
@@ -6383,6 +6408,8 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call cancelled without response", call_called_without_any_response),
 	TEST_NO_TAG("Call cancelled without response and network switch", call_called_without_any_response_with_network_switch),
 	TEST_NO_TAG("Early cancelled call", early_cancelled_call),
+	TEST_NO_TAG("Udp call early cancelled with sal error", udp_call_early_cancelled_with_sal_error),
+	TEST_NO_TAG("Udp call terminated with sal error", udp_call_terminated_with_sal_error),
 	TEST_NO_TAG("Call with DNS timeout", call_with_dns_time_out),
 	TEST_NO_TAG("Cancelled ringing call", cancelled_ringing_call),
 	TEST_NO_TAG("Call busy when calling self", call_busy_when_calling_self),
