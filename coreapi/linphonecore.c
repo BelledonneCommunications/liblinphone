@@ -1425,6 +1425,7 @@ static void sound_config_read(LinphoneCore *lc) {
 #ifdef __ANDROID__
 		// Null ring value is allowed, it means using the native ringtone if lc->native_ringing_enabled == true
 		if (!lc->native_ringing_enabled) {
+			ms_warning("Native ringing has been disabled but no ringtone has been defined in sound config, using default one");
 			linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
 		}
 #else
@@ -5576,6 +5577,10 @@ void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable)
 void linphone_core_enable_native_ringing(LinphoneCore *core, bool_t enable) {
 	core->native_ringing_enabled = enable;
 	linphone_config_set_int(core->config, "sound", "use_native_ringing", enable);
+	if (enable == FALSE && linphone_core_get_ring(core) == NULL) {
+		ms_warning("Native ringing has been disabled but no ringtone has been defined in sound config, using default one");
+		linphone_core_set_ring(core, get_default_local_ring(core).c_str());
+	}
 }
 
 bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core) {
