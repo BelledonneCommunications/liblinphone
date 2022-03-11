@@ -218,7 +218,10 @@ list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, 
 	L_D();
 	lDebug() << "[Magic Search] New search: " << filter;
 	std::shared_ptr<list<SearchResult> > resultList;
-
+	SearchRequest request(filter, withDomain, sourceFlags);
+	d->mAsyncData.setSearchRequest(request);
+	if(d->mAutoResetCache)
+		resetSearchCache();
 	if (getSearchCache() != nullptr && !filter.empty()) {
 		resultList = continueSearch(filter, withDomain);
 		resetSearchCache();
@@ -400,12 +403,18 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 				LinphoneParticipant *participant = static_cast<LinphoneParticipant*>(p->data);
 				const LinphoneAddress *addr = linphone_address_clone(linphone_participant_get_address(participant));
 				if (filter.empty() && withDomain.empty()) {
-					if (findAddress(currentList, addr)) continue;
+					if (findAddress(currentList, addr)) {
+						linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+						continue;
+					}
 					resultList.push_back(SearchResult(0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 				} else {
 					unsigned int weight = searchInAddress(addr, filter, withDomain);
 					if (weight > getMinWeight()) {
-						if (findAddress(currentList, addr)) continue;
+						if (findAddress(currentList, addr)) {
+							linphone_address_unref(const_cast<LinphoneAddress *>(addr));
+							continue;
+						}
 						resultList.push_back(SearchResult(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 					}
 				}
@@ -419,12 +428,18 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 			if( peerAddress){
 				LinphoneAddress *addr = linphone_address_clone(peerAddress);
 				if (filter.empty()) {
-					if (findAddress(currentList, addr)) continue;
+					if (findAddress(currentList, addr)) {
+						linphone_address_unref(addr);		
+						continue;
+					}
 					resultList.push_back(SearchResult(0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 				} else {
 					unsigned int weight = searchInAddress(addr, filter, withDomain);
 					if (weight > getMinWeight()) {
-						if (findAddress(currentList, addr)) continue;
+						if (findAddress(currentList, addr)) {
+							linphone_address_unref(addr);
+							continue;
+						}
 						resultList.push_back(SearchResult(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 					}
 				}
@@ -571,7 +586,6 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 		addResultsToResultsList(crResults, *resultList);
 	}
 
-	sortResultsList(resultList);
 	return resultList;
 }
 

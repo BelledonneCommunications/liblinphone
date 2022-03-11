@@ -2388,6 +2388,7 @@ static void ldap_search(void){
 	linphone_magic_search_cbs_set_user_data(searchHandler, stat);
 //------------------------------------------------------------------------
 // Note on LDAP search: " ", "" should get the same results  :all
+
 	for(int i = 0 ; i < 2 ; ++i){
 		linphone_magic_search_get_contacts_async(magicSearch, i == 0 ? " " : "", "", LinphoneMagicSearchSourceLdapServers);
 		BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
@@ -2396,6 +2397,18 @@ static void ldap_search(void){
 		check_results(manager, resultList, LinphoneMagicSearchSourceLdapServers);
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
+
+
+// Test synchronous version
+	resultList = linphone_magic_search_get_contacts(magicSearch, "u", "", LinphoneMagicSearchSourceAll );
+	stat->number_of_LinphoneMagicSearchResultReceived = 0;
+	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),5 , int, "%d");
+	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);	// Laure
+	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 2, "sip:Pauline@ldap.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 3, "sip:pauline@sip.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 4, "sip:u@sip.example.org", NULL);
+	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 
 // Use cn for testing on display names
 	LinphoneLdapParams * params = linphone_ldap_params_clone(linphone_ldap_get_params(ldap));
@@ -2480,7 +2493,7 @@ static void ldap_search(void){
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),1 , int, "%d");
 	_check_friend_result_list(manager->lc, resultList, 0, "sip:Pauline@ldap.example.org", NULL);
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
-	
+
 //------------------------------------------------------------------------
 	linphone_magic_search_cbs_unref(searchHandler);
 	linphone_magic_search_unref(magicSearch);
