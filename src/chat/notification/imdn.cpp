@@ -120,7 +120,8 @@ bool Imdn::isCurrentlySendingImdnMessages() {
 		}
 	}
 	
-	return !sentImdnMessages.empty();
+	// IMDNs are pending if the timer before sending them is not NULL or if the list of IMDN chat message isn't empty
+	return timer != NULL || !sentImdnMessages.empty();
 }
 
 // -----------------------------------------------------------------------------
