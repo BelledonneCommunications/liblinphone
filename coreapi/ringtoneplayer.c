@@ -96,12 +96,16 @@ LinphoneStatus linphone_ringtoneplayer_start_with_cb(MSFactory *factory, Linphon
 		ms_message("the local ringtone is already started");
 		return 2;
 	}
-	if (card!=NULL && ringtone){
+	if (card != NULL && ringtone) {
 		ms_message("Starting local ringtone...");
 		rp->end_of_ringtone = end_of_ringtone;
 		rp->end_of_ringtone_ud = user_data;
 		rp->ringstream=ring_start_with_cb(factory, ringtone,loop_pause_ms,card,notify_end_of_ringtone,rp);
 		return rp->ringstream != NULL ? 0 : 1;
+	} else if (ringtone) {
+		ms_error("Can't start local ringtone without a MSSndCard!");
+	} else {
+		ms_error("Can't start local ringtone without a ringtone to play!");
 	}
 	return 3;
 }
