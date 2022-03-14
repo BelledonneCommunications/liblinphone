@@ -30,17 +30,20 @@ LINPHONE_BEGIN_NAMESPACE
 SearchAsyncData::CbData::~CbData(){
 }
 
-void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data, bool_t haveMoreResults ){
+void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t* searchResults, void* data, bool_t haveMoreResults ){
 	SearchAsyncData::CbData * cbData = (SearchAsyncData::CbData*)data;
-	for (const bctbx_list_t *f = friends ; f != nullptr ; f = bctbx_list_next(f)) {
-		LinphoneAddress *addr = static_cast<LinphoneAddress*>(f->data);
-		if (addr) {
+	std::list<std::shared_ptr<SearchResult>> results = SearchResult::getCppListFromCList(searchResults);
+	for (auto searchResult : results) {
+		if (searchResult) {
 			if (cbData->mFilter.empty() && cbData->mWithDomain.empty()) {
-				cbData->mResult->push_back(SearchResult(0, addr, "", nullptr, cbData->mSourceFlags));
+				searchResult->setWeight(0);
+				cbData->mResult->push_back(searchResult);
 			} else {// We have constraints : add result with weight
-				unsigned int weight = cbData->mParent->searchInAddress(addr, cbData->mFilter, cbData->mWithDomain);
-				if( weight >= cbData->mParent->getMinWeight())
-					cbData->mResult->push_back(SearchResult(weight, addr, "", nullptr, cbData->mSourceFlags));
+				unsigned int weight = cbData->mParent->searchInAddress(searchResult->getAddress(), cbData->mFilter, cbData->mWithDomain);
+				if( weight >= cbData->mParent->getMinWeight()) {
+					searchResult->setWeight(weight);
+					cbData->mResult->push_back(searchResult);
+				}
 			}
 		}
 	}
@@ -56,7 +59,7 @@ SearchAsyncData::~SearchAsyncData(){
 	ms_mutex_destroy(&mLockQueue);
 }
 
-std::list<SearchResult> *SearchAsyncData::createResult(std::list<SearchResult> data){
+std::list<std::shared_ptr<SearchResult>> *SearchAsyncData::createResult(std::list<std::shared_ptr<SearchResult>> data){
 	mProviderResults.push_back(data);
 	return &mProviderResults.back();
 }
@@ -126,7 +129,7 @@ void SearchAsyncData::setSearchRequest(const SearchRequest& request) {
 	mSearchRequest = request;
 }
 
-bool SearchAsyncData::setSearchResults(std::shared_ptr<list<SearchResult> > resultList){
+bool SearchAsyncData::setSearchResults(std::shared_ptr<list<std::shared_ptr<SearchResult>> > resultList){
 	mSearchResults = resultList;
 	return mSearchResults != nullptr;
 }

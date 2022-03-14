@@ -129,7 +129,7 @@ public:
 	 * This function is thread-safe.
 	 * @param predicate A value to be used to replace a format specifier in the format string : 'filter' configuration key.
 	 * This key is a string that contains a format string that follows the same specifications as format in printf.
-	 * @param cb The callback where to get results in the form of 'static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data );'
+	 * @param cb The callback where to get results in the form of 'static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* searchResults, void* data );'
 	 * @param cbData The data to pass to the callback
 	 * @param requestHistory The list of search that have been requested. It is used to make a delay between the same kind of searchs.
 	 * @return true if the request can be processed.

@@ -33,11 +33,11 @@ public:
 	/**
 	 * Regroup findings and keep the best choices.
 	 * 
-	 * A map of string to ensure having uniques.
+	 * A map of sip addresses to ensure having uniques. Value is the number associated to the address
 	 * A list can be all mobile numbers
 	 */
 	std::pair< std::string, int> mName;
-	std::map<std::string, int> mSip;
+	std::map<std::string, std::string> mSip;
 };
 
 LINPHONE_END_NAMESPACE

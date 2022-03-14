@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Belledonne Communications SARL.
+ * Copyright (c) 2021-2022 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -26,6 +26,7 @@
 #include "belle-sip/object++.hh"
 #include "core/core.h"
 #include "core/core-accessor.h"
+#include "../search/search-result.h"
 #include <map>
 #include <vector>
 #include <string>
@@ -51,7 +52,7 @@ public:
 	std::string mFilter;
 	bool_t  complete;
 	bool_t mHaveMoreResults = FALSE;
-	bctbx_list_t* mFoundEntries;
+	std::list<std::shared_ptr<SearchResult>> mFoundEntries;
 	unsigned int mFoundCount;
 	
 private:

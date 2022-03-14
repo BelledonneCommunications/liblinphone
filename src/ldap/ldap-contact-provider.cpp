@@ -26,6 +26,7 @@
 #include "linphone/api/c-types.h"
 #include "ldap.h"
 #include "ldap-params.h"
+#include "../search/search-result.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -373,7 +374,10 @@ int LdapContactProvider::completeContact( LdapContactFields* contact, const char
 				if(mConfig.count("sip_domain")>0 && mConfig.at("sip_domain") != "")
 					linphone_address_set_domain(la, mConfig.at("sip_domain").c_str());
 				char *newSip = linphone_address_as_string(la);
-				contact->mSip[newSip] = 0;
+				char *phoneNumber = linphone_account_normalize_phone_number(linphone_core_get_default_account(mCore->getCCore()), attributeValueLocale.c_str());
+				if(contact->mSip.count(newSip)==0 || contact->mSip[newSip] == "")
+					contact->mSip[newSip] = (phoneNumber ? phoneNumber : "");
+				if(phoneNumber) ms_free(phoneNumber);
 				ms_free(newSip);
 				linphone_address_unref(la);
 			}
@@ -634,12 +638,13 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 							int maxResults = atoi(mConfig["max_results"].c_str());
 							if( maxResults == 0 || req->mFoundCount < (unsigned int) maxResults) {
 								linphone_address_set_display_name(la, ldapData.mName.first.c_str());
-								req->mFoundEntries = bctbx_list_append(req->mFoundEntries, la);
+								std::shared_ptr<SearchResult> searchResult = SearchResult::create((unsigned int)0,la,sipAddress.second, nullptr, LinphoneMagicSearchSourceLdapServers);
+								req->mFoundEntries.push_back(searchResult);
 								++req->mFoundCount;
 							}else{// Have more result (requested max_results+1). Do not store this result to avoid missunderstanding from user.
-								linphone_address_unref(la);
 								req->mHaveMoreResults = TRUE;
 							}
+							linphone_address_unref(la);
 						}
 					}
 				}

@@ -214,10 +214,10 @@ void MagicSearch::getContactListFromFilterAsync (const string &filter, const str
 }
 
 //Public
-list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain, int sourceFlags) {
+list<std::shared_ptr<SearchResult>> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain, int sourceFlags) {
 	L_D();
 	lDebug() << "[Magic Search] New search: " << filter;
-	std::shared_ptr<list<SearchResult> > resultList;
+	std::shared_ptr<list<std::shared_ptr<SearchResult>> > resultList;
 	SearchRequest request(filter, withDomain, sourceFlags);
 	d->mAsyncData.setSearchRequest(request);
 	if(d->mAutoResetCache)
@@ -236,7 +236,7 @@ list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, 
 // Private : used from iterate. This is an auto start. 
 bool MagicSearch::getContactListFromFilterStartAsync (const SearchRequest& request, SearchAsyncData * asyncData) {
 	L_D();
-	std::shared_ptr<list<SearchResult>> returnList = nullptr;
+	std::shared_ptr<list<std::shared_ptr<SearchResult>>> returnList = nullptr;
 	if (getSearchCache() != nullptr && !request.getFilter().empty()) {
 		returnList = continueSearch(request.getFilter(), request.getWithDomain());
 		resetSearchCache();
@@ -253,22 +253,22 @@ static int compareStringItems(const char *a, const char *b) {
 	return strcasecmp(a, b);
 }
 
-static void sortResultsList(std::shared_ptr<list<SearchResult>> resultList) {
+static void sortResultsList(std::shared_ptr<list<std::shared_ptr<SearchResult>>> resultList) {
 	lDebug() << "[Magic Search] Sorting " << resultList->size() << " results";
-	resultList->sort([](const SearchResult& lsr, const SearchResult& rsr) {
-		const char* name1 = lsr.getDisplayName();
-		const char* name2 = rsr.getDisplayName();
+	resultList->sort([](const std::shared_ptr<SearchResult>& lsr, const std::shared_ptr<SearchResult>& rsr) {
+		const char* name1 = lsr->getDisplayName();
+		const char* name2 = rsr->getDisplayName();
 		int nameComp = compareStringItems(name1, name2);
 
 		// Check in order: Friend's display name, address username, address domain, phone number
 		if (nameComp == 0) {
-			if (lsr.getAddress() && rsr.getAddress()) {
-				int usernameComp = compareStringItems(linphone_address_get_username(lsr.getAddress()), linphone_address_get_username(rsr.getAddress()));
+			if (lsr->getAddress() && rsr->getAddress()) {
+				int usernameComp = compareStringItems(linphone_address_get_username(lsr->getAddress()), linphone_address_get_username(rsr->getAddress()));
 				if (usernameComp == 0) {
-					int domainComp = compareStringItems(linphone_address_get_domain(lsr.getAddress()), linphone_address_get_domain(rsr.getAddress()));
+					int domainComp = compareStringItems(linphone_address_get_domain(lsr->getAddress()), linphone_address_get_domain(rsr->getAddress()));
 					if (domainComp == 0) {
-						if (!lsr.getPhoneNumber().empty() && !rsr.getPhoneNumber().empty()) {
-							int phoneComp = strcmp(lsr.getPhoneNumber().c_str(), rsr.getPhoneNumber().c_str());
+						if (!lsr->getPhoneNumber().empty() && !rsr->getPhoneNumber().empty()) {
+							int phoneComp = strcmp(lsr->getPhoneNumber().c_str(), rsr->getPhoneNumber().c_str());
 							if (phoneComp == 0) {
 								return true;
 							} else {
@@ -288,16 +288,16 @@ static void sortResultsList(std::shared_ptr<list<SearchResult>> resultList) {
 	});
 }
 
-list<SearchResult> MagicSearch::processResults(std::shared_ptr<list<SearchResult>> pResultList) {
+list<std::shared_ptr<SearchResult>> MagicSearch::processResults(std::shared_ptr<list<std::shared_ptr<SearchResult>>> pResultList) {
 	uniqueItemsList(pResultList);
 	sortResultsList(pResultList);
 	setSearchCache(pResultList);
    	return getLastSearch();
 }
 
-std::list<SearchResult> MagicSearch::getLastSearch() const {
+std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 	L_D();
-	list<SearchResult> returnList = *getSearchCache();
+	list<std::shared_ptr<SearchResult>> returnList = *getSearchCache();
 	LinphoneProxyConfig *proxy = nullptr;
 	if (getLimitedSearch() && returnList.size() > getSearchLimit()) {
 		auto limitIterator = returnList.begin();
@@ -315,7 +315,7 @@ std::list<SearchResult> MagicSearch::getLastSearch() const {
 				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c){ return tolower(c); });
 				LinphoneAddress *lastResult = linphone_core_interpret_url(this->getCore()->getCCore(), strTmp.c_str());
 				if (lastResult) {
-					returnList.push_back(SearchResult(0, lastResult, "", nullptr, LinphoneMagicSearchSourceRequest));
+					returnList.push_back(SearchResult::create((unsigned int)0, lastResult, "", nullptr, LinphoneMagicSearchSourceRequest));
 					linphone_address_unref(lastResult);
 				}
 			}
@@ -333,21 +333,21 @@ void MagicSearch::setAutoResetCache(const bool_t& enable){
 // Private Methods //
 /////////////////////
 
-std::shared_ptr<list<SearchResult> > MagicSearch::getSearchCache () const {
+std::shared_ptr<list<std::shared_ptr<SearchResult>> > MagicSearch::getSearchCache () const {
 	L_D();
 	return d->mCacheResult;
 }
 
-void MagicSearch::setSearchCache (std::shared_ptr<list<SearchResult>> cache) {
+void MagicSearch::setSearchCache (std::shared_ptr<list<std::shared_ptr<SearchResult>>> cache) {
 	L_D();
 	if (d->mCacheResult != cache)
 		d->mCacheResult = cache;
 }
 
-static bool findAddress (const list<SearchResult> &list, const LinphoneAddress *addr) {
+static bool findAddress (const list<std::shared_ptr<SearchResult>> &list, const LinphoneAddress *addr) {
 	for (auto r : list) {
-		if (r.getAddress()) {
-			if (linphone_address_weak_equal(r.getAddress(), addr)) {
+		if (r->getAddress()) {
+			if (linphone_address_weak_equal(r->getAddress(), addr)) {
 				return true;
 			}
 		}
@@ -355,12 +355,12 @@ static bool findAddress (const list<SearchResult> &list, const LinphoneAddress *
 	return false;
 }
 
-list<SearchResult> MagicSearch::getAddressFromCallLog (
+list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromCallLog (
 	const string &filter,
 	const string &withDomain,
-	const list<SearchResult> &currentList
+	const list<std::shared_ptr<SearchResult>> &currentList
 ) const {
-	list<SearchResult> resultList;
+	list<std::shared_ptr<SearchResult>> resultList;
 	const bctbx_list_t *callLog = linphone_core_get_call_logs(this->getCore()->getCCore());
 
 	// For all call log or when we reach the search limit
@@ -371,12 +371,12 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 		if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
 			if (filter.empty() && withDomain.empty()) {
 				if (findAddress(currentList, addr)) continue;
-				resultList.push_back(SearchResult(0, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+				resultList.push_back(SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
 			} else {
 				unsigned int weight = searchInAddress(addr, filter, withDomain);
 				if (weight > getMinWeight()) {
 					if (findAddress(currentList, addr)) continue;
-					resultList.push_back(SearchResult(weight, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+					resultList.push_back(SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
 				}
 			}
 		}
@@ -386,12 +386,12 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 	return resultList;
 }
 
-list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
+list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromGroupChatRoomParticipants (
 	const string &filter,
 	const string &withDomain,
-	const list<SearchResult> &currentList
+	const list<std::shared_ptr<SearchResult>> &currentList
 ) const {
-	list<SearchResult> resultList;
+	list<std::shared_ptr<SearchResult>> resultList;
 	const bctbx_list_t *chatRooms = linphone_core_get_chat_rooms(this->getCore()->getCCore());
 
 	// For all call log or when we reach the search limit
@@ -407,7 +407,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 						linphone_address_unref(const_cast<LinphoneAddress *>(addr));
 						continue;
 					}
-					resultList.push_back(SearchResult(0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
+					resultList.push_back(SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 				} else {
 					unsigned int weight = searchInAddress(addr, filter, withDomain);
 					if (weight > getMinWeight()) {
@@ -415,7 +415,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 							linphone_address_unref(const_cast<LinphoneAddress *>(addr));
 							continue;
 						}
-						resultList.push_back(SearchResult(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
+						resultList.push_back(SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 					}
 				}
 				if (addr) {
@@ -432,7 +432,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 						linphone_address_unref(addr);		
 						continue;
 					}
-					resultList.push_back(SearchResult(0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
+					resultList.push_back(SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 				} else {
 					unsigned int weight = searchInAddress(addr, filter, withDomain);
 					if (weight > getMinWeight()) {
@@ -440,7 +440,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 							linphone_address_unref(addr);
 							continue;
 						}
-						resultList.push_back(SearchResult(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
+						resultList.push_back(SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceChatRooms));
 					}
 				}
 				linphone_address_unref(addr);
@@ -498,7 +498,7 @@ bool MagicSearch::getAddressIsEndAsync(SearchAsyncData* asyncData)const{
 #ifdef LDAP_ENABLED
 // Synchronous search by iterate directly on main loop if there are async processes
 // Provided for convenience
-std::list<list<SearchResult>> MagicSearch::getAddressFromLDAPServer (
+std::list<list<std::shared_ptr<SearchResult>>> MagicSearch::getAddressFromLDAPServer (
 	const string &filter,
 	const string &withDomain
 ) {
@@ -523,12 +523,12 @@ void MagicSearch::beginNewSearchAsync (const SearchRequest& request, SearchAsync
 	asyncData->setSearchRequest(request);
 	if( (request.getSourceFlags() & LinphoneMagicSearchSourceFriends) == LinphoneMagicSearchSourceFriends){
 		const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
-		list<SearchResult> friendsList;
+		list<std::shared_ptr<SearchResult>> friendsList;
 		for (const bctbx_list_t *fl = friend_lists ; fl != nullptr ; fl = bctbx_list_next(fl)) {
 			LinphoneFriendList *fList = static_cast<LinphoneFriendList*>(fl->data);
 			// For all friends or when we reach the search limit
 			for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-				list<SearchResult> fResults = searchInFriend(static_cast<LinphoneFriend*>(f->data), request.getFilter(), request.getWithDomain());
+				list<std::shared_ptr<SearchResult>> fResults = searchInFriend(static_cast<LinphoneFriend*>(f->data), request.getFilter(), request.getWithDomain());
 				addResultsToResultsList(fResults, friendsList);
 			}
 		}
@@ -540,23 +540,23 @@ void MagicSearch::beginNewSearchAsync (const SearchRequest& request, SearchAsync
 		getAddressFromLDAPServerStartAsync(request.getFilter(), request.getWithDomain(), asyncData);
 #endif
 	if( (request.getSourceFlags() & LinphoneMagicSearchSourceCallLogs) == LinphoneMagicSearchSourceCallLogs)
-		asyncData->createResult(getAddressFromCallLog(request.getFilter(), request.getWithDomain(), list<SearchResult>()));
+		asyncData->createResult(getAddressFromCallLog(request.getFilter(), request.getWithDomain(), list<std::shared_ptr<SearchResult>>()));
 	if( (request.getSourceFlags() & LinphoneMagicSearchSourceChatRooms) == LinphoneMagicSearchSourceChatRooms)
-		asyncData->createResult(getAddressFromGroupChatRoomParticipants(request.getFilter(), request.getWithDomain(), list<SearchResult>()));
+		asyncData->createResult(getAddressFromGroupChatRoomParticipants(request.getFilter(), request.getWithDomain(), list<std::shared_ptr<SearchResult>>()));
 }
 
 void MagicSearch::mergeResults (const SearchRequest& request, SearchAsyncData * asyncData) {
-	std::shared_ptr<list<SearchResult>> resultList = std::make_shared<list<SearchResult>>();
+	std::shared_ptr<list<std::shared_ptr<SearchResult>>> resultList = std::make_shared<list<std::shared_ptr<SearchResult>>>();
 	for(auto it = asyncData->mProviderResults.begin() ; it != asyncData->mProviderResults.end() ; ++it){
 		addResultsToResultsList(*it, *resultList, request.getFilter(), request.getWithDomain());
 	}
 	asyncData->setSearchResults(resultList);
 }
 
-std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &filter, const string &withDomain, int sourceFlags) {
-	list<SearchResult> clResults, crResults;
-	list<list<SearchResult>> multiClResults;
-	std::shared_ptr<list<SearchResult>> resultList = std::make_shared<list<SearchResult>>();
+std::shared_ptr<list<std::shared_ptr<SearchResult>>> MagicSearch::beginNewSearch (const string &filter, const string &withDomain, int sourceFlags) {
+	list<std::shared_ptr<SearchResult>> clResults, crResults;
+	list<list<std::shared_ptr<SearchResult>>> multiClResults;
+	std::shared_ptr<list<std::shared_ptr<SearchResult>>> resultList = std::make_shared<list<std::shared_ptr<SearchResult>>>();
 	
 	if( (sourceFlags & LinphoneMagicSearchSourceFriends) == LinphoneMagicSearchSourceFriends){
 		const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
@@ -565,7 +565,7 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 			LinphoneFriendList *fList = static_cast<LinphoneFriendList*>(fl->data);
 			// For all friends or when we reach the search limit
 			for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-				list<SearchResult> fResults = searchInFriend(static_cast<LinphoneFriend*>(f->data), filter, withDomain);
+				list<std::shared_ptr<SearchResult>> fResults = searchInFriend(static_cast<LinphoneFriend*>(f->data), filter, withDomain);
 				addResultsToResultsList(fResults, *resultList);
 			}
 		}
@@ -589,21 +589,21 @@ std::shared_ptr<list<SearchResult>> MagicSearch::beginNewSearch (const string &f
 	return resultList;
 }
 
-std::shared_ptr<list<SearchResult>> MagicSearch::continueSearch (const string &filter, const string &withDomain) const {
-	std::shared_ptr<list<SearchResult>> resultList = std::make_shared<list<SearchResult>>();
-	const std::shared_ptr<list <SearchResult>> cacheList = getSearchCache();
+std::shared_ptr<list<std::shared_ptr<SearchResult>>> MagicSearch::continueSearch (const string &filter, const string &withDomain) const {
+	std::shared_ptr<list<std::shared_ptr<SearchResult>>> resultList = std::make_shared<list<std::shared_ptr<SearchResult>>>();
+	const std::shared_ptr<list<std::shared_ptr<SearchResult>>> cacheList = getSearchCache();
 
 	const LinphoneFriend *previousFriend = nullptr;
 	for (const auto &sr : *cacheList) {
-		if (sr.getAddress() || !sr.getPhoneNumber().empty()) {
-			if (sr.getFriend() && (!previousFriend || sr.getFriend() != previousFriend)) {
-				list<SearchResult> results = searchInFriend(sr.getFriend(), filter, withDomain);
+		if (sr->getAddress() || !sr->getPhoneNumber().empty()) {
+			if (sr->getFriend() && (!previousFriend || sr->getFriend() != previousFriend)) {
+				list<std::shared_ptr<SearchResult>> results = searchInFriend(sr->getFriend(), filter, withDomain);
 				addResultsToResultsList(results, *resultList);
-				previousFriend = sr.getFriend();
-			} else if (!sr.getFriend()) {
-				unsigned int weight = searchInAddress(sr.getAddress(), filter, withDomain);
+				previousFriend = sr->getFriend();
+			} else if (!sr->getFriend()) {
+				unsigned int weight = searchInAddress(sr->getAddress(), filter, withDomain);
 				if (weight > getMinWeight()) {
-					resultList->push_back(SearchResult(weight, sr.getAddress(), sr.getPhoneNumber(), nullptr, sr.getSourceFlags()));
+					resultList->push_back(SearchResult::create(weight, sr->getAddress(), sr->getPhoneNumber(), nullptr, sr->getSourceFlags()));
 				}
 			}
 		}
@@ -612,8 +612,8 @@ std::shared_ptr<list<SearchResult>> MagicSearch::continueSearch (const string &f
 	return resultList;
 }
 
-list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, const string &filter, const string &withDomain) const{
-	list<SearchResult> friendResult;
+list<std::shared_ptr<SearchResult>> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, const string &filter, const string &withDomain) const{
+	list<std::shared_ptr<SearchResult>> friendResult;
 	string phoneNumber = "";
 	unsigned int weight = getMinWeight();
 
@@ -641,7 +641,7 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 		unsigned int weightAddress = searchInAddress(lAddress, filter, withDomain) * 1;
 
 		if ((weightAddress + weight) > getMinWeight()) {
-			friendResult.push_back(SearchResult(weight + weightAddress, lAddress, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
+			friendResult.push_back(SearchResult::create(weight + weightAddress, lAddress, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
 		}
 	}
 
@@ -669,7 +669,7 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 					if (withDomain.empty() || withDomain == "*" || compareStringItems(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) {
 						weightNumber += getWeight(contact, filter) * 2;
 						if ((weightNumber + weight) > getMinWeight()) {
-							friendResult.push_back(SearchResult(weight + weightNumber, tmpAdd, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
+							friendResult.push_back(SearchResult::create(weight + weightNumber, tmpAdd, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
 						}
 						linphone_address_unref(tmpAdd);
 						bctbx_free(contact);
@@ -678,7 +678,7 @@ list<SearchResult> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, c
 			}
 		} else {
 			if ((weightNumber + weight) > getMinWeight() && withDomain.empty()) {
-				friendResult.push_back(SearchResult(weight + weightNumber, nullptr, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
+				friendResult.push_back(SearchResult::create(weight + weightNumber, nullptr, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
 			}
 		}
 		phoneNumbers = phoneNumbers->next;
@@ -771,21 +771,21 @@ bool MagicSearch::checkDomain (const LinphoneFriend *lFriend, const LinphoneAddr
 	return soFarSoGood;
 }
 
-void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const {
+void MagicSearch::addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL) const {
 	if (!results.empty()) {
 		srL.splice(srL.end(), results);
 	}
 }
 
-void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL, const std::string filter, const std::string& withDomain) const {
+void MagicSearch::addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL, const std::string filter, const std::string& withDomain) const {
 	auto itResult = results.begin();
 	while(itResult != results.end()){// Merge addresses that are already in srL
-		const LinphoneAddress * addr = itResult->getAddress();
-		auto srLAddress = std::find_if(srL.begin(), srL.end(), [addr](const SearchResult& r){
-									return r.getAddress() && linphone_address_weak_equal(r.getAddress(), addr);
+		const LinphoneAddress * addr = (*itResult)->getAddress();
+		auto srLAddress = std::find_if(srL.begin(), srL.end(), [addr](const std::shared_ptr<SearchResult>& r){
+									return r->getAddress() && linphone_address_weak_equal(r->getAddress(), addr);
 							});
 		if( srLAddress != srL.end()){
-			srLAddress->merge(*itResult);
+			(*srLAddress)->merge(*itResult);
 			itResult = results.erase(itResult);
 		}else
 			++itResult;
@@ -795,20 +795,20 @@ void MagicSearch::addResultsToResultsList (std::list<SearchResult> &results, std
 	}
 }
 
-void MagicSearch::uniqueItemsList (std::shared_ptr<list<SearchResult>> list) const {
+void MagicSearch::uniqueItemsList (std::shared_ptr<list<std::shared_ptr<SearchResult>>> list) const {
 	lDebug() << "[Magic Search] List size before unique = " << list->size();
-	list->unique([](const SearchResult& lsr, const SearchResult& rsr){
+	list->unique([](const std::shared_ptr<SearchResult>& lsr, const std::shared_ptr<SearchResult>& rsr){
 		bool sip_addresses = false;
-		const LinphoneAddress *left = lsr.getAddress();
-		const LinphoneAddress *right = rsr.getAddress();
+		const LinphoneAddress *left = lsr->getAddress();
+		const LinphoneAddress *right = rsr->getAddress();
 		if (left == nullptr && right == nullptr) {
 			sip_addresses = true;
 		} else if (left != nullptr && right != nullptr) {
 			sip_addresses = linphone_address_weak_equal(left, right);
 		}
 
-		bool phone_numbers = lsr.getPhoneNumber() == rsr.getPhoneNumber();
-		bool capabilities = lsr.getCapabilities() == rsr.getCapabilities();
+		bool phone_numbers = lsr->getPhoneNumber() == rsr->getPhoneNumber();
+		bool capabilities = lsr->getCapabilities() == rsr->getCapabilities();
 		return sip_addresses && phone_numbers && capabilities;
 	});
 	lDebug() << "[Magic Search] List size after unique = " << list->size();

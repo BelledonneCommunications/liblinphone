@@ -41,7 +41,7 @@ private:
 	
 	belle_sip_source_t * mIteration;
 
-	std::shared_ptr< std::list<SearchResult>> mCacheResult;
+	std::shared_ptr< std::list<std::shared_ptr<SearchResult>>> mCacheResult;
 	SearchAsyncData mAsyncData;
 	
 	L_DECLARE_PUBLIC(MagicSearch);

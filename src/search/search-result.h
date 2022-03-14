@@ -20,20 +20,20 @@
 #ifndef _L_SEARCH_RESULT_H_
 #define _L_SEARCH_RESULT_H_
 
+#include <belle-sip/object++.hh>
+#include "linphone/api/c-types.h"
 #include "linphone/types.h"
-#include "linphone/utils/general.h"
 
-#include "object/clonable-object.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SearchResultPrivate;
-
-class LINPHONE_PUBLIC SearchResult : public ClonableObject {
+class LINPHONE_PUBLIC SearchResult : public bellesip::HybridObject<LinphoneSearchResult, SearchResult> {
 public:
 	// TODO: Use C++ Address! Not LinphoneAddress.
+	SearchResult();
 	SearchResult (const unsigned int weight, const LinphoneAddress *a, const std::string &pn, const LinphoneFriend *f, int sourceFlags);
 	SearchResult (const SearchResult &other);
 	~SearchResult ();
@@ -51,7 +51,7 @@ public:
 		return str;
 	}
 
-	std::string toString() const;
+	std::string toString() const override;
 
 	const char* getDisplayName() const;
 
@@ -86,6 +86,12 @@ public:
 	unsigned int getWeight () const;
 	
 	/**
+	 * @param the result weight to set. Default is 0.
+	 **/
+	void setWeight(const unsigned int& weight);
+	
+	
+	/**
 	 * @return the source flags associated to the result
 	 **/
 	int getSourceFlags() const;
@@ -93,10 +99,17 @@ public:
 	/**
 	 * @brief Merge the results with withResult : add sourceFlags, complete missing field (no override if weight is lesser than current weight)
 	 **/
-	void merge(const SearchResult& withResult);
+	void merge(const std::shared_ptr<SearchResult>& withResult);
 
 private:
-	L_DECLARE_PRIVATE(SearchResult);
+	void updateCapabilities ();
+
+	int mSourceFlags;
+	const LinphoneFriend *mFriend;
+	const LinphoneAddress *mAddress;
+	std::string mPhoneNumber;
+	int mCapabilities = LinphoneFriendCapabilityGroupChat | LinphoneFriendCapabilityLimeX3dh | LinphoneFriendCapabilityEphemeralMessages;
+	unsigned int mWeight;
 };
 
 LINPHONE_END_NAMESPACE
