@@ -129,7 +129,7 @@ public:
 	 * @param[in] sourceFlags Make a search in selected sources
 	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
 	 **/
-	std::list<SearchResult> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "", int sourceFlags = LinphoneMagicSearchSourceAll);
+	std::list<std::shared_ptr<SearchResult>> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "", int sourceFlags = LinphoneMagicSearchSourceAll);
 
 	/**
 	 * Create a sorted list of SearchResult from SipUri, Contact name,
@@ -150,7 +150,7 @@ public:
 	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
 	 * 
 	 **/
-	std::list<SearchResult> getLastSearch() const;
+	std::list<std::shared_ptr<SearchResult>> getLastSearch() const;
 	
 // When a new search start, let MagicSearch to clean its cache. Default to true.
 	void setAutoResetCache(const bool_t& enable);
@@ -162,14 +162,14 @@ private:
 	 * @return the cache of precedent result
 	 * @private
 	 **/
-	std::shared_ptr<std::list<SearchResult> > getSearchCache () const;
+	std::shared_ptr<std::list<std::shared_ptr<SearchResult> > > getSearchCache () const;
 
 	/**
 	 * Save a result for future search
 	 * @param[in] cache result we want to save
 	 * @private
 	 **/
-	void setSearchCache (std::shared_ptr<std::list<SearchResult>> cache);
+	void setSearchCache (std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> cache);
 
 	/**
 	 * Get all addresses from call log
@@ -179,10 +179,10 @@ private:
 	 * @return all addresses from call log which match in a SearchResult list
 	 * @private
 	 **/
-	std::list<SearchResult> getAddressFromCallLog (
+	std::list<std::shared_ptr<SearchResult>> getAddressFromCallLog (
 		const std::string &filter,
 		const std::string &withDomain,
-		const std::list<SearchResult> &currentList
+		const std::list<std::shared_ptr<SearchResult>> &currentList
 	) const;
 
 	/**
@@ -193,10 +193,10 @@ private:
 	 * @return all address from chat rooms participants which match in a SearchResult list
 	 * @private
 	 **/
-	std::list<SearchResult> getAddressFromGroupChatRoomParticipants (
+	std::list<std::shared_ptr<SearchResult>> getAddressFromGroupChatRoomParticipants (
 		const std::string &filter,
 		const std::string &withDomain,
-		const std::list<SearchResult> &currentList
+		const std::list<std::shared_ptr<SearchResult>> &currentList
 	) const;
 
 #ifdef LDAP_ENABLED
@@ -207,7 +207,7 @@ private:
 	 * @return all address from chat rooms participants which match in a SearchResult list
 	 * @private
 	 **/
-	std::list<std::list<SearchResult> > getAddressFromLDAPServer(
+	std::list<std::list<std::shared_ptr<SearchResult>> > getAddressFromLDAPServer(
 		const std::string &filter,
 		const std::string &withDomain
 	);
@@ -219,7 +219,7 @@ private:
 	 * @return all friends in a SearchResult list
 	 * @private
 	 **/
-	std::list<SearchResult> getFriends (const std::string &withDomain) const;
+	std::list<std::shared_ptr<SearchResult>> getFriends (const std::string &withDomain) const;
 
 	/**
 	 * Begin the search from friend list
@@ -228,7 +228,7 @@ private:
 	 * @param[in] sourceFlags Flags where to search #LinphoneMagicSearchSource
 	 * @private
 	 **/
-	std::shared_ptr<std::list<SearchResult> > beginNewSearch (const std::string &filter, const std::string &withDomain, int sourceFlags);
+	std::shared_ptr<std::list<std::shared_ptr<SearchResult>> > beginNewSearch (const std::string &filter, const std::string &withDomain, int sourceFlags);
 
 	/**
 	 * Continue the search from the cache of precedent search
@@ -236,7 +236,7 @@ private:
 	 * @param[in] withDomain domain which we want to search only
 	 * @private
 	 **/
-	std::shared_ptr<std::list<SearchResult> > continueSearch (const std::string &filter, const std::string &withDomain) const;
+	std::shared_ptr<std::list<std::shared_ptr<SearchResult>> > continueSearch (const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Search informations in friend given
@@ -246,7 +246,7 @@ private:
 	 * @return list of result from friend
 	 * @private
 	 **/
-	std::list<SearchResult> searchInFriend (const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain) const;
+	std::list<std::shared_ptr<SearchResult>> searchInFriend (const LinphoneFriend* lFriend, const std::string &filter, const std::string &withDomain) const;
 
 	/**
 	 * Search informations in address given
@@ -275,9 +275,9 @@ private:
 	 **/
 	bool checkDomain (const LinphoneFriend* lFriend, const LinphoneAddress *lAddress, const std::string &withDomain) const;
 
-	void addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL) const;
+	void addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL) const;
 
-	void uniqueItemsList (std::shared_ptr<std::list<SearchResult>> list) const;
+	void uniqueItemsList (std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> list) const;
 	enum{
 		STATE_START,
 		STATE_WAIT,
@@ -323,7 +323,7 @@ private:
 	 * @brief processResults Clean for unique items and set the cache.
 	 * @return the cleaned list.
 	 */
-	std::list<SearchResult> processResults(std::shared_ptr<std::list<SearchResult> >);
+	std::list<std::shared_ptr<SearchResult>> processResults(std::shared_ptr<std::list<std::shared_ptr<SearchResult>> >);
 	
 	/**
 	 * @brief beginNewSearchAsync Same as beginNewSearch but on an asynchronous version : it will build the SearchAsyncData from async providers like LDAP.
@@ -339,7 +339,7 @@ private:
 	 * @param filter word we search.
 	 * @param withDomain domain which we want to search only.
 	 */
-	void addResultsToResultsList (std::list<SearchResult> &results, std::list<SearchResult> &srL, const std::string filter, const std::string& withDomain) const;
+	void addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL, const std::string filter, const std::string& withDomain) const;
 
 	int mState;
 	/**

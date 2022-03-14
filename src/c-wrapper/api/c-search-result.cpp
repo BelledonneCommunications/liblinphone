@@ -20,7 +20,7 @@
 #include "search/search-result.h"
 #include "c-wrapper/c-wrapper.h"
 
-L_DECLARE_C_CLONABLE_OBJECT_IMPL(SearchResult);
+using namespace LinphonePrivate;
 
 LinphoneSearchResult *linphone_search_result_ref (LinphoneSearchResult *searchResult) {
 	belle_sip_object_ref(searchResult);
@@ -32,29 +32,29 @@ void linphone_search_result_unref (LinphoneSearchResult *searchResult) {
 }
 
 const LinphoneFriend *linphone_search_result_get_friend (const LinphoneSearchResult *searchResult) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getFriend();
+	return SearchResult::toCpp(searchResult)->getFriend();
 }
 
 const LinphoneAddress *linphone_search_result_get_address (const LinphoneSearchResult *searchResult) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getAddress();
+	return SearchResult::toCpp(searchResult)->getAddress();
 }
 
 const char *linphone_search_result_get_phone_number (const LinphoneSearchResult *searchResult) {
-	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getPhoneNumber());
+	return L_STRING_TO_C(SearchResult::toCpp(searchResult)->getPhoneNumber());
 }
 
 int linphone_search_result_get_capabilities (const LinphoneSearchResult *searchResult) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getCapabilities();
+	return SearchResult::toCpp(searchResult)->getCapabilities();
 }
 
 bool_t linphone_search_result_has_capability (const LinphoneSearchResult *searchResult, const LinphoneFriendCapability capability) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->hasCapability(capability);
+	return SearchResult::toCpp(searchResult)->hasCapability(capability);
 }
 
 unsigned int linphone_search_result_get_weight (const LinphoneSearchResult *searchResult) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getWeight();
+	return SearchResult::toCpp(searchResult)->getWeight();
 }
 
 int linphone_search_result_get_source_flags (const LinphoneSearchResult *searchResult) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(searchResult)->getSourceFlags();
+	return SearchResult::toCpp(searchResult)->getSourceFlags();
 }

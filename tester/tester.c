@@ -2665,19 +2665,25 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 	if (lf || linphone_search_result_get_address(sr)) {
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
 			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
-		if (la) {
-			char* fa = linphone_address_as_string_uri_only(la);
-			BC_ASSERT_STRING_EQUAL(fa , uri);
-			free(fa);
-			return;
-		} else if (phone) {
-			const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, phone);
-			if (BC_ASSERT_PTR_NOT_NULL(presence)) {
-				char *contact = linphone_presence_model_get_contact(presence);
-				BC_ASSERT_STRING_EQUAL(contact, uri);
-				free(contact);
+		
+		if(uri){	// Check on address
+			if (la) {
+				char* fa = linphone_address_as_string_uri_only(la);
+				BC_ASSERT_STRING_EQUAL(fa , uri);
+				free(fa);
 				return;
+			} else if (phone) {
+				const LinphonePresenceModel *presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, phone);
+				if (BC_ASSERT_PTR_NOT_NULL(presence)) {
+					char *contact = linphone_presence_model_get_contact(presence);
+					BC_ASSERT_STRING_EQUAL(contact, uri);
+					free(contact);
+					return;
+				}
 			}
+		}else if(phone){	// Check on phone number
+			BC_ASSERT_STRING_EQUAL(linphone_search_result_get_phone_number(sr), phone);
+			return;
 		}
 	} else {
 		const bctbx_list_t *callLog = linphone_core_get_call_logs(lc);

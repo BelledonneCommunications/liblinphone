@@ -2349,8 +2349,8 @@ static void async_search_friend_in_sources(void){
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),5 , int, "%d");
-	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);	// Laure
-	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);	// Laure. Note : we get it as an address because of linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
+	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", "+33655667788");
 	_check_friend_result_list(manager->lc, resultList, 2, "sip:Pauline@ldap.example.org", NULL);
 	_check_friend_result_list(manager->lc, resultList, 3, "sip:pauline@sip.example.org", NULL);
 	_check_friend_result_list(manager->lc, resultList, 4, "sip:u@sip.example.org", NULL);
@@ -2403,8 +2403,9 @@ static void ldap_search(void){
 	resultList = linphone_magic_search_get_contacts(magicSearch, "u", "", LinphoneMagicSearchSourceAll );
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),5 , int, "%d");
-	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);	// Laure
-	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);	// Laure. Note : we get it as an address because of linphone_ldap_params_set_sip_attribute(params, "mobile,telephoneNumber,homePhone,sn");
+	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", "+33655667788");
+	_check_friend_result_list(manager->lc, resultList, 1, NULL, "+33655667788");
 	_check_friend_result_list(manager->lc, resultList, 2, "sip:Pauline@ldap.example.org", NULL);
 	_check_friend_result_list(manager->lc, resultList, 3, "sip:pauline@sip.example.org", NULL);
 	_check_friend_result_list(manager->lc, resultList, 4, "sip:u@sip.example.org", NULL);
@@ -2459,7 +2460,7 @@ static void ldap_search(void){
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),2 , int, "%d");
 	_check_friend_result_list(manager->lc, resultList, 0, "sip:+33655667788@ldap.example.org", NULL);
-	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", NULL);
+	_check_friend_result_list(manager->lc, resultList, 1, "sip:Laure@ldap.example.org", "+33655667788");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
 	linphone_magic_search_get_contacts_async(magicSearch, "pa ine", "", LinphoneMagicSearchSourceLdapServers);

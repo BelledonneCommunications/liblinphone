@@ -24,6 +24,7 @@
 // =============================================================================
 
 using namespace std;
+using namespace LinphonePrivate;
 
 static void _linphone_magic_search_constructor (LinphoneMagicSearch *magic);
 static void _linphone_magic_search_destructor (LinphoneMagicSearch *magic);
@@ -171,7 +172,7 @@ bctbx_list_t *linphone_magic_search_get_contacts (
 	const char *domain,
 	int sourceFlags
 ) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
+	return SearchResult::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
 		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags
 	));
 }
@@ -181,7 +182,7 @@ bctbx_list_t *linphone_magic_search_get_contact_list_from_filter (
 	const char *filter,
 	const char *domain
 ) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
+	return SearchResult::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
 		L_C_TO_STRING(filter), L_C_TO_STRING(domain), LinphoneMagicSearchSourceAll
 	));
 }
@@ -210,5 +211,5 @@ void linphone_magic_search_get_contact_list_from_filter_async (
 }
 
 LINPHONE_PUBLIC bctbx_list_t* linphone_magic_search_get_last_search(const LinphoneMagicSearch *magic_search){
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getLastSearch());
+	return SearchResult::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getLastSearch());
 }

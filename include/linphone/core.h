@@ -4728,7 +4728,7 @@ LINPHONE_PUBLIC void linphone_core_set_echo_canceller_filter_name(LinphoneCore *
 /** Contact Providers
   */
 
-typedef void (*ContactSearchCallback)( LinphoneContactSearch* id, bctbx_list_t* friends, void* data, bool_t haveMoreResults );
+typedef void (*ContactSearchCallback)( LinphoneContactSearch* id, bctbx_list_t* searchResults, void* data, bool_t haveMoreResults );
 
 /**
  * Set URI where to download xml configuration file at startup.

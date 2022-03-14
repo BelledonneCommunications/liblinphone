@@ -36,12 +36,12 @@ public:
 	/**
 	 * @brief mSearchResults This is the final result to use.
 	 */
-	std::shared_ptr<std::list<SearchResult>> mSearchResults;
+	std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> mSearchResults;
 
 	/**
 	 * @brief mProviderResults All results stored for each providers.
 	 */
-	std::list<std::list<SearchResult> > mProviderResults;
+	std::list<std::list<std::shared_ptr<SearchResult>> > mProviderResults;
 	
 	/**
 	 * @brief mSearchRequest Search criteria.
@@ -69,10 +69,10 @@ public:
 		 * @brief resultsCb Callback that is call when a result has to be used.
 		 * By default, it will set mEnd to true on the first call of this callback.
 		 * @param id The current search request.
-		 * @param friends List of address as results. Data depends of the provider.
+		 * @param searchResults List of #SearchResult. Data depends of the provider.
 		 * @param data User data coming from Callback binding.
 		 */
-		static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* friends, void* data, bool_t haveMoreResults );
+		static void resultsCb( LinphoneContactSearch* id, bctbx_list_t* searchResults, void* data, bool_t haveMoreResults );
 
 		/**
 		 * @brief mEnd Search is over.
@@ -87,12 +87,13 @@ public:
 		/**
 		 * @brief mResult Pointer to a result data that is inside parent.
 		 */
-		std::list<SearchResult> *mResult;
+		std::list<std::shared_ptr<SearchResult>> *mResult;
 
 		/**
 		 * @brief mFilter Filter Request
 		 */		
 		std::string mFilter;
+		
 		/**
 		 * @brief mWithDomain Domain Request
 		 */
@@ -123,7 +124,7 @@ public:
 	 * @param data Initialize list as results.
 	 * @return 
 	 */
-	std::list<SearchResult> *createResult(std::list<SearchResult> data = std::list<SearchResult>());
+	std::list<std::shared_ptr<SearchResult>> *createResult(std::list<std::shared_ptr<SearchResult>> data = std::list<std::shared_ptr<SearchResult>>());
 
 	/**
 	 * @brief getCurrentRequest Get the current request if there is one in the queue.
@@ -175,7 +176,7 @@ public:
 	 * @param resultList The search result list.
 	 * @return true if results are not null.
 	 */
-	bool setSearchResults(std::shared_ptr<std::list<SearchResult> > resultList);
+	bool setSearchResults(std::shared_ptr<std::list<std::shared_ptr<SearchResult>> > resultList);
 
 
 	/**

@@ -30,7 +30,6 @@ LINPHONE_BEGIN_NAMESPACE
 LdapContactSearch::LdapContactSearch(const int& msgId){
 	mMsgId = msgId;
 	mFoundCount = 0;
-	mFoundEntries = NULL;
 	complete = 0;
 	mHaveMoreResults = FALSE;
 }
@@ -41,7 +40,6 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string p
 	mCbData = cbData;
 	mMsgId = 0;
 	mFoundCount = 0;
-	mFoundEntries = NULL;
 	complete = 0;
 	mHaveMoreResults = 0;
 	
@@ -64,15 +62,14 @@ LdapContactSearch::LdapContactSearch(LdapContactProvider * parent, std::string p
 	bctoolbox::Utils::replace( mFilter, "**", "*", false);// Do not step as replacement can still contain double stars.
 }
 
-static void destroy_address( void* entry ){
-	linphone_address_unref((LinphoneAddress*)entry);
-}
 LdapContactSearch::~LdapContactSearch(){
-	if(mFoundEntries)
-		bctbx_list_free_with_data(mFoundEntries, destroy_address);
 }
 
 void LdapContactSearch::callCallback(){
-	mCb(NULL, mFoundEntries, mCbData, mHaveMoreResults);
+	bctbx_list_t* results = SearchResult::getCListFromCppList(mFoundEntries);
+	mCb(NULL, results, mCbData, mHaveMoreResults);
+	if (results) {
+		bctbx_list_free_with_data(results, (bctbx_list_free_func)linphone_search_result_unref);
+	}
 }
 LINPHONE_END_NAMESPACE
