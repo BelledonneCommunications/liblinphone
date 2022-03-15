@@ -693,6 +693,63 @@ static void call_terminated_during_ice_reinvite(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_ice_and_dual_stack_stun_server(void){
+	LinphoneCoreManager * marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
+	LinphoneCall *pauline_call, *marie_call;
+	LinphoneNatPolicy *pol;
+	
+	pol = linphone_core_get_nat_policy(marie->lc);
+	pol = linphone_nat_policy_clone(pol);
+	linphone_nat_policy_set_stun_server(pol, "sip.example.org"); /* this host has ipv4 and ipv6 address.*/
+	linphone_nat_policy_enable_stun(pol, TRUE);
+	linphone_nat_policy_enable_ice(pol, TRUE);
+	linphone_core_set_nat_policy(marie->lc, pol);
+	linphone_nat_policy_unref(pol);
+	linphone_core_manager_wait_for_stun_resolution(marie);
+
+	enable_stun_in_core(pauline, TRUE, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(pauline);
+
+
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	if (marie_call && pauline_call){
+		std::string paulineConnectionAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress();
+		std::string marieConnectionAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress();
+		
+		/* The stun server shall provide marie with an IPv4 address, that we should find in c= of SDP.*/
+		BC_ASSERT_TRUE(marieConnectionAddress.find(':') == std::string::npos);
+		
+		/* Pauline has an IPv4-only stun server, that is expected to work. */
+		bool isBehindNat = !is_matching_a_local_address(paulineConnectionAddress, local_addresses);
+		
+		linphone_call_accept(pauline_call);
+		
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+		
+		if (isBehindNat){
+			/*check immmediately that the offer has a c line with a v4 IP address that is not the local one, which means
+			that STUN discovery was successful.*/
+			BC_ASSERT_FALSE(is_matching_a_local_address(marieConnectionAddress, local_addresses));
+		}else{
+			ms_warning("Test skipped, the tester is not behind a NAT.");
+		}
+		
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		check_ice(marie, pauline, LinphoneIceStateHostConnection);
+	}
+	end_call(marie, pauline);
+	bctbx_list_free_with_data(local_addresses, bctbx_free);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 
 static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE in IPv4 with IPv6 enabled", call_with_ice_in_ipv4_with_v6_enabled, "ICE"),
@@ -736,7 +793,8 @@ static test_t call_with_ice_tests[] = {
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with caller ice and rtcp mux", dtls_srtp_call_paused_resumed_with_caller_ice_and_rtcp_mux, "ICE", "DTLS"),
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with callee ice and rtcp mux", dtls_srtp_call_paused_resumed_with_callee_ice_and_rtcp_mux, "ICE", "DTLS"),
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with both ice and rtcp mux", dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE", "DTLS"),
-	TEST_ONE_TAG("Call terminated during ICE re-INVITE", call_terminated_during_ice_reinvite, "ICE")
+	TEST_ONE_TAG("Call terminated during ICE re-INVITE", call_terminated_during_ice_reinvite, "ICE"),
+	TEST_ONE_TAG("Call with ICE using dual-stack stun server", call_with_ice_and_dual_stack_stun_server, "ICE")
 };
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

@@ -649,7 +649,7 @@ void IceService::gatheringFinished () {
 const struct addrinfo *IceService::getIcePreferredStunServerAddrinfo (const struct addrinfo *ai) {
 	// Search for NAT64 addrinfo.
 	const struct addrinfo *it = ai;
-	while (it) {
+	for (it = ai ; it != nullptr; it = it->ai_next) {
 		if (it->ai_family == AF_INET6) {
 			struct sockaddr_storage ss;
 			socklen_t sslen = sizeof(ss);
@@ -657,28 +657,29 @@ const struct addrinfo *IceService::getIcePreferredStunServerAddrinfo (const stru
 			bctbx_sockaddr_remove_nat64_mapping(it->ai_addr, (struct sockaddr *)&ss, &sslen);
 			if (ss.ss_family == AF_INET) break;
 		}
-		it = it->ai_next;
 	}
 	const struct addrinfo *preferredAi = it;
 	if (!preferredAi) {
 		// Search for IPv4 addrinfo.
-		it = ai;
-		while (it) {
+		for (it = ai ; it != nullptr; it = it->ai_next) {
+			char ip_port[128] = {0};
+			bctbx_addrinfo_to_printable_ip_address(it, ip_port, sizeof(ip_port)-1);
 			if (it->ai_family == AF_INET)
 				break;
-			if ((it->ai_family == AF_INET6) && (it->ai_flags & AI_V4MAPPED))
-				break;
-			it = it->ai_next;
+			if (it->ai_family == AF_INET6){
+				struct sockaddr_in6 * in6 = (struct sockaddr_in6*) it->ai_addr;
+				if (IN6_IS_ADDR_V4MAPPED(&in6->sin6_addr)){
+					break;
+				}
+			}
 		}
 		preferredAi = it;
 	}
 	if (!preferredAi) {
 		// Search for IPv6 addrinfo.
-		it = ai;
-		while (it) {
+		for (it = ai ; it != nullptr; it = it->ai_next) {
 			if (it->ai_family == AF_INET6)
 				break;
-			it = it->ai_next;
 		}
 		preferredAi = it;
 	}

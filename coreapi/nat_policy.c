@@ -48,18 +48,6 @@ static void linphone_nat_policy_destroy(LinphoneNatPolicy *policy) {
 	}
 }
 
-static void _linphone_nat_policy_clone(LinphoneNatPolicy *pol, const LinphoneNatPolicy *otherPol){
-	if (otherPol->stun_server) pol->stun_server = bctbx_strdup(otherPol->stun_server);
-	if (otherPol->stun_server_username) pol->stun_server_username = bctbx_strdup(otherPol->stun_server_username);
-	pol->ice_enabled = otherPol->ice_enabled;
-	pol->stun_enabled = otherPol->stun_enabled;
-	pol->turn_enabled = otherPol->turn_enabled;
-	pol->upnp_enabled = otherPol->upnp_enabled;
-	pol->turn_udp_enabled = otherPol->turn_udp_enabled;
-	pol->turn_tcp_enabled = otherPol->turn_tcp_enabled;
-	pol->turn_tls_enabled = otherPol->turn_tls_enabled;
-	pol->lc = otherPol->lc;
-}
 
 /* Simply cancel pending DNS resoltion, as the core is going to shutdown.*/
 void linphone_nat_policy_release(LinphoneNatPolicy *policy){
@@ -76,6 +64,21 @@ bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy) {
 		&& ((linphone_nat_policy_stun_enabled(policy) == TRUE) || (linphone_nat_policy_turn_enabled(policy) == TRUE));
 }
 
+
+static void _linphone_nat_policy_clone(LinphoneNatPolicy *policy, const LinphoneNatPolicy *other){
+	policy->lc = other->lc;
+	policy->ref = belle_sip_strdup(other->ref);
+	policy->stun_server = belle_sip_strdup(other->stun_server);
+	policy->stun_server_username = belle_sip_strdup(other->stun_server_username);
+	/* don't clone the resolver context and results */
+	policy->stun_enabled = other->stun_enabled;
+	policy->ice_enabled = other->ice_enabled;
+	policy->turn_enabled = other->turn_enabled;
+	policy->upnp_enabled = other->upnp_enabled;
+	policy->turn_udp_enabled = other->turn_udp_enabled;
+	policy->turn_tcp_enabled = other->turn_tcp_enabled;
+	policy->turn_tls_enabled = other->turn_tls_enabled;
+}
 
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneNatPolicy);

@@ -56,6 +56,13 @@ LINPHONE_PUBLIC LinphoneNatPolicy * linphone_nat_policy_ref(LinphoneNatPolicy *p
 LINPHONE_PUBLIC void linphone_nat_policy_unref(LinphoneNatPolicy *policy);
 
 /**
+ * Clone a #LinphoneNatPolicy object.
+ * @param policy #LinphoneNatPolicy object. @notnil
+ * @return a new #LinphoneNatPolicy object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneNatPolicy * linphone_nat_policy_clone(const LinphoneNatPolicy *policy);
+
+/**
  * Retrieve the user pointer associated with the #LinphoneNatPolicy object.
  * @param policy #LinphoneNatPolicy object. @notnil
  * @return The user pointer associated with the #LinphoneNatPolicy object. @maybenil
