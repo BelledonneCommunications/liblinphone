@@ -64,12 +64,27 @@ bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy) {
 }
 
 
+static void _linphone_nat_policy_clone(LinphoneNatPolicy *policy, const LinphoneNatPolicy *other){
+	policy->lc = other->lc;
+	policy->ref = belle_sip_strdup(other->ref);
+	policy->stun_server = belle_sip_strdup(other->stun_server);
+	policy->stun_server_username = belle_sip_strdup(other->stun_server_username);
+	/* don't clone the resolver context and results */
+	policy->stun_enabled = other->stun_enabled;
+	policy->ice_enabled = other->ice_enabled;
+	policy->turn_enabled = other->turn_enabled;
+	policy->upnp_enabled = other->upnp_enabled;
+	policy->turn_udp_enabled = other->turn_udp_enabled;
+	policy->turn_tcp_enabled = other->turn_tcp_enabled;
+	policy->turn_tls_enabled = other->turn_tls_enabled;
+}
+
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneNatPolicy);
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneNatPolicy, belle_sip_object_t,
 	(belle_sip_object_destroy_t)linphone_nat_policy_destroy,
-	NULL, // clone
+	(belle_sip_object_clone_t)_linphone_nat_policy_clone, // clone
 	NULL, // marshal
 	FALSE
 );
@@ -115,6 +130,10 @@ void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy) {
 		}
 		belle_sip_free(section);
 	}
+}
+
+LinphoneNatPolicy * linphone_nat_policy_clone(const LinphoneNatPolicy *other){
+	return (LinphoneNatPolicy*)belle_sip_object_clone((belle_sip_object_t*)other);
 }
 
 LinphoneNatPolicy * linphone_nat_policy_ref(LinphoneNatPolicy *policy) {

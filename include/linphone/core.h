@@ -2666,7 +2666,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_nat_address(const LinphoneCore *co
  * @param core #LinphoneCore object @notnil
  * @param policy #LinphoneNatPolicy object @maybenil
  * @ingroup network_parameters
- * @see linphone_proxy_config_set_nat_policy()
+ * @see linphone_account_params_set_nat_policy()
  */
 LINPHONE_PUBLIC void linphone_core_set_nat_policy(LinphoneCore *core, LinphoneNatPolicy *policy);
 
@@ -2696,7 +2696,7 @@ LINPHONE_PUBLIC bool_t linphone_core_forced_ice_relay_enabled(const LinphoneCore
  * @param core #LinphoneCore object
  * @return #LinphoneNatPolicy object in use. @maybenil
  * @ingroup network_parameters
- * @see linphone_proxy_config_get_nat_policy()
+ * @see linphone_account_params_get_nat_policy()
  */
 LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_get_nat_policy(const LinphoneCore *core);
 
