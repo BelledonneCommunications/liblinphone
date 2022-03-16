@@ -307,6 +307,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 			if (playcard) {
 				auto streamType = ms_snd_card_get_stream_type(playcard);
+				lInfo() << "Restarting stream because stream type changed...";
 				mRestartStreamRequired |= (streamType != expectedStreamType);
 			}
 

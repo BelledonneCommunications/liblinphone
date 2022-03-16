@@ -540,6 +540,10 @@ void RemoteConferenceEventHandler::onEnteringForeground () {
 
 void RemoteConferenceEventHandler::invalidateSubscription () {
 	if (lev){
+		if ((lev->subscription_state == LinphoneSubscriptionError) && (conf->getState() == ConferenceInterface::State::CreationPending)) {
+			// The conference received an answer to its SUBSCRIBE and the server is not supporting the conference event package
+			conf->setState(ConferenceInterface::State::Created);
+		}
 		linphone_event_unref(lev);
 		lev = nullptr;
 	}

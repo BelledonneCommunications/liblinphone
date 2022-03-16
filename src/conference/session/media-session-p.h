@@ -267,7 +267,7 @@ private:
 	void fillRtpParameters(SalStreamDescription & stream) const;
 	void fillVideoRptParameters(SalStreamDescription & newStream) const;
 	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
-	SalStreamDescription & addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx);
+	SalStreamDescription & addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx, const std::shared_ptr<SalMediaDescription> & oldMd);
 
 private:
 	static const std::string ecStateStore;

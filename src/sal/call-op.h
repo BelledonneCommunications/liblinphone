@@ -55,6 +55,7 @@ public:
 
 	void haltSessionTimersTimer ();
 	void restartSessionTimersTimer (belle_sip_response_t *response, int delta);
+	bool canSendRequest (bool noUserConsent, bool logError = false);
 	int update (const std::string &subject, bool noUserConsent);
 	int update (const std::string &subject, bool noUserConsent, bool withSDP, int delta);
 	int cancelInvite (const SalErrorInfo *info = nullptr);

@@ -48,6 +48,7 @@ class LINPHONE_INTERNAL_PUBLIC MediaSessionParams : public CallSessionParams {
 	friend class MS2RTTStream;
 	friend class ParticipantDevice;
 
+	friend class Conference;
 	friend class MediaConference::LocalConference;
 public:
 	MediaSessionParams ();

@@ -1788,4 +1788,9 @@ bool CallSession::isEarlyState (CallSession::State state) {
 	}
 }
 
+void CallSession::addPendingAction(std::function<LinphoneStatus()> f) {
+	L_D();
+	d->pendingActions.push(f);
+}
+
 LINPHONE_END_NAMESPACE

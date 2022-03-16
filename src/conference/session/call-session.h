@@ -158,6 +158,8 @@ public:
 	//bool isDelinedEarly ();
 	//const LinphoneErrorInfo * getErrorInfoCache () const;
 
+	void addPendingAction(std::function<LinphoneStatus()> f);
+
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState () const;

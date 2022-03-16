@@ -2073,7 +2073,7 @@ void RemoteConference::finalizeCreation() {
 				eventHandler->subscribe(getConferenceId());
 			} else {
 		#endif // HAVE_ADVANCED_IM
-				lInfo() << "Unable to send SUBSCRIBE because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+				lInfo() << "Unable to send SUBSCRIBE to finalize creation of conference " << getConferenceAddress() << " because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
 		#ifdef HAVE_ADVANCED_IM
 			}
 		#endif // HAVE_ADVANCED_IM
@@ -2753,8 +2753,13 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 			for (const auto & device : getParticipantDevices()) {
 				device->updateStreamAvailabilities();
 			}
-			if (focusContactAddress.hasParam("isfocus") && !finalized && (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
-				finalizeCreation();
+			if (focusContactAddress.hasParam("isfocus") && (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
+				if (!finalized) {
+					finalizeCreation();
+				} else if (fullStateReceived && (getState() == ConferenceInterface::State::CreationPending)) {
+					setState(ConferenceInterface::State::Created);
+					updateMainSession();
+				}
 			}
 		}
 			break;
@@ -3035,20 +3040,22 @@ void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipan
 #endif
 
 	if (isMe(pAddr)) {
-	#ifdef HAVE_ADVANCED_IM
-		bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
-		if (eventLogEnabled && (getState() == ConferenceInterface::State::CreationPending)) {
-			if (!eventHandler) {
-				eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
+		if (getState() == ConferenceInterface::State::CreationPending) {
+		#ifdef HAVE_ADVANCED_IM
+			bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+			if (eventLogEnabled) {
+				if (!eventHandler) {
+					eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
+				}
+				lInfo() << "Subscribing me (address " << pAddr << ") to conference " << getConferenceAddress();
+				eventHandler->subscribe(getConferenceId());
+			} else {
+		#endif // HAVE_ADVANCED_IM
+				lInfo() << "Unable to send SUBSCRIBE following me being added because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+		#ifdef HAVE_ADVANCED_IM
 			}
-			lInfo() << "Subscribing me (address " << pAddr << ") to conference " << getConferenceAddress();
-			eventHandler->subscribe(getConferenceId());
-		} else {
-	#endif // HAVE_ADVANCED_IM
-			lInfo() << "Unable to send SUBSCRIBE because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
-	#ifdef HAVE_ADVANCED_IM
+		#endif // HAVE_ADVANCED_IM
 		}
-	#endif // HAVE_ADVANCED_IM
 	} else if (findParticipant(pAddr)) {
 		lInfo() << "Addition of participant with address " << pAddr << " to conference " << getConferenceAddress() << " has been successful";
 	} else {
@@ -3083,9 +3090,19 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created)) {
-		lInfo() << "Sending re-INVITE in order to get streams for newly added participant device " << device->getAddress();
-		updateMainSession();
+	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress())) {
+		auto updateSession = [this, device]() -> LinphoneStatus{
+			lInfo() << "Sending re-INVITE in order to get streams for newly added participant device " << device->getAddress();
+			auto ret = updateMainSession();
+			if (ret != 0) {
+				lInfo() << "re-INVITE to get streams for newly added participant device " << device->getAddress() << " cannot be sent right now";
+			}
+			return ret;
+		};
+
+		if (updateSession() != 0) {
+			session->addPendingAction(updateSession);
+		}
 	}
 }
 
@@ -3093,20 +3110,45 @@ void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<Confere
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created)) {
-		lInfo() << "Sending re-INVITE in order to get streams for recently removed participant device " << device->getAddress();
-		updateMainSession();
+	if (confParams->videoEnabled() && params->videoEnabled() && (getLayout() != ConferenceLayout::Legacy) && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress())) {
+		auto updateSession = [this, device]() -> LinphoneStatus{
+			lInfo() << "Sending re-INVITE in order to get streams for recently removed participant device " << device->getAddress();
+			auto ret = updateMainSession();
+			if (ret != 0) {
+				lInfo() << "re-INVITE to get streams for recently removed participant device " << device->getAddress() << " cannot be sent right now";
+			}
+			return ret;
+		};
+
+		if (updateSession() != 0) {
+			session->addPendingAction(updateSession);
+		}
 	}
 }
 
 void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	if ((getLayout() != ConferenceLayout::Legacy) && (!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created)) {
-		lInfo() << "Sending re-INVITE because device " << device->getAddress() << " has changed its stream availability";
-		updateMainSession();
+		auto updateSession = [this, device]() -> LinphoneStatus{
+			lInfo() << "Sending re-INVITE because device " << device->getAddress() << " has changed its stream availability";
+			auto ret = updateMainSession();
+			if (ret != 0) {
+				lInfo() << "re-INVITE due to device " << device->getAddress() << " changing its stream availability cannot be sent right now";
+			}
+			return ret;
+		};
+
+		if (updateSession() != 0) {
+			auto session = static_pointer_cast<MediaSession>(getMainSession());
+			if (session) {
+				session->addPendingAction(updateSession);
+			}
+		}
 	}
 }
 
 void RemoteConference::onFullStateReceived() {
+	fullStateReceived = true;
+
 #ifdef HAVE_DB_STORAGE
 	// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
 	auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -3124,14 +3166,14 @@ void RemoteConference::onFullStateReceived() {
 	auto requestStreams = [this]() -> LinphoneStatus{
 		lInfo() << "Sending re-INVITE in order to get streams after joining conference " << getConferenceAddress();
 		setState(ConferenceInterface::State::Created);
-		return updateMainSession();
+		auto ret = updateMainSession();
+		return ret;
 	};
 
 	if (focus->getSession() && (!static_pointer_cast<MediaSession>(focus->getSession())->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE))) {
 		requestStreams();
 	} else {
 		lInfo() << "Delaying re-INVITE in order to get streams after joining conference " << getConferenceAddress() << " because ICE negotiations didn't end yet";
-		static_pointer_cast<MediaSession>(focus->getSession())->queueIceCompletionTask(requestStreams);
 	}
 }
 

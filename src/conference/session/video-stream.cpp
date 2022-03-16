@@ -250,6 +250,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			lInfo() << "Restarting stream because it has to be linked to ITC sink.";
 			stop();
 		} else {
+			if (!label.empty() && label.compare(getLabel()) != 0) {
+				lInfo() << "Handling label change - previously it was " << getLabel() << " and now it is " << label;
+				setNativeWindowId(label.empty() ? getMediaSession().getParticipantWindowId(label) : NULL);
+				video_stream_set_label(mStream, L_STRING_TO_C(label));
+			}
 			return;
 		}
 	}
@@ -299,7 +304,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	} else if (isThumbnail || (videoMixer && getMediaSession().getParticipantWindowId(label))) {
+	} else if (!label.empty()) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);

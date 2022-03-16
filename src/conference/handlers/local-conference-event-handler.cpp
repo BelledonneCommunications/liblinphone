@@ -891,6 +891,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
 		device->setConferenceSubscribeEvent(lev);
 		if (evLastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
+			conf->setLastNotify(lastNotify+1);
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
 			notifyFullState(createNotifyFullState(lev), device);
 

@@ -1484,6 +1484,29 @@ void SalCallOp::restartSessionTimersTimer (belle_sip_response_t *response, int d
 	belle_sip_object_unref(mSessionTimersTimer);
 }
 
+bool SalCallOp::canSendRequest(bool noUserConsent, bool logError) {
+	auto state = belle_sip_dialog_get_state(mDialog);
+	bool ret = false;
+	if (state == BELLE_SIP_DIALOG_CONFIRMED) {
+		if (noUserConsent)
+			ret = belle_sip_dialog_can_create_synchronous_request(mDialog, "UPDATE");
+		else
+			ret = belle_sip_dialog_can_create_synchronous_request(mDialog, "INVITE");
+	} else if (state == BELLE_SIP_DIALOG_EARLY) {
+		ret = belle_sip_dialog_can_create_synchronous_request(mDialog, "UPDATE");
+	}
+
+	if (!ret && logError) {
+		// Why did it fail?
+		if (belle_sip_dialog_request_pending(mDialog))
+			sal_error_info_set(&mErrorInfo, SalReasonRequestPending, "SIP", 491, nullptr, nullptr);
+		else
+			sal_error_info_set(&mErrorInfo, SalReasonUnknown, "SIP", 500, nullptr, nullptr);
+	}
+
+	return ret;
+}
+
 int SalCallOp::update (const string &subject, bool noUserConsent) {
 	return update(subject, noUserConsent, true, 0);
 }

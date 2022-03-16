@@ -19,6 +19,7 @@
 
 #include "conference.h"
 #include "conference/participant-device.h"
+#include "conference/params/media-session-params-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
 #include "content/content.h"
@@ -168,6 +169,7 @@ LinphoneStatus Conference::updateMainSession() {
 	if (session) {
 		const MediaSessionParams * params = session->getMediaParams();
 		MediaSessionParams *currentParams = params->clone();
+		currentParams->getPrivate()->setInternalCallUpdate(false);
 		if (!currentParams->rtpBundleEnabled()) {
 			currentParams->enableRtpBundle((getLayout() != ConferenceLayout::Legacy));
 		}
@@ -405,7 +407,6 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 }
 
 shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const std::string &label) const {
-
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
 			if (device->getLabel() == label)

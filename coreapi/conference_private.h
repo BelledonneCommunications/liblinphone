@@ -418,6 +418,7 @@ private:
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered, LinphoneCallState newCallState);
 
 	bool finalized = false;
+	bool fullStateReceived = false;
 	std::string pendingSubject;
 	std::shared_ptr<Participant> focus;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;

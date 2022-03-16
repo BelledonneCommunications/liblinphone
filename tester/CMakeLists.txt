@@ -149,6 +149,7 @@ set(RC_FILES
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
 	rcfiles/lime_x3dh_xml_rc
+	rcfiles/lise_rc
 	rcfiles/marie2_rc
 	rcfiles/marie_bodyless_rc
 	rcfiles/marie_dependent_proxy_rc

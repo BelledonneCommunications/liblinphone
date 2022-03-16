@@ -3916,12 +3916,12 @@ static void call_established_with_rejected_reinvite_with_error_base(bool_t trans
 
 		if (trans_pending)
 			BC_ASSERT_NOT_EQUAL(result,0, int, "%d");
-		else
+		else {
 			BC_ASSERT_EQUAL(result,0,int, "%d");
+			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
+		}
 
-		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
-
-		BC_ASSERT_EQUAL(linphone_call_get_reason(linphone_core_get_current_call(pauline->lc)),LinphoneReasonTemporarilyUnavailable, int, "%d"); /*might be change later*/
+		BC_ASSERT_EQUAL(linphone_call_get_reason(linphone_core_get_current_call(pauline->lc)),LinphoneReasonTemporarilyUnavailable, int, "%d"); /*might be changed later*/
 
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning,1, int, "%d");
 		check_call_state(pauline,LinphoneCallStreamsRunning);
