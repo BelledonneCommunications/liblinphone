@@ -557,6 +557,14 @@ bool ClientGroupChatRoom::hasBeenLeft () const {
 	return (getState() != State::Created);
 }
 
+bool ClientGroupChatRoom::isReadOnly () const {
+	L_D();
+	if (d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
+		return getState() != State::Created && getState() != State::Terminated;
+	}
+	return getState() != State::Created;
+}
+
 const ConferenceAddress &ClientGroupChatRoom::getConferenceAddress () const {
 	return getConference()->getConferenceAddress();
 }

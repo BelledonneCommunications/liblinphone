@@ -1907,10 +1907,15 @@ static void group_chat_room_leave (void) {
 	// Check that the chat room is correctly created on Laure's side and that the participants are added
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(laureCr));
+
 	linphone_chat_room_leave(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, initialPaulineStats.number_of_LinphoneConferenceStateTerminated + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_removed, initialMarieStats.number_of_participants_removed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_removed, initialLaureStats.number_of_participants_removed + 1, 5000));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineCr));
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4839,11 +4844,15 @@ static void exhume_one_to_one_chat_room_1(void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
 	linphone_chat_message_unref(message);
 
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
+
 	if (marieOneToOneCr) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 		/* The chatroom from Pauline is expected to terminate as well */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 
 		bctbx_list_t *participants = linphone_chat_room_get_participants(paulineOneToOneCr);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(participants), 1, int , "%d");
@@ -4888,6 +4897,9 @@ static void exhume_one_to_one_chat_room_1(void) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 	}
 
 end:
@@ -4932,11 +4944,15 @@ static void exhume_one_to_one_chat_room_2(void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
 	linphone_chat_message_unref(message);
 
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
+
 	if (marieOneToOneCr) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 		/* The chatroom from Pauline is expected to terminate as well */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 
 		participantsAddresses = NULL;
 		initialMarieStats = marie->stat;
@@ -4994,6 +5010,9 @@ static void exhume_one_to_one_chat_room_2(void) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+		
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 	}
 
 end:
@@ -5059,6 +5078,9 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 	wait_for_list(coresList, &dummy, 1, 5000); // Ensures 200 OK of the NOTIFY has been ACK'ed
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	wait_for_list(coresList, &dummy, 1, 2000);
+
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 	
 	if (marieOneToOneCr) {
 
@@ -5207,6 +5229,9 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 	}
 
 end:
@@ -5260,11 +5285,15 @@ static void exhume_one_to_one_chat_room_4(void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
 	linphone_chat_message_unref(message);
 
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
+
 	if (marieOneToOneCr) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 		/* The chatroom from Pauline is expected to terminate as well */
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 
 		bctbx_list_t *participants = linphone_chat_room_get_participants(paulineOneToOneCr);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(participants), 1, int , "%d");
@@ -5320,6 +5349,9 @@ static void exhume_one_to_one_chat_room_4(void) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(marieOneToOneCr));
+		BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineOneToOneCr));
 	}
 
 end:

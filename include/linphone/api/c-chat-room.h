@@ -394,8 +394,17 @@ LINPHONE_PUBLIC LinphoneChatRoomState linphone_chat_room_get_state (const Linpho
  * Return whether or not the chat room has been left.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return TRUE if the chat room has been left, FALSE otherwise.
+ * @deprecated 16/03/2022 use linphone_chat_room_is_read_only() instead.
  */
 LINPHONE_PUBLIC bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *chat_room);
+
+/**
+ * Return whether or not a message can be sent using this chat room.
+ * A chat room may be read only until it's created, or when it's a group you have left.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @return TRUE if a chat message can't be sent in it, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_room_is_read_only (const LinphoneChatRoom *chat_room);
 
 /**
  * Return the creation time for the chat room

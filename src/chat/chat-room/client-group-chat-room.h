@@ -58,6 +58,7 @@ public:
 	ChatRoom::SecurityLevel getSecurityLevel () const override;
 	ChatRoom::SecurityLevel getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const;
 	bool hasBeenLeft () const override;
+	bool isReadOnly () const override;
 
 	const ConferenceAddress &getConferenceAddress () const override;
 
