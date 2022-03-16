@@ -1403,6 +1403,10 @@ bool ServerGroupChatRoom::hasBeenLeft () const {
 	return false;
 }
 
+bool ServerGroupChatRoom::isReadOnly() const {
+	return false;
+}
+
 bool ServerGroupChatRoom::addParticipant (const IdentityAddress &participantAddress) {
 	L_D();
 

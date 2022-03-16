@@ -103,6 +103,11 @@ bool ProxyChatRoom::hasBeenLeft () const {
 	return d->chatRoom->hasBeenLeft();
 }
 
+bool ProxyChatRoom::isReadOnly () const {
+	L_D();
+	return d->chatRoom->isReadOnly();
+}
+
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<EventLog>> ProxyChatRoom::getMessageHistory (int nLast) const {

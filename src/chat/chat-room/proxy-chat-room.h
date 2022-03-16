@@ -45,6 +45,7 @@ public:
 	State getState () const override;
 	SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
+	bool isReadOnly () const override;
 
 	std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const override;
 	std::list<std::shared_ptr<EventLog>> getMessageHistoryRange (int begin, int end) const override;

@@ -55,6 +55,7 @@ public:
 
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
+	bool isReadOnly () const override;
 
 	const ConferenceAddress &getConferenceAddress () const override;
 

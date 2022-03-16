@@ -341,6 +341,10 @@ bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *cr) {
 	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->hasBeenLeft();
 }
 
+bool_t linphone_chat_room_is_read_only (const LinphoneChatRoom *cr) {
+	return (bool_t)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->isReadOnly();
+}
+
 time_t linphone_chat_room_get_creation_time(const LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCreationTime();
 }
