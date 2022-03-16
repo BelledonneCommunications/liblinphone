@@ -806,10 +806,10 @@ void MagicSearch::uniqueItemsList (std::shared_ptr<list<std::shared_ptr<SearchRe
 		} else if (left != nullptr && right != nullptr) {
 			sip_addresses = linphone_address_weak_equal(left, right);
 		}
-
 		bool phone_numbers = lsr->getPhoneNumber() == rsr->getPhoneNumber();
 		bool capabilities = lsr->getCapabilities() == rsr->getCapabilities();
-		return sip_addresses && phone_numbers && capabilities;
+		bool sip_display_names = (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
+		return sip_addresses && phone_numbers && capabilities && sip_display_names;
 	});
 	lDebug() << "[Magic Search] List size after unique = " << list->size();
 }
