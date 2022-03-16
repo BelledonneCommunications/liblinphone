@@ -20,6 +20,7 @@
 #include "search-async-data.h"
 #include "magic-search.h"
 #include "magic-search-p.h"
+#include "logger/logger.h"
 
 #include <bctoolbox/list.h>
 
@@ -47,6 +48,7 @@ void SearchAsyncData::CbData::resultsCb( LinphoneContactSearch* id, bctbx_list_t
 			}
 		}
 	}
+	lInfo() << "[Magic Search] Found " << cbData->mResult->size() << " results in LDAP." << (haveMoreResults?" More results are available." : "");
 	cbData->mHaveMoreResults = haveMoreResults;
 	cbData->mEnd = TRUE;
 }
