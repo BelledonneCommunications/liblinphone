@@ -289,8 +289,8 @@ static void sortResultsList(std::shared_ptr<list<std::shared_ptr<SearchResult>>>
 }
 
 list<std::shared_ptr<SearchResult>> MagicSearch::processResults(std::shared_ptr<list<std::shared_ptr<SearchResult>>> pResultList) {
-	uniqueItemsList(pResultList);
 	sortResultsList(pResultList);
+	uniqueItemsList(pResultList);
 	setSearchCache(pResultList);
    	return getLastSearch();
 }
@@ -806,10 +806,10 @@ void MagicSearch::uniqueItemsList (std::shared_ptr<list<std::shared_ptr<SearchRe
 		} else if (left != nullptr && right != nullptr) {
 			sip_addresses = linphone_address_weak_equal(left, right);
 		}
-		bool phone_numbers = lsr->getPhoneNumber() == rsr->getPhoneNumber();
-		bool capabilities = lsr->getCapabilities() == rsr->getCapabilities();
-		bool sip_display_names = (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
-		return sip_addresses && phone_numbers && capabilities && sip_display_names;
+		return sip_addresses 
+				&& lsr->getCapabilities() == rsr->getCapabilities() 
+				&& lsr->getPhoneNumber() == rsr->getPhoneNumber() 
+				&& (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
 	});
 	lDebug() << "[Magic Search] List size after unique = " << list->size();
 }
