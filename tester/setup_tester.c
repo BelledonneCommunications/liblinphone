@@ -1862,7 +1862,7 @@ static void search_friend_large_database(void) {
 		memcpy(subBuff, searchedFriend, i);
 		subBuff[i] = '\0';
 		liblinphone_tester_clock_start(&start);
-		bctbx_list_t *resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, subBuff, "");
+		bctbx_list_t *resultList = linphone_magic_search_get_contacts(magicSearch, subBuff, "", LinphoneMagicSearchSourceFriends);
 		if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 			long long time;
 			ms_get_cur_time(&current);
