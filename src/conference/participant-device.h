@@ -121,6 +121,9 @@ public:
 	bool setStreamAvailability(const bool available, const LinphoneStreamType type);
 	bool getStreamAvailability(const LinphoneStreamType type) const;
 
+	void setIsMuted(bool isMuted);
+	bool getIsMuted() const;
+
 protected:
 	Conference *getConference () const;
 
@@ -138,6 +141,7 @@ private:
 	uint32_t mSsrc = 0;
 	bool mSupportAdminMode = false;
 	mutable void * mWindowId = NULL;
+	bool mIsMuted = false;
 
 	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
 	std::map<LinphoneStreamType, bool> streamAvailabilities;
@@ -157,6 +161,8 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 	public:
 		LinphoneParticipantDeviceCbsIsSpeakingChangedCb getIsSpeakingChanged()const;
 		void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
+		LinphoneParticipantDeviceCbsIsMutedCb getIsMuted()const;
+		void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
 		LinphoneParticipantDeviceCbsConferenceJoinedCb getConferenceJoined()const;
 		void setConferenceJoined(LinphoneParticipantDeviceCbsConferenceJoinedCb cb);
 		LinphoneParticipantDeviceCbsConferenceLeftCb getConferenceLeft()const;
@@ -167,6 +173,7 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 		void setStreamAvailabilityChanged(LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb);
 	private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
+	LinphoneParticipantDeviceCbsIsMutedCb mIsMutedCb = nullptr;
 	LinphoneParticipantDeviceCbsConferenceJoinedCb mConferenceJoinedCb = nullptr;
 	LinphoneParticipantDeviceCbsConferenceLeftCb mConferenceLeftCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;

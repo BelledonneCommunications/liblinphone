@@ -53,6 +53,14 @@ void linphone_participant_device_cbs_set_is_speaking_changed (LinphoneParticipan
 	ParticipantDeviceCbs::toCpp(cbs)->setIsSpeakingChanged(cb);
 }
 
+LinphoneParticipantDeviceCbsIsMutedCb linphone_participant_device_cbs_get_is_muted (const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getIsMuted();
+}
+
+void linphone_participant_device_cbs_set_is_muted (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsMutedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setIsMuted(cb);
+}
+
 LinphoneParticipantDeviceCbsConferenceJoinedCb linphone_participant_device_cbs_get_conference_joined (const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getConferenceJoined();
 }

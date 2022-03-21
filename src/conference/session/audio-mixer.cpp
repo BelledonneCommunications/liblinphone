@@ -30,7 +30,6 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioMixer::MS2AudioMixer(MixerSession &session) : StreamMixer(session){
 	MSAudioConferenceParams ms_conf_params;
 	ms_conf_params.samplerate = linphone_config_get_int(mSession.getCCore()->config, "sound", "conference_rate", 16000);
-	ms_conf_params.max_volumes = 5;
 	ms_conf_params.active_talker_callback = &MS2AudioMixer::sOnActiveTalkerChanged;
 	ms_conf_params.user_data = this;
 	mConference = ms_audio_conference_new(&ms_conf_params, mSession.getCCore()->factory);

@@ -985,6 +985,10 @@ void LocalConferenceEventHandler::onParticipantDeviceIsSpeakingChanged (const st
 	
 }
 
+void LocalConferenceEventHandler::onParticipantDeviceIsMuted (const std::shared_ptr<ParticipantDevice> &device, bool isMuted) {
+	
+}
+
 void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {

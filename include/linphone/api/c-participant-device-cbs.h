@@ -81,6 +81,20 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbsIsSpeakingChangedCb linphone_partici
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_is_speaking_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
 
 /**
+ * Get the is this participant device muted callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current is this participant device muted callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsIsMutedCb linphone_participant_device_cbs_get_is_muted (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the is this participant device muted callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The is this participant device muted callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_is_muted (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsMutedCb cb);
+
+/**
  * Get the participant device conference joined callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
  * @return The current participant device conference joined callback.

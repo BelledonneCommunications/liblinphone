@@ -417,12 +417,28 @@ void * ParticipantDevice::getWindowId() const {
 	return mWindowId;
 }
 
+void ParticipantDevice::setIsMuted(bool isMuted) {
+	mIsMuted = isMuted;
+}
+
+bool ParticipantDevice::getIsMuted() const {
+	return mIsMuted;
+}
+
 LinphoneParticipantDeviceCbsIsSpeakingChangedCb ParticipantDeviceCbs::getIsSpeakingChanged()const{
 	return mIsSpeakingChangedCb;
 }
 
 void ParticipantDeviceCbs::setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb){
 	mIsSpeakingChangedCb = cb;
+}
+
+LinphoneParticipantDeviceCbsIsMutedCb ParticipantDeviceCbs::getIsMuted()const{
+	return mIsMutedCb;
+}
+
+void ParticipantDeviceCbs::setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb){
+	mIsMutedCb = cb;
 }
 
 LinphoneParticipantDeviceCbsConferenceJoinedCb ParticipantDeviceCbs::getConferenceJoined()const {

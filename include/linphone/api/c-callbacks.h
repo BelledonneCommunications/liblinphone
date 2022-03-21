@@ -535,9 +535,17 @@ typedef void (*LinphoneConferenceCbsSubjectChangedCb) (LinphoneConference *confe
  * Callback used to notify that a participant device is speaking or isn't speaking anymore.
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] participant_device the participant device @notnil
- * @param[in] is_speaking TRUE if is speaking, FALSE otherwise @notnil
+ * @param[in] is_speaking TRUE if is speaking, FALSE otherwise
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_speaking);
+
+/**
+ * Callback used to notify that a participant device is muted or is no longer muted.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device the participant device @notnil
+ * @param[in] is_muted TRUE if is muted, FALSE otherwise
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceIsMutedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_muted);
 
 /**
  * Callback used to notify that the audio device of a conference has changed.
@@ -564,9 +572,16 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConfere
 /**
  * Callback used to notify that is this participant device speaking has changed.
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- * @param[in] is_speaking  is this participant device speaking
+ * @param[in] is_speaking is this participant device speaking
  */
 typedef void (*LinphoneParticipantDeviceCbsIsSpeakingChangedCb) (LinphoneParticipantDevice *participant_device, bool_t is_speaking);
+
+/**
+ * Callback used to notify that this participant device is muted or is no longer muted.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ * @param[in] is_muted is this participant device muted
+ */
+typedef void (*LinphoneParticipantDeviceCbsIsMutedCb) (LinphoneParticipantDevice *participant_device, bool_t is_muted);
 
 /**
  * Callback used to notify that participant device has left the conference.

@@ -175,6 +175,13 @@ LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(co
 LINPHONE_PUBLIC void * linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Return whether the participant device is muted or not.
+ * @param participant_device The #LinphoneParticipantDeviceCbs object @notnil
+ * @return TRUE if the participant device is muted, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_participant_device_get_is_muted (const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 

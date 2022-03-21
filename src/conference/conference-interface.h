@@ -327,6 +327,13 @@ public:
 	virtual void onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &device, bool isSpeaking) {}
 
 	/*
+	 * This function is called each time a participant device mutes or unmutes itself.
+	 * @param[in] device the participant device.
+	 * @param[in] isMuted true if participant device is currently muted, false otherwise.
+	 */
+	virtual void onParticipantDeviceIsMuted (const std::shared_ptr<ParticipantDevice> &device, bool isMuted) {}
+
+	/*
 	 * This fonction is called each time list of available media is modified by the focus after full state notification.
 	 * @param[in] event informations related to the available media. @notnil
 	 */

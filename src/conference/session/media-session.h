@@ -144,6 +144,7 @@ public:
 	StreamsGroup & getStreamsGroup()const;
 	bool pausedByApp()const;
 	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking);
+	void notifyMutedDevice(uint32_t ssrc, bool muted);
 
 	void queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda);
 

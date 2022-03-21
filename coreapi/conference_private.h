@@ -93,6 +93,7 @@ public:
 	LinphoneConferenceCbsAvailableMediaChangedCb availableMediaChangedCb;
 	LinphoneConferenceCbsAudioDeviceChangedCb audioDeviceChangedCb;
 	LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb participantDeviceIsSpeakingChangedCb;
+	LinphoneConferenceCbsParticipantDeviceIsMutedCb participantDeviceIsMutedCb;
 };
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*

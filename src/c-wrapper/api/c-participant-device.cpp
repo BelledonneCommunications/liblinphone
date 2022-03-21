@@ -83,6 +83,10 @@ uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *p
 	return ParticipantDevice::toCpp(participant_device)->getSsrc();
 }
 
+bool_t linphone_participant_device_get_is_muted (const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getIsMuted();
+}
+
 void linphone_participant_device_add_callbacks (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceCbs *cbs) {
 	ParticipantDevice::toCpp(participant_device)->addCallbacks(ParticipantDeviceCbs::toCpp(cbs)->getSharedFromThis());
 }
@@ -105,6 +109,11 @@ const bctbx_list_t *linphone_participant_device_get_callbacks_list(const Linphon
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
+}
+
+void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_muted, is_muted);
+	ParticipantDevice::toCpp(participant_device)->setIsMuted(is_muted);
 }
 
 void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device, void* window_id){

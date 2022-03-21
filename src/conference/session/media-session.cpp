@@ -1464,7 +1464,10 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 		cfg.replacePayloads(codecs);
 		cfg.rtcp_cname = getMe()->getAddress().asString();
 
-		if ((type == SalAudio) && isInConference()) cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
+		if ((type == SalAudio) && isInConference()) {
+			cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
+			cfg.client_to_mixer_extension_id = RTP_EXTENSION_CLIENT_TO_MIXER_AUDIO_LEVEL;
+		}
 		if ((type == SalVideo) && isInConference()) validateVideoStreamDirection(cfg);
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, stream, cfg, mid);
 
@@ -4585,6 +4588,20 @@ void MediaSession::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 			cppConference->notifySpeakingDevice(ssrc, isSpeaking);
 		} else {
 			lDebug() << "IsSpeaking: unable to notify speaking device because there is no conference.";
+		}
+	}
+}
+
+void MediaSession::notifyMutedDevice(uint32_t ssrc, bool muted) {
+	L_D();
+	LinphoneConference * conference = nullptr;
+	if (d->listener) {
+		conference = d->listener->getCallSessionConference(getSharedFromThis());
+		if (conference) {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			cppConference->notifyMutedDevice(ssrc, muted);
+		} else {
+			lDebug() << "IsMuted: unable to notify muted device because there is no conference.";
 		}
 	}
 }

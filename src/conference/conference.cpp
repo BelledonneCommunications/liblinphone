@@ -349,6 +349,30 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 	lDebug() << "IsSpeaking: unable to notify speaking device because there is no device found.";
 }
 
+void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getSsrc() == ssrc) {
+				_linphone_participant_device_notify_is_muted(device->toC(), muted);
+				for (const auto &l : confListeners) {
+					l->onParticipantDeviceIsMuted(device, muted);
+				}
+				return;
+			}
+		}
+	}
+	for (const auto &device : getMe()->getDevices()) {
+		if (device->getSsrc() == ssrc) {
+			_linphone_participant_device_notify_is_muted(device->toC(), muted);
+			for (const auto &l : confListeners) {
+				l->onParticipantDeviceIsMuted(device, muted);
+			}
+			return;
+		}
+	}
+	lDebug() << "IsMuted: unable to notify muted device because there is no device found.";
+}
+
 void Conference::setUsername (const string &username) {
 	mUsername = username;
 }

@@ -860,6 +860,117 @@ end:
 	destroy_mgr_in_conference(laure);
 }
 
+static void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
+	stats* stat = get_stats((LinphoneCore *)linphone_participant_device_get_user_data(participant_device));
+	if (is_muted) {
+		stat->number_of_LinphoneParticipantDeviceMuted++;
+	} else {
+		stat->number_of_LinphoneParticipantDeviceUnmuted++;
+	}
+}
+
+static void simple_conference_notify_muted_device(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	stats initial_marie_stat;
+	stats initial_pauline_stat;
+	stats initial_laure_stat;
+	LinphoneCall* marie_call_pauline = NULL;
+	LinphoneCall* pauline_called_by_marie = NULL;
+	LinphoneCall* marie_call_laure = NULL;
+	LinphoneAddress * marie_conference_address = NULL;
+	/* Simulate speaker changed */
+	char *filepath = bc_tester_res("sounds/vrroom.wav");
+	linphone_core_set_play_file(pauline->lc, filepath);
+	linphone_core_set_play_file(marie->lc, filepath);
+	linphone_core_set_play_file(laure->lc, filepath);
+
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+	lcs=bctbx_list_append(lcs,pauline->lc);
+	lcs=bctbx_list_append(lcs,laure->lc);
+
+	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
+	marie_call_pauline=linphone_core_get_current_call(marie->lc);
+	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
+	if (!BC_ASSERT_TRUE(call(marie,laure))) goto end;
+	marie_call_laure=linphone_core_get_current_call(marie->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
+
+	bctbx_list_t* new_participants=bctbx_list_append(NULL,laure);
+	new_participants=bctbx_list_append(new_participants,pauline);
+
+	initial_marie_stat=marie->stat;
+	initial_pauline_stat=pauline->stat;
+	initial_laure_stat=laure->stat;
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants, FALSE);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,initial_pauline_stat.number_of_LinphoneCallStreamsRunning+1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,initial_laure_stat.number_of_LinphoneCallStreamsRunning+1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,initial_marie_stat.number_of_LinphoneCallStreamsRunning+2,3000));
+
+	LinphoneConference *laure_conf = linphone_call_get_conference(linphone_core_get_current_call(laure->lc));
+	BC_ASSERT_PTR_NOT_NULL(laure_conf);
+	if (!laure_conf) goto end;
+	bctbx_list_t *participants = linphone_conference_get_participant_list(laure_conf);
+
+	for (bctbx_list_t *it = participants; it != NULL; it = it->next) {
+		LinphoneParticipant *p = (LinphoneParticipant *) it->data;
+		bctbx_list_t *devices = linphone_participant_get_devices(p);
+		for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+			LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
+			linphone_participant_device_set_user_data(d, laure->lc);
+			LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
+			linphone_participant_device_cbs_set_is_muted(cbs, on_muted_notified);
+			linphone_participant_device_add_callbacks(d, cbs);
+			linphone_participant_device_cbs_unref(cbs);
+		}
+		bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+	}
+	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
+
+	linphone_core_mute_mic(pauline->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceMuted, 1, 5000));
+
+	linphone_core_mute_mic(pauline->lc, FALSE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceUnmuted, 1, 5000));
+
+	terminate_conference(new_participants, marie, NULL, NULL);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,2,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,10000));
+
+	bctbx_list_free(new_participants);
+
+end:
+	// Wait for all conferences to be terminated
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateTerminationPending, pauline->stat.number_of_LinphoneConferenceStateCreated, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateTerminated, pauline->stat.number_of_LinphoneConferenceStateCreated, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateDeleted, pauline->stat.number_of_LinphoneConferenceStateCreated, 5000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneConferenceStateTerminationPending, laure->stat.number_of_LinphoneConferenceStateCreated, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneConferenceStateTerminated, laure->stat.number_of_LinphoneConferenceStateCreated, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneConferenceStateDeleted, laure->stat.number_of_LinphoneConferenceStateCreated, 5000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateTerminationPending, marie->stat.number_of_LinphoneConferenceStateCreated, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateTerminated, marie->stat.number_of_LinphoneConferenceStateCreated, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateDeleted, marie->stat.number_of_LinphoneConferenceStateCreated, 5000));
+
+	if (filepath) bctbx_free(filepath);
+	bctbx_list_free(lcs);
+	if (marie_conference_address) {
+		linphone_address_unref(marie_conference_address);
+	}
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+}
+
 static void simple_conference_with_admin_changed(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
@@ -10563,6 +10674,7 @@ static void video_conference_created_by_merging_video_calls_with_active_speaker_
 test_t audio_video_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference notify speaking device", simple_conference_notify_speaking_device),
+	TEST_NO_TAG("Simple conference notify muted device", simple_conference_notify_muted_device),
 	TEST_NO_TAG("Simple conference established before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 	TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),

@@ -63,6 +63,11 @@ static void audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_
 	zis->getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
 }
 
+static void audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t muted) {
+	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
+	zis->getMediaSession().notifyMutedDevice(ssrc, muted);
+}
+
 void MS2AudioStream::initZrtp() {
 	shared_ptr<CallLog> log = getMediaSession().getLog();
 	const LinphoneAddress *peerAddr = log->getRemoteAddress();
@@ -455,8 +460,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			io.input.soundcard = captcard;
 		} else {
 			io.input.type = MSResourceFile;
-			onHoldFile = playfile;
-			io.input.file = nullptr; /* We prefer to use the remote_play api, that allows to play multimedia files */
+			onHoldFile = "";
+			io.input.file = playfile.c_str(); /* We prefer to use the remote_play api, that allows to play multimedia files */
 		}
 	}
 	if (ok) {
@@ -480,6 +485,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 
 		audio_stream_set_is_speaking_callback(mStream, audioStreamIsSpeakingCb, this);
+		audio_stream_set_is_muted_callback(mStream, audioStreamIsMutedCb, this);
 		
 		audio_stream_set_audio_route_changed_callback(mStream, &MS2AudioStream::audioRouteChangeCb, &getCore());
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,

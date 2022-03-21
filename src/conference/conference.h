@@ -152,6 +152,7 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceJoined (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 
 	void notifySpeakingDevice (uint32_t ssrc, bool isSpeaking);
+	void notifyMutedDevice (uint32_t ssrc, bool muted);
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);

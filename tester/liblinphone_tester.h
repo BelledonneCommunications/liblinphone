@@ -426,6 +426,9 @@ typedef struct _stats {
 	int number_of_LinphoneParticipantDeviceStartSpeaking;
 	int number_of_LinphoneParticipantDeviceStopSpeaking;
 
+	int number_of_LinphoneParticipantDeviceMuted;
+	int number_of_LinphoneParticipantDeviceUnmuted;
+
 	int number_of_ConferenceSchedulerStateReady;
 	int number_of_ConferenceSchedulerStateUpdating;
 	int number_of_ConferenceSchedulerStateError;

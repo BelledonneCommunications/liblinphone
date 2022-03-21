@@ -78,6 +78,13 @@ public:
 	virtual void onParticipantDeviceIsSpeakingChanged (const std::shared_ptr<ParticipantDevice> &device, bool isSpeaking) override;
 
 	/*
+	 * This function is called each time a participant device mutes or unmutes itself.
+	 * @param[in] device the participant device.
+	 * @param[in] isMuted true if participant device is currently muted, false otherwise.
+	 */
+	virtual void onParticipantDeviceIsMuted (const std::shared_ptr<ParticipantDevice> &device, bool isMuted) override;
+
+	/*
 	* This fonction is called each time a new participant device is added by the focus after full state notification.
 	* @param[in] event informations related to the added participant's device. @notnil
 	* @param[in] device participant device added to the conference or chat room. @notnil
