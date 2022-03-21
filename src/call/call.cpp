@@ -137,6 +137,9 @@ LinphoneCallStats *Call::getPrivateStats (LinphoneStreamType type) const {
 
 void Call::initiateIncoming () {
 	getActiveSession()->initiateIncoming();
+	if (ms_snd_card_manager_reload_requested(ms_factory_get_snd_card_manager(getCore()->getCCore()->factory))) {
+		linphone_core_reload_sound_devices(getCore()->getCCore());
+	}
 	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
 	if (outputAudioDevice) {
 		setOutputAudioDevicePrivate(outputAudioDevice);
@@ -154,7 +157,9 @@ void Call::initiateIncoming () {
 bool Call::initiateOutgoing () {
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing();
-	
+	if (ms_snd_card_manager_reload_requested(ms_factory_get_snd_card_manager(getCore()->getCCore()->factory))) {
+		linphone_core_reload_sound_devices(getCore()->getCCore());
+	}
 	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
 	if (outputAudioDevice) {
 		setOutputAudioDevicePrivate(outputAudioDevice);
