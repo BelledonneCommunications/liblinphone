@@ -257,10 +257,17 @@ const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	if (!lc) return NULL;
 
 #ifdef HAVE_DB_STORAGE
-	if (lc->call_logs != NULL) return lc->call_logs;
-
 	std::unique_ptr<MainDb> &mainDb = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb;
-	if (!mainDb) return NULL;
+	if (!mainDb) return lc->call_logs;
+
+	if (lc->call_logs != NULL) {
+		size_t callLogsDatabaseSize = (size_t) mainDb->getCallHistorySize();
+		if (bctbx_list_size(lc->call_logs) >= callLogsDatabaseSize) return lc->call_logs;
+		// If some call logs were added to the Core before the full history was loaded from database, 
+		// clean memory cache and reload everything from database
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func) linphone_call_log_unref);
+		lc->call_logs = NULL;
+	}
 
 	auto list = mainDb->getCallHistory(lc->max_call_logs);
 	if (!list.empty()) {
