@@ -809,13 +809,7 @@ Call::Call (
 	mParticipant->createSession(getCore(), msp, TRUE, this);
 	mParticipant->getSession()->configure(direction, cfg, op, from, to);
 
-	if (msp) {
-		setMicrophoneMuted(!msp->isMicEnabled());
-		setInputAudioDevicePrivate(msp->getInputAudioDevice());
-		setOutputAudioDevicePrivate(msp->getOutputAudioDevice());
-	} else {
-		configureSoundCardsFromCore();
-	}
+	configureSoundCardsFromCore(msp);
 }
 
 Call::Call (
@@ -832,13 +826,22 @@ Call::Call (
 	mParticipant->createSession(getCore(), nullptr, TRUE, this);
 	mParticipant->getSession()->configure(direction, callid);
 
-	configureSoundCardsFromCore();
+	configureSoundCardsFromCore(nullptr);
 }
 
 Call::~Call () {
 }
 
-void Call::configureSoundCardsFromCore() {
+void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
+	if (ms_snd_card_manager_reload_requested(ms_factory_get_snd_card_manager(getCore()->getCCore()->factory))) {
+		linphone_core_reload_sound_devices(getCore()->getCCore());
+	}
+	if (msp) {
+		setMicrophoneMuted(!msp->isMicEnabled());
+		setInputAudioDevicePrivate(msp->getInputAudioDevice());
+		setOutputAudioDevicePrivate(msp->getOutputAudioDevice());
+		return;
+	}
 	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
 	if (outputAudioDevice) {
 		setOutputAudioDevicePrivate(outputAudioDevice);
