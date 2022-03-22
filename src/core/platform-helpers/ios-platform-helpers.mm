@@ -35,7 +35,7 @@
 #include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
-#include "platform-helpers.h"
+#include "mac-platform-helpers.h"
 
 // TODO: Remove me
 #include "private.h"
@@ -49,26 +49,16 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-class IosPlatformHelpers : public GenericPlatformHelpers {
+class IosPlatformHelpers : public MacPlatformHelpers {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 	~IosPlatformHelpers () {
 		[mAppDelegate dealloc];
 	}
 
-	void acquireWifiLock () override {}
-	void releaseWifiLock () override {}
-	void acquireMcastLock () override {}
-	void releaseMcastLock () override {}
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
 
-	string getConfigPath () const override { return ""; }
-	string getDataPath () const override { return ""; }
-	string getDataResource (const string &filename) const override;
-	string getImageResource (const string &filename) const override;
-	string getRingResource (const string &filename) const override;
-	string getSoundResource (const string &filename) const override;
 	void * getPathContext () override;
 
 	NetworkType getNetworkType()const override;
@@ -84,7 +74,6 @@ public:
 	void onWifiOnlyEnabled (bool enabled) override;
 	bool isActiveNetworkWifiOnlyCompliant () const override;
 	void setDnsServers () override;
-	void setHttpProxy (const string &host, int port) override;
 	bool startNetworkMonitoring() override;
 	void stopNetworkMonitoring() override;
 
@@ -113,21 +102,15 @@ public:
 	void setDeviceRotation (int orientation) const override;
 
 private:
-	string toUTF8String(CFStringRef str);
 	void kickOffConnectivity();
-	void getHttpProxySettings(void);
-
 	void bgTaskTimeout ();
 	static void sBgTaskTimeout (void *data);
-	static string getResourceDirPath (const string &framework, const string &resource);
-	static string getResourcePath (const string &framework, const string &resource);
     
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
 	SCNetworkReachabilityRef reachabilityRef = NULL;
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
-	static const string Framework;
 
 	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
 	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
@@ -139,9 +122,8 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 
 // =============================================================================
 
-const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 
-IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
+IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : MacPlatformHelpers(core) {
 	mUseAppDelgate = core->getCCore()->is_main_core;
 	if (mUseAppDelgate) {
 		mAppDelegate = [[IosAppDelegate alloc] initWithCore:core];
@@ -154,40 +136,7 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
-	
-
-	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
-	if (!cpimPath.empty())
-		belr::GrammarLoader::get().addPath(cpimPath);
-	else
-		ms_error("IosPlatformHelpers did not find cpim grammar resource directory...");
-
-	string icsPath = getResourceDirPath(Framework, "ics_grammar");
-	if (!icsPath.empty())
-		belr::GrammarLoader::get().addPath(icsPath);
-	else
-		ms_error("IosPlatformHelpers did not find ics grammar resource directory...");
-
-	string identityPath = getResourceDirPath(Framework, "identity_grammar");
-	if (!identityPath.empty())
-		belr::GrammarLoader::get().addPath(identityPath);
-	else
-		ms_error("IosPlatformHelpers did not find identity grammar resource directory...");
-
-#ifdef VCARD_ENABLED
-	string vcardPath = getResourceDirPath("org.linphone.belcard", "vcard_grammar");
-	if (!vcardPath.empty())
-		belr::GrammarLoader::get().addPath(vcardPath);
-	else
-		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
-#endif
-
-	string sdpPath = getResourceDirPath("org.linphone.belle-sip", "sdp_grammar");
-	if (!sdpPath.empty())
-		belr::GrammarLoader::get().addPath(sdpPath);
-	else
-		ms_error("IosPlatformHelpers did not find sdp grammar resource directory...");
-	
+		
 	ms_message("IosPlatformHelpers is fully started");
 	mStart = true;
 	[mAppDelegate onStopAsyncEnd:false];
@@ -243,25 +192,6 @@ void IosPlatformHelpers::setDeviceRotation (int orientation) const {
 
 }
 
-//Safely get an UTF-8 string from the given CFStringRef
-string IosPlatformHelpers::toUTF8String(CFStringRef str) {
-	string ret;
-
-	if (str == NULL) {
-		return ret;
-	}
-	CFIndex length = CFStringGetLength(str);
-	CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
-	char *buffer = (char *) malloc((size_t) maxSize);
-	if (buffer) {
-		if (CFStringGetCString(str, buffer, maxSize, kCFStringEncodingUTF8)) {
-			ret = buffer;
-		}
-		free(buffer);
-	}
-	return ret;
-}
-
 // -----------------------------------------------------------------------------
 
 void IosPlatformHelpers::bgTaskTimeout () {
@@ -303,51 +233,6 @@ void IosPlatformHelpers::releaseCpuLock () {
 
 	belle_sip_end_background_task(static_cast<unsigned long>(mCpuLockTaskId));
 	mCpuLockTaskId = 0;
-}
-
-// -----------------------------------------------------------------------------
-
-string IosPlatformHelpers::getDataResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
-}
-
-string IosPlatformHelpers::getImageResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
-}
-
-string IosPlatformHelpers::getRingResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
-}
-
-string IosPlatformHelpers::getSoundResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
-}
-
-// -----------------------------------------------------------------------------
-
-string IosPlatformHelpers::getResourceDirPath (const string &framework, const string &resource) {
-	CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-	CFStringRef cfFramework = CFStringCreateWithCString(nullptr, framework.c_str(), encodingMethod);
-	CFStringRef cfResource = CFStringCreateWithCString(nullptr, resource.c_str(), encodingMethod);
-	CFBundleRef bundle = CFBundleGetBundleWithIdentifier(cfFramework);
-	CFURLRef resourceUrl = CFBundleCopyResourceURL(bundle, cfResource, nullptr, nullptr);
-	string path("");
-	if (resourceUrl) {
-		CFURLRef resourceUrlDirectory = CFURLCreateCopyDeletingLastPathComponent(nullptr, resourceUrl);
-		CFStringRef resourcePath = CFURLCopyFileSystemPath(resourceUrlDirectory, kCFURLPOSIXPathStyle);
-		path = CFStringGetCStringPtr(resourcePath, encodingMethod);
-		CFRelease(resourcePath);
-		CFRelease(resourceUrlDirectory);
-		CFRelease(resourceUrl);
-	}
-
-	CFRelease(cfResource);
-	CFRelease(cfFramework);
-	return path;
-}
-
-string IosPlatformHelpers::getResourcePath (const string &framework, const string &resource) {
-	return getResourceDirPath(framework, resource) + "/" + resource;
 }
 
 void *IosPlatformHelpers::getPathContext () {
@@ -411,53 +296,6 @@ void IosPlatformHelpers::setDnsServers () {
 	//Nothing to do here, already handled by core for IOS platforms
 }
 
-//Set proxy settings on core
-void IosPlatformHelpers::setHttpProxy (const string &host, int port) {
-	if (!mStart) return;
-
-	linphone_core_set_http_proxy_host(getCore()->getCCore(), host.c_str());
-	linphone_core_set_http_proxy_port(getCore()->getCCore(), port);
-}
-
-//Get global proxy settings from system and set variables mHttpProxy{Host,Port,Enabled}.
-void IosPlatformHelpers::getHttpProxySettings(void) {
-	CFDictionaryRef proxySettings = CFNetworkCopySystemProxySettings();
-
-	if (proxySettings) {
-		CFNumberRef enabled = (CFNumberRef) CFDictionaryGetValue(proxySettings, kCFNetworkProxiesHTTPEnable);
-		if (enabled != NULL) {
-			int val = 0;
-			CFNumberGetValue(enabled, kCFNumberIntType, &val);
-			mHttpProxyEnabled = !!val;
-		}
-		if (mHttpProxyEnabled) {
-			CFStringRef proxyHost = (CFStringRef) CFDictionaryGetValue(proxySettings, kCFNetworkProxiesHTTPProxy);
-			if (proxyHost != NULL) {
-				mHttpProxyHost = toUTF8String(proxyHost);
-				if (mHttpProxyHost.empty()) {
-					mHttpProxyEnabled = false;
-				}
-			} else {
-				mHttpProxyEnabled = false;
-			}
-		}
-		if (mHttpProxyEnabled) {
-			CFNumberRef proxyPort = (CFNumberRef) CFDictionaryGetValue(proxySettings, kCFNetworkProxiesHTTPPort);
-			if (proxyPort != NULL) {
-				if (!CFNumberGetValue(proxyPort, kCFNumberIntType, &mHttpProxyPort)) {
-					mHttpProxyEnabled = false;
-				}
-			} else {
-				mHttpProxyEnabled = false;
-			}
-		}
-		CFRelease(proxySettings);
-	}
-	if (!mHttpProxyEnabled) {
-		mHttpProxyPort = 0;
-		mHttpProxyHost.clear();
-	}
-}
 
 static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
 	ms_message("Network connection flags:");

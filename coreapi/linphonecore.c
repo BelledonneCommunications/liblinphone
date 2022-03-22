@@ -1630,7 +1630,7 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	memset(&tr,0,sizeof(tr));
 
-#if TARGET_OS_IPHONE || defined(__ANDROID__)
+#if TARGET_OS_MAC /*OSX + IOS*/ || defined(__ANDROID__)
 	tr.udp_port= linphone_config_get_int(lc->config,"sip","sip_port",LC_SIP_TRANSPORT_DONTBIND);
 	tr.tcp_port=linphone_config_get_int(lc->config,"sip","sip_tcp_port",LC_SIP_TRANSPORT_DONTBIND);
 #else
@@ -2928,10 +2928,16 @@ static void linphone_core_init(LinphoneCore *lc, LinphoneCoreCbs *cbs, LpConfig 
 	if (lc->platform_helper == NULL) {
 		lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
 	}
-	getPlatformHelpers(lc)->start(lc->cppPtr);
+#elif TARGET_OS_OSX
+	if (lc->platform_helper == NULL) {
+		lc->platform_helper = LinphonePrivate::createMacPlatformHelpers(lc->cppPtr, lc->system_context);
+	}
+
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
+
+	getPlatformHelpers(lc)->start(lc->cppPtr);
 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
