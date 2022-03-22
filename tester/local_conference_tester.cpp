@@ -3316,7 +3316,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 
 		for (auto mgr : {marie.getCMgr(), pauline.getCMgr(), laure.getCMgr()}) {
 			const bctbx_list_t* call_logs = linphone_core_get_call_logs(mgr->lc);
-			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(call_logs), 1, unsigned int, "%u");
+			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(call_logs), ((client_restart && (mgr == marie.getCMgr())) ? 2 : 1), unsigned int, "%u");
 
 			bctbx_list_t * mgr_focus_call_log = linphone_core_get_call_history_2(mgr->lc, focus.getCMgr()->identity, mgr->identity);
 			BC_ASSERT_PTR_NOT_NULL(mgr_focus_call_log);
