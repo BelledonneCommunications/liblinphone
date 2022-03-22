@@ -85,6 +85,7 @@ private:
 	std::shared_ptr<Account> mAccount = nullptr;
 
 	unsigned long mInvitationsSent = 0;
+	std::list<IdentityAddress> mInvitationsToSend;
 	std::list<Address> mInvitationsInError;
 };
 

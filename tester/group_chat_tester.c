@@ -1915,7 +1915,7 @@ static void group_chat_room_leave (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, initialPaulineStats.number_of_LinphoneConferenceStateTerminated + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_removed, initialMarieStats.number_of_participants_removed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_removed, initialLaureStats.number_of_participants_removed + 1, 5000));
-	BC_ASSERT_FALSE(linphone_chat_room_is_read_only(paulineCr));
+	BC_ASSERT_TRUE(linphone_chat_room_is_read_only(paulineCr));
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);

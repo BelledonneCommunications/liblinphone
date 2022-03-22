@@ -197,7 +197,7 @@ void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessag
 				mInvitationsInError.push_back(Address(participantAddress.asAddress()));
 			} else { // Message was sent using a group chat room
 				lError() << "[Conference Scheduler] Chat room wasn't creatd, so no one received the invitation!";
-				for (auto &participant : mConferenceInfo->getParticipants()) {
+				for (auto &participant : mInvitationsToSend) {
 					mInvitationsInError.push_back(Address(participant.asAddress()));
 				}
 			}
@@ -209,11 +209,11 @@ void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessag
 		} else { // A single message was used for all participants
 			// In case of a group chat room there is only 1 message being sent
 			auto participants = chatRoom->getParticipants();
-			if (participants.size() == mConferenceInfo->getParticipants().size()) {
+			if (participants.size() == mInvitationsToSend.size()) {
 				lInfo() << "[Conference Scheduler] Invitation to was delivered to all participants";
-				mInvitationsSent = (unsigned long)(mConferenceInfo->getParticipants().size());
+				mInvitationsSent = (unsigned long)(mInvitationsToSend.size());
 			} else { // In case someone couldn't be invited in the chat room, all others may have received the invitation
-				for (auto &participant : mConferenceInfo->getParticipants()) {
+				for (auto &participant : mInvitationsToSend) {
 					bool found = false;
 					for (auto &chatRoomParticipant : participants) {
 						if (participant.asAddress().weakEqual(chatRoomParticipant->getAddress().asAddress())) {
@@ -234,7 +234,7 @@ void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessag
 		return;
 	}
 
-	if (mInvitationsSent + mInvitationsInError.size() == mConferenceInfo->getParticipants().size()) {
+	if (mInvitationsSent + mInvitationsInError.size() == mInvitationsToSend.size()) {
 		linphone_conference_scheduler_notify_invitations_sent(toC(), L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(mInvitationsInError));
 	}
 }
@@ -328,18 +328,21 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		return;
 	}
 
-	std::list<IdentityAddress> addresses;
+	mInvitationsToSend.clear();
 	for (auto participant : participants) {
 		if (participant != sender) {
-			addresses.push_back(Address(participant.asAddress()));
+			mInvitationsToSend.push_back(Address(participant.asAddress()));
+		} else {
+			lInfo() << "[Conference Scheduler] Removed conference participant [" << participant << "] from chat room participants as it is ourselves";
 		}
 	}
 
 	const auto & organizer = mConferenceInfo->getOrganizer();
 	if (sender != organizer) {
-		const bool organizerFound = (std::find(addresses.cbegin(), addresses.cend(), organizer) != addresses.cend());
+		const bool organizerFound = (std::find(mInvitationsToSend.cbegin(), mInvitationsToSend.cend(), organizer) != mInvitationsToSend.cend());
 		if (!organizerFound) {
-			addresses.push_back(Address(organizer.asAddress()));
+			lInfo() << "[Conference Scheduler] Organizer [" << organizer << "] not found in conference participants, adding it to chat room participants";
+			mInvitationsToSend.push_back(Address(organizer.asAddress()));
 		}
 	}
 
@@ -350,21 +353,22 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		shared_ptr<AbstractChatRoom> chatRoom = getCore()->getPrivate()->createChatRoom(
 			chatRoomParams,
 			sender,
-			mConferenceInfo->getParticipants());
+			mInvitationsToSend);
 		if (!chatRoom) {
 			lError() << "[Conference Scheduler] Failed to create group chat room using given chat room params & conference information";
-			for (auto participant : addresses) {
+			for (auto participant : mInvitationsToSend) {
 				mInvitationsInError.push_back(Address(participant.asAddress()));
 			}
 			linphone_conference_scheduler_notify_invitations_sent(toC(), L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(mInvitationsInError));
 			return;
 		} else {
+			lInfo() << "[Conference Scheduler] Group chat room created, sending invitation message";
 			shared_ptr<ChatMessage> message = createInvitationChatMessage(chatRoom);
 			message->send();
 		}
 	} else {
 		// Sending the ICS once for each participant in a separated chat room each time.
-		for (auto participant : addresses) {
+		for (auto participant : mInvitationsToSend) {
 			list<IdentityAddress> participantList;
 			participantList.push_back(participant);
 
