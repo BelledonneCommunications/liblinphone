@@ -6150,6 +6150,75 @@ static void call_with_early_media_accepted_state_changed_callback(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_two_audio_streams(void){
+	const char * crashing_invite =
+	"INVITE sip:631453@212.55.48.36:51230;transport=udp SIP/2.0\r\n"
+"Via: SIP/2.0/UDP 212.55.48.2:5060;branch=z9hG4bKac1473882254\r\n"
+"Max-Forwards: 19\r\n"
+"From: \"Mickey Mouse\" <sip:mickey@example.com;user=phone>;tag=1c849167855\r\n"
+"To: \"Bugs Bunny\" <sip:bunny@example.com>\r\n"
+"Call-ID: 9771187781832022142418@212.55.48.2\r\n"
+"CSeq: 1 INVITE\r\n"
+"Contact: <sip:212.55.48.2:5060>\r\n"
+"Supported: 100rel,sdp-anat\r\n"
+"Allow: ACK,BYE,CANCEL,INFO,INVITE,OPTIONS,PRACK,REFER,NOTIFY,UPDATE\r\n"
+"User-Agent: vSBC PROD/v.7.20A.258.459\r\n"
+"Accept:application/media_control+xml,application/sdp,multipart/mixed\r\n"
+"Recv-Info:x-broadworks-client-session-info\r\n"
+"Content-Type: application/sdp\r\n"
+"Content-Length: 860\r\n"
+"\r\n"
+"v=0\r\n"
+"o=BroadWorks 1693848685 415741525 IN IP4 212.55.48.2\r\n"
+"s=-\r\n"
+"c=IN IP4 212.55.48.2\r\n"
+"t=0 0\r\n"
+"m=audio 15536 RTP/AVP 8 0 18 116\r\n"
+"a=rtpmap:8 PCMA/8000\r\n"
+"a=rtpmap:0 PCMU/8000\r\n"
+"a=rtpmap:116 telephone-event/8000\r\n"
+"a=ptime:20\r\n"
+"a=3gOoBTC\r\n"
+"a=rtpmap:18 G729/8000\r\n"
+"a=fmtp:18 annexb=yes\r\n"
+"m=audio 15536 RTP/SAVP 8 0 18 116\r\n"
+"a=rtpmap:8 PCMA/8000\r\n"
+"a=rtpmap:0 PCMU/8000\r\n"
+"a=rtpmap:116 telephone-event/8000\r\n"
+"a=ptime:20\r\n"
+"a=3gOoBTC\r\n"
+"a=rtpmap:18 G729/8000\r\n"
+"a=fmtp:18 annexb=yes\r\n"
+"a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:zc409/eT1JuwUPQAswLkF878WJvn5Rpo+aLUt+SI|2^31\r\n"
+"a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:ebHN/WPPcu2E+Jm4kdx9YK58jVFDKD4uRgwFu18k|2^31\r\n"
+"a=crypto:3 AES_256_CM_HMAC_SHA1_80 inline:M9UR+6n8F8DZ5mh/V5vh2VKdYZ+5Hb4K3mwepx8oM9aIQYb7RzdfJE42ezOTcQ==|2^31\r\n"
+"a=crypto:4 AES_256_CM_HMAC_SHA1_32 inline:AIsXIk2O8tsCefUYXpqP96hNZKJR+nJZcXlCOiXZW6TDEtg/g5HQD7lcj0KJPA==|2^31\r\n";
+
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_rc_udp");
+
+	LinphoneTransports *tp = linphone_core_get_transports_used(laure->lc);
+	BC_ASSERT_TRUE(liblinphone_tester_send_data(crashing_invite, strlen(crashing_invite), "127.0.0.1", linphone_transports_get_udp_port(tp), SOCK_DGRAM) > 0);
+	linphone_transports_unref(tp);
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	LinphoneCall * laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	if (laure_call) {
+		linphone_call_accept(laure_call);
+		BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallStreamsRunning, 1));
+		const LinphoneCallParams* laure_call_param = linphone_call_get_current_params(laure_call);
+		const LinphoneMediaEncryption laure_enc = linphone_call_params_get_media_encryption(laure_call_param);
+		BC_ASSERT_EQUAL(laure_enc,LinphoneMediaEncryptionNone, int, "%d");
+
+		linphone_call_terminate(laure_call);
+	}
+
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneCallEnd, 1));
+	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
+	linphone_core_manager_destroy(laure);
+}
+
 static void _call_with_unknown_stream(bool_t accepted){
 	const char * crashing_invite = 
 	"INVITE sip:3827m@192.168.50.222:54989;transport=udp SIP/2.0\r\n"
@@ -6216,7 +6285,6 @@ static void _call_with_unknown_stream(bool_t accepted){
 	BC_ASSERT_TRUE(wait_for_until(laure->lc, NULL, &laure->stat.number_of_LinphoneCallReleased, 1, 36000));
 	linphone_core_manager_destroy(laure);
 }
-
 
 static void call_with_unknown_stream(void){
 	_call_with_unknown_stream(FALSE);
@@ -6402,6 +6470,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call without automatic 180 ringing but early media", call_without_automatic_180_ringing_but_early_media),
 	TEST_NO_TAG("Call with early media accepted in state changed callback", call_with_early_media_accepted_state_changed_callback),
 	TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently),
+	TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams),
+	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted)
 };
 
 test_t call_not_established_tests[] = {
@@ -6438,8 +6508,7 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call with rtcp-mux not accepted", call_with_rtcp_mux_not_accepted),
 	TEST_NO_TAG("Call cancelled with reason", cancel_call_with_error),
 	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
-	TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream),
-	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted)
+	TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream)
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

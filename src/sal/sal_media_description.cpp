@@ -646,9 +646,9 @@ bool SalMediaDescription::hasSrtp() const {
 	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.hasSrtp()) return true;
+		if (stream.hasSrtp() != true) return false;
 	}
-	return false;
+	return true;
 }
 
 bool SalMediaDescription::hasDtls() const {

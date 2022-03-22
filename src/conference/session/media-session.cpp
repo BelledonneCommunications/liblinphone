@@ -1873,7 +1873,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if ((!conference || (localIsOfferer && getParams()->audioEnabled())) || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList));
 
-		const auto audioStreamIdx = refMd ? refMd->findIdxBestStream(SalAudio) : -1;
+		const auto audioStreamIdx = (conference && refMd) ? refMd->findIdxBestStream(SalAudio) : -1;
 		SalStreamDescription & audioStream = addStreamToMd(md, audioStreamIdx, oldMd);
 		fillLocalStreamDescription(audioStream, md, getParams()->audioEnabled(), "Audio", SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr, offerNegotiatedMediaProtocolOnly), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
 
