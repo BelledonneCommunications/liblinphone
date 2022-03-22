@@ -193,6 +193,7 @@ private:
 
 PlatformHelpers *createAndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 PlatformHelpers *createIosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
+PlatformHelpers *createMacPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
 
 LINPHONE_END_NAMESPACE
 
