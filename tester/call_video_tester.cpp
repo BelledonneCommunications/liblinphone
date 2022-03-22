@@ -306,7 +306,7 @@ bool_t request_video(LinphoneCoreManager* caller,LinphoneCoreManager* callee, bo
 	return FALSE;
 }
 
-static bool_t remove_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee) {
+bool_t remove_video(LinphoneCoreManager *caller, LinphoneCoreManager *callee) {
 	LinphoneCallParams *callee_params;
 	LinphoneCall *call_obj;
 	stats initial_caller_stat = caller->stat;
@@ -422,65 +422,7 @@ end:
 }
 
 static void call_with_several_video_switches(void) {
-	int dummy = 0;
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	bool_t call_ok;
-
-	if(g_display_filter != ""){
-		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
-		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
-	}
-
-	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
-
-	if (!call_ok) goto end;
-
-	BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
-	wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
-	BC_ASSERT_TRUE(remove_video(pauline,marie));
-	BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
-	wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
-	BC_ASSERT_TRUE(remove_video(pauline,marie));
-	/**/
-	end_call(pauline, marie);
-end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static void srtp_call_with_several_video_switches(void) {
-	int dummy = 0;
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	bool_t call_ok;
-
-	if(g_display_filter != ""){
-		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
-		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
-	}
-
-	if (linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionSRTP)) {
-		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
-		linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionSRTP);
-
-		BC_ASSERT_TRUE(call_ok=call(pauline,marie));
-		if (!call_ok) goto end;
-
-		BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
-		wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
-		BC_ASSERT_TRUE(remove_video(pauline,marie));
-		BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
-		wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
-		BC_ASSERT_TRUE(remove_video(pauline,marie));
-		/**/
-		end_call(pauline, marie);
-	} else {
-		ms_warning("Not tested because SRTP is not available.");
-	}
-end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
+	call_with_several_video_switches_base(LinphoneMediaEncryptionNone, LinphoneMediaEncryptionNone);
 }
 
 static void call_with_declined_video_base(bool_t using_policy) {
@@ -2558,7 +2500,6 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call with video added 2", call_with_video_added_2),
 	TEST_NO_TAG("Call with video added (random ports)", call_with_video_added_random_ports),
 	TEST_NO_TAG("Call with several video switches", call_with_several_video_switches),
-	TEST_NO_TAG("SRTP call with several video switches", srtp_call_with_several_video_switches),
 	TEST_NO_TAG("Call with video declined", call_with_declined_video),
 	TEST_NO_TAG("Call with video declined despite policy", call_with_declined_video_despite_policy),
 	TEST_NO_TAG("Call with video declined using policy", call_with_declined_video_using_policy),

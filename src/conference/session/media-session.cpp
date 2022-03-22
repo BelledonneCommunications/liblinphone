@@ -933,7 +933,6 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 	LinphoneCore *lc = q->getCore()->getCCore();
 	/* Handle AVPF, SRTP and DTLS */
 
-
 	getParams()->enableAvpf(hasAvpf(md));
 	if (destProxy)
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
@@ -2493,6 +2492,11 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	} else {
 		negotiatedEncryption = getEncryptionFromMediaDescription(newMd);
 		lInfo() << "Negotiated media encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+		// There is no way to signal that ZRTP was enabled in the SDP and it is automatically accepted by Linphone even if it was not offered in the first place
+		// Attribute zrtp-hash is not mandatory
+		if (!q->isCapabilityNegotiationEnabled() && (negotiatedEncryption == LinphoneMediaEncryptionZRTP) && (getParams()->getMediaEncryption() == LinphoneMediaEncryptionNone)) {
+			getParams()->setMediaEncryption(negotiatedEncryption);
+		}
 	}
 	
 	/* Notify the tone manager that we're about to transition to a future state.

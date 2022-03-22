@@ -2502,10 +2502,14 @@ void simple_call_with_capability_negotiations_with_different_encryption_after_re
 			BC_ASSERT_LOWER(callee->stat.number_of_rtcp_received, 5, int, "%d");
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),0,int,"%i");
-			LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-			BC_ASSERT_EQUAL((int)linphone_call_stats_get_download_bandwidth(calleeStats),0,int,"%d");
-			linphone_call_stats_unref(calleeStats);
-			calleeStats = NULL;
+			LinphoneCall * calleeCall2 = linphone_core_get_current_call(callee->lc);
+			BC_ASSERT_PTR_NOT_NULL(calleeCall2);
+			if (calleeCall2) {
+				LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(calleeCall2);
+				BC_ASSERT_EQUAL((int)linphone_call_stats_get_download_bandwidth(calleeStats),0,int,"%d");
+				linphone_call_stats_unref(calleeStats);
+				calleeStats = NULL;
+			}
 
 		}
 

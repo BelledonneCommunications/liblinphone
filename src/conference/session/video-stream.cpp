@@ -156,6 +156,9 @@ void MS2VideoStream::initZrtp() {
 	if (audioStream){
 		MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
 		video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+
+		// Copy newly created zrtp context into mSessions
+		media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
 	} else {
 		lError() << "Unable to initiate ZRTP session because no audio stream is attached to video stream " << this << ".";
 	}
@@ -171,8 +174,6 @@ void MS2VideoStream::startZrtp(){
 		}
 
 		if (mSessions.zrtp_context) {
-			// Since the zrtp session is now initialized, make sure it is retained for future use.
-			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
 			video_stream_start_zrtp(mStream);
 		}else{
 			lError() << "Error while enabling zrtp on video stream: ZRTP context is NULL";
@@ -425,7 +426,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		/* Audio stream is already encrypted and video stream is active */
 		if (audioStream && audioStream->isEncrypted()) {
 			startZrtp();
-			if (remoteStream.getChosenConfiguration().hasZrtpHash() == 1) {
+			if (mSessions.zrtp_context && (remoteStream.getChosenConfiguration().hasZrtpHash() == 1)) {
 				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remoteStream.getChosenConfiguration().getZrtpHash())));
 				if (retval != 0)
 					lError() << "Video stream ZRTP hash mismatch 0x" << hex << retval;
