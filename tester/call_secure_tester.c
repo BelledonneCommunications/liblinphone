@@ -865,8 +865,80 @@ static void dtls_srtp_audio_call_with_rtcp_mux_not_accepted(void){
 	_dtls_srtp_audio_call_with_rtcp_mux(TRUE);
 }
 
+#ifdef VIDEO_ENABLED
+void call_with_several_video_switches_base(const LinphoneMediaEncryption caller_encryption, const LinphoneMediaEncryption callee_encryption) {
+	int dummy = 0;
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bool_t call_ok;
+
+	if (linphone_core_media_encryption_supported(marie->lc, caller_encryption) && linphone_core_media_encryption_supported(marie->lc, callee_encryption)) {
+		linphone_core_set_media_encryption(marie->lc, callee_encryption);
+		linphone_core_set_media_encryption(pauline->lc, caller_encryption);
+
+		BC_ASSERT_TRUE(call_ok=call(pauline,marie));
+		if (!call_ok) goto end;
+
+		BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
+		wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
+		BC_ASSERT_TRUE(remove_video(pauline,marie));
+		BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
+		wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
+		BC_ASSERT_TRUE(remove_video(pauline,marie));
+		/**/
+		end_call(pauline, marie);
+	} else {
+		ms_warning("Not tested because either callee doesn't support %s or caller doesn't support %s.", linphone_media_encryption_to_string(callee_encryption), linphone_media_encryption_to_string(caller_encryption));
+	}
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void srtp_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+}
+
+static void none_to_srtp_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionNone, LinphoneMediaEncryptionSRTP);
+}
+
+static void srtp_to_none_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone);
+}
+
+static void zrtp_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
+}
+
+static void none_to_zrtp_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionNone, LinphoneMediaEncryptionZRTP);
+}
+
+static void zrtp_to_none_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionNone);
+}
+
+static void dtls_srtp_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionDTLS);
+}
+
+static void none_to_dtls_srtp_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionNone, LinphoneMediaEncryptionDTLS);
+}
+
+static void dtls_srtp_to_none_call_with_several_video_switches(void) {
+	call_with_several_video_switches_base(LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone);
+}
+#endif // VIDEO_ENABLED
+
 test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call", srtp_call),
+#ifdef VIDEO_ENABLED
+	TEST_NO_TAG("SRTP call with several video switches", srtp_call_with_several_video_switches),
+	TEST_NO_TAG("SRTP to none call with several video switches", srtp_to_none_call_with_several_video_switches),
+	TEST_NO_TAG("None to SRTP call with several video switches", none_to_srtp_call_with_several_video_switches),
+#endif // VIDEO_ENABLED
 	TEST_NO_TAG("SRTP call with different crypto suite", srtp_call_with_different_crypto_suite),
 	TEST_NO_TAG("SRTP call with crypto suite parameters", srtp_call_with_crypto_suite_parameters),
 	TEST_NO_TAG("SRTP call with crypto suite parameters 2", srtp_call_with_crypto_suite_parameters_2),
@@ -875,11 +947,21 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption 3", srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3),
 	TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption 4", srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4),
 	TEST_NO_TAG("ZRTP call", zrtp_call),
+#ifdef VIDEO_ENABLED
+	TEST_NO_TAG("ZRTP call with several video switches", zrtp_call_with_several_video_switches),
+	TEST_NO_TAG("ZRTP to none call with several video switches", zrtp_to_none_call_with_several_video_switches),
+	TEST_NO_TAG("None to ZRTP call with several video switches", none_to_zrtp_call_with_several_video_switches),
+#endif // VIDEO_ENABLED
 	TEST_NO_TAG("ZRTP silent call", zrtp_silent_call),
 	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
 	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
+#ifdef VIDEO_ENABLED
+	TEST_ONE_TAG("DTLS SRTP call with several video switches", dtls_srtp_call_with_several_video_switches, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP to none call with several video switches", dtls_srtp_to_none_call_with_several_video_switches, "DTLS"),
+	TEST_ONE_TAG("None to DTLS SRTP call with several video switches", none_to_dtls_srtp_call_with_several_video_switches, "DTLS"),
+#endif // VIDEO_ENABLED
 	TEST_ONE_TAG("DTLS SRTP call with ICE", dtls_srtp_call_with_ice, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with ICE and dtls start immediatly", dtls_srtp_call_with_ice_and_dtls_start_immediate, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy, "DTLS"),
