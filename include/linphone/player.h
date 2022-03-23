@@ -154,6 +154,20 @@ LINPHONE_PUBLIC void linphone_player_set_window_id(LinphonePlayer *player, void 
 LINPHONE_PUBLIC bool_t linphone_player_get_is_video_available(LinphonePlayer *player);
 
 /**
+ * Set the volume gain of the player.
+ * @param player #LinphonePlayer object @notnil
+ * @param gain Percentage of the gain. Valid values are in [ 0.0 : 1.0 ].
+ */
+LINPHONE_PUBLIC void linphone_player_set_volume_gain(LinphonePlayer *player, float gain);
+
+/**
+ * Get the volume gain of the player.
+ * @param player #LinphonePlayer object @notnil
+ * @return Percentage of the gain. Valid values are in [ 0.0 : 1.0 ].
+ */
+LINPHONE_PUBLIC float linphone_player_get_volume_gain(LinphonePlayer *player);
+
+/**
  * Returns the #LinphoneCore object managing this player's call, if any.
  * @param player #LinphonePlayer object @notnil
  * @return the #LinphoneCore object associated @notnil

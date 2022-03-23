@@ -32,6 +32,8 @@ static void _local_player_close(LinphonePlayer *obj);
 static void _local_player_destroy(LinphonePlayer *obj);
 static void _local_player_set_window_id(LinphonePlayer *obj, void* window_id);
 static bool_t _local_player_is_video_available(LinphonePlayer *obj);
+static void _local_player_set_volume_gain(LinphonePlayer *obj, float gain);
+static float _local_player_get_volume_gain(const LinphonePlayer *obj);
 static void _local_player_eof_callback(void *user_data);
 
 LinphonePlayer *linphone_core_create_local_player(LinphoneCore *lc, const char *sound_card_name, const char *video_display_name, void *window_id) {
@@ -59,6 +61,8 @@ LinphonePlayer *linphone_core_create_local_player(LinphoneCore *lc, const char *
 	obj->destroy = _local_player_destroy;
 	obj->set_window_id = _local_player_set_window_id;
 	obj->is_video_available = _local_player_is_video_available;
+	obj->set_volume_gain = _local_player_set_volume_gain;
+	obj->get_volume_gain = _local_player_get_volume_gain;
 	ms_media_player_set_eof_callback((MSMediaPlayer *)obj->impl, _local_player_eof_callback, obj);
 	return obj;
 }
@@ -111,6 +115,15 @@ static void _local_player_set_window_id(LinphonePlayer *obj, void* window_id) {
 static bool_t _local_player_is_video_available(LinphonePlayer *obj) {
 	return ms_media_player_get_is_video_available((MSMediaPlayer *)obj->impl);
 }
+
+static void _local_player_set_volume_gain(LinphonePlayer *player, float gain) {
+	ms_media_player_set_volume_gain((MSMediaPlayer *)player->impl, gain);
+}
+
+static float _local_player_get_volume_gain(const LinphonePlayer *player) {
+	return ms_media_player_get_volume_gain((const MSMediaPlayer *)player->impl);
+}
+
 
 static void _local_player_eof_callback(void *user_data) {
 	LinphonePlayer *obj = (LinphonePlayer *)user_data;

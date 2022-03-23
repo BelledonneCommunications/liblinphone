@@ -133,6 +133,14 @@ bool_t linphone_player_get_is_video_available(LinphonePlayer *obj) {
 	return obj->is_video_available(obj);
 }
 
+void linphone_player_set_volume_gain(LinphonePlayer *player, float gain) {
+	player->set_volume_gain(player, gain);
+}
+
+float linphone_player_get_volume_gain(LinphonePlayer *player) {
+	return player->get_volume_gain(player);
+}
+
 void linphone_player_destroy(LinphonePlayer *obj) {
 	_linphone_player_destroy(obj);
 }
