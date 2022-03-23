@@ -539,6 +539,8 @@ struct _LinphonePlayer{
 	void (*destroy)(LinphonePlayer *player);
 	void (*set_window_id)(LinphonePlayer *player, void* window_id);
 	bool_t (*is_video_available)(LinphonePlayer *player);
+	void (*set_volume_gain)(LinphonePlayer *player, float gain);
+	float (*get_volume_gain)(const LinphonePlayer *player);
 	void *impl;
 	LinphonePlayerCbs *callbacks; // Deprecated, use a list of Cbs instead
 	LinphoneCore *core;
