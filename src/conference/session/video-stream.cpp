@@ -348,10 +348,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_set_device_rotation(mStream, getCCore()->device_rotation);
 	video_stream_set_freeze_on_error(mStream, !!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
 	video_stream_use_video_preset(mStream, linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
-	if (isThumbnail)
-		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "thumbnail_display_mode", "OccupyAllSpace")));
+
+	if (!label.empty() && dir != MediaStreamSendRecv )
+		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "other_display_mode", "OccupyAllSpace")));
 	else
-		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "display_mode", "Hybrid")));
+		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "main_display_mode", "Hybrid")));
 
 	video_stream_enable_thumbnail(mStream, isThumbnail);
 	if (!label.empty()) {
