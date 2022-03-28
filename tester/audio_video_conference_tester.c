@@ -680,8 +680,9 @@ static void simple_conference_with_admin_changed(void) {
 
 		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(m->lc));
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, uri, conference_address, NULL);
-		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
+		if(!BC_ASSERT_PTR_NOT_NULL(conference))
+			continue;
 
 		bctbx_list_t *participants_after_removal = linphone_conference_get_participant_list(conference);
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants_after_removal), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
@@ -1402,7 +1403,7 @@ static void simple_conference_with_subject_change_from_admin(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 
-		BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
+		if(conference) BC_ASSERT_TRUE(strcmp(original_subject, linphone_conference_get_subject(conference)) == 0);
 	}
 
 	stats* initial_participants_stats = NULL;
@@ -1440,7 +1441,7 @@ static void simple_conference_with_subject_change_from_admin(void) {
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		linphone_address_unref(uri);
 
-		BC_ASSERT_TRUE(strcmp(new_subject, linphone_conference_get_subject(conference)) == 0);
+		if(conference) BC_ASSERT_TRUE(strcmp(new_subject, linphone_conference_get_subject(conference)) == 0);
 	}
 	bctbx_list_free(all_manangers_in_conf);
 
@@ -2147,18 +2148,19 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 		// Try to change conference address after creation.
 		LinphoneConference * conference = linphone_core_get_conference(marie->lc);
-		BC_ASSERT_PTR_NOT_NULL(conference);
-		const char * new_conference_address_str = "sip:toto@sip.example.org";
-		LinphoneAddress *new_conference_address = linphone_address_new (new_conference_address_str);
-		BC_ASSERT_PTR_NOT_NULL(new_conference_address);
-		linphone_conference_set_conference_address(conference, new_conference_address);
-		linphone_address_unref(new_conference_address);
+		if(BC_ASSERT_PTR_NOT_NULL(conference)) {
+			const char * new_conference_address_str = "sip:toto@sip.example.org";
+			LinphoneAddress *new_conference_address = linphone_address_new (new_conference_address_str);
+			BC_ASSERT_PTR_NOT_NULL(new_conference_address);
+			linphone_conference_set_conference_address(conference, new_conference_address);
+			linphone_address_unref(new_conference_address);
 
-		const LinphoneAddress *current_conference_address = linphone_conference_get_conference_address(conference);
-		char * current_conference_address_str = linphone_address_as_string(current_conference_address);
-		// Change of conference address after creation is not allowed.
-		BC_ASSERT_NOT_EQUAL(strcmp(current_conference_address_str,new_conference_address_str), 0, int, "%d");
-		ms_free(current_conference_address_str);
+			const LinphoneAddress *current_conference_address = linphone_conference_get_conference_address(conference);
+			char * current_conference_address_str = linphone_address_as_string(current_conference_address);
+			// Change of conference address after creation is not allowed.
+			BC_ASSERT_NOT_EQUAL(strcmp(current_conference_address_str,new_conference_address_str), 0, int, "%d");
+			ms_free(current_conference_address_str);
+		}
 	}
 
 	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_conference(marie->lc))) {
@@ -6050,7 +6052,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	}
 
 	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
-	BC_ASSERT_PTR_NOT_NULL(conference);
+	if(!BC_ASSERT_PTR_NOT_NULL(conference)) goto end;
 	// Verify that video capabilities are still enabled
 	const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
 	BC_ASSERT_TRUE(linphone_conference_params_is_video_enabled(params) == TRUE);
