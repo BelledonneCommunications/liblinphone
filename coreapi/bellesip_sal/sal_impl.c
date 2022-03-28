@@ -28,6 +28,7 @@ SalAuthInfo* sal_auth_info_create(belle_sip_auth_event_t* event) {
 	SalAuthInfo* auth_info = sal_auth_info_new();
 	auth_info->realm = ms_strdup(belle_sip_auth_event_get_realm(event));
 	auth_info->username = ms_strdup(belle_sip_auth_event_get_username(event));
+	auth_info->userid = ms_strdup(belle_sip_auth_event_get_userid(event));
 	auth_info->domain = ms_strdup(belle_sip_auth_event_get_domain(event));
 	auth_info->mode = (SalAuthMode)belle_sip_auth_event_get_mode(event);
 	auth_info->algorithm = ms_strdup(belle_sip_auth_event_get_algorithm(event));
