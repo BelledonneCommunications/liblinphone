@@ -1222,6 +1222,7 @@ LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 	L_D();
 	if (d->state == CallSession::State::PushIncomingReceived && !d->op) {
 		lInfo() << "[pushkit] Terminate CallSession [" << this << "]";
+		linphone_error_info_set(d->ei, nullptr, LinphoneReasonDeclined, 3, "Declined", nullptr);
 		d->terminate();
 		d->setState(LinphonePrivate::CallSession::State::Released, "Call released");
 		return 0;

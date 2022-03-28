@@ -300,7 +300,7 @@ static void call_received(SalCallOp *h) {
 		LinphonePrivate::Call::toCpp(call)->initiateIncoming();
 	} else {
 		LinphoneCallLog *calllog = linphone_core_find_call_log(lc, h->getCallId().c_str(), linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
-		if (calllog) {
+		if (calllog && linphone_call_log_get_status(calllog) == LinphoneCallDeclined) {
 			/* Before create a new call, check if the call log with the same callid is created.
 			   If yes, that means the call is already declined by callkit. */
 			lInfo() << "The call " << h->getCallId() <<" is already declined by callkit";
@@ -311,6 +311,8 @@ static void call_received(SalCallOp *h) {
 			linphone_call_log_unref(calllog);
 			return;
 		}
+		if (calllog)
+			linphone_call_log_unref(calllog);
 		call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
 	}
 
