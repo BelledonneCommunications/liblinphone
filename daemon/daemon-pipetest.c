@@ -33,7 +33,7 @@ static int running=1;
 
 int main(int argc, char *argv[]){
 	char buf[32768];
-	ortp_pipe_t fd;
+	bctbx_pipe_t fd;
 
 	/* handle args */
 	if (argc < 2) {
@@ -44,8 +44,8 @@ int main(int argc, char *argv[]){
 	ortp_init();
 	ortp_set_log_level_mask(NULL, ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR | ORTP_FATAL);
 
-	fd=ortp_client_pipe_connect(argv[1]);
-	if (fd==(ortp_pipe_t)-1){
+	fd=bctbx_client_pipe_connect(argv[1]);
+	if (fd==(bctbx_pipe_t)-1){
 		ortp_error("Could not connect to control pipe: %s",strerror(errno));
 		return -1;
 	}
@@ -64,10 +64,10 @@ int main(int argc, char *argv[]){
 		ReadFile(hin, buf, sizeof(buf), &read, NULL);
 		if (read > 2) {
 			buf[read - 2] = '\0'; // Remove ending '\r\n'
-			if (ortp_pipe_write(fd, (uint8_t *)buf, (int)strlen(buf)) < 0) {
+			if (bctbx_pipe_write(fd, (uint8_t *)buf, (int)strlen(buf)) < 0) {
 				running = 0;
 			} else {
-				read = ortp_pipe_read(fd, (uint8_t *)buf, sizeof(buf));
+				read = bctbx_pipe_read(fd, (uint8_t *)buf, sizeof(buf));
 				if (read > 0) {
 					WriteFile(hout, buf, read, &written, NULL);
 				} else {

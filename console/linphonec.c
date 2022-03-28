@@ -153,7 +153,7 @@ static const char *factory_configfile_name=NULL;
 static char *sip_addr_to_call = NULL; /* for autocall */
 static void *window_id = NULL; /* NULL=standalone window, or window id for embedding video */
 #if !defined(_WIN32_WCE)
-static ortp_pipe_t client_sock=ORTP_PIPE_INVALID;
+static bctbx_pipe_t client_sock=BCTBX_PIPE_INVALID;
 #endif /*_WIN32_WCE*/
 char prompt[PROMPT_MAX_LEN];
 #if !defined(_WIN32_WCE)
@@ -161,7 +161,7 @@ static ortp_thread_t pipe_reader_th;
 static bool_t pipe_reader_run=FALSE;
 #endif /*_WIN32_WCE*/
 #if !defined(_WIN32_WCE)
-static ortp_pipe_t server_sock;
+static bctbx_pipe_t server_sock;
 #endif /*_WIN32_WCE*/
 
 bool_t linphonec_camera_enabled=TRUE;
@@ -397,7 +397,7 @@ static void start_prompt_reader(void){
 	ortp_thread_create(&th,NULL,prompt_reader_thread,NULL);
 }
 #if !defined(_WIN32_WCE)
-static ortp_pipe_t create_server_socket(void){
+static bctbx_pipe_t create_server_socket(void){
 	char path[128];
 #ifndef _WIN32
 	snprintf(path,sizeof(path)-1,"linphonec-%i",getuid());
@@ -409,7 +409,7 @@ static ortp_pipe_t create_server_socket(void){
 		snprintf(path,sizeof(path)-1,"linphonec-%s",username);
 	}
 #endif
-	return ortp_server_pipe_create(path);
+	return bctbx_server_pipe_create(path);
 }
 
 
@@ -425,11 +425,11 @@ static void *pipe_thread(void*p){
 			Sleep(20);
 #endif
 		}
-		client_sock=ortp_server_pipe_accept_client(server_sock);
+		client_sock=bctbx_server_pipe_accept_client(server_sock);
 		if (client_sock!=ORTP_PIPE_INVALID){
 			int len;
 			/*now read from the client */
-			if ((len=ortp_pipe_read(client_sock,(uint8_t*)tmp,sizeof(tmp)-1))>0){
+			if ((len=bctbx_pipe_read(client_sock,(uint8_t*)tmp,sizeof(tmp)-1))>0){
 				ortp_mutex_lock(&prompt_mutex);
 				tmp[len]='\0';
 				strcpy(received_prompt,tmp);
@@ -438,7 +438,7 @@ static void *pipe_thread(void*p){
 				ortp_mutex_unlock(&prompt_mutex);
 			}else{
 				printf("read nothing\n");fflush(stdout);
-				ortp_server_pipe_close_client(client_sock);
+				bctbx_server_pipe_close_client(client_sock);
 				client_sock=ORTP_PIPE_INVALID;
 			}
 
@@ -459,7 +459,7 @@ static void start_pipe_reader(void){
 static void stop_pipe_reader(void){
 	pipe_reader_run=FALSE;
 	linphonec_command_finished();
-	ortp_server_pipe_close(server_sock);
+	bctbx_server_pipe_close(server_sock);
 	ortp_thread_join(pipe_reader_th,NULL);
 }
 #endif /*_WIN32_WCE*/
@@ -532,7 +532,7 @@ void linphonec_out(const char *fmt,...){
 	fflush(stdout);
 #if !defined(_WIN32_WCE)
 	if (client_sock!=ORTP_PIPE_INVALID){
-		if (ortp_pipe_write(client_sock,(uint8_t*)res,(int)strlen(res))==-1){
+		if (bctbx_pipe_write(client_sock,(uint8_t*)res,(int)strlen(res))==-1){
 			fprintf(stderr,"Fail to send output via pipe: %s",strerror(errno));
 		}
 	}
@@ -543,7 +543,7 @@ void linphonec_out(const char *fmt,...){
 void linphonec_command_finished(void){
 #if !defined(_WIN32_WCE)
 	if (client_sock!=ORTP_PIPE_INVALID){
-		ortp_server_pipe_close_client(client_sock);
+		bctbx_server_pipe_close_client(client_sock);
 		client_sock=ORTP_PIPE_INVALID;
 	}
 #endif /*_WIN32_WCE*/
@@ -1555,4 +1555,3 @@ lpc_strip_blanks(char *input)
  *
  *
  ****************************************************************************/
-

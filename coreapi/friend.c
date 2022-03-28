@@ -1822,9 +1822,9 @@ bctbx_list_t* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFrie
 
 	buf = sqlite3_mprintf("SELECT * FROM friends WHERE friend_list_id = %u ORDER BY id", list->storage_id);
 
-	begin = ortp_get_cur_time_ms();
+	begin = bctbx_get_cur_time_ms();
 	linphone_sql_request_friend(lc->friends_db, buf, lc->vcard_context);
-	end = ortp_get_cur_time_ms();
+	end = bctbx_get_cur_time_ms();
 	ms_message("%s(): %u results fetched, completed in %i ms",__FUNCTION__, (unsigned int)bctbx_list_size(result), (int)(end-begin));
 	sqlite3_free(buf);
 
@@ -1857,9 +1857,9 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 
 	buf = sqlite3_mprintf("SELECT * FROM friends_lists ORDER BY id");
 
-	begin = ortp_get_cur_time_ms();
+	begin = bctbx_get_cur_time_ms();
 	linphone_sql_request_friends_list(lc->friends_db, buf, &result);
-	end = ortp_get_cur_time_ms();
+	end = bctbx_get_cur_time_ms();
 	ms_message("%s(): %u results fetched, completed in %i ms",__FUNCTION__, (unsigned int)bctbx_list_size(result), (int)(end-begin));
 	sqlite3_free(buf);
 

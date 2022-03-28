@@ -1836,7 +1836,7 @@ static void video_call_snapshot(void) {
 			ms_warning("No jpegwriter support!");
 		} else {
 			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,1));
-			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			BC_ASSERT_EQUAL(bctbx_file_exist(filename), 0, int, "%d");
 			remove(filename);
 		}
 		end_call(marie, pauline);
@@ -1885,19 +1885,19 @@ static void video_call_snapshots(void) {
 			ms_warning("No jpegwriter support!");
 		} else {
 			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,1));
-			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			BC_ASSERT_EQUAL(bctbx_file_exist(filename), 0, int, "%d");
 			remove(filename);
 
 			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 1000);
 			linphone_call_take_video_snapshot(callInst, filename);
 			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,2));
-			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			BC_ASSERT_EQUAL(bctbx_file_exist(filename), 0, int, "%d");
 			remove(filename);
 
 			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 1000);
 			linphone_call_take_video_snapshot(callInst, filename);
 			BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_snapshot_taken,3));
-			BC_ASSERT_EQUAL(ortp_file_exist(filename), 0, int, "%d");
+			BC_ASSERT_EQUAL(bctbx_file_exist(filename), 0, int, "%d");
 			remove(filename);
 		}
 		end_call(marie, pauline);
@@ -2310,7 +2310,7 @@ static void call_paused_resumed_with_automatic_video_accept(void) {
 static void video_call_with_mire_and_analyse(void) {
 	LinphoneCoreManager* callee = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	
+
 	LinphoneCall* callee_call;
 	LinphoneCall* caller_call;
 	LinphoneVideoPolicy callee_policy;
@@ -2395,7 +2395,7 @@ static void call_with_video_mkv_file_player(void) {
 
 	src_mkv = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
 	hellowav = bc_tester_res("sounds/hello8000_mkv_ref.wav");
-	
+
 	if (!linphone_core_file_format_supported(marie->lc,"mkv")){
 		ms_warning("Test skipped, no mkv support.");
 		goto end;
@@ -2420,7 +2420,7 @@ static void call_with_video_mkv_file_player(void) {
 	linphone_core_set_video_activation_policy(marie->lc, pol);
 	linphone_core_set_video_activation_policy(pauline->lc, pol);
 	linphone_video_activation_policy_unref(pol);
-	
+
 	/*caller uses files instead of soundcard in order to avoid mixing soundcard input with file played using call's player*/
 	linphone_core_set_use_files(marie->lc,TRUE);
 	linphone_core_set_play_file(marie->lc,NULL);
@@ -2438,20 +2438,20 @@ static void call_with_video_mkv_file_player(void) {
 		linphone_player_cbs_set_eof_reached(cbs, on_eof);
 		linphone_player_cbs_set_user_data(cbs, marie);
 		int res = linphone_player_open(player, src_mkv);
-		
+
 		BC_ASSERT_EQUAL(res, 0, int, "%d");
 		BC_ASSERT_EQUAL(linphone_player_start(player),0,int,"%d");
-		
+
 		liblinphone_tester_set_next_video_frame_decoded_cb(linphone_core_get_current_call(pauline->lc));
 
 		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,1));
 		/*wait for some seconds so that we can have an fps measurement */
 		wait_for_until(pauline->lc,marie->lc,NULL,0, 2000);
 		BC_ASSERT_GREATER(linphone_call_params_get_received_framerate(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))), 15.0f, float, "%f");
-		
+
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_player_eof,1,25000));
 		linphone_player_close(player);
-		
+
 		video_stats = linphone_call_get_video_stats(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_PTR_NOT_NULL(video_stats);
 		if (video_stats){

@@ -2115,7 +2115,7 @@ LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, co
 void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
 		const char *record_file = linphone_core_get_record_file(mgr->lc);
-		if (!liblinphone_tester_keep_record_files && record_file && ortp_file_exist(record_file)==0) {
+		if (!liblinphone_tester_keep_record_files && record_file && bctbx_file_exist(record_file)==0) {
 			if ((bc_get_number_of_failures() - mgr->number_of_bcunit_error_at_creation)>0) {
 				ms_error("Test has failed, keeping recorded file [%s]", record_file);
 			}
@@ -2134,7 +2134,7 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
 		const char *record_file = linphone_core_get_record_file(mgr->lc);
-		if (!liblinphone_tester_keep_record_files && record_file && ortp_file_exist(record_file)==0) {
+		if (!liblinphone_tester_keep_record_files && record_file && bctbx_file_exist(record_file)==0) {
 			if ((bc_get_number_of_failures() - mgr->number_of_bcunit_error_at_creation)>0) {
 				ms_error("Test has failed, keeping recorded file [%s]", record_file);
 			}
@@ -2676,7 +2676,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 	if (lf || linphone_search_result_get_address(sr)) {
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
 			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
-		
+
 		if(uri){	// Check on address
 			if (la) {
 				char* fa = linphone_address_as_string_uri_only(la);

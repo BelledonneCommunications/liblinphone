@@ -242,7 +242,7 @@ class Daemon {
 	friend class DaemonCommand;
 public:
 	typedef Response::Status Status;
-	Daemon(const char *config_path, const char *factory_config_path, const char *log_file, const char *pipe_name, bool display_video, bool capture_video);
+	Daemon(const char *config_path, const char *factory_config_path, const char *log_file, const char *pipe_path, bool display_video, bool capture_video);
 	~Daemon();
 	int run();
 	void quit();

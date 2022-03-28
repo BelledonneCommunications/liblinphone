@@ -77,7 +77,7 @@ static int make_status_value(const char *status_string){
 }
 
 static int send_command(const char *command, char *reply, int reply_len, int print_errors){
-	ortp_pipe_t pp;
+	bctbx_pipe_t pp;
 	int i;
 	int err;
 	char path[128];
@@ -91,22 +91,22 @@ static int send_command(const char *command, char *reply, int reply_len, int pri
 		snprintf(path,sizeof(path)-1,"linphonec-%s",username);
 	}
 #endif
-	if ((pp=ortp_client_pipe_connect(path))==ORTP_PIPE_INVALID){
+	if ((pp=bctbx_client_pipe_connect(path))==ORTP_PIPE_INVALID){
 		if (print_errors) fprintf(stderr,"ERROR: Failed to connect pipe: %s\n",strerror(errno));
 		return -1;
 	}
-	if (ortp_pipe_write(pp,(uint8_t*)command,strlen(command))==-1){
+	if (bctbx_pipe_write(pp,(uint8_t*)command,strlen(command))==-1){
 		if (print_errors) fprintf(stderr,"ERROR: Fail to send command to remote linphonec\n");
-		ortp_client_pipe_close(pp);
+		bctbx_client_pipe_close(pp);
 		return -1;
 	}
 	/*wait for replies */
 	i=0;
-	while ((err=ortp_pipe_read(pp,(uint8_t*)&reply[i],reply_len-i-1))>0){
+	while ((err=bctbx_pipe_read(pp,(uint8_t*)&reply[i],reply_len-i-1))>0){
 		i+=err;
 	}
 	reply[i]='\0';
-	ortp_client_pipe_close(pp);
+	bctbx_client_pipe_close(pp);
 	return 0;
 }
 

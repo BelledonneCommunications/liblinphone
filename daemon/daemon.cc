@@ -139,7 +139,7 @@ CallEvent::CallEvent(Daemon *daemon, LinphoneCall *call, LinphoneCallState state
 	setBody(ostr.str());
 
 	bctbx_free(fromStr);
-	
+
 }
 
 DtmfEvent::DtmfEvent(Daemon *daemon, LinphoneCall *call, int dtmf) : Event("receiving-tone"){
@@ -219,7 +219,7 @@ AudioStreamStatsEvent::AudioStreamStatsEvent(Daemon* daemon, AudioStream* stream
 
 CallPlayingStatsEvent::CallPlayingStatsEvent(Daemon* daemon, int id) : Event("call-playing-complete"){
 	ostringstream ostr;
- 
+
 	ostr << "Id: " << id << "\n";
 
 	setBody(ostr.str());
@@ -300,12 +300,12 @@ bool DaemonCommand::matches(const string& name) const {
 	return mName.compare(name) == 0;
 }
 
-Daemon::Daemon(const char *config_path, const char *factory_config_path, const char *log_file, const char *pipe_name, bool display_video, bool capture_video) :
+Daemon::Daemon(const char *config_path, const char *factory_config_path, const char *log_file, const char *pipe_path, bool display_video, bool capture_video) :
 		mLSD(0), mLogFile(NULL), mAutoVideo(0), mCallIds(0), mProxyIds(0), mAudioStreamIds(0) {
 	ms_mutex_init(&mMutex, NULL);
-	mServerFd = (ortp_pipe_t)-1;
-	mChildFd = (ortp_pipe_t)-1;
-	if (pipe_name == NULL) {
+	mServerFd = (bctbx_pipe_t)-1;
+	mChildFd = (bctbx_pipe_t)-1;
+	if (pipe_path == NULL) {
 #ifdef HAVE_READLINE
 		const char *homedir = getenv("HOME");
 		rl_readline_name = (char*)"daemon";
@@ -316,12 +316,12 @@ Daemon::Daemon(const char *config_path, const char *factory_config_path, const c
 		setlinebuf(stdout);
 #endif
 	} else {
-		mServerFd = ortp_server_pipe_create(pipe_name);
+		mServerFd = bctbx_server_pipe_create_by_path(pipe_path);
 #ifndef _WIN32
 		listen(mServerFd, 2);
-		fprintf(stdout, "Server unix socket created, name=%s fd=%i\n", pipe_name, (int)mServerFd);
+		fprintf(stdout, "Server unix socket created, path=%s fd=%i\n", pipe_path, (int)mServerFd);
 #else
-		fprintf(stdout, "Named pipe  created, name=%s fd=%p\n", pipe_name, mServerFd);
+		fprintf(stdout, "Named pipe  created, path=%s fd=%p\n", pipe_path, mServerFd);
 #endif
 	}
 
@@ -524,11 +524,11 @@ bool Daemon::pullEvent() {
 	bool status = false;
 	ostringstream ostr;
 	size_t size = mEventQueue.size();
-	
+
 	if (size != 0) size--;
-	
+
 	ostr << "Size: " << size << "\n"; //size is the number items remaining in the queue after popping the event.
-	
+
 	if (!mEventQueue.empty()) {
 		Event *e = mEventQueue.front();
 		mEventQueue.pop();
@@ -536,14 +536,14 @@ bool Daemon::pullEvent() {
 		delete e;
 		status = true;
 	}
-	
+
 	sendResponse(Response(ostr.str().c_str(), Response::Ok));
 	return status;
 }
 
 void Daemon::callStateChanged(LinphoneCall *call, LinphoneCallState state, const char *msg) {
 	queueEvent(new CallEvent(this, call, state));
-	
+
 	if (state == LinphoneCallIncomingReceived && mAutoAnswer){
 		linphone_call_accept(call);
 	}
@@ -606,7 +606,7 @@ void Daemon::iterateStreamStats() {
 void Daemon::iterate() {
 	linphone_core_iterate(mLc);
 	iterateStreamStats();
-	if (mChildFd == (ortp_pipe_t)-1) {
+	if (mChildFd == (bctbx_pipe_t)-1) {
 		if (!mEventQueue.empty()) {
 			Event *r = mEventQueue.front();
 			mEventQueue.pop();
@@ -637,8 +637,8 @@ void Daemon::execCommand(const string &command) {
 
 void Daemon::sendResponse(const Response &resp) {
 	string buf = resp.toBuf();
-	if (mChildFd != (ortp_pipe_t)-1) {
-		if (ortp_pipe_write(mChildFd, (uint8_t *)buf.c_str(), (int)buf.size()) == -1) {
+	if (mChildFd != (bctbx_pipe_t)-1) {
+		if (bctbx_pipe_write(mChildFd, (uint8_t *)buf.c_str(), (int)buf.size()) == -1) {
 			ms_error("Fail to write to pipe: %s", strerror(errno));
 		}
 	} else {
@@ -654,19 +654,19 @@ string Daemon::readPipe() {
 	char buffer[32768];
 	memset(buffer, '\0', sizeof(buffer));
 #ifdef _WIN32
-	if (mChildFd == (ortp_pipe_t)-1) {
-		mChildFd = ortp_server_pipe_accept_client(mServerFd);
+	if (mChildFd == (bctbx_pipe_t)-1) {
+		mChildFd = bctbx_server_pipe_accept_client(mServerFd);
 		ms_message("Client accepted");
 	}
-	if (mChildFd != (ortp_pipe_t)-1) {
-		int ret = ortp_pipe_read(mChildFd, (uint8_t *)buffer, sizeof(buffer));
+	if (mChildFd != (bctbx_pipe_t)-1) {
+		int ret = bctbx_pipe_read(mChildFd, (uint8_t *)buffer, sizeof(buffer));
 		if (ret == -1) {
 			ms_error("Fail to read from pipe: %s", strerror(errno));
-			mChildFd = (ortp_pipe_t)-1;
+			mChildFd = (bctbx_pipe_t)-1;
 		} else {
 			if (ret == 0) {
 				ms_message("Client disconnected");
-				mChildFd = (ortp_pipe_t)-1;
+				mChildFd = (bctbx_pipe_t)-1;
 				return "";
 			}
 			buffer[ret] = '\0';
@@ -677,40 +677,40 @@ string Daemon::readPipe() {
 	struct pollfd pfd[2];
 	int nfds = 1;
 	memset(&pfd[0], 0, sizeof(pfd));
-	if (mServerFd != (ortp_pipe_t)-1) {
+	if (mServerFd != (bctbx_pipe_t)-1) {
 		pfd[0].events = POLLIN;
 		pfd[0].fd = mServerFd;
 	}
-	if (mChildFd != (ortp_pipe_t)-1) {
+	if (mChildFd != (bctbx_pipe_t)-1) {
 		pfd[1].events = POLLIN;
 		pfd[1].fd = mChildFd;
 		nfds++;
 	}
 	int err = poll(pfd, (nfds_t)nfds, 50);
 	if (err > 0) {
-		if (mServerFd != (ortp_pipe_t)-1 && (pfd[0].revents & POLLIN)) {
+		if (mServerFd != (bctbx_pipe_t)-1 && (pfd[0].revents & POLLIN)) {
 			struct sockaddr_storage addr;
 			socklen_t addrlen = sizeof(addr);
 			int childfd = accept(mServerFd, (struct sockaddr*) &addr, &addrlen);
 			if (childfd != -1) {
-				if (mChildFd != (ortp_pipe_t)-1) {
+				if (mChildFd != (bctbx_pipe_t)-1) {
 					ms_error("Cannot accept two client at the same time");
 					close(childfd);
 				} else {
-					mChildFd = (ortp_pipe_t)childfd;
+					mChildFd = (bctbx_pipe_t)childfd;
 					return "";
 				}
 			}
 		}
-		if (mChildFd != (ortp_pipe_t)-1 && (pfd[1].revents & POLLIN)) {
+		if (mChildFd != (bctbx_pipe_t)-1 && (pfd[1].revents & POLLIN)) {
 			int ret;
-			if ((ret = ortp_pipe_read(mChildFd, (uint8_t *)buffer, sizeof(buffer))) == -1) {
+			if ((ret = bctbx_pipe_read(mChildFd, (uint8_t *)buffer, sizeof(buffer))) == -1) {
 				ms_error("Fail to read from pipe: %s", strerror(errno));
 			} else {
 				if (ret == 0) {
 					ms_message("Client disconnected");
-					ortp_server_pipe_close_client(mChildFd);
-					mChildFd = (ortp_pipe_t)-1;
+					bctbx_server_pipe_close_client(mChildFd);
+					mChildFd = (bctbx_pipe_t)-1;
 					return "";
 				}
 				buffer[ret] = '\0';
@@ -812,7 +812,7 @@ static void printHelp() {
 		"\t--help                     Print this notice." << endl <<
 		"\t--dump-commands-help       Dump the help of every available commands." << endl <<
 		"\t--dump-commands-html-help  Dump the help of every available commands." << endl <<
-		"\t--pipe <pipename>          Create an unix server socket in /tmp to receive commands from." << endl <<
+		"\t--pipe <pipepath>          Create an unix server socket in the specified path to receive commands from. For Windows just use a name instead of a path." << endl <<
 		"\t--log <path>               Supply a file where the log will be saved." << endl <<
 		"\t--factory-config <path>    Supply a readonly linphonerc style config file to start with." << endl <<
 		"\t--config <path>            Supply a linphonerc style config file to start with." << endl <<
@@ -856,7 +856,7 @@ int Daemon::run() {
 	while (mRunning) {
 		string line;
 		bool eof=false;
-		if (mServerFd == (ortp_pipe_t)-1) {
+		if (mServerFd == (bctbx_pipe_t)-1) {
 			line = readLine(prompt, &eof);
 			if (!line.empty()) {
 #ifdef HAVE_READLINE
@@ -913,11 +913,11 @@ Daemon::~Daemon() {
 
 	enableLSD(false);
 	linphone_core_unref(mLc);
-	if (mChildFd != (ortp_pipe_t)-1) {
-		ortp_server_pipe_close_client(mChildFd);
+	if (mChildFd != (bctbx_pipe_t)-1) {
+		bctbx_server_pipe_close_client(mChildFd);
 	}
-	if (mServerFd != (ortp_pipe_t)-1) {
-		ortp_server_pipe_close(mServerFd);
+	if (mServerFd != (bctbx_pipe_t)-1) {
+		bctbx_server_pipe_close(mServerFd);
 	}
 	if (mLogFile != NULL) {
 		linphone_core_enable_logs(NULL);
@@ -947,7 +947,7 @@ int main(int argc, char *argv[]) {
 #endif
 	const char *config_path = NULL;
 	const char *factory_config_path = NULL;
-	const char *pipe_name = NULL;
+	const char *pipe_path = NULL;
 	const char *log_file = NULL;
 	bool capture_video = false;
 	bool display_video = false;
@@ -970,10 +970,10 @@ int main(int argc, char *argv[]) {
 			return 0;
 		} else if (strcmp(argv[i], "--pipe") == 0) {
 			if (i + 1 >= argc) {
-				fprintf(stderr, "no pipe name specify after --pipe\n");
+				fprintf(stderr, "no pipe path specified after --pipe\n");
 				return -1;
 			}
-			pipe_name = argv[++i];
+			pipe_path = argv[++i];
 			stats_enabled = false;
 		} else if (strcmp(argv[i], "--factory-config") == 0) {
 			if (i + 1 >= argc) {
@@ -1011,8 +1011,8 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Unrecognized option : %s", argv[i]);
 		}
 	}
-	Daemon app(config_path, factory_config_path, log_file, pipe_name, display_video, capture_video);
-	
+	Daemon app(config_path, factory_config_path, log_file, pipe_path, display_video, capture_video);
+
 	the_app = &app;
 	signal(SIGINT, sighandler);
 	app.enableStatsEvents(stats_enabled);

@@ -2928,7 +2928,7 @@ static void linphone_core_init(LinphoneCore *lc, LinphoneCoreCbs *cbs, LpConfig 
 	msplugins_dir = linphone_factory_get_msplugins_dir(lfactory);
 	image_resources_dir = linphone_factory_get_image_resources_dir(lfactory);
 	// MS Factory MUST be created after Android context has been set, otherwise no camera will be detected !
-	
+
 	// The ms2 factory must survive to linphone_core_stop(), otherwise it invalidates resources created by LinphonePlayer/LinphoneRecorder.
 	if (!lc->factory){
 		lc->factory = ms_factory_new_with_voip_and_directories(msplugins_dir, image_resources_dir);
@@ -4308,7 +4308,7 @@ LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity_strict(LinphoneCore
 	}
 	if (!found_cfg && found_reg_cfg)    found_cfg = found_reg_cfg;
 	else if (!found_cfg && found_noreg_cfg) found_cfg = found_noreg_cfg;
-	
+
 	return found_cfg;
 }
 
@@ -5484,13 +5484,13 @@ void linphone_core_reload_sound_devices(LinphoneCore* lc) {
 			input_dev_id_copy = ms_strdup(input_dev_id);
 		}
 	}
-	
+
 	// Reload
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
-	
+
 	// Set selection
-	
+
 	linphone_core_set_ringer_device(lc, ringer_copy);
 	if (ringer_copy != NULL)
 		ms_free(ringer_copy);
