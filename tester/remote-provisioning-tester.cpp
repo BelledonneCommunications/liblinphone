@@ -307,23 +307,26 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url);
 
 	BC_ASSERT_PTR_NOT_NULL(friendList);
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList)), 2, unsigned int, "%u");
+	unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
+	BC_ASSERT_EQUAL(friends_list_size, 2, unsigned int, "%u");
 
-	// Check if the vCard has been properly parsed
-	LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(linphone_friend_list_get_friends(friendList));
-	LinphoneVcard *vcard = linphone_friend_get_vcard(lf);
+	if (friends_list_size > 0) {
+		// Check if the vCard has been properly parsed
+		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(linphone_friend_list_get_friends(friendList));
+		LinphoneVcard *vcard = linphone_friend_get_vcard(lf);
 
-	string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
-	BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
-	BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
-							   vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
-						   "rfc2833");
+		string fullName = string(linphone_vcard_get_full_name(vcard)).substr(0, usernameContact2.length());
+		BC_ASSERT_STRING_EQUAL(fullName.c_str(), usernameContact2.c_str());
+		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
+								vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
+							"rfc2833");
 
-	linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
-	linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
-	BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
-							   vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
-						   "test");
+		linphone_vcard_remove_extented_properties_by_name(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL");
+		linphone_vcard_add_extended_property(vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL", "test");
+		BC_ASSERT_STRING_EQUAL((const char *)bctbx_list_get_data(linphone_vcard_get_extended_properties_values_by_name(
+								vcard, "X-LINPHONE-ACCOUNT-DTMF-PROTOCOL")),
+							"test");
+	}
 
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_friends_lists(marie->lc)), 2, int, "%i");
 	linphone_core_remove_friend_list(marie->lc, friendList);
