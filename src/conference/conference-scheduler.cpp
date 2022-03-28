@@ -106,19 +106,22 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 		return;
 	}
 
-	LinphoneConferenceInfo * foundConferenceInfo = nullptr;
+	bool isUpdate = false;
+	ConferenceAddress conferenceAddress;
 #ifdef HAVE_DB_STORAGE
-	auto conference_address = linphone_address_clone(linphone_conference_info_get_uri(info->toC()));
-	foundConferenceInfo = linphone_core_find_conference_information_from_uri(getCore()->getCCore(), conference_address);
-	linphone_address_unref(conference_address);
-	if (foundConferenceInfo) {
-		mConferenceInfo = ConferenceInfo::toCpp(foundConferenceInfo)->getSharedFromThis();
+	if (info->getUri().isValid()) {
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		auto confInfo = mainDb->getConferenceInfoFromURI(info->getUri());
+		if (confInfo) {
+			lInfo() << "[Conference Scheduler] Found matching conference info in database for address [" << info->getUri() << "]";
+			conferenceAddress = info->getUri();
+			isUpdate = true;
+			setState(State::Updating);
+		}
 	}
 #endif // HAVE_DB_STORAGE
 
-
-	ConferenceAddress conferenceAddress;
-	if (mConferenceInfo == nullptr) {
+	if (mConferenceInfo == nullptr && !isUpdate) {
 		setState(State::AllocationPending);
 		if (info->getUri().isValid()) {
 			// This is a hack for the tester
@@ -127,15 +130,12 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 			setState(State::Ready);
 			return;
 		}
-	} else {
+	} else if (mConferenceInfo != nullptr) {
 		conferenceAddress = mConferenceInfo->getUri();
 		info->setUri(conferenceAddress);
 		setState(State::Updating);
 	}
 	mConferenceInfo = info;
-	if (foundConferenceInfo) {
-		linphone_conference_info_unref(foundConferenceInfo);
-	}
 
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
 	const auto identityAddress = mConferenceInfo->getOrganizer();
@@ -144,7 +144,7 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	conferenceParams->setSubject(mConferenceInfo->getSubject());
 
 	if (mConferenceInfo->getDateTime() <= 0) {
-		if (!foundConferenceInfo) {
+		if (!isUpdate) {
 			// Set start time only if a conference is going to be created
 			mConferenceInfo->setDateTime(ms_time(NULL));
 		}
@@ -158,7 +158,7 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 		}
 	}
 
-	if (foundConferenceInfo) {
+	if (isUpdate) {
 		// Updating an existing conference
 		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, mConferenceInfo->getParticipants(), conferenceAddress);
 	} else {
