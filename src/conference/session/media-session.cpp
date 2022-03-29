@@ -2818,11 +2818,13 @@ bool MediaSession::initiateOutgoing () {
 				 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 				 */
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-			}else{
+			}else {
 				d->queueIceGatheringTask([this]() {
 					L_D();
-					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-					startInvite(nullptr, "");
+					if(d->state != CallSession::State::End) {// Call has been terminated while gathering: avoid to update descriptions.
+						d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+						startInvite(nullptr, "");
+					}
 				});
 			}
 			defer |= ice_needs_defer;

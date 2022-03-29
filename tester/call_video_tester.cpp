@@ -998,10 +998,12 @@ static void call_with_ice_video_to_novideo(void) {
 	linphone_core_set_video_policy(pauline->lc,&vpol);
 	vpol.automatically_initiate=FALSE;
 	linphone_core_set_video_policy(marie->lc,&vpol);
-	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,TRUE);	// Cancel while gathering candidates.
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
 
 /*
  * This function aims at testing ICE together with video enablement policies, and video enablements/disablements by either
