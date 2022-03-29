@@ -113,6 +113,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 
 		const int & getMixerToClientExtensionId() const;
 		const int & getClientToMixerExtensionId() const;
+		const int & getFrameMarkingExtensionId() const;
 
 		void replacePayloads(const std::list<PayloadType*> & newPayloads);
 
@@ -148,6 +149,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
 		int mixer_to_client_extension_id = 0;
 		int client_to_mixer_extension_id = 0;
+		int frame_marking_extension_id = 0;
 		unsigned int conference_ssrc = 0;
 		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 		bool rtcp_mux = false;

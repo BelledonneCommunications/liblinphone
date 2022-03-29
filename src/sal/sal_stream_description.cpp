@@ -686,6 +686,8 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 					actualCfg.mixer_to_client_extension_id = value;
 				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:ssrc-audio-level") == 0) {
 					actualCfg.client_to_mixer_extension_id = value;
+				} else if (strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:framemarking") == 0) {
+					actualCfg.frame_marking_extension_id = value;
 				}
 			}
 			bctbx_free(extmap_urn);
@@ -1115,6 +1117,12 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 
 	if (actualCfg.client_to_mixer_extension_id != 0) {
 		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:ssrc-audio-level vad=off", actualCfg.client_to_mixer_extension_id);
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
+		bctbx_free(value);
+	}
+
+	if (actualCfg.frame_marking_extension_id != 0) {
+		char *value = bctbx_strdup_printf("%i urn:ietf:params:rtp-hdrext:framemarking", actualCfg.frame_marking_extension_id);
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("extmap", value));
 		bctbx_free(value);
 	}

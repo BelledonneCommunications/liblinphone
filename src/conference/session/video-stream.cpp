@@ -390,6 +390,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
+			const auto & streamCfg = vstream.getActualConfiguration();
+
+			// Only activate frame marking if we are using VP8
+			if (streamCfg.getFrameMarkingExtensionId() > 0 && usedPt == 96) {
+				// This has to be called before video_stream_start so that the VideoStream can configure it's filters properly
+				video_stream_set_frame_marking_extension_id(mStream, streamCfg.getFrameMarkingExtensionId());
+			}
+
 			if (videoMixer == nullptr && !label.empty() && dir == MediaStreamSendOnly && isThumbnail) {
 				itcStream = getGroup().lookupItcStream(mStream);
 				if (itcStream) {

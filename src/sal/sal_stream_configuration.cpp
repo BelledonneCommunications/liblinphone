@@ -63,6 +63,7 @@ SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & ot
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
 	mixer_to_client_extension_id = other.mixer_to_client_extension_id;
 	client_to_mixer_extension_id = other.client_to_mixer_extension_id;
+	frame_marking_extension_id = other.frame_marking_extension_id;
 	conference_ssrc = other.conference_ssrc;
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
@@ -101,6 +102,7 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
 	mixer_to_client_extension_id = other.mixer_to_client_extension_id;
 	client_to_mixer_extension_id = other.client_to_mixer_extension_id;
+	frame_marking_extension_id = other.frame_marking_extension_id;
 	conference_ssrc = other.conference_ssrc;
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
@@ -230,6 +232,7 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 	/* Extensions */
 	if (mixer_to_client_extension_id != other.mixer_to_client_extension_id) result |= SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
 	if (client_to_mixer_extension_id != other.client_to_mixer_extension_id) result |= SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED;
+	if (frame_marking_extension_id != other.frame_marking_extension_id) result |= SAL_MEDIA_DESCRIPTION_FRAME_MARKING_EXTENSION_CHANGED;
 
 	return result;
 }
@@ -444,6 +447,10 @@ const int & SalStreamConfiguration::getMixerToClientExtensionId() const {
 
 const int & SalStreamConfiguration::getClientToMixerExtensionId() const {
 	return client_to_mixer_extension_id;
+}
+
+const int & SalStreamConfiguration::getFrameMarkingExtensionId() const {
+	return frame_marking_extension_id;
 }
 
 std::string SalStreamConfiguration::cryptoToSdpValue(const SalSrtpCryptoAlgo & crypto) {

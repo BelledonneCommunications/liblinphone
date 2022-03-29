@@ -777,8 +777,8 @@ static void simple_conference_notify_speaking_device(void) {
 	/* Simulate speaker changed */
 	char *filepath = bc_tester_res("sounds/vrroom.wav");
 	linphone_core_set_play_file(pauline->lc, filepath);
-	linphone_core_set_play_file(marie->lc, filepath);
-	linphone_core_set_play_file(laure->lc, filepath);
+	//linphone_core_set_play_file(marie->lc, filepath);
+	//linphone_core_set_play_file(laure->lc, filepath);
 
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
