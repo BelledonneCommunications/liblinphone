@@ -913,28 +913,26 @@ static void simple_conference_notify_muted_device(void) {
 	LinphoneConference *laure_conf = linphone_call_get_conference(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NOT_NULL(laure_conf);
 	if (!laure_conf) goto end;
-	bctbx_list_t *participants = linphone_conference_get_participant_list(laure_conf);
+	bctbx_list_t *participant_devices = linphone_conference_get_participant_device_list(laure_conf);
 
-	for (bctbx_list_t *it = participants; it != NULL; it = it->next) {
-		LinphoneParticipant *p = (LinphoneParticipant *) it->data;
-		bctbx_list_t *devices = linphone_participant_get_devices(p);
-		for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
-			LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
-			linphone_participant_device_set_user_data(d, laure->lc);
-			LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
-			linphone_participant_device_cbs_set_is_muted(cbs, on_muted_notified);
-			linphone_participant_device_add_callbacks(d, cbs);
-			linphone_participant_device_cbs_unref(cbs);
-		}
-		bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+	for (bctbx_list_t *it = participant_devices; it != NULL; it = it->next) {
+		LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it->data;
+		linphone_participant_device_set_user_data(d, laure->lc);
+		LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
+		linphone_participant_device_cbs_set_is_muted(cbs, on_muted_notified);
+		linphone_participant_device_add_callbacks(d, cbs);
+		linphone_participant_device_cbs_unref(cbs);
 	}
-	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
+	bctbx_list_free_with_data(participant_devices, (void(*)(void *))linphone_participant_device_unref);
 
 	linphone_core_mute_mic(pauline->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceMuted, 1, 5000));
 
 	linphone_core_mute_mic(pauline->lc, FALSE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceUnmuted, 1, 5000));
+
+	linphone_core_mute_mic(laure->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceMuted, 2, 5000));
 
 	terminate_conference(new_participants, marie, NULL, NULL);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
