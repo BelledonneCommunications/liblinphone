@@ -153,6 +153,7 @@ public:
 
 	void notifySpeakingDevice (uint32_t ssrc, bool isSpeaking);
 	void notifyMutedDevice (uint32_t ssrc, bool muted);
+	void notifyLocalMutedDevices (bool muted);
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);

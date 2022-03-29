@@ -375,6 +375,15 @@ void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 	lDebug() << "IsMuted: unable to notify muted device because there is no device found.";
 }
 
+void Conference::notifyLocalMutedDevices (bool muted) {
+	for (const auto &device : getMe()->getDevices()) {
+		_linphone_participant_device_notify_is_muted(device->toC(), muted);
+		for (const auto &l : confListeners) {
+			l->onParticipantDeviceIsMuted(device, muted);
+		}
+	}
+}
+
 void Conference::setUsername (const string &username) {
 	mUsername = username;
 }
