@@ -312,7 +312,7 @@ JNIEXPORT jobject JNICALL get{{className}}(JNIEnv *env, {{classCName}} *cptr, bo
 		jclass {{cPrefix}}_class = ljb->{{cPrefix}}_class;
 		jmethodID {{cPrefix}}_constructor = ljb->{{cPrefix}}_class_constructor;
 
-		if (up == nullptr) {
+		if (env->IsSameObject((jobject)up,nullptr)) {
 			jobj = env->NewObject({{cPrefix}}_class, {{cPrefix}}_constructor, (jlong)cptr, (jboolean)is_const == TRUE);
 			belle_sip_object_data_set((belle_sip_object_t *)cptr, key, (void*)env->NewWeakGlobalRef(jobj), nullptr);
 			if (takeref) {
