@@ -135,6 +135,8 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 				*/
 				s->stop();
 				s = createStream(params);
+			} else if (s->getType() == SalVideo) {
+				s->configure(params);
 			}
 		}
 	}

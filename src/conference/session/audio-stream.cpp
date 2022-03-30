@@ -68,6 +68,10 @@ static void audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t muted) {
 	zis->getMediaSession().notifyMutedDevice(ssrc, muted);
 }
 
+void MS2AudioStream::configure(const OfferAnswerContext &params) {
+
+}
+
 void MS2AudioStream::initZrtp() {
 	shared_ptr<CallLog> log = getMediaSession().getLog();
 	const LinphoneAddress *peerAddr = log->getRemoteAddress();

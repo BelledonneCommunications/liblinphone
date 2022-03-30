@@ -130,6 +130,7 @@ public:
 	virtual void updateBandwidthReports() = 0;
 	virtual float getCpuUsage()const = 0;
 	virtual std::string getLabel()const = 0;
+	virtual void configure(const OfferAnswerContext &params) = 0;
 	size_t getIndex()const { return mIndex; }
 	SalStreamType getType()const{ return mStreamType;}
 	LinphoneCore *getCCore()const;

@@ -153,6 +153,8 @@ public:
 	virtual void finish() override;
 	virtual void initZrtp() override;
 	virtual void startZrtp() override;
+
+	virtual void configure(const OfferAnswerContext &params) override;
 	
 	/* AudioControlInterface */
 	virtual void enableMic(bool value) override;
@@ -270,6 +272,7 @@ public:
 	virtual void finish() override;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
 	virtual void initZrtp() override;
+	virtual void configure(const OfferAnswerContext &params) override;
 	virtual void startZrtp() override;
 
 	virtual MediaStream *getMediaStream()const override;
@@ -311,6 +314,7 @@ public:
 	virtual void initZrtp() override;
 	virtual void startZrtp() override;
 	virtual std::string getLabel()const override;
+	virtual void configure(const OfferAnswerContext &params) override;
 	virtual ~MS2RTTStream();
 
 private:

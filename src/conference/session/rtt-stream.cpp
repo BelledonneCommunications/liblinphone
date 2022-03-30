@@ -43,6 +43,10 @@ MS2RTTStream::MS2RTTStream(StreamsGroup &sg, const OfferAnswerContext &params) :
 	initializeSessions(&mStream->ms);
 }
 
+void MS2RTTStream::configure(const OfferAnswerContext &params) {
+
+}
+
 void MS2RTTStream::realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg) {
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	

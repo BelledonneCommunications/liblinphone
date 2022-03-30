@@ -59,15 +59,17 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 
 	initializeSessions(&mStream->ms);
 
+	configure(params);
+}
+
+void MS2VideoStream::configure(const OfferAnswerContext &params) {
+	const auto & localDesc = params.getLocalStreamDescription();
 	const auto & content = localDesc.getContent();
 	const auto & label = localDesc.getLabel();
-
 	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
 	if (!label.empty()) {
 		video_stream_set_label(mStream, label.c_str());
 	}
-
-
 }
 
 void MS2VideoStream::sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args) {
