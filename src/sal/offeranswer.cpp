@@ -982,10 +982,10 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
 				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
 				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
-				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
+				if (rtcp_xr_conf != NULL) {
 					memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
 				} else {
-					actualCfg.rtcp_xr.enabled = TRUE;
+					actualCfg.rtcp_xr.enabled = FALSE;
 				}
 			}
 		} else {

@@ -1497,7 +1497,7 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 
 SalStreamDescription & MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx, const std::shared_ptr<SalMediaDescription> & oldMd) {
 	const auto oldSize = md->streams.size();
-	if (streamIdx == -1) {
+	if (streamIdx < 0) {
 		const int protectedStreamNumber = 3;
 		const auto inactiveStreamIt = (oldSize <= protectedStreamNumber) ? md->streams.cend() :
 		std::find_if(md->streams.cbegin() + protectedStreamNumber, md->streams.cend(), [&] (const auto s) {
@@ -1521,8 +1521,6 @@ SalStreamDescription & MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMed
 					const auto & s = oldMd->streams[i];
 					auto & c = md->streams[i];
 					c.type = s.type;
-					c.setLabel(s.getLabel());
-					c.setContent(s.getContent());
 					c.setDirection(SalStreamInactive);
 				}
 			}
@@ -1643,11 +1641,20 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 								}
 							}
 
+							const auto & idx = md->streams.size();
+							SalStreamDescription & newStream = addStreamToMd(md, static_cast<int>(idx), oldMd);
 							if (dev) {
-								const auto & idx = static_cast<int>(md->streams.size());
-								SalStreamDescription & newStream = addStreamToMd(md, idx, oldMd);
 								newStream.setContent(contentAttrValue);
 								fillConferenceParticipantVideoStream(newStream, oldMd, md, dev, pth, encs);
+							} else {
+								const auto & s = rmd->streams[idx];
+								SalStreamConfiguration cfg;
+								cfg.dir = SalStreamInactive;
+								newStream.disable();
+								newStream.type = s.type;
+								newStream.rtp_port = 0;
+								newStream.rtcp_port = 0;
+								newStream.addActualConfiguration(cfg);
 							}
 						}
 					}
@@ -3927,7 +3934,6 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 	if (msp) {
 
 		// The state must be set before recreating the media description in order for the method forceStreamsDirAccordingToState (called by makeLocalMediaDescription) to set the stream directions accordingly
-		CallSession::State initialState = d->state;
 		d->setState(nextState, "Updating call");
 		d->broken = false;
 		d->setParams(new MediaSessionParams(*msp));
@@ -3958,24 +3964,19 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 		bool isOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->localIsOfferer = isOfferer;
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
-
 		const auto & localDesc = d->localDesc;
-		bool useInitialState = !((linphone_nat_policy_ice_enabled(d->natPolicy) && d->getStreamsGroup().prepare()) || isIceRunning);
 
-		auto updateCompletionTask = [this, method, subject, localDesc, nextState, initialState, useInitialState]() -> LinphoneStatus{
+		auto updateCompletionTask = [this, method, subject, localDesc, nextState]() -> LinphoneStatus{
 			L_D();
 
-			CallSession::State previousState = initialState;
-			if (!useInitialState) {
-				CallSession::State newState;
-				if (!d->isUpdateAllowed(newState)) {
-					return -1;
-				}
+			CallSession::State previousState = d->state;
+			CallSession::State newState;
+			if (!d->isUpdateAllowed(newState)) {
+				return -1;
+			}
 
-				previousState = d->state;
-				if (d->state != nextState) {
-					d->state = newState;
-				}
+			if (d->state != nextState) {
+				d->state = newState;
 			}
 
 			// We may running this code after ICE candidates have been gathered or ICE released task completed, therefore the local description must be updated to include ICE candidates for every stream

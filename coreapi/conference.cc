@@ -597,7 +597,10 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	msp.getPrivate()->setInConference(true);
 
 	if (times.size() > 0) {
-		const auto startTime = times.front().first;
+		auto startTime = times.front().first;
+		if (startTime <= 0) {
+			startTime = ms_time(NULL);
+		}
 		const auto endTime = times.front().second;
 		confParams->setStartTime(startTime);
 		confParams->setEndTime(endTime);
@@ -1109,12 +1112,16 @@ int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<Linphone
 	int success = -1;
 	if (p) {
 		std::shared_ptr<ParticipantDevice> device = p->findDevice(session);
-		if (device && (device->getSsrc() != ssrc)) {
-			lInfo() << "Setting ssrc of participant device " << device->getAddress().asString() << " in conference " << getConferenceAddress() << " to " << ssrc;
-			device->setSsrc(ssrc);
-			if (device->getState() == ParticipantDevice::State::Present) {
-				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, p, device);
+		if (device) {
+			if (device->getSsrc() != ssrc) {
+				lInfo() << "Setting ssrc of participant device " << device->getAddress().asString() << " in conference " << getConferenceAddress() << " to " << ssrc;
+				device->setSsrc(ssrc);
+				if (device->getState() == ParticipantDevice::State::Present) {
+					time_t creationTime = time(nullptr);
+					notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, p, device);
+				}
+			} else {
+				lInfo() << "Leaving unchanged ssrc of participant device " << device->getAddress().asString() << " in conference " << getConferenceAddress() << " whose value is " << ssrc;
 			}
 			return 0;
 		}

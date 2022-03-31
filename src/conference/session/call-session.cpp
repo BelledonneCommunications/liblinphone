@@ -689,6 +689,7 @@ bool CallSessionPrivate::isUpdateAllowed (CallSession::State &nextState) const {
 		case CallSession::State::Pausing:
 		case CallSession::State::Resuming:
 		case CallSession::State::Updating:
+		case CallSession::State::EarlyUpdating:
 			nextState = state;
 			break;
 		default:

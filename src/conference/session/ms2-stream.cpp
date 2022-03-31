@@ -77,6 +77,7 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 
 void MS2Stream::removeFromBundle(){
 	if (mRtpBundle){
+		lInfo() << "Session " << mSessions.rtp_session << " of stream " << *this << " removed from rtp bundle " << mRtpBundle;
 		rtp_bundle_remove_session(mRtpBundle, mSessions.rtp_session);
 		if (mOwnsBundle){
 			RtpBundle *bundle = mRtpBundle;
@@ -108,7 +109,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 	RtpBundle * bundle = mBundleOwner->createOrGetRtpBundle(resultStreamDesc);
 	if (bundle && mBundleOwner != this && mRtpBundle == nullptr){
 		const auto & mid = resultStreamDesc.getChosenConfiguration().getMid();
-		lInfo() << "Stream " << *this << " added to rtp bundle " << bundle << " with mid '" << mid << "'";
+		lInfo() << "Session " << mSessions.rtp_session << " of stream " << *this << " added to rtp bundle " << bundle << " with mid '" << mid << "'";
 		rtp_bundle_add_session(bundle, L_STRING_TO_C(mid), mSessions.rtp_session);
 		mRtpBundle = bundle;
 		mOwnsBundle = false;
@@ -213,6 +214,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	}
 	if (!isTransportOwner()){
 		if (localDesc.getChosenConfiguration().mid.empty()) {
+			lInfo() << "Local stream configuration has no MID defined, hence remove session " << mSessions.rtp_session << " of stream " << *this << " from rtp bundle " << mRtpBundle;
 			removeFromBundle();
 		} else {
 			/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
