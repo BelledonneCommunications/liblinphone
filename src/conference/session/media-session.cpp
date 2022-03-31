@@ -3578,7 +3578,8 @@ bool MediaSession::initiateOutgoing (const string &subject, const Content *conte
 				ms_free(toAddr);
 				d->queueIceGatheringTask([this, subject, content]() {
 					L_D();
-					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					if(d->state != CallSession::State::End) // Call has been terminated while gathering: avoid to update descriptions.
+						d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 					startInvite(nullptr, subject, content);
 					return 0;
 				});

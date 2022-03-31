@@ -991,7 +991,11 @@ LinphoneStatus Call::takeVideoSnapshot (const string &file) {
 }
 
 LinphoneStatus Call::terminate (const LinphoneErrorInfo *ei) {
-	return getActiveSession()->terminate(ei);
+	bool cleanCall = getActiveSession()->getState() == CallSession::State::OutgoingInit;
+	LinphoneStatus status = getActiveSession()->terminate(ei);
+	if( cleanCall && !status )
+		unref();
+	return status;
 }
 
 LinphoneStatus Call::transfer (const shared_ptr<Call> &dest) {

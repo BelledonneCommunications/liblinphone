@@ -198,7 +198,6 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
 	localDesc.rtp_addr = getPublicIp();
 	localDesc.rtcp_addr = getPublicIp();
-	
 	if (localDesc.rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && !localDesc.getPayloads().empty()){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
 		if (linphone_core_zero_rtp_port_for_stream_inactive_enabled(getCCore()) && (localDesc.getDirection() == SalStreamInactive)) {
@@ -1261,7 +1260,8 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
 				getCore().doLater([this, ev](){
-					getIceService().handleIceEvent(ev);
+					if(mState != State::Stopped)// Media session has stopped : Ice Service is no more.
+						getIceService().handleIceEvent(ev);
 					ortp_event_destroy(ev);
 				});
 				continue; // Go to next event.

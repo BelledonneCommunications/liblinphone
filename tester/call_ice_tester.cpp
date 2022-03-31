@@ -38,7 +38,8 @@ static void call_with_ice_in_ipv4_with_v6_enabled(void) {
 		marie = linphone_core_manager_new("marie_v4proxy_rc");
 		pauline = linphone_core_manager_new("pauline_v4proxy_rc");
 
-		_call_with_ice_base(marie,pauline,TRUE,TRUE,TRUE,TRUE);
+		_call_with_ice_base(marie,pauline,TRUE,TRUE,TRUE,TRUE,FALSE);
+		_call_with_ice_base(marie,pauline,TRUE,TRUE,TRUE,TRUE,TRUE);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);
 	} else ms_warning("Test skipped, need both ipv6 and v4 available");
@@ -52,7 +53,8 @@ static void call_with_ice_ipv4_to_ipv6(void) {
 		marie = linphone_core_manager_new("marie_v4proxy_rc");
 		pauline = linphone_core_manager_new("pauline_tcp_rc");
 
-		_call_with_ice_base(marie,pauline,TRUE,TRUE,TRUE,TRUE);
+		_call_with_ice_base(marie,pauline,TRUE,TRUE,TRUE,TRUE,FALSE);
+		_call_with_ice_base(marie,pauline,TRUE,TRUE,TRUE,TRUE,TRUE);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);
 	} else ms_warning("Test skipped, need both ipv6 and v4 available");
@@ -66,7 +68,8 @@ static void call_with_ice_ipv6_to_ipv4(void) {
 		marie = linphone_core_manager_new("marie_rc");
 		pauline = linphone_core_manager_new("pauline_v4proxy_rc");
 
-		_call_with_ice_base(marie, pauline,TRUE,TRUE,TRUE,TRUE);
+		_call_with_ice_base(marie, pauline,TRUE,TRUE,TRUE,TRUE,FALSE);
+		_call_with_ice_base(marie, pauline,TRUE,TRUE,TRUE,TRUE,TRUE);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);
 	} else ms_warning("Test skipped, need both ipv6 and v4 available");
@@ -80,7 +83,8 @@ static void call_with_ice_ipv6_to_ipv6(void) {
 		marie = linphone_core_manager_new("marie_rc");
 		pauline = linphone_core_manager_new("pauline_tcp_rc");
 
-		_call_with_ice_base(marie, pauline,TRUE,TRUE,TRUE,TRUE);
+		_call_with_ice_base(marie, pauline,TRUE,TRUE,TRUE,TRUE,FALSE);
+		_call_with_ice_base(marie, pauline,TRUE,TRUE,TRUE,TRUE,TRUE);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);
 	} else ms_warning("Test skipped, need both ipv6 and v4 available");
@@ -309,7 +313,8 @@ static void call_with_ice_without_stun(void){
 
 	linphone_core_set_stun_server(marie->lc, NULL);
 	linphone_core_set_stun_server(pauline->lc, NULL);
-	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, TRUE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -321,7 +326,8 @@ static void call_with_ice_without_stun2(void){
 
 	//linphone_core_set_stun_server(marie->lc, NULL);
 	linphone_core_set_stun_server(pauline->lc, NULL);
-	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, TRUE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -335,7 +341,7 @@ static void call_with_ice_stun_not_responding(void){
 	linphone_core_set_stun_server(marie->lc, "belledonne-communications.com:443");
 	linphone_core_set_stun_server(pauline->lc, "belledonne-communications.com:443");
 	/*we expect ICE to continue without stun candidates*/
-	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, FALSE);
 
 	/*retry but with nat policy instead of core */
 	linphone_core_set_stun_server(marie->lc, NULL);
@@ -343,7 +349,8 @@ static void call_with_ice_stun_not_responding(void){
 	linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(marie->lc), "belledonne-communications.com:443");
 	linphone_nat_policy_set_stun_server(linphone_core_get_nat_policy(pauline->lc), "belledonne-communications.com:443");
 	/*we expect ICE to continue without stun candidates*/
-	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, FALSE);
+	_call_with_ice_base(marie, pauline, TRUE, TRUE, TRUE, FALSE, TRUE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -358,7 +365,8 @@ static void _call_with_ice(bool_t caller_with_ice, bool_t callee_with_ice, bool_
 	}
 	linphone_core_manager_start(marie, TRUE);
 	linphone_core_manager_start(pauline, TRUE);
-	_call_with_ice_base(pauline,marie,caller_with_ice,callee_with_ice,random_ports,forced_relay);
+	_call_with_ice_base(pauline,marie,caller_with_ice,callee_with_ice,random_ports,forced_relay, FALSE);
+	_call_with_ice_base(pauline,marie,caller_with_ice,callee_with_ice,random_ports,forced_relay, TRUE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -386,7 +394,8 @@ static void call_with_ice_ufrag_and_password_set_in_sdp_m_line(void){
 	linphone_core_manager_start(pauline, TRUE);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "ice_password_ufrag_in_media_description", 1);
 
-	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,TRUE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -402,7 +411,8 @@ static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_2(void){
 	linphone_core_manager_start(pauline, TRUE);
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "ice_password_ufrag_in_media_description", 1);
 
-	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,TRUE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -419,7 +429,8 @@ static void call_with_ice_ufrag_and_password_set_in_sdp_m_line_3(void){
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "ice_password_ufrag_in_media_description", 1);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "ice_password_ufrag_in_media_description", 1);
 
-	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,FALSE);
+	_call_with_ice_base(pauline,marie,TRUE,TRUE,TRUE,FALSE,TRUE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }

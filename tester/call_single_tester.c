@@ -1632,6 +1632,8 @@ static void early_declined_call(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+
+
 static void call_busy_when_calling_self(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCall *out_call=linphone_core_invite_address(marie->lc,marie->identity);
@@ -1985,7 +1987,7 @@ int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, 
 	return c1_ret && c2_ret;
 }
 
-void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay) {
+void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay, bool_t quick_cancel) {
 
 	linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
@@ -2012,28 +2014,35 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
 		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
 	}
-
-	if (!BC_ASSERT_TRUE(call(pauline,marie)))
-		return;
-
-	if (callee_with_ice && caller_with_ice) {
-		/*wait for the ICE reINVITE to complete*/
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
-
-		if (forced_relay == TRUE) {
-			BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateRelayConnection));
-		} else {
-			BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+	if(quick_cancel){
+		stats pauline_stats = pauline->stat;
+		LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallOutgoingInit,pauline_stats.number_of_LinphoneCallOutgoingInit+1));
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 100);// Let time to begin candidates gathering
+		linphone_call_terminate(out_call);
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,pauline_stats.number_of_LinphoneCallEnd+1));
+	}else{
+		if (!BC_ASSERT_TRUE(call(pauline,marie)))
+			return;
+	
+		if (callee_with_ice && caller_with_ice) {
+			/*wait for the ICE reINVITE to complete*/
+			BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
+			BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+	
+			if (forced_relay == TRUE) {
+				BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateRelayConnection));
+			} else {
+				BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+			}
+			check_nb_media_starts(AUDIO_START, pauline, marie, 1, 1);
 		}
-		check_nb_media_starts(AUDIO_START, pauline, marie, 1, 1);
+	
+		liblinphone_tester_check_rtcp(marie,pauline);
+		/*then close the call*/
+		end_call(pauline, marie);
 	}
-
-	liblinphone_tester_check_rtcp(marie,pauline);
-	/*then close the call*/
-	end_call(pauline, marie);
 }
-
 
 static void on_ack_processing(LinphoneCall *call, LinphoneHeaders *ack, bool_t is_received){
 	if (!is_received){
