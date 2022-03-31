@@ -8656,7 +8656,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 				identity = linphone_address_clone(L_GET_C_BACK_PTR(&identity_address.asAddress()));
 			}else {
 				identity = linphone_address_new(linphone_core_get_identity(lc));
-				lInfo() << "Creating remote conference with identity from default account" << linphone_address_as_string(identity);
+				lInfo() << "Creating remote conference with identity from default account " << L_GET_CPP_PTR_FROM_C_OBJECT(identity)->asString();
 			}
 		}
 

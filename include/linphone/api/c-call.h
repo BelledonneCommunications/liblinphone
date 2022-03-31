@@ -801,28 +801,28 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_info_message(LinphoneCall *cal
  * Returns a copy of the call statistics for a particular stream type.
  * @param call the #LinphoneCall @notnil
  * @param type the #LinphoneStreamType
- * @return a #LinphoneCallStats object for the given stream or NULL if stream isn't available. @maybenil
+ * @return a #LinphoneCallStats object for the given stream or NULL if stream isn't available. @maybenil @tobefreed
 **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_stats(LinphoneCall *call, LinphoneStreamType type);
 
 /**
  * Returns a copy of the call statistics for the audio stream.
  * @param call the #LinphoneCall @notnil
- * @return a #LinphoneCallStats object for the audio stream or NULL if it isn't available. @maybenil
+ * @return a #LinphoneCallStats object for the audio stream or NULL if it isn't available. @maybenil @tobefreed
 **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_audio_stats(LinphoneCall *call);
 
 /**
  * Returns a copy of the call statistics for the video stream.
  * @param call the #LinphoneCall @notnil
- * @return a #LinphoneCallStats object for the video stream or NULL if it isn't available. @maybenil
+ * @return a #LinphoneCallStats object for the video stream or NULL if it isn't available. @maybenil @tobefreed
 **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_video_stats(LinphoneCall *call);
 
 /**
  * Returns a copy of the call statistics for the text stream.
  * @param call the #LinphoneCall @notnil
- * @return a #LinphoneCallStats object for the text stream or NULL if it isn't available. @maybenil
+ * @return a #LinphoneCallStats object for the text stream or NULL if it isn't available. @maybenil @tobefreed
 **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_get_text_stats(LinphoneCall *call);
 

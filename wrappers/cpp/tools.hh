@@ -95,17 +95,12 @@ namespace linphone {
 	class EnumBctbxListWrapper: public AbstractBctbxListWrapper {
 	public:
 		EnumBctbxListWrapper(const std::list<T> &cppList): AbstractBctbxListWrapper() {
-			mCList = fromCppList(cppList);
+			for(auto val : cppList) {
+				mCList = bctbx_list_append(mCList, reinterpret_cast<void *>(static_cast<intptr_t>(val)));
+			}
 		}
 		virtual ~EnumBctbxListWrapper() {
 			bctbx_list_free(mCList);
-		}
-		static bctbx_list_t* fromCppList(const std::list<T> &cppList) {
-			bctbx_list_t* cList = NULL;
-			for(auto val : cppList) {
-				cList = bctbx_list_append(cList, reinterpret_cast<void *>(static_cast<intptr_t>(val)));
-			}
-			return cList;
 		}
 		static std::list<T> bctbxListToCppList(const ::bctbx_list_t *bctbxList) {
 			std::list<T> cppList{};

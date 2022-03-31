@@ -277,7 +277,7 @@ class CppTranslator:
 						cExpr = 'StructBctbxListWrapper<{0},{1}>::cppListToBctbxList({2})'.format(ptrType, cType, cppExpr)
 			elif isinstance(exprtype.containedTypeDesc, AbsApi.EnumType):
 				ptrType = exprtype.containedTypeDesc.translate(self.langTranslator, namespace=usedNamespace)
-				cExpr = 'EnumBctbxListWrapper<{0}>::fromCppList({1})'.format(ptrType, cppExpr)
+				cExpr = 'EnumBctbxListWrapper<{0}>({1}).c_list()'.format(ptrType, cppExpr)
 			else:
 				raise AbsApi.Error('translation of bctbx_list_t of enums or basic C types is not supported')
 		
