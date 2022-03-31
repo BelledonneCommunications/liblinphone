@@ -326,6 +326,8 @@ void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallL
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
+	if (d->mainDb == nullptr) return;
+
 	if (confInfo == nullptr) {
 		// Let's see if we have a conference info in db with the corresponding URI
 		confInfo = callLog->wasConference() ? callLog->getConferenceInfo() : d->mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())));

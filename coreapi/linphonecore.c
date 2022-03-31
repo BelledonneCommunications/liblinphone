@@ -7364,6 +7364,9 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 
 	sip_setup_unregister_all();
 
+	// We have to disconnect mainDB later since sip_config_uninit iterates
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->disconnectMainDb();
+
 	if (linphone_config_needs_commit(lc->config)) linphone_config_sync(lc->config);
 
 	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
