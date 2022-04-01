@@ -1940,7 +1940,6 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 100);// Let time to begin candidates gathering
 		linphone_call_terminate(out_call);
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,pauline_stats.number_of_LinphoneCallEnd+1));
-		linphone_call_unref(out_call);
 	}else{
 		if (!BC_ASSERT_TRUE(call(pauline,marie)))
 			return;

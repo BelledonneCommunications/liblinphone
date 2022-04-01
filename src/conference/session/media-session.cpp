@@ -2821,10 +2821,10 @@ bool MediaSession::initiateOutgoing () {
 			}else {
 				d->queueIceGatheringTask([this]() {
 					L_D();
-					if(d->state != CallSession::State::End) {// Call has been terminated while gathering: avoid to update descriptions.
+					if(d->state != CallSession::State::End) // Call has been terminated while gathering: avoid to update descriptions.
 						d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-						startInvite(nullptr, "");
-					}
+					startInvite(nullptr, "");
+					return 0;
 				});
 			}
 			defer |= ice_needs_defer;
