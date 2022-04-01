@@ -852,21 +852,12 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 4, 10000));
 
-	if (layout != LinphoneConferenceLayoutLegacy) {
-		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 150000, 400000, 50000);
-	} else {
-		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 810000, 1150000, 50000);
-	}
+	wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 150000, 400000, 50000);
 	
 	simparams.max_bandwidth = 300000;
 	linphone_core_set_network_simulator_params(pauline->lc, &simparams);
-	if (layout != LinphoneConferenceLayoutLegacy) {
-		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 20000, 40000, 30000);
-		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 40000, 60000, 50000);
-	} else {
-		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 110000, 210000, 30000);
-		wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 210000, 300000, 50000);
-	}
+	wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 20000, 40000, 30000);
+	wait_for_list_interval(lcs, &laure->stat.last_tmmbr_value_received, 40000, 60000, 50000);
 
 	terminate_conference(participants, marie, NULL, NULL);
 
@@ -891,10 +882,6 @@ static void video_conference_with_thin_congestion_layout_active_speaker (void) {
 	video_conference_with_thin_congestion_basic(LinphoneConferenceLayoutActiveSpeaker);
 }
 
-static void video_conference_with_thin_congestion_layout_none (void) {
-	video_conference_with_thin_congestion_basic(LinphoneConferenceLayoutLegacy);
-}
-
 static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion),
 	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
@@ -917,8 +904,7 @@ static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video loss rate resilience with implicit AVPF", video_call_loss_resilience_with_implicit_avpf),
 	TEST_NO_TAG("Video loss rate resilience without AVPF", video_call_loss_resilience_without_avpf),
 	TEST_NO_TAG("Video conference (active speaker) with thin congestion", video_conference_with_thin_congestion_layout_active_speaker),
-	TEST_NO_TAG("Video conference (grid) with thin congestion", video_conference_with_thin_congestion_layout_grid),
-	TEST_NO_TAG("Video conference (none) with thin congestion", video_conference_with_thin_congestion_layout_none)
+	TEST_NO_TAG("Video conference (grid) with thin congestion", video_conference_with_thin_congestion_layout_grid)
 };
 
 test_suite_t call_video_quality_test_suite = {"Video Call quality", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

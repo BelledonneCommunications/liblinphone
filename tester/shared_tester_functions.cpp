@@ -406,23 +406,21 @@ void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, Linphon
 		LinphoneConference * conference1 = linphone_call_get_conference(call1);
 		BC_ASSERT_PTR_NOT_NULL(conference1);
 		if (conference1) {
-			int nb = layout == LinphoneConferenceLayoutLegacy ? 1 : (linphone_conference_get_participant_count(conference1) + 2);
+			int nb = (linphone_conference_get_participant_count(conference1) + 2);
 			BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		}
 
 		LinphoneConference * conference2 = linphone_call_get_conference(call1);
 		BC_ASSERT_PTR_NOT_NULL(conference2);
 		if (conference2) {
-			int nb = layout == LinphoneConferenceLayoutLegacy ? 1 : (linphone_conference_get_participant_count(conference2) + 2);
+			int nb = (linphone_conference_get_participant_count(conference2) + 2);
 			BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		}
 
 		BC_ASSERT_TRUE(Call::toCpp(call1)->checkRtpSession());
 		BC_ASSERT_TRUE(Call::toCpp(call2)->checkRtpSession());
-		if (layout != LinphoneConferenceLayoutLegacy) {
-			BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly, vstream2s->label));
-			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly, vstream1s->label));
-		}
+		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly, vstream2s->label));
+		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly, vstream1s->label));
 		if (layout != LinphoneConferenceLayoutGrid) {
 			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv, ""));
 		}
@@ -438,9 +436,9 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants,Li
 			const LinphoneCallParams * call_params = linphone_call_get_current_params(call);
 			const bool_t video_enabled = linphone_call_params_video_enabled(call_params);
 
-			int nb = ((layout == LinphoneConferenceLayoutLegacy) ? 1 : static_cast<int>((bctbx_list_size(participants)+(local_participant?2:1))));
+			int nb = (static_cast<int>((bctbx_list_size(participants)+(local_participant?2:1))));
 			if (!video_enabled) {
-				if ((layout == LinphoneConferenceLayoutLegacy) || (layout == LinphoneConferenceLayoutActiveSpeaker)) {
+				if (layout == LinphoneConferenceLayoutActiveSpeaker) {
 					// Only thumbnail corresponding to the participant is going to be inactivated
 					nb--;
 				} else if (layout == LinphoneConferenceLayoutGrid) {

@@ -160,7 +160,7 @@ static void second_call_rejection(bool_t second_without_audio){
 	 * It must be rejected by the core, since the audio resources are already engaged for the first call*/
 	params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_audio(params, !second_without_audio);
-	marie_call = linphone_core_invite_with_params(marie->lc, "sip:laure_non_exstent@test.linphone.org", params);
+	marie_call = linphone_core_invite_with_params(marie->lc, "sip:laure_non_existent@test.linphone.org", params);
 
 	linphone_call_params_unref(params);
 

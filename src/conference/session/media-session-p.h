@@ -164,7 +164,7 @@ public:
 	bool isMediaEncryptionAccepted(const LinphoneMediaEncryption enc) const;
 
 	LinphoneMediaEncryption getNegotiatedMediaEncryption() const;
-	int getThumbnailStreamIdx(bool useNegotiatedMediaDesc) const;
+	int getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> & md) const;
 	LinphoneMediaDirection getVideoDirFromMd (const std::shared_ptr<SalMediaDescription> & md) const;
 	void validateVideoStreamDirection(SalStreamConfiguration & cfg) const;
 	bool mandatoryRtpBundleEnabled()const;

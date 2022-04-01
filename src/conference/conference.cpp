@@ -73,7 +73,6 @@ bool Conference::tryAddMeDevice() {
 
 			char label[Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
-			meDev->setLayout(getLayout());
 			meDev->setLabel(label);
 			meDev->setSession(meSession);
 
@@ -167,7 +166,7 @@ LinphoneStatus Conference::updateMainSession() {
 		MediaSessionParams *currentParams = params->clone();
 		currentParams->getPrivate()->setInternalCallUpdate(false);
 		if (!currentParams->rtpBundleEnabled()) {
-			currentParams->enableRtpBundle((getLayout() != ConferenceLayout::Legacy));
+			currentParams->enableRtpBundle(true);
 		}
 		ret = session->update(currentParams);
 		delete currentParams;
@@ -252,10 +251,6 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 		return false;
 	}
 	confParams = ConferenceParams::create(newConfParams);
-
-	for (const auto &device : getMe()->getDevices()) {
-		device->setLayout(getLayout());
-	}
 	return true;
 };
 

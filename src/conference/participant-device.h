@@ -101,9 +101,6 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
-	void setLayout(const ConferenceLayout l) { mLayout = l; };
-	ConferenceLayout getLayout() const { return mLayout; };
-
 	// Media getters and setters
 	bool updateMediaCapabilities();
 	bool updateStreamAvailabilities();
@@ -134,7 +131,6 @@ private:
 	std::string mLabel;
 	std::shared_ptr<CallSession> mSession;
 	std::string mCapabilityDescriptor;
-	ConferenceLayout mLayout = ConferenceLayout::Legacy;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;

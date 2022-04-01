@@ -8333,7 +8333,7 @@ void linphone_core_set_default_ephemeral_lifetime(LinphoneCore *lc, long value) 
 }
 
 LinphoneConferenceLayout linphone_core_get_default_conference_layout(const LinphoneCore *lc) {
-	return (LinphoneConferenceLayout)linphone_config_get_int(lc->config, "misc", "conference_layout", LinphoneConferenceLayoutLegacy);
+	return (LinphoneConferenceLayout)linphone_config_get_int(lc->config, "misc", "conference_layout", LinphoneConferenceLayoutActiveSpeaker);
 }
 
 void linphone_core_set_default_conference_layout(LinphoneCore *lc, LinphoneConferenceLayout value) {

@@ -3652,7 +3652,7 @@ static void create_conference_with_uninvited_participant_not_allowed (void) {
 }
 
 static void create_conference_starting_immediately (void) {
-	create_conference_base (ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutLegacy, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
+	create_conference_base (ms_time(NULL), 0, FALSE, LinphoneConferenceParticipantListTypeClosed, FALSE, LinphoneMediaEncryptionNone, FALSE, LinphoneConferenceLayoutGrid, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaDirectionRecvOnly);
 }
 
 static void create_conference_starting_in_the_past (void) {
@@ -4297,7 +4297,7 @@ static void two_overlapping_conferences_base (bool_t same_organizer) {
 		}
 
 		linphone_core_set_conference_participant_list_type(focus.getLc(), LinphoneConferenceParticipantListTypeOpen);
-		linphone_core_set_default_conference_layout(focus.getLc(), LinphoneConferenceLayoutLegacy);
+		linphone_core_set_default_conference_layout(focus.getLc(), LinphoneConferenceLayoutGrid);
 
 		stats focus_stat = focus.getStats();
 
@@ -5214,7 +5214,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 						if (change_layout) {
 							stats mgr_stat2=mgr->stat;
 
-							LinphoneConferenceLayout new_layout = LinphoneConferenceLayoutLegacy;
+							LinphoneConferenceLayout new_layout = LinphoneConferenceLayoutActiveSpeaker;
 							LinphoneCall * pcall2 = linphone_conference_get_call(pconference);
 							BC_ASSERT_PTR_NOT_NULL(pcall2);
 							if (pcall2) {
@@ -5352,7 +5352,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 }
 
 static void create_simple_conference_merging_calls (void) {
-	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutLegacy, FALSE, FALSE, FALSE);
+	create_simple_conference_merging_calls_base(FALSE, LinphoneConferenceLayoutActiveSpeaker, FALSE, FALSE, FALSE);
 }
 
 static void create_simple_conference_merging_calls_with_video_toggling (void) {
@@ -6023,7 +6023,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams) != (layout == LinphoneConferenceLayoutGrid));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
-			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams) != (layout == LinphoneConferenceLayoutGrid));
 			const LinphoneCallParams* call_cparams = linphone_call_get_current_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_cparams) != (layout == LinphoneConferenceLayoutGrid));
 		}
@@ -6194,7 +6194,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 		if (focus_called_by_marie) {
 			_linphone_call_check_nb_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
-			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams) != (layout == LinphoneConferenceLayoutGrid));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams) != (layout == LinphoneConferenceLayoutGrid));
 			const LinphoneCallParams* call_cparams = linphone_call_get_current_params(focus_called_by_marie);

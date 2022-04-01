@@ -557,8 +557,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		}
 	}
 
-	resultCfg.mixer_to_client_extension_id = remoteCfg.mixer_to_client_extension_id;
-	resultCfg.client_to_mixer_extension_id = remoteCfg.client_to_mixer_extension_id;
+	resultCfg.mixer_to_client_extension_id = (remoteCfg.mixer_to_client_extension_id == 0) ? localCfg.mixer_to_client_extension_id : remoteCfg.mixer_to_client_extension_id;
+	resultCfg.client_to_mixer_extension_id = (remoteCfg.client_to_mixer_extension_id == 0) ? localCfg.client_to_mixer_extension_id : remoteCfg.client_to_mixer_extension_id;
+
 	resultCfg.conference_ssrc = remoteCfg.conference_ssrc;
 
 	if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
@@ -779,8 +780,8 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	resultCfg.mixer_to_client_extension_id = localCfg.mixer_to_client_extension_id;
-	resultCfg.client_to_mixer_extension_id = localCfg.client_to_mixer_extension_id;
+	resultCfg.mixer_to_client_extension_id = (localCfg.mixer_to_client_extension_id == 0) ? remoteCfg.mixer_to_client_extension_id : localCfg.mixer_to_client_extension_id;
+	resultCfg.client_to_mixer_extension_id = (localCfg.client_to_mixer_extension_id == 0) ? remoteCfg.client_to_mixer_extension_id : localCfg.client_to_mixer_extension_id;
 	resultCfg.conference_ssrc = localCfg.conference_ssrc;
 
 	if (resultCfg.hasSrtp() == true) {
