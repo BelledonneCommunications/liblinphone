@@ -239,6 +239,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/event-log.h
 	event-log/events.h
 	factory/factory.h
+	friend/friend_phone_number.h
 	hacks/hacks.h
 	ldap/ldap.h
 	ldap/ldap-config-keys.h
@@ -360,6 +361,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-factory.cpp
+	c-wrapper/api/c-friend-phone-number.cpp
 	c-wrapper/api/c-ldap.cpp
 	c-wrapper/api/c-ldap-params.cpp
 	c-wrapper/api/c-magic-search.cpp
@@ -458,6 +460,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-ephemeral-message-event.cpp
 	event-log/event-log.cpp
 	factory/factory.cpp
+	friend/friend_phone_number.cpp
 	hacks/hacks.cpp
 	ldap/ldap.cpp
 	ldap/ldap-config-keys.cpp

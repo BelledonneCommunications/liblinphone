@@ -135,6 +135,16 @@ bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
 	return NULL;
 }
 
+void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFriendPhoneNumber *phoneNumber) {
+}
+
+void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard, const LinphoneFriendPhoneNumber *phoneNumber) {
+}
+
+bctbx_list_t* linphone_vcard_get_phone_numbers_with_label(const LinphoneVcard *vCard) {
+	return NULL;
+}
+
 void linphone_vcard_set_organization(LinphoneVcard *vCard, const char *organization) {
 }
 

@@ -1198,6 +1198,20 @@ static void search_friend_with_phone_number(void) {
 	if (stephanieFriend) linphone_friend_unref(stephanieFriend);
 	if (stephanieVcard) linphone_vcard_unref(stephanieVcard);
 
+	LinphoneFriendPhoneNumber *phone_number = linphone_friend_phone_number_new("+33952636505", "work");
+	BC_ASSERT_PTR_NOT_NULL(phone_number);
+	if (phone_number) {
+		BC_ASSERT_STRING_EQUAL(linphone_friend_phone_number_get_phone_number(phone_number), "+33952636505");
+		BC_ASSERT_STRING_EQUAL(linphone_friend_phone_number_get_label(phone_number), "work");
+		linphone_friend_phone_number_set_label(phone_number, NULL);
+		BC_ASSERT_PTR_NULL(linphone_friend_phone_number_get_label(phone_number));
+		linphone_friend_phone_number_set_label(phone_number, "home");
+		BC_ASSERT_STRING_EQUAL(linphone_friend_phone_number_get_label(phone_number), "home");
+		linphone_friend_phone_number_set_phone_number(phone_number, "+33612131415");
+		BC_ASSERT_STRING_EQUAL(linphone_friend_phone_number_get_phone_number(phone_number), "+33612131415");
+		linphone_friend_phone_number_unref(phone_number);
+	}
+
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
 }

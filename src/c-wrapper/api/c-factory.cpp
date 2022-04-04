@@ -476,3 +476,7 @@ LinphoneConferenceInfo *linphone_factory_create_conference_info(LinphoneFactory 
 LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_content(LinphoneFactory *factory, LinphoneContent *content) {
 	return Factory::toCpp(factory)->createConferenceInfoFromIcalendarContent(content);
 }
+
+LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label) {
+	return linphone_friend_phone_number_new(phone_number, label);
+}

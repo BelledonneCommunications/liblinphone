@@ -459,11 +459,39 @@ void linphone_friend_add_phone_number(LinphoneFriend *lf, const char *phone) {
 	}
 }
 
+void linphone_friend_add_phone_number_with_label(LinphoneFriend *lf, LinphoneFriendPhoneNumber *phoneNumber) {
+	if (!lf || !phoneNumber) return;
+
+	const char *phone = linphone_friend_phone_number_get_phone_number(phoneNumber);
+	if (!phone) return;
+
+	if (lf->friend_list) {
+		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, phone);
+		add_friend_to_list_map_if_not_in_it_yet(lf, uri);
+	}
+
+	if (linphone_core_vcard_supported()) {
+		if (!lf->vcard) {
+			linphone_friend_create_vcard(lf, phone);
+		}
+		linphone_vcard_add_phone_number_with_label(lf->vcard, phoneNumber);
+	}
+}
+
 bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *lf) {
 	if (!lf || !lf->vcard) return NULL;
 
 	if (linphone_core_vcard_supported()) {
 		return linphone_vcard_get_phone_numbers(lf->vcard);
+	}
+	return NULL;
+}
+
+bctbx_list_t* linphone_friend_get_phone_numbers_with_label(const LinphoneFriend *lf) {
+	if (!lf || !lf->vcard) return NULL;
+
+	if (linphone_core_vcard_supported()) {
+		return linphone_vcard_get_phone_numbers_with_label(lf->vcard);
 	}
 	return NULL;
 }
@@ -520,6 +548,24 @@ void linphone_friend_remove_phone_number(LinphoneFriend *lf, const char *phone) 
 
 	if (linphone_core_vcard_supported()) {
 		linphone_vcard_remove_phone_number(lf->vcard, phone);
+	}
+}
+
+void linphone_friend_remove_phone_number_with_label(LinphoneFriend *lf, const LinphoneFriendPhoneNumber *phoneNumber) {
+	if (!lf || !phoneNumber || !lf->vcard) return;
+
+	const char *phone = linphone_friend_phone_number_get_phone_number(phoneNumber);
+	if (!phone) return;
+
+	if (lf->friend_list) {
+		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, phone);
+		if (uri) {
+			remove_friend_from_list_map_if_already_in_it(lf, uri);
+		}
+	}
+
+	if (linphone_core_vcard_supported()) {
+		linphone_vcard_remove_phone_number_with_label(lf->vcard, phoneNumber);
 	}
 }
 

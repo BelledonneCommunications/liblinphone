@@ -77,11 +77,25 @@ LINPHONE_PUBLIC void linphone_friend_remove_address(LinphoneFriend *linphone_fri
 LINPHONE_PUBLIC void linphone_friend_add_phone_number(LinphoneFriend *linphone_friend, const char *phone_number);
 
 /**
+ * Adds a #LinphoneFriendPhoneNumber to this friend
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @param phone_number the #LinphoneFriendPhoneNumber to add @notnil
+ */
+LINPHONE_PUBLIC void linphone_friend_add_phone_number_with_label(LinphoneFriend *linphone_friend, LinphoneFriendPhoneNumber *phone_number);
+
+/**
  * Returns a list of phone numbers for this friend
  * @param linphone_friend #LinphoneFriend object @notnil
  * @return A list of phone numbers as string. \bctbx_list{const char *} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *linphone_friend);
+
+/**
+ * Returns a list of #LinphoneFriendPhoneNumber for this friend
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @return A list of phone numbers as string. \bctbx_list{LinphoneFriendPhoneNumber} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t* linphone_friend_get_phone_numbers_with_label(const LinphoneFriend *linphone_friend);
 
 /**
  * Returns whether a friend contains the given phone number
@@ -97,6 +111,13 @@ LINPHONE_PUBLIC bool_t linphone_friend_has_phone_number(const LinphoneFriend *li
  * @param phone_number number to remove @notnil
  */
 LINPHONE_PUBLIC void linphone_friend_remove_phone_number(LinphoneFriend *linphone_friend, const char *phone_number);
+
+/**
+ * Removes a #LinphoneFriendPhoneNumber from this friend
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @param phone_number the #LinphoneFriendPhoneNumber to remove @notnil
+ */
+LINPHONE_PUBLIC void linphone_friend_remove_phone_number_with_label(LinphoneFriend *linphone_friend, const LinphoneFriendPhoneNumber *phone_number);
 
 /**
  * Set the display name for this friend
