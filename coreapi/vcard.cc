@@ -25,6 +25,8 @@
 #include "linphone/factory.h"
 #include "linphone/wrapper_utils.h"
 #include "linphone/utils/utils.h"
+#include "linphone/api/c-friend-phone-number.h"
+#include "friend/friend_phone_number.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
@@ -341,6 +343,38 @@ bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
 	for (auto &phoneNumber : vCard->belCard->getPhoneNumbers()) {
 		const char *value = phoneNumber->getValue().c_str();
 		result = bctbx_list_append(result, (char *)value);
+	}
+	return result;
+}
+
+
+void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFriendPhoneNumber *phoneNumber) {
+	if (!vCard || !phoneNumber) return;
+
+	shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber = LinphonePrivate::FriendPhoneNumber::toCpp(phoneNumber)->toBelcardPhoneNumber();
+	vCard->belCard->addPhoneNumber(belcardPhoneNumber);
+}
+
+void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard, const LinphoneFriendPhoneNumber *phoneNumber) {
+	if (!vCard) return;
+	const char *phone = linphone_friend_phone_number_get_phone_number(phoneNumber);
+
+	for (auto &number : vCard->belCard->getPhoneNumbers()) {
+		const char *value = number->getValue().c_str();
+		if (strcmp(value, phone) == 0) {
+			vCard->belCard->removePhoneNumber(number);
+			break;
+		}
+	}
+}
+
+bctbx_list_t* linphone_vcard_get_phone_numbers_with_label(const LinphoneVcard *vCard) {
+	bctbx_list_t *result = NULL;
+	if (!vCard) return NULL;
+
+	for (auto &number : vCard->belCard->getPhoneNumbers()) {
+		LinphoneFriendPhoneNumber *phoneNumber = LinphonePrivate::FriendPhoneNumber::createCObject(number);
+		result = bctbx_list_append(result, (LinphoneFriendPhoneNumber *)phoneNumber);
 	}
 	return result;
 }

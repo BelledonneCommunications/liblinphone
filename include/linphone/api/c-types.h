@@ -549,11 +549,23 @@ typedef struct _LinphoneSearchResult LinphoneSearchResult;
 // -----------------------------------------------------------------------------
 // Digest authentication policy.
 // -----------------------------------------------------------------------------
+
 /**
  * @brief The LinphoneDigestAuthenticationPolicy holds parameters relative to digest authentication procedures.
  * @ingroup misc
  */
 typedef struct _LinphoneDigestAuthenticationPolicy LinphoneDigestAuthenticationPolicy;
+
+
+// -----------------------------------------------------------------------------
+// Friend.
+// -----------------------------------------------------------------------------
+
+/**
+ * Object that represents a #LinphoneFriend's phone number.
+ * @ingroup buddy_list
+ */
+typedef struct _LinphoneFriendPhoneNumber LinphoneFriendPhoneNumber;
 
 #ifdef __cplusplus
 	}

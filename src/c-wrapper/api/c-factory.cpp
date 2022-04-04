@@ -493,3 +493,7 @@ LinphoneConferenceInfo *linphone_factory_create_conference_info_from_icalendar_c
 LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createConferenceSchedulerCbs();
 }
+
+LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label) {
+	return linphone_friend_phone_number_new(phone_number, label);
+}

@@ -851,6 +851,15 @@ LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption(LinphoneFactory *factor
  */
 LINPHONE_PUBLIC LinphoneDigestAuthenticationPolicy *linphone_factory_create_digest_authentication_policy(const LinphoneFactory *factory);
 
+/**
+ * Creates a new #LinphoneFriendPhoneNumber objects.
+ * @param factory The #LinphoneFactory @notnil
+ * @param phone_number The phone number. @notnil
+ * @param label the type of phone number, for example "home", "cell", etc. Use NULL or empty for no label. @maybenil
+ * @return The newly created #LinphoneFriendPhoneNumber object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label);
+
 
 /**
  * @}

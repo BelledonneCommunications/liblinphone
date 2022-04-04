@@ -44,6 +44,7 @@
 #include "linphone/api/c-content.h"
 #include "linphone/api/c-dial-plan.h"
 #include "linphone/api/c-event-log.h"
+#include "linphone/api/c-friend-phone-number.h"
 #include "linphone/api/c-ldap.h"
 #include "linphone/api/c-ldap-params.h"
 #include "linphone/api/c-magic-search.h"

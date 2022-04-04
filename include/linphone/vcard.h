@@ -170,6 +170,27 @@ LINPHONE_PUBLIC void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, co
 LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 
 /**
+ * Adds a #LinphoneFriendPhoneNumber in the vCard, using the TEL property
+ * @param vCard the #LinphoneVcard @notnil
+ * @param phoneNumber the #LinphoneFriendPhoneNumber to add @notnil
+ */
+LINPHONE_PUBLIC void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFriendPhoneNumber *phoneNumber);
+
+/**
+ * Removes a #LinphoneFriendPhoneNumber in the vCard (if it exists), using the TEL property
+ * @param vCard the #LinphoneVcard @notnil
+ * @param phoneNumber the #LinphoneFriendPhoneNumber to remove @notnil
+ */
+LINPHONE_PUBLIC void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard, const LinphoneFriendPhoneNumber *phoneNumber);
+
+/**
+ * Returns the list of phone numbers in the vCard (all the TEL attributes) or NULL
+ * @param vCard the #LinphoneVcard @notnil
+ * @return The phone numbers as #LinphoneFriendPhoneNumber. \bctbx_list{LinphoneFriendPhoneNumber} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_vcard_get_phone_numbers_with_label(const LinphoneVcard *vCard);
+
+/**
  * Fills the Organization field of the vCard
  * @param vCard the #LinphoneVcard @notnil
  * @param organization the Organization. @maybenil
