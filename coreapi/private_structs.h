@@ -123,6 +123,8 @@ struct _LinphoneFriend{
 	LinphoneSubscriptionState out_sub_state;
 	int capabilities;
 	int rc_index;
+	bool_t is_starred;
+	char *native_uri;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);
