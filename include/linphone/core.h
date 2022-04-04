@@ -3644,7 +3644,7 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
  * Set the native video window id where the video is to be displayed.
  *
  * On Desktop platforms(MacOS, Linux, Windows), the display filter is "MSOGL" by default. That means :
- ** If `window_id` is not set or set to #LINPHONE_VIDEO_DISPLAY_AUTO, then the core will create its own window, unless the special id #LINPHONE_VIDEO_DISPLAY_NONE is given.
+ ** If `window_id` is not set or set to #LINPHONE_VIDEO_DISPLAY_NONE, then the core will not create its own window, unless the special id #LINPHONE_VIDEO_DISPLAY_AUTO is given.
  ** This is currently only supported for Linux X11 (#Window type), Windows UWP (#SwapChainPanel type) and Windows (#HWND type).
  **
  ** The CSharp Wrapper on Windows for UWP takes directly a #SwapChainPanel without Marshalling.
