@@ -323,10 +323,14 @@ void CorePrivate::uninit() {
 #endif
 
 	Address::clearSipAddressesCache();
+
+	/* The toneManager is kept until destructor, we may need it because of calls ended during linphone_core_destroy(). */
+}
+
+void CorePrivate::disconnectMainDb () {
 	if (mainDb != nullptr) {
 		mainDb->disconnect();
 	}
-	/* The toneManager is kept until destructor, we may need it because of calls ended during linphone_core_destroy(). */
 }
 
 // -----------------------------------------------------------------------------

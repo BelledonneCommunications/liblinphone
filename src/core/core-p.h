@@ -55,8 +55,9 @@ public:
 	void registerListener (CoreListener *listener);
 	void unregisterListener (CoreListener *listener);
 	void uninit ();
-	void shutdown();
-	bool isShutdownDone();
+	void shutdown ();
+	bool isShutdownDone ();
+	void disconnectMainDb ();
 
 	void notifyGlobalStateChanged (LinphoneGlobalState state);
 	void notifyNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable);
