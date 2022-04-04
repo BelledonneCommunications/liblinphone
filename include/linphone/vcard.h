@@ -211,6 +211,26 @@ LINPHONE_PUBLIC const char *linphone_vcard_get_organization(const LinphoneVcard 
 LINPHONE_PUBLIC void linphone_vcard_remove_organization(LinphoneVcard *vCard);
 
 /**
+ * Sets a picture URI in the vCard, using the PHOTO property
+ * @param vCard the #LinphoneVcard @notnil
+ * @param picture the picture URI to add. If NULL it will have the same effet as linphone_vcard_remove_photo(). @maybenil
+ */
+LINPHONE_PUBLIC void linphone_vcard_set_photo(LinphoneVcard *vCard, const char *picture);
+
+/**
+ * Removes any existing PHOTO property
+ * @param vCard the #LinphoneVcard @notnil
+ */
+LINPHONE_PUBLIC void linphone_vcard_remove_photo(LinphoneVcard *vCard);
+
+/**
+ * Returns the first PHOTO property or NULL.
+ * @param vCard the #LinphoneVcard @notnil
+ * @return The picture URI as string or NULL if none has been set. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_vcard_get_photo(const LinphoneVcard *vCard);
+
+/**
  * Generates a random unique id for the vCard.
  * If is required to be able to synchronize the vCard with a CardDAV server
  * @param vCard the #LinphoneVcard @notnil

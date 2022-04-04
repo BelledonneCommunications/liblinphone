@@ -155,6 +155,18 @@ const char* linphone_vcard_get_organization(const LinphoneVcard *vCard) {
 void linphone_vcard_remove_organization(LinphoneVcard *vCard) {
 }
 
+void linphone_vcard_set_photo(LinphoneVcard *vCard, const char *picture) {
+
+}
+
+void linphone_vcard_remove_photo(LinphoneVcard *vCard) {
+
+}
+
+const char *linphone_vcard_get_photo(const LinphoneVcard *vCard) {
+	return NULL;
+}
+
 bool_t linphone_vcard_generate_unique_id(LinphoneVcard *vCard) {
 	return FALSE;
 }

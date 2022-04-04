@@ -217,6 +217,8 @@ LinphoneFriend * linphone_friend_new(void){
 	obj->vcard = NULL;
 	obj->storage_id = 0;
 	obj->rc_index = -1;
+	obj->is_starred = FALSE;
+	obj->native_uri = NULL;
 	return obj;
 }
 
@@ -692,6 +694,7 @@ static void _linphone_friend_destroy(LinphoneFriend *lf){
 	if (lf->info!=NULL) buddy_info_free(lf->info);
 	if (lf->vcard != NULL) linphone_vcard_unref(lf->vcard);
 	if (lf->refkey != NULL) ms_free(lf->refkey);
+	if (lf->native_uri != NULL) ms_free(lf->native_uri);
 }
 
 static belle_sip_error_code _linphone_friend_marshall(belle_sip_object_t *obj, char* buff, size_t buff_size, size_t *offset) {
@@ -1214,6 +1217,7 @@ LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int inde
 	lf->rc_index = index;
 
 	linphone_friend_set_ref_key(lf,linphone_config_get_string(config,item,"refkey",NULL));
+	linphone_friend_set_starred(lf,linphone_config_get_bool(config,item,"starred",FALSE));
 	return lf;
 }
 
@@ -2055,4 +2059,61 @@ float linphone_friend_get_capability_version(const LinphoneFriend *lf, const Lin
 	bctbx_list_free(phones);
 
 	return version;
+}
+
+void linphone_friend_set_photo(LinphoneFriend *lf, const char *picture_uri) {
+	if (!lf) return;
+
+	if (linphone_core_vcard_supported()) {
+		linphone_vcard_set_photo(lf->vcard, picture_uri);
+	}
+}
+
+const char * linphone_friend_get_photo(const LinphoneFriend *lf) {
+	if (!lf) return NULL;
+
+	if (linphone_core_vcard_supported()) {
+		return linphone_vcard_get_photo(lf->vcard);
+	}
+
+	return NULL;
+}
+
+void linphone_friend_set_starred(LinphoneFriend *lf, bool_t is_starred) {
+	if (lf) lf->is_starred = is_starred;
+}
+
+bool_t linphone_friend_get_starred(const LinphoneFriend *lf) {
+	if (!lf) return FALSE;
+	return lf->is_starred;
+}
+
+void linphone_friend_set_native_uri(LinphoneFriend *lf, const char *native_uri) {
+	if (!lf) return;
+	if (lf->native_uri) {
+		ms_free(lf->native_uri);
+		lf->native_uri = NULL;
+	}
+	if (native_uri) {
+		lf->native_uri = ms_strdup(native_uri);
+	}
+}
+
+const char * linphone_friend_get_native_uri(const LinphoneFriend *lf) {
+	if (!lf) return NULL;
+	return lf->native_uri;
+}
+
+void linphone_friend_set_organization(LinphoneFriend *lf, const char *organization) {
+	if (!lf) return;
+	if (linphone_core_vcard_supported() && lf->vcard) {
+		linphone_vcard_set_organization(lf->vcard, organization);
+	}
+}
+
+const char * linphone_friend_get_organization(const LinphoneFriend *lf) {
+	if (lf && linphone_core_vcard_supported() && lf->vcard) {
+		return linphone_vcard_get_organization(lf->vcard);
+	}
+	return NULL;
 }

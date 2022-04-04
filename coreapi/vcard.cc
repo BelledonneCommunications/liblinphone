@@ -177,7 +177,7 @@ LinphoneVcard* linphone_vcard_context_get_vcard_from_buffer(LinphoneVcardContext
 		if (belCard) {
 			vCard = linphone_vcard_new_from_belcard(belCard);
 		} else {
-			ms_error("Couldn't parse buffer %s", buffer);
+			ms_error("[vCard] Couldn't parse buffer %s", buffer);
 		}
 	}
 	return vCard;
@@ -269,7 +269,7 @@ void linphone_vcard_add_sip_address(LinphoneVcard *vCard, const char *sip_addres
 	shared_ptr<belcard::BelCardImpp> impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
 	impp->setValue(sip_address);
 	if (!vCard->belCard->addImpp(impp)) {
-		ms_error("Couldn't add IMPP value %s to vCard [%p]", sip_address, vCard);
+		ms_error("[vCard] Couldn't add IMPP value [%s] to vCard [%p]", sip_address, vCard);
 	}
 }
 
@@ -295,7 +295,7 @@ void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_
 		shared_ptr<belcard::BelCardImpp> impp = belcard::BelCardGeneric::create<belcard::BelCardImpp>();
 		impp->setValue(sip_address);
 		if (!vCard->belCard->addImpp(impp)) {
-			ms_error("Couldn't add IMPP value %s to vCard [%p]", sip_address, vCard);
+			ms_error("[vCard] Couldn't add IMPP value [%s] to vCard [%p]", sip_address, vCard);
 		}
 	}
 }
@@ -321,7 +321,9 @@ void linphone_vcard_add_phone_number(LinphoneVcard *vCard, const char *phone) {
 
 	shared_ptr<belcard::BelCardPhoneNumber> phone_number = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
 	phone_number->setValue(phone);
-	vCard->belCard->addPhoneNumber(phone_number);
+	if (!vCard->belCard->addPhoneNumber(phone_number)) {
+		ms_error("[vCard] Couldn't add TEL value [%s] to vCard [%p]", phone, vCard);
+	}
 }
 
 void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, const char *phone) {
@@ -352,7 +354,11 @@ void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFr
 	if (!vCard || !phoneNumber) return;
 
 	shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumber = LinphonePrivate::FriendPhoneNumber::toCpp(phoneNumber)->toBelcardPhoneNumber();
-	vCard->belCard->addPhoneNumber(belcardPhoneNumber);
+	if (!vCard->belCard->addPhoneNumber(belcardPhoneNumber)) {
+		const char *phone = linphone_friend_phone_number_get_phone_number(phoneNumber);
+		const char *label = linphone_friend_phone_number_get_label(phoneNumber);
+		ms_error("[vCard] Couldn't add TEL value [%s] with label [%s] to vCard [%p]", phone, label, vCard);
+	}
 }
 
 void linphone_vcard_remove_phone_number_with_label(LinphoneVcard *vCard, const LinphoneFriendPhoneNumber *phoneNumber) {
@@ -390,7 +396,9 @@ void linphone_vcard_set_organization(LinphoneVcard *vCard, const char *organizat
 	} else {
 		shared_ptr<belcard::BelCardOrganization> org = belcard::BelCardGeneric::create<belcard::BelCardOrganization>();
 		org->setValue(organization);
-		vCard->belCard->addOrganization(org);
+		if (!vCard->belCard->addOrganization(org)) {
+			ms_error("[vCard] Couldn't add ORG value [%s] to vCard [%p]", organization, vCard);
+		}
 	}
 }
 
@@ -410,6 +418,41 @@ void linphone_vcard_remove_organization(LinphoneVcard *vCard) {
 		const shared_ptr<belcard::BelCardOrganization> org = vCard->belCard->getOrganizations().front();
 		vCard->belCard->removeOrganization(org);
 	}
+}
+
+void linphone_vcard_set_photo(LinphoneVcard *vCard, const char *picture) {
+	if (!vCard) return;
+
+	if (!picture) {
+		linphone_vcard_remove_photo(vCard);
+	} else if (vCard->belCard->getPhotos().size() > 0) {
+		const shared_ptr<belcard::BelCardPhoto> photo = vCard->belCard->getPhotos().front();
+		photo->setValue(picture);
+	} else {
+		shared_ptr<belcard::BelCardPhoto> photo = belcard::BelCardGeneric::create<belcard::BelCardPhoto>();
+		photo->setValue(picture);
+		if (!vCard->belCard->addPhoto(photo)) {
+			ms_error("[vCard] Couldn't add PHOTO value [%s] to vCard [%p]", picture, vCard);
+		}
+	}
+}
+
+void linphone_vcard_remove_photo(LinphoneVcard *vCard) {
+	if (!vCard) return;
+
+	if (vCard->belCard->getPhotos().size() > 0) {
+		const shared_ptr<belcard::BelCardPhoto> photo = vCard->belCard->getPhotos().front();
+		vCard->belCard->removePhoto(photo);
+	}
+}
+
+const char *linphone_vcard_get_photo(const LinphoneVcard *vCard) {
+	if (vCard && vCard->belCard->getPhotos().size() > 0) {
+		const shared_ptr<belcard::BelCardPhoto> photo = vCard->belCard->getPhotos().front();
+		return photo->getValue().c_str();
+	}
+
+	return NULL;
 }
 
 bool_t linphone_vcard_generate_unique_id(LinphoneVcard *vCard) {
@@ -513,7 +556,9 @@ void linphone_vcard_add_extended_property(LinphoneVcard *vCard, const char *name
 	shared_ptr<belcard::BelCardProperty> property = belcard::BelCardGeneric::create<belcard::BelCardProperty>();
 	property->setName(name);
 	property->setValue(value);
-	vCard->belCard->addExtendedProperty(property);
+	if (!vCard->belCard->addExtendedProperty(property)) {
+		ms_error("[vCard] Couldn't add extended property name [%s] value [%s] to vCard [%p]", name, value, vCard);
+	}
 }
 
 void linphone_vcard_remove_extented_properties_by_name(LinphoneVcard *vCard, const char *name) {

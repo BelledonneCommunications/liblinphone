@@ -376,6 +376,64 @@ LINPHONE_PUBLIC float linphone_friend_get_capability_version(const LinphoneFrien
  */
 LINPHONE_PUBLIC void linphone_friend_remove(LinphoneFriend *linphone_friend);
 
+/**
+ * Sets the contact's picture URI
+ * @param linphone_friend the #LinphoneFriend object.
+ * @param picture_uri the picture URI to set. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_friend_set_photo(LinphoneFriend *linphone_friend, const char *picture_uri);
+
+/**
+ * Gets the contact's picture URI
+ * @param linphone_friend the #LinphoneFriend object.
+ * @return the picture URI set if any, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC const char * linphone_friend_get_photo(const LinphoneFriend *linphone_friend);
+
+/**
+ * Sets if the friend is a user's favorite or important contact.
+ * @param linphone_friend the #LinphoneFriend object.
+ * @param is_starred TRUE if the friend is to be considered as important, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_friend_set_starred(LinphoneFriend *linphone_friend, bool_t is_starred);
+
+/**
+ * Gets if the friend is to be considered as important for the user.
+ * @param linphone_friend the #LinphoneFriend object.
+ * @return TRUE if the contact is a user's favorite, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_friend_get_starred(const LinphoneFriend *linphone_friend);
+
+/**
+ * Sets the contact's native URI.
+ * @param linphone_friend the #LinphoneFriend object.
+ * @param native_uri the URI that matches the contact on the native system. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_friend_set_native_uri(LinphoneFriend *linphone_friend, const char *native_uri);
+
+/**
+ * Gets the contact's native URI
+ * @param linphone_friend the #LinphoneFriend object.
+ * @return the native URI set if any, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC const char * linphone_friend_get_native_uri(const LinphoneFriend *linphone_friend);
+
+/**
+ * Sets the contact's organization.
+ * It's a shortcut to linphone_friend_get_vcard() and linphone_vcard_set_organization().
+ * @param linphone_friend the #LinphoneFriend object.
+ * @param organization the organization to store in Friend's vCard. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_friend_set_organization(LinphoneFriend *linphone_friend, const char *organization);
+
+/**
+ * Gets the contact's organization from it's vCard. 
+ * It's a shortcut to linphone_friend_get_vcard() and linphone_vcard_get_organization().
+ * @param linphone_friend the #LinphoneFriend object.
+ * @return the organization set if any & vCard is available, NULL otherwise. @maybenil
+ */
+LINPHONE_PUBLIC const char * linphone_friend_get_organization(const LinphoneFriend *linphone_friend);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

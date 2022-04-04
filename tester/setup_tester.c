@@ -1114,6 +1114,8 @@ static void search_friend_research_estate_reset(void) {
 static void search_friend_with_phone_number(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
+	const char *stephanie_avatar = "https://fr.wikipedia.org/wiki/St%C3%A9phanie_de_Monaco#/media/Fichier:St%C3%A9phanie_van_Monaco_(1986).jpg";
+	const char *stephanie_uri = "contact://stephanie_de_monaco";
 	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
@@ -1124,10 +1126,22 @@ static void search_friend_with_phone_number(void) {
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
 
+	BC_ASSERT_FALSE(linphone_friend_get_starred(stephanieFriend));
+	BC_ASSERT_PTR_NULL(linphone_friend_get_photo(stephanieFriend));
+	BC_ASSERT_PTR_NULL(linphone_friend_get_native_uri(stephanieFriend));
 	linphone_vcard_set_full_name(stephanieVcard, stephanieName); // stephanie de monaco
 	linphone_vcard_add_phone_number(stephanieVcard, stephaniePhoneNumber);
 	linphone_friend_set_vcard(stephanieFriend, stephanieVcard);
 	linphone_core_add_friend(manager->lc, stephanieFriend);
+	BC_ASSERT_FALSE(linphone_friend_get_starred(stephanieFriend));
+	BC_ASSERT_PTR_NULL(linphone_friend_get_photo(stephanieFriend));
+	BC_ASSERT_PTR_NULL(linphone_friend_get_native_uri(stephanieFriend));
+	linphone_friend_set_starred(stephanieFriend, TRUE);
+	BC_ASSERT_TRUE(linphone_friend_get_starred(stephanieFriend));
+	linphone_friend_set_photo(stephanieFriend, stephanie_avatar);
+	BC_ASSERT_STRING_EQUAL(linphone_friend_get_photo(stephanieFriend), stephanie_avatar);
+	linphone_friend_set_native_uri(stephanieFriend, stephanie_uri);
+	BC_ASSERT_STRING_EQUAL(linphone_friend_get_native_uri(stephanieFriend), stephanie_uri);
 
 	linphone_friend_add_phone_number(linphone_friend_list_find_friend_by_uri(lfl, sFriends[5]), mariePhoneNumber);
 
