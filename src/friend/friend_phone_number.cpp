@@ -33,10 +33,12 @@ FriendPhoneNumber::FriendPhoneNumber (const string &phoneNumber): FriendPhoneNum
     
 }
 
+#ifdef VCARD_ENABLED
 FriendPhoneNumber::FriendPhoneNumber (const std::shared_ptr<belcard::BelCardPhoneNumber>& belcardPhoneNumber) {
     mLabel = belcardPhoneNumber->getTypeParam()->getValue();
     mPhoneNumber = belcardPhoneNumber->getValue();
 }
+#endif
 
 FriendPhoneNumber::FriendPhoneNumber (const FriendPhoneNumber &other) : HybridObject(other) {
     
@@ -52,6 +54,8 @@ FriendPhoneNumber* FriendPhoneNumber::clone () const {
 	return new FriendPhoneNumber(*this);
 }
 
+
+#ifdef VCARD_ENABLED
 shared_ptr<belcard::BelCardPhoneNumber> FriendPhoneNumber::toBelcardPhoneNumber() const {
     shared_ptr<belcard::BelCardPhoneNumber> phoneNumber = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
     phoneNumber->setValue(mPhoneNumber);
@@ -63,6 +67,7 @@ shared_ptr<belcard::BelCardPhoneNumber> FriendPhoneNumber::toBelcardPhoneNumber(
     }
     return phoneNumber;
 }
+#endif
 
 // -----------------------------------------------------------------------------
 

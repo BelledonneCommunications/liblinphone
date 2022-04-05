@@ -20,7 +20,9 @@
 #ifndef _L_FRIEND_PHONE_NUMBER_H_
 #define _L_FRIEND_PHONE_NUMBER_H_
 
+#ifdef VCARD_ENABLED
 #include <belcard/belcard_communication.hpp>
+#endif
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/api/c-types.h"
 
@@ -32,12 +34,16 @@ class FriendPhoneNumber : public bellesip::HybridObject<LinphoneFriendPhoneNumbe
 public:
     FriendPhoneNumber (const std::string &phoneNumber, const std::string label);
     FriendPhoneNumber (const std::string &phoneNumber);
+#ifdef VCARD_ENABLED
     FriendPhoneNumber (const std::shared_ptr<belcard::BelCardPhoneNumber>& belcardPhoneNumber);
+#endif
     FriendPhoneNumber (const FriendPhoneNumber &other);
 	~FriendPhoneNumber ();
 
 	FriendPhoneNumber* clone () const override;
+#ifdef VCARD_ENABLED
     std::shared_ptr<belcard::BelCardPhoneNumber> toBelcardPhoneNumber() const;
+#endif
 
     void setPhoneNumber(const std::string& phoneNumber);
     const std::string& getPhoneNumber() const;
