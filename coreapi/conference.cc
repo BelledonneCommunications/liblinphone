@@ -573,11 +573,11 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 	// - start and end time from the SDP active time attribute
 	// - conference active media:
 	//    - if the SDP has at least one active audio stream, audio is enabled
-	//    - if the SDP has at least one active video stream, video is enabled
+	//    - if the core is a conference server, video is enabled
 	// - Subject is got from the "Subject" header in the INVITE
 	const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
-	auto videoEnabled = (linphone_core_conference_server_enabled(lc)) ? (linphone_core_video_enabled(lc) && (remoteMd->nbActiveStreamsOfType(SalVideo) > 0)) : (remoteMd->nbActiveStreamsOfType(SalVideo) > 0);
-	if(!linphone_core_conference_server_enabled(core->getCCore())) {
+	auto videoEnabled = linphone_core_video_enabled(lc);
+	if(videoEnabled && !linphone_core_conference_server_enabled(core->getCCore())) {
 		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
 		videoEnabled = false;
 	}
@@ -3231,6 +3231,26 @@ void RemoteConference::onFullStateReceived() {
 		requestStreams();
 	} else {
 		lInfo() << "Delaying re-INVITE in order to get streams after joining conference " << getConferenceAddress() << " because ICE negotiations didn't end yet";
+	}
+}
+
+void RemoteConference::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	const bool videoEnabled = (session) ? session->getCurrentParams()->videoEnabled() : false;
+	if (!confParams->videoEnabled() && videoEnabled) {
+		auto updateSession = [this]() -> LinphoneStatus{
+			lInfo() << "Sending re-INVITE because the conference has no longer video capabilities";
+			auto ret = updateMainSession();
+			if (ret != 0) {
+				lInfo() << "Sending re-INVITE because the conference has no longer video capabilities";
+				lInfo() << "re-INVITE to remove video cannot be sent right now";
+			}
+			return ret;
+		};
+
+		if (updateSession() != 0) {
+			session->addPendingAction(updateSession);
+		}
 	}
 }
 

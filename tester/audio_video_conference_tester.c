@@ -3152,7 +3152,7 @@ static void video_conference_by_merging_calls(void){
 	LinphoneConference *conf = NULL;
 	LinphoneCallParams *params;
 	LinphoneConferenceParams *conf_params;
-	LinphoneCall *pauline_call, *laure_call;
+	LinphoneCall *pauline_call, *laure_call, *marie_call;
 	bctbx_list_t* new_participants = NULL;
 	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	bctbx_list_t *lcs = NULL;
@@ -3210,11 +3210,13 @@ static void video_conference_by_merging_calls(void){
 	}else goto end;
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,5000));
-	
-	// Then she calls Laure, audio-only.
-	
-	laure_call = linphone_core_invite_address(marie->lc, laure->identity);
-	
+
+	// Then she calls Laure with video
+	params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_video(params, TRUE);
+	laure_call = linphone_core_invite_address_with_params(marie->lc, laure->identity, params);
+	linphone_call_params_unref(params);
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,2,10000));
 	if (BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,10000))){
 		linphone_call_accept(linphone_core_get_current_call(laure->lc));
@@ -3226,9 +3228,9 @@ static void video_conference_by_merging_calls(void){
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPaused,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPausedByRemote,1,5000));
 	
-	// Marie now creates a conference, audio-only.
+	// Marie now creates a conference - join with video.
 	conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
-	linphone_conference_params_enable_video(conf_params, FALSE);
+	linphone_conference_params_enable_video(conf_params, TRUE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 	
@@ -3240,9 +3242,11 @@ static void video_conference_by_merging_calls(void){
 	// Now check that both Pauline and Laure have video.
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	laure_call = linphone_core_get_current_call(laure->lc);
+	marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	BC_ASSERT_PTR_NOT_NULL(laure_call);
-	if (pauline_call && laure_call){
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	if (pauline_call && laure_call && marie_call){
 		const bctbx_list_t *focus_calls, *it;
 		
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,3,5000));
@@ -3256,25 +3260,36 @@ static void video_conference_by_merging_calls(void){
 		for (it = focus_calls; it != NULL; it = it->next){
 			BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(linphone_call_get_current_params((LinphoneCall*)it->data)) == TRUE);
 		}
-		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == FALSE);
-		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == FALSE);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)));
 
 		LinphoneAddress *conference_address = linphone_address_clone(linphone_conference_get_conference_address(conf));
 		BC_ASSERT_PTR_NOT_NULL(conference_address);
 
-		ms_message("Adding video to the conference...");
+		// Change camera, unfortunately there is no way to test its effectiveness for the moment.
+		ms_message("Changing Marie's video device...");
+		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
+		wait_for_list(lcs ,NULL, 0, 2000);
+
+		stats initial_marie_stat = marie->stat;
+		stats initial_pauline_stat = pauline->stat;
+		stats initial_laure_stat = laure->stat;
+
+		ms_message("Removing video to the conference...");
 		// Marie upgrades the conference with video.
 		LinphoneConference * focus_conference = linphone_core_search_conference(focus_mgr->lc, NULL, NULL, conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(focus_conference);
 		if (focus_conference) {
 			conf_params = linphone_core_create_conference_params_2(focus_mgr->lc, focus_conference);
-			linphone_conference_params_enable_video(conf_params, TRUE);
+			linphone_conference_params_enable_video(conf_params, FALSE);
 			linphone_conference_update_params(focus_conference, conf_params);
 			linphone_conference_params_unref(conf_params);
 		}
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_available_media_changed,1,3000));
-		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_available_media_changed,1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_available_media_changed,initial_marie_stat.number_of_available_media_changed + 1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_available_media_changed,initial_pauline_stat.number_of_available_media_changed + 1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_available_media_changed,initial_laure_stat.number_of_available_media_changed + 1,3000));
 
 		if (conference_address) {
 			LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, NULL, conference_address, NULL);
@@ -3282,7 +3297,15 @@ static void video_conference_by_merging_calls(void){
 			if (pauline_conference) {
 				const LinphoneConferenceParams * current_pauline_conf_params = linphone_conference_get_current_params(pauline_conference);
 				BC_ASSERT_PTR_NOT_NULL(current_pauline_conf_params);
-				BC_ASSERT_TRUE(linphone_conference_params_video_enabled(current_pauline_conf_params));
+				BC_ASSERT_FALSE(linphone_conference_params_video_enabled(current_pauline_conf_params));
+			}
+
+			LinphoneConference * marie_conference = linphone_core_search_conference(marie->lc, NULL, NULL, conference_address, NULL);
+			BC_ASSERT_PTR_NOT_NULL(marie_conference);
+			if (marie_conference) {
+				const LinphoneConferenceParams * current_marie_conf_params = linphone_conference_get_current_params(marie_conference);
+				BC_ASSERT_PTR_NOT_NULL(current_marie_conf_params);
+				BC_ASSERT_FALSE(linphone_conference_params_video_enabled(current_marie_conf_params));
 			}
 
 			LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, NULL, conference_address, NULL);
@@ -3290,16 +3313,22 @@ static void video_conference_by_merging_calls(void){
 			if (laure_conference) {
 				const LinphoneConferenceParams * current_laure_conf_params = linphone_conference_get_current_params(laure_conference);
 				BC_ASSERT_PTR_NOT_NULL(current_laure_conf_params);
-				BC_ASSERT_TRUE(linphone_conference_params_video_enabled(current_laure_conf_params));
+				BC_ASSERT_FALSE(linphone_conference_params_video_enabled(current_laure_conf_params));
 			}
 		}
-
 		linphone_address_unref(conference_address);
 
-		// Change camera, unfortunately there is no way to test its effectiveness for the moment.
-		ms_message("Changing Marie's video device...");
-		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
-		wait_for_list(lcs ,NULL, 0, 2000);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallUpdating, initial_laure_stat.number_of_LinphoneCallUpdating + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, initial_laure_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, initial_marie_stat.number_of_LinphoneCallUpdating + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdating, initial_pauline_stat.number_of_LinphoneCallUpdating + 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
 
 		terminate_conference(new_participants, marie, conf, focus_mgr);
 	}

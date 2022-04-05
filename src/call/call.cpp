@@ -577,7 +577,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 	std::shared_ptr<MediaConference::RemoteConference> remoteConference = nullptr;
 
 	if (conference) {
-		lInfo() << "Attaching call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") to conference " << conference->getConferenceAddress() << " ID " << conferenceId;
+		lInfo() << "Attaching call (local address " << session->getLocalAddress().asString() << " remote address " << session->getRemoteAddress()->asString() << ") to conference " << conference->getConferenceAddress() << " ID " << conferenceId;
 		remoteConference = dynamic_pointer_cast<MediaConference::RemoteConference>(conference);
 		if (remoteConference) {
 			remoteConference->setMainSession(session);
@@ -715,6 +715,7 @@ void Call::onStatsUpdated (const shared_ptr<CallSession> &session, const Linphon
 void Call::onUpdateMediaInfoForReporting (const shared_ptr<CallSession> &session, int statsType) {
 	linphone_reporting_update_media_info(this->toC(), statsType);
 }
+
 
 void Call::onResetCurrentSession (const shared_ptr<CallSession> &session) {
 	getCore()->getPrivate()->setCurrentCall(nullptr);
