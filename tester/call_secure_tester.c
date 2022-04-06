@@ -364,12 +364,10 @@ static void zrtp_hybrid_key_agreement_call(void) {
     LpConfig *lpp = linphone_core_get_config(marie->lc);
     linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_SIK751");
     LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
-    call_with_caller_params(marie, pauline, marie_params);
+    BC_ASSERT_EQUAL(call_with_caller_params(marie, pauline, marie_params), 1, int, "%d");
     end_call(marie, pauline);
-    free(marie);
-    free(pauline);
-    free(lpm);
-    free(lpp);
+    linphone_core_manager_destroy(marie);
+    linphone_core_manager_destroy(pauline);
 }
 
 static void dtls_srtp_call(void) {
