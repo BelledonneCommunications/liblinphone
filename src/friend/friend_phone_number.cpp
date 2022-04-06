@@ -35,7 +35,12 @@ FriendPhoneNumber::FriendPhoneNumber (const string &phoneNumber): FriendPhoneNum
 
 #ifdef VCARD_ENABLED
 FriendPhoneNumber::FriendPhoneNumber (const std::shared_ptr<belcard::BelCardPhoneNumber>& belcardPhoneNumber) {
-    mLabel = belcardPhoneNumber->getTypeParam()->getValue();
+    shared_ptr<belcard::BelCardTypeParam> type = belcardPhoneNumber->getTypeParam();
+    if (type) {
+        mLabel = type->getValue();
+    } else {
+        mLabel = "";
+    }
     mPhoneNumber = belcardPhoneNumber->getValue();
 }
 #endif
