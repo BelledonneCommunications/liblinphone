@@ -807,7 +807,6 @@ shared_ptr<Participant> MediaSessionPrivate::getMe () const {
 
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
-
  	q->getCore()->getPrivate()->getToneManager().notifyState(q->getSharedFromThis(), newState);
 	// Take a ref on the session otherwise it might get destroyed during the call to setState
 	shared_ptr<CallSession> sessionRef = q->getSharedFromThis();
@@ -1930,6 +1929,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 							videoDir = SalStreamRecvOnly;
 							break;
 					}
+				} else if (deviceState == ParticipantDevice::State::ScheduledForJoining) {
+					videoDir = getParams()->getPrivate()->getSalVideoDirection();
+					enableVideoStream = true;
 				} else {
 					videoDir = MediaSessionParamsPrivate::mediaDirectionToSalStreamDir(participantDevice->getStreamCapability(LinphoneStreamTypeVideo));
 					enableVideoStream = (localIsOfferer) ? callVideoEnabled : isVideoConferenceEnabled;
@@ -1986,9 +1988,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-	if (addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) {
+#ifdef HAVE_ADVANCED_IM
+	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+	if (eventLogEnabled && addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) {
 		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	}
+#endif // HAVE_ADVANCED_IM
 	copyOldStreams(md, oldMd, refMd, pth, encList);
 
 	setupEncryptionKeys(md, forceCryptoKeyGeneration);

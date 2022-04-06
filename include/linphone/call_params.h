@@ -48,7 +48,7 @@ LINPHONE_PUBLIC void linphone_call_params_add_custom_header(LinphoneCallParams *
 /**
  * Copy an existing #LinphoneCallParams object to a new #LinphoneCallParams object.
  * @param call_params The #LinphoneCallParams object to copy. @notnil
- * @return A copy of the #LinphoneCallParams object. @notnil
+ * @return A copy of the #LinphoneCallParams object. @notnil @tobefreed
 **/
 LINPHONE_PUBLIC LinphoneCallParams * linphone_call_params_copy(const LinphoneCallParams *call_params);
 

@@ -1508,7 +1508,6 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
 		Conference::removeParticipant(participant);
 		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
-		checkIfTerminated();
 	} else {
 		if ((sessionState != LinphonePrivate::CallSession::State::Released) && (sessionState != LinphonePrivate::CallSession::State::End)) {
 			lError() << "Trying to remove participant " << *session->getRemoteAddress() << " with session " << session << " which is not part of conference " << getConferenceAddress();
