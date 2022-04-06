@@ -361,7 +361,7 @@ static void zrtp_hybrid_key_agreement_call(void) {
     linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
     LpConfig *lpm = linphone_core_get_config(marie->lc);
     linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_SIK751");
-    LpConfig *lpp = linphone_core_get_config(marie->lc);
+    LpConfig *lpp = linphone_core_get_config(pauline->lc);
     linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_SIK751");
     LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
     BC_ASSERT_EQUAL(call_with_caller_params(marie, pauline, marie_params), 1, int, "%d");
