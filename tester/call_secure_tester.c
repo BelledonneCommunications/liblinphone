@@ -354,6 +354,21 @@ static void zrtp_key_agreement_call(void) {
 	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_ecdh448_rc", "pauline_zrtp_ecdh448_rc");
 }
 
+static void zrtp_hybrid_key_agreement_call(void) {
+    LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+    LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+    linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP);
+    linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP);
+    LpConfig *lp = linphone_core_get_config(marie->lc);
+    linphone_config_set_string(lp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_SIK751");
+    LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
+    call_with_caller_params(marie, pauline, marie_params);
+    end_call(marie, pauline);
+    free(marie);
+    free(pauline);
+    free(lp);
+}
+
 static void dtls_srtp_call(void) {
 	call_base(LinphoneMediaEncryptionDTLS,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
 }
@@ -1016,6 +1031,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
+    TEST_NO_TAG("ZRTP Hybrid key Agreement call", zrtp_hybrid_key_agreement_call),
 	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
 #ifdef VIDEO_ENABLED
 	TEST_ONE_TAG("DTLS SRTP call with several video switches", dtls_srtp_call_with_several_video_switches, "DTLS"),
