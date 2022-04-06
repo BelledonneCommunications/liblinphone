@@ -355,6 +355,7 @@ static void zrtp_key_agreement_call(void) {
 }
 
 static void zrtp_hybrid_key_agreement_call(void) {
+    bool_t call_ok;
     LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
     LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 
@@ -362,17 +363,16 @@ static void zrtp_hybrid_key_agreement_call(void) {
     BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
 
     LpConfig *lpm = linphone_core_get_config(marie->lc);
-    linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_SIK751");
+    linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
     LpConfig *lpp = linphone_core_get_config(pauline->lc);
-    linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_SIK751");
+    linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
 
-    LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
-
-    BC_ASSERT_EQUAL(call_with_caller_params(marie, pauline, marie_params), 1, int, "%d");
+    BC_ASSERT_TRUE(call_ok=call(marie,pauline));
+    if (!call_ok) goto end;
 
     end_call(marie, pauline);
 
-    linphone_call_params_unref(marie_params);
+end:
     linphone_core_manager_destroy(marie);
     linphone_core_manager_destroy(pauline);
 }
