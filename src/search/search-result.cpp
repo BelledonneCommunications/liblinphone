@@ -191,11 +191,12 @@ void SearchResult::merge(const std::shared_ptr<SearchResult>& withResult) {
 	if(doOverride || mPhoneNumber.empty())
 		mPhoneNumber = withResult->getPhoneNumber();
 		
-	if( withResult->getFriend()){// There is a new data
-		if( doOverride && mFriend)
+	const LinphoneFriend* other = withResult->getFriend();
+	if (other && other != mFriend) {// There is a new data
+		if (doOverride && mFriend)
 			linphone_friend_unref(const_cast<LinphoneFriend *>(mFriend));
-		if(doOverride || !mFriend) {
-			mFriend = withResult->getFriend();
+		if (doOverride || !mFriend) {
+			mFriend = other;
 			linphone_friend_ref(const_cast<LinphoneFriend *>(mFriend));
 		}
 	}	
