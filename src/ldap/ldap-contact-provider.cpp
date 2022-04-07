@@ -632,13 +632,19 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 					attr = ldap_next_attribute(mLd, entry, ber);
 				}
 				if( contact_complete ) {
+					LinphoneFriend *lfriend = linphone_core_create_friend(lc);
+					linphone_friend_set_name(lfriend, ldapData.mName.first.c_str());
+
 					for(auto sipAddress : ldapData.mSip) {
 						LinphoneAddress* la = linphone_core_interpret_url(lc, sipAddress.first.c_str());
 						if( la ){
+							linphone_address_set_display_name(la, ldapData.mName.first.c_str());
+							linphone_friend_add_address(lfriend, la);
+							linphone_friend_add_phone_number(lfriend, L_STRING_TO_C(sipAddress.second));
+
 							int maxResults = atoi(mConfig["max_results"].c_str());
 							if( maxResults == 0 || req->mFoundCount < (unsigned int) maxResults) {
-								linphone_address_set_display_name(la, ldapData.mName.first.c_str());
-								std::shared_ptr<SearchResult> searchResult = SearchResult::create((unsigned int)0,la,sipAddress.second, nullptr, LinphoneMagicSearchSourceLdapServers);
+								std::shared_ptr<SearchResult> searchResult = SearchResult::create((unsigned int)0, la, sipAddress.second, lfriend, LinphoneMagicSearchSourceLdapServers);
 								req->mFoundEntries.push_back(searchResult);
 								++req->mFoundCount;
 							}else{// Have more result (requested max_results+1). Do not store this result to avoid missunderstanding from user.
@@ -647,6 +653,8 @@ void LdapContactProvider::handleSearchResult( LDAPMessage* message ) {
 							linphone_address_unref(la);
 						}
 					}
+
+					linphone_friend_unref(lfriend);
 				}
 				if( ber ) ber_free(ber, 0);
 				if(attr) ldap_memfree(attr);
