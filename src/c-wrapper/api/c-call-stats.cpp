@@ -56,6 +56,11 @@ struct _LinphoneCallStats {
 	int clockrate;  /*RTP clockrate of the stream, provided here for easily converting timestamp units expressed in RTCP packets in milliseconds*/
 	float estimated_download_bandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in kbit/s, including IP/UDP/RTP headers*/
 	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
+    uint8_t cipherAlgo;
+    uint8_t keyAgreementAlgo;
+    uint8_t hashAlgo;
+    uint8_t authTagAlgo;
+    uint8_t sasAlgo;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallStats);
@@ -235,7 +240,14 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			evd->packet = NULL;
 			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			linphone_call_stats_update(stats,ms);
-		}
+        } else if (evt == ORTP_EVENT_ZRTP_SAS_READY){
+            stats->cipherAlgo = evd->info.zrtp_info.cipherAlgo;
+            stats->keyAgreementAlgo = evd->info.zrtp_info.keyAgreementAlgo;
+            stats->hashAlgo = evd->info.zrtp_info.hashAlgo;
+            stats->authTagAlgo = evd->info.zrtp_info.authTagAlgo;
+            stats->sasAlgo = evd->info.zrtp_info.sasAlgo;
+            //ms_message("ZRTP algo used during negotiation: Cipher: %s - KeyAgreement: %s - Hash: %s - AuthTag: %s - Sas Rendering: %s", bzrtp_cipher_toString(evd->info.zrtp_info.cipherAlgo), bzrtp_keyAgreement_toString(evd->info.zrtp_info.keyAgreementAlgo), bzrtp_hash_toString(evd->info.zrtp_info.hashAlgo), bzrtp_authtag_toString(evd->info.zrtp_info.authTagAlgo), bzrtp_sas_toString(evd->info.zrtp_info.sasAlgo));
+        }
 	}
 }
 

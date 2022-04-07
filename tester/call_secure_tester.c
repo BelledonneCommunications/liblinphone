@@ -370,6 +370,8 @@ static void zrtp_hybrid_key_agreement_call(void) {
     BC_ASSERT_TRUE(call_ok=call(marie,pauline));
     if (!call_ok) goto end;
 
+    //vérification du de l'algo de chiffrement
+
     end_call(marie, pauline);
 
 end:
