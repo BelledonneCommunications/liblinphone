@@ -377,7 +377,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		playfile = "";
 	}
 
-	if (targetState == CallSession::State::Paused) {
+	bool pause = targetState == CallSession::State::Paused;
+	if (pause) {
 		// In paused state, we never use soundcard
 		playcard = captcard = nullptr;
 		recfile = "";
@@ -465,8 +466,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			io.input.soundcard = captcard;
 		} else {
 			io.input.type = MSResourceFile;
-			onHoldFile = "";
-			io.input.file = playfile.c_str(); /* We prefer to use the remote_play api, that allows to play multimedia files */
+
+			// We need to use onHoldFile when paused
+			onHoldFile = pause ? playfile : "";
+			io.input.file = pause ? nullptr : playfile.c_str(); /* We prefer to use the remote_play api, that allows to play multimedia files */
 		}
 	}
 	if (ok) {
