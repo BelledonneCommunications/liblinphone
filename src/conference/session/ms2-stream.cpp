@@ -218,6 +218,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 			removeFromBundle();
 		} else {
 			/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
+			localDesc.rtp_addr = "";
 			localDesc.rtp_port = 0;
 			localDesc.setBundleOnly(TRUE);
 		}
