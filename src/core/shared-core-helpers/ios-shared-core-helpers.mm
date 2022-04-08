@@ -405,7 +405,6 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 	[defaults release];
 
 	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr, isIcalendar);
-	lInfo() << "[push] PushNotificationMessage created: " << msg->toString();
 	return msg;
 }
 
