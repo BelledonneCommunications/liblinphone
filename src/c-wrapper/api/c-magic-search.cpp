@@ -166,6 +166,18 @@ void linphone_magic_search_reset_search_cache (LinphoneMagicSearch *magic_search
 	L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->resetSearchCache();
 }
 
+bctbx_list_t *linphone_magic_search_get_contacts_list (
+	LinphoneMagicSearch *magic_search,
+	const char *filter,
+	const char *domain,
+	int sourceFlags,
+	LinphoneMagicSearchAggregation aggregation
+) {
+	return SearchResult::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
+		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags, aggregation
+	));
+}
+
 bctbx_list_t *linphone_magic_search_get_contacts (
 	LinphoneMagicSearch *magic_search,
 	const char *filter,
@@ -173,7 +185,7 @@ bctbx_list_t *linphone_magic_search_get_contacts (
 	int sourceFlags
 ) {
 	return SearchResult::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
-		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags
+		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags, LinphoneMagicSearchAggregationNone
 	));
 }
 
@@ -183,11 +195,23 @@ bctbx_list_t *linphone_magic_search_get_contact_list_from_filter (
 	const char *domain
 ) {
 	return SearchResult::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilter(
-		L_C_TO_STRING(filter), L_C_TO_STRING(domain), LinphoneMagicSearchSourceAll
+		L_C_TO_STRING(filter), L_C_TO_STRING(domain), LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone
 	));
 }
 
 typedef void (*MagicSearchCb)(void *, void *);
+
+void linphone_magic_search_get_contacts_list_async (
+	LinphoneMagicSearch *magic_search,
+	const char *filter,
+	const char *domain,
+	int sourceFlags,
+	LinphoneMagicSearchAggregation aggregation
+) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilterAsync(
+		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags, aggregation
+	);
+}
 
 void linphone_magic_search_get_contacts_async (
 	LinphoneMagicSearch *magic_search,
@@ -196,7 +220,7 @@ void linphone_magic_search_get_contacts_async (
 	int sourceFlags
 ) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilterAsync(
-		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags
+		L_C_TO_STRING(filter), L_C_TO_STRING(domain), sourceFlags, LinphoneMagicSearchAggregationNone
 	);
 }
 
@@ -206,7 +230,7 @@ void linphone_magic_search_get_contact_list_from_filter_async (
 	const char *domain
 ) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->getContactListFromFilterAsync(
-		L_C_TO_STRING(filter), L_C_TO_STRING(domain), LinphoneMagicSearchSourceAll
+		L_C_TO_STRING(filter), L_C_TO_STRING(domain), LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone
 	);
 }
 
