@@ -127,9 +127,10 @@ public:
 	 ** "*" for searching in contact with sip SipUri
 	 ** "yourdomain" for searching in contact from "yourdomain" domain
 	 * @param[in] sourceFlags Make a search in selected sources
+ 	 * @param[in] aggregation a #LinphoneMagicSearchAggregation flag to indicate how to merge results
 	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
 	 **/
-	std::list<std::shared_ptr<SearchResult>> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "", int sourceFlags = LinphoneMagicSearchSourceAll);
+	std::list<std::shared_ptr<SearchResult>> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "", int sourceFlags = LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregation aggregation = LinphoneMagicSearchAggregationNone);
 
 	/**
 	 * Create a sorted list of SearchResult from SipUri, Contact name,
@@ -143,8 +144,9 @@ public:
 	 ** "*" for searching in contact with sip SipUri
 	 ** "yourdomain" for searching in contact from "yourdomain" domain
 	 * @param[in] sourceFlags Make a search in selected sources
+ 	 * @param[in] aggregation a #LinphoneMagicSearchAggregation flag to indicate how to merge results
 	 **/
-	void getContactListFromFilterAsync (const std::string &filter, const std::string &withDomain, int sourceFlags = LinphoneMagicSearchSourceAll);
+	void getContactListFromFilterAsync (const std::string &filter, const std::string &withDomain, int sourceFlags = LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregation aggregation = LinphoneMagicSearchAggregationNone);
 	
 	/**
 	 * @return sorted list of SearchResult with "filter" or an empty list if "filter" is empty
@@ -278,6 +280,8 @@ private:
 	void addResultsToResultsList (std::list<std::shared_ptr<SearchResult>> &results, std::list<std::shared_ptr<SearchResult>> &srL) const;
 
 	void uniqueItemsList (std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> list) const;
+	void uniqueFriendsInList (std::shared_ptr<std::list<std::shared_ptr<SearchResult>>> list) const;
+
 	enum{
 		STATE_START,
 		STATE_WAIT,

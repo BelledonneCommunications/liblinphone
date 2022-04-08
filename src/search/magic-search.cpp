@@ -200,10 +200,10 @@ bool MagicSearch::iterate(void){
 }
 
 //Public
-void MagicSearch::getContactListFromFilterAsync (const string &filter, const string &withDomain, int sourceFlags) {
+void MagicSearch::getContactListFromFilterAsync (const string &filter, const string &withDomain, int sourceFlags, LinphoneMagicSearchAggregation aggregation) {
 	L_D();
 	lDebug() << "[Magic Search] New async search: " << filter;
-	if( d->mAsyncData.pushRequest(SearchRequest(filter,withDomain,sourceFlags)) == 1){// This is a new request.
+	if( d->mAsyncData.pushRequest(SearchRequest(filter, withDomain, sourceFlags, aggregation)) == 1){// This is a new request.
 		if(d->mAutoResetCache){
 			resetSearchCache();
 		}
@@ -214,11 +214,11 @@ void MagicSearch::getContactListFromFilterAsync (const string &filter, const str
 }
 
 //Public
-list<std::shared_ptr<SearchResult>> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain, int sourceFlags) {
+list<std::shared_ptr<SearchResult>> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain, int sourceFlags, LinphoneMagicSearchAggregation aggregation) {
 	L_D();
 	lDebug() << "[Magic Search] New search: " << filter;
 	std::shared_ptr<list<std::shared_ptr<SearchResult>> > resultList;
-	SearchRequest request(filter, withDomain, sourceFlags);
+	SearchRequest request(filter, withDomain, sourceFlags, aggregation);
 	d->mAsyncData.setSearchRequest(request);
 	if(d->mAutoResetCache)
 		resetSearchCache();
@@ -288,10 +288,28 @@ static void sortResultsList(std::shared_ptr<list<std::shared_ptr<SearchResult>>>
 	});
 }
 
+static void sortResultsByFriendInList(std::shared_ptr<list<std::shared_ptr<SearchResult>>> resultList) {
+	lDebug() << "[Magic Search] Sorting " << resultList->size() << " results by Friend";
+	resultList->sort([](const std::shared_ptr<SearchResult>& lsr, const std::shared_ptr<SearchResult>& rsr) {
+		const char* name1 = linphone_friend_get_name(lsr->getFriend());
+		const char* name2 = linphone_friend_get_name(rsr->getFriend());
+		int nameComp = compareStringItems(name1, name2);
+		return nameComp < 0;
+	});
+}
+
 list<std::shared_ptr<SearchResult>> MagicSearch::processResults(std::shared_ptr<list<std::shared_ptr<SearchResult>>> pResultList) {
+	L_D();
+
+	if (d->mAsyncData.mSearchRequest.getAggregation() == LinphoneMagicSearchAggregationFriend) {
+		sortResultsByFriendInList(pResultList);
+		uniqueFriendsInList(pResultList);
+	}
+
 	sortResultsList(pResultList);
 	uniqueItemsList(pResultList);
 	setSearchCache(pResultList);
+	
    	return getLastSearch();
 }
 
@@ -504,7 +522,7 @@ std::list<list<std::shared_ptr<SearchResult>>> MagicSearch::getAddressFromLDAPSe
 ) {
 	SearchAsyncData asyncData;
 // Start async search
-	SearchRequest request(filter, withDomain, LinphoneMagicSearchSourceAll);
+	SearchRequest request(filter, withDomain, LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);
 	asyncData.pushRequest(request);
 	asyncData.setSearchRequest(request);
 	getAddressFromLDAPServerStartAsync(filter, withDomain, &asyncData);
@@ -812,6 +830,14 @@ void MagicSearch::uniqueItemsList (std::shared_ptr<list<std::shared_ptr<SearchRe
 				&& (compareStringItems(lsr->getDisplayName(), rsr->getDisplayName()) == 0);
 	});
 	lDebug() << "[Magic Search] List size after unique = " << list->size();
+}
+
+void MagicSearch::uniqueFriendsInList (std::shared_ptr<list<std::shared_ptr<SearchResult>>> list) const {
+	lDebug() << "[Magic Search] List size before friend unique = " << list->size();
+	list->unique([](const std::shared_ptr<SearchResult>& lsr, const std::shared_ptr<SearchResult>& rsr){
+		return lsr->getFriend() == rsr->getFriend();
+	});
+	lDebug() << "[Magic Search] List size after friend unique = " << list->size();
 }
 
 LINPHONE_END_NAMESPACE

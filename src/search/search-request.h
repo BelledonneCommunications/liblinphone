@@ -33,7 +33,7 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC SearchRequest {
 public:
 	SearchRequest(){}
-	SearchRequest(const std::string& filter, const std::string& withDomain, int sourceFlags);
+	SearchRequest(const std::string& filter, const std::string& withDomain, int sourceFlags, LinphoneMagicSearchAggregation aggregation);
 	SearchRequest( const SearchRequest& request);
 	~SearchRequest();
 	
@@ -53,6 +53,11 @@ public:
 	 * @return all sources where to search #LinphoneMagicSearchSource
 	 **/
 	int getSourceFlags() const;
+
+	/**
+	 * @return The #LinphoneMagicSearchAggregation mode set for this request
+	 **/
+	LinphoneMagicSearchAggregation getAggregation() const;
 	
 	/**
 	* @brief initStartTime To be call when starting a search. This will store the start time when the request begin.
@@ -70,6 +75,8 @@ private:
 	std::string mFilter;
 	std::string mWithDomain;
 	int mSourceFlags = LinphoneMagicSearchSourceAll;
+	LinphoneMagicSearchAggregation mAggregation = LinphoneMagicSearchAggregationNone;
+
 	/**
 	 * @brief mStartTime Start time of the request
 	 */

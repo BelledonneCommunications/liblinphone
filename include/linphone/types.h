@@ -1335,5 +1335,14 @@ typedef enum _LinphoneMagicSearchSource {
 	LinphoneMagicSearchSourceAll = -1 /**< Search in all sources */
 } LinphoneMagicSearchSource;
 
+/**
+* @brief Enum describing how to merge #LinphoneSearchResult from #LinphoneMagicSearch
+* @ingroup buddy_list
+**/
+typedef enum _LinphoneMagicSearchAggregation {
+	LinphoneMagicSearchAggregationNone = 0, /**< No aggregation is done, you can have multiple SearchResult with the same Friend */
+	LinphoneMagicSearchAggregationFriend = 1 /**< Aggregation is done by friend, you will have at most a SearchResult per Friend */
+} LinphoneMagicSearchAggregation;
+
 
 #endif /* LINPHONE_TYPES_H_ */

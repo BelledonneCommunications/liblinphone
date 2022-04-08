@@ -26,10 +26,11 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SearchRequest::SearchRequest(const std::string& filter, const std::string& withDomain, int sourceFlags) {
+SearchRequest::SearchRequest(const std::string& filter, const std::string& withDomain, int sourceFlags, LinphoneMagicSearchAggregation aggregation) {
 	mFilter = filter;
 	mWithDomain = withDomain;
 	mSourceFlags = sourceFlags;
+	mAggregation = aggregation;
 	mStartTime = 0;
 }
 
@@ -37,6 +38,7 @@ SearchRequest::SearchRequest(const SearchRequest& request){
 	mFilter = request.mFilter;
 	mWithDomain = request.mWithDomain;
 	mSourceFlags = request.mSourceFlags;
+	mAggregation = request.mAggregation;
 	mStartTime = request.mStartTime;
 }
 
@@ -47,6 +49,7 @@ void SearchRequest::operator= (const SearchRequest &request){
 	mFilter = request.mFilter;
 	mWithDomain = request.mWithDomain;
 	mSourceFlags = request.mSourceFlags;
+	mAggregation = request.mAggregation;
 	mStartTime = request.mStartTime;
 }
 
@@ -60,6 +63,10 @@ const std::string &SearchRequest::getWithDomain() const{
 
 int SearchRequest::getSourceFlags() const{
 	return mSourceFlags;
+}
+
+LinphoneMagicSearchAggregation SearchRequest::getAggregation() const {
+	return mAggregation;
 }
 
 void SearchRequest::initStartTime() {
