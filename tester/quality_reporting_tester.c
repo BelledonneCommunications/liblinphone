@@ -375,7 +375,7 @@ static void quality_reporting_sent_using_custom_route(void) {
 	// INVALID collector: sip.linphone.org do not collect reports, so it will throw a 404 Not Found error
 	LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(marie->lc);
 	linphone_proxy_config_edit(config);
-	linphone_proxy_config_set_quality_reporting_collector(config, "sip:sip.linphone.org");
+	linphone_proxy_config_set_quality_reporting_collector(config, "sip:invalid.uri");
 	linphone_proxy_config_done(config);
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, NULL, NULL)) {
