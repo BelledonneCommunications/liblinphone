@@ -58,11 +58,13 @@ struct _LinphoneCallStats {
 	int clockrate;  /*RTP clockrate of the stream, provided here for easily converting timestamp units expressed in RTCP packets in milliseconds*/
 	float estimated_download_bandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in kbit/s, including IP/UDP/RTP headers*/
 	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
-    uint8_t cipherAlgo;
-    uint8_t keyAgreementAlgo;
-    uint8_t hashAlgo;
-    uint8_t authTagAlgo;
-    uint8_t sasAlgo;
+	struct _zrtp_info {
+		uint8_t cipherAlgo; /**< Id of the cipher algorithm */
+		uint8_t keyAgreementAlgo; /**< Id of the key agreement algorithm */
+		uint8_t hashAlgo; /**< Id of the hash algorithm */
+		uint8_t authTagAlgo; /**< Id of the authencation tag algorithm */
+		uint8_t sasAlgo; /**< Id of the SAS algorithm */
+	} zrtp_info;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallStats);
@@ -243,11 +245,11 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			linphone_call_stats_update(stats,ms);
         } else if (evt == ORTP_EVENT_ZRTP_SAS_READY){
-            stats->cipherAlgo = evd->info.zrtp_info.cipherAlgo;
-            stats->keyAgreementAlgo = evd->info.zrtp_info.keyAgreementAlgo;
-            stats->hashAlgo = evd->info.zrtp_info.hashAlgo;
-            stats->authTagAlgo = evd->info.zrtp_info.authTagAlgo;
-            stats->sasAlgo = evd->info.zrtp_info.sasAlgo;
+			stats->zrtp_info.cipherAlgo = evd->info.zrtp_info.cipherAlgo;
+			stats->zrtp_info.keyAgreementAlgo = evd->info.zrtp_info.keyAgreementAlgo;
+			stats->zrtp_info.hashAlgo = evd->info.zrtp_info.hashAlgo;
+			stats->zrtp_info.authTagAlgo = evd->info.zrtp_info.authTagAlgo;
+			stats->zrtp_info.sasAlgo = evd->info.zrtp_info.sasAlgo;
 			ms_message("ZRTP algo used during negotiation: Cipher: %s - KeyAgreement: %s - Hash: %s - AuthTag: %s - Sas Rendering: %s", bzrtp_algoToString(evd->info.zrtp_info.cipherAlgo), bzrtp_algoToString(evd->info.zrtp_info.keyAgreementAlgo), bzrtp_algoToString(evd->info.zrtp_info.hashAlgo), bzrtp_algoToString(evd->info.zrtp_info.authTagAlgo), bzrtp_algoToString(evd->info.zrtp_info.sasAlgo));
         }
 	}
