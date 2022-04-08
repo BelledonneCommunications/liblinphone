@@ -797,6 +797,9 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 		LinphoneVideoActivationPolicy * cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
 		linphone_video_activation_policy_unref(cpol);
+		
+		linphone_config_set_int(linphone_core_get_config(c), "rtp", "rtcp_mux", 1);
+		linphone_core_set_default_conference_layout(c, layout);
 	}
 
 	linphone_video_activation_policy_unref(pol);
@@ -831,8 +834,10 @@ static void video_conference_with_thin_congestion_basic(LinphoneConferenceLayout
 	linphone_call_params_unref(pauline_call_params);
 	linphone_call_params_unref(marie_call_params);
 
+	const char * subject = "Weekly team meeting";
 	conf_params = linphone_core_create_conference_params_2(marie->lc, NULL);
-	linphone_conference_params_set_video_enabled(conf_params, TRUE);
+	linphone_conference_params_set_subject(conf_params, subject);
+	linphone_conference_params_enable_video(conf_params, TRUE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 
