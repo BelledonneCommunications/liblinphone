@@ -209,7 +209,7 @@ void MS2AudioStream::finishPrepare(){
 }
 
 MediaStream *MS2AudioStream::getMediaStream()const{
-	return &mStream->ms;
+	return mStream ? &mStream->ms : nullptr;
 }
 
 void MS2AudioStream::setupMediaLossCheck(){
@@ -924,8 +924,9 @@ AudioDevice* MS2AudioStream::getOutputDevice() const {
 void MS2AudioStream::finish(){
 	if (mStream){
 		stopRecording();	// ensure to stop recording if recording
-		audio_stream_stop(mStream);
+		auto oldStream = mStream;
 		mStream = nullptr;
+		audio_stream_stop(oldStream);
 	}
 	MS2Stream::finish();
 }
