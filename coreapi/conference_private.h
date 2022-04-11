@@ -226,14 +226,13 @@ public:
 
 protected:
 	std::list<std::shared_ptr<Address>> invitedAddresses;
-	std::shared_ptr<LinphonePrivate::ConferenceInfo> conferenceInfo = nullptr;
 
 	// Legacy member
 	std::string mConferenceID;
 
 	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
 	void *mCbUserData = nullptr;
-	LinphoneCoreCbs *m_coreCbs;
+	LinphoneCoreCbs *mCoreCbs;
 
 	static void callStateChanged(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
@@ -242,6 +241,9 @@ protected:
 	callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) = 0;
 	virtual void
 	transferStateChangedCb(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) = 0;
+
+	virtual std::shared_ptr<ConferenceInfo>
+	createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const override;
 };
 
 /*
@@ -382,6 +384,7 @@ private:
 	std::shared_ptr<Address> organizer;
 	static constexpr int confIdLength = 10;
 
+	bool validateNewParameters(const LinphonePrivate::ConferenceParams &newConfParams) const;
 	bool updateAllParticipantSessionsExcept(const std::shared_ptr<CallSession> &session);
 	void updateParticipantsSessions();
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device,
@@ -399,7 +402,7 @@ private:
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 
-	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const override;
+	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const override;
 	bool tryAddMeDevice();
 };
 
@@ -425,7 +428,6 @@ public:
 	                 const std::list<std::shared_ptr<Address>> &invitees,
 	                 CallSessionListener *listener,
 	                 const std::shared_ptr<LinphonePrivate::ConferenceParams> params);
-
 	virtual ~RemoteConference();
 
 	virtual int inviteAddresses(const std::list<std::shared_ptr<Address>> &addresses,
@@ -536,7 +538,7 @@ protected:
 
 private:
 	virtual const std::shared_ptr<CallSession> getMainSession() const override;
-	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const override;
+	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const override;
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();
@@ -546,6 +548,7 @@ private:
 	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState);
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered,
 	                                   LinphoneCallState newCallState);
+	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
 
 	bool finalized = false;
 	bool scheduleUpdate = false;
@@ -555,11 +558,12 @@ private:
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 
-	std::list<std::shared_ptr<Address>> cleanAddressesList(const std::list<std::shared_ptr<Address>> &addresses) const;
-
 	uint32_t displayedSpeaker = 0;
 	uint32_t louderSpeaker = 0;
 	uint32_t lastNotifiedSsrc = 0;
+
+	// end-to-end encryption
+	std::vector<uint8_t> mEktKey;
 };
 
 } // end of namespace MediaConference

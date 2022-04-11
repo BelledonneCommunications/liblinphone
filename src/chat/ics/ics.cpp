@@ -328,6 +328,11 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo() const {
 		}
 	}
 
+	ConferenceParams::SecurityLevel securityLevel = ConferenceParams::SecurityLevel::None;
+	lInfo() << "Setting the conference security level to " << securityLevel
+	        << " as we don't have received the notify full state yet";
+	confInfo->setSecurityLevel(securityLevel);
+
 	tm start = event->getDateTimeStart();
 	confInfo->setDateTime(Utils::getTmAsTimeT(start));
 

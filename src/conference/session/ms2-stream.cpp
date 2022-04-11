@@ -654,6 +654,11 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, BCTBX_UNUSE
 			/* TODO */
 			// changesToHandle &= ~SAL_MEDIA_DESCRIPTION_FRAME_MARKING_EXTENSION_CHANGED;
 		}
+		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_DIRECTION_CHANGED) {
+			stop();
+			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_DIRECTION_CHANGED;
+			return false;
+		}
 
 		if (changesToHandle == 0) {
 			// We've handled everything.

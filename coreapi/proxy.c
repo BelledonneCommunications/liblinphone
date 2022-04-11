@@ -54,6 +54,7 @@
 #include "account/account.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
+#include "event/event-publish.h"
 #include "linphone/api/c-dial-plan.h"
 
 #include "dial-plan/dial-plan.h"

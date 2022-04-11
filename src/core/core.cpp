@@ -1564,11 +1564,13 @@ const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId &confere
 	const auto &rawPeerAddress = conferenceId.getPeerAddress();
 	if (rawPeerAddress) {
 		peerAddress = Address::create(rawPeerAddress->getUriWithoutGruu());
+		peerAddress->removeUriParam("conference-security-mode");
 	}
 	std::shared_ptr<Address> localAddress = nullptr;
 	const auto &rawLocalAddress = conferenceId.getLocalAddress();
 	if (rawLocalAddress) {
 		localAddress = Address::create(rawLocalAddress->getUriWithoutGruu());
+		localAddress->removeUriParam("conference-security-mode");
 	}
 	ConferenceId prunedConferenceId = ConferenceId(peerAddress, localAddress);
 	return prunedConferenceId;
@@ -1576,10 +1578,9 @@ const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId &confere
 
 std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference(const ConferenceId &conferenceId,
                                                                             bool logIfNotFound) const {
-
 	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
-
 	auto it = audioVideoConferenceById.find(prunedConferenceId);
+
 	if (it != audioVideoConferenceById.cend()) {
 		lInfo() << "Found audio video conference in RAM with conference ID " << conferenceId << ".";
 		return it->second;
@@ -1718,6 +1719,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 			return nullptr;
 		}
 		conferenceFactoryUri = Address::toCpp(factoryUri)->getSharedFromThis();
+		conferenceFactoryUri->setUriParam("conference-security-mode",
+		                                  ConferenceParams::getSecurityLevelAttribute(confParams->getSecurityLevel()));
 	}
 
 	ConferenceId conferenceId = ConferenceId(nullptr, localAddr);

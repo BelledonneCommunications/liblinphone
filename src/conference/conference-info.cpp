@@ -207,6 +207,14 @@ void ConferenceInfo::setUtf8Description(const string &description) {
 	mDescription = Utils::trim(Utils::utf8ToLocale(description));
 }
 
+ConferenceParamsInterface::SecurityLevel ConferenceInfo::getSecurityLevel() const {
+	return mSecurityLevel;
+}
+
+void ConferenceInfo::setSecurityLevel(ConferenceParamsInterface::SecurityLevel securityLevel) {
+	mSecurityLevel = securityLevel;
+}
+
 const ConferenceInfo::State &ConferenceInfo::getState() const {
 	return mState;
 }

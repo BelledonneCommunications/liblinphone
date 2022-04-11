@@ -28,42 +28,13 @@
 #include <belle-sip/object++.hh>
 
 #include "address/address.h"
+#include "conference/conference-params-interface.h"
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
-
-/* Temporary utility for non HybridObject, that does almost the same as ListHolder
- FIXME: it has to be declared in c-wrapper.h like other c-wrapping utilities, however this cannot be
- done because of circular dependencies within liblinphone internal include files (linphone/utils/utils.h is
- problematic). This has to be fixed first.
- */
-class CListCache {
-public:
-	CListCache() = default;
-	CListCache(BCTBX_UNUSED(const CListCache &other)) : mList(nullptr) {
-	}
-	template <typename _container, typename _functor>
-	const bctbx_list_t *construct(const _container &container, _functor fun) const {
-		if (mList) {
-			bctbx_list_free_with_data(mList, belle_sip_object_unref);
-			mList = nullptr;
-		}
-		for (const auto &obj : container) {
-			mList = bctbx_list_append(mList, fun(obj));
-		}
-		return mList;
-	}
-	~CListCache() {
-		if (mList) bctbx_list_free_with_data(mList, belle_sip_object_unref);
-	}
-
-private:
-	mutable bctbx_list_t *mList = nullptr;
-};
-
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
 	struct AddressCmp {
@@ -146,6 +117,9 @@ public:
 
 	void updateFrom(const std::shared_ptr<ConferenceInfo> &info);
 
+	ConferenceParamsInterface::SecurityLevel getSecurityLevel() const;
+	void setSecurityLevel(ConferenceParamsInterface::SecurityLevel securityLevel);
+
 	// Used only by the tester
 	void setCreationTime(time_t time);
 
@@ -160,6 +134,7 @@ private:
 	mutable unsigned int mIcsSequence = 0;
 	mutable std::string mIcsUid = "";
 	State mState = State::New;
+	ConferenceParamsInterface::SecurityLevel mSecurityLevel = ConferenceParamsInterface::SecurityLevel::None;
 	time_t mCreationTime = (time_t)-1;
 };
 

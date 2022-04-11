@@ -260,7 +260,9 @@ void CallSessionPrivate::onCallStateChanged(BCTBX_UNUSED(LinphoneCall *call),
 }
 
 void CallSessionPrivate::executePendingActions() {
-	if ((state != CallSession::State::End) && (state != CallSession::State::Released) &&
+	L_Q();
+	bool_t networkReachable = linphone_core_is_network_reachable(q->getCore()->getCCore());
+	if (networkReachable && (state != CallSession::State::End) && (state != CallSession::State::Released) &&
 	    (state != CallSession::State::Error)) {
 		std::queue<std::function<LinphoneStatus()>> unsuccessfulActions;
 		auto copyPendingActions = pendingActions;
@@ -960,16 +962,26 @@ void CallSessionPrivate::setContactOp() {
 	// Do not try to set contact address if it is not valid
 	if (contactAddress && contactAddress->isValid()) {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
-		for (auto it = contactParams.begin(); it != contactParams.end(); it++)
+		for (auto it = contactParams.begin(); it != contactParams.end(); it++) {
 			contactAddress->setParam(it->first, it->second);
+		}
 		q->updateContactAddress(*contactAddress);
 		if (isInConference()) {
 			std::shared_ptr<MediaConference::Conference> conference =
 			    q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+
+			auto guessedConferenceAddress =
+			    Address::create((direction == LinphoneCallIncoming) ? op->getTo() : op->getFrom());
+			auto &mainDb = q->getCore()->getPrivate()->mainDb;
+			const auto &confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
 			if (conference) {
 				// Try to change conference address in order to add GRUU to it
 				// Note that this operation may fail if the conference was previously created on the server
 				conference->setConferenceAddress(contactAddress);
+			} else if (confInfo && confInfo->getUri()->isValid()) {
+				// The conference may have already been terminated when setting the contact address.
+				// This happens when an admin cancel a conference by sending an INVITE with an empty resource list
+				contactAddress = confInfo->getUri();
 			}
 		}
 
@@ -983,7 +995,6 @@ void CallSessionPrivate::setContactOp() {
 }
 
 // -----------------------------------------------------------------------------
-
 void CallSessionPrivate::onNetworkReachable(bool sipNetworkReachable, BCTBX_UNUSED(bool mediaNetworkReachable)) {
 	if (sipNetworkReachable) {
 		repairIfBroken();
@@ -1877,7 +1888,6 @@ void CallSession::updateContactAddress(Address &contactAddress) const {
 
 	const auto isInConference = d->isInConference();
 	const std::string confId(d->getConferenceId());
-
 	if (isInConference) {
 		// Add conference ID
 		if (!contactAddress.hasUriParam("conf-id")) {

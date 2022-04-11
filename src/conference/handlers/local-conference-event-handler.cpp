@@ -22,19 +22,19 @@
 
 #include <bctoolbox/defs.h>
 
-#include "linphone/api/c-content.h"
-#include "linphone/utils/utils.h"
-
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
+#include "conference_private.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
 #include "db/main-db.h"
 #include "event-log/events.h"
+#include "linphone/api/c-content.h"
+#include "linphone/utils/utils.h"
 #include "local-conference-event-handler.h"
 #include "logger/logger.h"
 
@@ -134,6 +134,7 @@ Content LocalConferenceEventHandler::createNotifyFullState(const shared_ptr<Even
 	if (ephemerable) {
 		keywordList += "ephemeral ";
 	}
+
 	if (!keywordList.empty()) {
 		KeywordsType keywords(sizeof(char), keywordList.c_str());
 		confDescr.setKeywords(keywords);
@@ -156,6 +157,20 @@ Content LocalConferenceEventHandler::createNotifyFullState(const shared_ptr<Even
 
 		confDescr.getAny().push_back(e);
 	}
+
+	ConferenceParamsInterface::SecurityLevel securityLevel = confParams.getSecurityLevel();
+	if (chatRoom) {
+		securityLevel =
+		    (chatRoom->getCurrentParams()->isEncrypted() ? ConferenceParamsInterface::SecurityLevel::EndToEnd
+		                                                 : ConferenceParamsInterface::SecurityLevel::None);
+	}
+	const auto cryptoSecurityLevel = CryptoSecurityLevel(ConferenceParams::getSecurityLevelAttribute(securityLevel));
+	auto &confDescrDOMDoc = confDescr.getDomDocument();
+	::xercesc::DOMElement *e(confDescrDOMDoc.createElementNS(
+	    ::xsd::cxx::xml::string("linphone:xml:ns:conference-info-linphone-extension").c_str(),
+	    ::xsd::cxx::xml::string("linphone-cie:crypto-security-level").c_str()));
+	*e << cryptoSecurityLevel;
+	confDescr.getAny().push_back(e);
 
 	confInfo.setConferenceDescription((const ConferenceDescriptionType)confDescr);
 
@@ -354,6 +369,9 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 			audio.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeAudio)));
 		}
 	}
+	if (!device->getLabel(LinphoneStreamTypeAudio).empty()) {
+		audio.setLabel(device->getLabel(LinphoneStreamTypeAudio));
+	}
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
@@ -362,8 +380,8 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	video.setDisplayText("video");
 	video.setType("video");
 	if (videoDirection != LinphoneMediaDirectionInactive) {
-		if (!device->getLabel().empty()) {
-			video.setLabel(device->getLabel());
+		if (!device->getLabel(LinphoneStreamTypeVideo).empty()) {
+			video.setLabel(device->getLabel(LinphoneStreamTypeVideo));
 		}
 		if (device->getSsrc(LinphoneStreamTypeVideo) > 0) {
 			video.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeVideo)));
@@ -465,7 +483,6 @@ Content LocalConferenceEventHandler::createNotifyMultipart(int notifyId) {
 				    static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog);
 				body = createNotifyAvailableMediaChanged(availableMediaEvent->getAvailableMediaType());
 			} break;
-
 			default:
 				// We should never pass here!
 				L_ASSERT(false);
@@ -994,7 +1011,6 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived(const shared_ptr<E
 	ev->accept();
 	if (ev->getState() == LinphoneSubscriptionActive) {
 		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(ev->getCustomHeader("Last-Notify-Version")));
-
 		auto oldEv = device->getConferenceSubscribeEvent();
 		device->setConferenceSubscribeEvent(ev);
 		if (oldEv) {
@@ -1098,9 +1114,7 @@ void LocalConferenceEventHandler::onParticipantAdded(const std::shared_ptr<Confe
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAllExcept(makeContent(createNotifyParticipantAdded(participant->getAddress())), participant);
-#ifdef HAVE_DB_STORAGE
 		conf->updateParticipantsInConferenceInfo(participant->getAddress());
-#endif // HAVE_DB_STORAGE
 
 		if (conf) {
 			shared_ptr<Core> core = conf->getCore();

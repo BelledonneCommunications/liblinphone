@@ -26,7 +26,6 @@
 #include "account-params.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
-#include "event/event-publish.h"
 #include "linphone/api/c-types.h"
 #include "sal/register-op.h"
 
@@ -41,6 +40,8 @@ typedef enum _LinphoneAccountAddressComparisonResult {
 } LinphoneAccountAddressComparisonResult;
 
 class AccountCbs;
+class Address;
+class EventPublish;
 
 class Account : public bellesip::HybridObject<LinphoneAccount, Account>,
                 public UserDataAccessor,

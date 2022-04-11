@@ -133,6 +133,16 @@ void linphone_conference_info_set_description(LinphoneConferenceInfo *conference
 	ConferenceInfo::toCpp(conference_info)->setDescription(L_C_TO_STRING(description));
 }
 
+LinphoneConferenceSecurityLevel
+linphone_conference_info_get_security_level(const LinphoneConferenceInfo *conference_info) {
+	return (LinphoneConferenceSecurityLevel)ConferenceInfo::toCpp(conference_info)->getSecurityLevel();
+}
+
+void linphone_conference_info_set_security_level(LinphoneConferenceInfo *conference_info,
+												 LinphoneConferenceSecurityLevel security_level) {
+	ConferenceInfo::toCpp(conference_info)->setSecurityLevel((ConferenceParamsInterface::SecurityLevel)security_level);
+}
+
 char *linphone_conference_info_get_icalendar_string(const LinphoneConferenceInfo *conference_info) {
 	std::string tmp = ConferenceInfo::toCpp(conference_info)->toIcsString();
 	if (!tmp.empty()) {

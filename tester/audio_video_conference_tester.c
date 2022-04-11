@@ -239,7 +239,7 @@ set_video_in_conference(bctbx_list_t *lcs, LinphoneCoreManager *conf, bctbx_list
 
 	stats *initial_stats = NULL;
 	bool_t *initial_video_call = NULL;
-	int *initial_video_streams = NULL;
+	size_t *initial_video_streams = NULL;
 	int idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager *m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -247,7 +247,7 @@ set_video_in_conference(bctbx_list_t *lcs, LinphoneCoreManager *conf, bctbx_list
 		// Allocate memory
 		initial_stats = (stats *)realloc(initial_stats, (idx + 1) * sizeof(stats));
 		initial_video_call = (bool_t *)realloc(initial_video_call, (idx + 1) * sizeof(bool_t));
-		initial_video_streams = (int *)realloc(initial_video_streams, (idx + 1) * sizeof(int));
+		initial_video_streams = (size_t *)realloc(initial_video_streams, (idx + 1) * sizeof(int));
 		// Append element
 		initial_stats[idx] = m->stat;
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(conf->lc, m->identity);
@@ -394,7 +394,7 @@ set_video_in_conference(bctbx_list_t *lcs, LinphoneCoreManager *conf, bctbx_list
 			nb_video_streams = local_conf_participants + ((layout == LinphoneConferenceLayoutActiveSpeaker) ? 1 : 0) +
 			                   (linphone_conference_is_in(conference) ? 1 : 0);
 		} else {
-			nb_video_streams = initial_video_streams[idx];
+			nb_video_streams = (int)initial_video_streams[idx];
 		}
 
 		check_nb_streams(conf, m, nb_audio_streams, nb_video_streams, 0);
@@ -3122,6 +3122,9 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 	ms_free(initial_participants_stats);
 	initial_participants_stats = NULL;
 
+	// need time to finish all communications
+	wait_for_list(lcs, NULL, 1, 5000);
+
 	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager *m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
@@ -3140,9 +3143,6 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 		}
 	}
 	bctbx_list_free(all_manangers_in_conf);
-
-	// need time to finish all communications
-	wait_for_list(lcs, NULL, 1, 5000);
 
 	terminate_conference(participants, marie, NULL, (LinphoneCoreManager *)focus);
 
@@ -10675,7 +10675,22 @@ static void simple_conference_with_multi_device(void) {
 }
 #endif
 
-static void simple_conference_with_participant_with_no_event_log(void) {
+static void simple_conference_with_local_participant_with_no_event_log(void) {
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE, NULL);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "misc", "conference_event_log_enabled", FALSE);
+	linphone_core_enable_conference_server(marie->lc, TRUE);
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE, NULL);
+	LinphoneCoreManager *laure =
+	    create_mgr_for_conference(liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE, NULL);
+
+	simple_conference_base(marie, pauline, laure, NULL, FALSE);
+
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(marie);
+}
+
+static void simple_conference_with_remote_participant_with_no_event_log(void) {
 	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE, NULL);
 	linphone_core_enable_conference_server(marie->lc, TRUE);
 	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE, NULL);
@@ -12035,8 +12050,10 @@ test_t audio_video_conference_basic_tests[] = {
     TEST_NO_TAG("Simple conference notify muted device", simple_conference_notify_muted_device),
     TEST_NO_TAG("Simple conference established before proxy config is created",
                 simple_conference_established_before_proxy_config_creation),
-    TEST_NO_TAG("Simple conference with participant with no event log",
-                simple_conference_with_participant_with_no_event_log),
+    TEST_NO_TAG("Simple conference with local participant with no event log",
+                simple_conference_with_local_participant_with_no_event_log),
+    TEST_NO_TAG("Simple conference with remote participant with no event log",
+                simple_conference_with_remote_participant_with_no_event_log),
     TEST_NO_TAG("Simple conference with admin changed", simple_conference_with_admin_changed),
     TEST_NO_TAG("Simple conference with participant removal from non admin",
                 simple_conference_with_participant_removal_from_non_admin),

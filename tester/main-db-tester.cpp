@@ -19,14 +19,13 @@
  */
 
 #include "address/address.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "core/core-p.h"
 #include "db/main-db.h"
 #include "event-log/events.h"
-
-// TODO: Remove me. <3
-#include "private.h"
-
+// TODO: Remove me.
 #include "liblinphone_tester.h"
+#include "private.h"
 #include "tools/tester.h"
 
 // =============================================================================

@@ -669,6 +669,7 @@ LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo *ei, SalErrorInfo *sei);
 
 SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type);
+LinphoneStreamType sal_stream_type_to_linphone(SalStreamType type);
 LinphoneEventCbs *linphone_event_cbs_new(void);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h

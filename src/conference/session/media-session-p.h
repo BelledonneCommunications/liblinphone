@@ -193,7 +193,7 @@ public:
 	LinphoneMediaEncryption getNegotiatedMediaEncryption() const;
 	int getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
 	int getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescription> &md) const;
-	LinphoneMediaDirection getVideoDirFromMd(const std::shared_ptr<SalMediaDescription> &md) const;
+	LinphoneMediaDirection getDirFromMd(const std::shared_ptr<SalMediaDescription> &md, const SalStreamType type) const;
 	void validateVideoStreamDirection(SalStreamConfiguration &cfg) const;
 	bool mandatoryRtpBundleEnabled() const;
 
@@ -237,20 +237,28 @@ private:
 	                                const std::list<OrtpPayloadType *> &codecs,
 	                                const std::string mid,
 	                                const SalCustomSdpAttribute *customSdpAttributes);
-	void fillConferenceParticipantVideoStream(SalStreamDescription &newStream,
-	                                          const std::shared_ptr<SalMediaDescription> &oldMd,
+	void fillConferenceParticipantStream(SalStreamDescription &newStream,
+	                                     const std::shared_ptr<SalMediaDescription> &oldMd,
+	                                     std::shared_ptr<SalMediaDescription> &md,
+	                                     const std::shared_ptr<ParticipantDevice> &dev,
+	                                     PayloadTypeHandler &pth,
+	                                     const std::list<LinphoneMediaEncryption> &encs,
+	                                     SalStreamType type,
+	                                     const std::string &mid);
+	void addConferenceLocalParticipantStreams(bool add,
 	                                          std::shared_ptr<SalMediaDescription> &md,
-	                                          const std::shared_ptr<ParticipantDevice> &dev,
-	                                          PayloadTypeHandler &pth,
-	                                          const std::list<LinphoneMediaEncryption> &encs);
-	void addConferenceParticipantVideostreams(std::shared_ptr<SalMediaDescription> &md,
 	                                          const std::shared_ptr<SalMediaDescription> &oldMd,
 	                                          PayloadTypeHandler &pth,
-	                                          const std::list<LinphoneMediaEncryption> &encs);
+	                                          const std::list<LinphoneMediaEncryption> &encs,
+	                                          const SalStreamType type);
+	void addConferenceParticipantStreams(std::shared_ptr<SalMediaDescription> &md,
+	                                     const std::shared_ptr<SalMediaDescription> &oldMd,
+	                                     PayloadTypeHandler &pth,
+	                                     const std::list<LinphoneMediaEncryption> &encs,
+	                                     const SalStreamType type);
 	void copyOldStreams(std::shared_ptr<SalMediaDescription> &md,
 	                    const std::shared_ptr<SalMediaDescription> &oldMd,
 	                    const std::shared_ptr<SalMediaDescription> &refMd,
-	                    PayloadTypeHandler &pth,
 	                    const std::list<LinphoneMediaEncryption> &encs);
 	void setupDtlsKeys(std::shared_ptr<SalMediaDescription> &md);
 	void setupEncryptionKeys(std::shared_ptr<SalMediaDescription> &md,

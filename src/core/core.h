@@ -48,6 +48,7 @@ class LocalConferenceTester;
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
+class Account;
 class Address;
 class AudioDevice;
 class Call;

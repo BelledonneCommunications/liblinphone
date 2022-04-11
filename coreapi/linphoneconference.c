@@ -24,20 +24,21 @@
 #include <unordered_map>
 
 #include "bctoolbox/list.h"
+
 #include "mediastreamer2/msogl.h"
+
 #include <belle-sip/object++.hh>
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "call/call.h"
-#include "core/core.h"
-#include "linphone/api/c-conference.h"
-#include "linphone/conference.h"
-
 #include "conference/participant.h"
 #include "conference/session/ms2-streams.h"
 #include "conference/session/streams.h"
 #include "conference_private.h"
+#include "core/core.h"
+#include "linphone/api/c-conference.h"
+#include "linphone/conference.h"
 
 using namespace std;
 
@@ -554,6 +555,15 @@ void linphone_conference_params_set_end_time(LinphoneConferenceParams *params, t
 
 time_t linphone_conference_params_get_end_time(const LinphoneConferenceParams *params) {
 	return ConferenceParams::toCpp(params)->getEndTime();
+}
+
+LinphoneConferenceSecurityLevel linphone_conference_params_get_security_level(const LinphoneConferenceParams *params) {
+	return (LinphoneConferenceSecurityLevel)ConferenceParams::toCpp(params)->getSecurityLevel();
+}
+
+void linphone_conference_params_set_security_level(LinphoneConferenceParams *params,
+                                                   LinphoneConferenceSecurityLevel security_level) {
+	ConferenceParams::toCpp(params)->setSecurityLevel((ConferenceParamsInterface::SecurityLevel)security_level);
 }
 
 void linphone_conference_params_set_conference_factory_address(LinphoneConferenceParams *params,

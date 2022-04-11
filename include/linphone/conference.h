@@ -295,6 +295,22 @@ LINPHONE_PUBLIC bool_t
 linphone_conference_params_one_participant_conference_enabled(const LinphoneConferenceParams *params);
 
 /**
+ * Retrieve the desired security level of the conference.
+ * @param params The #LinphoneConferenceParams object. @notnil
+ * @return The desired security level of the conference.
+ */
+LINPHONE_PUBLIC LinphoneConferenceSecurityLevel
+linphone_conference_params_get_security_level(const LinphoneConferenceParams *params);
+
+/**
+ * Set the desired security level of the conference.
+ * @param params The #LinphoneConferenceParams object. @notnil
+ * @param security_level The desired security level of the conference.
+ */
+LINPHONE_PUBLIC void linphone_conference_params_set_security_level(LinphoneConferenceParams *params,
+                                                                   LinphoneConferenceSecurityLevel security_level);
+
+/**
  * Take a reference on a #LinphoneConference.
  * @param conference The #LinphoneConference to ref. @notnil
  * @return The same #LinphoneConference object. @notnil
@@ -482,6 +498,7 @@ LINPHONE_PUBLIC void linphone_conference_set_username(LinphoneConference *confer
 LINPHONE_PUBLIC void linphone_conference_set_local_participant_stream_capability(LinphoneConference *conference,
                                                                                  const LinphoneMediaDirection direction,
                                                                                  const LinphoneStreamType type);
+
 /**
  * Get the conference duration
  * @param conference The #LinphoneConference object. @notnil

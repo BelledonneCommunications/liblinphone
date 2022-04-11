@@ -71,7 +71,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 21);
+constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 22);
 constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -591,6 +591,7 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 	const unsigned int state = static_cast<unsigned int>(conferenceInfo->getState());
 	const unsigned int &sequence = conferenceInfo->getIcsSequence();
 	const string &uid = conferenceInfo->getIcsUid();
+	const unsigned int security_level = static_cast<unsigned int>(conferenceInfo->getSecurityLevel());
 
 	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
 	ConferenceInfo::participant_list_t dbParticipantList;
@@ -609,24 +610,25 @@ long long MainDbPrivate::insertConferenceInfo(const std::shared_ptr<ConferenceIn
 		                                  "  description = :description,"
 		                                  "  state = :state,"
 		                                  "  ics_sequence = :sequence,"
-		                                  "  ics_uid = :uid"
+		                                  "  ics_uid = :uid,"
+		                                  "  security_level = :security_level"
 		                                  " WHERE id = :conferenceInfoId",
 		    soci::use(organizerSipAddressId), soci::use(startTime.first, startTime.second), soci::use(duration),
-		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid),
+		    soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence), soci::use(uid), soci::use(security_level),
 		    soci::use(conferenceInfoId);
 	} else {
 		lInfo() << "Insert new conference info in database.";
 
 		*dbSession.getBackendSession() << "INSERT INTO conference_info ("
 		                                  "  organizer_sip_address_id, uri_sip_address_id, start_time, duration, "
-		                                  "subject, description, state, ics_sequence, ics_uid"
+		                                  "subject, description, state, ics_sequence, ics_uid, security_level"
 		                                  ") VALUES ("
 		                                  "  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, "
-		                                  ":subject, :description, :state, :sequence, :uid"
+		                                  ":subject, :description, :state, :sequence, :uid, :security_level"
 		                                  ")",
 		    soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime.first, startTime.second),
 		    soci::use(duration), soci::use(subject), soci::use(description), soci::use(state), soci::use(sequence),
-		    soci::use(uid);
+		    soci::use(uid), soci::use(security_level);
 
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
@@ -1114,9 +1116,6 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent(const soci::row &r
 		if (conferenceInfo == nullptr) {
 			conferenceInfo = ConferenceInfo::create();
 
-			std::shared_ptr<Address> organizer = Address::create(row.get<string>(16));
-			conferenceInfo->setOrganizer(organizer);
-
 			std::shared_ptr<Address> uri = Address::create(row.get<string>(17));
 			conferenceInfo->setUri(uri);
 
@@ -1125,18 +1124,49 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent(const soci::row &r
 			conferenceInfo->setUtf8Subject(row.get<string>(20));
 			conferenceInfo->setUtf8Description(row.get<string>(21));
 
-			static const string query = "SELECT sip_address.value"
-			                            " FROM sip_address, conference_info, conference_info_participant"
-			                            " WHERE conference_info.id = :conferenceInfoId"
-			                            " AND sip_address.id = conference_info_participant.participant_sip_address_id"
-			                            " AND conference_info_participant.conference_info_id = conference_info.id";
+			unsigned int icsSequence = dbSession.getUnsignedInt(row, 22, 0);
+			conferenceInfo->setIcsSequence(icsSequence);
+			conferenceInfo->setIcsUid(row.get<string>(23));
+			conferenceInfo->setSecurityLevel(
+			    static_cast<ConferenceParams::SecurityLevel>(dbSession.getUnsignedInt(row, 24, 0)));
+
+			static const string participantsQuery =
+			    "SELECT sip_address.value"
+			    " FROM sip_address, conference_info, conference_info_participant"
+			    " WHERE conference_info.id = :conferenceInfoId"
+			    " AND sip_address.id = conference_info_participant.participant_sip_address_id"
+			    " AND conference_info_participant.conference_info_id = conference_info.id";
 
 			soci::session *session = dbSession.getBackendSession();
-			soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(conferenceInfoId));
+			soci::rowset<soci::row> participantRows =
+			    (session->prepare << participantsQuery, soci::use(conferenceInfoId));
 			for (const auto &participantRow : participantRows) {
 				std::shared_ptr<Address> participant = Address::create(participantRow.get<string>(0));
 				ConferenceInfo::participant_params_t participantParams;
 				conferenceInfo->addParticipant(participant, participantParams);
+			}
+
+			// For backward compability purposes, get the organizer from conference_info table and set the sequence
+			// number to that of the conference info stored in the db It may be overridden if the conference organizer
+			// has been stored in table conference_info_organizer.
+			std::shared_ptr<Address> organizer = Address::create(row.get<string>(16));
+			ConferenceInfo::participant_params_t defaultOrganizerParams;
+			defaultOrganizerParams.insert(std::make_pair(ConferenceInfo::sequenceParam, std::to_string(icsSequence)));
+			conferenceInfo->setOrganizer(organizer, defaultOrganizerParams);
+			static const string organizerQuery =
+			    "SELECT sip_address.value, conference_info_organizer.params"
+			    " FROM sip_address, conference_info, conference_info_organizer"
+			    " WHERE conference_info.id = :conferenceInfoId"
+			    " AND sip_address.id = conference_info_organizer.organizer_sip_address_id"
+			    " AND conference_info_organizer.conference_info_id = conference_info.id";
+
+			soci::rowset<soci::row> organizerRows = (session->prepare << organizerQuery, soci::use(conferenceInfoId));
+			for (const auto &organizerRow : organizerRows) {
+				std::shared_ptr<Address> organizerAddress = Address::create(organizerRow.get<string>(0));
+				const string organizerParamsStr = organizerRow.get<string>(1);
+				ConferenceInfo::participant_params_t organizerParams =
+				    ConferenceInfo::stringToMemberParameters(organizerParamsStr);
+				conferenceInfo->setOrganizer(organizerAddress, organizerParams);
 			}
 
 			cache(conferenceInfo, conferenceInfoId);
@@ -1252,7 +1282,6 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralMessageEvent(const 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceAvailableMediaEvent(const ConferenceId &conferenceId,
                                                                         BCTBX_UNUSED(EventLog::Type type),
                                                                         const soci::row &row) const {
-
 	std::map<ConferenceMediaCapabilities, bool> mediaCapabilities;
 	// TODO: choose rows
 	mediaCapabilities[ConferenceMediaCapabilities::Audio] = false;
@@ -1872,7 +1901,9 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	const long long &dbConferenceInfoId = dbSession.resolveId(row, 0);
 
 	auto conferenceInfo = getConferenceInfoFromCache(dbConferenceInfoId);
-	if (conferenceInfo) return conferenceInfo;
+	if (conferenceInfo) {
+		return conferenceInfo;
+	}
 
 	conferenceInfo = ConferenceInfo::create();
 	std::shared_ptr<Address> uri = Address::create(row.get<string>(2));
@@ -1887,14 +1918,9 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 	unsigned int icsSequence = dbSession.getUnsignedInt(row, 8, 0);
 	conferenceInfo->setIcsSequence(icsSequence);
 
-	// For backward compability purposes, get the organizer from conference_info table and set the sequence number to
-	// that of the conference info stored in the db It may be overridden if the conference organizer has been stored in
-	// table conference_info_organizer.
-	std::shared_ptr<Address> organizer = Address::create(row.get<string>(1));
-	ConferenceInfo::participant_params_t defaultOrganizerParams;
-	defaultOrganizerParams.insert(std::make_pair(ConferenceInfo::sequenceParam, std::to_string(icsSequence)));
-	conferenceInfo->setOrganizer(organizer, defaultOrganizerParams);
 	conferenceInfo->setIcsUid(row.get<string>(9));
+	conferenceInfo->setSecurityLevel(
+	    static_cast<ConferenceParams::SecurityLevel>(dbSession.getUnsignedInt(row, 10, 0)));
 
 	static const string participantQuery =
 	    "SELECT sip_address.value, conference_info_participant.deleted, conference_info_participant.params"
@@ -1915,6 +1941,14 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo(const soci::row &
 			conferenceInfo->addParticipant(participantAddress, participantParams);
 		}
 	}
+
+	// For backward compability purposes, get the organizer from conference_info table and set the sequence number to
+	// that of the conference info stored in the db It may be overridden if the conference organizer has been stored in
+	// table conference_info_organizer.
+	std::shared_ptr<Address> organizer = Address::create(row.get<string>(1));
+	ConferenceInfo::participant_params_t defaultOrganizerParams;
+	defaultOrganizerParams.insert(std::make_pair(ConferenceInfo::sequenceParam, std::to_string(icsSequence)));
+	conferenceInfo->setOrganizer(organizer, defaultOrganizerParams);
 
 	static const string organizerQuery = "SELECT sip_address.value, conference_info_organizer.params"
 	                                     " FROM sip_address, conference_info, conference_info_organizer"
@@ -2345,6 +2379,10 @@ void MainDbPrivate::updateSchema() {
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_method TINYINT UNSIGNED DEFAULT 0";
 		*session << "ALTER TABLE chat_room_participant_device ADD COLUMN joining_time" + dbSession.timestampType() +
 		                " NOT NULL DEFAULT " + dbSession.currentTimestamp();
+	}
+
+	if (version < makeVersion(1, 0, 22)) {
+		*session << "ALTER TABLE conference_info ADD COLUMN security_level INT UNSIGNED DEFAULT 0";
 	}
 
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable
@@ -5129,7 +5167,7 @@ void MainDb::deleteChatRoomParticipantDevice(const shared_ptr<AbstractChatRoom> 
 std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos(time_t afterThisTime) const {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	               " start_time, duration, subject, description, state, ics_sequence, ics_uid"
+	               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
 	               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 	               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 	               "conference_info.uri_sip_address_id = uri_sip_address.id";
@@ -5176,7 +5214,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo(long long conferenceIn
 #ifdef HAVE_DB_STORAGE
 	static const string query =
 	    "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-	    " start_time, duration, subject, description, state, ics_sequence, ics_uid"
+	    " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
 	    " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 	    " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 	    "conference_info.uri_sip_address_id = uri_sip_address.id"
@@ -5207,7 +5245,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI(const std::shar
 #ifdef HAVE_DB_STORAGE
 	if (isInitialized() && uri) {
 		string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-		               " start_time, duration, subject, description, state, ics_sequence, ics_uid"
+		               " start_time, duration, subject, description, state, ics_sequence, ics_uid, security_level"
 		               " FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		               " WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND "
 		               "conference_info.uri_sip_address_id = uri_sip_address.id"

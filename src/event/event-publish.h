@@ -27,6 +27,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class Account;
+
 class LINPHONE_PUBLIC EventPublish : public Event {
 public:
 	EventPublish(const std::shared_ptr<Core> &core);

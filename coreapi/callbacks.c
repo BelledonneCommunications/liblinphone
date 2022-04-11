@@ -54,6 +54,7 @@
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
+#include "event/event-publish.h"
 #include "event/event.h"
 #include "factory/factory.h"
 

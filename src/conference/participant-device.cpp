@@ -151,7 +151,6 @@ bool ParticipantDevice::setSsrc(const LinphoneStreamType type, uint32_t newSsrc)
 		ssrc[type] = newSsrc;
 		changed = true;
 	}
-
 	auto conference = getConference();
 	switch (type) {
 		case LinphoneStreamTypeAudio:
@@ -308,6 +307,27 @@ void ParticipantDevice::setSession(std::shared_ptr<CallSession> session) {
 	mSession = session;
 }
 
+const std::string &ParticipantDevice::getLabel(const LinphoneStreamType type) const {
+	try {
+		return label.at(type);
+	} catch (std::out_of_range &) {
+		return Utils::getEmptyConstRefObject<string>();
+	}
+}
+
+bool ParticipantDevice::setLabel(const std::string &streamLabel, const LinphoneStreamType type) {
+	const bool idxFound = (label.find(type) != label.cend());
+	if (!idxFound || (label[type] != streamLabel)) {
+		auto conference = getConference();
+		lInfo() << "Setting label of " << std::string(linphone_stream_type_to_string(type))
+		        << " stream of participant device " << getAddress() << " in conference "
+		        << conference->getConferenceAddress() << " to " << streamLabel;
+		label[type] = streamLabel;
+		return true;
+	}
+	return false;
+}
+
 LinphoneMediaDirection ParticipantDevice::getStreamCapability(const LinphoneStreamType type) const {
 	try {
 		return mediaCapabilities.at(type);
@@ -334,15 +354,18 @@ LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const Li
 	    (state == CallSession::State::OutgoingEarlyMedia) || (state == CallSession::State::PushIncomingReceived);
 
 	const MediaSessionParams *participantParams = nullptr;
+	auto isInLocalConference = false;
 	if (mSession) {
+		isInLocalConference = mSession->getPrivate()->isInConference();
+		const auto mMediaSession = static_pointer_cast<MediaSession>(mSession);
 		if (sessionNotEstablished) {
 			if (mSession->getPrivate()->isInConference()) {
-				participantParams = static_pointer_cast<MediaSession>(mSession)->getRemoteParams();
+				participantParams = mMediaSession->getRemoteParams();
 			} else {
-				participantParams = static_pointer_cast<MediaSession>(mSession)->getMediaParams();
+				participantParams = mMediaSession->getMediaParams();
 			}
 		} else {
-			participantParams = static_pointer_cast<MediaSession>(mSession)->getCurrentParams();
+			participantParams = mMediaSession->getCurrentParams();
 		}
 	} else {
 		participantParams = nullptr;
@@ -365,12 +388,14 @@ LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const Li
 		}
 	}
 
-	// Current params stores the negotiated media direction from the local standpoint, hence it must be flipped if it is
-	// unidirectional
-	if (dir == LinphoneMediaDirectionSendOnly) {
-		dir = LinphoneMediaDirectionRecvOnly;
-	} else if (dir == LinphoneMediaDirectionRecvOnly) {
-		dir = LinphoneMediaDirectionSendOnly;
+	// Current params store the negotiated media direction from the local standpoint, hence it must be flipped if it is
+	// unidirectional.
+	if (isInLocalConference) {
+		if (dir == LinphoneMediaDirectionSendOnly) {
+			dir = LinphoneMediaDirectionRecvOnly;
+		} else if (dir == LinphoneMediaDirectionRecvOnly) {
+			dir = LinphoneMediaDirectionSendOnly;
+		}
 	}
 
 	return dir;
@@ -609,11 +634,13 @@ void *ParticipantDevice::createWindowId() const {
 #ifdef VIDEO_ENABLED
 	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
-	if (!mLabel.empty() && session) {
-		windowId = static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(mLabel);
+	if ((!label.at(LinphoneStreamTypeVideo).empty()) && session) {
+		windowId =
+		    static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(label.at(LinphoneStreamTypeVideo));
 	} else {
 		lError() << "Unable to create a window ID for device " << *getAddress()
-		         << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel)
+		         << " because either label is empty (actual "
+		         << (label.at(LinphoneStreamTypeVideo).empty() ? "<not-defined>" : label.at(LinphoneStreamTypeVideo))
 		         << ") or no session is linked to this device (actual " << session << ")";
 	}
 #endif
@@ -629,17 +656,19 @@ void ParticipantDevice::setWindowId(void *newWindowId) {
 	mWindowId = newWindowId;
 	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
-	if (!mLabel.empty() && session) {
+	const auto videoLabel = label.at(LinphoneStreamTypeVideo);
+
+	if ((!videoLabel.empty()) && session) {
 		if (conference->isMe(getAddress())) {
 			linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
 		} else {
 			auto s = static_pointer_cast<MediaSession>(session);
-			s->setNativeVideoWindowId(mWindowId, mLabel);
+			s->setNativeVideoWindowId(mWindowId, videoLabel);
 		}
 	} else {
 		lError() << "Unable to set window ID for device " << *getAddress() << " because either label is empty (actual "
-		         << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual "
-		         << session << ")";
+		         << (label.at(LinphoneStreamTypeVideo).empty() ? "<not-defined>" : label.at(LinphoneStreamTypeVideo))
+		         << ") or no session is linked to this device (actual " << session << ")";
 	}
 #endif
 }

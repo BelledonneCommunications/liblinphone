@@ -34,6 +34,7 @@ MS2VideoMixer::MS2VideoMixer(MixerSession &session) : StreamMixer(session), MS2V
 	MSVideoConferenceParams paramsAlltoAll = {0};
 	paramsAlltoAll.codec_mime_type = "VP8";
 	paramsAlltoAll.min_switch_interval = 3000;
+	paramsAlltoAll.security_level = StreamMixer::securityLevelToMsSecurityLevel(session.getSecurityLevel());
 	mConferenceMix = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
 	mConferenceThumbnail = ms_video_conference_new(mSession.getCCore()->factory, &paramsAlltoAll);
 }

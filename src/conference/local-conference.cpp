@@ -58,6 +58,7 @@ LocalConference::LocalConference(const shared_ptr<Core> &core,
 	lastNotify = 1;
 
 	this->confParams->enableLocalParticipant(false);
+	this->confParams->enableChat(true);
 
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalConferenceEventHandler>(this, confListener);

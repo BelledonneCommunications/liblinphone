@@ -31,6 +31,7 @@
 
 #include "conference/participant.h"
 #include "conference/remote-conference.h"
+#include "conference_private.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -229,7 +230,24 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);
 					}
 				}
+			} else if (nodeName == "linphone-cie:crypto-security-level") {
+				CryptoSecurityLevel cryptoSecurityLevel{anyElement};
+				auto securityLevelString = cryptoSecurityLevel.getLevel();
+				auto securityLevel = ConferenceParams::getSecurityLevelFromAttribute(securityLevelString);
+				conf->confParams->setSecurityLevel(securityLevel);
+				conf->updateSecurityLevelInConferenceInfo(securityLevel);
 			}
+		}
+	}
+
+	auto &confState = confInfo->getConferenceState();
+	if (confState.present()) {
+		auto &anySequence(confState.get().getAny());
+
+		for (const auto &anyElement : anySequence) {
+			auto name = xsd::cxx::xml::transcode<char>(anyElement.getLocalName());
+			auto nodeName = xsd::cxx::xml::transcode<char>(anyElement.getNodeName());
+			auto nodeValue = xsd::cxx::xml::transcode<char>(anyElement.getNodeValue());
 		}
 	}
 
@@ -280,12 +298,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 			} else {
 				participant = Participant::create(conf, address);
 				conf->participants.push_back(participant);
-#ifdef HAVE_DB_STORAGE
 				conf->updateParticipantsInConferenceInfo(address);
-#endif // HAVE_DB_STORAGE
 				lInfo() << "Participant " << *participant << " is successfully added - conference "
 				        << conferenceAddressString << " has " << conf->getParticipantCount() << " participants";
-
 				if (!isFullState ||
 				    (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !conf->isMe(address))) {
 					conf->notifyParticipantAdded(creationTime, isFullState, participant);
@@ -430,7 +445,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 						if (media.getLabel()) {
 							const std::string label = media.getLabel().get();
 							if (!label.empty()) {
-								device->setLabel(label);
+								device->setLabel(label, streamType);
 							}
 						}
 						if (mediaDirection == LinphoneMediaDirectionInactive) {
@@ -527,6 +542,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived(const string &xm
 							device->setToTag(sip.getToTag());
 						}
 					}
+
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
 					if (!name.empty()) device->setName(name);
@@ -675,7 +691,7 @@ void RemoteConferenceEventHandler::subscribe() {
 
 void RemoteConferenceEventHandler::unsubscribePrivate() {
 	if (ev) {
-		/* The following tricky code is to break a cycle. Indeed linphone_event_terminate() will chage the event's
+		/* The following tricky code is to break a cycle. Indeed linphone_event_terminate() will change the event's
 		 * state, which will be notified to the core, that will call us immediately in invalidateSubscription(), which
 		 * resets 'ev' while we still have to unref it.*/
 		shared_ptr<EventSubscribe> tmpEv = ev;

@@ -18,13 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/defs.h>
+
 #include "account.h"
 
 #include "core/core.h"
 #include "linphone/api/c-account-params.h"
 #include "linphone/api/c-account.h"
 #include "push-notification/push-notification-config.h"
-#include <bctoolbox/defs.h>
 #ifdef HAVE_ADVANCED_IM
 #ifdef HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
@@ -32,6 +33,7 @@
 #endif // HAVE_ADVANCED_IM
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "event/event-publish.h"
 #include "linphone/core.h"
 #include "private.h"
 #include "utils/custom-params.h"

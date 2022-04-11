@@ -18,12 +18,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "participant.h"
-
 #include <algorithm>
 
 #include "core/core.h"
 #include "params/media-session-params.h"
+#include "participant.h"
 #include "session/media-session.h"
 
 using namespace std;
@@ -161,8 +160,11 @@ void Participant::clearDevices() {
 
 shared_ptr<ParticipantDevice> Participant::findDevice(const std::string &label, const bool logFailure) const {
 	for (const auto &device : devices) {
-		const auto &deviceLabel = device->getLabel();
-		if (!label.empty() && !deviceLabel.empty() && (deviceLabel.compare(label) == 0)) return device;
+		const auto &deviceVideoLabel = device->getLabel(LinphoneStreamTypeVideo);
+		const auto &deviceAudioLabel = device->getLabel(LinphoneStreamTypeAudio);
+		if (!label.empty() && ((!deviceAudioLabel.empty() && deviceAudioLabel.compare(label) == 0) ||
+		                       (!deviceVideoLabel.empty() && deviceVideoLabel.compare(label) == 0)))
+			return device;
 	}
 	if (logFailure) {
 		lInfo() << "Unable to find device with label " << label << " among those belonging to participant "

@@ -427,17 +427,17 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 			def.interval = 2000;
 			break;
 		case LinphoneToneBusy:
-			def.duration=500;
-			def.frequencies[0]=440;
-			def.interval=500;
-			def.repeat_count=3;
-		break;
+			def.duration = 500;
+			def.frequencies[0] = 440;
+			def.interval = 500;
+			def.repeat_count = 3;
+			break;
 		case LinphoneToneCallNotAnswered:
-			def.duration=250;
-			def.frequencies[0]=440;
-			def.interval=250;
-			def.repeat_count=3;
-		break;
+			def.duration = 250;
+			def.frequencies[0] = 440;
+			def.interval = 250;
+			def.repeat_count = 3;
+			break;
 		case LinphoneToneCallLost:
 			def.duration = 250;
 			// def.frequencies[0]=480;  // Second frequency that is hide

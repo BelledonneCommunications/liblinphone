@@ -25,13 +25,14 @@
 
 #include "belle-sip/object++.hh"
 
-#include "address/address.h"
 #include "conference/conference-interface.h"
+#include "conference/conference-params-interface.h"
 #include "linphone/core.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class Account;
+class Address;
 namespace MediaConference { // They are in a special namespace because of conflict of generic Conference classes in
 	                        // src/conference/*
 class Conference;
@@ -166,6 +167,16 @@ public:
 		return m_joinMode;
 	};
 
+	virtual void setSecurityLevel(const SecurityLevel &level) override {
+		m_securityLevel = level;
+	};
+	const SecurityLevel &getSecurityLevel() const {
+		return m_securityLevel;
+	};
+
+	static ConferenceParams::SecurityLevel getSecurityLevelFromAttribute(const std::string &level);
+	static std::string getSecurityLevelAttribute(const ConferenceParams::SecurityLevel &level);
+
 private:
 	void updateFromAccount(const std::shared_ptr<Account> &account); // Update Me and default factory from account.
 
@@ -178,6 +189,7 @@ private:
 	JoiningMode m_joinMode = JoiningMode::DialIn;
 	std::shared_ptr<Address> m_conferenceAddress = nullptr;
 	std::shared_ptr<Address> m_factoryAddress = nullptr;
+	SecurityLevel m_securityLevel = SecurityLevel::None;
 	bool m_useDefaultFactoryAddress = true;
 	std::string m_subject = "";
 	mutable std::string m_utf8Subject = "";

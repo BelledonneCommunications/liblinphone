@@ -367,27 +367,42 @@ void _linphone_call_check_nb_streams(const LinphoneCall *call,
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
 	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
 	if (call_result_desc) {
-		BC_ASSERT_EQUAL((int)call_result_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams,
-		                int, "%i");
-		BC_ASSERT_EQUAL((int)call_result_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
-		BC_ASSERT_EQUAL((int)call_result_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
-		BC_ASSERT_EQUAL((int)call_result_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
+		BC_ASSERT_LOWER(call_result_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, size_t,
+		                "%zu");
+		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalAudio), nb_audio_streams, size_t, "%zu");
+		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalVideo), nb_video_streams, size_t, "%zu");
+		BC_ASSERT_LOWER(call_result_desc->nbStreamsOfType(SalText), nb_text_streams, size_t, "%zu");
 	}
 }
 
-int _linphone_call_get_nb_audio_steams(const LinphoneCall *call) {
+void _linphone_call_check_nb_streams(const LinphoneCall *call,
+                                     const size_t nb_audio_streams,
+                                     const size_t nb_video_streams,
+                                     const size_t nb_text_streams) {
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
-	return (int)call_result_desc->nbStreamsOfType(SalAudio);
+	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
+	if (call_result_desc) {
+		BC_ASSERT_EQUAL(call_result_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, size_t,
+		                "%zu");
+		BC_ASSERT_EQUAL(call_result_desc->nbStreamsOfType(SalAudio), nb_audio_streams, size_t, "%zu");
+		BC_ASSERT_EQUAL(call_result_desc->nbStreamsOfType(SalVideo), nb_video_streams, size_t, "%zu");
+		BC_ASSERT_EQUAL(call_result_desc->nbStreamsOfType(SalText), nb_text_streams, size_t, "%zu");
+	}
 }
 
-int _linphone_call_get_nb_video_steams(const LinphoneCall *call) {
+size_t _linphone_call_get_nb_audio_steams(const LinphoneCall *call) {
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
-	return (int)call_result_desc->nbStreamsOfType(SalVideo);
+	return call_result_desc->nbStreamsOfType(SalAudio);
 }
 
-int _linphone_call_get_nb_text_steams(const LinphoneCall *call) {
+size_t _linphone_call_get_nb_video_steams(const LinphoneCall *call) {
 	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
-	return (int)call_result_desc->nbStreamsOfType(SalText);
+	return call_result_desc->nbStreamsOfType(SalVideo);
+}
+
+size_t _linphone_call_get_nb_text_steams(const LinphoneCall *call) {
+	const SalMediaDescription *call_result_desc = _linphone_call_get_result_desc(call);
+	return call_result_desc->nbStreamsOfType(SalText);
 }
 
 LinphoneConferenceLayout _linphone_participant_device_get_layout(const LinphoneParticipantDevice *participant_device) {
@@ -427,12 +442,12 @@ bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphonePar
 }
 
 void _linphone_call_check_nb_active_streams(const LinphoneCall *call,
-                                            const int nb_audio_streams,
-                                            const int nb_video_streams,
-                                            const int nb_text_streams) {
-	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeAudio), nb_audio_streams, int, "%d");
-	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb_video_streams, int, "%d");
-	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeText), nb_text_streams, int, "%d");
+                                            const size_t nb_audio_streams,
+                                            const size_t nb_video_streams,
+                                            const size_t nb_text_streams) {
+	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeAudio), nb_audio_streams, size_t, "%zu");
+	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb_video_streams, size_t, "%zu");
+	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeText), nb_text_streams, size_t, "%zu");
 }
 
 void check_video_conference(bctbx_list_t *lcs,
@@ -465,15 +480,15 @@ void check_video_conference(bctbx_list_t *lcs,
 		LinphoneConference *conference1 = linphone_call_get_conference(call1);
 		BC_ASSERT_PTR_NOT_NULL(conference1);
 		if (conference1) {
-			int nb = (linphone_conference_get_participant_count(conference1) + 2);
-			BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+			size_t nb = static_cast<size_t>(linphone_conference_get_participant_count(conference1) + 2);
+			BC_ASSERT_EQUAL(Call::toCpp(call1)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, size_t, "%zu");
 		}
 
 		LinphoneConference *conference2 = linphone_call_get_conference(call1);
 		BC_ASSERT_PTR_NOT_NULL(conference2);
 		if (conference2) {
-			int nb = (linphone_conference_get_participant_count(conference2) + 2);
-			BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+			size_t nb = static_cast<size_t>(linphone_conference_get_participant_count(conference2) + 2);
+			BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, size_t, "%zu");
 		}
 
 		linphone_call_check_rtp_sessions(call1);
@@ -497,7 +512,7 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants,
 			const LinphoneCallParams *call_params = linphone_call_get_current_params(call);
 			const bool_t video_enabled = linphone_call_params_video_enabled(call_params);
 
-			int nb = (static_cast<int>((bctbx_list_size(participants) + (local_participant ? 2 : 1))));
+			size_t nb = ((bctbx_list_size(participants) + (local_participant ? 2 : 1)));
 			if (!video_enabled) {
 				if (layout == LinphoneConferenceLayoutActiveSpeaker) {
 					// Only thumbnail corresponding to the participant is going to be inactivated
@@ -507,7 +522,7 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants,
 					nb -= 2;
 				}
 			}
-			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
+			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, size_t, "%zu");
 			if (video_enabled) {
 				linphone_call_check_rtp_sessions(call);
 			}

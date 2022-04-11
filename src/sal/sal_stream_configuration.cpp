@@ -127,11 +127,16 @@ bool SalStreamConfiguration::isRecvOnly(const PayloadType *p) {
 }
 
 bool SalStreamConfiguration::isSamePayloadType(const PayloadType *p1, const PayloadType *p2) {
-	if (p1->type != p2->type) return false;
-	if (strcmp(p1->mime_type, p2->mime_type) != 0) return false;
-	if (p1->clock_rate != p2->clock_rate) return false;
-	if (p1->channels != p2->channels) return false;
-	if (payload_type_get_number(p1) != payload_type_get_number(p2)) return false;
+	if (p1->type != p2->type)
+		return false;
+	if (strcmp(p1->mime_type, p2->mime_type) != 0)
+		return false;
+	if (p1->clock_rate != p2->clock_rate)
+		return false;
+	if (p1->channels != p2->channels)
+		return false;
+	if (payload_type_get_number(p1) != payload_type_get_number(p2))
+		return false;
 	/*
 	 Do not compare fmtp right now: they are modified internally when the call is started
 	*/
@@ -144,13 +149,15 @@ bool SalStreamConfiguration::isSamePayloadType(const PayloadType *p1, const Payl
 }
 
 bool SalStreamConfiguration::isSamePayloadList(const std::list<PayloadType *> &l1, const std::list<PayloadType *> &l2) {
-	if (l1.size() != l2.size()) return false;
+	if (l1.size() != l2.size())
+		return false;
 
 	auto p1 = l1.cbegin();
 	auto p2 = l2.cbegin();
 
 	// First payloads must match
-	if (p1 != l1.cend() && p2 != l2.cend() && !isSamePayloadType(*p1, *p2)) return false;
+	if (p1 != l1.cend() && p2 != l2.cend() && !isSamePayloadType(*p1, *p2))
+		return false;
 
 	// Subsequent payloads are considered equal irrespective of order
 	bool matching = true;
@@ -184,9 +191,10 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration &other) const {
 
 	/* A different proto should result in SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED but the encryption change
 	   needs a stream restart for now, so use SAL_MEDIA_DESCRIPTION_CODEC_CHANGED */
-	if (proto != other.proto) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if (proto != other.proto)
+		result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 	for (auto crypto1 = crypto.cbegin(), crypto2 = other.crypto.cbegin();
-	     (crypto1 != crypto.cend() && crypto2 != other.crypto.cend()); ++crypto1, ++crypto2) {
+		 (crypto1 != crypto.cend() && crypto2 != other.crypto.cend()); ++crypto1, ++crypto2) {
 		if ((crypto1->tag != crypto2->tag) || (crypto1->algo != crypto2->algo)) {
 			result |= SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
 		}
@@ -210,18 +218,23 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration &other) const {
 		result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 	}
 	// Codec changed if either ptime is valid (i.e. greater than 0) and the other is not
-	if (((ptime > 0) ^ (other.ptime > 0))) result |= SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
+	if (((ptime > 0) ^ (other.ptime > 0)))
+		result |= SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
 	// If both ptimes are valid, check that their valid is the same
-	if ((ptime > 0) && (other.ptime > 0) && (ptime != other.ptime)) result |= SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
-	if (dir != other.dir) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if ((ptime > 0) && (other.ptime > 0) && (ptime != other.ptime))
+		result |= SAL_MEDIA_DESCRIPTION_PTIME_CHANGED;
+	if (dir != other.dir)
+		result |= SAL_MEDIA_DESCRIPTION_DIRECTION_CHANGED;
 
 	/*DTLS*/
-	if (dtls_role != other.dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+	if (dtls_role != other.dtls_role)
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 
 	if (((dtls_role == SalDtlsRoleInvalid) && (other.dtls_role != SalDtlsRoleInvalid)) ||
-	    ((dtls_role != SalDtlsRoleInvalid) && (other.dtls_role == SalDtlsRoleInvalid)))
+		((dtls_role != SalDtlsRoleInvalid) && (other.dtls_role == SalDtlsRoleInvalid)))
 		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED;
-	if (dtls_fingerprint.compare(other.dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+	if (dtls_fingerprint.compare(other.dtls_fingerprint) != 0)
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 
 	/*ZRTP*/
 	if (haveZrtpHash != other.haveZrtpHash) {
@@ -326,7 +339,8 @@ bool SalStreamConfiguration::hasZrtp() const {
 }
 
 bool SalStreamConfiguration::hasLimeIk() const {
-	if (haveLimeIk == 1) return true;
+	if (haveLimeIk == 1)
+		return true;
 	return false;
 }
 
@@ -335,8 +349,10 @@ const SalMediaProto &SalStreamConfiguration::getProto() const {
 }
 
 const std::string SalStreamConfiguration::getProtoAsString() const {
-	if (proto == SalProtoOther) return proto_other;
-	else return LinphonePrivate::Utils::toString(proto);
+	if (proto == SalProtoOther)
+		return proto_other;
+	else
+		return LinphonePrivate::Utils::toString(proto);
 }
 
 SalStreamDir SalStreamConfiguration::getDirection() const {

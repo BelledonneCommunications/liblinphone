@@ -171,6 +171,22 @@ LINPHONE_PUBLIC void linphone_conference_info_set_description(LinphoneConference
                                                               const char *description);
 
 /**
+ * Retrieve the desired security level of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return The desired security level of the conference.
+ */
+LINPHONE_PUBLIC LinphoneConferenceSecurityLevel
+linphone_conference_info_get_security_level(const LinphoneConferenceInfo *conference_info);
+
+/**
+ * Set the desired security level of the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param security_level The desired security level of the conference.
+ */
+LINPHONE_PUBLIC void linphone_conference_info_set_security_level(LinphoneConferenceInfo *conference_info,
+																 LinphoneConferenceSecurityLevel security_level);
+
+/**
  * Retrieve the conference as an Icalendar string.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  * @return The conference as an Icalendar string. The returned char* must be freed by the caller. @maybenil @tobefreed

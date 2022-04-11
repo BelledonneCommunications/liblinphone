@@ -46,20 +46,20 @@ void check_result_desc_rtp_rtcp_ports(LinphoneCall *call, int rtp_port, int rtcp
 
 void _check_call_media_ip_consistency(LinphoneCall *call);
 void _linphone_call_check_nb_active_streams(const LinphoneCall *call,
-                                            const int nb_audio_streams,
-                                            const int nb_video_streams,
-                                            const int nb_text_streams);
+                                            const size_t nb_audio_streams,
+                                            const size_t nb_video_streams,
+                                            const size_t nb_text_streams);
 void _linphone_call_check_nb_streams(const LinphoneCall *call,
-                                     const int nb_audio_streams,
-                                     const int nb_video_streams,
-                                     const int nb_text_streams);
+                                     const size_t nb_audio_streams,
+                                     const size_t nb_video_streams,
+                                     const size_t nb_text_streams);
 void _linphone_call_check_max_nb_streams(const LinphoneCall *call,
                                          const size_t nb_audio_streams,
                                          const size_t nb_video_streams,
                                          const size_t nb_text_streams);
-int _linphone_call_get_nb_audio_steams(const LinphoneCall *call);
-int _linphone_call_get_nb_video_steams(const LinphoneCall *call);
-int _linphone_call_get_nb_text_steams(const LinphoneCall *call);
+size_t _linphone_call_get_nb_audio_steams(const LinphoneCall *call);
+size_t _linphone_call_get_nb_video_steams(const LinphoneCall *call);
+size_t _linphone_call_get_nb_text_steams(const LinphoneCall *call);
 LinphoneConferenceLayout _linphone_participant_device_get_layout(const LinphoneParticipantDevice *participant_device);
 bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice *participant_device);
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice *participant_device);

@@ -23,18 +23,16 @@
 
 #include <map>
 
-#include "linphone/core.h"
-#include "linphone/types.h"
+#include "belle-sip/object++.hh"
 
 #include "address/address.h"
-
 #include "conference/conference-id.h"
 #include "conference/conference-interface.h"
 #include "conference/conference-listener.h"
 #include "conference/conference-params.h"
 #include "core/core-accessor.h"
-
-#include "belle-sip/object++.hh"
+#include "linphone/core.h"
+#include "linphone/types.h"
 
 // =============================================================================
 
@@ -73,8 +71,9 @@ public:
 	std::shared_ptr<ParticipantDevice> findParticipantDevice(const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDevice(const std::shared_ptr<Address> &pAddr,
 	                                                         const std::shared_ptr<Address> &dAddr) const;
-	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel(const std::string &label) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDeviceBySsrc(uint32_t ssrc, LinphoneStreamType type) const;
+	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel(const LinphoneStreamType type,
+	                                                                const std::string &label) const;
 	std::shared_ptr<ParticipantDevice> getActiveSpeakerParticipantDevice() const;
 
 	virtual const std::shared_ptr<CallSession> getMainSession() const;
@@ -204,6 +203,7 @@ public:
 
 	void updateSubjectInConferenceInfo(const std::string &subject) const;
 	void updateParticipantsInConferenceInfo(const std::shared_ptr<Address> &participantAddress) const;
+	void updateSecurityLevelInConferenceInfo(const ConferenceParams::SecurityLevel &level) const;
 
 protected:
 	explicit Conference(const std::shared_ptr<Core> &core,
@@ -244,9 +244,12 @@ protected:
 	std::map<uint32_t, bool> pendingParticipantsMutes;
 
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
+	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo() const;
 	virtual std::shared_ptr<ConferenceInfo>
-	createConferenceInfo(const std::shared_ptr<Address> &organizer,
-	                     const std::list<std::shared_ptr<Address>> invitedParticipants) const;
+	createConferenceInfoWithCustomParticipantList(const std::shared_ptr<Address> &organizer,
+	                                              const std::list<std::shared_ptr<Address>> invitedParticipants) const;
+	virtual std::shared_ptr<ConferenceInfo>
+	createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const;
 
 private:
 	L_DISABLE_COPY(Conference);

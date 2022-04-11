@@ -21,12 +21,13 @@
 #ifndef mixing_h
 #define mixing_h
 
-#include "ms2-streams.h"
-#include "streams.h"
+#include <map>
 
 #include "mediastreamer2/msconference.h"
 
-#include <map>
+#include "conference/conference-params.h"
+#include "ms2-streams.h"
+#include "streams.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -78,6 +79,14 @@ public:
 	void setFocus(StreamsGroup *sg);
 	Core &getCore() const;
 	LinphoneCore *getCCore() const;
+	/**
+	 * Set security level of mixer session
+	 */
+	void setSecurityLevel(const ConferenceParams::SecurityLevel &level);
+	/**
+	 * Get security level of mixer session
+	 */
+	const ConferenceParams::SecurityLevel &getSecurityLevel() const;
 
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
@@ -85,6 +94,7 @@ protected:
 private:
 	Core &mCore;
 	std::map<SalStreamType, std::unique_ptr<StreamMixer>> mMixers;
+	ConferenceParams::SecurityLevel mSecurityLevel = ConferenceParams::SecurityLevel::None;
 };
 
 inline std::ostream &operator<<(std::ostream &str, const MixerSession &session) {
@@ -118,6 +128,21 @@ public:
 	virtual std::string getLocalLabel() const {
 		return mLocalLabel;
 	};
+	static MSStreamSecurityLevel securityLevelToMsSecurityLevel(const ConferenceParams::SecurityLevel &level) {
+		MSStreamSecurityLevel ms2_level = MSStreamSecurityLevelNone;
+		switch (level) {
+			case ConferenceParams::SecurityLevel::None:
+				ms2_level = MSStreamSecurityLevelNone;
+				break;
+			case ConferenceParams::SecurityLevel::PointToPoint:
+				ms2_level = MSStreamSecurityLevelPointToPoint;
+				break;
+			case ConferenceParams::SecurityLevel::EndToEnd:
+				ms2_level = MSStreamSecurityLevelEndToEnd;
+				break;
+		}
+		return ms2_level;
+	}
 
 protected:
 	MixerSession &mSession;

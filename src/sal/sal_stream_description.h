@@ -142,6 +142,7 @@ public:
 	const std::list<LinphoneMediaEncryption> &getSupportedEncryptions() const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptionsInPotentialCfgs() const;
 	bool isBundleOnly() const;
+	const std::string &getMid() const;
 
 	const SalStreamType &getType() const;
 	const std::string getTypeAsString() const;

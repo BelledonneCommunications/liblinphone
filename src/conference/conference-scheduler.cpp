@@ -213,6 +213,7 @@ void ConferenceScheduler::setInfo(const std::shared_ptr<ConferenceInfo> &info) {
 	conferenceParams->enableAudio(true);
 	conferenceParams->enableVideo(true);
 	conferenceParams->setSubject(mConferenceInfo->getSubject());
+	conferenceParams->setSecurityLevel(mConferenceInfo->getSecurityLevel());
 
 	if (mConferenceInfo->getDateTime() <= 0) {
 		if (!isUpdate) {

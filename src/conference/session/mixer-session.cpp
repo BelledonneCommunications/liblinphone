@@ -72,6 +72,14 @@ StreamMixer *MixerSession::getMixerByType(SalStreamType type) {
 	return nullptr;
 }
 
+void MixerSession::setSecurityLevel(const ConferenceParams::SecurityLevel &level) {
+	mSecurityLevel = level;
+};
+
+const ConferenceParams::SecurityLevel &MixerSession::getSecurityLevel() const {
+	return mSecurityLevel;
+};
+
 Core &MixerSession::getCore() const {
 	return mCore;
 }

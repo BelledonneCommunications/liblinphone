@@ -71,16 +71,17 @@ public:
 	int findIdxBestStream(SalStreamType type) const;
 	const SalStreamDescription &
 	findStreamWithSdpAttribute(const SalStreamType type,
-	                           const std::vector<std::pair<std::string, std::string>> &attributes) const;
+							   const std::vector<std::pair<std::string, std::string>> &attributes) const;
 	const SalStreamDescription &
 	findStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &attributes) const;
-	const SalStreamDescription findFirstStreamOfType(SalStreamType type) const;
+	const SalStreamDescription &findFirstStreamOfType(SalStreamType type, int startingIdx = -1) const;
+	int findFirstStreamIdxOfType(SalStreamType type, int startingIdx = -1) const;
 	const std::list<SalStreamDescription> findAllStreamsOfType(SalStreamType type) const;
 	int findIdxStreamWithSdpAttribute(const SalStreamType,
-	                                  const std::vector<std::pair<std::string, std::string>> &attributes) const;
+									  const std::vector<std::pair<std::string, std::string>> &attributes) const;
 	int findIdxStreamWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &attributes) const;
-	const SalStreamDescription &findStreamWithLabel(const std::string label) const;
-	int findIdxStreamWithLabel(const std::string label) const;
+	const SalStreamDescription &findStreamWithLabel(SalStreamType type, const std::string label) const;
+	int findIdxStreamWithLabel(SalStreamType type, const std::string label) const;
 
 	const SalStreamDescription &findStreamWithContent(const std::string content) const;
 	int findIdxStreamWithContent(const std::string content) const;
@@ -175,18 +176,21 @@ private:
 
 	mutable SalMediaDescriptionParams params;
 
+	std::vector<SalStreamDescription>::const_iterator findFirstStreamItOfType(SalStreamType type,
+																			  int startingIdx = -1) const;
 	std::vector<SalStreamDescription>::const_iterator
 	findStreamItWithSdpAttribute(const std::vector<std::pair<std::string, std::string>> &attributes) const;
 	std::vector<SalStreamDescription>::const_iterator
 	findStreamItWithSdpAttribute(const SalStreamType type,
-	                             const std::vector<std::pair<std::string, std::string>> &attributes) const;
+								 const std::vector<std::pair<std::string, std::string>> &attributes) const;
 	std::vector<SalStreamDescription>::const_iterator findStreamIt(SalMediaProto proto, SalStreamType type) const;
-	std::vector<SalStreamDescription>::const_iterator findStreamItWithLabel(const std::string label) const;
+	std::vector<SalStreamDescription>::const_iterator findStreamItWithLabel(SalStreamType type,
+																			const std::string label) const;
 	std::vector<SalStreamDescription>::const_iterator findStreamItWithContent(const std::string content) const;
 	std::vector<SalStreamDescription>::const_iterator findStreamItWithContent(const std::string content,
-	                                                                          const SalStreamDir direction) const;
+																			  const SalStreamDir direction) const;
 	std::vector<SalStreamDescription>::const_iterator findStreamItWithContent(const std::string content,
-	                                                                          const std::string label) const;
+																			  const std::string label) const;
 
 	/*check for the presence of at least one stream with requested direction */
 	bool containsStreamWithDir(const SalStreamDir &stream_dir) const;

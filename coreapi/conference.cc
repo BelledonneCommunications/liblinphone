@@ -23,6 +23,7 @@
 #include <string>
 #include <typeinfo>
 
+#include "bctoolbox/crypto.hh"
 #include <bctoolbox/defs.h>
 
 #include <mediastreamer2/msvolume.h>
@@ -94,17 +95,17 @@ Conference::Conference(const shared_ptr<Core> &core,
 		setState(ConferenceInterface::State::CreationFailed);
 	}
 
-	m_coreCbs = nullptr;
-	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChanged);
-	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
-	linphone_core_cbs_set_user_data(m_coreCbs, this);
-	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
+	mCoreCbs = nullptr;
+	mCoreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_call_state_changed(mCoreCbs, callStateChanged);
+	linphone_core_cbs_set_transfer_state_changed(mCoreCbs, transferStateChanged);
+	linphone_core_cbs_set_user_data(mCoreCbs, this);
+	_linphone_core_add_callbacks(getCore()->getCCore(), mCoreCbs, TRUE);
 }
 
 Conference::~Conference() {
-	linphone_core_remove_callbacks(getCore()->getCCore(), m_coreCbs);
-	linphone_core_cbs_unref(m_coreCbs);
+	linphone_core_remove_callbacks(getCore()->getCCore(), mCoreCbs);
+	linphone_core_cbs_unref(mCoreCbs);
 }
 
 void Conference::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
@@ -477,6 +478,27 @@ void Conference::setState(LinphonePrivate::ConferenceInterface::State state) {
 	}
 }
 
+std::shared_ptr<ConferenceInfo>
+Conference::createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const {
+
+	std::list<std::shared_ptr<Address>> participantAddresses;
+	if (!invitedAddresses.empty()) {
+		participantAddresses = invitedAddresses;
+	}
+
+	// Add participants that are not part of the invitees'list
+	for (const auto &p : getParticipants()) {
+		const auto &pAddress = p->getAddress();
+		auto pIt = std::find_if(participantAddresses.begin(), participantAddresses.end(),
+		                        [&pAddress](const auto &address) { return (pAddress->weakEqual(*address)); });
+		if (pIt == participantAddresses.end()) {
+			participantAddresses.push_back(pAddress);
+		}
+	}
+
+	return createConferenceInfoWithCustomParticipantList(organizer, participantAddresses);
+}
+
 void Conference::notifyStateChanged(LinphonePrivate::ConferenceInterface::State state) {
 	// Call listeners
 	LinphonePrivate::Conference::notifyStateChanged(state);
@@ -554,6 +576,8 @@ LocalConference::LocalConference(const shared_ptr<Core> &core,
 		confParams->enableVideo(false);
 	}
 	mMixerSession.reset(new MixerSession(*core.get()));
+	mMixerSession->setSecurityLevel(confParams->getSecurityLevel());
+
 	setState(ConferenceInterface::State::Instantiated);
 
 	organizer = myAddress;
@@ -605,6 +629,7 @@ LocalConference::LocalConference(const std::shared_ptr<Core> &core, SalCallOp *o
 #endif // HAVE_ADVANCED_IM
 
 	mMixerSession.reset(new MixerSession(*core.get()));
+
 	setState(ConferenceInterface::State::Instantiated);
 
 	configure(op);
@@ -696,7 +721,7 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				auto invitees = Utils::parseResourceLists(resourceList);
 				invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
 			}
-			const auto &conferenceInfo = createConferenceInfo(organizer, invitedAddresses);
+			const auto &conferenceInfo = createConferenceInfoWithCustomParticipantList(organizer, invitedAddresses);
 			auto infoState = ConferenceInfo::State::New;
 			if (resourceList.isEmpty()) {
 				infoState = ConferenceInfo::State::Cancelled;
@@ -761,6 +786,21 @@ void LocalConference::configure(SalCallOp *op) {
 	const bool createdConference = (info && info->isValidUri());
 	// If start time or end time is not -1, then the client wants to update the conference
 	const auto isUpdate = (admin && ((startTimeSdp != -1) || (endTimeSdp != -1)) && info);
+
+	ConferenceParams::SecurityLevel securityLevel = ConferenceParams::SecurityLevel::None;
+	if (createdConference && info) {
+		securityLevel = info->getSecurityLevel();
+	} else {
+		const auto &toAddrStr = op->getTo();
+		Address toAddr(toAddrStr);
+		if (toAddr.hasUriParam("conference-security-mode")) {
+			securityLevel =
+			    ConferenceParams::getSecurityLevelFromAttribute(toAddr.getUriParamValue("conference-security-mode"));
+		}
+	}
+	confParams->setSecurityLevel(securityLevel);
+
+	mMixerSession->setSecurityLevel(confParams->getSecurityLevel());
 
 	if (isUpdate || (admin && !createdConference)) {
 		// The following informations are retrieved from the received INVITE:
@@ -916,7 +956,6 @@ void LocalConference::confirmCreation() {
 			conferenceAddress->setUriParam("conf-id", confId);
 			setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 		}
-
 		const_cast<LinphonePrivate::CallSessionParamsPrivate *>(L_GET_PRIVATE(session->getParams()))
 		    ->setInConference(true);
 		session->getPrivate()->setConferenceId(confId);
@@ -950,32 +989,8 @@ void LocalConference::confirmCreation() {
 	}
 }
 
-std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() const {
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	if (mainDb) {
-		std::shared_ptr<ConferenceInfo> conferenceInfo =
-		    getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
-		if (conferenceInfo) {
-			return conferenceInfo;
-		}
-	}
-#endif // HAVE_DB_STORAGE
-
-	std::list<std::shared_ptr<Address>> participantAddresses;
-	if (!invitedAddresses.empty()) {
-		participantAddresses = invitedAddresses;
-	}
-	for (const auto &p : getParticipants()) {
-		const auto &pAddress = p->getAddress();
-		auto pIt = std::find_if(participantAddresses.begin(), participantAddresses.end(),
-		                        [&pAddress](const auto &address) { return address->weakEqual(*pAddress); });
-		if (pIt == participantAddresses.end()) {
-			participantAddresses.push_back(pAddress);
-		}
-	}
-
-	return createConferenceInfo(organizer, participantAddresses);
+std::shared_ptr<ConferenceInfo> LocalConference::createConferenceInfo() const {
+	return createConferenceInfoWithOrganizer(organizer);
 }
 
 void LocalConference::finalizeCreation() {
@@ -1086,7 +1101,7 @@ void LocalConference::addLocalEndpoint() {
 				auto meSsrc = media_stream_get_send_ssrc(&videoStream->ms);
 				for (auto &device : me->getDevices()) {
 					device->setSsrc(LinphoneStreamTypeVideo, meSsrc);
-					videoMixer->setLocalParticipantLabel(device->getLabel());
+					videoMixer->setLocalParticipantLabel(device->getLabel(LinphoneStreamTypeVideo));
 				}
 #endif // VIDEO_ENABLED
 				VideoControlInterface *vci = getVideoControlInterface();
@@ -1506,7 +1521,9 @@ bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call
 			                             : ParticipantDevice::JoiningMethod::DialedOut);
 			char label[LinphonePrivate::Conference::labelLength];
 			belle_sip_random_token(label, sizeof(label));
-			device->setLabel(label);
+			device->setLabel(label, LinphoneStreamTypeAudio);
+			belle_sip_random_token(label, sizeof(label));
+			device->setLabel(label, LinphoneStreamTypeVideo);
 			auto op = session->getPrivate()->getOp();
 			auto displayName = L_C_TO_STRING(sal_address_get_display_name(
 			    (call->getDirection() == LinphoneCallIncoming) ? op->getFromAddress() : op->getToAddress()));
@@ -1533,7 +1550,9 @@ bool LocalConference::tryAddMeDevice() {
 
 			char label[Conference::labelLength];
 			belle_sip_random_token(label, sizeof(label));
-			meDev->setLabel(label);
+			meDev->setLabel(label, LinphoneStreamTypeAudio);
+			belle_sip_random_token(label, sizeof(label));
+			meDev->setLabel(label, LinphoneStreamTypeVideo);
 			meDev->setSession(meSession);
 			meDev->setJoiningMethod(ParticipantDevice::JoiningMethod::FocusOwner);
 			meDev->setState(ParticipantDevice::State::Present);
@@ -2229,19 +2248,39 @@ void LocalConference::leave() {
 	}
 }
 
+bool LocalConference::validateNewParameters(const LinphonePrivate::ConferenceParams &newConfParams) const {
+	if (!confParams) {
+		return true;
+	}
+
+	if (confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) {
+		lError() << "Factory address change is not allowed: actual " << confParams->getConferenceFactoryAddress()
+		         << " new value " << newConfParams.getConferenceFactoryAddress();
+		return false;
+	}
+
+	if (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()) {
+		lError() << "Conference address change is not allowed: actual " << confParams->getConferenceAddress()
+		         << " new value " << newConfParams.getConferenceAddress();
+		return false;
+	}
+
+	if (confParams->getSecurityLevel() != newConfParams.getSecurityLevel()) {
+		lError() << "Conference security level change is not allowed: actual " << confParams->getSecurityLevel()
+		         << " new value " << newConfParams.getSecurityLevel();
+		return false;
+	}
+
+	return true;
+}
+
 bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters) {
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = confParams->videoEnabled();
 	bool previousAudioEnablement = confParams->audioEnabled();
 	bool previousChatEnablement = confParams->chatEnabled();
 	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams &>(newParameters);
-	if (confParams && ((confParams->getConferenceFactoryAddress() != newConfParams.getConferenceFactoryAddress()) ||
-	                   (confParams->getConferenceAddress() != newConfParams.getConferenceAddress()))) {
-		lError() << "Trying to change frozen conference parameters:";
-		lError() << " -  factory address: actual " << confParams->getConferenceFactoryAddress() << " new value "
-		         << newConfParams.getConferenceFactoryAddress();
-		lError() << " -  conference address: actual " << confParams->getConferenceAddress() << " new value "
-		         << newConfParams.getConferenceAddress();
+	if (!validateNewParameters(newConfParams)) {
 		return false;
 	}
 	confParams = ConferenceParams::create(newConfParams);
@@ -2361,6 +2400,7 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 	auto cppCall = Call::toCpp(call)->getSharedFromThis();
 	if (conf && conf->getSharedFromThis() == cppCall->getConference()) {
 		const auto &session = cppCall->getActiveSession();
+		const std::shared_ptr<Address> &remoteAddress = cppCall->getRemoteAddress();
 		switch (cstate) {
 			case LinphoneCallStateOutgoingRinging:
 				participantDeviceAlerting(session);
@@ -2373,7 +2413,6 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 			case LinphoneCallStateStreamsRunning: {
 				if (!addParticipantDevice(cppCall)) {
 					// If the participant is already in the conference
-					const std::shared_ptr<Address> &remoteAddress = cppCall->getRemoteAddress();
 					const auto &participant = findParticipant(remoteAddress);
 					const auto &device = findParticipantDevice(session);
 					const auto &deviceState =
@@ -2435,7 +2474,7 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 						setParticipantAdminStatus(participant, admin);
 					} else {
 						lError() << "Unable to update admin status and device address as no participant with address "
-						         << remoteAddress << " has been found in conference " << *getConferenceAddress();
+						         << *remoteAddress << " has been found in conference " << *getConferenceAddress();
 					}
 					if (device) {
 						if (deviceState == ParticipantDevice::State::Present) {
@@ -2471,8 +2510,7 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 				// If a call in a local conference is paused by remote, it means that the remote participant temporarely
 				// left the call, hence notify that no audio and video is available
 				lInfo() << "Call in conference has been put on hold by remote device, hence participant "
-				        << session->getRemoteAddress()->toString() << " temporarely left conference "
-				        << *getConferenceAddress();
+				        << *remoteAddress << " temporarely left conference " << *getConferenceAddress();
 				participantDeviceLeft(session);
 				break;
 			case LinphoneCallStateUpdatedByRemote: {
@@ -2502,8 +2540,8 @@ void LocalConference::callStateChangedCb(LinphoneCore *lc,
 			case LinphoneCallStateEnd:
 			case LinphoneCallStateError:
 				lInfo() << "Removing terminated call (local address " << session->getLocalAddress()->toString()
-				        << " remote address " << session->getRemoteAddress()->toString() << ") from conference " << this
-				        << " (" << *getConferenceAddress() << ")";
+				        << " remote address " << *remoteAddress << ") from conference " << this << " ("
+				        << *getConferenceAddress() << ")";
 				if (session->getErrorInfo() &&
 				    (linphone_error_info_get_reason(session->getErrorInfo()) == LinphoneReasonBusy)) {
 					removeParticipantDevice(session);
@@ -2623,7 +2661,7 @@ RemoteConference::RemoteConference(const shared_ptr<Core> &core,
     : Conference(core, conferenceId.getLocalAddress(), listener, params) {
 
 	focus = Participant::create(this, confAddr, focusSession);
-	lInfo() << "Create focus '" << focus->getAddress() << "' from address : " << confAddr;
+	lInfo() << "Create focus '" << *focus->getAddress() << "' from address : " << *confAddr;
 	confParams->enableLocalParticipant(false);
 	pendingSubject = confParams->getSubject();
 
@@ -2646,7 +2684,6 @@ RemoteConference::RemoteConference(const shared_ptr<Core> &core,
 
 	setConferenceId(conferenceId);
 	setConferenceAddress(confAddr);
-
 	finalizeCreation();
 }
 
@@ -2697,7 +2734,6 @@ RemoteConference::RemoteConference(const shared_ptr<Core> &core,
 	setState(ConferenceInterface::State::Instantiated);
 
 	setConferenceAddress(conferenceAddress);
-
 	finalizeCreation();
 }
 
@@ -2739,38 +2775,11 @@ void RemoteConference::finalizeCreation() {
 	}
 }
 
-std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() const {
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	if (mainDb) {
-		std::shared_ptr<ConferenceInfo> conferenceInfo =
-		    getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
-		if (conferenceInfo) {
-			return conferenceInfo;
-		}
-	}
-#endif // HAVE_DB_STORAGE
-
+std::shared_ptr<ConferenceInfo> RemoteConference::createConferenceInfo() const {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
 	const auto organizer = (referer) ? referer->getRemoteAddress() : getMe()->getAddress();
-
-	std::list<std::shared_ptr<Address>> participantAddresses;
-	if (!invitedAddresses.empty()) {
-		participantAddresses = invitedAddresses;
-	}
-
-	// Add participants that are not part of the invitees'list
-	for (const auto &p : getParticipants()) {
-		const auto &pAddress = p->getAddress();
-		auto pIt = std::find_if(participantAddresses.begin(), participantAddresses.end(),
-		                        [&pAddress](const auto &address) { return (pAddress->weakEqual(*address)); });
-		if (pIt == participantAddresses.end()) {
-			participantAddresses.push_back(pAddress);
-		}
-	}
-
-	return createConferenceInfo(organizer, participantAddresses);
+	return createConferenceInfoWithOrganizer(organizer);
 }
 
 void RemoteConference::setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> &session) {
@@ -3404,10 +3413,8 @@ bool RemoteConference::transferToFocus(std::shared_ptr<LinphonePrivate::Call> ca
 		const auto &remoteAddress = call->getRemoteAddress();
 		lInfo() << "Transfering call (local address " << call->getLocalAddress()->toString() << " remote address "
 		        << (remoteAddress ? remoteAddress->toString() : "Unknown") << ") to focus " << referToAddr;
-#ifdef HAVE_DB_STORAGE
 		const auto &participantAddress = participant->getAddress();
 		updateParticipantsInConferenceInfo(participantAddress);
-#endif
 		if (call->transfer(referToAddr->toString()) == 0) {
 			m_transferingCalls.push_back(call);
 			return true;
@@ -3454,9 +3461,7 @@ void RemoteConference::onFocusCallStateChanged(LinphoneCallState state) {
 	switch (state) {
 		case LinphoneCallStreamsRunning: {
 
-#ifdef HAVE_DB_STORAGE
 			updateParticipantsInConferenceInfo(getMe()->getAddress());
-#endif
 			const auto &previousState = session->getPreviousState();
 			// NOTIFY that a participant has been added only if it follows a resume of the call
 			if (previousState == CallSession::State::Resuming) {
@@ -3865,10 +3870,8 @@ void RemoteConference::onParticipantAdded(const shared_ptr<ConferenceParticipant
                                           const std::shared_ptr<Participant> &participant) {
 	const std::shared_ptr<Address> &pAddr = event->getParticipantAddress();
 
-#ifdef HAVE_DB_STORAGE
 	const auto &participantAddress = participant->getAddress();
 	updateParticipantsInConferenceInfo(participantAddress);
-#endif
 
 	if (isMe(pAddr)) {
 		if (getState() == ConferenceInterface::State::CreationPending) {
@@ -3975,10 +3978,18 @@ void RemoteConference::onParticipantDeviceStateChanged(
 		return (*devAddr == contactAddress);
 	});
 
+	const auto &audioDir = device->getStreamCapability(LinphoneStreamTypeAudio);
+	const auto &confSecurityLevel = confParams->getSecurityLevel();
+	const auto audioNeedsReInvite =
+	    ((confSecurityLevel == ConferenceParams::SecurityLevel::EndToEnd) && confParams->audioEnabled() &&
+	     params->audioEnabled() &&
+	     ((audioDir == LinphoneMediaDirectionSendOnly) || (audioDir == LinphoneMediaDirectionSendRecv)));
 	const auto &videoDir = device->getStreamCapability(LinphoneStreamTypeVideo);
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) &&
-	    (callIt == m_pendingCalls.cend()) && isIn() && (device->getState() == ParticipantDevice::State::Present) &&
-	    ((videoDir == LinphoneMediaDirectionSendOnly) || (videoDir == LinphoneMediaDirectionSendRecv))) {
+	const auto videoNeedsReInvite =
+	    (confParams->videoEnabled() && params->videoEnabled() &&
+	     ((videoDir == LinphoneMediaDirectionSendOnly) || (videoDir == LinphoneMediaDirectionSendRecv)));
+	if ((getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn() &&
+	    (device->getState() == ParticipantDevice::State::Present) && ((videoNeedsReInvite || audioNeedsReInvite))) {
 		auto updateSession = [this, device]() -> LinphoneStatus {
 			lInfo() << "Sending re-INVITE in order to get streams for participant device " << *device->getAddress()
 			        << " that joined recently the conference " << *getConferenceAddress();
@@ -3998,7 +4009,6 @@ void RemoteConference::onParticipantDeviceStateChanged(
 }
 
 void RemoteConference::onParticipantDeviceMediaAvailabilityChanged(
-
     BCTBX_UNUSED(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event),
     const std::shared_ptr<ParticipantDevice> &device) {
 	if ((!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created) && isIn()) {
@@ -4020,7 +4030,8 @@ void RemoteConference::onParticipantDeviceMediaAvailabilityChanged(
 }
 
 void RemoteConference::onFullStateReceived() {
-
+	// When receiving a full state, we must recreate the conference informations in order to get the security level and
+	// the participant list up to date
 	const auto conferenceInfo = createOrGetConferenceInfo();
 	auto callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
 	if (callLog) {

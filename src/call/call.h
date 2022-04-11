@@ -25,15 +25,11 @@
 #include "conference/session/call-session.h"
 #include "core/core-accessor.h"
 #include "object/object.h"
-
 #include "linphone/api/c-types.h"
-#include <c-wrapper/c-wrapper.h>
-
+#include "c-wrapper/c-wrapper.h"
 #include "object/object-p.h"
-
 #include "conference/session/call-session-listener.h"
 #include "utils/background-task.h"
-
 #include "call/call-log.h"
 #include "call/video-source/video-source-descriptor.h"
 
@@ -100,7 +96,7 @@ public:
 
 	Call(std::shared_ptr<Core> core, LinphoneCallDir direction, const std::string &callid);
 
-	~Call();
+	virtual ~Call();
 
 	void configure(LinphoneCallDir direction,
 	               const std::shared_ptr<Address> &from,
@@ -241,7 +237,7 @@ public:
 	// don't make new code relying on this method.
 	MediaStream *getMediaStream(LinphoneStreamType type) const;
 	int getMediaStreamIndex(LinphoneStreamType type) const;
-	int getMediaStreamsNb(LinphoneStreamType type) const;
+	size_t getMediaStreamsNb(LinphoneStreamType type) const;
 	SalCallOp *getOp() const;
 	bool getSpeakerMuted() const;
 	void setSpeakerMuted(bool muted);

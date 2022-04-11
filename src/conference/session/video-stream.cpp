@@ -152,7 +152,7 @@ void MS2VideoStream::sVideoStreamDisplayCb(void *userData, const unsigned int ev
 
 void MS2VideoStream::videoStreamDisplayCb(const unsigned int eventId, const void *args) {
 	CallSessionListener *callListener = getMediaSessionPrivate().getCallSessionListener();
-	auto participantDevice = getMediaSession().getParticipantDevice(getLabel());
+	auto participantDevice = getMediaSession().getParticipantDevice(LinphoneStreamTypeVideo, getLabel());
 
 	switch (eventId) {
 		case MS_VIDEO_DISPLAY_ERROR_OCCURRED:

@@ -39,7 +39,7 @@ public:
 	        LinphoneCallDir direction,
 	        const std::shared_ptr<Address> &from,
 	        const std::shared_ptr<Address> &to);
-	~CallLog();
+	virtual ~CallLog();
 
 	LinphoneCallDir getDirection() const;
 	void setDirection(LinphoneCallDir direction);

@@ -122,8 +122,8 @@ int Call::getMediaStreamIndex(LinphoneStreamType type) const {
 	return (int)s->getIndex();
 }
 
-int Call::getMediaStreamsNb(LinphoneStreamType type) const {
-	int nb = 0;
+size_t Call::getMediaStreamsNb(LinphoneStreamType type) const {
+	size_t nb = 0;
 	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
 	StreamsGroup &sg = ms->getStreamsGroup();
 	SalStreamType nType;

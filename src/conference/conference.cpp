@@ -63,6 +63,7 @@ Conference::~Conference() {
 }
 
 // -----------------------------------------------------------------------------
+
 time_t Conference::getStartTime() const {
 	return startTime;
 }
@@ -210,11 +211,11 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices() co
 	return devices;
 }
 
-const string &Conference::getSubject () const {
+const string &Conference::getSubject() const {
 	return confParams->getSubject();
 }
 
-const string &Conference::getUtf8Subject () const {
+const string &Conference::getUtf8Subject() const {
 	return confParams->getUtf8Subject();
 }
 
@@ -278,9 +279,7 @@ void Conference::setUtf8Subject(const string &subject) {
 
 void Conference::setSubject(const string &subject) {
 	confParams->setSubject(subject);
-#ifdef HAVE_DB_STORAGE
 	updateSubjectInConferenceInfo(subject);
-#endif // HAVE_DB_STORAGE
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent>
@@ -385,17 +384,19 @@ shared_ptr<Participant> Conference::findParticipant(const std::shared_ptr<Addres
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const std::string &label) const {
+shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel(const LinphoneStreamType type,
+                                                                       const std::string &label) const {
 	for (const auto &participant : participants) {
 		auto device = participant->findDevice(label, false);
-		if (device) {
-			return device;
+		if (device) return device;
+		for (const auto &device : participant->getDevices()) {
+			if (device->getLabel(type) == label) return device;
 		}
 	}
 
 	lDebug() << "Unable to find participant device in conference "
 	         << (getConferenceAddress() ? getConferenceAddress()->toString() : std::string("<unknown address>"))
-	         << " with label " << label;
+	         << " with " << std::string(linphone_stream_type_to_string(type)) << " label " << label;
 
 	return nullptr;
 }
@@ -697,12 +698,37 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 }
 
 std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb) {
+		std::shared_ptr<ConferenceInfo> conferenceInfo =
+		    getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
+		if (conferenceInfo) {
+			return conferenceInfo;
+		}
+	}
+#endif // HAVE_DB_STORAGE
+	return createConferenceInfo();
+}
+
+std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo() const {
 	return nullptr;
 }
 
 std::shared_ptr<ConferenceInfo>
-Conference::createConferenceInfo(const std::shared_ptr<Address> &organizer,
-                                 const std::list<std::shared_ptr<Address>> invitedParticipants) const {
+Conference::createConferenceInfoWithOrganizer(const std::shared_ptr<Address> &organizer) const {
+	// Add participants that are currently in the conference
+	std::list<std::shared_ptr<Address>> participantAddresses;
+	for (const auto &p : getParticipants()) {
+		const auto &pAddress = p->getAddress();
+		participantAddresses.push_back(pAddress);
+	}
+
+	return createConferenceInfoWithCustomParticipantList(organizer, participantAddresses);
+}
+
+std::shared_ptr<ConferenceInfo> Conference::createConferenceInfoWithCustomParticipantList(
+    const std::shared_ptr<Address> &organizer, const std::list<std::shared_ptr<Address>> invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
 	info->setOrganizer(organizer);
 	for (const auto &participant : invitedParticipants) {
@@ -723,9 +749,39 @@ Conference::createConferenceInfo(const std::shared_ptr<Address> &organizer,
 	}
 
 	info->setSubject(confParams->getSubject());
+	info->setSecurityLevel(confParams->getSecurityLevel());
 
 	return info;
 }
+
+#ifndef _MSC_VER
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif // _MSC_VER
+void Conference::updateSecurityLevelInConferenceInfo(const ConferenceParams::SecurityLevel &level) const {
+#ifdef HAVE_DB_STORAGE
+	if ((getState() == ConferenceInterface::State::CreationPending) ||
+	    (getState() == ConferenceInterface::State::Created)) {
+		auto info = createOrGetConferenceInfo();
+
+		if (info) {
+			info->setSecurityLevel(level);
+
+			// Store into DB after the start incoming notification in order to have a valid conference address being the
+			// contact address of the call
+			auto &mainDb = getCore()->getPrivate()->mainDb;
+			if (mainDb) {
+				lInfo() << "Updating conference information of conference " << *getConferenceAddress()
+				        << " because its security level has been changed to " << level;
+				mainDb->insertConferenceInfo(info);
+			}
+		}
+	}
+#endif // HAVE_DB_STORAGE
+}
+#ifndef _MSC_VER
+#pragma GCC diagnostic pop
+#endif // _MSC_VER
 
 #ifndef _MSC_VER
 #pragma GCC diagnostic push

@@ -77,6 +77,17 @@ typedef enum _LinphoneConferenceParticipantListType {
 } LinphoneConferenceParticipantListType;
 
 /**
+ * @brief Conference minimum security level
+ *
+ * @ingroup conference
+ */
+typedef enum _LinphoneConferenceSecurityLevel {
+	LinphoneConferenceSecurityLevelNone = 0,		 /**< No security */
+	LinphoneConferenceSecurityLevelPointToPoint = 1, /**< Point-to-point encryption */
+	LinphoneConferenceSecurityLevelEndToEnd = 2,	 /**< End-to-end encryption */
+} LinphoneConferenceSecurityLevel;
+
+/**
  * @brief Describes conference scheduler possible states.
  *
  * It is notified via the conference_scheduler_state_changed callback in #LinphoneConferenceSchedulerCbs.

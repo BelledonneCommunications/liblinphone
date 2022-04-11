@@ -18,86 +18,18 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
-
-#include <bctoolbox/defs.h>
-
-#include "linphone/api/c-content.h"
-#include "linphone/api/c-recorder-params.h"
-#include "linphone/api/c-recorder.h"
-#include "linphone/core.h"
-#include "linphone/core_utils.h"
-#include "linphone/logging.h"
-#include "linphone/lpconfig.h"
-#include "linphone/sipsetup.h"
-
-#include "conference_private.h"
-#include "logger/logger.h"
-#include "logging-private.h"
-#include "private.h"
-#include "quality_reporting.h"
-
-#ifdef HAVE_SQLITE
-#include "sqlite3_bctbx_vfs.h"
-#endif
-
-#include "chat/modifier/file-transfer-chat-message-modifier.h"
-#include "content/file-transfer-content.h"
-
-#include "bctoolbox/defs.h"
-#include "bctoolbox/regex.h"
-#include "belr/grammarbuilder.h"
 #include <math.h>
-#include <mediastreamer2/dtls_srtp.h>
-#include <mediastreamer2/zrtp.h>
-#include <ortp/telephonyevents.h>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "mediastreamer2/dtmfgen.h"
-#include "mediastreamer2/mediastream.h"
-#include "mediastreamer2/msequalizer.h"
-#include "mediastreamer2/mseventqueue.h"
-#include "mediastreamer2/msfactory.h"
-#include "mediastreamer2/msjpegwriter.h"
-#include "mediastreamer2/msogl.h"
-#include "mediastreamer2/msqrcodereader.h"
-#include "mediastreamer2/msvolume.h"
-
-#include "bctoolbox/charconv.h"
-
-#include "account/account.h"
-
-#ifdef HAVE_ADVANCED_IM
-#include "chat/chat-room/client-group-chat-room-p.h"
-#include "chat/chat-room/client-group-to-basic-chat-room.h"
-#include "chat/chat-room/server-group-chat-room-p.h"
-#include "conference/handlers/local-conference-list-event-handler.h"
-#include "conference/handlers/remote-conference-event-handler.h"
-#include "conference/handlers/remote-conference-list-event-handler.h"
-#endif
-#include "conference/conference-info.h"
-#include "conference/conference-scheduler.h"
-#include "conference/session/media-session-p.h"
-#include "conference/session/media-session.h"
-#include "content/content-manager.h"
-#include "content/content-type.h"
-#include "core/core-p.h"
-
-// For migration purpose.
-#include "address/address.h"
-#include "c-wrapper/c-wrapper.h"
-#include "utils/payload-type-handler.h"
-
 #ifdef INET6
 #ifndef _WIN32
 #include <netdb.h>
 #endif
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#include "gitversion.h"
+#ifdef HAVE_SQLITE
+#include "sqlite3_bctbx_vfs.h"
 #endif
 
 #ifdef __APPLE__
@@ -108,11 +40,70 @@
 #include "android/api-level.h"
 #endif
 
-#include "c-wrapper/c-wrapper.h"
-#include "call/call.h"
-#include "conference/params/media-session-params-p.h"
+#include "bctoolbox/charconv.h"
+#include "bctoolbox/defs.h"
+#include "bctoolbox/regex.h"
 
+#include "belr/grammarbuilder.h"
+
+#include <ortp/telephonyevents.h>
+
+#include "mediastreamer2/dtmfgen.h"
+#include "mediastreamer2/mediastream.h"
+#include "mediastreamer2/msequalizer.h"
+#include "mediastreamer2/mseventqueue.h"
+#include "mediastreamer2/msfactory.h"
+#include "mediastreamer2/msjpegwriter.h"
+#include "mediastreamer2/msogl.h"
+#include "mediastreamer2/msqrcodereader.h"
+#include "mediastreamer2/msvolume.h"
+#include <mediastreamer2/dtls_srtp.h>
+#include <mediastreamer2/zrtp.h>
+
+#include "account/account.h"
+#include "call/call.h"
+#include "chat/modifier/file-transfer-chat-message-modifier.h"
+#include "conference_private.h"
+#include "content/file-transfer-content.h"
+#include "linphone/api/c-content.h"
+#include "linphone/api/c-recorder-params.h"
+#include "linphone/api/c-recorder.h"
+#include "linphone/core.h"
+#include "linphone/core_utils.h"
+#include "linphone/logging.h"
+#include "linphone/lpconfig.h"
+#include "linphone/sipsetup.h"
+#include "logger/logger.h"
+#include "logging-private.h"
+#include "private.h"
+#include "quality_reporting.h"
+#ifdef HAVE_ADVANCED_IM
+#include "chat/chat-room/client-group-chat-room-p.h"
+#include "chat/chat-room/client-group-to-basic-chat-room.h"
+#include "chat/chat-room/server-group-chat-room-p.h"
+#include "conference/handlers/local-conference-list-event-handler.h"
+#include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
+#endif
+#include "conference/conference-info.h"
+#include "conference/conference-scheduler.h"
+#include "conference/params/media-session-params-p.h"
+#include "conference/session/media-session-p.h"
+#include "conference/session/media-session.h"
+#include "content/content-manager.h"
+#include "content/content-type.h"
+#include "core/core-p.h"
+#include "event/event-publish.h"
 #include "sal/sal.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "gitversion.h"
+#endif
+
+// For migration purpose.
+#include "address/address.h"
+#include "c-wrapper/c-wrapper.h"
+#include "utils/payload-type-handler.h"
 
 #ifdef HAVE_ZLIB
 #define COMPRESSED_LOG_COLLECTION_EXTENSION "gz"
@@ -4761,6 +4752,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc,
 		if (linphone_proxy_config_get_privacy(proxy) != LinphonePrivacyDefault) {
 			op->setPrivacy(linphone_proxy_config_get_privacy(proxy));
 		}
+		op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
 	} else identity = linphone_core_get_primary_contact(lc);
 	/*sending out of calls*/
 	if (proxy) {
@@ -4771,7 +4763,6 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc,
 	op->setToAddress(Address::toCpp(dest)->getImpl());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
-	op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
 
 	if (with_contact && proxy && Account::toCpp(proxy->account)->getOp()) {
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);

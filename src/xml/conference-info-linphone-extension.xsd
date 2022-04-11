@@ -44,4 +44,13 @@
 		</xs:complexType>
 	</xs:element>
 
+	<xs:element name="crypto-security-level">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="level" type="xs:string"/>
+				<xs:any namespace="##targetNamespace" processContents="strict" maxOccurs="unbounded" />	
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
 </xs:schema>

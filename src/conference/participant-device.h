@@ -98,12 +98,6 @@ public:
 
 	const std::shared_ptr<Address> &getAddress() const;
 	void setAddress(const std::shared_ptr<Address> &address);
-	inline const std::string &getLabel() const {
-		return mLabel;
-	}
-	inline void setLabel(const std::string &label) {
-		mLabel = label;
-	};
 	const std::string &getCallId();
 	void setCallId(const std::string &callId);
 	const std::string &getFromTag();
@@ -189,6 +183,9 @@ public:
 	void setWindowId(void *newWindowId);
 	void *getWindowId() const;
 
+	bool setLabel(const std::string &label, const LinphoneStreamType type);
+	const std::string &getLabel(const LinphoneStreamType type) const;
+
 	bool setStreamCapability(const LinphoneMediaDirection &direction, const LinphoneStreamType type);
 	LinphoneMediaDirection getStreamCapability(const LinphoneStreamType type) const;
 
@@ -212,7 +209,6 @@ private:
 	std::weak_ptr<Participant> mParticipant;
 	std::shared_ptr<Address> mGruu;
 	std::string mName;
-	std::string mLabel;
 	std::shared_ptr<CallSession> mSession;
 	std::string mCapabilityDescriptor;
 	std::string mCallId;
@@ -233,6 +229,7 @@ private:
 	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
 	std::map<LinphoneStreamType, bool> streamAvailabilities;
 	std::map<LinphoneStreamType, uint32_t> ssrc;
+	std::map<LinphoneStreamType, std::string> label;
 
 	void *mUserData = nullptr;
 

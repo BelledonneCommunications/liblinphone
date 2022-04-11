@@ -123,10 +123,19 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params) {
 		if (index >= mStreams.size() || ((s = mStreams[index].get()) == nullptr)) {
 			s = createStream(params);
 		} else if (s) {
-			if (s->getType() != params.getLocalStreamDescription().type) {
-				lError() << "Inconsistency detected while creating streams. Type has changed from "
-				         << sal_stream_type_to_string(s->getType()) << " to "
-				         << sal_stream_type_to_string(params.getLocalStreamDescription().type) << "!";
+			if (s->getType() != params.getLocalStreamDescription().getType()) {
+				if (params.getLocalStreamDescription().getRtpPort() == 0) {
+					lInfo() << "Restarting stream at index " << index << " because its type has changed from "
+					        << sal_stream_type_to_string(s->getType()) << " to "
+					        << sal_stream_type_to_string(params.getLocalStreamDescription().type) << "!";
+					s->stop();
+					s = createStream(params);
+				} else {
+					lInfo() << "Invalid attempt to change type of stream at index " << index << " from "
+					        << sal_stream_type_to_string(s->getType()) << " to "
+					        << sal_stream_type_to_string(params.getLocalStreamDescription().type)
+					        << " because the RTP port wasn't 0 but " << params.getLocalStreamDescription().getRtpPort();
+				}
 			} else if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED) {
 				/*
 				 * Special case: due to implementation constraint, it is necessary to instanciate a new Stream when

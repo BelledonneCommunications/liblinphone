@@ -20,6 +20,7 @@
 
 #include "event-publish.h"
 
+#include "account/account.h"
 #include "core/core.h"
 #include "core_private.h"
 

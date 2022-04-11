@@ -64,7 +64,7 @@ void ConferenceParams::updateFromAccount(
 				auto core = account->getCore();
 				m_factoryAddress = accountParams->getAudioVideoConferenceFactoryAddress();
 				if (m_factoryAddress && (linphone_core_get_global_state(core) != LinphoneGlobalStartup)) {
-					lInfo() << "Update conference parameters from account, factory: " << m_factoryAddress->toString();
+					lInfo() << "Update conference parameters from account, factory: " << *m_factoryAddress;
 				}
 			}
 		} else lInfo() << "Update conference parameters from account: no account parameters";
@@ -92,5 +92,28 @@ const std::string &ConferenceParams::getUtf8Subject() const {
 void ConferenceParams::setConferenceAddress(const std::shared_ptr<Address> conferenceAddress) {
 	m_conferenceAddress = Address::create(conferenceAddress->getUri());
 };
+
+ConferenceParams::SecurityLevel ConferenceParams::getSecurityLevelFromAttribute(const string &level) {
+	if (level.compare("point-to-point") == 0) {
+		return ConferenceParams::SecurityLevel::PointToPoint;
+	} else if (level.compare("end-to-end") == 0) {
+		return ConferenceParams::SecurityLevel::EndToEnd;
+	} else {
+		return ConferenceParams::SecurityLevel::None;
+	}
+	return ConferenceParams::SecurityLevel::None;
+}
+
+string ConferenceParams::getSecurityLevelAttribute(const ConferenceParams::SecurityLevel &level) {
+	switch (level) {
+		case ConferenceParams::SecurityLevel::None:
+			return "none";
+		case ConferenceParams::SecurityLevel::PointToPoint:
+			return "point-to-point";
+		case ConferenceParams::SecurityLevel::EndToEnd:
+			return "end-to-end";
+	}
+	return "none";
+}
 
 LINPHONE_END_NAMESPACE
