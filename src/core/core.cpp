@@ -151,7 +151,6 @@ void CorePrivate::init () {
 			} else lWarning() << "ZRTP secrets database explicitely not requested";
 		}
 	}
-	reloadLdapList();
 
 #ifdef __ANDROID__
 	// On Android assume Core has been started in background,
