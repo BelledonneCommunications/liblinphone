@@ -581,7 +581,8 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 }
 
 bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
-	return isEncryptionMandatory() && (getNegotiatedMediaEncryption()==LinphoneMediaEncryptionSRTP) && !md->hasSrtp();
+	L_Q();
+	return linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_any_encryption", 0) ? (getNegotiatedMediaEncryption()==LinphoneMediaEncryptionNone) : (isEncryptionMandatory() && (getNegotiatedMediaEncryption()==LinphoneMediaEncryptionSRTP) && !md->hasSrtp());
 }
 
 void MediaSessionPrivate::updating(bool isUpdate) {
@@ -3917,8 +3918,9 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 	L_D();
 	CallSession::State nextState;
 	LinphoneStatus result = 0;
-	if (!d->isUpdateAllowed(nextState))
+	if (!d->isUpdateAllowed(nextState)) {
 		return -1;
+	}
 
 	bool noUserConsent = getMediaParams()->getPrivate()->getNoUserConsent();
 	if (method != CallSession::UpdateMethod::Default) {
