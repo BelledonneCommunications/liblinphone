@@ -4195,13 +4195,15 @@ static void imdn_for_group_chat_room (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
-	LinphoneChatRoom *marieCr = NULL, *paulineCr = NULL, *chloeCr = NULL;
+	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
+	LinphoneChatRoom *marieCr = NULL, *marie2Cr = NULL, *paulineCr = NULL, *chloeCr = NULL;
 	const LinphoneAddress *confAddr = NULL;
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, chloe);
+	coresManagerList = bctbx_list_append(coresManagerList, marie2);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -4209,12 +4211,14 @@ static void imdn_for_group_chat_room (void) {
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	stats initialChloeStats = chloe->stat;
+	stats initialMarie2Stats = marie2->stat;
 	time_t initialTime = ms_time(NULL);
 
 	// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(chloe->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie2->lc));
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
@@ -4232,10 +4236,14 @@ static void imdn_for_group_chat_room (void) {
 	chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloeCr)) goto end;
 
+	marie2Cr = check_creation_chat_room_client_side(coresList, marie2, &initialMarie2Stats, confAddr, initialSubject, 2, TRUE);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie2Cr)) goto end;
+
 	// Chloe begins composing a message
 	const char *chloeTextMessage = "Hello";
 	LinphoneChatMessage *chloeMessage = _send_message(chloeCr, chloeTextMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneMessageReceived, initialMarie2Stats.number_of_LinphoneMessageReceived + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageSent, 1, 1000));
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
@@ -4280,6 +4288,9 @@ static void imdn_for_group_chat_room (void) {
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDelivered));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateNotDelivered));
 
+	// Marie2 should have received marie's Display IMDN, causing it's own chatroom to be marked as read as well automatically
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marie2Cr), 0, int, "%d");
+
 	// Pauline also marks the message as read, check that the state is now displayed on Chloe's side
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 5000));
@@ -4300,10 +4311,12 @@ end:
 	if (marieCr) linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	if (chloeCr) linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
 	if (paulineCr) linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	if (marie2Cr) linphone_core_manager_delete_chat_room(marie2, marie2Cr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(marie2);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(chloe);
 }

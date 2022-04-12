@@ -265,8 +265,16 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 				}
 			} else if (displayNotification.present()) {
 				auto &status = displayNotification.get().getStatus();
-				if (status.getDisplayed().present() && linphone_im_notif_policy_get_recv_imdn_displayed(policy))
+				if (status.getDisplayed().present() && linphone_im_notif_policy_get_recv_imdn_displayed(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::Displayed, imdnTime);
+					if (cr->getLocalAddress().getAddressWithoutGruu() == chatMessage->getFromAddress().getAddressWithoutGruu()) {
+						auto lastMsg = cr->getLastChatMessageInHistory();
+						if (lastMsg == cm) {
+							lInfo() << "Received Display IMDN from ourselves for last message in this chat room, marking it as read";
+							cr->markAsRead();
+						}
+					}
+				}
 			}
 		}
 	}
