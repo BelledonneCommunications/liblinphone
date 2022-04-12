@@ -36,6 +36,7 @@
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "factory/factory.h"
 #include "logger/logger.h"
 #include "sal/refer-op.h"
 
@@ -169,7 +170,7 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (!previousSession && !found) {
 		q->setState(ConferenceInterface::State::CreationPending);
 		// Handle participants addition
-		list<IdentityAddress> identAddresses = ClientGroupChatRoom::parseResourceLists(op->getRemoteBody());
+		list<IdentityAddress> identAddresses = Utils::parseResourceLists(op->getRemoteBody());
 		for (const auto &addr : identAddresses) {
 			auto participant = q->findParticipant(addr);
 			if (!participant) {
@@ -331,7 +332,7 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 
 	getConference()->setSubject(subject);
-	for (const auto &addr : Conference::parseResourceLists(content))
+	for (const auto &addr : Utils::parseResourceLists(content))
 		getConference()->participants.push_back(Participant::create(getConference().get(),addr));
 
 	if (params->getEphemeralMode() == AbstractChatRoom::EphemeralMode::AdminManaged) {
@@ -659,7 +660,7 @@ bool ClientGroupChatRoom::addParticipants (
 
 void ClientGroupChatRoom::sendInvite (std::shared_ptr<CallSession> &session, const list<IdentityAddress> & addressList) {
 	Content content;
-	content.setBodyFromUtf8(getConference()->getResourceLists(addressList));
+	content.setBodyFromUtf8(Utils::getResourceLists(addressList));
 	content.setContentType(ContentType::ResourceLists);
 	content.setContentDisposition(ContentDisposition::RecipientList);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
@@ -805,7 +806,7 @@ void ClientGroupChatRoom::exhume () {
 	Content content;
 	list<IdentityAddress> addresses;
 	addresses.push_front(remoteParticipant);
-	content.setBodyFromUtf8(conference->getResourceLists(addresses));
+	content.setBodyFromUtf8(Utils::getResourceLists(addresses));
 	content.setContentType(ContentType::ResourceLists);
 	content.setContentDisposition(ContentDisposition::RecipientList);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {

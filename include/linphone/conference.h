@@ -297,8 +297,9 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conference);
 
 /**
  * Get URIs of all participants of one conference
- * The returned bctbx_list_t contains URIs of all participant. That list must be
+ * The returned bctbx_list_t contains URIs of all participants. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
+ * @warning The returned list does not include me.
  * @param conference A #LinphoneConference @notnil
  * @return The list of the participants' address active in the conference. \bctbx_list{LinphoneAddress} @maybenil @tobefreed
  * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
@@ -307,6 +308,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_partic
 
 /**
  * Get list of all participants of a conference
+ * @warning The returned list does not include me.
  * @param conference A #LinphoneConference @notnil
  * @return The list of participants of the conference. \bctbx_list{LinphoneParticipant} @maybenil @tobefreed
  */
@@ -318,13 +320,6 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const Lin
  * @return The list of participant devices of the conference. \bctbx_list{LinphoneParticipantDevice} @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_device_list(const LinphoneConference *conference);
-
-/**
- * Get list of all participant devices of a conference
- * @param conference A #LinphoneConference @notnil
- * @return The list of participant devices of the conference. \bctbx_list{LinphoneParticipantDevice} @maybenil @tobefreed
- */
-LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 
 /**
  * @param conference A #LinphoneConference @notnil
@@ -466,7 +461,7 @@ LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConf
 
 /**
  * For a local audio video conference, this function returns the participant hosting the conference
- * For a remote audio video conference, this function returns the focus of the conference
+ * For a remote audio video conference, this function returns the local participant of the conference
  * @param conference The #LinphoneConference object. @notnil
  * @return a #LinphoneParticipant . @notnil
  */
@@ -521,7 +516,7 @@ LINPHONE_PUBLIC int linphone_conference_leave(LinphoneConference *conference);
 
 /**
  * For a local audio video conference, this function compares the address provided as argument with that of participant hosting the conference
- * For a remote audio video conference, this function compares the address provided as argument with that of the focus of the conference
+ * For a remote audio video conference, this function compares the address provided as argument with that of the local participant of the conference
  * @param conference A #LinphoneConference object @notnil
  * @param uri A #LinphoneAddress object @notnil
  * @return TRUE if the participant is me, FALSE otherwise.

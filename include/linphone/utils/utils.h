@@ -224,6 +224,9 @@ namespace Utils {
 	 * "lime,groupchat/1.1,ephemeral". If absent, the version number is arbitrary supposed to be 1.0.
 	 */
 	LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
+	std::string getSipFragAddress(const Content & content);
+	std::string getResourceLists (const std::list<IdentityAddress> &addresses);
+	std::list<IdentityAddress> parseResourceLists (const Content &content);
 }
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream & ostr, const Utils::Version &version);

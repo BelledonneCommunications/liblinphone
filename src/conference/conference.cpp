@@ -480,56 +480,6 @@ bool Conference::isMe (const IdentityAddress &addr) const {
 
 // -----------------------------------------------------------------------------
 
-string Conference::getResourceLists (const list<IdentityAddress> &addresses) {
-#ifdef HAVE_ADVANCED_IM
-	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
-	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
-	for (const auto &addr : addresses) {
-		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asString());
-		l.getEntry().push_back(entry);
-	}
-	rl.getList().push_back(l);
-
-	Xsd::XmlSchema::NamespaceInfomap map;
-	stringstream xmlBody;
-	serializeResourceLists(xmlBody, rl, map);
-	return xmlBody.str();
-#else
-	lWarning() << "Advanced IM such as group chat is disabled!";
-	return "";
-#endif
-}
-
-// -----------------------------------------------------------------------------
-
-list<IdentityAddress> Conference::parseResourceLists (const Content &content) {
-#ifdef HAVE_ADVANCED_IM
-	if ((content.getContentType() == ContentType::ResourceLists)
-		&& ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList))
-			|| (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory))
-		)
-	) {
-		istringstream data(content.getBodyAsString());
-		unique_ptr<Xsd::ResourceLists::ResourceLists> rl(Xsd::ResourceLists::parseResourceLists(
-			data,
-			Xsd::XmlSchema::Flags::dont_validate
-		));
-		list<IdentityAddress> addresses;
-		for (const auto &l : rl->getList()) {
-			for (const auto &entry : l.getEntry()) {
-				IdentityAddress addr(entry.getUri());
-				addresses.push_back(move(addr));
-			}
-		}
-		return addresses;
-	}
-	return list<IdentityAddress>();
-#else
-	lWarning() << "Advanced IM such as group chat is disabled!";
-	return list<IdentityAddress>();
-#endif
-}
-
 void Conference::setLastNotify (unsigned int lastNotify) {
 	this->lastNotify = lastNotify;
 }

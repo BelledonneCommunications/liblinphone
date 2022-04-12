@@ -72,6 +72,7 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 		const auto result = unparsed_cfgs.insert(cfg);
 		if (!result.second) unparsed_cfgs[cfg.first] = cfg.second;
 	}
+	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto & pt : other.already_assigned_payloads) {
 		already_assigned_payloads.push_back(payload_type_clone(pt));
 	}

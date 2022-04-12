@@ -131,6 +131,9 @@ protected:
 	mutable Address referToAddress;
 	std::string emptyString = "";
 	Address emptyAddress = Address();
+	// This counter is used to keep active track of reINVITEs and UPDATEs under processing at any given time.
+	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction queue is popped after receiving the 100 Trying and not the 200 Ok
+	int nbProcessingUpdates = 0;
 
 	SalCallOp *op = nullptr;
 

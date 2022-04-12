@@ -270,7 +270,8 @@ int PayloadTypeHandler::getRemainingBandwidthForVideo (int total, int audio) {
 
 bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const std::list<OrtpPayloadType*> & codecs, int number, const OrtpPayloadType *ignore) {
 	for (const auto & pt : codecs) {
-		if ((pt != ignore) && (payload_type_get_number(pt) == number)) return false;
+		if (!pt) continue;
+		if (pt && (pt != ignore) && (payload_type_get_number(pt) == number)) return false;
 	}
 	return true;
 }

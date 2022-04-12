@@ -307,7 +307,24 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 				const auto previousDeviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 
-				if ((state != StateType::deleted) && (device)) {
+				if (state == StateType::deleted) {
+
+					participant->removeDevice(gruu);
+
+					if (device) {
+						// Set participant device state to left in case the application regularly checks its state
+						device->setState(ParticipantDevice::State::Left);
+					}
+
+					if (!isFullState && device && participant) {
+						conf->notifyParticipantDeviceRemoved(
+							creationTime,
+							isFullState,
+							participant,
+							device
+						);
+					}
+				} else if (device) {
 /*
 					auto & deviceAnySequence (endpoint.get().getAny());
 
@@ -388,24 +405,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							device->setState(ParticipantDevice::State::Left);
 						}
 					}
-				}
-
-				if (state == StateType::deleted) {
-
-					participant->removeDevice(gruu);
-
-					if (!isFullState && device && participant) {
-						conf->notifyParticipantDeviceRemoved(
-							creationTime,
-							isFullState,
-							participant,
-							device
-						);
-					}
-
-				} else if (device) {
-
-					lInfo() << "Participant device " << gruu.asString() << " is successfully added";
 
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
@@ -415,13 +414,18 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					if (conf->isMe(address) && conf->getMainSession())
 						device->setSession(conf->getMainSession());
 
-					if(!isFullState && (state == StateType::full)) {
-						conf->notifyParticipantDeviceAdded(
-							creationTime,
-							isFullState,
-							participant,
-							device
-						);
+					if(state == StateType::full) {
+						lInfo() << "Participant device " << gruu.asString() << " has been successfully added";
+						if(!isFullState) {
+							conf->notifyParticipantDeviceAdded(
+								creationTime,
+								isFullState,
+								participant,
+								device
+							);
+						}
+					} else {
+						lInfo() << "Participant device " << gruu.asString() << " has been successfully updated";
 					}
 
 					if (endpoint.getStatus().present()) {

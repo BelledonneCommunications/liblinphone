@@ -32,6 +32,10 @@
 
 #include "private.h"
 
+#ifdef HAVE_ADVANCED_IM
+#include "xml/resource-lists.h"
+#endif
+
 // =============================================================================
 
 using namespace std;
@@ -307,6 +311,70 @@ map<string, Utils::Version> Utils::parseCapabilityDescriptor(const string &descr
 		
 	}
 	return result;
+}
+
+std::string Utils::getSipFragAddress(const Content & content) {
+	if (content.getContentType() != ContentType::SipFrag) {
+		lError() << "Content type is not SipFrag hence " << __func__ << " is unable to extract the address";
+		return std::string();
+	}
+	// Extract Contact header from sipfrag content
+	auto id = content.getBodyAsUtf8String();
+	std::string toErase = "From: ";
+	size_t contactPosition = id.find(toErase);
+	if (contactPosition != std::string::npos) id.erase(contactPosition, toErase.length());
+	IdentityAddress tmpIdentityAddress(id);
+	return tmpIdentityAddress.asString();
+}
+
+std::string Utils::getResourceLists (const std::list<IdentityAddress> &addresses) {
+#ifdef HAVE_ADVANCED_IM
+	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
+	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
+	for (const auto &addr : addresses) {
+		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asString());
+		l.getEntry().push_back(entry);
+	}
+	rl.getList().push_back(l);
+
+	Xsd::XmlSchema::NamespaceInfomap map;
+	std::stringstream xmlBody;
+	serializeResourceLists(xmlBody, rl, map);
+	return xmlBody.str();
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return "";
+#endif
+}
+
+// -----------------------------------------------------------------------------
+
+std::list<IdentityAddress> Utils::parseResourceLists (const Content &content) {
+#ifdef HAVE_ADVANCED_IM
+	if ((content.getContentType() == ContentType::ResourceLists)
+		&& ((content.getContentDisposition().weakEqual(ContentDisposition::RecipientList))
+			|| (content.getContentDisposition().weakEqual(ContentDisposition::RecipientListHistory))
+		)
+	) {
+		std::istringstream data(content.getBodyAsString());
+		std::unique_ptr<Xsd::ResourceLists::ResourceLists> rl(Xsd::ResourceLists::parseResourceLists(
+			data,
+			Xsd::XmlSchema::Flags::dont_validate
+		));
+		std::list<IdentityAddress> addresses;
+		for (const auto &l : rl->getList()) {
+			for (const auto &entry : l.getEntry()) {
+				IdentityAddress addr(entry.getUri());
+				addresses.push_back(std::move(addr));
+			}
+		}
+		return addresses;
+	}
+	return std::list<IdentityAddress>();
+#else
+	lWarning() << "Advanced IM such as group chat is disabled!";
+	return std::list<IdentityAddress>();
+#endif
 }
 
 LINPHONE_END_NAMESPACE

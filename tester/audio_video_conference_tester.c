@@ -518,7 +518,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,initial_marie_stat.number_of_LinphoneCallStreamsRunning+2,3000));
 
 	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
-	wait_for_list(lcs,NULL,0,1000);
+	wait_for_list(lcs,NULL,0,5000);
 
 	// Check that laure received volumes from other participant's devices
 	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);

@@ -195,7 +195,6 @@ bool IceService::prepare(){
 	// Start ICE gathering if needed.
 	if (!ice_session_candidates_gathered(mIceSession)) {
 		int err = gatherIceCandidates();
-
 		if (err == 0) {
 			// Ice candidates gathering wasn't started, but we can proceed with the call anyway.
 			return false;

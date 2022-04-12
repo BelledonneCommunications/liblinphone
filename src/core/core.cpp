@@ -1514,7 +1514,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 
 	if (!addressesList.empty()) {
 		Content content;
-		content.setBodyFromUtf8(Conference::getResourceLists(addressesList));
+		content.setBodyFromUtf8(Utils::getResourceLists(addressesList));
 		content.setContentType(ContentType::ResourceLists);
 		content.setContentDisposition(ContentDisposition::RecipientList);
 		if (linphone_core_content_encoding_supported(lc, "deflate")) {

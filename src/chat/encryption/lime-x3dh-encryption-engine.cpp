@@ -27,6 +27,7 @@
 #include "conference/participant.h"
 #include "conference/participant-device.h"
 #include "core/core.h"
+#include "factory/factory.h"
 #include "c-wrapper/c-wrapper.h"
 #include "event-log/conference/conference-security-event.h"
 #include "lime-x3dh-encryption-engine.h"
@@ -413,14 +414,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		for (const auto &content : contentList) {
 			if (content.getContentType() != ContentType::SipFrag)
 				continue;
-
-			// Extract Contact header from sipfrag content
-			senderDeviceId = content.getBodyAsUtf8String();
-			string toErase = "From: ";
-			size_t contactPosition = senderDeviceId.find(toErase);
-			if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
-			IdentityAddress tmpIdentityAddress(senderDeviceId);
-			senderDeviceId = tmpIdentityAddress.asString();
+			senderDeviceId = Utils::getSipFragAddress(content);
 		}
 	}
 

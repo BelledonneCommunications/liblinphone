@@ -103,8 +103,6 @@ public:
 
 	virtual std::shared_ptr<Conference> getConference () const override {return conference;};
 
-	static std::list<IdentityAddress> parseResourceLists (const Content &content);
-
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 

@@ -326,10 +326,13 @@ void check_local_desc_stream (LinphoneCall *call) {
 
 void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
 	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
-	BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
-	BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
+	BC_ASSERT_PTR_NOT_NULL(call_local_desc);
+	if (call_local_desc) {
+		BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
+		BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
+		BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
+		BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
+	}
 }
 
 int _linphone_call_get_nb_audio_steams(const LinphoneCall * call) {

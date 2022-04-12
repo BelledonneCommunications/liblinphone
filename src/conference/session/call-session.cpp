@@ -26,11 +26,13 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "conference/participant.h"
 #include "conference/params/call-session-params-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/call-session.h"
 #include "conference/conference-scheduler.h"
 #include "core/core-p.h"
+#include "factory/factory.h"
 #include "logger/logger.h"
 
 #include "conference_private.h"
@@ -76,7 +78,6 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 	if (state != newState){
 		prevState = state;
 		prevMessageState = messageState;
-
 		// Make sanity checks with call state changes. Any bad transition can result in unpredictable results
 		// or irrecoverable errors in the application.
 		if ((state == CallSession::State::End) || (state == CallSession::State::Error)) {
@@ -696,7 +697,6 @@ bool CallSessionPrivate::isUpdateAllowed (CallSession::State &nextState) const {
 			lError() << "Update is not allowed in [" << Utils::toString(state) << "] state";
 			return false;
 	}
-
 	return true;
 }
 
@@ -874,17 +874,6 @@ void CallSessionPrivate::setContactOp () {
 					conference->setConferenceAddress(contactAddress);
 				}
 			}
-
-			#ifdef HAVE_DB_STORAGE
-			auto &mainDb = q->getCore()->getPrivate()->mainDb;
-			if (mainDb)  {
-				const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*q->getRemoteAddress()));
-				if (confInfo) {
-					// me is admin if the organizer is the same as me
-					contactAddress.setParam("admin", Utils::toString((confInfo->getOrganizer() == q->getLocalAddress())));
-				}
-			}
-			#endif
 
 			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
 			op->setContactAddress(contactAddress.getInternalAddress());
@@ -1513,6 +1502,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const UpdateMe
 	CallSession::State initialState = d->state;
 	if (!d->isUpdateAllowed(nextState))
 		return -1;
+	d->setState(nextState, "Updating call");
 	if (d->currentParams == csp)
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (csp)
@@ -1587,7 +1577,7 @@ Address CallSession::getContactAddress() const {
 	} else if (d->getDestProxy() && linphone_core_conference_server_enabled(getCore()->getCCore()) && linphone_proxy_config_get_contact(d->getDestProxy())) {
 		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->getDestProxy()));
 	} else {
-		lError() << "Unable to retrieve contact address from proxy confguration for call " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
+		lError() << "Unable to retrieve contact address from proxy confguration for call session " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
 	}
 	if (contactAddressStr) {
 		Address contactAddress(contactAddressStr);
@@ -1757,17 +1747,49 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 		}
 	}
 
-	#ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	if (mainDb)  {
-		const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*getRemoteAddress()));
-		if (confInfo) {
-			// me is admin if the organizer is the same as me
-			contactAddress.setParam("admin", Utils::toString((confInfo->getOrganizer() == getLocalAddress())));
+	bool isAdmin = false;
+	LinphoneConference * conference = d->listener ? d->listener->getCallSessionConference(const_pointer_cast<CallSession>(getSharedFromThis())) : nullptr;
+	if (conference) {
+		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+		const auto & me = cppConference->getMe();
+		isAdmin = me->isAdmin();
+		contactAddress.setParam("admin", Utils::toString(isAdmin));
+	} else {
+		IdentityAddress organizer = IdentityAddress();
+		const auto sipfrag = d->op ? d->op->getContentInRemote(ContentType::SipFrag) : Content();
+		const auto & remoteContactSalAddress = d->op ? d->op->getRemoteContactAddress() : nullptr;
+
+		auto guessedConferenceAddress = ConferenceAddress();
+
+		// If remote contact address is not yet available, try with remote address
+		if (remoteContactSalAddress) {
+			auto remoteContactAddressStr = sal_address_as_string(remoteContactSalAddress);
+			Address remoteContactAddress(remoteContactAddressStr);
+			ms_free(remoteContactAddressStr);
+			if ((!sipfrag.isEmpty()) && remoteContactAddress.hasParam("isfocus")) {
+				auto organizerId = Utils::getSipFragAddress(sipfrag);
+				organizer = IdentityAddress(organizerId);
+			}
+			guessedConferenceAddress = ConferenceAddress(remoteContactAddress);
+		} else {
+			guessedConferenceAddress = ConferenceAddress(*getRemoteAddress());
+		}
+
+		#ifdef HAVE_DB_STORAGE
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		if (mainDb && (guessedConferenceAddress != ConferenceAddress()))  {
+			const auto & confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
+			if (confInfo) {
+				organizer = confInfo->getOrganizer();
+			}
+		}
+		#endif
+
+		if (organizer != IdentityAddress()) {
+			isAdmin = (organizer == getLocalAddress());
+			contactAddress.setParam("admin", Utils::toString(isAdmin));
 		}
 	}
-	#endif
-
 }
 
 // -----------------------------------------------------------------------------

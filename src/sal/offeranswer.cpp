@@ -901,6 +901,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 			ms_warning("No matching stream for %zu",i);
 		}
 	}
+	result->times=remote_answer->times;
 	result->bandwidth=remote_answer->bandwidth;
 	result->origin_addr=remote_answer->origin_addr;
 	result->addr=remote_answer->addr;
@@ -1012,6 +1013,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
+	result->times=local_capabilities->times;
 	result->bandwidth=local_capabilities->bandwidth;
 	result->origin_addr=local_capabilities->origin_addr;
 	result->session_ver=local_capabilities->session_ver;
@@ -1030,7 +1032,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		if ((local_capabilities->rtcp_xr.enabled == TRUE) && (local_capabilities->dir == SalStreamSendRecv)) {
 			memcpy(&result->rtcp_xr, &local_capabilities->rtcp_xr, sizeof(result->rtcp_xr));
 		} else {
-			result->rtcp_xr.enabled = TRUE;
+			result->rtcp_xr.enabled = FALSE;
 		}
 	}
 

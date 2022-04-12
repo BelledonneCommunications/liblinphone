@@ -33,6 +33,7 @@
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "core/core-p.h"
+#include "factory/factory.h"
 #include "event-log/events.h"
 #include "logger/logger.h"
 #include "sal/refer-op.h"
@@ -513,7 +514,7 @@ bool ServerGroupChatRoomPrivate::initializeParticipants (const shared_ptr<Partic
 
 	handleSubjectChange(op);
 	// Handle participants addition
-	list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(op->getRemoteBody());
+	list<IdentityAddress> identAddresses = Utils::parseResourceLists(op->getRemoteBody());
 	// DO not try to add participants with invalid address
 	for (auto it = identAddresses.begin(); it != identAddresses.end(); ) {
 		if (!((*it).isValid())) {
@@ -951,7 +952,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	}
 
 	Content content;
-	content.setBodyFromUtf8(q->getConference()->getResourceLists(addressesList));
+	content.setBodyFromUtf8(Utils::getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
 	content.setContentDisposition(ContentDisposition::RecipientListHistory);
 	if (linphone_core_content_encoding_supported(q->getCore()->getCCore(), "deflate"))

@@ -169,6 +169,8 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 		user.setState(StateType::full);
 
 		for (const auto &device : participant->getDevices()) {
+			// Do not add devices with invalid addresses to the notify full state
+			if (!device->getAddress().isValid()) continue;
 			const string &gruu = device->getAddress().asString();
 			EndpointType endpoint = EndpointType();
 			endpoint.setEntity(gruu);

@@ -755,10 +755,6 @@ void ChatRoom::addListener(std::shared_ptr<ConferenceListenerInterface> listener
 	}
 }
 
-list<IdentityAddress> ChatRoom::parseResourceLists (const Content &content) {
-	return Conference::parseResourceLists(content); 
-}
-
 bool ChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
 	bool soFarSoGood = true;
 	for (const auto &p : participants)

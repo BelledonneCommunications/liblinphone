@@ -1550,7 +1550,8 @@ int SalCallOp::update (const string &subject, bool noUserConsent, bool withSDP, 
 		}
 		fillSessionExpiresHeaders(update, BELLE_SIP_HEADER_SESSION_EXPIRES_UAC, delta);
 		if (withSDP) fillInvite(update);
-		return sendRequestWithContact(update, true);
+		auto ret = sendRequestWithContact(update, true);
+		return ret;
 	}
 	// Why did it fail?
 	if (belle_sip_dialog_request_pending(mDialog))

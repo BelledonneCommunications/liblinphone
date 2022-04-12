@@ -47,6 +47,7 @@ void Participant::configure (Conference *conference, const IdentityAddress &addr
 }
 
 Participant::~Participant() {
+	clearDevices();
 }
 
 // =============================================================================
@@ -75,7 +76,11 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice (const std::shared_ptr
 	shared_ptr<ParticipantDevice> device = findDevice(session, false);
 	if (device)
 		return device;
-	lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session << " to participant " << getAddress().asString();
+	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
+		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session << " to participant " << getAddress().asString();
+	} else {
+		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with session " << session << " to participant " << getAddress().asString();
+	}
 	device = ParticipantDevice::create(getSharedFromThis(), session, name);
 	devices.push_back(device);
 	return device;
@@ -85,7 +90,11 @@ std::shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress
 	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
 	if (device)
 		return device;
-	lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString() << " to participant " << getAddress().asString();
+	if (getCore() && (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalOn)) {
+		lInfo() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString() << " to participant " << getAddress().asString();
+	} else {
+		lDebug() << "Add device " << (name.empty() ? "<no-name>" : name) << " with address " << gruu.asString() << " to participant " << getAddress().asString();
+	}
 	device = ParticipantDevice::create(getSharedFromThis(), gruu, name);
 	devices.push_back(device);
 	return device;

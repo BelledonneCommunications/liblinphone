@@ -54,6 +54,7 @@
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
+#include "factory/factory.h"
 
 using namespace std;
 
@@ -123,7 +124,7 @@ static void call_received(SalCallOp *h) {
 						return;
 					}
 					IdentityAddress from(h->getFrom());
-					list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
+					list<IdentityAddress> identAddresses = Utils::parseResourceLists(h->getRemoteBody());
 					if (identAddresses.size() != 1) {
 						h->decline(SalReasonNotAcceptable);
 						h->release();
@@ -155,7 +156,7 @@ static void call_received(SalCallOp *h) {
 
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
-				list<IdentityAddress> participantList = Conference::parseResourceLists(h->getRemoteBody());
+				list<IdentityAddress> participantList = Utils::parseResourceLists(h->getRemoteBody());
 				if (participantList.size() == 1) {
 					IdentityAddress participant = participantList.front();
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->findExhumableOneToOneChatRoom(
@@ -370,7 +371,7 @@ static void call_refreshing(SalOp *op) {
 	}
 	auto sessionRef = session->getSharedFromThis();
 
-	L_GET_PRIVATE(sessionRef)->setState(CallSession::State::Updating, "Session refreshing");
+	L_GET_PRIVATE(sessionRef)->setState(LinphonePrivate::CallSession::State::Updating, "Session refreshing");
 }
 
 /* this callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session*/

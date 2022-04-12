@@ -120,9 +120,6 @@ public:
 	time_t getStartTime() const;
 	int getDuration() const;
 
-	static std::string getResourceLists (const std::list<IdentityAddress> &addresses);
-	static std::list<IdentityAddress> parseResourceLists (const Content &content);
-
 	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
 		confListeners.push_back(listener);
 	}

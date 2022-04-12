@@ -71,6 +71,7 @@ public:
 	std::shared_ptr<Core> getCore () const;
 
 	const IdentityAddress & getAddress () const;
+	bool updateAddress();
 	inline const std::string &getLabel () const { return mLabel; }
 	inline void setLabel (const std::string &label) { mLabel = label; };
 	inline const std::string &getName () const { return mName; }
@@ -126,7 +127,7 @@ protected:
 
 private:
 	std::weak_ptr<Participant> mParticipant;
-	mutable IdentityAddress mGruu;
+	IdentityAddress mGruu;
 	std::string mName;
 	std::string mLabel;
 	std::shared_ptr<CallSession> mSession;

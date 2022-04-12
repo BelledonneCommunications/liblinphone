@@ -26,6 +26,7 @@
 #include "conference/participant.h"
 #include "conference/conference.h"
 #include "core/core-p.h"
+#include "factory/factory.h"
 #include "logger/logger.h"
 #include "sal/sal_media_description.h"
 
@@ -465,6 +466,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						linphone_call_params_enable_audio(params, TRUE);
 						linphone_call_params_enable_video(params, (getRemoteParams()->videoEnabled() && conference->getCurrentParams().videoEnabled()) ? TRUE : FALSE);
 						linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
+						linphone_call_params_set_start_time(params, conference->getCurrentParams().getStartTime());
+						linphone_call_params_set_end_time(params, conference->getCurrentParams().getEndTime());
 						static_pointer_cast<MediaSession>(session)->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 						linphone_call_params_unref(params);
 					}
@@ -585,13 +588,16 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			remoteConference->setMainSession(session);
 		}
 	} else {
-
 		auto confParams = ConferenceParams::create(getCore()->getCCore());
 		std::shared_ptr<ConferenceInfo> conferenceInfo = 
 		#ifdef HAVE_DB_STORAGE
 			getCore()->getPrivate()->mainDb ? getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(remoteContactAddress) :
 		#endif
 			nullptr;
+
+		const auto op = session->getPrivate()->getOp();
+		const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
+		const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 		if (conferenceInfo) {
 			confParams->setSubject(conferenceInfo->getSubject());
 			auto startTime = conferenceInfo->getDateTime();
@@ -610,11 +616,20 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			const ConferenceAddress confAddr(conferenceInfo->getUri());
 			const ConferenceId confId(confAddr, session->getLocalAddress());
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), session, confAddr, confId, invitees, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
-		} else {
-			const auto & remoteParams = session->getRemoteParams();
+#ifdef HAVE_ADVANCED_IM
+		} else if (!resourceList.isEmpty() || !sipfrag.isEmpty()) {
+			const auto & remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
 			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
 			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
-
+			auto organizer = Utils::getSipFragAddress(sipfrag);
+			auto invitees = Utils::parseResourceLists(resourceList);
+			invitees.push_back(IdentityAddress(organizer));
+			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), session, remoteContactAddress, conferenceId, invitees, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
+#endif // HAVE_ADVANCED_IM
+		} else {
+			const auto & remoteParams = static_pointer_cast<MediaSession>(session)->getRemoteParams();
+			confParams->setStartTime(remoteParams->getPrivate()->getStartTime());
+			confParams->setEndTime(remoteParams->getPrivate()->getEndTime());
 			// It is expected that the core of the remote conference is the participant one
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
 		}

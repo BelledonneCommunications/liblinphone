@@ -230,6 +230,7 @@ void MediaSessionPrivate::accepted () {
 		lInfo() << "Rejecting media session";
 		md = nullptr;
 	}
+
 	if (md) {
 		/* There is a valid SDP in the response, either offer or answer, and we're able to start/update the streams */
 		CallSession::State nextState = CallSession::State::Idle;
@@ -253,7 +254,6 @@ void MediaSessionPrivate::accepted () {
 					nextState = CallSession::State::StreamsRunning;
 					nextStateMsg = "Streams running";
 				}
-
 				break;
 			case CallSession::State::EarlyUpdating:
 				nextState = prevState;
@@ -272,9 +272,14 @@ void MediaSessionPrivate::accepted () {
 				break;
 		}
 
-		if (nextState == CallSession::State::Idle)
-			lError() << "BUG: nextState is not set in accepted(), current state is " << Utils::toString(state);
-		else {
+		// A negative value of the counter may lead to unexpected behaviour, hence terminate here the execution in order to analyze what lead to this scenario
+		if (nbProcessingUpdates < 0) {
+			lFatal() << "The number of updates under processing for media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") should be greater than or equal to 0. Currently it is " << nbProcessingUpdates;
+		}
+
+		if (nextState == CallSession::State::Idle) {
+			lError() << "BUG: nextState is not set in accepted(), current state is " << Utils::toString(state) << " request pending " << op->canSendRequest(true, false);
+		} else {
 			updateRemoteSessionIdAndVer();
 			//getIceAgent().updateIceStateInCallStats();
 			updateStreams(md, nextState);
@@ -1420,9 +1425,9 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 
 	if (dev) {
 		const auto & label = dev->getLabel();
-
 		const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithLabel(label) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-		std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+		const auto alreadyAssignedPayloads = ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList);
+		std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, alreadyAssignedPayloads);
 		if (!l.empty()) {
 			newStream.setLabel(label);
 			const auto rtp_port = q->getRandomRtpPort(newStream);
@@ -1512,6 +1517,10 @@ SalStreamDescription & MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMed
 	} else {
 		const auto & idx = static_cast<decltype(md->streams)::size_type>(streamIdx);
 		try {
+			auto stream = md->streams.at(idx);
+			if (stream.getDirection() != SalStreamInactive) {
+				md->streams.insert(std::next(md->streams.begin(), static_cast<decltype(md->streams.begin())::difference_type>(idx)), stream);
+			}
 			return md->streams.at(idx);
 		} catch (std::out_of_range&) {
 			md->streams.resize(idx + 1);
@@ -1745,20 +1754,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	L_Q();
 	const auto & core = q->getCore()->getCCore();
 
-	bool conferenceCreated = true;
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
-	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
-	if (conference && !isInLocalConference) {
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto & conferenceState = cppConference->getState();
-		conferenceCreated = !((conferenceState == ConferenceInterface::State::Instantiated) || (conferenceState == ConferenceInterface::State::CreationPending));
-	}
 
+	LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	const std::shared_ptr<SalMediaDescription> & refMd = (conference) ? 
-			((isInLocalConference) ? oldMd : op->getRemoteMediaDescription()) :
-			((localIsOfferer) ? oldMd : op->getRemoteMediaDescription())
+		((isInLocalConference) ? oldMd : op->getRemoteMediaDescription()) :
+		((localIsOfferer) ? oldMd : op->getRemoteMediaDescription())
 	;
 
 	this->localIsOfferer = localIsOfferer;
@@ -1844,6 +1847,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	encList.push_back(getParams()->getMediaEncryption());
 
+	bool conferenceCreated = true;
 	bool isConferenceLayoutActiveSpeaker = false;
 	bool isVideoConferenceEnabled = false;
 	ConferenceLayout confLayout = ConferenceLayout::ActiveSpeaker;
@@ -1863,7 +1867,18 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
 		confLayout = (participantDevice && isInLocalConference) ? getRemoteParams()->getConferenceVideoLayout() : getParams()->getConferenceVideoLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+		if (isInLocalConference) {
+			// If the conference is dialing out to participants and an internal update (i.e. ICE reINVITE or capability negitiations reINVITE) occurs
+			if (getParams()->getPrivate()->getInternalCallUpdate() && (direction == LinphoneCallOutgoing)) {
+				conferenceCreated = (deviceState == ParticipantDevice::State::Present);
+			}
+		} else {
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto & conferenceState = cppConference->getState();
+			conferenceCreated = !((conferenceState == ConferenceInterface::State::Instantiated) || (conferenceState == ConferenceInterface::State::CreationPending));
+		}
 	}
+
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
 	if ((!conference || (localIsOfferer && getParams()->audioEnabled())) || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
@@ -1990,7 +2005,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 #ifdef HAVE_ADVANCED_IM
 	bool eventLogEnabled = !!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
-	if (eventLogEnabled && addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) {
+	if (conferenceCreated && eventLogEnabled && addVideoStream && participantDevice && ((deviceState == ParticipantDevice::State::Joining) || (deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::OnHold))) {
 		addConferenceParticipantVideostreams(md, oldMd, pth, encList);
 	}
 #endif // HAVE_ADVANCED_IM
@@ -2313,13 +2328,21 @@ std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() cons
 		}
 	}
 
-	unsigned int cryptoId = static_cast<unsigned int>(linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "crypto_suite_tag_starting_value", 1));
+	auto cryptoId = linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "crypto_suite_tag_starting_value", 1);
+	unsigned int cryptoTag = 0;
+	// crypto tag lower than 1 is not valid
+	if (cryptoId < 1) {
+		lWarning() << "Trying to set initial value of the crypto tag suite to a value lower than 1: " << cryptoId << ". Automatically fixing it by setting it to 1";
+		cryptoTag = 1;
+	} else {
+		cryptoTag = static_cast<unsigned int>(cryptoId);
+	}
 	for (auto suite:suitesList) {
 		if (doNotUseParams || !isEncryptionMandatory() || (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
 			SalSrtpCryptoAlgo newCrypto;
-			setupEncryptionKey(newCrypto, suite, cryptoId);
+			setupEncryptionKey(newCrypto, suite, cryptoTag);
 			cryptos.push_back(newCrypto);
-			cryptoId++;
+			cryptoTag++;
 		} else if (isEncryptionMandatory() && ms_crypto_suite_is_unencrypted(suite)) {
 			lWarning() << "Not offering " << std::string(ms_crypto_suite_to_string(suite)) << " because either RTP or RTCP streams is not encrypted";
 		} else {
@@ -2358,7 +2381,7 @@ void MediaSessionPrivate::performMutualAuthentication(){
 	// Perform mutual authentication if instant messaging encryption is enabled
 	auto encryptionEngine = q->getCore()->getEncryptionEngine();
 	// Is call direction really relevant ? might be linked to offerer/answerer rather than call direction ?
-	const std::shared_ptr<SalMediaDescription> & md = localIsOfferer ? localDesc : op->getRemoteMediaDescription();
+	const std::shared_ptr<SalMediaDescription> & md = localIsOfferer ? op->getLocalMediaDescription() : op->getRemoteMediaDescription();
 	const auto audioStreamIndex = md->findIdxBestStream(SalAudio);
 	Stream *stream = audioStreamIndex != -1 ? getStreamsGroup().getStream(audioStreamIndex) : nullptr;
 	MS2AudioStream *ms2a = dynamic_cast<MS2AudioStream*>(stream);
@@ -2375,7 +2398,7 @@ void MediaSessionPrivate::performMutualAuthentication(){
 
 void MediaSessionPrivate::startDtlsOnAllStreams () {
 	OfferAnswerContext params;
-	params.localMediaDescription = localDesc;
+	params.localMediaDescription = op->getLocalMediaDescription();
 	params.remoteMediaDescription = op->getRemoteMediaDescription();
 	params.resultMediaDescription = resultDesc;
 	if (params.remoteMediaDescription && params.resultMediaDescription){
@@ -2488,7 +2511,7 @@ void MediaSessionPrivate::onIceRestartNeeded(IceService & service){
 
 void MediaSessionPrivate::tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> & md) {
 	OfferAnswerContext ctx;
-	ctx.localMediaDescription = localDesc;
+	ctx.localMediaDescription = op->getLocalMediaDescription();
 	ctx.remoteMediaDescription = md;
 	ctx.resultMediaDescription = resultDesc;
 	lInfo() << "Early media response received from another branch, checking if media can be forked to this new destination";
@@ -2508,8 +2531,13 @@ void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription &resu
 }
 
 void MediaSessionPrivate::updateFrozenPayloads (std::shared_ptr<SalMediaDescription> & result) {
+	const auto localMediaDesc = op->getLocalMediaDescription();
 	for (size_t i = 0; i < result->streams.size(); i++) {
-		updateStreamFrozenPayloads(result->streams[i], localDesc->streams[i]);
+		if (i < localMediaDesc->streams.size()) {
+			updateStreamFrozenPayloads(result->streams[i], localMediaDesc->streams[i]);
+		} else {
+			lError() << "Local media description has " << localMediaDesc->streams.size() << " whereas result has " << result->streams.size();
+		}
 	}
 }
 
@@ -3965,7 +3993,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 		d->makeLocalMediaDescription(d->localIsOfferer, addCapabilityNegotiationAttributesToLocalMd, isCapabilityNegotiationReInvite);
 		const auto & localDesc = d->localDesc;
 
-		auto updateCompletionTask = [this, method, subject, localDesc, nextState]() -> LinphoneStatus{
+		auto updateCompletionTask = [this, method, subject, localDesc]() -> LinphoneStatus{
 			L_D();
 
 			CallSession::State previousState = d->state;
@@ -3976,7 +4004,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 
 			// Do not set state calling setState because we shouldn't call the callbacks as it may trigger an infinite loop.
 			// For example, at every state change, the core tries to run pending tasks for each and every session and this may lead to queue the same action multiple times
-			if (d->state != nextState) {
+			if (d->state != newState) {
 				d->state = newState;
 			}
 
