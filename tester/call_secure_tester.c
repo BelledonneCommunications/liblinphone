@@ -932,6 +932,36 @@ static void dtls_srtp_to_none_call_with_several_video_switches(void) {
 }
 #endif // VIDEO_ENABLED
 
+static void call_accepting_all_encryptions(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(marie->lc, TRUE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "accept_any_encryption", 1);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "accept_any_encryption", 1);
+
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_set_media_encryption(marie_params, LinphoneMediaEncryptionZRTP);
+
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_set_media_encryption(pauline_params, LinphoneMediaEncryptionZRTP);
+	BC_ASSERT_TRUE((call_with_params(marie,pauline,marie_params,pauline_params)));
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
+
+	const LinphoneCallParams *params = NULL;
+	params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionZRTP, int, "%d");
+	params = linphone_call_get_current_params(linphone_core_get_current_call(marie->lc));
+	BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionZRTP, int, "%d");
+
+	end_call(pauline, marie);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call", srtp_call),
 #ifdef VIDEO_ENABLED
@@ -979,7 +1009,8 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("ZRTP mandatory called by SRTP", zrtp_mandatory_called_by_srtp),
 	TEST_NO_TAG("Video SRTP call without audio", video_srtp_call_without_audio),
 	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux", dtls_srtp_audio_call_with_rtcp_mux),
-	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux not accepted", dtls_srtp_audio_call_with_rtcp_mux_not_accepted)
+	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux not accepted", dtls_srtp_audio_call_with_rtcp_mux_not_accepted),
+	TEST_NO_TAG("Call accepting all encryptions", call_accepting_all_encryptions)
 };
 
 test_suite_t call_secure_test_suite = {"Secure Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
