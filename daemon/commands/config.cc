@@ -65,14 +65,21 @@ ConfigSetCommand::ConfigSetCommand() :
 }
 
 void ConfigSetCommand::exec(Daemon *app, const string& args) {
-	string section,key,value;
+	string section,key,value,temp;
 	istringstream ist(args);
 	ist >> section >> key;
 	if (ist.fail()) {
 		app->sendResponse(Response("Missing section and/or key names."));
 		return;
 	}
-	ist>>value;
+	bool first = true;
+	while(ist>>temp){
+		if(!first)
+			value += ' ';
+		else
+			first = false;
+        value += temp;
+	}
 	linphone_config_set_string(linphone_core_get_config(app->getCore()), section.c_str(), key.c_str(), value.size()>0 ? value.c_str() : NULL);
 	app->sendResponse(ConfigResponse(value.c_str()));
 }

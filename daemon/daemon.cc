@@ -63,6 +63,7 @@
 #include "commands/conference.h"
 #include "commands/contact.h"
 #include "commands/dtmf.h"
+#include "commands/echo.h"
 #include "commands/firewall-policy.h"
 #include "commands/help.h"
 #include "commands/ipv6.h"
@@ -508,6 +509,7 @@ void Daemon::initCommands() {
 	mCommands.push_back(new IncallPlayerPauseCommand());
 	mCommands.push_back(new IncallPlayerResumeCommand());
 	mCommands.push_back(new MessageCommand());
+	mCommands.push_back(new EchoCalibrationCommand());
 	mCommands.sort(compareCommands);
 }
 

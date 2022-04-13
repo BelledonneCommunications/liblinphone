@@ -326,7 +326,7 @@ Video::Preview::Preview():
 										"Enabled"));
 	addExample(make_unique<DaemonCommandExample>("videopreview off",
 										"Status: Ok\n\n"
-										"Desabled"));
+										"Disabled"));
 }
 
 void Video::Preview::exec(Daemon* app, const string& args)
@@ -338,7 +338,7 @@ void Video::Preview::exec(Daemon* app, const string& args)
 		app->sendResponse(Response("Enabled", Response::Ok));
 	}else if(args == "off"){
 		linphone_core_enable_video_preview(app->getCore(), FALSE);
-		app->sendResponse(Response("Desabled", Response::Ok));
+		app->sendResponse(Response("Disabled", Response::Ok));
 	}else {
 		app->sendResponse(Response("Bad command. Use on/off.", Response::Error));
 	}

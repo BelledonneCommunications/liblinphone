@@ -65,6 +65,8 @@ set(DAEMON_SOURCE_FILES
 	commands/contact.h
 	commands/dtmf.cc
 	commands/dtmf.h
+	commands/echo.cc
+	commands/echo.h
 	commands/firewall-policy.cc
 	commands/firewall-policy.h
 	commands/help.cc
