@@ -675,7 +675,7 @@ static void renameFileAfterAutoDownload(shared_ptr<Core> core, FileContent *file
 
 	lInfo() << "Renaming downloaded file from [" << fileContent->getFilePath() << "] to [" << filepath << "]";
 	if (std::rename(fileContent->getFilePath().c_str(), filepath.c_str())) {
-		lError() << "Error while renaming file!";
+		lError() << "Error while renaming file! [" << strerror(errno)  << "]";
 	} else {
 		fileContent->setFilePath(filepath);
 	}
