@@ -1705,6 +1705,40 @@ static void search_friend_with_name(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void search_friend_with_aggregation(void) {
+	LinphoneMagicSearch *magicSearch = NULL;
+	bctbx_list_t *resultList = NULL;
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
+
+	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
+	linphone_friend_set_name(stephanieFriend, "Stephanie de Monaco");
+	LinphoneFriendPhoneNumber *stephaniePhoneNumber = linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33952636505", "work");
+	linphone_friend_add_phone_number_with_label(stephanieFriend, stephaniePhoneNumber);
+	linphone_friend_phone_number_unref(stephaniePhoneNumber);
+	LinphoneAddress *stephanieAddress = linphone_factory_create_address(linphone_factory_get(), "sip:stephanie@sip.example.org");
+	linphone_friend_add_address(stephanieFriend, stephanieAddress);
+	linphone_address_unref(stephanieAddress);
+	linphone_friend_list_add_local_friend(lfl, stephanieFriend);
+	linphone_friend_unref(stephanieFriend);
+
+	magicSearch = linphone_magic_search_new(manager->lc);
+
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationNone);
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationFriend);
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+
+	linphone_magic_search_unref(magicSearch);
+	linphone_core_manager_destroy(manager);
+}
+
 static void search_friend_with_name_with_uppercase(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -1903,7 +1937,7 @@ static void search_friend_large_database(void) {
 		memcpy(subBuff, searchedFriend, i);
 		subBuff[i] = '\0';
 		liblinphone_tester_clock_start(&start);
-		bctbx_list_t *resultList = linphone_magic_search_get_contacts(magicSearch, subBuff, "", LinphoneMagicSearchSourceFriends);
+		bctbx_list_t *resultList = linphone_magic_search_get_contacts_list(magicSearch, subBuff, "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationNone);
 		if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 			long long time;
 			ms_get_cur_time(&current);
@@ -2378,7 +2412,7 @@ static void async_search_friend_in_sources(void){
 
 // Check all selections	
 	for(int i = LinphoneMagicSearchSourceAll ; i < LinphoneMagicSearchSourceFriends + LinphoneMagicSearchSourceCallLogs + LinphoneMagicSearchSourceLdapServers + LinphoneMagicSearchSourceChatRooms ; ++i){
-		linphone_magic_search_get_contacts_async(magicSearch, "", "", i);
+		linphone_magic_search_get_contacts_list_async(magicSearch, "", "", i, LinphoneMagicSearchAggregationNone);
 		BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 		stat->number_of_LinphoneMagicSearchResultReceived = 0;
 		resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2387,9 +2421,9 @@ static void async_search_friend_in_sources(void){
 	}
 // Test on cancellable search
 
-	linphone_magic_search_get_contacts_async(magicSearch, "", "", LinphoneMagicSearchSourceAll);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "", "", LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);
 	wait_for_until(manager->lc,NULL,NULL,0,100);	// Do some quick actions like starting LDAP connection
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	wait_for_until(manager->lc,NULL,NULL,0,1000);
 	BC_ASSERT_TRUE(stat->number_of_LinphoneMagicSearchResultReceived == 1);	// Should not be 2 after 1s of processing
@@ -2444,7 +2478,7 @@ static void ldap_search(void){
 // Note on LDAP search: " ", "" should get the same results  :all
 
 	for(int i = 0 ; i < 2 ; ++i){
-		linphone_magic_search_get_contacts_async(magicSearch, i == 0 ? " " : "", "", LinphoneMagicSearchSourceLdapServers);
+		linphone_magic_search_get_contacts_list_async(magicSearch, i == 0 ? " " : "", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 		BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 		stat->number_of_LinphoneMagicSearchResultReceived = 0;
 		resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2454,7 +2488,7 @@ static void ldap_search(void){
 
 
 // Test synchronous version
-	resultList = linphone_magic_search_get_contacts(magicSearch, "u", "", LinphoneMagicSearchSourceAll );
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "u", "", LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	if(linphone_core_ldap_available(manager->lc)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),5 , int, "%d");
@@ -2481,35 +2515,35 @@ static void ldap_search(void){
 	}
 
 // Test star characters (not wild)
-	linphone_magic_search_get_contacts_async(magicSearch, "*", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "*", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "pa*ine", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "pa*ine", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "*pau", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "*pau", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "ine*", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "ine*", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "ine**", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "ine**", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2517,7 +2551,7 @@ static void ldap_search(void){
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
 // Test space character
-	linphone_magic_search_get_contacts_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers);// Laure Ardy
+	linphone_magic_search_get_contacts_list_async(magicSearch, "la dy", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);// Laure Ardy
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2529,7 +2563,7 @@ static void ldap_search(void){
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "pa ine", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "pa ine", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2540,7 +2574,7 @@ static void ldap_search(void){
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, " pau", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, " pau", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2552,7 +2586,7 @@ static void ldap_search(void){
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 		
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "ine ", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "ine ", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2563,7 +2597,7 @@ static void ldap_search(void){
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "ine  ", "", LinphoneMagicSearchSourceLdapServers);	// double spaces
+	linphone_magic_search_get_contacts_list_async(magicSearch, "ine  ", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);	// double spaces
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	resultList = linphone_magic_search_get_last_search(magicSearch);
@@ -2689,9 +2723,9 @@ static void ldap_features_delay(void){
 	}
 	// Test delay between LDAP calls
 	uint64_t t = bctbx_get_cur_time_ms();
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll);// t = 0
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);// t = 0
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll);// t = 400
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);// t = 400
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,2));
 	if( linphone_core_ldap_available(manager->lc))
 		BC_ASSERT_TRUE( bctbx_get_cur_time_ms()-t >= 2000);// Take more than timeout
@@ -2739,14 +2773,14 @@ static void ldap_features_min_characters(void){
 		linphone_ldap_params_unref(params);
 	}
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceLdapServers);// "u" will not be searched
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);// "u" will not be searched
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),0 , int, "%d");
 	bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 	
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll);// "u" will be searched but without Ldap results
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceAll, LinphoneMagicSearchAggregationNone);// "u" will be searched but without Ldap results
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	resultList = linphone_magic_search_get_last_search(magicSearch);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(resultList),3 , int, "%d");
@@ -2794,7 +2828,7 @@ static void ldap_features_more_results(void){
 		linphone_ldap_set_params(ldap, params);
 		linphone_ldap_params_unref(params);
 	}
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	if(linphone_core_ldap_available(manager->lc))
 		BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchLdapHaveMoreResults,1));
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
@@ -2808,7 +2842,7 @@ static void ldap_features_more_results(void){
 	stat->number_of_LinphoneMagicSearchResultReceived = 0;
 //------------------------------	TEST NETWORK REACHABILITY
 	linphone_core_set_network_reachable(manager->lc, FALSE);
-	linphone_magic_search_get_contacts_async(magicSearch, "u", "", LinphoneMagicSearchSourceLdapServers);
+	linphone_magic_search_get_contacts_list_async(magicSearch, "u", "", LinphoneMagicSearchSourceLdapServers, LinphoneMagicSearchAggregationNone);
 	BC_ASSERT_TRUE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchResultReceived,1));
 	if(linphone_core_ldap_available(manager->lc))
 		BC_ASSERT_FALSE(wait_for(manager->lc,NULL,&stat->number_of_LinphoneMagicSearchLdapHaveMoreResults,1));	// Should not have more results as search has not been done.
@@ -3161,6 +3195,7 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend in call log but don't add address which already exist", search_friend_in_call_log_already_exist, "MagicSearch"),
 	TEST_ONE_TAG("Search friend last item is the filter", search_friend_last_item_is_filter, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with name", search_friend_with_name, "MagicSearch"),
+	TEST_ONE_TAG("Search friend with aggregation", search_friend_with_aggregation, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with uppercase name", search_friend_with_name_with_uppercase, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with multiple sip address", search_friend_with_multiple_sip_address, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with same address", search_friend_with_same_address, "MagicSearch"),
