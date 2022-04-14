@@ -3147,7 +3147,7 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 		return (devAddr == contactAddress);
 	});
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress()) && (callIt == m_pendingCalls.cend())) {
+	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress()) && (callIt == m_pendingCalls.cend()) && isIn()) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE in order to get streams for newly added participant device " << device->getAddress();
 			auto ret = updateMainSession();
@@ -3167,7 +3167,7 @@ void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<Confere
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress())) {
+	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress()) && isIn()) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE in order to get streams for recently removed participant device " << device->getAddress();
 			auto ret = updateMainSession();
@@ -3184,7 +3184,7 @@ void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<Confere
 }
 
 void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	if ((!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created)) {
+	if ((!isMe(device->getAddress())) && (getState() == ConferenceInterface::State::Created) && isIn()) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE because device " << device->getAddress() << " has changed its stream availability";
 			auto ret = updateMainSession();
@@ -3237,7 +3237,7 @@ void RemoteConference::onFullStateReceived() {
 void RemoteConference::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const bool videoEnabled = (session) ? session->getCurrentParams()->videoEnabled() : false;
-	if (!confParams->videoEnabled() && videoEnabled) {
+	if (!confParams->videoEnabled() && videoEnabled && isIn()) {
 		auto updateSession = [this]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE because the conference has no longer video capabilities";
 			auto ret = updateMainSession();
