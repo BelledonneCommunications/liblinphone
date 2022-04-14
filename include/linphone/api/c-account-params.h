@@ -760,6 +760,22 @@ LINPHONE_PUBLIC const char * linphone_account_params_get_custom_param(const Linp
 
 
 /**
+ * Set a an optional custom contact address to be used when registering to the SIP server.
+ * This is typically used to supply an alternative SIP address to call in case the main one is not reachable.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param contact a #LinphoneAddress the optional alternative contact address. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_custom_contact(LinphoneAccountParams *params, const LinphoneAddress *contact);
+
+/**
+ * Get the custom contact address previously used when registering to the SIP server.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return a #LinphoneAddress @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneAddress * linphone_account_params_get_custom_contact(const LinphoneAccountParams *params);
+
+
+/**
  * @}
  */
 

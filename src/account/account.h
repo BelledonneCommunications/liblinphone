@@ -137,6 +137,8 @@ private:
 	void onInternationalPrefixChanged ();
 	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
 	void onNatPolicyChanged (LinphoneNatPolicy *policy);
+	bool customContactChanged();
+	std::list<SalAddress*> getOtherContacts();
 
 
 	std::shared_ptr<AccountParams> mParams;

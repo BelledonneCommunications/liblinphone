@@ -25,7 +25,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-int SalRegisterOp::sendRegister (const string &proxy, const string &from, int expires, const SalAddress *oldContact) {
+int SalRegisterOp::sendRegister (const string &proxy, const string &from, int expires, const std::list<SalAddress *> &customContacts) {
 	if (mRefresher) {
 		belle_sip_refresher_stop(mRefresher);
 		belle_sip_object_unref(mRefresher);
@@ -50,16 +50,15 @@ int SalRegisterOp::sendRegister (const string &proxy, const string &from, int ex
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), acceptHeader);
 	belle_sip_message_set_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(createContact()));
 
-	if (oldContact) {
-		auto contactHeader = belle_sip_header_contact_create(BELLE_SIP_HEADER_ADDRESS(oldContact));
+	for (const SalAddress * customContact : customContacts) {
+		auto contactHeader = belle_sip_header_contact_create(BELLE_SIP_HEADER_ADDRESS(customContact));
 		if (contactHeader) {
-			belle_sip_header_contact_set_expires(contactHeader, 0); // Remove old aor
 			belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(contactHeader));
 			char *tmp = belle_sip_object_to_string(contactHeader);
-			lInfo() << "Clearing contact [" << tmp << "] for op [" << this << "]";
+			lInfo() << "Added custom contact [" << tmp << "] for op [" << this << "]";
 			ms_free(tmp);
 		} else {
-			lError() << "Cannot add old contact header to op [" << this << "]";
+			lError() << "Cannot add custom contact header to op [" << this << "]";
 		}
 	}
 

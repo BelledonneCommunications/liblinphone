@@ -28,7 +28,7 @@ class SalRegisterOp : public SalOp {
 public:
 	SalRegisterOp(Sal *sal) : SalOp(sal) { mType = Type::Register; }
 
-	int sendRegister (const std::string &proxy, const std::string &from, int expires, const SalAddress *oldContact);
+	int sendRegister (const std::string &proxy, const std::string &from, int expires, const std::list<SalAddress *> &customContacts);
 	int refreshRegister (int expires) {
 		return mRefresher ? belle_sip_refresher_refresh(mRefresher, expires) : -1;
 	}

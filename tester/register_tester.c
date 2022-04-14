@@ -1603,6 +1603,90 @@ static void unreliable_channels_cleanup(void){
 }
 
 
+//FIXME: uncomment CUSTOM_CONTACT_TEST when fs-test machines are updated with the necessary feature to get 
+// registration_with_custom_contact() working.
+
+//#define CUSTOM_CONTACT_TEST 1
+
+#ifdef CUSTOM_CONTACT_TEST
+static void registration_with_custom_contact(void){
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_rc" );
+	LinphoneCoreManager* marie  = linphone_core_manager_new( "marie_rc" );
+	LinphoneCoreManager* laure  = linphone_core_manager_new( "laure_rc_udp" );
+	
+	LinphoneAccount *account = linphone_core_get_default_account(pauline->lc);
+	const LinphoneAccountParams *params = linphone_account_get_params(account);
+	
+	/* set laure as secondary contact for pauline */
+	LinphoneAccountParams *new_params = linphone_account_params_clone(params);
+	LinphoneAddress *custom_contact = linphone_address_clone(linphone_account_get_contact_address(linphone_core_get_default_account(laure->lc)));
+	bctbx_list_t *lcs = NULL;
+	LinphoneCall *c;
+	
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+	/* add a low priority for this secondary contact */
+	linphone_address_set_param(custom_contact, "q", "0.3");
+	
+	linphone_account_params_set_custom_contact(new_params, custom_contact);
+	linphone_address_unref(custom_contact);
+	linphone_account_set_params(account, new_params);
+	linphone_account_params_unref(new_params);
+	
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneRegistrationOk, 2, 10000));
+	
+	/* Marie makes a call to pauline, it should ring on pauline side, not laure, because pauline is available.*/
+	
+	if (BC_ASSERT_TRUE(call(marie,pauline))){
+		wait_for_list(lcs, NULL, 0, 3000);
+		end_call(pauline, marie);
+	}
+	BC_ASSERT_TRUE(laure->stat.number_of_LinphoneCallIncomingReceived == 0);
+	
+	/* Now pauline is offline */
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	/* Marie makes a call to pauline, laure shall receive it */
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	if (BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, 15000))){
+		linphone_call_accept(linphone_core_get_current_call(laure->lc));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+		liblinphone_tester_check_rtcp(marie, laure);
+		end_call(laure, marie);
+	}
+	/* Pauline goes online, and removes laure as secondary contact.*/
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneRegistrationOk, 3, 10000));
+	new_params = linphone_account_params_clone(linphone_account_get_params(account));
+	linphone_account_params_set_custom_contact(new_params, NULL);
+	linphone_account_set_params(account, new_params);
+	linphone_account_params_unref(new_params);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneRegistrationOk, 4, 10000));
+	
+	/* Pauline goes offline. Marie makes a call, no one should receive this call.*/
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	c = linphone_core_invite_address(marie->lc, pauline->identity);
+	linphone_call_ref(c);
+	BC_ASSERT_FALSE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 2, 15000));
+
+	if (linphone_call_get_state(c) != LinphoneCallError){
+		linphone_call_terminate(c);
+	}
+	linphone_call_unref(c);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 3, 10000));
+	
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(laure);
+}
+#else
+static void registration_with_custom_contact(void){
+}
+#endif
+
+
 test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),
 	TEST_NO_TAG("Simple register unregister", simple_unregister),
@@ -1660,7 +1744,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address),
 	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port),
 	TEST_NO_TAG("Cleanup of unreliable channels", unreliable_channels_cleanup),
-	TEST_NO_TAG("MD5-based digest rejected by policy", md5_digest_rejected)
+	TEST_NO_TAG("MD5-based digest rejected by policy", md5_digest_rejected),
+	TEST_NO_TAG("Registration with custom contact", registration_with_custom_contact)
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

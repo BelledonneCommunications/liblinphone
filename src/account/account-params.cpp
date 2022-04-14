@@ -108,6 +108,9 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	}
 	mRtpBundleEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle", linphone_core_rtp_bundle_enabled(lc)) : false;
 	mRtpBundleAssumption = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "rtp_bundle_assumption", false) : false;
+	
+	string customContact = lc ? linphone_config_get_default_string(lc->config, "proxy", "custom_contact", "") : "";
+	setCustomContact(customContact);
 }
 
 AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
@@ -193,6 +196,8 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	}
 	mRtpBundleEnabled = !!linphone_config_get_bool(config, key, "rtp_bundle", linphone_core_rtp_bundle_enabled(lc));
 	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
+	
+	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 }
 
 AccountParams::AccountParams (const AccountParams &other) : HybridObject(other), CustomParams(other) {
@@ -241,6 +246,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other),
 	mPushNotificationConfig = other.mPushNotificationConfig->clone();
 	mRtpBundleEnabled = other.mRtpBundleEnabled;
 	mRtpBundleAssumption = other.mRtpBundleAssumption;
+	mCustomContact = other.mCustomContact ? linphone_address_clone(other.mCustomContact) : nullptr;
 }
 
 AccountParams::~AccountParams () {
@@ -251,6 +257,7 @@ AccountParams::~AccountParams () {
 	if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
 	if (mPushNotificationConfig) mPushNotificationConfig->unref();
 	if (mAudioVideoConferenceFactoryAddress) linphone_address_unref(mAudioVideoConferenceFactoryAddress);
+	if (mCustomContact) linphone_address_unref(mCustomContact);
 }
 
 AccountParams* AccountParams::clone () const {
@@ -508,6 +515,20 @@ void AccountParams::enableRtpBundleAssumption(bool value){
 	mRtpBundleAssumption = value;
 }
 
+void AccountParams::setCustomContact(const LinphoneAddress *contact){
+	if (mCustomContact) linphone_address_unref(mCustomContact);
+	mCustomContact = contact ? linphone_address_clone(contact) : nullptr;
+}
+
+void AccountParams::setCustomContact(const string &contact){
+	LinphoneAddress *address = !contact.empty() ? linphone_address_new(contact.c_str()) : nullptr;
+	if (address == nullptr && !contact.empty()){
+		lError() << "AccountParams: invalid custom contact '" << contact << "'";
+	}
+	if (mCustomContact) linphone_address_unref(mCustomContact);
+	mCustomContact = address;
+}
+
 // -----------------------------------------------------------------------------
 
 int AccountParams::getExpires () const {
@@ -672,6 +693,10 @@ bool AccountParams::rtpBundleEnabled() const{
 
 bool AccountParams::rtpBundleAssumptionEnabled()const{
 	return mRtpBundleAssumption;
+}
+
+const LinphoneAddress *AccountParams::getCustomContact()const{
+	return mCustomContact;
 }
 
 // -----------------------------------------------------------------------------

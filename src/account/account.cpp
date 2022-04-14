@@ -200,6 +200,14 @@ std::shared_ptr<const AccountParams> Account::getAccountParams () const {
 	return mParams;
 }
 
+bool Account::customContactChanged(){
+	if (!mOldParams) return false;
+	if (mParams->mCustomContact == nullptr && mOldParams->mCustomContact == nullptr) return false;
+	if (mParams->mCustomContact != nullptr && mOldParams->mCustomContact == nullptr) return true;
+	if (mParams->mCustomContact == nullptr && mOldParams->mCustomContact != nullptr) return true;
+	return !linphone_address_equal(mOldParams->mCustomContact, mParams->mCustomContact);
+}
+
 void Account::applyParamsChanges () {
 
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
@@ -218,7 +226,8 @@ void Account::applyParamsChanges () {
 		|| mOldParams->mContactUriParameters != mParams->mContactUriParameters
 		|| mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed
 		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed
-		|| !(mOldParams->mPushNotificationConfig->isEqual(*mParams->mPushNotificationConfig)) ) {
+		|| !(mOldParams->mPushNotificationConfig->isEqual(*mParams->mPushNotificationConfig)) 
+		|| customContactChanged() ) {
 		mRegisterChanged = true;
 	}
 }
@@ -355,6 +364,7 @@ void Account::setState (LinphoneRegistrationState state, const std::string& mess
 		if (state == LinphoneRegistrationOk) {
 			const SalAddress *salAddr = mOp->getContactAddress();
 			if (salAddr) L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress)->setInternalAddress(salAddr);
+			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		}
 
 		if (linphone_core_should_subscribe_friends_only_when_registered(mCore) && mState != state && state == LinphoneRegistrationOk) {
@@ -591,6 +601,28 @@ LinphoneAddress *Account::guessContactForRegister () {
 	return result;
 }
 
+std::list<SalAddress*> Account::getOtherContacts(){
+	std::list<SalAddress *> ret;
+	if (mPendingContactAddress){
+		SalAddress *toRemove = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(mPendingContactAddress)->getInternalAddress());
+		sal_address_set_params(toRemove, "expires=0");
+		ret.push_back(toRemove);
+	}
+	if (mParams->mCustomContact){
+		SalAddress *toAdd = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(mParams->mCustomContact)->getInternalAddress());
+		ret.push_back(toAdd);
+	}
+	if (mOldParams && mOldParams->mCustomContact){
+		if (!mParams->mCustomContact || !linphone_address_equal(mOldParams->mCustomContact, mParams->mCustomContact)){
+			/* need to remove previously used custom contact */
+			SalAddress *toRemove = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(mOldParams->mCustomContact)->getInternalAddress());
+			sal_address_set_params(toRemove, "expires=0");
+			ret.push_back(toRemove);
+		}
+	}
+	return ret;
+}
+
 void Account::registerAccount () {
 	if (mParams->mRegisterEnabled) {
 		LinphoneAddress* proxy = linphone_address_new(mParams->mProxy.c_str());
@@ -615,11 +647,12 @@ void Account::registerAccount () {
 		}
 		mOp->setUserPointer(this->toC());
 
+		auto otherContacts = getOtherContacts();
 		if (mOp->sendRegister(
 			proxy_string,
 			mParams->mIdentity,
 			mParams->mExpires,
-			mPendingContactAddress ? L_GET_CPP_PTR_FROM_C_OBJECT(mPendingContactAddress)->getInternalAddress() : NULL
+			otherContacts
 		)==0) {
 			if (mPendingContactAddress) {
 				linphone_address_unref(mPendingContactAddress);
@@ -631,6 +664,7 @@ void Account::registerAccount () {
 		}
 		ms_free(proxy_string);
 		ms_free(from);
+		for (auto ct : otherContacts) sal_address_unref(ct);
 	} else {
 		/* unregister if registered*/
 		unregister();

@@ -79,6 +79,7 @@ public:
 	void setAudioVideoConferenceFactoryAddress (const LinphoneAddress *audioVideoConferenceFactoryAddress);
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
+	void setCustomContact(const LinphoneAddress* contact);
 
 	// Getters
 	int getExpires () const;
@@ -119,6 +120,7 @@ public:
 	const LinphoneAddress* getAudioVideoConferenceFactoryAddress () const;
 	bool rtpBundleEnabled()const;
 	bool rtpBundleAssumptionEnabled()const;
+	const LinphoneAddress * getCustomContact()const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -133,6 +135,7 @@ public:
 	void writeToConfigFile (LinphoneConfig *config, int index);
 
 private:
+	void setCustomContact(const std::string &contact);
 	int mExpires;
 	int mQualityReportingInterval;
 	int mPublishExpires;
@@ -180,6 +183,7 @@ private:
 	PushNotificationConfig *mPushNotificationConfig;
 
 	LinphoneAddress *mAudioVideoConferenceFactoryAddress = nullptr;
+	LinphoneAddress *mCustomContact = nullptr;
 };
 
 LINPHONE_END_NAMESPACE
