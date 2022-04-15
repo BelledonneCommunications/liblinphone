@@ -873,7 +873,7 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 
 	if (resultStreamDesc.hasSrtp()){
 		// Valid local tags are > 0
-		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, static_cast<unsigned char>(resultStreamDesc.getChosenConfiguration().crypto_local_tag));
+		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, resultStreamDesc.getChosenConfiguration().crypto_local_tag);
 		if (cryptoIdx >= 0) {
 			MSCryptoSuite algo = resultStreamDesc.getChosenConfiguration().crypto[0].algo;
 			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
@@ -1263,10 +1263,11 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
-				getCore().doLater([this, ev](){
+				iceQueuedEventTask = getCore().doLater([this, ev](){
 					if(mState != State::Stopped)// Media session has stopped : Ice Service is no more.
 						getIceService().handleIceEvent(ev);
 					ortp_event_destroy(ev);
+					iceQueuedEventTask = nullptr;
 				});
 				continue; // Go to next event.
 			break;
@@ -1441,7 +1442,10 @@ MS2Stream::~MS2Stream(){
 	finish();
 	linphone_call_stats_unref(mStats);
 	mStats = nullptr;
-	
+	if (iceQueuedEventTask) {
+		getCore().cancelTask(iceQueuedEventTask);
+		belle_sip_object_unref(iceQueuedEventTask);
+	}
 }
 
 LINPHONE_END_NAMESPACE

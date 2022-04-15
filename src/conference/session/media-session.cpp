@@ -2312,7 +2312,8 @@ std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() cons
 			suitesList.push_back(suites[j]);
 		}
 	}
-	unsigned int cryptoId = 1;
+
+	unsigned int cryptoId = static_cast<unsigned int>(linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "crypto_suite_tag_starting_value", 1));
 	for (auto suite:suitesList) {
 		if (doNotUseParams || !isEncryptionMandatory() || (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
 			SalSrtpCryptoAlgo newCrypto;

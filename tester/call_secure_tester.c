@@ -38,6 +38,33 @@ static void srtp_call(void) {
 	call_base(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
 }
 
+static void srtp_call_non_zero_tag(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(marie->lc, TRUE);
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "crypto_suite_tag_starting_value", 264);
+
+	linphone_core_invite_address(pauline->lc,marie->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingProgress, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingRinging,1));
+	linphone_call_accept(linphone_core_get_current_call(marie->lc));
+	liblinphone_tester_check_rtcp(marie, pauline);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning,1));
+	end_call(pauline, marie);
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 /*
  *Purpose of this test is to check that even if caller and callee does not have exactly the same crypto suite configured, the matching crypto suite is used.
  */
@@ -879,6 +906,8 @@ void call_with_several_video_switches_base(const LinphoneMediaEncryption caller_
 		BC_ASSERT_TRUE(call_ok=call(pauline,marie));
 		if (!call_ok) goto end;
 
+		liblinphone_tester_check_rtcp(marie, pauline);
+
 		BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
 		wait_for_until(pauline->lc,marie->lc,&dummy,1,1000); /* Wait for VFU request exchanges to be finished. */
 		BC_ASSERT_TRUE(remove_video(pauline,marie));
@@ -964,6 +993,7 @@ static void call_accepting_all_encryptions(void) {
 
 test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call", srtp_call),
+	TEST_NO_TAG("SRTP call with non zero crypto suite tag", srtp_call_non_zero_tag),
 #ifdef VIDEO_ENABLED
 	TEST_NO_TAG("SRTP call with several video switches", srtp_call_with_several_video_switches),
 	TEST_NO_TAG("SRTP to none call with several video switches", srtp_to_none_call_with_several_video_switches),

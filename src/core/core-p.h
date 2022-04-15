@@ -146,7 +146,9 @@ public:
 		bool encrypted) const;
 	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
 
-	void doLater(const std::function<void ()> &something);
+	// Cancel task scheduled on the main loop
+	void cancelTask(belle_sip_source_t * task);
+	belle_sip_source_t * doLater(const std::function<void ()> &something);
 	belle_sip_main_loop_t *getMainLoop();
 	bool basicToFlexisipChatroomMigrationEnabled()const;
 	std::unique_ptr<MainDb> mainDb;

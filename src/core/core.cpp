@@ -427,8 +427,12 @@ LinphoneCore *CorePrivate::getCCore() const {
 	return getPublic()->getCCore();
 }
 
-void CorePrivate::doLater(const std::function<void ()> &something){
-	belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
+void CorePrivate::cancelTask(belle_sip_source_t * task){
+	belle_sip_main_loop_remove_source(getMainLoop(), task);
+}
+
+belle_sip_source_t * CorePrivate::doLater(const std::function<void ()> &something){
+	return belle_sip_main_loop_cpp_do_later(getMainLoop(), something);
 }
 
 void CorePrivate::enableFriendListsSubscription(bool enable) {
@@ -1307,8 +1311,12 @@ Address Core::interpretUrl (const std::string &url) const {
 	return address;
 }
 
-void Core::doLater(const std::function<void ()> &something){
-	getPrivate()->doLater(something);
+void Core::cancelTask(belle_sip_source_t * task){
+	return getPrivate()->cancelTask(task);
+}
+
+belle_sip_source_t * Core::doLater(const std::function<void ()> &something){
+	return getPrivate()->doLater(something);
 }
 
 void Core::performOnIterateThread(const std::function<void ()> &something){

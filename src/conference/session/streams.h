@@ -183,6 +183,7 @@ private:
 	StreamsGroup & mStreamsGroup;
 	const SalStreamType mStreamType;
 	const size_t mIndex;
+	std::shared_ptr<Core> mCore = nullptr;
 	State mState = Stopped;
 	StreamMixer *mMixer = nullptr;
 	bool mIsMain = false;

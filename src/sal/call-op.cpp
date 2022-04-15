@@ -403,11 +403,11 @@ void SalCallOp::sdpProcess () {
 				mResult->streams[i].rtcp_addr = mRemoteMedia->streams[i].rtcp_addr;
 				mResult->streams[i].rtcp_port = mRemoteMedia->streams[i].rtcp_port;
 				if (mResult->streams[i].hasSrtp()) {
-					int cryptoIdx = Sal::findCryptoIndexFromTag(mRemoteMedia->streams[i].getCryptos(), static_cast<unsigned char>(mResult->streams[i].getCryptoAtIndex(0).tag));
+					int cryptoIdx = Sal::findCryptoIndexFromTag(mRemoteMedia->streams[i].getCryptos(), mResult->streams[i].getCryptoAtIndex(0).tag);
 					if (cryptoIdx >= 0)
 						mResult->streams[i].setCrypto(0, mRemoteMedia->streams[i].getCryptoAtIndex(static_cast<size_t>(cryptoIdx)));
 					else
-						lError() << "Failed to find crypto algo with tag: " << mResult->streams[i].getChosenConfiguration().crypto_local_tag << "from resulting description [" << mResult << "]";
+						lError() << "Failed to find crypto algo with tag: " << mResult->streams[i].getChosenConfiguration().crypto_local_tag << " from resulting description [" << mResult << "]";
 				}
 			}
 		}
