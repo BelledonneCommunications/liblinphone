@@ -109,12 +109,10 @@ public:
 	RtpTransport * getMetaRtcpTransport (int streamIndex) const;
 	RtpTransport * getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;
-	void * getNativeVideoWindowId () const;
-	void * getNativeVideoWindowId (const std::string label);
+	void * getNativeVideoWindowId (const std::string label = "") const;
 	void * getNativePreviewVideoWindowId () const;
 	void * createNativePreviewVideoWindowId () const;
-	void * createNativeVideoWindowId () const;
-	void * createNativeVideoWindowId (const std::string label);
+	void * createNativeVideoWindowId (const std::string label = "") const;
 	const CallSessionParams *getParams () const override;
 	float getPlayVolume () const;
 	float getRecordVolume () const;
@@ -128,8 +126,7 @@ public:
 	bool mediaInProgress () const;
 	void setAuthenticationTokenVerified (bool value);
 	void setMicrophoneVolumeGain (float value);
-	void setNativeVideoWindowId (void *id);
-	void setNativeVideoWindowId (void *id, const std::string label);
+	void setNativeVideoWindowId (void *id, const std::string label = "");
 	void setNativePreviewWindowId (void *id);
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);

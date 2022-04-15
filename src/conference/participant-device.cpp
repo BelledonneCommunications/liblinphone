@@ -394,10 +394,17 @@ void ParticipantDevice::enableAdminModeSupport(bool support) {
 }
 
 void * ParticipantDevice::createWindowId() const {
-	if (!mWindowId && !mLabel.empty() && mSession)
-		return static_pointer_cast<MediaSession>(mSession)->createNativeVideoWindowId(mLabel);
-	else
-		return nullptr;
+	void * windowId = nullptr;
+#ifdef VIDEO_ENABLED
+	const auto & conference = getConference();
+	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
+	if (!mLabel.empty() && session) {
+		windowId = static_pointer_cast<MediaSession>(session)->createNativeVideoWindowId(mLabel);
+	} else {
+		lError() << "Unable to create a window ID for device " << getAddress() << " because either label is empty (actual " << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual " << session << ")";
+	}
+#endif
+	return windowId;
 }
 
 void ParticipantDevice::setWindowId(void * newWindowId) const {

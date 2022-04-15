@@ -2760,8 +2760,8 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 		case LinphoneCallStreamsRunning:
 		{
 			const auto & previousState = session->getPreviousState();
-			// NOTIFY that a participant has been added only if we hit this code following an update from the conference
-			if (previousState != CallSession::State::UpdatedByRemote) {
+			// NOTIFY that a participant has been added only if we didn't hit this code following an update
+			if (previousState != CallSession::State::Updating) {
 				// The participant rejoins the conference
 				time_t creationTime = time(nullptr);
 				notifyParticipantAdded(creationTime, false, getMe());

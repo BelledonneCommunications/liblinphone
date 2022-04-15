@@ -4190,54 +4190,24 @@ void MediaSession::setSpeakerVolumeGain (float value) {
 		lError() << "Could not set playback volume: no audio stream";
 }
 
-void * MediaSession::getNativeVideoWindowId () const {
-	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (iface) {
-		return iface->getNativeWindowId();
-	}
-	return nullptr;
-}
-
-void MediaSession::setNativeVideoWindowId (void *id) {
-	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (iface) {
-		lInfo() << "Set native window ID " << id << " to video control interface " << iface;
-		iface->setNativeWindowId(id);
-	} else {
-		lError() << "Unable to set window ID because video control interface cannot be found";
-	}
-}
-
-void * MediaSession::getNativeVideoWindowId(const std::string label) {
-//*************************** START WORKAROUND for active speaker stream - HUGE DIY
-	L_D()
-	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released) && d->listener) {
-		auto conference = d->listener->getCallSessionConference(getSharedFromThis());
-		std::string meLabel;
-		if (conference) {
-			auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			// Do not preserve conference after removing the participant
-			auto meParticipant = cppConference->getMe();
-			auto meDevice = meParticipant->getDevices();
-			if (!meDevice.empty()) {
-				meLabel = meDevice.front()->getLabel();
-			}
-		}
-		std::string searchedLabel;
-		if (conference && meLabel.compare(label) != 0) {
-			searchedLabel = label;
-		}
-		auto s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
-//*************************** END WORKAROUND for active speaker
-//		auto s = getStreamsGroup().lookupStream(SalVideo, label);
-		if (s) {
-			VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
-			if (iface == nullptr){
-				lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
-				return nullptr;
-			}
+void * MediaSession::getNativeVideoWindowId(const std::string label) const {
+	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
+		if (label.empty()) {
+			auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 			if (iface) {
 				return iface->getNativeWindowId();
+			}
+		} else {
+			auto s = getStreamsGroup().lookupStream(SalVideo, label);
+			if (s) {
+				VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
+				if (iface == nullptr){
+					lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
+					return nullptr;
+				}
+				if (iface) {
+					return iface->getNativeWindowId();
+				}
 			}
 		}
 	}
@@ -4245,39 +4215,30 @@ void * MediaSession::getNativeVideoWindowId(const std::string label) {
 }
 
 void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
-//*************************** START WORKAROUND for active speaker stream - HUGE DIY
-	L_D()
-	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released) && d->listener) {
-		auto conference = d->listener->getCallSessionConference(getSharedFromThis());
-		std::string meLabel;
-		if (conference) {
-			auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			// Do not preserve conference after removing the participant
-			auto meParticipant = cppConference->getMe();
-			auto meDevice = meParticipant->getDevices();
-			if (!meDevice.empty()) {
-				meLabel = meDevice.front()->getLabel();
-			}
-		}
-		std::string searchedLabel;
-		if (conference && meLabel.compare(label) != 0) {
-			searchedLabel = label;
-		}
-		auto s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
-//*************************** END WORKAROUND for active speaker
-//		auto s = getStreamsGroup().lookupStream(SalVideo, label);
-		if (s) {
-			VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
-			if (iface == nullptr){
-				lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
-				return;
-			}
+	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
+		if (label.empty()) {
+			auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 			if (iface) {
-				lInfo() << "Set window ID " << id << " to video stream with label " << searchedLabel;
+				lInfo() << "Set native window ID " << id << " to video control interface " << iface;
 				iface->setNativeWindowId(id);
+			} else {
+				lError() << "Unable to set window ID because video control interface cannot be found";
 			}
 		} else {
-			lError() << "Unable to set window ID because no video stream has been found with label " << searchedLabel;
+			auto s = getStreamsGroup().lookupStream(SalVideo, label);
+			if (s) {
+				VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
+				if (iface == nullptr){
+					lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
+					return;
+				}
+				if (iface) {
+					lInfo() << "Set window ID " << id << " to video stream with label " << label;
+					iface->setNativeWindowId(id);
+				}
+			} else {
+				lError() << "Unable to set window ID because no video stream has been found with label " << label;
+			}
 		}
 	}
 }
@@ -4308,44 +4269,24 @@ void * MediaSession::createNativePreviewVideoWindowId () const{
 	return nullptr;
 }
 
-void * MediaSession::createNativeVideoWindowId () const {
-	auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-	if (iface) {
-		return iface->createNativeWindowId();
-	}
-	return nullptr;
-}
-
-void * MediaSession::createNativeVideoWindowId(const std::string label) {
-//*************************** START WORKAROUND for active speaker stream - HUGE DIY
-	L_D()
-	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released) && d->listener) {
-		auto conference = d->listener->getCallSessionConference(getSharedFromThis());
-		std::string meLabel;
-		if (conference) {
-			auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-			// Do not preserve conference after removing the participant
-			auto meParticipant = cppConference->getMe();
-			auto meDevice = meParticipant->getDevices();
-			if (!meDevice.empty()) {
-				meLabel = meDevice.front()->getLabel();
-			}
-		}
-		std::string searchedLabel;
-		if (conference && meLabel.compare(label) != 0) {
-			searchedLabel = label;
-		}
-		auto s = getStreamsGroup().lookupStream(SalVideo, searchedLabel);
-//*************************** END WORKAROUND for active speaker
-//		auto s = getStreamsGroup().lookupStream(SalVideo, label);
-		if (s) {
-			VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
-			if (iface == nullptr){
-				lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
-				return nullptr;
-			}
+void * MediaSession::createNativeVideoWindowId(const std::string label) const {
+	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
+		if (label.empty()) {
+			auto iface = getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 			if (iface) {
 				return iface->createNativeWindowId();
+			}
+		} else {
+			auto s = getStreamsGroup().lookupStream(SalVideo, label);
+			if (s) {
+				VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
+				if (iface == nullptr){
+					lError() << "stream " << s << " with label " << label << " cannot be casted to VideoControlInterface";
+					return nullptr;
+				}
+				if (iface) {
+					return iface->createNativeWindowId();
+				}
 			}
 		}
 	}
