@@ -1741,13 +1741,16 @@ std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() cons
 	std::vector<SalSrtpCryptoAlgo>  cryptos;
 	const bool doNotUseParams = (direction == LinphoneCallIncoming) && (state == CallSession::State::Idle);
 	const MSCryptoSuite *suites = (doNotUseParams) ? linphone_core_get_all_supported_srtp_crypto_suites(q->getCore()->getCCore()) : linphone_core_get_srtp_crypto_suites_array(q->getCore()->getCCore());
-	size_t cryptoId = 0;
+	auto cryptoId = linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "crypto_suite_tag_starting_value", 1);
+	if (cryptoId <= 0) {
+		cryptoId = 1;
+	}
 	for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
 		MSCryptoSuite suite = suites[j];
 		if (doNotUseParams || !isEncryptionMandatory() || (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
 			SalSrtpCryptoAlgo newCrypto;
-			setupEncryptionKey(newCrypto, suite, static_cast<unsigned int>(cryptoId) + 1);
-			cryptos.emplace(std::next(cryptos.begin(),static_cast<ptrdiff_t>(cryptoId)),newCrypto);
+			setupEncryptionKey(newCrypto, suite, static_cast<unsigned int>(cryptoId));
+			cryptos.push_back(newCrypto);
 			cryptoId++;
 		}
 	}

@@ -101,6 +101,7 @@ protected:
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;
+	belle_sip_source_t * iceQueuedEventTask = nullptr;
 private:
 	void fillPotentialCfgGraph(OfferAnswerContext & ctx);
 	void initRtpBundle(const OfferAnswerContext &params);
