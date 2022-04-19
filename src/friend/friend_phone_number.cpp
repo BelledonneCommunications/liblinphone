@@ -37,7 +37,9 @@ FriendPhoneNumber::FriendPhoneNumber (const string &phoneNumber): FriendPhoneNum
 FriendPhoneNumber::FriendPhoneNumber (const std::shared_ptr<belcard::BelCardPhoneNumber>& belcardPhoneNumber) {
     shared_ptr<belcard::BelCardTypeParam> type = belcardPhoneNumber->getTypeParam();
     if (type) {
-        mLabel = type->getValue();
+        string label = type->getValue();
+        std::replace(label.begin(), label.end(), ',', ' ');
+        mLabel = label;
     } else {
         mLabel = "";
     }
@@ -67,7 +69,9 @@ shared_ptr<belcard::BelCardPhoneNumber> FriendPhoneNumber::toBelcardPhoneNumber(
     if (!mLabel.empty()) {
         shared_ptr<belcard::BelCardTypeParam> label = belcard::BelCardGeneric::create<belcard::BelCardTypeParam>();
         label->setName("TYPE");
-        label->setValue(mLabel);
+        string value = mLabel;
+        std::replace(value.begin(), value.end(), ' ', ',');
+        label->setValue(value);
         phoneNumber->setTypeParam(label);
     }
     return phoneNumber;

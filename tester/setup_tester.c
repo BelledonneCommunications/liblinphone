@@ -1708,6 +1708,57 @@ static void search_friend_with_name(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void search_friend_with_aggregation(void) {
+	LinphoneMagicSearch *magicSearch = NULL;
+	bctbx_list_t *resultList = NULL;
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
+
+	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
+	linphone_friend_set_name(stephanieFriend, "Stephanie de Monaco");
+	LinphoneFriendPhoneNumber *stephaniePhoneNumber = linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33952636505", "work cell");
+	linphone_friend_add_phone_number_with_label(stephanieFriend, stephaniePhoneNumber);
+	linphone_friend_phone_number_unref(stephaniePhoneNumber);
+	LinphoneAddress *stephanieAddress = linphone_factory_create_address(linphone_factory_get(), "sip:stephanie@sip.example.org");
+	linphone_friend_add_address(stephanieFriend, stephanieAddress);
+	linphone_address_unref(stephanieAddress);
+	linphone_friend_list_add_local_friend(lfl, stephanieFriend);
+	linphone_friend_unref(stephanieFriend);
+
+	magicSearch = linphone_magic_search_new(manager->lc);
+
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationNone);
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationFriend);
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		const LinphoneSearchResult *result = (const LinphoneSearchResult *)resultList->data;
+		const LinphoneFriend *friend_result = linphone_search_result_get_friend(result);
+		BC_ASSERT_PTR_NOT_NULL(friend_result);
+		if (friend_result) {
+			bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers_with_label(friend_result);
+			BC_ASSERT_PTR_NOT_NULL(phone_numbers);
+			if (phone_numbers) {
+				int len = (int)bctbx_list_size(phone_numbers);
+				BC_ASSERT_EQUAL(len, 1, int, "%d");
+				const LinphoneFriendPhoneNumber *phone_number = (const LinphoneFriendPhoneNumber *)phone_numbers->data;
+				const char *number = linphone_friend_phone_number_get_phone_number(phone_number);
+				const char *label = linphone_friend_phone_number_get_label(phone_number);
+				BC_ASSERT_STRING_EQUAL(number, "+33952636505");
+				BC_ASSERT_STRING_EQUAL(label, "work cell");
+				bctbx_list_free_with_data(phone_numbers, (bctbx_list_free_func)linphone_friend_phone_number_unref);
+			}
+		}
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
+	}
+
+	linphone_magic_search_unref(magicSearch);
+	linphone_core_manager_destroy(manager);
+}
+
 static void search_friend_with_name_with_uppercase(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -3089,6 +3140,7 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend in call log but don't add address which already exist", search_friend_in_call_log_already_exist, "MagicSearch"),
 	TEST_ONE_TAG("Search friend last item is the filter", search_friend_last_item_is_filter, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with name", search_friend_with_name, "MagicSearch"),
+	TEST_ONE_TAG("Search friend with aggregation", search_friend_with_aggregation, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with uppercase name", search_friend_with_name_with_uppercase, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with multiple sip address", search_friend_with_multiple_sip_address, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with same address", search_friend_with_same_address, "MagicSearch"),
