@@ -19,6 +19,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "c-wrapper/c-wrapper.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "liblinphone_tester.h"
@@ -761,6 +762,67 @@ static void call_with_ice_and_dual_stack_stun_server(void){
 	linphone_core_manager_destroy(pauline);
 }
 
+static void srtp_ice_call_to_no_encryption(void) {
+	LinphoneCoreManager * marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bool_t call_ok;
+
+	// important: VP8 has really poor performances with the mire camera, at least
+	// on iOS - so when ever h264 is available, let's use it instead
+	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+		disable_all_video_codecs_except_one(pauline->lc,"h264");
+		disable_all_video_codecs_except_one(marie->lc,"h264");
+	}
+	linphone_core_set_video_device(pauline->lc,liblinphone_tester_mire_id);
+	linphone_core_set_video_device(marie->lc,liblinphone_tester_mire_id);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	enable_stun_in_core(marie, TRUE, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(marie);
+	enable_stun_in_core(pauline, TRUE, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(pauline);
+
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
+
+	bctbx_list_t * call_enc = NULL;
+	call_enc = bctbx_list_append(call_enc, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionNone));
+	linphone_core_set_supported_media_encryptions (pauline->lc, call_enc);
+	bctbx_list_free(call_enc);
+
+	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, LinphoneMediaEncryptionSRTP));
+
+	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
+	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFDisabled);
+
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "misc", "no_avpf_for_audio", TRUE);
+
+	BC_ASSERT_TRUE((call_ok=call(marie,pauline)));
+	if (!call_ok) goto end;
+
+	BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);/*fixme to workaround a crash*/
+
+#ifdef VIDEO_ENABLED
+	if (linphone_core_video_supported(marie->lc)) {
+		BC_ASSERT_TRUE(request_video(pauline,marie, TRUE));
+		BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
+		liblinphone_tester_check_rtcp(marie,pauline);
+	} else {
+		ms_warning ("not tested because video not available");
+	}
+#endif
+	end_call(marie, pauline);
+
+end:
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
 
 static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE in IPv4 with IPv6 enabled", call_with_ice_in_ipv4_with_v6_enabled, "ICE"),
@@ -805,7 +867,8 @@ static test_t call_with_ice_tests[] = {
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with callee ice and rtcp mux", dtls_srtp_call_paused_resumed_with_callee_ice_and_rtcp_mux, "ICE", "DTLS"),
 	TEST_TWO_TAGS("DTLS SRTP Call with ICE pause and resume with both ice and rtcp mux", dtls_srtp_call_paused_resumed_with_both_ice_and_rtcp_mux, "ICE", "DTLS"),
 	TEST_ONE_TAG("Call terminated during ICE re-INVITE", call_terminated_during_ice_reinvite, "ICE"),
-	TEST_ONE_TAG("Call with ICE using dual-stack stun server", call_with_ice_and_dual_stack_stun_server, "ICE")
+	TEST_ONE_TAG("Call with ICE using dual-stack stun server", call_with_ice_and_dual_stack_stun_server, "ICE"),
+	TEST_ONE_TAG("SRTP ice call to no encryption", srtp_ice_call_to_no_encryption, "ICE")
 };
 
 test_suite_t call_with_ice_test_suite = {"Call with ICE", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

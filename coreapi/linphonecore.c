@@ -8207,7 +8207,6 @@ bctbx_list_t * linphone_core_get_supported_media_encryptions_at_compile_time() {
 
 const bctbx_list_t * linphone_core_get_supported_media_encryptions(LinphoneCore *lc) {
 	bctbx_list_t * supported_encryptions = linphone_config_get_string_list(lc->config,"sip","supported_encryptions",NULL);
-	bool_t capability_negotiation_supported = linphone_core_capability_negociation_enabled(lc);
 
 	if (lc->supported_encryptions) {
 		bctbx_list_free(lc->supported_encryptions);
@@ -8215,7 +8214,7 @@ const bctbx_list_t * linphone_core_get_supported_media_encryptions(LinphoneCore 
 	}
 
 	// If capability negotiation is not enabled or user didn't specify the list of supported encryption, then it is assumed that all encryptions that were enabled at compile time are supported
-	if (!capability_negotiation_supported || (supported_encryptions == NULL)) {
+	if (supported_encryptions == NULL) {
 		bctbx_list_t * default_encryption_list = linphone_core_get_supported_media_encryptions_at_compile_time();
 		if (lc->zrtp_not_available_simulation) {
 			bctbx_list_t * zrtp_encryption = bctbx_list_find(default_encryption_list, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionZRTP));

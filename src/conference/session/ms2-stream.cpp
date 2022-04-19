@@ -1248,6 +1248,7 @@ void MS2Stream::handleEvents () {
 		}
 		if (ms)
 			linphone_call_stats_fill(mStats, ms, ev);
+
 		switch(evt){
 			case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
 				if (getType() != SalAudio || !isMain()){

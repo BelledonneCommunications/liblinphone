@@ -703,7 +703,7 @@ bool CallSessionPrivate::isUpdateAllowed (CallSession::State &nextState) const {
 int CallSessionPrivate::restartInvite () {
 	L_Q();
 	createOp();
-	return q->startInvite(nullptr, subject);
+	return q->initiateOutgoing(subject);
 }
 
 /*

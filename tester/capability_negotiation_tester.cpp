@@ -1205,16 +1205,16 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	std::list<LinphoneMediaEncryption> marie_enc_list;
-	if (encryption != LinphoneMediaEncryptionZRTP) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionZRTP)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionZRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionDTLS) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionDTLS)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionDTLS);
 	}
-	if (encryption != LinphoneMediaEncryptionSRTP) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionSRTP)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionSRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionNone) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionNone)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionNone);
 	}
 
@@ -1227,16 +1227,16 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	linphone_core_enable_capability_negotiation_reinvite(marie->lc, caller_cap_neg_reinvite);
 
 	std::list<LinphoneMediaEncryption> pauline_enc_list;
-	if (encryption != LinphoneMediaEncryptionSRTP) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionSRTP)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionSRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionZRTP) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionZRTP)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionZRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionNone) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionNone)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionNone);
 	}
-	if (encryption != LinphoneMediaEncryptionDTLS) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionDTLS)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionDTLS);
 	}
 
@@ -1545,16 +1545,16 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	std::list<LinphoneMediaEncryption> marie_enc_list;
-	if (encryption != LinphoneMediaEncryptionZRTP) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionZRTP)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionZRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionDTLS) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionDTLS)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionDTLS);
 	}
-	if (encryption != LinphoneMediaEncryptionSRTP) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionSRTP)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionSRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionNone) {
+	if (!caller_cap_neg || (encryption != LinphoneMediaEncryptionNone)) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionNone);
 	}
 
@@ -1567,16 +1567,16 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	linphone_core_enable_capability_negotiation_reinvite(marie->lc, caller_cap_neg_reinvite);
 
 	std::list<LinphoneMediaEncryption> pauline_enc_list;
-	if (encryption != LinphoneMediaEncryptionSRTP) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionSRTP)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionSRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionZRTP) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionZRTP)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionZRTP);
 	}
-	if (encryption != LinphoneMediaEncryptionNone) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionNone)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionNone);
 	}
-	if (encryption != LinphoneMediaEncryptionDTLS) {
+	if (!callee_cap_neg || (encryption != LinphoneMediaEncryptionDTLS)) {
 		pauline_enc_list.push_back(LinphoneMediaEncryptionDTLS);
 	}
 

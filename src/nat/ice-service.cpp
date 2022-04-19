@@ -35,7 +35,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 IceService::IceService(StreamsGroup & sg) : mStreamsGroup(sg){
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
-	
 	mAllowLateIce = !!linphone_config_get_int(config, "net", "allow_late_ice", 0);
 	mEnableIntegrityCheck = !!linphone_config_get_int(config, "net", "ice_session_enable_message_integrity_check", 1);
 	mDontDefaultToStunCandidates = linphone_config_get_int(config, "net", "dont_default_to_stun_candidates", 0);

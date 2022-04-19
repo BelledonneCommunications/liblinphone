@@ -3347,7 +3347,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 	if (linphone_core_get_calls_nb(callee_mgr->lc)<=1)
 		BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
-	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,initial_caller.number_of_LinphoneCallOutgoingProgress+1, int, "%d");
+	BC_ASSERT_GREATER(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,initial_caller.number_of_LinphoneCallOutgoingProgress, int, "%d");
 
 	while (caller_mgr->stat.number_of_LinphoneCallOutgoingRinging!=(initial_caller.number_of_LinphoneCallOutgoingRinging + 1)
 			&& caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia!=(initial_caller.number_of_LinphoneCallOutgoingEarlyMedia +1)

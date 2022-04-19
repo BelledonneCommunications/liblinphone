@@ -2431,6 +2431,7 @@ bool MediaSessionPrivate::isUpdateSentWhenIceCompleted() const {
  * IceServiceListener implementation
  */
 void MediaSessionPrivate::onGatheringFinished(IceService &service){
+	lInfo() << "Finished gathering candidates";
 	runIceGatheringTasks();
 }
 
@@ -2780,6 +2781,8 @@ int MediaSessionPrivate::restartInvite () {
 	L_Q();
 	stopStreams();
 	getStreamsGroup().clearStreams();
+	// Clear streams resets the ICE service therefore the pointer to its listener is now NULL and it must be set asap in order to receive events.
+	getStreamsGroup().getIceService().setListener(this);
 	makeLocalMediaDescription(true, q->isCapabilityNegotiationEnabled(), false);
 	return CallSessionPrivate::restartInvite();
 }
@@ -3830,7 +3833,7 @@ int MediaSession::getRandomRtpPort (const SalStreamDescription & stream) const {
 
 int MediaSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
-	
+
 	if (d->getOp() == nullptr) d->createOp();
 	linphone_core_stop_dtmf_stream(getCore()->getCCore());
 	if (getCore()->getCCore()->sound_conf.play_sndcard && getCore()->getCCore()->sound_conf.capt_sndcard) {
