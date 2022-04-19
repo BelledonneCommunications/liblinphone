@@ -203,6 +203,41 @@ LINPHONE_PUBLIC float linphone_call_stats_get_round_trip_delay (const LinphoneCa
  */
 LINPHONE_PUBLIC float linphone_call_stats_get_estimated_download_bandwidth(const LinphoneCallStats *stats);
 
+/**
+ * Get the cipher algorithm used in the ZRTP exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The cipher algorithm
+ */
+LINPHONE_PUBLIC uint8_t linphone_call_stats_get_cipher_algo (const LinphoneCallStats *stats);
+
+/**
+ * Get the key agreement algorithm used in the ZRTP exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The key agreement algorithm
+ */
+LINPHONE_PUBLIC uint8_t linphone_call_stats_get_key_agreement_algo (const LinphoneCallStats *stats);
+
+/**
+ * Get the hash algorithm used in the ZRTP exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The hash algorithm
+ */
+LINPHONE_PUBLIC uint8_t linphone_call_stats_get_hash_algo (const LinphoneCallStats *stats);
+
+/**
+ * Get the authentication tag algorithm used in the ZRTP exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The authentication tag algorithm
+ */
+LINPHONE_PUBLIC uint8_t linphone_call_stats_get_auth_tag_algo (const LinphoneCallStats *stats);
+
+/**
+ * Get the sas algorithm used in the ZRTP exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The sas algorithm
+ */
+LINPHONE_PUBLIC uint8_t linphone_call_stats_get_sas_algo (const LinphoneCallStats *stats);
+
 void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *stats, float estimated_value);
 
 /**

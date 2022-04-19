@@ -365,12 +365,18 @@ static void zrtp_hybrid_key_agreement_call(void) {
     LpConfig *lpm = linphone_core_get_config(marie->lc);
     linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
     LpConfig *lpp = linphone_core_get_config(pauline->lc);
-    linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
+	linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_KYB1024");
 
     BC_ASSERT_TRUE(call_ok=call(marie,pauline));
     if (!call_ok) goto end;
 
 	// Check encryption algorithm
+	LinphoneStreamType streamType = LinphoneStreamTypeAudio;
+	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
+	LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
+	LinphoneCall *paulineCall = linphone_core_get_current_call(pauline->lc);
+	LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
+	BC_ASSERT_EQUAL(linphone_call_stats_get_key_agreement_algo(marieStats), linphone_call_stats_get_key_agreement_algo(paulineStats), int, "%d");
 
     end_call(marie, pauline);
 
