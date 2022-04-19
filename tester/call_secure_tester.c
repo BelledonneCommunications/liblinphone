@@ -363,7 +363,7 @@ static void zrtp_hybrid_key_agreement_call(void) {
     BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
 
     LpConfig *lpm = linphone_core_get_config(marie->lc);
-    linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
+	linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024,MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
     LpConfig *lpp = linphone_core_get_config(pauline->lc);
 	linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512,MS_ZRTP_KEY_AGREEMENT_K448_KYB1024");
 
@@ -376,7 +376,14 @@ static void zrtp_hybrid_key_agreement_call(void) {
 	LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
 	LinphoneCall *paulineCall = linphone_core_get_current_call(pauline->lc);
 	LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
+	BC_ASSERT_EQUAL(linphone_call_stats_get_cipher_algo(marieStats), linphone_call_stats_get_cipher_algo(paulineStats), int, "%d");
 	BC_ASSERT_EQUAL(linphone_call_stats_get_key_agreement_algo(marieStats), linphone_call_stats_get_key_agreement_algo(paulineStats), int, "%d");
+	BC_ASSERT_EQUAL(linphone_call_stats_get_hash_algo(marieStats), linphone_call_stats_get_hash_algo(paulineStats), int, "%d");
+	BC_ASSERT_EQUAL(linphone_call_stats_get_auth_tag_algo(marieStats), linphone_call_stats_get_auth_tag_algo(paulineStats), int, "%d");
+	BC_ASSERT_EQUAL(linphone_call_stats_get_sas_algo(marieStats), linphone_call_stats_get_sas_algo(paulineStats), int, "%d");
+
+	linphone_call_stats_unref(marieStats);
+	linphone_call_stats_unref(paulineStats);
 
     end_call(marie, pauline);
 
