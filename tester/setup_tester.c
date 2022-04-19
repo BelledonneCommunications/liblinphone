@@ -1713,7 +1713,7 @@ static void search_friend_with_aggregation(void) {
 
 	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
 	linphone_friend_set_name(stephanieFriend, "Stephanie de Monaco");
-	LinphoneFriendPhoneNumber *stephaniePhoneNumber = linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33952636505", "work");
+	LinphoneFriendPhoneNumber *stephaniePhoneNumber = linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33952636505", "work cell");
 	linphone_friend_add_phone_number_with_label(stephanieFriend, stephaniePhoneNumber);
 	linphone_friend_phone_number_unref(stephaniePhoneNumber);
 	LinphoneAddress *stephanieAddress = linphone_factory_create_address(linphone_factory_get(), "sip:stephanie@sip.example.org");
@@ -1732,6 +1732,23 @@ static void search_friend_with_aggregation(void) {
 	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationFriend);
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
+		const LinphoneSearchResult *result = (const LinphoneSearchResult *)resultList->data;
+		const LinphoneFriend *friend_result = linphone_search_result_get_friend(result);
+		BC_ASSERT_PTR_NOT_NULL(friend_result);
+		if (friend_result) {
+			bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers_with_label(friend_result);
+			BC_ASSERT_PTR_NOT_NULL(phone_numbers);
+			if (phone_numbers) {
+				int len = (int)bctbx_list_size(phone_numbers);
+				BC_ASSERT_EQUAL(len, 1, int, "%d");
+				const LinphoneFriendPhoneNumber *phone_number = (const LinphoneFriendPhoneNumber *)phone_numbers->data;
+				const char *number = linphone_friend_phone_number_get_phone_number(phone_number);
+				const char *label = linphone_friend_phone_number_get_label(phone_number);
+				BC_ASSERT_STRING_EQUAL(number, "+33952636505");
+				BC_ASSERT_STRING_EQUAL(label, "work cell");
+				bctbx_list_free_with_data(phone_numbers, (bctbx_list_free_func)linphone_friend_phone_number_unref);
+			}
+		}
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 
