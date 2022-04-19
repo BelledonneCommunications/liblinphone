@@ -45,6 +45,7 @@ public:
 	enum class EngineType {
 		Undefined = -1,
 		LimeX3dh = 0,
+		LimeX3dhServer = 1
 	};
 
 	virtual ~EncryptionEngine () = default;

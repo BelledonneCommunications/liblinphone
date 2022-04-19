@@ -1149,6 +1149,15 @@ void ChatMessagePrivate::send () {
 				lInfo() << "Encryption has been prevented, skipping this modifier";
 			}
 		}
+	} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+		if (!encryptionPrevented) {
+			EncryptionChatMessageModifier ecmm;
+			ChatMessageModifier::Result result = ecmm.encode(q->getSharedFromThis(), errorCode);
+			if (result == ChatMessageModifier::Result::Error)
+				return;
+		} else {
+			lInfo() << "[server] Encryption has been prevented, skipping this modifier";
+		}
 	}
 
 	// ---------------------------------------

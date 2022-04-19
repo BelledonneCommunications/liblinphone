@@ -661,21 +661,27 @@ void Core::enableLimeX3dh (bool enable) {
 
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-		string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
-		if (serverUrl.empty()) {
-			lInfo() << "Lime X3DH server URL not set, can't enable";
-			//Do not enable encryption engine if url is undefined
-			return;
-		}
-		string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
-		if (dbAccess.empty()) {
-			dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
-		}
-		belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
+		if (linphone_core_conference_server_enabled(getCCore())) {
+			LimeX3dhEncryptionServerEngine *engine = new LimeX3dhEncryptionServerEngine(getSharedFromThis());
+			setEncryptionEngine(engine);
+			d->registerListener(engine);
+		} else {
+			string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+			if (serverUrl.empty()) {
+				lInfo() << "Lime X3DH server URL not set, can't enable";
+				//Do not enable encryption engine if url is undefined
+				return;
+			}
+			string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
+			if (dbAccess.empty()) {
+				dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
+			}
+			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 
-		LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
-		setEncryptionEngine(engine);
-		d->registerListener(engine);
+			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
+			setEncryptionEngine(engine);
+			d->registerListener(engine);
+		}
 		addSpec("lime");
 	}
 #else
@@ -710,7 +716,9 @@ std::string Core::getX3dhServerUrl() const {
 bool Core::limeX3dhEnabled () const {
 #ifdef HAVE_LIME_X3DH
 	L_D();
-	if (d->imee && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)
+	bool isServer = linphone_core_conference_server_enabled(getCCore());
+	if (d->imee && ((!isServer && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)
+					|| (isServer && d->imee->getEngineType() == EncryptionEngine::EngineType::LimeX3dhServer)))
 		return true;
 #endif
 	return false;

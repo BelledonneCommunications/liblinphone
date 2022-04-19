@@ -38,6 +38,17 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+static bool isMessageEncrpted(const Content *internalContent) {
+	ContentType incomingContentType = internalContent->getContentType();
+	ContentType expectedContentType = ContentType::Encrypted;
+	expectedContentType.addParameter("protocol", "\"application/lime\"");
+	expectedContentType.addParameter("boundary", MultipartBoundary);
+	ContentType legacyContentType = ContentType::Encrypted; //for backward compatibility with limev2 early access
+	legacyContentType.addParameter("boundary", MultipartBoundary);
+
+	return incomingContentType == expectedContentType || incomingContentType == legacyContentType;
+}
+
 struct X3dhServerPostContext {
 	const lime::limeX3DHServerResponseProcess responseProcess;
 	const string username;
@@ -183,7 +194,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 		lInfo() << "[LIME] this chatroom is not encrypted, no need to encrypt outgoing message";
 		return ChatMessageModifier::Result::Skipped;
 	}
-
+	
 	// Reject message in unsafe chatroom if not allowed
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		if (chatRoom->getSecurityLevel() == ClientGroupChatRoom::SecurityLevel::Unsafe) {
@@ -369,15 +380,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		internalContent = message->getContents().front();
 
 	// Check if the message is encrypted and unwrap the multipart
-	ContentType incomingContentType = internalContent->getContentType();
-	ContentType expectedContentType = ContentType::Encrypted;
-	expectedContentType.addParameter("protocol", "\"application/lime\"");
-	expectedContentType.addParameter("boundary", MultipartBoundary);
-	ContentType legacyContentType = ContentType::Encrypted; //for backward compatibility with limev2 early access
-	legacyContentType.addParameter("boundary", MultipartBoundary);
-
-	if (incomingContentType != expectedContentType && incomingContentType != legacyContentType) {
-		lError() << "[LIME] unexpected content-type: " << incomingContentType;
+	if (!isMessageEncrpted(internalContent)) {
+		lError() << "[LIME] unexpected content-type: " << internalContent->getContentType();
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
 		// Disable sender authentication otherwise the unexpected message will always be discarded
@@ -981,6 +985,71 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	} catch (const exception &e) {
 		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
 	}
+}
+
+// -----------------------------------------------  LimeX3dhEncryptionServerEngine
+
+LimeX3dhEncryptionServerEngine::LimeX3dhEncryptionServerEngine (const shared_ptr<Core> core) : EncryptionEngine(core) {
+	engineType = EncryptionEngine::EngineType::LimeX3dhServer;
+	lInfo() << "[LIME][server] instanciate a LimeX3dhEncryptionServer engine "<<this;
+}
+
+LimeX3dhEncryptionServerEngine::~LimeX3dhEncryptionServerEngine () {
+	lInfo()<<"[LIME][server] destroy LimeX3dhEncryptionServer engine "<<this;
+}
+
+ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessage (
+	const std::shared_ptr<ChatMessage> &message,
+	int &errorCode) {
+	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
+	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+	const string &toDeviceId = message->getToAddress().asString();
+	const Content *internalContent;
+
+	// Check if chatroom is encrypted or not
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+		lInfo() << "[LIME][server] this chatroom is encrypted, proceed to encrypt outgoing message";
+	} else {
+		lInfo() << "[LIME][server] this chatroom is not encrypted, no need to encrypt outgoing message";
+		return ChatMessageModifier::Result::Skipped;
+	}
+
+	if (!message->getInternalContent().isEmpty())
+		internalContent = &(message->getInternalContent());
+	else
+		internalContent = message->getContents().front();
+
+	// Check if the message is encrypted
+	if (!isMessageEncrpted(internalContent)) {
+		lError() << "[LIME][server] unexpected content-type: " << internalContent->getContentType();
+		return ChatMessageModifier::Result::Error;
+	}
+
+	list<Content> contentsList = ContentManager::multipartToContentList(*internalContent);
+	list<Content *> contents;
+	bool hasKey = FALSE;
+	for (auto &content : contentsList) {
+		if (content.getContentType() != ContentType::LimeKey) {
+			contents.push_back(&content);
+		} else if (content.getHeader("Content-Id").getValueWithParams() == toDeviceId) {
+			contents.push_back(&content);
+			hasKey = TRUE;
+		}
+	}
+
+	if (!hasKey) {
+		lError() << "[LIME][server] this message doesn't contain the cipher key for participant " << toDeviceId;
+		return ChatMessageModifier::Result::Error;
+	}
+
+	Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
+	finalContent.setContentType(internalContent->getContentType());
+	message->setInternalContent(finalContent);
+	return ChatMessageModifier::Result::Done;
+}
+
+EncryptionEngine::EngineType LimeX3dhEncryptionServerEngine::getEngineType () {
+	return engineType;
 }
 
 LINPHONE_END_NAMESPACE

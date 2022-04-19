@@ -175,6 +175,17 @@ private:
 	lime::CurveId curve;
 };
 
+class LimeX3dhEncryptionServerEngine: public EncryptionEngine, public CoreListener {
+public:
+	LimeX3dhEncryptionServerEngine (const std::shared_ptr<Core> core);
+	~LimeX3dhEncryptionServerEngine ();
+	ChatMessageModifier::Result processOutgoingMessage (
+		const std::shared_ptr<ChatMessage> &message,
+		int &errorCode
+	) override;
+	EncryptionEngine::EngineType getEngineType () override;
+};
+
 LINPHONE_END_NAMESPACE
 
 #endif // _L_LIME_X3DH_ENCRYPTION_ENGINE_H_
