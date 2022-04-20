@@ -18,10 +18,8 @@
  */
 
 #include "linphone/api/c-call-stats.h"
-
+#include "private.h"
 #include "c-wrapper/c-wrapper.h"
-
-#include <bzrtp/bzrtp.h>
 
 // =============================================================================
 
@@ -238,14 +236,13 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			evd->packet = NULL;
 			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			linphone_call_stats_update(stats,ms);
-        } else if (evt == ORTP_EVENT_ZRTP_SAS_READY){
+		} else if (evt == ORTP_EVENT_ZRTP_SAS_READY){
 			stats->zrtp_info.cipher_algo = evd->info.zrtp_info.cipherAlgo;
 			stats->zrtp_info.key_agreement_algo = evd->info.zrtp_info.keyAgreementAlgo;
 			stats->zrtp_info.hash_algo = evd->info.zrtp_info.hashAlgo;
 			stats->zrtp_info.auth_tag_algo = evd->info.zrtp_info.authTagAlgo;
 			stats->zrtp_info.sas_algo = evd->info.zrtp_info.sasAlgo;
-			ms_message("ZRTP algo used during negotiation: Cipher: %s - KeyAgreement: %s - Hash: %s - AuthTag: %s - Sas Rendering: %s", bzrtp_algoToString(evd->info.zrtp_info.cipherAlgo), bzrtp_algoToString(evd->info.zrtp_info.keyAgreementAlgo), bzrtp_algoToString(evd->info.zrtp_info.hashAlgo), bzrtp_algoToString(evd->info.zrtp_info.authTagAlgo), bzrtp_algoToString(evd->info.zrtp_info.sasAlgo));
-        }
+		}
 	}
 }
 

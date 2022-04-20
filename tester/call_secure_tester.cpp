@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "linphone/core.h"
+#include "private.h"
 #include "linphone/lpconfig.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -369,8 +370,7 @@ int zrtp_hybrid_key_agreement_call(const char *cipherAlgo, const char *keyAgreem
 	linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_K255_KYB512");
 
     BC_ASSERT_TRUE(call_ok=call(marie,pauline));
-    if (!call_ok) goto end;
-
+    if (call_ok) {
 	// Check encryption algorithm
 	LinphoneStreamType streamType = LinphoneStreamTypeAudio;
 	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
@@ -390,8 +390,8 @@ int zrtp_hybrid_key_agreement_call(const char *cipherAlgo, const char *keyAgreem
 	linphone_call_stats_unref(paulineStats);
 
     end_call(marie, pauline);
+    }
 
-end:
     linphone_core_manager_destroy(marie);
     linphone_core_manager_destroy(pauline);
 
@@ -726,6 +726,7 @@ static void recreate_zrtpdb_when_corrupted(void) {
 static void call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, LinphoneMediaEncryption enc2, bool_t mandatory) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneCall* out_call = NULL;
 
 	if (!linphone_core_media_encryption_supported(marie->lc, enc1)) goto end;
 	linphone_core_set_media_encryption(marie->lc, enc1);
@@ -735,7 +736,7 @@ static void call_declined_encryption_mandatory(LinphoneMediaEncryption enc1, Lin
 	linphone_core_set_media_encryption(pauline->lc, enc2);
 	linphone_core_set_media_encryption_mandatory(pauline->lc, mandatory);
 
-	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
+	out_call = linphone_core_invite_address(pauline->lc,marie->identity);
 	linphone_call_ref(out_call);
 
 	/* We expect a 488 Not Acceptable */

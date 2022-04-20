@@ -264,7 +264,6 @@ set(SOURCE_FILES_C
 	call_race_conditions.c
 	call_push_incoming_tester.c
 	call_recovery_tester.c
-	call_secure_tester.c
 	call_single_tester.c
 	call_with_rtp_bundle_tester.c
 	complex_sip_case_tester.c
@@ -310,6 +309,7 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
+	call_secure_tester.cpp
 	capability_negotiation_tester.cpp
 	ice_capability_negotiation_tester.cpp
 	srtp_capability_negotiation_tester.cpp

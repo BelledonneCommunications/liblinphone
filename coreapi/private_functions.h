@@ -727,6 +727,14 @@ LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new(vo
 LinphoneDigestAuthenticationPolicy * linphone_digest_authentication_policy_new_from_config(LinphoneConfig *config);
 void linphone_digest_authentication_policy_save(const LinphoneDigestAuthenticationPolicy* policy, LinphoneConfig *config);
 
+typedef struct _ZrtpAlgo ZrtpAlgo;
+/**
+ * Get the zrtp info
+ * @param stats #LinphoneCallStats object @notnil
+ * @return The zrtp info
+ */
+LINPHONE_PUBLIC ZrtpAlgo linphone_call_stats_get_zrtp_info (const LinphoneCallStats *stats);
+
 #ifdef __cplusplus
 }
 #endif

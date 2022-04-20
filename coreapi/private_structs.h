@@ -797,6 +797,13 @@ namespace LinphonePrivate {
 	bool_t native_ringing_enabled; \
 	bool_t vibrate_on_incoming_call; \
 
-
+typedef struct _ZrtpAlgo ZrtpAlgo;
+struct _ZrtpAlgo {
+	uint8_t cipher_algo; /**< Id of the cipher algorithm */
+	uint8_t key_agreement_algo; /**< Id of the key agreement algorithm */
+	uint8_t hash_algo; /**< Id of the hash algorithm */
+	uint8_t auth_tag_algo; /**< Id of the authencation tag algorithm */
+	uint8_t sas_algo; /**< Id of the SAS algorithm */
+};
 
 #endif /* _PRIVATE_STRUCTS_H_ */
