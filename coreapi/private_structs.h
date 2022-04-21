@@ -799,11 +799,11 @@ namespace LinphonePrivate {
 
 typedef struct _ZrtpAlgo ZrtpAlgo;
 struct _ZrtpAlgo {
-	uint8_t cipher_algo; /**< Id of the cipher algorithm */
-	uint8_t key_agreement_algo; /**< Id of the key agreement algorithm */
-	uint8_t hash_algo; /**< Id of the hash algorithm */
-	uint8_t auth_tag_algo; /**< Id of the authencation tag algorithm */
-	uint8_t sas_algo; /**< Id of the SAS algorithm */
+	int cipher_algo; /**< Id of the cipher algorithm */
+	int key_agreement_algo; /**< Id of the key agreement algorithm */
+	int hash_algo; /**< Id of the hash algorithm */
+	int auth_tag_algo; /**< Id of the authencation tag algorithm */
+	int sas_algo; /**< Id of the SAS algorithm */
 };
 
 #endif /* _PRIVATE_STRUCTS_H_ */
