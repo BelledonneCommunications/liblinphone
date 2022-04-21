@@ -733,7 +733,7 @@ typedef struct _ZrtpAlgo ZrtpAlgo;
  * @param stats #LinphoneCallStats object @notnil
  * @return The zrtp info
  */
-LINPHONE_PUBLIC const ZrtpAlgo *linphone_call_stats_get_zrtp_info (const LinphoneCallStats *stats);
+LINPHONE_PUBLIC const ZrtpAlgo *linphone_call_stats_get_zrtp_algo (const LinphoneCallStats *stats);
 
 #ifdef __cplusplus
 }

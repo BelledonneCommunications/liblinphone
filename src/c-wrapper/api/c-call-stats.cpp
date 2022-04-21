@@ -56,7 +56,7 @@ struct _LinphoneCallStats {
 	int clockrate;  /*RTP clockrate of the stream, provided here for easily converting timestamp units expressed in RTCP packets in milliseconds*/
 	float estimated_download_bandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in kbit/s, including IP/UDP/RTP headers*/
 	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
-	ZrtpAlgo zrtp_info;
+	ZrtpAlgo zrtp_algo;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallStats);
@@ -237,11 +237,11 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			linphone_call_stats_update(stats,ms);
 		} else if (evt == ORTP_EVENT_ZRTP_SAS_READY){
-			set_algo_id(&stats->zrtp_info.cipher_algo, evd->info.zrtp_info.cipherAlgo);
-			set_algo_id(&stats->zrtp_info.key_agreement_algo, evd->info.zrtp_info.keyAgreementAlgo);
-			set_algo_id(&stats->zrtp_info.hash_algo, evd->info.zrtp_info.hashAlgo);
-			set_algo_id(&stats->zrtp_info.auth_tag_algo, evd->info.zrtp_info.authTagAlgo);
-			set_algo_id(&stats->zrtp_info.sas_algo, evd->info.zrtp_info.sasAlgo);
+			set_algo_id(&stats->zrtp_algo.cipher_algo, evd->info.zrtp_info.cipherAlgo);
+			set_algo_id(&stats->zrtp_algo.key_agreement_algo, evd->info.zrtp_info.keyAgreementAlgo);
+			set_algo_id(&stats->zrtp_algo.hash_algo, evd->info.zrtp_info.hashAlgo);
+			set_algo_id(&stats->zrtp_algo.auth_tag_algo, evd->info.zrtp_info.authTagAlgo);
+			set_algo_id(&stats->zrtp_algo.sas_algo, evd->info.zrtp_info.sasAlgo);
 		}
 	}
 }
@@ -400,6 +400,6 @@ void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *sta
 	stats->estimated_download_bandwidth = estimated_value;
 }
 
-const ZrtpAlgo *linphone_call_stats_get_zrtp_info (const LinphoneCallStats *stats){
-	return &stats->zrtp_info;
+const ZrtpAlgo *linphone_call_stats_get_zrtp_algo (const LinphoneCallStats *stats){
+	return &stats->zrtp_algo;
 }
