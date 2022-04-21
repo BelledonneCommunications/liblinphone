@@ -824,8 +824,9 @@ static void simple_conference_notify_speaking_device(void) {
 	}
 	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 1, 20000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStopSpeaking, 1, 20000));
+	// need time to be notified
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 1, 50000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStopSpeaking, 1, 50000));
 	
 	terminate_conference(new_participants, marie, NULL, NULL);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
