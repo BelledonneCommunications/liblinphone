@@ -36,6 +36,15 @@
 #endif
 #endif
 
+typedef struct _ZrtpAlgoString ZrtpAlgoString;
+struct _ZrtpAlgoString {
+	const char *cipher_algo = NULL; /**< Cipher algorithm */
+	const char *key_agreement_algo = NULL; /**< Key agreement algorithm */
+	const char *hash_algo = NULL; /**< Hash algorithm */
+	const char *auth_tag_algo = NULL; /**< Authencation tag algorithm */
+	const char *sas_algo = NULL; /**< SAS algorithm */
+};
+
 static void srtp_call(void) {
 	call_base(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
 }
@@ -85,7 +94,7 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
 	BC_ASSERT_TRUE(call(pauline,marie));
 	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
-	LinphoneCall * pauline_call = linphone_core_get_current_call(marie->lc);
+	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (marie_call && pauline_call) {
 		liblinphone_tester_check_rtcp(marie, pauline);
@@ -365,7 +374,7 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 
     BC_ASSERT_TRUE(call_ok=call(marie,pauline));
     if (call_ok) {
-		// Check encryption algorithm
+		/* Check encryption algorithms */
 		LinphoneStreamType streamType = LinphoneStreamTypeAudio;
 
 		LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);

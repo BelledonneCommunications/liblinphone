@@ -806,13 +806,4 @@ struct _ZrtpAlgo {
 	int sas_algo; /**< Id of the SAS algorithm */
 };
 
-typedef struct _ZrtpAlgoString ZrtpAlgoString;
-struct _ZrtpAlgoString {
-	const char *cipher_algo; /**< Cipher algorithm */
-	const char *key_agreement_algo; /**< Key agreement algorithm */
-	const char *hash_algo; /**< Hash algorithm */
-	const char *auth_tag_algo; /**< Authencation tag algorithm */
-	const char *sas_algo; /**< SAS algorithm */
-};
-
 #endif /* _PRIVATE_STRUCTS_H_ */
