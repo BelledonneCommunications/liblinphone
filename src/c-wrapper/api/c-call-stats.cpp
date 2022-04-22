@@ -237,11 +237,11 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			linphone_call_stats_update(stats,ms);
 		} else if (evt == ORTP_EVENT_ZRTP_SAS_READY){
-			set_algo_id(&stats->zrtp_algo.cipher_algo, evd->info.zrtp_info.cipherAlgo);
-			set_algo_id(&stats->zrtp_algo.key_agreement_algo, evd->info.zrtp_info.keyAgreementAlgo);
-			set_algo_id(&stats->zrtp_algo.hash_algo, evd->info.zrtp_info.hashAlgo);
-			set_algo_id(&stats->zrtp_algo.auth_tag_algo, evd->info.zrtp_info.authTagAlgo);
-			set_algo_id(&stats->zrtp_algo.sas_algo, evd->info.zrtp_info.sasAlgo);
+			stats->zrtp_algo.cipher_algo = evd->info.zrtp_info.cipherAlgo;
+			stats->zrtp_algo.key_agreement_algo = evd->info.zrtp_info.keyAgreementAlgo;
+			stats->zrtp_algo.hash_algo = evd->info.zrtp_info.hashAlgo;
+			stats->zrtp_algo.auth_tag_algo = evd->info.zrtp_info.authTagAlgo;
+			stats->zrtp_algo.sas_algo = evd->info.zrtp_info.sasAlgo;
 		}
 	}
 }

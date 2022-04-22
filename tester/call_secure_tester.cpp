@@ -366,8 +366,8 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 	linphone_config_set_string(lpm, "sip", "zrtp_hash_suites", marieAlgo.hash_algo);
 	linphone_config_set_string(lpp, "sip", "zrtp_hash_suites", paulineAlgo.hash_algo);
 
-	//linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", marieAlgo.auth_tag_algo);
-	//linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", paulineAlgo.auth_tag_algo);
+	//linphone_config_set_string(lpm, "sip", "zrtp__suites", marieAlgo.auth_tag_algo);
+	//linphone_config_set_string(lpp, "sip", "zrtp__suites", paulineAlgo.auth_tag_algo);
 
 	linphone_config_set_string(lpm, "sip", "zrtp_sas_suites", marieAlgo.sas_algo);
 	linphone_config_set_string(lpp, "sip", "zrtp_sas_suites", paulineAlgo.sas_algo);
@@ -389,16 +389,26 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 		const ZrtpAlgo *marieZrtpInfo = linphone_call_stats_get_zrtp_algo(marieStats);
 		const ZrtpAlgo *paulineZrtpInfo = linphone_call_stats_get_zrtp_algo(paulineStats);
 
-		BC_ASSERT_EQUAL(marieZrtpInfo->cipher_algo, res.cipher_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->cipher_algo, paulineZrtpInfo->cipher_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->key_agreement_algo, res.key_agreement_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->key_agreement_algo, paulineZrtpInfo->key_agreement_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->hash_algo, res.hash_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->hash_algo, paulineZrtpInfo->hash_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->auth_tag_algo, res.auth_tag_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->auth_tag_algo, paulineZrtpInfo->auth_tag_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->sas_algo, res.sas_algo, int, "%d");
-		BC_ASSERT_EQUAL(marieZrtpInfo->sas_algo, paulineZrtpInfo->sas_algo, int, "%d");
+		if(res.cipher_algo != 0) {
+			BC_ASSERT_EQUAL(marieZrtpInfo->cipher_algo, res.cipher_algo, int, "%d");
+			BC_ASSERT_EQUAL(marieZrtpInfo->cipher_algo, paulineZrtpInfo->cipher_algo, int, "%d");
+		}
+		if(res.key_agreement_algo != 0) {
+			BC_ASSERT_EQUAL(marieZrtpInfo->key_agreement_algo, res.key_agreement_algo, int, "%d");
+			BC_ASSERT_EQUAL(marieZrtpInfo->key_agreement_algo, paulineZrtpInfo->key_agreement_algo, int, "%d");
+		}
+		if(res.hash_algo != 0) {
+			BC_ASSERT_EQUAL(marieZrtpInfo->hash_algo, res.hash_algo, int, "%d");
+			BC_ASSERT_EQUAL(marieZrtpInfo->hash_algo, paulineZrtpInfo->hash_algo, int, "%d");
+		}
+		if(res.auth_tag_algo != 0) {
+			BC_ASSERT_EQUAL(marieZrtpInfo->auth_tag_algo, res.auth_tag_algo, int, "%d");
+			BC_ASSERT_EQUAL(marieZrtpInfo->auth_tag_algo, paulineZrtpInfo->auth_tag_algo, int, "%d");
+		}
+		if(res.sas_algo != 0) {
+			BC_ASSERT_EQUAL(marieZrtpInfo->sas_algo, res.sas_algo, int, "%d");
+			BC_ASSERT_EQUAL(marieZrtpInfo->sas_algo, paulineZrtpInfo->sas_algo, int, "%d");
+		}
 
 		linphone_call_stats_unref(marieStats);
 		linphone_call_stats_unref(paulineStats);
@@ -491,6 +501,12 @@ static void zrtp_hybrid_key_agreement_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgo res;
+
+	res.cipher_algo = 0;
+	res.key_agreement_algo = 0;
+	res.hash_algo = 0;
+	res.auth_tag_algo = 0;
+	res.sas_algo = 0;
 
 	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
