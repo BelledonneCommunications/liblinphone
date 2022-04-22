@@ -108,8 +108,8 @@ void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipant
 }
 
 void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_muted, is_muted);
 	ParticipantDevice::toCpp(participant_device)->setIsMuted(is_muted);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_muted, is_muted);
 }
 
 void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device, void* window_id){
