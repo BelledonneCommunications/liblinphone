@@ -388,7 +388,7 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 		const ZrtpAlgo *marieZrtpInfo = linphone_call_stats_get_zrtp_algo(marieStats);
 		const ZrtpAlgo *paulineZrtpInfo = linphone_call_stats_get_zrtp_algo(paulineStats);
 
-		if(res.cipher_algo != 0) {
+		if(res.cipher_algo[0] != 0) {
 			BC_ASSERT_EQUAL(marieZrtpInfo->cipher_algo[0], marieZrtpInfo->cipher_algo[0] == res.cipher_algo[0] ? res.cipher_algo[0] : res.cipher_algo[1], int, "%d");
 			BC_ASSERT_EQUAL(marieZrtpInfo->cipher_algo[0], paulineZrtpInfo->cipher_algo[0], int, "%d");
 		}
@@ -519,6 +519,34 @@ static void zrtp_hybrid_key_agreement_call(void) {
 	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	res.key_agreement_algo = MS_ZRTP_KEY_AGREEMENT_K255_KYB512;
+
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+}
+
+static void zrtp_authtag_call(void) {
+	ZrtpAlgoString marieAlgo;
+	ZrtpAlgoString paulineAlgo;
+	ZrtpAlgo res = nothingExpected;
+
+	// Call where Marie and Pauline use :
+	// - MS_ZRTP_AUTHTAG_HS32 for their authentication tag algorithms
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32";
+	res.auth_tag_algo = MS_ZRTP_AUTHTAG_HS32;
+
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call where Marie uses :
+	// - MS_ZRTP_AUTHTAG_HS80 for her authentication tag algorithm
+	paulineAlgo.auth_tag_algo = NULL;
+
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call where Marie and Pauline use :
+	// - MS_ZRTP_AUTHTAG_HS80 for their authentication tag algorithms
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80";
+	res.auth_tag_algo = MS_ZRTP_AUTHTAG_HS80;
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
@@ -1187,6 +1215,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
 	TEST_NO_TAG("ZRTP Hybrid key Agreement call", zrtp_hybrid_key_agreement_call),
+	TEST_NO_TAG("ZRTP Authentication tag call", zrtp_authtag_call),
 	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
 #ifdef VIDEO_ENABLED
 	TEST_ONE_TAG("DTLS SRTP call with several video switches", dtls_srtp_call_with_several_video_switches, "DTLS"),
