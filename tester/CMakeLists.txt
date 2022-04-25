@@ -205,7 +205,6 @@ set(RC_FILES
 	rcfiles/pauline_v4proxy_rc
 	rcfiles/pauline_well_known_port_rc
 	rcfiles/pauline_wild_rc
-	rcfiles/pauline_zrtp_ecdh255_rc
 	rcfiles/pauline_zrtp_srtpsuite_aes256_rc
 	rcfiles/remote_zero_length_params_rc
 	rcfiles/stun_rc
