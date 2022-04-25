@@ -346,6 +346,8 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4(vo
 
 }
 
+static ZrtpAlgo nothingExpected = {0,0,0,0,0};
+
 int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpAlgo res) {
     bool_t call_ok;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -366,8 +368,8 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 	linphone_config_set_string(lpm, "sip", "zrtp_hash_suites", marieAlgo.hash_algo);
 	linphone_config_set_string(lpp, "sip", "zrtp_hash_suites", paulineAlgo.hash_algo);
 
-	//linphone_config_set_string(lpm, "sip", "zrtp__suites", marieAlgo.auth_tag_algo);
-	//linphone_config_set_string(lpp, "sip", "zrtp__suites", paulineAlgo.auth_tag_algo);
+	linphone_config_set_string(lpm, "sip", "zrtp_auth_suites", marieAlgo.auth_tag_algo);
+	linphone_config_set_string(lpp, "sip", "zrtp_auth_suites", paulineAlgo.auth_tag_algo);
 
 	linphone_config_set_string(lpm, "sip", "zrtp_sas_suites", marieAlgo.sas_algo);
 	linphone_config_set_string(lpp, "sip", "zrtp_sas_suites", paulineAlgo.sas_algo);
@@ -382,9 +384,6 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 
 		LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
 		LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
-
-//		LinphoneCallStats *marieStats	= linphone_call_get_audio_stats(linphone_core_get_current_call(marie->lc));
-//		LinphoneCallStats *paulineStats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc));
 
 		const ZrtpAlgo *marieZrtpInfo = linphone_call_stats_get_zrtp_algo(marieStats);
 		const ZrtpAlgo *paulineZrtpInfo = linphone_call_stats_get_zrtp_algo(paulineStats);
@@ -425,7 +424,7 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 static void zrtp_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
-	ZrtpAlgo res;
+	ZrtpAlgo res = nothingExpected;
 
 	//call_base(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
@@ -434,7 +433,7 @@ static void zrtp_call(void) {
 static void zrtp_sas_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
-	ZrtpAlgo res;
+	ZrtpAlgo res = nothingExpected;
 
 	marieAlgo.sas_algo = "MS_ZRTP_SAS_B256";
 	paulineAlgo.sas_algo = "MS_ZRTP_SAS_B256";
@@ -452,7 +451,7 @@ static void zrtp_sas_call(void) {
 static void zrtp_cipher_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
-	ZrtpAlgo res;
+	ZrtpAlgo res = nothingExpected;
 
 	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_srtpsuite_aes256_rc", "pauline_zrtp_srtpsuite_aes256_rc");
 
@@ -472,7 +471,7 @@ static void zrtp_cipher_call(void) {
 static void zrtp_key_agreement_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
-	ZrtpAlgo res;
+	ZrtpAlgo res = nothingExpected;
 
 	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1";
 	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1";
@@ -500,13 +499,7 @@ static void zrtp_key_agreement_call(void) {
 static void zrtp_hybrid_key_agreement_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
-	ZrtpAlgo res;
-
-	res.cipher_algo = 0;
-	res.key_agreement_algo = 0;
-	res.hash_algo = 0;
-	res.auth_tag_algo = 0;
-	res.sas_algo = 0;
+	ZrtpAlgo res = nothingExpected;
 
 	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
