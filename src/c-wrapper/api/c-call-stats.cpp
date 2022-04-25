@@ -110,8 +110,7 @@ static void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCa
 	dst->clockrate = src->clockrate;
 	dst->rtcp_received_via_mux = src->rtcp_received_via_mux;
 	dst->estimated_download_bandwidth = src->estimated_download_bandwidth;
-	dst->zrtp_algo.cipher_algo[0] = src->zrtp_algo.cipher_algo[0];
-	dst->zrtp_algo.cipher_algo[1] = src->zrtp_algo.cipher_algo[1];
+	dst->zrtp_algo.cipher_algo = src->zrtp_algo.cipher_algo;
 	dst->zrtp_algo.key_agreement_algo = src->zrtp_algo.key_agreement_algo;
 	dst->zrtp_algo.hash_algo = src->zrtp_algo.hash_algo;
 	dst->zrtp_algo.auth_tag_algo = src->zrtp_algo.auth_tag_algo;
@@ -243,8 +242,7 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
 			linphone_call_stats_update(stats,ms);
 		} else if (evt == ORTP_EVENT_ZRTP_SAS_READY) {
-			stats->zrtp_algo.cipher_algo[0] = evd->info.zrtp_info.cipherAlgo;
-			stats->zrtp_algo.cipher_algo[1] = evd->info.zrtp_info.cipherAlgo;
+			stats->zrtp_algo.cipher_algo = evd->info.zrtp_info.cipherAlgo;
 			stats->zrtp_algo.key_agreement_algo = evd->info.zrtp_info.keyAgreementAlgo;
 			stats->zrtp_algo.hash_algo = evd->info.zrtp_info.hashAlgo;
 			stats->zrtp_algo.auth_tag_algo = evd->info.zrtp_info.authTagAlgo;
