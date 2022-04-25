@@ -799,7 +799,7 @@ namespace LinphonePrivate {
 
 typedef struct _ZrtpAlgo ZrtpAlgo;
 struct _ZrtpAlgo {
-	int cipher_algo; /**< Id of the cipher algorithm */
+	int cipher_algo[2]; /**< Id of the cipher algorithms */
 	int key_agreement_algo; /**< Id of the key agreement algorithm */
 	int hash_algo; /**< Id of the hash algorithm */
 	int auth_tag_algo; /**< Id of the authencation tag algorithm */
