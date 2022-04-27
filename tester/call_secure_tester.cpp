@@ -569,8 +569,11 @@ static void zrtp_authtag_call(void) {
 	// Call where Marie uses :
 	// - MS_ZRTP_AUTHTAG_HS32 for her authentication tag algorithm
 	paulineAlgo.auth_tag_algo = NULL;
+	res.auth_tag_algo.push_back(MS_ZRTP_AUTHTAG_HS80);
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	res.auth_tag_algo.clear();
 
 	// Call where Marie and Pauline use :
 	// - MS_ZRTP_AUTHTAG_HS80 for their authentication tag algorithms
@@ -580,7 +583,10 @@ static void zrtp_authtag_call(void) {
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
+	// Call where Marie uses :
+	// - MS_ZRTP_AUTHTAG_HS80 for her authentication tag algorithm
 	paulineAlgo.auth_tag_algo = NULL;
+	res.auth_tag_algo.push_back(MS_ZRTP_AUTHTAG_HS32);
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
