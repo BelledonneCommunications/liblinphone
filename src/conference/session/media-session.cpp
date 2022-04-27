@@ -3933,8 +3933,8 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const Update
 
 	if (d->getCurrentParams() == msp)
 		lWarning() << "MediaSession::update() is given the current params, this is probably not what you intend to do!";
-	if (msp) {
 
+	if (msp) {
 		// The state must be set before recreating the media description in order for the method forceStreamsDirAccordingToState (called by makeLocalMediaDescription) to set the stream directions accordingly
 		d->setState(nextState, "Updating call");
 		d->broken = false;

@@ -1144,8 +1144,8 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	lcs=bctbx_list_append(NULL,marie->lc);
 
 	// Set audio device to start with a known situation
-	linphone_core_set_default_input_audio_device(marie->lc, marie_current_dev);
-	linphone_core_set_default_output_audio_device(marie->lc, marie_current_dev);
+	linphone_core_set_default_input_audio_device(marie->lc, marie_dev1);
+	linphone_core_set_default_output_audio_device(marie->lc, marie_dev1);
 
 	// Pauline is online - ringback can start immediately
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -1186,11 +1186,15 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	// Set audio device to start with a known situation
-	linphone_core_set_default_input_audio_device(pauline->lc, pauline_current_dev);
-	linphone_core_set_default_output_audio_device(pauline->lc, pauline_current_dev);
+	linphone_core_set_default_input_audio_device(pauline->lc, pauline_dev1);
+	linphone_core_set_default_output_audio_device(pauline->lc, pauline_dev1);
 
-	LinphoneCall * marie_call = linphone_core_invite_address(marie->lc,pauline->identity);
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_set_input_audio_device(marie_params, marie_current_dev);
+	linphone_call_params_set_output_audio_device(marie_params, marie_current_dev);
+	LinphoneCall * marie_call = linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	linphone_call_params_unref(marie_params);
 
 	// Pauline shall receive the call immediately
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,5000));
@@ -1204,8 +1208,12 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), marie_current_dev);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), marie_current_dev);
 
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_set_input_audio_device(pauline_params, pauline_current_dev);
+	linphone_call_params_set_output_audio_device(pauline_params, pauline_current_dev);
 	// Take call - ringing ends
-	linphone_call_accept(pauline_call);
+	linphone_call_accept_with_params(pauline_call, pauline_params);
+	linphone_call_params_unref(pauline_params);
 
 	// Start call with a device that it is not the default one
 	linphone_audio_device_unref(pauline_current_dev);
