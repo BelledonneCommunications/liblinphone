@@ -1716,6 +1716,9 @@ static void search_friend_with_aggregation(void) {
 	LinphoneFriendPhoneNumber *stephaniePhoneNumber = linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33952636505", "work cell");
 	linphone_friend_add_phone_number_with_label(stephanieFriend, stephaniePhoneNumber);
 	linphone_friend_phone_number_unref(stephaniePhoneNumber);
+	LinphoneFriendPhoneNumber *stephaniePhoneNumber2 = linphone_factory_create_friend_phone_number(linphone_factory_get(), "+33901020304", "label (invalid)");
+	linphone_friend_add_phone_number_with_label(stephanieFriend, stephaniePhoneNumber2);
+	linphone_friend_phone_number_unref(stephaniePhoneNumber2);
 	LinphoneAddress *stephanieAddress = linphone_factory_create_address(linphone_factory_get(), "sip:stephanie@sip.example.org");
 	linphone_friend_add_address(stephanieFriend, stephanieAddress);
 	linphone_address_unref(stephanieAddress);
@@ -1726,7 +1729,7 @@ static void search_friend_with_aggregation(void) {
 
 	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationNone);
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 	resultList = linphone_magic_search_get_contacts_list(magicSearch, "stephanie", "", LinphoneMagicSearchSourceFriends, LinphoneMagicSearchAggregationFriend);
@@ -1737,21 +1740,31 @@ static void search_friend_with_aggregation(void) {
 		BC_ASSERT_PTR_NOT_NULL(friend_result);
 		if (friend_result) {
 			bctbx_list_t *phone_numbers = linphone_friend_get_phone_numbers_with_label(friend_result);
+			bctbx_list_t *it = phone_numbers;
 			BC_ASSERT_PTR_NOT_NULL(phone_numbers);
 			if (phone_numbers) {
 				int len = (int)bctbx_list_size(phone_numbers);
-				BC_ASSERT_EQUAL(len, 1, int, "%d");
-				const LinphoneFriendPhoneNumber *phone_number = (const LinphoneFriendPhoneNumber *)phone_numbers->data;
+				BC_ASSERT_EQUAL(len, 2, int, "%d");
+
+				const LinphoneFriendPhoneNumber *phone_number = (const LinphoneFriendPhoneNumber *)it->data;
 				const char *number = linphone_friend_phone_number_get_phone_number(phone_number);
 				const char *label = linphone_friend_phone_number_get_label(phone_number);
 				BC_ASSERT_STRING_EQUAL(number, "+33952636505");
 				BC_ASSERT_STRING_EQUAL(label, "work cell");
+
+				it = bctbx_list_next(phone_numbers);
+				const LinphoneFriendPhoneNumber *phone_number2 = (const LinphoneFriendPhoneNumber *)it->data;
+				const char *number2 = linphone_friend_phone_number_get_phone_number(phone_number2);
+				const char *label2 = linphone_friend_phone_number_get_label(phone_number2);
+				BC_ASSERT_STRING_EQUAL(number2, "+33901020304");
+				BC_ASSERT_PTR_NULL(label2);
+
 				bctbx_list_free_with_data(phone_numbers, (bctbx_list_free_func)linphone_friend_phone_number_unref);
 			}
 		}
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
-
+	
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
 }

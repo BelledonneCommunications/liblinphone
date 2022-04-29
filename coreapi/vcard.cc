@@ -358,6 +358,14 @@ void linphone_vcard_add_phone_number_with_label(LinphoneVcard *vCard, LinphoneFr
 		const char *phone = linphone_friend_phone_number_get_phone_number(phoneNumber);
 		const char *label = linphone_friend_phone_number_get_label(phoneNumber);
 		ms_error("[vCard] Couldn't add TEL value [%s] with label [%s] to vCard [%p]", phone, label, vCard);
+
+		shared_ptr<belcard::BelCardPhoneNumber> belcardPhoneNumberWithoutLabel = belcard::BelCardGeneric::create<belcard::BelCardPhoneNumber>();
+		belcardPhoneNumberWithoutLabel->setValue(phone);
+		if (!vCard->belCard->addPhoneNumber(belcardPhoneNumberWithoutLabel)) {
+			ms_error("[vCard] Couldn't add TEL value [%s] without label to vCard [%p] either!", phone, vCard);
+		} else {
+			ms_warning("[vCard] TEL value [%s] added to vCard [%p] without label", phone, vCard);
+		}
 	}
 }
 
