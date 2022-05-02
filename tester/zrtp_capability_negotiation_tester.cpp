@@ -106,47 +106,94 @@ static void zrtp_call_with_potential_configuration_same_as_actual_configuration(
 }
 
 static void zrtp_sas_call_with_capability_negotiations(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_b256_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_b256_rc");
+	//LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_b256_rc");
+	//LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_b256_rc");
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	LpConfig *lpp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_string(lpm, "sip", "zrtp_sas_suites", "MS_ZRTP_SAS_B256");
+	linphone_config_set_string(lpp, "sip", "zrtp_sas_suites", "MS_ZRTP_SAS_B256");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void zrtp_sas_call_with_capability_negotiations_default_keys_on_callee(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_b256_rc");
+//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_b256_rc");
+
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	linphone_config_set_string(lpm, "sip", "zrtp_sas_suites", "MS_ZRTP_SAS_B256");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void zrtp_cipher_call_with_capability_negotiations(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_aes256_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_aes256_rc");
+//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_aes256_rc");
+//	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_aes256_rc");
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	LpConfig *lpp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_string(lpm, "sip", "srtp_crypto_suites", "AES_CM_256_HMAC_SHA1_80,AES_CM_256_HMAC_SHA1_32");
+	linphone_config_set_string(lpp, "sip", "srtp_crypto_suites", "AES_CM_256_HMAC_SHA1_80,AES_CM_256_HMAC_SHA1_32");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void zrtp_cipher_call_with_capability_negotiations_aes256(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_aes256_rc");
+//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+//	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_aes256_rc");
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	LpConfig *lpp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_string(lpm, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
+	linphone_config_set_string(lpp, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void zrtp_call_with_different_cipher_suites_and_capability_negotiations(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+//	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	LpConfig *lpp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_string(lpm, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
+	linphone_config_set_string(lpp, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
+	linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_X255");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void zrtp_cipher_call_with_capability_negotiations_default_keys_on_callee(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	linphone_config_set_string(lpm, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
@@ -154,8 +201,19 @@ static void zrtp_cipher_call_with_capability_negotiations_default_keys_on_callee
 }
 
 static void zrtp_key_agreement_call_with_capability_negotiations(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_ecdh255_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+//	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_ecdh255_rc");
+//	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionZRTP), 0, int, "%d");
+	LpConfig *lpm = linphone_core_get_config(marie->lc);
+	LpConfig *lpp = linphone_core_get_config(pauline->lc);
+	linphone_config_set_string(lpm, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
+	linphone_config_set_string(lpm, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_X255");
+	linphone_config_set_string(lpp, "sip", "zrtp_cipher_suites", "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1");
+	linphone_config_set_string(lpp, "sip", "zrtp_key_agreements_suites", "MS_ZRTP_KEY_AGREEMENT_X255");
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);

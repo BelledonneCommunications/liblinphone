@@ -472,7 +472,6 @@ static void zrtp_sas_call(void) {
 
 	// Call where Marie uses :
 	// - MS_ZRTP_SAS_B256 for her SAS algorithm
-	//call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_b256_rc", "pauline_tcp_rc");
 	paulineAlgo.sas_algo = NULL;
 	res.sas_algo.push_back(MS_ZRTP_SAS_B32);
 
@@ -497,7 +496,6 @@ static void zrtp_cipher_call(void) {
 
 	// Call where Marie uses :
 	// - MS_ZRTP_CIPHER_AES3 or MS_ZRTP_CIPHER_AES1 for her cipher algorithm
-	//call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_aes256_rc", "pauline_tcp_rc");
 	paulineAlgo.cipher_algo = NULL;
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
