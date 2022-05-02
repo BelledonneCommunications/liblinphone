@@ -356,6 +356,7 @@ void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsMuted(device, muted);
 				}
+				pendingParticipantsMutes.erase(ssrc);
 				return;
 			}
 		}
@@ -366,10 +367,12 @@ void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsMuted(device, muted);
 			}
+			pendingParticipantsMutes.erase(ssrc);
 			return;
 		}
 	}
-	lDebug() << "IsMuted: unable to notify muted device because there is no device found.";
+	pendingParticipantsMutes[ssrc] = muted;
+	lDebug() << "IsMuted: unable to notify muted device because there is no device found - queuing it waiting to match a device to ssrc " << ssrc;
 }
 
 void Conference::notifyLocalMutedDevices (bool muted) {
@@ -379,6 +382,10 @@ void Conference::notifyLocalMutedDevices (bool muted) {
 			l->onParticipantDeviceIsMuted(device, muted);
 		}
 	}
+}
+
+const std::map<uint32_t, bool> & Conference::getPendingParticipantsMutes() const {
+	return pendingParticipantsMutes;
 }
 
 void Conference::setUsername (const string &username) {

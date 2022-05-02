@@ -1299,7 +1299,6 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 					resumed++;
 				} else {
 					BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),10000));
-ms_message("%s - DEBUG DEBUG m %s conf_mgr %s", __func__, linphone_core_get_identity(m->lc), linphone_core_get_identity(conf_mgr->lc));
 					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+updated,5000));
 
 					bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE);

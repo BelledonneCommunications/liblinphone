@@ -189,6 +189,7 @@ int linphone_conference_get_participant_device_volume(LinphoneConference *confer
 }
 
 int linphone_conference_mute_microphone (LinphoneConference *conference, bool_t val) {
+	MediaConference::Conference::toCpp(conference)->notifyLocalMutedDevices(val);
 	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 	if (!aci) return -1;
 	aci->enableMic(!val);

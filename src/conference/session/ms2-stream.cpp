@@ -23,6 +23,7 @@
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
+#include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "conference/participant.h"
@@ -226,12 +227,24 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = mSessions.rtp_session? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
 
-	if (getMediaSessionPrivate().getOp() && getMediaSessionPrivate().getOp()->getRemoteContactAddress()) {
-		char *c_address = sal_address_as_string(getMediaSessionPrivate().getOp()->getRemoteContactAddress());
-		Address address(c_address);
-		if (address.hasParam("isfocus")) localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc = mSessions.rtp_session? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
-		ms_free(c_address);
+	Address address = Address();
+	if (getMediaSessionPrivate().getOp()) {
+		const auto remoteContactAddress = getMediaSessionPrivate().getOp()->getRemoteContactAddress();
+		if (remoteContactAddress) {
+			char *c_address = sal_address_as_string(remoteContactAddress);
+			address = Address(c_address);
+			ms_free(c_address);
+		}
 	}
+	std::shared_ptr<LinphonePrivate::ConferenceInfo> confInfo = nullptr;
+	#ifdef HAVE_DB_STORAGE
+	// Search in the DB if this is a call toward a conference URI
+	auto &mainDb = getCore().getPrivate()->mainDb;
+	if (mainDb) {
+		confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*(getMediaSession().getRemoteAddress())));
+	}
+	#endif // HAVE_DB_STORAGE
+	if (address.hasParam("isfocus") || confInfo) localDesc.cfgs[localDesc.getChosenConfigurationIndex()].conference_ssrc = mSessions.rtp_session ? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
 
 	// The negotiated encryption must remain unchanged if:
 	// - internal update

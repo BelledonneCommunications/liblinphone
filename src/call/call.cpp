@@ -273,8 +273,10 @@ shared_ptr<Call> Call::startReferredCall (const MediaSessionParams *params) {
 	if (newCall) {
 		getActiveSession()->getPrivate()->setTransferTarget(Call::toCpp(newCall)->getActiveSession());
 		Call::toCpp(newCall)->getActiveSession()->getPrivate()->notifyReferState();
+		Call::toCpp(newCall)->setMicrophoneMuted(getMicrophoneMuted());
+		return Call::toCpp(newCall)->getSharedFromThis();
 	}
-	return Call::toCpp(newCall)->getSharedFromThis();
+	return nullptr;
 }
 
 // =============================================================================
@@ -615,7 +617,6 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 
 			// It is expected that the core of the remote conference is the participant one
 			remoteConference = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), conferenceId, nullptr, confParams), [](MediaConference::RemoteConference * c){c->unref();});
-			
 		}
 	}
 

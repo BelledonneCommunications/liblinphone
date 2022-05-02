@@ -47,11 +47,9 @@ class LocalConferenceEventHandler;
 
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
-
-class Conference;
-class LocalConference;
-class RemoteConference;
-
+	class Conference;
+	class LocalConference;
+	class RemoteConference;
 }
 
 class LINPHONE_PUBLIC Conference :
@@ -163,6 +161,8 @@ public:
 
 	virtual std::shared_ptr<Call> getCall() const = 0;
 
+	const std::map<uint32_t, bool> & getPendingParticipantsMutes() const;
+
 	void clearParticipants();
 
 #ifdef HAVE_DB_STORAGE
@@ -208,6 +208,7 @@ protected:
 	time_t startTime = 0;
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
+	std::map<uint32_t, bool> pendingParticipantsMutes;
 
 #ifdef HAVE_DB_STORAGE
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;

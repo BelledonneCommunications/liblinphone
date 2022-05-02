@@ -863,7 +863,7 @@ end:
 	destroy_mgr_in_conference(laure);
 }
 
-static void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
+void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted) {
 	stats* stat = get_stats((LinphoneCore *)linphone_participant_device_get_user_data(participant_device));
 	if (is_muted) {
 		stat->number_of_LinphoneParticipantDeviceMuted++;
@@ -1385,6 +1385,7 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	LinphoneCall* pauline_called_by_marie;
 	LinphoneCall* marie_call_laure;
 	LinphoneCall* laure_called_by_marie;
+	LinphoneCall* michelle_called_by_marie;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,michelle->lc);
@@ -1403,6 +1404,9 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	BC_ASSERT_TRUE(call(marie,michelle));
+	michelle_called_by_marie=linphone_core_get_current_call(michelle->lc);
+	linphone_call_set_microphone_muted(michelle_called_by_marie, TRUE);
+	BC_ASSERT_TRUE(linphone_call_get_microphone_muted(michelle_called_by_marie));
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -1418,12 +1422,30 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	const LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(marie_conference);
-	LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
-	LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
-	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
-	if (pauline_conference) {
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(pauline_conference), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
-		BC_ASSERT_EQUAL(linphone_conference_is_in(pauline_conference), 1, int, "%d");
+
+	//wait a bit to ensure that all devices became aware that Michelle joined the conference in mute
+	wait_for_list(lcs,NULL,0,2000);
+
+	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+		LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(c));
+		LinphoneConference * m_conference = linphone_core_search_conference(c, NULL, m_uri, marie_conference_address, NULL);
+		linphone_address_unref(m_uri);
+
+		BC_ASSERT_PTR_NOT_NULL(m_conference);
+		if (m_conference) {
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(m_conference), (unsigned int)bctbx_list_size(participants) + ((c == ((LinphoneCoreManager *)focus)->lc) ? 1 : 0), unsigned int, "%u");
+			BC_ASSERT_TRUE(linphone_conference_is_in(m_conference) == (c != ((LinphoneCoreManager *)focus)->lc));
+			bctbx_list_t * participant_device_list = linphone_conference_get_participant_device_list(m_conference);
+			for (bctbx_list_t *d_it = participant_device_list; d_it; d_it = bctbx_list_next(d_it)) {
+				LinphoneParticipantDevice * d = (LinphoneParticipantDevice *)bctbx_list_get_data(d_it);
+				BC_ASSERT_PTR_NOT_NULL(d);
+				if (d) {
+					BC_ASSERT_TRUE(!!linphone_participant_device_get_is_muted(d) == (linphone_address_weak_equal(linphone_participant_device_get_address(d), michelle->identity)));
+				}
+			}
+			bctbx_list_free_with_data(participant_device_list, (void(*)(void *))linphone_participant_device_unref);
+		}
 	}
 
 	stats focus_stats = focus_mgr->stat;
@@ -1437,9 +1459,6 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	BC_ASSERT_TRUE(call(pauline,chloe));
 	LinphoneCall * chloe_called_by_pauline = linphone_core_get_call_by_remote_address2(pauline->lc, chloe->identity);
 	BC_ASSERT_PTR_NOT_NULL(chloe_called_by_pauline);
-
-	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
-	wait_for_list(lcs,NULL,0,1000);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPaused, pauline_stats.number_of_LinphoneCallPaused + 1, 5000));
 	// Laure received the notification about Pauline's media capability changed
@@ -1472,6 +1491,9 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 		BC_ASSERT_EQUAL(linphone_conference_is_in(marie_conference), 1, int, "%d");
 	}
 
+	LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
+	LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
+	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
 	if (pauline_conference && chloe_called_by_pauline) {
 		// Pauline tries to add Chloe to the conference
 		linphone_conference_add_participant (pauline_conference, chloe_called_by_pauline);

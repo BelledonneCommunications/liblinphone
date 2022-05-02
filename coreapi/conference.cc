@@ -3146,7 +3146,9 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 		return (devAddr == contactAddress);
 	});
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress()) && (callIt == m_pendingCalls.cend()) && isIn()) {
+	if (isMe(device->getAddress())) {
+		notifyLocalMutedDevices(session->getPrivate()->getMicrophoneMuted());
+	} else if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn()) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE in order to get streams for newly added participant device " << device->getAddress();
 			auto ret = updateMainSession();

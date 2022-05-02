@@ -4577,9 +4577,8 @@ void MediaSession::notifySpeakingDevice(uint32_t ssrc, bool isSpeaking) {
 
 void MediaSession::notifyMutedDevice(uint32_t ssrc, bool muted) {
 	L_D();
-	LinphoneConference * conference = nullptr;
 	if (d->listener) {
-		conference = d->listener->getCallSessionConference(getSharedFromThis());
+		LinphoneConference * conference = d->listener->getCallSessionConference(getSharedFromThis());
 		if (conference) {
 			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 			cppConference->notifyMutedDevice(ssrc, muted);

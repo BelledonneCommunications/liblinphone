@@ -136,6 +136,14 @@ bool ParticipantDevice::isInConference() const {
 
 void ParticipantDevice::setSsrc (uint32_t ssrc) {
 	mSsrc = ssrc;
+	auto conference = getConference();
+	if (conference) {
+		const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
+		auto it = pendingParticipantsMutes.find(ssrc);
+		if (it != pendingParticipantsMutes.end()) {
+			conference->notifyMutedDevice(it->first, it->second);
+		}
+	}
 }
 
 uint32_t ParticipantDevice::getSsrc () const {

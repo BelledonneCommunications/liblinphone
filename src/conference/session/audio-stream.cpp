@@ -33,6 +33,7 @@
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/flowcontrol.h"
 
+#include "conference_private.h"
 #include "linphone/core.h"
 
 #include <cmath>
@@ -50,7 +51,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 	isOfferer = params.localIsOfferer;
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
-	
+
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
 	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
 		initZrtp();
@@ -58,12 +59,12 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	initializeSessions((MediaStream*)mStream);
 }
 
-static void audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
+void MS2AudioStream::audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
 	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
 	zis->getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
 }
 
-static void audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t muted) {
+void MS2AudioStream::audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t muted) {
 	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
 	zis->getMediaSession().notifyMutedDevice(ssrc, muted);
 }
@@ -487,14 +488,15 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters properly
 			audio_stream_set_mixer_to_client_extension_id(mStream, streamCfg.getMixerToClientExtensionId());
 		}
+
 		if (streamCfg.getClientToMixerExtensionId() > 0) {
 			// This has to be called before audio_stream_start so that the AudioStream can configure it's filters properly
 			audio_stream_set_client_to_mixer_extension_id(mStream, streamCfg.getClientToMixerExtensionId());
 		}
 
-		audio_stream_set_is_speaking_callback(mStream, audioStreamIsSpeakingCb, this);
-		audio_stream_set_is_muted_callback(mStream, audioStreamIsMutedCb, this);
-		
+		audio_stream_set_is_speaking_callback(mStream, &MS2AudioStream::audioStreamIsSpeakingCb, this);
+		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::audioStreamIsMutedCb, this);
+
 		audio_stream_set_audio_route_changed_callback(mStream, &MS2AudioStream::audioRouteChangeCb, &getCore());
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
@@ -511,7 +513,16 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	}
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
 		setupRingbackPlayer();
-	
+
+
+	std::shared_ptr<ParticipantDevice> device = nullptr;
+	if (getMediaSessionPrivate().getCallSessionListener()) {
+		LinphoneConference * conference = getMediaSessionPrivate().getCallSessionListener()->getCallSessionConference(getMediaSession().getSharedFromThis());
+		if (conference) {
+			device = MediaConference::Conference::toCpp(conference)->findParticipantDevice(getMediaSession().getSharedFromThis());
+		}
+	}
+
 	if (audioMixer && !mMuted){
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
 		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));

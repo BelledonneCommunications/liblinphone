@@ -632,8 +632,8 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);
 
-int linphone_conference_mute_microphone(LinphoneConference *conference, bool_t val);
-bool_t linphone_conference_microphone_is_muted(const LinphoneConference *conference);
+LINPHONE_PUBLIC int linphone_conference_mute_microphone(LinphoneConference *conference, bool_t val);
+LINPHONE_PUBLIC bool_t linphone_conference_microphone_is_muted(const LinphoneConference *conference);
 float linphone_conference_get_input_volume(const LinphoneConference *conference);
 
 void linphone_conference_on_call_terminating(LinphoneConference *conference, LinphoneCall *call);

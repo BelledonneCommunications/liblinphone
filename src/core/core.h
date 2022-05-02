@@ -85,6 +85,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class LocalConferenceEventHandler;
 	friend class MainDb;
 	friend class MainDbEventKey;
+	friend class MS2Stream;
 	friend class MediaSessionPrivate;
 	friend class RemoteConferenceEventHandler;
 	friend class RemoteConferenceListEventHandler;

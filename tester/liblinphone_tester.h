@@ -617,6 +617,7 @@ void compare_files(const char *path1, const char *path2);
 void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, MSList* lcs,LinphoneMediaDirection audio_dir, LinphoneMediaDirection video_dir);
 void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay, bool_t quick_cancel);
 void record_call(const char *filename, bool_t enableVideo, const char *video_codec);
+void on_muted_notified(LinphoneParticipantDevice *participant_device, bool_t is_muted);
 
 #define AUDIO_START	0
 #define VIDEO_START	1
