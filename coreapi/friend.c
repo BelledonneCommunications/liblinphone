@@ -1240,7 +1240,7 @@ void linphone_friend_remove(LinphoneFriend *lf) {
 				char section[50];
 				sprintf(section, "friend_%i", lf->rc_index);
 				linphone_config_clean_section(config, section);
-				linphone_config_sync(config);
+				linphone_core_config_sync(lc);
 				lf->rc_index = -1;
 			}
 		}

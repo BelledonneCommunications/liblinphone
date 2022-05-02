@@ -49,14 +49,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-typedef enum {
-	noCoreStarted,
-	mainCoreStarted,
-	executorCoreStarted,
-	executorCoreStopping, // A Main Core needs to start. Executor Cores have to stop.
-	executorCoreStopped // A Main Core has stopped the Executor Cores. Only a Main Core can start here.
-} SharedCoreState;
-
 string sharedStateToString(int state) {
    switch(state) {
       case noCoreStarted:
@@ -110,11 +102,12 @@ public:
 	void putMsgInUserDefaults(LinphoneChatMessage *msg);
 	void onMsgWrittenInUserDefaults() override;
 
+	SharedCoreState getSharedCoreState() override;
+
 private:
 	// shared core
 	void setupSharedCore(struct _LpConfig *config);
 	bool isSharedCoreStarted();
-	SharedCoreState getSharedCoreState();
 	static SharedCoreState getSharedCoreState(const string &appGroupId);
 	void setSharedCoreState(SharedCoreState sharedCoreState);
 	static void setSharedCoreState(SharedCoreState sharedCoreState, const string &appGroupId);

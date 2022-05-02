@@ -26,6 +26,14 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+typedef enum {
+	noCoreStarted,
+	mainCoreStarted,
+	executorCoreStarted,
+	executorCoreStopping, // A Main Core needs to start. Executor Cores have to stop.
+	executorCoreStopped // A Main Core has stopped the Executor Cores. Only a Main Core can start here.
+} SharedCoreState;
+
 /**
  * This interface aims at abstracting some features offered by the platform, most often mobile platforms.
  * A per platform implementation is to be made to implement these features, if available on the platform.
@@ -48,6 +56,8 @@ public:
 
     virtual void *getPathContext () = 0;
 	virtual void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) = 0;
+
+	virtual SharedCoreState getSharedCoreState() = 0;
 
 protected:
 	inline explicit SharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -72,6 +82,8 @@ public:
 
     void *getPathContext () override;
 	void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) override;
+
+	SharedCoreState getSharedCoreState() override;
 };
 
 std::shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core);
