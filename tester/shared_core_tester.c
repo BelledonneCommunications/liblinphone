@@ -513,6 +513,30 @@ static void stop_async_core_when_belle_sip_task_failed(void) {
 #endif
 }
 
+static void shared_executor_core_doesnt_modify_rc_file_when_main_shared_core_is_started(void) {
+#if TARGET_OS_IPHONE
+	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("marie_rc", TEST_GROUP_ID, TRUE, NULL);
+	LinphoneCoreManager *executor_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, main_mgr);
+
+	linphone_core_manager_start(main_mgr, TRUE);
+	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, NULL, &main_mgr->stat.number_of_LinphoneGlobalOn, 1, 2000));
+
+    LinphoneConfig *config = linphone_core_get_config(main_mgr->lc);
+	struct stat fileStat;
+	stat(linphone_config_get_filename(config), &fileStat);
+	time_t last_modified_time = fileStat.st_mtimespec.tv_sec;
+
+	BC_ASSERT_EQUAL(linphone_core_start(executor_mgr->lc), -1, int, "%d");
+
+    config = linphone_core_get_config(executor_mgr->lc);
+	stat(linphone_config_get_filename(config), &fileStat);
+	BC_ASSERT_EQUAL(last_modified_time, fileStat.st_mtimespec.tv_sec, time_t, "%ld");
+
+	linphone_core_manager_destroy(main_mgr);
+	linphone_core_manager_destroy(executor_mgr);
+#endif
+}
+
 test_t shared_core_tests[] = {
 	TEST_NO_TAG("Executor Shared Core can't start because Main Shared Core runs", shared_main_core_prevent_executor_core_start),
 	TEST_NO_TAG("Executor Shared Core stopped by Main Shared Core", shared_main_core_stops_executor_core),
@@ -522,7 +546,8 @@ test_t shared_core_tests[] = {
 	TEST_NO_TAG("Two Executor Shared Cores get messages", two_shared_executor_cores_get_messages),
 	TEST_NO_TAG("Executor Shared Core get new chat room from invite", shared_executor_core_get_chat_room),
 	TEST_NO_TAG("Two Executor Shared Cores get one msg and one chat room", two_shared_executor_cores_get_message_and_chat_room),
-	TEST_NO_TAG("stop async core when belle sip task failed", stop_async_core_when_belle_sip_task_failed)
+	TEST_NO_TAG("stop async core when belle sip task failed", stop_async_core_when_belle_sip_task_failed),
+	TEST_NO_TAG("Executor Shared Core does not modify rc file when Main Shared Core is started", shared_executor_core_doesnt_modify_rc_file_when_main_shared_core_is_started)
 };
 
 void shared_core_tester_before_each(void) {

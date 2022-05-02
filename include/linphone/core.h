@@ -6358,7 +6358,12 @@ LINPHONE_PUBLIC void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap 
 **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *core);
 
-
+/**
+ * Writes the config file to disk.
+ * @param config The #LinphoneCore object @notnil
+ * @return 0 if successful, -1 otherwise
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_config_sync(LinphoneCore *core);
 
 /**
  * @}

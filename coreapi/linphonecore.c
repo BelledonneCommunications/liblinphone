@@ -4143,7 +4143,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 	if (one_second_elapsed) {
 		bctbx_list_t *elem = NULL;
 		if (linphone_config_needs_commit(lc->config)) {
-			linphone_config_sync(lc->config);
+			linphone_core_config_sync(lc);
 		}
 		for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 			LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
@@ -7368,7 +7368,7 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	// We have to disconnect mainDB later since sip_config_uninit iterates
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->disconnectMainDb();
 
-	if (linphone_config_needs_commit(lc->config)) linphone_config_sync(lc->config);
+	if (linphone_config_needs_commit(lc->config)) linphone_core_config_sync(lc);
 
 	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
 	lc->call_logs=bctbx_list_free(lc->call_logs);
@@ -9049,4 +9049,14 @@ bool_t linphone_core_ldap_available(LinphoneCore *core) {
 #else
 	return FALSE;
 #endif
+}
+
+LinphoneStatus linphone_core_config_sync(LinphoneCore *core) {
+#if TARGET_OS_IPHONE
+	SharedCoreState state = getPlatformHelpers(core)->getSharedCoreHelpers()->getSharedCoreState();
+	if (state != SharedCoreState::mainCoreStarted || state != SharedCoreState::executorCoreStarted) {
+		return -1;
+	}
+#endif
+	return linphone_config_sync(core->config);
 }
