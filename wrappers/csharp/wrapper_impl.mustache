@@ -291,6 +291,42 @@ namespace Linphone
 			}
 			return bctbx_list;
 		}
+
+		/// Safely (no throw) convert a C++ char* to a .NET string (which are UTF-16).
+		/// If the raw string contains illegal UTF-8 multi-byte sequences,
+		/// replace them silently.
+		internal static string PtrToStringSafe(IntPtr str)
+		{
+			try  // the happy path first
+			{
+				return Marshal.PtrToStringAnsi(str);
+			}
+			catch (Exception)  // fallback to safe decoding
+			{
+				// Assume null-terminated and load into buffer
+				var buffer = new List<byte>();
+				byte current_byte;
+				int offset = 0;
+				do {
+					current_byte = Marshal.ReadByte(str, offset);
+					buffer.Add(current_byte);
+					offset++;
+				} while (current_byte != 0);
+				// Decode as UTF-8
+				return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+			}
+			// Notes:
+			// We could get rid of the try{} and always use safe decoding, however:
+			//  1. Most strings are correctly encoded
+			//  2. Safe decoding is expensive: The data is copied twice (from C++
+			//     to buffer, then from buffer to string). Since this is a hot path
+			//     (used in log message callbacks), we need performance, and we can
+			//     assume builtin marshalling will be faster (untested).
+			//  3. The exception, "Illegal byte sequence encounted in the input." (sic),
+			//     seems to happen only with the Mono runtime (Xamarin).
+			//     .NET Core either does no check, or replaces invalid characters
+			//     as part of marshalling, but does not throw an exception.
+		}
 	}
 
 	public class MediastreamerFactory
