@@ -56,6 +56,7 @@ private:
 	// Low level API.
 	// ---------------------------------------------------------------------------
 
+	long long insertSipAddress (const Address &address);
 	long long insertSipAddress (const std::string &sipAddress);
 	void insertContent (long long chatMessageId, const Content &content);
 	long long insertContentType (const std::string &contentType);

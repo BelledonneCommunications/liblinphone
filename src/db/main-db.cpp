@@ -63,7 +63,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 16);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 17);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -307,6 +307,35 @@ shared_ptr<MediaConference::Conference> MainDbPrivate::findAudioVideoConference 
 // Low level API.
 // -----------------------------------------------------------------------------
 
+long long MainDbPrivate::insertSipAddress (const Address &address) {
+#ifdef HAVE_DB_STORAGE
+	// This is a hack, because all addresses don't print their parameters in the same order.
+	const string sipAddress = ConferenceAddress(address).asString();
+	const string displayName = address.getDisplayName();
+
+	long long sipAddressId = selectSipAddressId(sipAddress);
+
+	if (sipAddressId < 0) {
+		lInfo() << "Insert new sip address in database: `" << sipAddress << "`.";
+		soci::indicator displayNameInd = displayName.empty() ? soci::i_null : soci::i_ok;
+
+		*dbSession.getBackendSession() << "INSERT INTO sip_address (value, display_name) VALUES (:sipAddress, :displayName)",
+			soci::use(sipAddress), soci::use(displayName, displayNameInd);
+
+		return dbSession.getLastInsertId();
+	} else if (sipAddressId >=0 && !displayName.empty()) {
+		lInfo() << "Updating sip address display name in database: `" << sipAddress << "`.";
+
+		*dbSession.getBackendSession() << "UPDATE sip_address SET display_name = :displayName WHERE id = :id",
+			soci::use(displayName), soci::use(sipAddressId);
+	}
+
+	return sipAddressId;
+#else
+	return -1;
+#endif
+}
+
 long long MainDbPrivate::insertSipAddress (const string &sipAddress) {
 #ifdef HAVE_DB_STORAGE
 	long long sipAddressId = selectSipAddressId(sipAddress);
@@ -314,7 +343,7 @@ long long MainDbPrivate::insertSipAddress (const string &sipAddress) {
 		return sipAddressId;
 
 	lInfo() << "Insert new sip address in database: `" << sipAddress << "`.";
-	*dbSession.getBackendSession() << "INSERT INTO sip_address (value) VALUES (:sipAddress)", soci::use(sipAddress);
+	*dbSession.getBackendSession() << "INSERT INTO sip_address (value, display_name) VALUES (:sipAddress, NULL)", soci::use(sipAddress);
 	return dbSession.getLastInsertId();
 #else
 	return -1;
@@ -623,8 +652,8 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 	if (conferenceCallId < 0) {
 		lInfo() << "Insert new conference call in database: " << callLog->getCallId();
 
-		const long long fromSipAddressId = insertSipAddress(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress())).asString());
-		const long long toSipAddressId = insertSipAddress(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress())).asString());
+		const long long fromSipAddressId = insertSipAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getFromAddress()));
+		const long long toSipAddressId = insertSipAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(callLog->getToAddress()));
 		int direction = static_cast<int>(callLog->getDirection());
 		const tm &startTime = Utils::getTimeTAsTm(callLog->getStartTime());
 
@@ -1669,26 +1698,32 @@ std::shared_ptr<CallLog> MainDbPrivate::selectCallLog (const soci::row &row) con
 	auto callLog = getCallLogFromCache(dbCallLogId);
 	if (callLog) return callLog;
 
+	LinphoneAddress *from = linphone_address_new(row.get<string>(1).c_str());
+	if (row.get_indicator(2) == soci::i_ok) linphone_address_set_display_name(from, row.get<string>(2).c_str());
+
+	LinphoneAddress *to = linphone_address_new(row.get<string>(3).c_str());
+	if (row.get_indicator(4) == soci::i_ok) linphone_address_set_display_name(to, row.get<string>(4).c_str());
+
 	callLog = CallLog::create(q->getCore(),
-		static_cast<LinphoneCallDir>(row.get<int>(3)),
-		linphone_address_new(row.get<string>(1).c_str()),
-		linphone_address_new(row.get<string>(2).c_str()));
+		static_cast<LinphoneCallDir>(row.get<int>(5)),
+		from,
+		to);
 
-	callLog->setDuration(row.get<int>(4));
-	callLog->setStartTime(dbSession.getTime(row, 5));
-	callLog->setConnectedTime(dbSession.getTime(row, 6));
-	callLog->setStatus(static_cast<LinphoneCallStatus>(row.get<int>(7)));
-	callLog->setVideoEnabled(!!row.get<int>(8));
-	callLog->setQuality((float) row.get<double>(9));
+	callLog->setDuration(row.get<int>(6));
+	callLog->setStartTime(dbSession.getTime(row, 7));
+	callLog->setConnectedTime(dbSession.getTime(row, 8));
+	callLog->setStatus(static_cast<LinphoneCallStatus>(row.get<int>(9)));
+	callLog->setVideoEnabled(!!row.get<int>(10));
+	callLog->setQuality((float) row.get<double>(11));
 
-	soci::indicator ind = row.get_indicator(10);
-	if (ind == soci::i_ok) callLog->setCallId(row.get<string>(10));
+	soci::indicator ind = row.get_indicator(12);
+	if (ind == soci::i_ok) callLog->setCallId(row.get<string>(12));
 
-	ind = row.get_indicator(11);
-	if (ind == soci::i_ok) callLog->setRefKey(row.get<string>(11));
+	ind = row.get_indicator(13);
+	if (ind == soci::i_ok) callLog->setRefKey(row.get<string>(13));
 
-	ind = row.get_indicator(12);
-	if (ind == soci::i_ok) callLog->setConferenceInfoId(dbSession.resolveId(row, 12));
+	ind = row.get_indicator(14);
+	if (ind == soci::i_ok) callLog->setConferenceInfoId(dbSession.resolveId(row, 14));
 
 	cache(callLog, dbCallLogId);
 
@@ -2066,6 +2101,10 @@ void MainDbPrivate::updateSchema () {
 
 	if (version < makeVersion(1, 0, 16)) {
 		*session << "ALTER TABLE chat_message_file_content ADD COLUMN duration INT NOT NULL DEFAULT -1";
+	}
+
+	if (version < makeVersion(1, 0, 17)) {
+		*session << "ALTER TABLE sip_address ADD COLUMN display_name VARCHAR(255)";
 	}
 #endif
 }
@@ -4727,8 +4766,8 @@ void MainDb::deleteCallLog (const std::shared_ptr<CallLog> &callLog) {
 
 std::shared_ptr<CallLog> MainDb::getCallLog (const std::string &callId, int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT c.id, from_sip_address.value, to_sip_address.value, direction, duration, start_time,"
-		"  connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
+	string query = "SELECT c.id, from_sip_address.value, from_sip_address.display_name, to_sip_address.value, to_sip_address.display_name,"
+		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM (conference_call as c, sip_address AS from_sip_address, sip_address AS to_sip_address)";
 
 	if (limit > 0) {
@@ -4765,7 +4804,7 @@ std::shared_ptr<CallLog> MainDb::getCallLog (const std::string &callId, int limi
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, to_sip_address.value, to_sip_address.display_name,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
@@ -4799,7 +4838,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (int limit) {
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const ConferenceAddress &address, int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, to_sip_address.value, to_sip_address.display_name,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
@@ -4835,7 +4874,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const ConferenceAddr
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const ConferenceAddress &peer, const ConferenceAddress &local, int limit) {
 #ifdef HAVE_DB_STORAGE
-	string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, to_sip_address.value, to_sip_address.display_name,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"
@@ -4871,7 +4910,7 @@ std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (const ConferenceAddr
 
 std::shared_ptr<CallLog> MainDb::getLastOutgoingCall () {
 #ifdef HAVE_DB_STORAGE
-	static const string query = "SELECT conference_call.id, from_sip_address.value, to_sip_address.value,"
+	static const string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, to_sip_address.value, to_sip_address.display_name,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
 		" WHERE conference_call.from_sip_address_id = from_sip_address.id AND conference_call.to_sip_address_id = to_sip_address.id"

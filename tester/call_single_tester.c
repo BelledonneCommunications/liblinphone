@@ -6383,6 +6383,75 @@ static void call_with_same_codecs_ordered_differently(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void simple_call_with_display_name(void) {
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	const LinphoneAddress *from;
+	LinphoneCall *pauline_call;
+	LinphoneProxyConfig* marie_cfg;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"));
+
+	/* with the account manager, we might lose the identity */
+	marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	{
+		LinphoneAddress* marie_addr = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_cfg));
+		char* marie_tmp_addr = NULL;
+		linphone_address_set_display_name(marie_addr, "Super Marie");
+		marie_tmp_addr = linphone_address_as_string(marie_addr);
+
+		linphone_proxy_config_edit(marie_cfg);
+		linphone_proxy_config_set_identity_address(marie_cfg, marie_addr);
+		linphone_proxy_config_done(marie_cfg);
+
+		ms_free(marie_tmp_addr);
+		linphone_address_unref(marie_addr);
+	}
+
+
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_NOT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	/*check that display name is correctly propagated in From */
+	if (pauline_call) {
+		from = linphone_call_get_remote_address(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_PTR_NOT_NULL(from);
+		if (from) {
+			const char *dname = linphone_address_get_display_name(from);
+			BC_ASSERT_PTR_NOT_NULL(dname);
+			if (dname){
+				BC_ASSERT_STRING_EQUAL(dname, "Super Marie");
+			}
+		}
+	}
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+	end_call(marie, pauline);
+
+	const bctbx_list_t *logs = linphone_core_get_call_logs(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(logs);
+	LinphoneCallLog *log = (LinphoneCallLog *)bctbx_list_get_data(logs);
+	BC_ASSERT_STRING_EQUAL(linphone_address_get_display_name(linphone_call_log_get_from_address(log)), "Super Marie");
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
@@ -6471,7 +6540,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with early media accepted in state changed callback", call_with_early_media_accepted_state_changed_callback),
 	TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently),
 	TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams),
-	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted)
+	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted),
+	TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
 };
 
 test_t call_not_established_tests[] = {
