@@ -52,8 +52,10 @@ public class DeviceUtils31 {
 							//Tombstone tombstone = Tombstone.parseFrom(inputStream);
 							//Log.w("TOMBSTONE=", tombstone.toString());
 						} else {
-							String trace = new BufferedReader(new InputStreamReader(inputStream)).lines().collect(Collectors.joining("\n"));
+							BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+							String trace = bufferedReader.lines().collect(Collectors.joining("\n"));
 							Log.w("TRACE=", trace);
+							bufferedReader.close();
 						}
 					} else {
 						Log.w("[Device Utils 31] No input stream for exit info");
