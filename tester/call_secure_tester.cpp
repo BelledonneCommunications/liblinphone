@@ -548,6 +548,14 @@ static void zrtp_hybrid_key_agreement_call(void) {
 	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_K255_KYB512);
 
+	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
+	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
+	res.cipher_algo.push_back(MS_ZRTP_CIPHER_AES3);
+
+	marieAlgo.hash_algo = "MS_ZRTP_HASH_S384";
+	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S384";
+	res.hash_algo.push_back(MS_ZRTP_HASH_S384);
+
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
 
