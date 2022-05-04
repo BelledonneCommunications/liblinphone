@@ -833,7 +833,7 @@ std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() con
 	for (const auto & p : getParticipants()) {
 		const auto & pAddress = p->getAddress();
 		auto pIt = std::find(participantAddresses.begin(), participantAddresses.end(), pAddress);
-		if (pIt == invitedAddresses.end()) {
+		if (pIt == participantAddresses.end()) {
 			participantAddresses.push_back(pAddress);
 		}
 	}
@@ -2154,7 +2154,7 @@ std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() co
 	for (const auto & p : getParticipants()) {
 		const auto & pAddress = p->getAddress();
 		auto pIt = std::find(participantAddresses.begin(), participantAddresses.end(), pAddress);
-		if (pIt == invitedAddresses.end()) {
+		if (pIt == participantAddresses.end()) {
 			participantAddresses.push_back(pAddress);
 		}
 	}
