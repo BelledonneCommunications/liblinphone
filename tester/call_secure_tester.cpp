@@ -355,6 +355,14 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4(vo
 
 }
 
+
+/*
+ *	In the case where Marie and Pauline do not have the same algorithms,
+ *	the selected algorithm is not deterministic
+ *	So we check if the selected algorithm is :
+ *		- the algorithm owned by Marie (or Pauline)
+ *		- or the default algorithm
+ */
 int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpAlgoRes res) {
     bool_t call_ok;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -544,6 +552,8 @@ static void zrtp_hybrid_key_agreement_call(void) {
 
 	// Call where Marie and Pauline use :
 	// - MS_ZRTP_KEY_AGREEMENT_K255_KYB512 for their key agreement algorithms
+	// - MS_ZRTP_CIPHER_AES3 for their chipher algorithms
+	// - MS_ZRTP_HASH_S384 for their hash algorithms
 	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
 	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_K255_KYB512);
@@ -555,6 +565,17 @@ static void zrtp_hybrid_key_agreement_call(void) {
 	marieAlgo.hash_algo = "MS_ZRTP_HASH_S384";
 	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S384";
 	res.hash_algo.push_back(MS_ZRTP_HASH_S384);
+
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call where Marie and Pauline use :
+	// - MS_ZRTP_KEY_AGREEMENT_K448_KYB1024 for their key agreement algorithms
+	// - MS_ZRTP_CIPHER_AES3 for their chipher algorithms
+	// - MS_ZRTP_HASH_S384 for their hash algorithms
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
+	res.key_agreement_algo.pop_back();
+	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024);
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
