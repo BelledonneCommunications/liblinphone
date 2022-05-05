@@ -122,8 +122,9 @@ static void last_outgoing_call_without_conference () {
 	// Report the call
 	L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, callLog, nullptr);
 
-	auto outgoingCall = LinphonePrivate::CallLog::toCpp(linphone_core_get_last_outgoing_call_log(marie->lc));
-	BC_ASSERT_STRING_EQUAL("PauPau", linphone_address_get_display_name(outgoingCall->getToAddress()));
+	LinphoneCallLog *log = linphone_core_get_last_outgoing_call_log(marie->lc);
+	BC_ASSERT_STRING_EQUAL("PauPau", linphone_address_get_display_name(linphone_call_log_get_to_address(log)));
+	linphone_call_log_unref(log);
 
 	// Create a new fake call log to a conference
 	callLog = CallLog::create(L_GET_CPP_PTR_FROM_C_OBJECT(marie->lc)->getSharedFromThis(),
