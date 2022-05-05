@@ -195,7 +195,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
 }
 
-AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) {
+AccountParams::AccountParams (const AccountParams &other) : HybridObject(other), CustomParams(other) {
 	mExpires = other.mExpires;
 	mQualityReportingInterval = other.mQualityReportingInterval;
 	mPublishExpires = other.mPublishExpires;
@@ -818,6 +818,8 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	}
 	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);
 	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleAssumption);
+
+	writeCustomParamsToConfigFile (config, key);
 }
 
 LINPHONE_END_NAMESPACE

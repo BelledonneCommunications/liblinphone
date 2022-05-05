@@ -27,6 +27,7 @@
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "utils/custom-params.h"
 
 // =============================================================================
 
@@ -830,6 +831,14 @@ void Account::writeToConfigFile (int index) {
 	}
 
 	mParams->writeToConfigFile(mCore->config, index);
+}
+
+void Account::addCustomParam(const std::string & key, const std::string & value) {
+	mParams->addCustomParam(key, value);
+}
+
+const std::string & Account::getCustomParam(const std::string & key) const {
+	return mParams->getCustomParam(key);
 }
 
 bool Account::canRegister(){

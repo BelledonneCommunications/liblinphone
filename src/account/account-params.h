@@ -25,20 +25,21 @@
 #include "linphone/api/c-types.h"
 #include "linphone/api/c-push-notification-config.h"
 #include "linphone/types.h"
+#include "utils/custom-params.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 class PushNotificationConfig;
 
-class AccountParams : public bellesip::HybridObject<LinphoneAccountParams, AccountParams> {
+class AccountParams : public bellesip::HybridObject<LinphoneAccountParams, AccountParams>, public CustomParams {
 	friend class Account;
 
 public:
 	AccountParams (LinphoneCore *lc);
 	AccountParams (LinphoneCore *lc, int index);
 	AccountParams (const AccountParams &other);
-	~AccountParams ();
+	virtual ~AccountParams ();
 
 	AccountParams* clone () const override;
 

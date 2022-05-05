@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <bctoolbox/vfs.h>
+
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
@@ -30,7 +32,10 @@ static void simple_account_creation(void) {
 
 	// Use default_index from config file so that the account params is already configured
 	LinphoneAccountParams *params = linphone_account_params_new_with_config(marie->lc, default_index);
+	linphone_account_params_add_custom_param(params, "default", "yes");
+	BC_ASSERT_STRING_EQUAL(linphone_account_params_get_custom_param(params, "default"), "yes");
 	LinphoneAccount *new_account = linphone_account_new(marie->lc, params);
+	linphone_account_add_custom_param(new_account, "main-account", "1");
 
 	linphone_core_remove_account(marie->lc, marie_account);
 	BC_ASSERT_PTR_NULL(linphone_core_get_default_account(marie->lc));
@@ -40,13 +45,33 @@ static void simple_account_creation(void) {
 	linphone_core_set_default_account(marie->lc, new_account);
 
 	BC_ASSERT_TRUE(linphone_core_get_default_account(marie->lc) == new_account);
+	BC_ASSERT_STRING_EQUAL(linphone_account_get_custom_param(new_account, "main-account"), "1");
+	BC_ASSERT_STRING_EQUAL(linphone_account_get_custom_param(new_account, "default"), "yes");
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_account(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_proxy_config(marie->lc));
 
 	linphone_account_params_unref(params);
 	linphone_account_unref(new_account);
+
+	// Verify that the config has the custom parameters
+	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(marie->lc), "proxy_0", "x-custom-property:main-account", 0), 1, int, "%0d");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(linphone_core_get_config(marie->lc), "proxy_0", "x-custom-property:default", 0), "yes");
+
+	char * local_rc = ms_strdup(marie->rc_local);
 	linphone_core_manager_destroy(marie);
+
+	// Verify that the custom parameters are written to the rc file
+	bctbx_vfs_file_t* cfg_file = bctbx_file_open(bctbx_vfs_get_default(), local_rc, "r");
+	size_t cfg_file_size = (size_t)bctbx_file_size(cfg_file);
+	char *buf = bctbx_malloc(cfg_file_size);
+	bctbx_file_read(cfg_file, buf, cfg_file_size, 0);
+	BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:main-account"));
+	BC_ASSERT_PTR_NOT_NULL(strstr(buf, "x-custom-property:default"));
+	bctbx_file_close(cfg_file);
+	bctbx_free(buf);
+
+	ms_free(local_rc);
 }
 
 void registration_state_changed_on_account(LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {

@@ -46,7 +46,7 @@ public:
 	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params);
 	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
 	Account (const Account &other);
-	~Account ();
+	virtual ~Account ();
 
 	Account* clone () const override;
 
@@ -105,6 +105,8 @@ public:
 	void unpublish ();
 	void unregister ();
 	void update ();
+	void addCustomParam(const std::string & key, const std::string & value);
+	const std::string & getCustomParam(const std::string & key) const;
 	void writeToConfigFile (int index);
 	const LinphoneAuthInfo* findAuthInfo () const;
 	LinphoneEvent *createPublish (const char *event, int expires);

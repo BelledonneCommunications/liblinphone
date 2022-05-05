@@ -280,6 +280,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	search/search-request.h
 	search/search-result.h
 	utils/background-task.h
+	utils/custom-params.h
 	utils/general-internal.h
 	utils/payload-type-handler.h
 	utils/if-addrs.h
@@ -505,6 +506,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	search/search-request.cpp
 	search/search-result.cpp
 	utils/background-task.cpp
+	utils/custom-params.cpp
 	utils/fs.cpp
 	utils/general.cpp
 	utils/payload-type-handler.cpp

@@ -742,6 +742,22 @@ LINPHONE_PUBLIC bool_t linphone_account_params_cpim_in_basic_chat_room_enabled(c
  */
 LINPHONE_PUBLIC void linphone_account_params_enable_cpim_in_basic_chat_room(LinphoneAccountParams *params, bool_t enable);
 
+/**
+ * Set one custom parameter to this #LinphoneAccountParams.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param key key of the searched parameter. @notnil
+ * @param value value of the searched parameter. @notnil
+ */
+LINPHONE_PUBLIC void linphone_account_params_add_custom_param(LinphoneAccountParams *params, const char * key, const char * value);
+
+/**
+ * Get the custom parameter with key to this #LinphoneAccountParams.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param key key of the searched parameter. @notnil
+ * @return The value of the parameter with key if found or an empty string otherwise
+ */
+LINPHONE_PUBLIC const char * linphone_account_params_get_custom_param(const LinphoneAccountParams *params, const char * key);
+
 
 /**
  * @}

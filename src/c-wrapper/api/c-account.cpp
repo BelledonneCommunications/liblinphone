@@ -62,6 +62,14 @@ const LinphoneAccountParams* linphone_account_get_params(const LinphoneAccount *
 	return Account::toCpp(account)->getAccountParams()->toC();
 }
 
+void linphone_account_add_custom_param(LinphoneAccount *account, const char * key, const char * value) {
+	Account::toCpp(account)->addCustomParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
+}
+
+const char * linphone_account_get_custom_param(const LinphoneAccount *account, const char * key) {
+	return L_STRING_TO_C(Account::toCpp(account)->getCustomParam(L_C_TO_STRING(key)));
+}
+
 void linphone_account_set_user_data(LinphoneAccount *account, void *user_data) {
 	Account::toCpp(account)->setUserData(user_data);
 }

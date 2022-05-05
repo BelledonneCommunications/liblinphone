@@ -86,6 +86,22 @@ LINPHONE_PUBLIC int linphone_account_set_params(LinphoneAccount *account, Linpho
 LINPHONE_PUBLIC const LinphoneAccountParams* linphone_account_get_params(const LinphoneAccount *account);
 
 /**
+ * Set one custom parameter to this #LinphoneAccount.
+ * @param account The #LinphoneAccount object. @notnil
+ * @param key key of the searched parameter. @notnil
+ * @param value value of the searched parameter. @notnil
+ */
+LINPHONE_PUBLIC void linphone_account_add_custom_param(LinphoneAccount *account, const char * key, const char * value);
+
+/**
+ * Get the custom parameter with key to this #LinphoneAccount.
+ * @param account The #LinphoneAccount object. @notnil
+ * @param key key of the searched parameter. @notnil
+ * @return The value of the parameter with key if found or an empty string otherwise
+ */
+LINPHONE_PUBLIC const char * linphone_account_get_custom_param(const LinphoneAccount *account, const char * key);
+
+/**
  * Assign a user pointer to the account.
  * @param account The #LinphoneAccount object. @notnil
  * @param user_data The user data. @maybenil

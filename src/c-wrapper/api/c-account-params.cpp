@@ -391,3 +391,10 @@ void linphone_account_params_enable_cpim_in_basic_chat_room(LinphoneAccountParam
 	AccountParams::toCpp(params)->setCpimMessagesAllowedInBasicChatRooms(enable);
 }
 
+void linphone_account_params_add_custom_param(LinphoneAccountParams *params, const char * key, const char * value) {
+	AccountParams::toCpp(params)->addCustomParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
+}
+
+const char * linphone_account_params_get_custom_param(const LinphoneAccountParams *params, const char * key) {
+	return L_STRING_TO_C(AccountParams::toCpp(params)->getCustomParam(L_C_TO_STRING(key)));
+}

@@ -411,10 +411,6 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	lcs=bctbx_list_append(lcs,laure->lc);
 	if (focus) lcs=bctbx_list_append(lcs,focus->lc);
 
-	setup_mgr_for_conference(marie);
-	setup_mgr_for_conference(pauline);
-	setup_mgr_for_conference(laure);
-
 	is_remote_conf = (strcmp(linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "conference_type", "local"), "remote") == 0);
 	if(is_remote_conf) BC_ASSERT_PTR_NOT_NULL(focus);
 
@@ -518,7 +514,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,initial_marie_stat.number_of_LinphoneCallStreamsRunning+2,3000));
 
 	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
-	wait_for_list(lcs,NULL,0,5000);
+	wait_for_list(lcs,NULL,0,3000);
 
 	// Check that laure received volumes from other participant's devices
 	LinphoneCall *laure_call = linphone_core_get_current_call(laure->lc);
