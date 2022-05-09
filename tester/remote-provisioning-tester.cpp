@@ -154,9 +154,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
 
 	// Create a test account
-	char *token = sal_get_random_token(6);
-	string username = string("test_").append(token);
-	ms_free(token);
+	string username = string("test_").append(sal_get_random_token_lowercase(12));
 	bool activated = false; // Required to get a confirmation key
 	string confirmationKey;
 	int id;
@@ -219,8 +217,8 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	unlink(friends_db);
 
 	// Create a test account
-	string usernameContact1 = string("test_").append(sal_get_random_token(6));
-	string usernameContact2 = string("test_").append(sal_get_random_token(6));
+	string usernameContact1 = string("test_").append(sal_get_random_token_lowercase(12));
+	string usernameContact2 = string("test_").append(sal_get_random_token_lowercase(12));
 	int contactId0;
 	int contactId1;
 	int contactId2;

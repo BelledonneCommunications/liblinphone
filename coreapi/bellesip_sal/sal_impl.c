@@ -251,6 +251,16 @@ char *sal_get_random_token(int size){
 	return belle_sip_random_token(reinterpret_cast<char *>(ms_malloc((size_t)size)),(size_t)size);
 }
 
+char *sal_get_random_token_lowercase(int size) {
+	char *random = sal_get_random_token(size);
+
+	for (int i = 0; i < size; i++) {
+		random[i] = (char) tolower(random[i]);
+	}
+
+	return random;
+}
+
 unsigned int sal_get_random(void){
 	unsigned int ret=0;
 	belle_sip_random_bytes((unsigned char*)&ret,4);
@@ -426,4 +436,3 @@ const char * sal_body_handler_get_header(const SalBodyHandler *body_handler, con
 const belle_sip_list_t* sal_body_handler_get_headers(const SalBodyHandler *body_handler) {
 	return belle_sip_body_handler_get_headers(BELLE_SIP_BODY_HANDLER(body_handler));
 }
-

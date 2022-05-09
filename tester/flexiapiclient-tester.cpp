@@ -130,9 +130,7 @@ static void flexiapiCreateAccount() {
 	int code = 0;
 	int fetched = 0;
 	int id = 0;
-	char* token = sal_get_random_token(6);
-	string username = string("test_").append(token);
-	ms_free(token);
+	string username = string("test_").append(sal_get_random_token_lowercase(12));
 	string resolvedDomain;
 	bool activated = true;
 

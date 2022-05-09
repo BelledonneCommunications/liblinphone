@@ -504,6 +504,7 @@ void sal_set_log_level(OrtpLogLevel level);
 
 unsigned int sal_get_random(void);
 LINPHONE_PUBLIC char *sal_get_random_token(int size);
+LINPHONE_PUBLIC char *sal_get_random_token_lowercase(int size);
 unsigned char * sal_get_random_bytes(unsigned char *ret, size_t size);
 #if 0
 belle_sip_source_t * sal_create_timer(Sal *sal, belle_sip_source_func_t func, void *data, unsigned int timeout_value_ms, const char* timer_name);
