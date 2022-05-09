@@ -2672,6 +2672,11 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 				linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
 				linphone_core_enable_video_capture(mgr->lc, TRUE);
 				linphone_core_enable_video_display(mgr->lc, TRUE);
+
+				if (layout == LinphoneConferenceLayoutGrid) {
+					linphone_core_set_preferred_video_definition_by_name(mgr->lc, "720p");
+					linphone_config_set_string(linphone_core_get_config(mgr->lc), "video", "max_mosaic_size", "vga");
+				}
 			}
 
 			if (mgr != focus.getCMgr()) {
@@ -2879,6 +2884,12 @@ static void create_conference_base (time_t start_time, int duration, bool_t add_
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_rparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_cparams = linphone_call_get_current_params(pcall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_cparams), enabled, int, "%0d");
+
+						if (enabled && layout == LinphoneConferenceLayoutGrid && video_direction == LinphoneMediaDirectionSendRecv) {
+							MSVideoSize vsize = linphone_call_params_get_sent_video_size(call_cparams);
+							BC_ASSERT_EQUAL(vsize.width, 640, int, "%d");
+							BC_ASSERT_EQUAL(vsize.height, 480, int, "%d");
+						}
 					}
 					LinphoneCall * ccall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
 					BC_ASSERT_PTR_NOT_NULL(ccall);

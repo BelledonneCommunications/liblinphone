@@ -296,13 +296,37 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	video_stream_set_fps(mStream, linphone_core_get_preferred_framerate(getCCore()));
 	if (linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "nowebcam_uses_normal_fps", 0))
 		mStream->staticimage_webcam_fps_optimization = false;
+
+	LinphoneVideoDefinition *max_vdef = nullptr;
+	if (this->getMediaSessionPrivate().getParams()->getConferenceVideoLayout() == ConferenceLayout::Grid) {
+		const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_mosaic_size", nullptr);
+		if (str != NULL && str[0] != 0) {
+			max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
+			if (max_vdef == NULL) {
+				lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
+			} else {
+				MSVideoSize max;
+				max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
+				max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
+				video_stream_set_sent_video_size_max(mStream, max);
+			}
+		}
+	}
+
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCCore());
 	if (vdef) {
 		MSVideoSize vsize;
-		vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
-		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
+		// If max size is set and preferred size is superior then use max size
+		if (max_vdef != nullptr && max_vdef->width < vdef->width && max_vdef->height < vdef->height) {
+			vsize.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
+			vsize.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
+		} else {
+			vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
+			vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
+		}
 		video_stream_set_sent_video_size(mStream, vsize);
 	}
+
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 
 	bool windowSet = false;
