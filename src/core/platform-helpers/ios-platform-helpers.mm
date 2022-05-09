@@ -580,7 +580,11 @@ void IosPlatformHelpers::networkChangeCallback() {
         }
 #endif
 	}
-	getHttpProxySettings();
+	if (!!linphone_core_automatic_http_proxy_detection_enabled(getCore()->getCCore())) {
+		ms_message("Do not try to get HTTP proxy as automatic proxy detection is enabled");
+	} else {
+		getHttpProxySettings();
+	}
 	if (mHttpProxyEnabled) {
 		ms_message("Update HTTP proxy settings: using [%s:%d]", mHttpProxyHost.c_str(), mHttpProxyPort);
 	} else {
@@ -588,10 +592,10 @@ void IosPlatformHelpers::networkChangeCallback() {
 	}
 	const char *currentProxyHostCstr = linphone_core_get_http_proxy_host(getCore()->getCCore());
 	string currentProxyHost;
-	int currentProxyPort = linphone_core_get_http_proxy_port(getCore()->getCCore());
 	if (currentProxyHostCstr) {
 		currentProxyHost = currentProxyHostCstr;
 	}
+	int currentProxyPort = linphone_core_get_http_proxy_port(getCore()->getCCore());
 	if (mHttpProxyEnabled == currentProxyHost.empty() || currentProxyPort != mHttpProxyPort || currentProxyHost.compare(mHttpProxyHost)) {
 		//Empty host is considered as no proxy
 		changed = true;

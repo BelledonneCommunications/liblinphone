@@ -5113,6 +5113,22 @@ LINPHONE_PUBLIC void linphone_core_set_http_proxy_host(LinphoneCore *core, const
 LINPHONE_PUBLIC void linphone_core_set_http_proxy_port(LinphoneCore *core, int port) ;
 
 /**
+ * Returns whether automatic http proxy is enabled.
+ * @param core #LinphoneCore object @notnil
+ * @return TRUE if automatic http proxy is enabled or FALSE.
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_automatic_http_proxy_detection_enabled(const LinphoneCore *core);
+
+/**
+ * Enables or disables automatic http proxy detection.
+ * @param core #LinphoneCore object @notnil
+ * @param enable TRUE if automatic http proxy is enabled or FALSE.
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_automatic_http_proxy_detection(LinphoneCore *lc, bool_t enable);
+
+/**
  * Get http proxy address to be used for signaling.
  * @param core #LinphoneCore object @notnil
  * @return hostname of IP adress of the http proxy (can be NULL to disable). @maybenil

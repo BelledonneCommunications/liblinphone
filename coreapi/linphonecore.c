@@ -8590,6 +8590,14 @@ void linphone_core_set_http_proxy_port(LinphoneCore *lc, int port) {
 	}
 }
 
+bool_t linphone_core_automatic_http_proxy_detection_enabled(const LinphoneCore *lc) {
+	return linphone_config_get_bool(lc->config,"sip","automatic_http_proxy_detection",FALSE);
+}
+
+void linphone_core_enable_automatic_http_proxy_detection(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_bool(lc->config,"sip","automatic_http_proxy_detection",enable);
+}
+
 const char *linphone_core_get_http_proxy_host(const LinphoneCore *lc) {
 	return linphone_config_get_string(lc->config,"sip","http_proxy_host",NULL);
 }
