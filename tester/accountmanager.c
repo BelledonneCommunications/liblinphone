@@ -79,12 +79,7 @@ static void account_manager_generate_unique_id(AccountManager * am) {
 	const int tokenLength = 6;
 	if (am->unique_id)
 		ms_free(am->unique_id);
-	am->unique_id=sal_get_random_token(tokenLength);
-
-	ms_message("Using lowercase random token for test username.");
-	for (int i=0; i<tokenLength; i++) {
-		am->unique_id[i] = tolower(the_am->unique_id[i]);
-	}
+	am->unique_id=sal_get_random_token_lowercase(tokenLength);
 }
 
 AccountManager *account_manager_get(void){
