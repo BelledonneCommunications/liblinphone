@@ -1553,7 +1553,7 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 		const auto & currentConfParams = cppConference->getCurrentParams();
 		bool isVideoConferenceEnabled = currentConfParams.videoEnabled();
 
-		const auto & participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(q->getContactAddress());
+		const auto & participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(q->getSharedFromThis());
 		const auto & confLayout = isInLocalConference ? getRemoteParams()->getConferenceVideoLayout() : getParams()->getConferenceVideoLayout();
 
 		// Add additional video streams if required
@@ -1857,9 +1857,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
 
-		// The call to getRemoteContactAddress updates CallSessionPrivate member remoteContactAddress
-		const auto contactAddress = q->getContactAddress();
-		participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(contactAddress);
+		participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(q->getSharedFromThis());
 		if (participantDevice) {
 			deviceState = participantDevice->getState();
 		}

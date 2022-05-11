@@ -1161,10 +1161,8 @@ static void simple_conference_with_admin_changed(void) {
 	idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_participants_stats[idx].number_of_NotifyReceived + 3),10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participants_removed,(initial_participants_stats[idx].number_of_participants_removed+1),3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_devices_removed,(initial_participants_stats[idx].number_of_participant_devices_removed+1),3000));
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_participant_admin_statuses_changed,(initial_participants_stats[idx].number_of_participant_admin_statuses_changed+1),3000));
 		idx++;
 	}
 

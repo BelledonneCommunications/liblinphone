@@ -408,17 +408,6 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 	return nullptr;
 }
 
-shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const CallSession> &session) const {
-
-	for (const auto &participant : participants) {
-		if (participant->getSession() == session)
-			return participant;
-	}
-	lWarning() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with call session " << session;
-
-	return nullptr;
-}
-
 shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const std::string &label) const {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {

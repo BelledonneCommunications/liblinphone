@@ -81,10 +81,12 @@ shared_ptr<Core> ParticipantDevice::getCore () const {
 	return getParticipant() ? getParticipant()->getCore() : nullptr;
 }
 
-// tryUpdate parameter allow to try updating the device address in case the device was added at an early stage of the call and the remote contact address was not available yet.
-// For example, this situation occurs when the conference server is dialing out
 const IdentityAddress & ParticipantDevice::getAddress() const {
 	return  mGruu;
+}
+
+void ParticipantDevice::setAddress (const IdentityAddress & address) {
+	mGruu = address;
 }
 
 bool ParticipantDevice::updateAddress() {
@@ -395,17 +397,14 @@ bool ParticipantDevice::updateStreamAvailabilities() {
 	}
 
 	return streamAvailabilityChanged;
-
 }
 
 bool ParticipantDevice::adminModeSupported() const {
 	return mSupportAdminMode;
-
 }
 
 void ParticipantDevice::enableAdminModeSupport(bool support) {
 	mSupportAdminMode = support;
-
 }
 
 void * ParticipantDevice::createWindowId() const {

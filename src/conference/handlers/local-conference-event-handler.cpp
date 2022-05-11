@@ -77,14 +77,16 @@ void LocalConferenceEventHandler::notifyAllExceptDevice (const string &notify, c
 
 void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
 	for (const auto &participant : conf->getParticipants()) {
-		if (participant != exceptParticipant)
+		if (participant != exceptParticipant) {
 			notifyParticipant(notify, participant);
+		}
 	}
 }
 
 void LocalConferenceEventHandler::notifyAll (const string &notify) {
-	for (const auto &participant : conf->getParticipants())
+	for (const auto &participant : conf->getParticipants()) {
 		notifyParticipant(notify, participant);
+	}
 }
 
 string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
@@ -898,7 +900,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 			notifyFullState(createNotifyFullState(lev), device);
 
 			// Notify everybody that a participant device has been added and its capabilities after receiving the SUBSCRIBE
-			notifyAllExcept(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()), participant);
+			notifyAllExceptDevice(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();

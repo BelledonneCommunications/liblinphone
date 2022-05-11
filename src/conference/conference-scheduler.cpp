@@ -262,7 +262,8 @@ void ConferenceScheduler::setConferenceAddress(const ConferenceAddress& conferen
 void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	const Address *remoteAddress = session->getRemoteContactAddress();
 	if (remoteAddress == nullptr) {
-		lError() << "[Conference Scheduler] Cannot update conference info focus URI because the remote contact address is invalid.";
+		auto conferenceAddress = mConferenceInfo->getUri();
+		lError() << "[Conference Scheduler] The session to update the conference information of conference " << (conferenceAddress.isValid() ? conferenceAddress.asString() : std::string("<unknown-address>")) << " did not succesfully establish hence it is likely that the request wasn't taken into account by the server";
 		setState(State::Error);
 	} else {
 		auto conferenceAddress = ConferenceAddress(*remoteAddress);
