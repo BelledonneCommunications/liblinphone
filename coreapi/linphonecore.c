@@ -9053,8 +9053,9 @@ bool_t linphone_core_ldap_available(LinphoneCore *core) {
 
 LinphoneStatus linphone_core_config_sync(LinphoneCore *core) {
 #if TARGET_OS_IPHONE
-	SharedCoreState state = getPlatformHelpers(core)->getSharedCoreHelpers()->getSharedCoreState();
-	if (state != SharedCoreState::mainCoreStarted || state != SharedCoreState::executorCoreStarted) {
+	auto helper = getPlatformHelpers(core)->getSharedCoreHelpers();
+	SharedCoreState state = helper->getSharedCoreState();
+	if (helper->isCoreShared()  && state != SharedCoreState::mainCoreStarted && state != SharedCoreState::executorCoreStarted) {
 		return -1;
 	}
 #endif
