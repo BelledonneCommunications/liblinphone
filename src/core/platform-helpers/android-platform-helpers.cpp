@@ -86,6 +86,8 @@ public:
 	void _setParticipantDeviceVideoWindow(const LinphoneParticipantDevice *participantDevice, jobject windowId);
 	string getDownloadPath() override;
 
+	void disableAudioRouteChanges(bool disable);
+
 private:
 	int callVoidMethod (jmethodID id);
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
@@ -120,6 +122,7 @@ private:
 	jmethodID mIsActiveNetworkWifiOnlyCompliantId = nullptr;
 	jmethodID mUpdateNetworkReachabilityId = nullptr;
 	jmethodID mRotateVideoPreviewId = nullptr;
+	jmethodID mDisableAudioRouteChangesId = nullptr;
 
 	// CoreManager methods
 	jmethodID mCoreManagerDestroyId = nullptr;
@@ -237,6 +240,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mIsActiveNetworkWifiOnlyCompliantId = getMethodId(env, klass, "isActiveNetworkWifiOnlyCompliant", "()Z");
 	mUpdateNetworkReachabilityId = getMethodId(env, klass, "updateNetworkReachability", "()V");
 	mRotateVideoPreviewId = getMethodId(env, klass, "rotateVideoPreview", "()V");
+	mDisableAudioRouteChangesId = getMethodId(env, klass, "disableAudioRouteChanges", "(Z)V");
 
 	jobject pm = env->CallObjectMethod(mJavaHelper, mGetPowerManagerId);
 	belle_sip_wake_lock_init(env, pm);
@@ -248,6 +252,11 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mPreviewVideoWindow = nullptr;
 	mVideoWindow = nullptr;
 	mNetworkReachable = false;
+
+	LinphoneConfig *config = linphone_core_get_config(getCore()->getCCore());
+	if (linphone_config_get_bool(config, "sound", "android_disable_audio_route_changes", FALSE) == TRUE) {
+		disableAudioRouteChanges(true);
+	}
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers () {
@@ -603,6 +612,14 @@ void AndroidPlatformHelpers::_setParticipantDeviceVideoWindow(const LinphonePart
 	
 	lInfo() << "[Android Platform Helper] New window ID is [" << currentWindow << "]";
 	LinphonePrivate::ParticipantDevice::toCpp(participantDevice)->setWindowId((void *)currentWindow);
+}
+
+
+void AndroidPlatformHelpers::disableAudioRouteChanges(bool disable) {
+	JNIEnv *env = ms_get_jni_env();
+	if (env && mJavaHelper) {
+		env->CallVoidMethod(mJavaHelper, mDisableAudioRouteChangesId, disable);
+	}
 }
 
 // -----------------------------------------------------------------------------
