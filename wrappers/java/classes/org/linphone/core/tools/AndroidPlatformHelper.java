@@ -109,6 +109,7 @@ public class AndroidPlatformHelper {
         mMainHandler = new Handler(mContext.getMainLooper());
 
         MediastreamerAndroidContext.setContext(mContext);
+
         Log.i("[Platform Helper] Created, wifi only mode is " + (mWifiOnly ? "enabled" : "disabled"));
 
         WifiManager wifiMgr = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
@@ -750,5 +751,14 @@ public class AndroidPlatformHelper {
         }
 
         mMonitoringEnabled = false;
+    }
+
+    public synchronized void disableAudioRouteChanges(boolean disable) {
+        if (disable) {
+            Log.i("[Platform Helper] Disabling audio route changes in mediastreamer2");
+        } else {
+            Log.i("[Platform Helper] Enabling audio route changes in mediastreamer2");
+        }
+        MediastreamerAndroidContext.disableAudioRouteChanges(disable);
     }
 };
