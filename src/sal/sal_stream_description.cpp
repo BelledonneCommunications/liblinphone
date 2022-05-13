@@ -798,6 +798,7 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
 	if (type != other.type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	if (content.compare(other.content) != 0) result |= SAL_MEDIA_DESCRIPTION_CONTENT_CHANGED;
 
 	// RTP
 	if ((rtp_addr.compare(other.rtp_addr) != 0) && ((rtp_port != 0) || (other.rtp_port != 0))) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;

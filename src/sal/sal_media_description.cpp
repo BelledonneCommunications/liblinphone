@@ -807,6 +807,10 @@ const std::string SalMediaDescription::printDifferences(int result) {
 		out.append("BANDWIDTH_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_BANDWIDTH_CHANGED;
 	}
+	if (result & SAL_MEDIA_DESCRIPTION_CONTENT_CHANGED) {
+		out.append("CONTENT_CHANGED");
+		result &= ~SAL_MEDIA_DESCRIPTION_CONTENT_CHANGED;
+	}
 	if (result){
 		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::printDifferences(), fix it");
 	}
