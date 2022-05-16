@@ -182,8 +182,6 @@ set(RC_FILES
 	rcfiles/marie_transient_remote_rc
 	rcfiles/marie_v4proxy_rc
         rcfiles/marie_well_known_port_rc
-	rcfiles/marie_zrtp_ecdh448_rc
-	rcfiles/marie_zrtp_srtpsuite_aes256_rc
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
@@ -205,7 +203,6 @@ set(RC_FILES
 	rcfiles/pauline_v4proxy_rc
 	rcfiles/pauline_well_known_port_rc
 	rcfiles/pauline_wild_rc
-	rcfiles/pauline_zrtp_srtpsuite_aes256_rc
 	rcfiles/remote_zero_length_params_rc
 	rcfiles/stun_rc
 	rcfiles/zero_length_params_rc

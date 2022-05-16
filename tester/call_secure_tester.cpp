@@ -471,17 +471,26 @@ static void zrtp_sas_call(void) {
 	ZrtpAlgoRes res;
 
 	// Call where Marie and Pauline use :
-	// - MS_ZRTP_SAS_B256 for their SAS algorithms
-	marieAlgo.sas_algo = "MS_ZRTP_SAS_B256";
-	paulineAlgo.sas_algo = "MS_ZRTP_SAS_B256";
-	res.sas_algo.push_back(MS_ZRTP_SAS_B256);
+	// - MS_ZRTP_SAS_B32 for their SAS algorithms
+	marieAlgo.sas_algo = "MS_ZRTP_SAS_B32";
+	paulineAlgo.sas_algo = "MS_ZRTP_SAS_B32";
+	res.sas_algo = {MS_ZRTP_SAS_B32};
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
-	// Call where Marie uses :
-	// - MS_ZRTP_SAS_B256 for her SAS algorithm
-	paulineAlgo.sas_algo = NULL;
-	res.sas_algo.push_back(MS_ZRTP_SAS_B32);
+	// Call where Marie and Pauline use :
+	// - MS_ZRTP_SAS_B256 for their SAS algorithms
+	marieAlgo.sas_algo = "MS_ZRTP_SAS_B256";
+	paulineAlgo.sas_algo = "MS_ZRTP_SAS_B256";
+	res.sas_algo = {MS_ZRTP_SAS_B256};
+
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call where Marie uses MS_ZRTP_SAS_B256 and Pauline MS_ZRTP_SAS_B32
+	// This result in using one or the other
+	marieAlgo.sas_algo = "MS_ZRTP_SAS_B256";
+	paulineAlgo.sas_algo = "MS_ZRTP_SAS_B32";
+	res.sas_algo = {MS_ZRTP_SAS_B256, MS_ZRTP_SAS_B32};
 
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
@@ -491,21 +500,28 @@ static void zrtp_cipher_call(void) {
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgoRes res;
 
-	call_base_with_configfile(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "marie_zrtp_srtpsuite_aes256_rc", "pauline_zrtp_srtpsuite_aes256_rc");
-
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_CIPHER_AES3 or MS_ZRTP_CIPHER_AES1 for their cipher algorithms
-	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1";
-	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1";
-	res.cipher_algo.push_back(MS_ZRTP_CIPHER_AES3);
-	res.cipher_algo.push_back(MS_ZRTP_CIPHER_AES1);
-
+	// Default is AES128
+	marieAlgo.cipher_algo = NULL;
+	paulineAlgo.cipher_algo = NULL;
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES1};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
-	// Call where Marie uses :
-	// - MS_ZRTP_CIPHER_AES3 or MS_ZRTP_CIPHER_AES1 for her cipher algorithm
-	paulineAlgo.cipher_algo = NULL;
+	// Using AES128
+	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1";
+	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1";
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES1};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
+	// Using AES256
+	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
+	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// One using AES128 and the other AES256, result can be any
+	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
+	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1";
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES3, MS_ZRTP_CIPHER_AES1};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
 
@@ -514,69 +530,127 @@ static void zrtp_key_agreement_call(void) {
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgoRes res;
 
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_CIPHER_AES3 or MS_ZRTP_CIPHER_AES1 for their cipher algorithms,
-	// - MS_ZRTP_KEY_AGREEMENT_X255 for their key agreement algorithms
-	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1";
-	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3,MS_ZRTP_CIPHER_AES1";
-	res.cipher_algo.push_back(MS_ZRTP_CIPHER_AES3);
-	res.cipher_algo.push_back(MS_ZRTP_CIPHER_AES1);
-
-	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X255";
-	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X255";
-	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_X255);
-
+	// Default is DH3k otherwise
+	marieAlgo.key_agreement_algo = NULL;
+	paulineAlgo.key_agreement_algo = NULL;
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_DH3K};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
-	res.key_agreement_algo.pop_back();
-
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_CIPHER_AES3 or MS_ZRTP_CIPHER_AES1 for their cipher algorithms,
-	// - MS_ZRTP_KEY_AGREEMENT_X255 for their key agreement algorithms,
-	// - MS_ZRTP_HASH_S384 for their hash algorithms
-	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X448";
-	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X448";
-	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_X448);
-
-	marieAlgo.hash_algo = "MS_ZRTP_HASH_S384";
-	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S384";
-	res.hash_algo.push_back(MS_ZRTP_HASH_S384);
-
+	// Use DH2k
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_DH2K";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_DH2K";
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_DH2K};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Use DH3k
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_DH3K";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_DH3K";
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_DH3K};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	if (bctbx_key_agreement_algo_list()&BCTBX_ECDH_X25519) { // Do we have ECDH
+		// Use X25519
+		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X255";
+		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X255";
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_X255};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+		// Use X448
+		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X448";
+		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_X448";
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_X448};
+		// when using X448, we shall use SHA512  or SHA384 and AES256 when available
+		marieAlgo.hash_algo = "MS_ZRTP_HASH_S256";
+		paulineAlgo.hash_algo = "MS_ZRTP_HASH_S256";
+		res.hash_algo = {MS_ZRTP_HASH_S256};
+		marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1";
+		paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1";
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES1};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+		marieAlgo.hash_algo = "MS_ZRTP_HASH_S256, MS_ZRTP_HASH_S384";
+		paulineAlgo.hash_algo = "MS_ZRTP_HASH_S256, MS_ZRTP_HASH_S384";
+		res.hash_algo = {MS_ZRTP_HASH_S384};
+		marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1, MS_ZRTP_CIPHER_AES3";
+		paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1, MS_ZRTP_CIPHER_AES3";
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+		marieAlgo.hash_algo = "MS_ZRTP_HASH_S256, MS_ZRTP_HASH_S384, MS_ZRTP_HASH_S512";
+		paulineAlgo.hash_algo = "MS_ZRTP_HASH_S256, MS_ZRTP_HASH_S384, MS_ZRTP_HASH_S512";
+		res.hash_algo = {MS_ZRTP_HASH_S512};
+		marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1, MS_ZRTP_CIPHER_AES3";
+		paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES1, MS_ZRTP_CIPHER_AES3";
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+	}
+
+	if (bctbx_key_agreement_algo_list()&BCTBX_KEM_X25519) { // Do we have post quantum algo
+		// Use hybrid X25519/Kyber512
+		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
+		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_KYB512};
+		//PQ algo should force(at config time) the use of SHA512 and AES256 even if we do not explicitely enable them
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+		res.hash_algo = {MS_ZRTP_HASH_S512};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+		// Use hybrid X448/Kyber1024
+		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
+		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_KYB1024};
+		//PQ algo should force the use of SHA512 and AES256
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+		res.hash_algo = {MS_ZRTP_HASH_S512};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+		// Use hybrid X25519/Sike434
+		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_SIK434";
+		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_SIK434";
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_SIK434};
+		//PQ algo should force the use of SHA512 and AES256
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+		res.hash_algo = {MS_ZRTP_HASH_S512};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+		// Use hybrid X448/Sike751
+		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_SIK751";
+		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_SIK751";
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_SIK751};
+		//PQ algo should force the use of SHA512 and AES256
+		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+		res.hash_algo = {MS_ZRTP_HASH_S512};
+		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+	}
 }
 
-static void zrtp_hybrid_key_agreement_call(void) {
+static void zrtp_hash_call(void) {
 	ZrtpAlgoString marieAlgo;
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgoRes res;
 
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_KEY_AGREEMENT_K255_KYB512 for their key agreement algorithms
-	// - MS_ZRTP_CIPHER_AES3 for their chipher algorithms
-	// - MS_ZRTP_HASH_S384 for their hash algorithms
-	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
-	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
-	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_K255_KYB512);
-
-	marieAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
-	paulineAlgo.cipher_algo = "MS_ZRTP_CIPHER_AES3";
-	res.cipher_algo.push_back(MS_ZRTP_CIPHER_AES3);
-
-	marieAlgo.hash_algo = "MS_ZRTP_HASH_S384";
-	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S384";
-	res.hash_algo.push_back(MS_ZRTP_HASH_S384);
-
+	// Default is SHA256
+	marieAlgo.hash_algo = NULL;
+	paulineAlgo.hash_algo = NULL;
+	res.hash_algo= {MS_ZRTP_HASH_S256};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_KEY_AGREEMENT_K448_KYB1024 for their key agreement algorithms
-	// - MS_ZRTP_CIPHER_AES3 for their chipher algorithms
-	// - MS_ZRTP_HASH_S384 for their hash algorithms
-	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
-	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
-	res.key_agreement_algo.pop_back();
-	res.key_agreement_algo.push_back(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024);
+	// Call using SHA256
+	marieAlgo.hash_algo = "MS_ZRTP_HASH_S256";
+	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S256";
+	res.hash_algo= {MS_ZRTP_HASH_S256};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
+	// Call using SHA384
+	marieAlgo.hash_algo = "MS_ZRTP_HASH_S384";
+	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S384";
+	res.hash_algo= {MS_ZRTP_HASH_S384};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call using SHA512
+	marieAlgo.hash_algo = "MS_ZRTP_HASH_S512";
+	paulineAlgo.hash_algo = "MS_ZRTP_HASH_S512";
+	res.hash_algo= {MS_ZRTP_HASH_S512};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
 
@@ -585,36 +659,32 @@ static void zrtp_authtag_call(void) {
 	ZrtpAlgoString paulineAlgo;
 	ZrtpAlgoRes res;
 
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_AUTHTAG_HS32 for their authentication tag algorithms
+	// Default is HS80
+	//  - this is a linphone internal default setting: SRTP crypto suite default is
+	//      AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32.
+	//      So the default auth tag set by the audio-stream is HS80, HS32
+	//  - default in bzrtp is HS32, HS80
+	marieAlgo.auth_tag_algo = NULL;
+	paulineAlgo.auth_tag_algo = NULL;
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call using HS80
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32";
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call using HS32
+	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80";
+	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32, MS_ZRTP_AUTHTAG_HS80";
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS32};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Call with on HS32 one HS80, result can be anyone of them
 	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32";
-	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS32";
-	res.auth_tag_algo.push_back(MS_ZRTP_AUTHTAG_HS32);
-
-	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
-
-	// Call where Marie uses :
-	// - MS_ZRTP_AUTHTAG_HS32 for her authentication tag algorithm
-	paulineAlgo.auth_tag_algo = NULL;
-	res.auth_tag_algo.push_back(MS_ZRTP_AUTHTAG_HS80);
-
-	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
-
-	res.auth_tag_algo.clear();
-
-	// Call where Marie and Pauline use :
-	// - MS_ZRTP_AUTHTAG_HS80 for their authentication tag algorithms
-	marieAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80";
 	paulineAlgo.auth_tag_algo = "MS_ZRTP_AUTHTAG_HS80";
-	res.auth_tag_algo.push_back(MS_ZRTP_AUTHTAG_HS80);
-
-	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
-
-	// Call where Marie uses :
-	// - MS_ZRTP_AUTHTAG_HS80 for her authentication tag algorithm
-	paulineAlgo.auth_tag_algo = NULL;
-	res.auth_tag_algo.push_back(MS_ZRTP_AUTHTAG_HS32);
-
+	res.auth_tag_algo = {MS_ZRTP_AUTHTAG_HS80, MS_ZRTP_AUTHTAG_HS32};
 	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 }
 
@@ -1281,7 +1351,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
-	TEST_NO_TAG("ZRTP Hybrid key Agreement call", zrtp_hybrid_key_agreement_call),
+	TEST_NO_TAG("ZRTP Hash call", zrtp_hash_call),
 	TEST_NO_TAG("ZRTP Authentication tag call", zrtp_authtag_call),
 	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
 #ifdef VIDEO_ENABLED
