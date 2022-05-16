@@ -897,7 +897,7 @@ void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_regi
 			LinphoneProxyConfig *cfg=linphone_core_lookup_known_proxy(fr->lc, addr);
 			if (cfg && linphone_proxy_config_get_state(cfg)!=LinphoneRegistrationOk){
 				char *tmp=linphone_address_as_string(addr);
-				ms_message("Friend [%s] belongs to proxy config with identity [%s], but this one isn't registered. Subscription is suspended.",
+				ms_debug("Friend [%s] belongs to proxy config with identity [%s], but this one isn't registered. Subscription is suspended.",
 					tmp,linphone_proxy_config_get_identity(cfg));
 				ms_free(tmp);
 				can_subscribe=0;

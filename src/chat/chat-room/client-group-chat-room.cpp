@@ -1248,7 +1248,9 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	L_D();
 
 	if (d->isEphemeral == ephem) {
-		lWarning() << "Ephemeral messages of chat room " << getConferenceId() << " are already " << (ephem ? "enabled" : "disabled");
+		if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalStartup) {
+			lWarning() << "Ephemeral messages of chat room " << getConferenceId() << " are already " << (ephem ? "enabled" : "disabled");
+		}
 		return;
 	}
 

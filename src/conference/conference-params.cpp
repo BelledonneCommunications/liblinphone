@@ -63,7 +63,7 @@ void ConferenceParams::setAccount(LinphoneAccount * a) {
 
 void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update Me and default factory from account.
 	if(account){
-		auto account_params = linphone_account_get_params( account);
+		auto account_params = linphone_account_get_params(account);
 		if( account_params){
 			auto identity = linphone_account_params_get_identity_address(account_params);
 			setMe(identity ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(identity)) : IdentityAddress());
@@ -73,7 +73,9 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 				char * conferenceFactoryAddressString = factory_addr ? linphone_address_as_string(factory_addr) : NULL;
 				const Address conferenceFactoryAddress(L_C_TO_STRING(conferenceFactoryAddressString));
 				m_factoryAddress = Address(conferenceFactoryAddress);
-				ms_message("Update conference parameters from account, factory:%s", conferenceFactoryAddressString);
+				if (linphone_core_get_global_state(linphone_account_get_core(account)) != LinphoneGlobalStartup) {
+					ms_message("Update conference parameters from account, factory:%s", conferenceFactoryAddressString);
+				}
 				if (factory_addr) {
 					linphone_address_unref(factory_addr);
 				}
