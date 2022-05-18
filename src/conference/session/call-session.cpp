@@ -1502,9 +1502,9 @@ int CallSession::getDuration () const {
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		case CallSession::State::Released:
-			return d->log->duration;
+			return d->log->connected_date_time == 0 ? 0 : d->log->duration;
 		default:
-			return d->computeDuration();
+			return d->log->connected_date_time == 0 ? 0 : d->computeDuration();
 	}
 }
 
