@@ -635,12 +635,19 @@ list<std::shared_ptr<SearchResult>> MagicSearch::searchInFriend (const LinphoneF
 	string phoneNumber = "";
 	unsigned int weight = getMinWeight();
 
-	// NAME
+	// NAME & ORGANIZATION
 	if (linphone_core_vcard_supported()) {
 		if (linphone_friend_get_vcard(lFriend)) {
 			const char *name = linphone_vcard_get_full_name(linphone_friend_get_vcard(lFriend));
 			if (name) {
 				weight += getWeight(name, filter) * 3;
+			}
+			if (weight == getMinWeight()) {
+				// If name doesn't match filter, check if organization does
+				const char *organization = linphone_vcard_get_organization(linphone_friend_get_vcard(lFriend));
+				if (organization) {
+					weight += getWeight(organization, filter) * 2;
+				}
 			}
 		}
 	}
