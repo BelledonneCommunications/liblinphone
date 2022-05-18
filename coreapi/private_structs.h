@@ -377,12 +377,12 @@ struct _EcCalibrator{
 };
 
 struct _EchoTester {
-    MSFactory *factory;
-    MSFilter *in,*out;
-    MSSndCard *capture_card;
-    MSSndCard *playback_card;
-    MSTicker *ticker;
-    unsigned int rate;
+	MSFactory *factory;
+	MSFilter *in,*out;
+	MSSndCard *capture_card;
+	MSSndCard *playback_card;
+	MSTicker *ticker;
+	unsigned int rate;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneContent);

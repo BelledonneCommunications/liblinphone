@@ -44,8 +44,6 @@
 #define LINPHONE_CALL_STATS_SENT_RTCP_UPDATE (1 << 1) /**< sent_rtcp field of LinphoneCallStats object has been updated */
 #define LINPHONE_CALL_STATS_PERIODICAL_UPDATE (1 << 2) /**< Every seconds LinphoneCallStats object has been updated */
 
-
-
 /**
  * Increment refcount.
  * @param stats #LinphoneCallStats object @notnil
