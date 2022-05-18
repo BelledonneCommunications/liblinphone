@@ -1163,7 +1163,6 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	}
 
 	d->log = CallLog::create(getCore(), direction, fromAddr, toAddr);
-	getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 
 	if (op) {
 		/* We already have an op for incoming calls */
@@ -1176,6 +1175,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 			)
 		);
 		d->log->setCallId(op->getCallId()); /* Must be known at that time */
+		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 	}
 
 	if (direction == LinphoneCallOutgoing) {
@@ -1433,6 +1433,7 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	} else {
 		d->log->setCallId(d->op->getCallId()); /* Must be known at that time */
 		d->setState(CallSession::State::OutgoingProgress, "Outgoing call in progress");
+		getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 	}
 	return result;
 }
@@ -1543,9 +1544,9 @@ int CallSession::getDuration () const {
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		case CallSession::State::Released:
-			return d->log->getDuration();
+			return d->log->getConnectedTime() == 0 ? 0 : d->log->getDuration();
 		default:
-			return d->computeDuration();
+			return d->log->getConnectedTime() == 0 ? 0 : d->computeDuration();
 	}
 }
 

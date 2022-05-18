@@ -1799,6 +1799,8 @@ static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia) {
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)), use_timeout ? LinphoneCallMissed : LinphoneCallDeclined, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_get_reason(out_call), use_timeout ? LinphoneReasonBusy : LinphoneReasonDeclined, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)), use_timeout ? LinphoneCallAborted : LinphoneCallDeclined, int, "%d");
+
+		if (use_timeout) BC_ASSERT_EQUAL(linphone_call_get_duration(out_call), 0, int, "%d");
 		linphone_call_unref(in_call);
 	}
 

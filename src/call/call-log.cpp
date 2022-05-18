@@ -221,7 +221,7 @@ std::shared_ptr<ConferenceInfo> CallLog::getConferenceInfo () {
 string CallLog::toString() const {
 	ostringstream os;
 
-	os << (mDirection == LinphoneCallIncoming ? "Incoming call" : "Outgoing call") << " at " << mStartDate << "\n";
+	os << (mDirection == LinphoneCallIncoming ? "Incoming call" : "Outgoing call") << " with call-id: " << mCallId << " at " << mStartDate << "\n";
 
 	char *from = linphone_address_as_string(mFrom);
 	char *to = linphone_address_as_string(mTo);
