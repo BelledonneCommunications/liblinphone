@@ -45,6 +45,7 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_localParticipantEnabled = params.m_localParticipantEnabled;
 	m_allowOneParticipantConference = params.m_allowOneParticipantConference;
 	m_participantListType = params.m_participantListType;
+	m_joinMode = params.m_joinMode;
 	m_conferenceAddress = params.m_conferenceAddress;
 	m_factoryAddress = params.m_factoryAddress;
 	m_subject = params.m_subject;

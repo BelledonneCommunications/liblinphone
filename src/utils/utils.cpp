@@ -377,4 +377,47 @@ std::list<IdentityAddress> Utils::parseResourceLists (const Content &content) {
 #endif
 }
 
+std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op, bool remote) {
+	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
+	if (!op) return info;
+	const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
+	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
+
+	if (!sipfrag.isEmpty()) {
+		auto organizer = Utils::getSipFragAddress(sipfrag);
+		info->setOrganizer(IdentityAddress(organizer));
+	}
+	if (!resourceList.isEmpty()) {
+		auto invitees = Utils::parseResourceLists(resourceList);
+		info->setParticipants(invitees);
+	}
+
+	char * remoteContactAddressStr = sal_address_as_string(remote ? op->getRemoteContactAddress() : op->getContactAddress());
+	const ConferenceAddress conferenceAddress(remoteContactAddressStr);
+	ms_free(remoteContactAddressStr);
+	if (conferenceAddress.isValid()) {
+		info->setUri(conferenceAddress);
+	}
+
+	auto & md = remote ? op->getRemoteMediaDescription() : op->getLocalMediaDescription();
+	if (md && md->times.size() > 0) {
+		const auto & timePair = md->times.front();
+		auto startTime = timePair.first;
+		auto endTime = timePair.second;
+		if (startTime >= 0) {
+			info->setDateTime(startTime);
+		} else {
+			info->setDateTime(ms_time(NULL));
+		}
+		if ((startTime >= 0) && (endTime >= 0) && (endTime > startTime)) {
+			unsigned int duration = (static_cast<unsigned int>(endTime - startTime)) / 60;
+			info->setDuration(duration);
+		}
+	}
+
+	info->setSubject(op->getSubject());
+
+	return info;
+}
+
 LINPHONE_END_NAMESPACE

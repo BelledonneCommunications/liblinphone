@@ -206,10 +206,8 @@ protected:
 	ConferenceInterface::State state = ConferenceInterface::State::None;
 	std::map<uint32_t, bool> pendingParticipantsMutes;
 
-#ifdef HAVE_DB_STORAGE
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const;
 	virtual std::shared_ptr<ConferenceInfo> createConferenceInfo(const IdentityAddress & organizer, const std::list<IdentityAddress> invitedParticipants) const;
-#endif // HAVE_DB_STORAGE
 
 private:
 	L_DISABLE_COPY(Conference);

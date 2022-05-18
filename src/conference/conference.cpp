@@ -710,7 +710,6 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	}
 }
 
-#ifdef HAVE_DB_STORAGE
 std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
 	return nullptr;
 }
@@ -738,6 +737,7 @@ std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo(const IdentityA
 	return info;
 }
 
+#ifdef HAVE_DB_STORAGE
 void Conference::updateSubjectInConferenceInfo(const std::string & subject) const {
 	if ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
@@ -758,7 +758,6 @@ void Conference::updateSubjectInConferenceInfo(const std::string & subject) cons
 void Conference::updateParticipantsInConferenceInfo(const IdentityAddress & participantAddress) const {
 	if ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
-
 		if (info) {
 			std::list<IdentityAddress> currentParticipants = info->getParticipants();
 			const auto participantAddressIt = std::find(currentParticipants.begin(), currentParticipants.end(), participantAddress);

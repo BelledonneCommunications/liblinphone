@@ -22,6 +22,8 @@
 #include "conference-scheduler.h"
 #include "participant.h"
 #include "chat/chat-message/chat-message-p.h"
+#include "conference/params/call-session-params-p.h"
+#include "conference/session/media-session.h"
 #include "core/core-p.h"
 #include "content/file-content.h"
 #include "account/account.h"
@@ -266,6 +268,34 @@ void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSessi
 		lError() << "[Conference Scheduler] The session to update the conference information of conference " << (conferenceAddress.isValid() ? conferenceAddress.asString() : std::string("<unknown-address>")) << " did not succesfully establish hence it is likely that the request wasn't taken into account by the server";
 		setState(State::Error);
 	} else {
+		// Do not try to call inpromptu conference if a participant updates its informations
+		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
+			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
+			// Participant with the focus call is admin
+			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
+			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomHeader("Require", "recipient-list-invite");
+			auto addressesList(mConferenceInfo->getParticipants());
+
+			addressesList.sort();
+			addressesList.unique();
+
+			if (!addressesList.empty()) {
+				Content content;
+				content.setBodyFromUtf8(Utils::getResourceLists(addressesList));
+				content.setContentType(ContentType::ResourceLists);
+				content.setContentDisposition(ContentDisposition::RecipientList);
+				if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
+					content.setContentEncoding("deflate");
+				}
+
+				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(content);
+			}
+			linphone_call_params_enable_video(new_params, static_pointer_cast<MediaSession>(session)->getMediaParams()->videoEnabled());
+
+			linphone_core_invite_address_with_params_2(getCore()->getCCore(), L_GET_C_BACK_PTR(remoteAddress), new_params, L_STRING_TO_C(mConferenceInfo->getSubject()), NULL);
+			linphone_call_params_unref(new_params);
+		}
+
 		auto conferenceAddress = ConferenceAddress(*remoteAddress);
 		lInfo () << "[Conference Scheduler] Conference has been succesfully created: " << conferenceAddress;
 		setConferenceAddress(conferenceAddress);

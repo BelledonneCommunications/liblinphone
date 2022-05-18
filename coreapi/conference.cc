@@ -805,27 +805,27 @@ void LocalConference::confirmCreation () {
 		session->getPrivate()->setConferenceId(confId);
 		session->startIncomingNotification(false);
 
+		const auto & conferenceInfo = createOrGetConferenceInfo();
 #ifdef HAVE_DB_STORAGE
 		// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
 		auto &mainDb = getCore()->getPrivate()->mainDb;
-		const auto & conferenceInfo = createOrGetConferenceInfo();
 		if (mainDb) {
 			lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
 			mainDb->insertConferenceInfo(conferenceInfo);
 		}
+#endif
 		auto callLog = session->getLog();
 		if (callLog) {
 			callLog->setConferenceInfo(conferenceInfo);
 		}
-#endif
 
 	} else {
 		lError() << "Unable to confirm the creation of the conference because no session was created";
 	}
 }
 
-#ifdef HAVE_DB_STORAGE
 std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() const {
+#ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		std::shared_ptr<ConferenceInfo> conferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
@@ -833,6 +833,7 @@ std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() con
 			return conferenceInfo;
 		}
 	}
+#endif // HAVE_DB_STORAGE
 
 	std::list<IdentityAddress> participantAddresses;
 	if (!invitedAddresses.empty()) {
@@ -848,7 +849,6 @@ std::shared_ptr<ConferenceInfo> LocalConference::createOrGetConferenceInfo() con
 
 	return createConferenceInfo(organizer, participantAddresses);
 }
-#endif // HAVE_DB_STORAGE
 
 void LocalConference::finalizeCreation() {
 
@@ -857,8 +857,6 @@ void LocalConference::finalizeCreation() {
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 		shared_ptr<CallSession> session = me->getSession();
 		if (session) {
-			Address addr(conferenceAddress.asAddress());
-			addr.setParam("isfocus");
 			auto op = session->getPrivate()->getOp();
 			auto & md = op ? op->getRemoteMediaDescription() : nullptr;
 			bool immediateStart = false;
@@ -869,44 +867,14 @@ void LocalConference::finalizeCreation() {
 				immediateStart = (startTime < 0) && (stopTime < 0);
 			}
 
-			const auto resourceList = op ? op->getContentInRemote(ContentType::ResourceLists) : Content();
+			confParams->setJoiningMode(immediateStart ? ConferenceParams::JoiningMode::DialOut : ConferenceParams::JoiningMode::DialIn);
 
-			// If no reource list is provided in the INVITE, then it is the duty of the organizer to add participants manually
-			if (immediateStart && !resourceList.isEmpty()) {
-				auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-				linphone_call_params_enable_video(new_params, confParams->videoEnabled());
-
-				linphone_call_params_set_in_conference(new_params, TRUE);
-
-				const Address & conferenceAddress = getConferenceAddress().asAddress();
-				const string & confId = conferenceAddress.getUriParamValue("conf-id");
-				linphone_call_params_set_conference_id(new_params, confId.c_str());
-
-				if (!resourceList.isEmpty()) {
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
-				}
-
-				if (op) {
-					Content sipfrag;
-					sipfrag.setBodyFromLocale("From: <" + op->getFrom() + ">");
-					sipfrag.setContentType(ContentType::SipFrag);
-					L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);
-				}
-
-				auto organizerAddress = IdentityAddress(*session->getRemoteAddress());
-				auto organizerAddressIt = std::find(invitedAddresses.cbegin(), invitedAddresses.cend(), organizerAddress);
-
-				list<const LinphoneAddress *> addresses;
-				if (organizerAddressIt == invitedAddresses.cend()) {
-					addresses.push_back(L_GET_C_BACK_PTR(&(organizerAddress.asAddress())));
-				}
-				for (auto & addr : invitedAddresses) {
-					addresses.push_back(L_GET_C_BACK_PTR(&(addr.asAddress())));
-				}
-				inviteAddresses(addresses, new_params);
-				linphone_call_params_unref (new_params);
+			if (immediateStart) {
+				confParams->setStartTime(ms_time(NULL));
 			}
 
+			Address addr(conferenceAddress.asAddress());
+			addr.setParam("isfocus");
 			if (session->getState() == CallSession::State::Idle) {
 				lInfo() << " Scheduling redirection to [" << addr <<"] for Call session ["<<session<<"]" ;
 				getCore()->doLater([session,addr] {
@@ -1023,12 +991,13 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 			}
 
 			linphone_call_params_set_in_conference(new_params, TRUE);
+			linphone_call_params_set_start_time(new_params, confParams->getStartTime());
 
 			const Address & conferenceAddress = getConferenceAddress().asAddress();
 			const string & confId = conferenceAddress.getUriParamValue("conf-id");
 			linphone_call_params_set_conference_id(new_params, confId.c_str());
 
-			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
+			call = linphone_core_invite_address_with_params_2(getCore()->getCCore(), address, new_params, L_STRING_TO_C(confParams->getSubject()), NULL);
 
 			if (!confParams->getAccount()) {
 				// Set proxy configuration used for the conference
@@ -1266,6 +1235,15 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		}
 	}
 
+	const auto initialState = getState();
+	const auto dialout = (confParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+	// If conference must start immediately, then the organizer will call the conference server and the other participants will be dialed out
+
+	if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !remoteAddress->weakEqual(organizer.asAddress())) {
+		lError() << "The conference must immediately start (start time: " << confParams->getStartTime() << " end time: " << confParams->getEndTime() << "). Unable to add participant " << remoteAddress->asString() << " because participants will be dialed out by the conference server as soon as " << organizer << " dials in";
+		return false;
+	}
+
 #if 0
 	if (!isConferenceStarted()) {
 		lError() << "Unable to add call (local address " << call->getLocalAddress().asString() << " remote address " <<  (remoteAddress ? remoteAddress->asString() : "Unknown") << ") because participant " << *remoteAddress << " is not in the list of allowed participants of conference " << getConferenceAddress();
@@ -1425,8 +1403,42 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				setInputAudioDevice(inputDevice);
 			}
 		}
-
 		setState(ConferenceInterface::State::Created);
+
+		auto op = session->getPrivate()->getOp();
+		const auto resourceList = op ? op->getContentInRemote(ContentType::ResourceLists) : Content();
+
+		// If no resource list is provided in the INVITE, there is not noeed to call participants
+		if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !resourceList.isEmpty()) {
+			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
+			linphone_call_params_enable_video(new_params, confParams->videoEnabled());
+
+			linphone_call_params_set_in_conference(new_params, TRUE);
+
+			const Address & conferenceAddress = getConferenceAddress().asAddress();
+			const string & confId = conferenceAddress.getUriParamValue("conf-id");
+			linphone_call_params_set_conference_id(new_params, confId.c_str());
+
+			if (!resourceList.isEmpty()) {
+				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
+			}
+
+			Content sipfrag;
+			sipfrag.setBodyFromLocale("From: <" + organizer.asString() + ">");
+			sipfrag.setContentType(ContentType::SipFrag);
+			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);
+
+			list<const LinphoneAddress *> addresses;
+			for (auto & addr : invitedAddresses) {
+				// Do not invite organizer as it is already dialing in
+				if (addr != organizer) {
+					addresses.push_back(L_GET_C_BACK_PTR(&(addr.asAddress())));
+				}
+			}
+			inviteAddresses(addresses, new_params);
+			linphone_call_params_unref (new_params);
+		}
+
 		return true;
 	}
 
@@ -2252,8 +2264,8 @@ void RemoteConference::finalizeCreation() {
 	}
 }
 
-#ifdef HAVE_DB_STORAGE
 std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() const {
+#ifdef HAVE_DB_STORAGE
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		std::shared_ptr<ConferenceInfo> conferenceInfo = getCore()->getPrivate()->mainDb->getConferenceInfoFromURI(getConferenceAddress());
@@ -2261,6 +2273,7 @@ std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() co
 			return conferenceInfo;
 		}
 	}
+#endif // HAVE_DB_STORAGE
 
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const auto referer = (session ? L_GET_PRIVATE(session->getMediaParams())->getReferer() : nullptr);
@@ -2281,7 +2294,6 @@ std::shared_ptr<ConferenceInfo> RemoteConference::createOrGetConferenceInfo() co
 
 	return createConferenceInfo(organizer, participantAddresses);
 }
-#endif // HAVE_DB_STORAGE
 
 void RemoteConference::setMainSession(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
 	if (focus) {
@@ -2880,6 +2892,10 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 	switch (state) {
 		case LinphoneCallStreamsRunning:
 		{
+
+		#ifdef HAVE_DB_STORAGE
+			updateParticipantsInConferenceInfo(getMe()->getAddress());
+		#endif
 			const auto & previousState = session->getPreviousState();
 			// NOTIFY that a participant has been added only if it follows a resume of the call
 			if (previousState == CallSession::State::Resuming) {
@@ -3341,17 +3357,18 @@ void RemoteConference::onParticipantDeviceMediaAvailabilityChanged (const std::s
 void RemoteConference::onFullStateReceived() {
 	fullStateReceived = true;
 
+	const auto conferenceInfo = createOrGetConferenceInfo();
+	auto  callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
+	if (callLog) {
+		callLog->setConferenceInfo(conferenceInfo);
+	}
+
 #ifdef HAVE_DB_STORAGE
 	// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
 	auto &mainDb = getCore()->getPrivate()->mainDb;
 	if (mainDb) {
 		lInfo() << "Inserting conference information to database related to conference " << getConferenceAddress();
-		const auto conferenceInfo = createOrGetConferenceInfo();
 		mainDb->insertConferenceInfo(conferenceInfo);
-		auto  callLog = getMainSession() ? getMainSession()->getLog() : nullptr;
-		if (callLog) {
-			callLog->setConferenceInfo(conferenceInfo);
-		}
 	}
 #endif // HAVE_DB_STORAGE
 

@@ -313,9 +313,7 @@ private:
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 
-#ifdef HAVE_DB_STORAGE
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const override;
-#endif // HAVE_DB_STORAGE
 
 	static constexpr int confIdLength = 10;
 };
@@ -408,9 +406,7 @@ protected:
 
 private:
 	virtual const std::shared_ptr<CallSession> getMainSession() const override;
-#ifdef HAVE_DB_STORAGE
 	virtual std::shared_ptr<ConferenceInfo> createOrGetConferenceInfo() const override;
-#endif // HAVE_DB_STORAGE
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
 	void reset();

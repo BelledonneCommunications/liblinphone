@@ -227,6 +227,7 @@ namespace Utils {
 	std::string getSipFragAddress(const Content & content);
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses);
 	std::list<IdentityAddress> parseResourceLists (const Content &content);
+	std::shared_ptr<ConferenceInfo> createConferenceInfoFromOp (SalCallOp *op, bool remote);
 }
 
 LINPHONE_PUBLIC std::ostream &operator<<(std::ostream & ostr, const Utils::Version &version);

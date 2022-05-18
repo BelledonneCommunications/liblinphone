@@ -450,13 +450,14 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			}
 			if ((state == CallSession::State::IncomingReceived) && op) {
 				const Address to(op->getTo());
-				
+				// Local conference
 				if (to.hasUriParam("conf-id")) {
 					shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(to), ConferenceAddress(to)));
 					// If the call is for a conference stored in the core, then accept it automatically without video
 					if (conference) {
 						const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
-						if (resourceList.isEmpty()) {
+						const auto dialout = (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+						if (resourceList.isEmpty() || ((conference->getState() == ConferenceInterface::State::CreationPending) && dialout)) {
 							conference->addParticipant(getSharedFromThis());
 						} else {
 							const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(getParams()))->setInConference(true);
@@ -470,6 +471,24 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						linphone_call_params_set_end_time(params, conference->getCurrentParams().getEndTime());
 						static_pointer_cast<MediaSession>(session)->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 						linphone_call_params_unref(params);
+					}
+				} else if (op->getRemoteContactAddress()) {
+					char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
+					Address remoteContactAddress(remoteContactAddressStr);
+					ms_free(remoteContactAddressStr);
+					if (remoteContactAddress.hasParam("isfocus")) {
+						const auto & conferenceInfo = Utils::createConferenceInfoFromOp(op, true);
+						if (conferenceInfo->getUri().isValid()) {
+						#ifdef HAVE_DB_STORAGE
+							auto &mainDb = getCore()->getPrivate()->mainDb;
+							if (mainDb) {
+								lInfo() << "Inserting conference information to database related to conference " << conferenceInfo->getUri();
+								mainDb->insertConferenceInfo(conferenceInfo);
+							}
+						#endif // HAVE_DB_STORAGE
+							auto log = session->getLog();
+							log->setConferenceInfo(conferenceInfo);
+						}
 					}
 				}
 			}
@@ -494,7 +513,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::UpdatedByRemote:
 		{
 			if (op && op->getRemoteContactAddress() && !getConference()) {
-
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
@@ -648,22 +666,25 @@ void Call::onCallSessionTransferStateChanged (const shared_ptr<CallSession> &ses
 }
 
 void Call::onCheckForAcceptation (const shared_ptr<CallSession> &session) {
-	list<shared_ptr<Call>> calls = getCore()->getCalls();
-	shared_ptr<Call> currentCall = getSharedFromThis();
-	for (const auto &call : calls) {
-		if (call == currentCall)
-			continue;
-		switch (call->getState()) {
-			case CallSession::State::OutgoingInit:
-			case CallSession::State::OutgoingProgress:
-			case CallSession::State::OutgoingRinging:
-			case CallSession::State::OutgoingEarlyMedia:
-				lInfo() << "Already existing call [" << call << "] in state [" << Utils::toString(call->getState())
-					<< "], canceling it before accepting new call [" << currentCall << "]";
-				call->terminate();
-				break;
-			default:
-				break; // Nothing to do
+	// If the core is a conference server, there is no need to ensure that media resources are not shared
+	if(!linphone_core_conference_server_enabled(getCore()->getCCore()) && (linphone_core_get_media_resource_mode(getCore()->getCCore()) != LinphoneSharedMediaResources)) {
+		list<shared_ptr<Call>> calls = getCore()->getCalls();
+		shared_ptr<Call> currentCall = getSharedFromThis();
+		for (const auto &call : calls) {
+			if (call == currentCall)
+				continue;
+			switch (call->getState()) {
+				case CallSession::State::OutgoingInit:
+				case CallSession::State::OutgoingProgress:
+				case CallSession::State::OutgoingRinging:
+				case CallSession::State::OutgoingEarlyMedia:
+					lInfo() << "Already existing call [" << call << "] in state [" << Utils::toString(call->getState())
+						<< "], canceling it before accepting new call [" << currentCall << "]";
+					call->terminate();
+					break;
+				default:
+					break; // Nothing to do
+			}
 		}
 	}
 }

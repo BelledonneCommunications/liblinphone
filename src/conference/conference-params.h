@@ -101,6 +101,9 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setParticipantListType (const ParticipantListType &type) override { m_participantListType = type; };
 		const ParticipantListType &getParticipantListType() const { return m_participantListType; };
 
+		virtual void setJoiningMode (const JoiningMode &mode) override { m_joinMode = mode; };
+		const JoiningMode &getJoiningMode() const { return m_joinMode; };
+
 	private:
 		void updateFromAccount(LinphoneAccount * account);// Update Me and default factory from account.
 	
@@ -110,6 +113,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		bool m_localParticipantEnabled = true;
 		bool m_allowOneParticipantConference = false;
 		ParticipantListType m_participantListType = ParticipantListType::Open;
+		JoiningMode m_joinMode = JoiningMode::DialIn;
 		ConferenceAddress m_conferenceAddress = ConferenceAddress();
 		Address m_factoryAddress = Address();
 		bool m_useDefaultFactoryAddress = true;

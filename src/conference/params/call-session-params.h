@@ -44,6 +44,7 @@ class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class MediaSessionPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ToneManager;
+	friend class ConferenceScheduler;
 
 public:
 	CallSessionParams ();

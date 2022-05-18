@@ -47,6 +47,17 @@ typedef enum _LinphoneConferenceLayout{
 } LinphoneConferenceLayout;
 
 /**
+ * @brief Mode of joining conference
+ * @warning It is only valid at the creation of the conferece
+ *
+ * @ingroup conference
+ */
+typedef enum _LinphoneConferenceJoiningMode{
+	LinphoneConferenceJoiningModeDialIn = 0, /**< Participants must dial the conference server */
+	LinphoneConferenceJoiningModeDialOut = 1, /**< Conference server dials participants */
+} LinphoneConferenceJoiningMode;
+
+/**
  * @brief Type of conference participant list.
  * When participant list is closed, no more participants can be added other than those declared when creating the conference
  * When participant list is open, other people can join the conference upon invitation of a participant

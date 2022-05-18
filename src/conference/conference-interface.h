@@ -356,6 +356,11 @@ public:
 class LINPHONE_PUBLIC ConferenceParamsInterface {
 public:
 
+	enum class JoiningMode {
+		DialIn = LinphoneConferenceJoiningModeDialIn,
+		DialOut = LinphoneConferenceJoiningModeDialOut
+	};
+
 	enum class ParticipantListType {
 		Closed = LinphoneConferenceParticipantListTypeClosed,
 		Open = LinphoneConferenceParticipantListTypeOpen
@@ -424,6 +429,12 @@ public:
 	* @param type participant list type
 	*/
 	virtual void setParticipantListType (const ParticipantListType &type) = 0;
+
+	/*
+	* Set participant joining mode
+	* @param type participant joining mode
+	*/
+	virtual void setJoiningMode (const JoiningMode &type) = 0;
 };
 
 
