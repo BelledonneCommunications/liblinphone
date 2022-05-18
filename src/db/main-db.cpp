@@ -1263,30 +1263,28 @@ long long MainDbPrivate::insertConferenceCallEvent (const shared_ptr<EventLog> &
 	auto conferenceInfo = conferenceCallEvent->getConferenceInfo();
 	long long conferenceCallId = selectConferenceCallId(callLog->getCallId());
 
-	//EventLog::Type type = conferenceCallEvent->getType();
-	// switch(type) {
-	// 	case EventLog::Type::ConferenceCallStarted:
-	// 		if (conferenceCallId >= 0) {
-	// 			lWarning() << "Conference call is already stored in db for call-id: " << callLog->getCallId();
-	// 			return -1;
-	// 		}
-	// 		break;
-	// 	case EventLog::Type::ConferenceCallConnected:
-	// 		if (conferenceCallId < 0) {
-	// 			lWarning() << "Cannot add ConferenceCallConnected event as conference call is not present in db for call-id: " << callLog->getCallId();
-	// 			return -1;
-	// 		}
-	// 		break;
-	// 	case EventLog::Type::ConferenceCallEnded:
-	// 		if (conferenceCallId < 0) {
-	// 			lWarning() << "Cannot add ConferenceCallEnded event as conference call is not present in db for call-id: " << callLog->getCallId();
-	// 			return -1;
-	// 		}
-	// 		break;
-	// 	default:
-	// 		lError() << "Trying to insert a conference call without the correct event type!";
-	// 		return -1;
-	// }
+	EventLog::Type type = conferenceCallEvent->getType();
+	switch(type) {
+		case EventLog::Type::ConferenceCallStarted:
+			if (conferenceCallId >= 0) {
+				lWarning() << "Cannot add ConferenceCallStarted event as conference call is already stored in db for call-id: " << callLog->getCallId();
+				return -1;
+			}
+			break;
+		case EventLog::Type::ConferenceCallConnected:
+			if (conferenceCallId < 0) {
+				lWarning() << "Adding ConferenceCallConnected event but conference call is not present in db for call-id: " << callLog->getCallId();
+			}
+			break;
+		case EventLog::Type::ConferenceCallEnded:
+			if (conferenceCallId < 0) {
+				lWarning() << "Adding ConferenceCallEnded event but conference call is not present in db for call-id: " << callLog->getCallId();
+			}
+			break;
+		default:
+			lError() << "Trying to insert a conference call without the correct event type!";
+			return -1;
+	}
 
 	conferenceCallId = insertOrUpdateConferenceCall(callLog, conferenceInfo);
 

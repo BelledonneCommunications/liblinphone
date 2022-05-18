@@ -139,6 +139,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 			case CallSession::State::Connected:
 				log->setStatus(LinphoneCallSuccess);
 				log->setConnectedTime(ms_time(nullptr));
+				q->getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallConnected, log, nullptr);
 				break;
 			default:
 				break;
@@ -1162,6 +1163,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	}
 
 	d->log = CallLog::create(getCore(), direction, fromAddr, toAddr);
+	getCore()->reportConferenceCallEvent(EventLog::Type::ConferenceCallStarted, d->log, nullptr);
 
 	if (op) {
 		/* We already have an op for incoming calls */
@@ -1304,7 +1306,6 @@ bool CallSession::initiateOutgoing (const string &subject, const Content *conten
 	L_D();
 	bool defer = false;
 	d->setState(CallSession::State::OutgoingInit, "Starting outgoing call");
-	d->log->setStartTime(ms_time(nullptr));
 	if (!d->destProxy)
 		defer = d->startPing();
 	return defer;
