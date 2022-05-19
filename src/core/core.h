@@ -284,10 +284,8 @@ public:
 
 	Address interpretUrl (const std::string &url) const;
 
-	// Cancel task scheduled on the main loop
-	void cancelTask(belle_sip_source_t * task);
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
-	belle_sip_source_t * doLater(const std::function<void ()> &something);
+	void doLater(const std::function<void ()> &something);
 	// Execure specified lambda now if this method is called on the same thread as linphone_core_iterate(), otherwise do the same as doLater() above.
 	void performOnIterateThread(const std::function<void ()> &something);
 

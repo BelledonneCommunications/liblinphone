@@ -1285,12 +1285,14 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
-				iceQueuedEventTask = getCore().doLater([this, ev](){
+				iceQueuedEventTask = getCore().createTimer([this, ev](){
 					if(mState != State::Stopped)// Media session has stopped : Ice Service is no more.
 						getIceService().handleIceEvent(ev);
 					ortp_event_destroy(ev);
+					getCore().destroyTimer(iceQueuedEventTask);
 					iceQueuedEventTask = nullptr;
-				});
+					return true;
+				}, 0, "ice task");
 				continue; // Go to next event.
 			break;
 		}
@@ -1465,8 +1467,8 @@ MS2Stream::~MS2Stream(){
 	linphone_call_stats_unref(mStats);
 	mStats = nullptr;
 	if (iceQueuedEventTask) {
-		getCore().cancelTask(iceQueuedEventTask);
-		belle_sip_object_unref(iceQueuedEventTask);
+		getCore().destroyTimer(iceQueuedEventTask);
+		iceQueuedEventTask = nullptr;
 	}
 }
 
