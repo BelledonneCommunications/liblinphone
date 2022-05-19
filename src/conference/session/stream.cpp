@@ -42,7 +42,7 @@ LINPHONE_BEGIN_NAMESPACE
  */
 
 
-Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription().type), mIndex(params.streamIndex), mCore(mStreamsGroup.getMediaSession().getCore()){
+Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription().type), mIndex(params.streamIndex){
 	setPortConfig();
 	initMulticast(params);
 }
@@ -56,7 +56,7 @@ LinphoneCore *Stream::getCCore()const{
 }
 
 Core &Stream::getCore()const{
-	return *mCore;
+	return *getMediaSession().getCore();
 }
 
 MediaSession &Stream::getMediaSession()const{
