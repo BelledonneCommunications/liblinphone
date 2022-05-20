@@ -4231,12 +4231,6 @@ static void create_conference_dial_out_base (bool_t send_ics, LinphoneConference
 						BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallUpdatedByRemote, focus_stat.number_of_LinphoneCallUpdatedByRemote + focus_no_updating, 10000));
 						BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat.number_of_LinphoneCallStreamsRunning + focus_no_streams_running, 10000));
 					} else {
-
-						int no_streams_running = ((enable_ice) ? 6 : 5);
-						int no_updating = no_streams_running - ((enable_ice) ? 2 : 1);
-						BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallUpdating, no_updating, 50000));
-						BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneCallStreamsRunning, no_streams_running, 10000));
-
 						no_participants = 4;
 						BC_ASSERT_TRUE(linphone_conference_is_in(pconference));
 						LinphoneCall * current_call = linphone_core_get_current_call(mgr->lc);
