@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.lang.IllegalStateException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,7 +61,11 @@ public class DeviceUtils31 {
 					} else {
 						Log.w("[Device Utils 31] No input stream for exit info");
 					}
-				} catch (IOException e) {
+				} catch (IOException ioe) {
+					Log.e("[Device Utils 31] IO Exception while trying to get trace input stream: ", ioe);
+				} catch (IllegalStateException ise) {
+					Log.e("[Device Utils 31] Illegal State Exception while trying to get trace input stream: ", ise);
+				} catch (Exception e) {
 					Log.e("[Device Utils 31] Exception while trying to get trace input stream: ", e);
 				}
 			}
