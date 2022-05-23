@@ -25,6 +25,7 @@
 #include <Foundation/Foundation.h>
 #include <CoreLocation/CoreLocation.h>
 #include <belr/grammarbuilder.h>
+#include <bctoolbox/port.h>
 #include "c-wrapper/c-wrapper.h"
 
 #include "logger/logger.h"
@@ -84,19 +85,23 @@ MacPlatformHelpers::~MacPlatformHelpers () {
 // -----------------------------------------------------------------------------
 
 string MacPlatformHelpers::getDataResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
+	string file = getFilePath(linphone_factory_get_data_resources_dir(linphone_factory_get()), filename);
+	return bctbx_file_exist(file.c_str()) ? file : getResourcePath(Framework, filename);
 }
 
 string MacPlatformHelpers::getImageResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
+	string file = getFilePath(linphone_factory_get_image_resources_dir(linphone_factory_get()), filename);
+	return bctbx_file_exist(file.c_str())? file : getResourcePath(Framework, filename);
 }
 
 string MacPlatformHelpers::getRingResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
+	string file = getFilePath(linphone_factory_get_ring_resources_dir(linphone_factory_get()), filename);
+	return bctbx_file_exist(file.c_str()) ? file : getResourcePath(Framework, filename);
 }
 
 string MacPlatformHelpers::getSoundResource (const string &filename) const {
-	return getResourcePath(Framework, filename);
+	string file = getFilePath(linphone_factory_get_sound_resources_dir(linphone_factory_get()), filename);
+	return bctbx_file_exist(file.c_str()) ? file : getResourcePath(Framework, filename);
 }
 
 // -----------------------------------------------------------------------------
