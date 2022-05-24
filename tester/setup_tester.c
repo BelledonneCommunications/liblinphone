@@ -1799,7 +1799,7 @@ static void search_friend_with_name_with_uppercase(void) {
 
 	magicSearch = linphone_magic_search_new(manager->lc);
 
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stepha", "");
+	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "И", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
@@ -1807,7 +1807,7 @@ static void search_friend_with_name_with_uppercase(void) {
 		_check_friend_result_list(manager->lc, resultList, 1, stephanie1SipUri, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
-	
+
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "и", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
@@ -1816,8 +1816,8 @@ static void search_friend_with_name_with_uppercase(void) {
 		_check_friend_result_list(manager->lc, resultList, 1, stephanie1SipUri, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
-	
-	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "И", "");
+
+	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stepha", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
