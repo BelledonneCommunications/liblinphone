@@ -584,44 +584,52 @@ static void zrtp_key_agreement_call(void) {
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 	}
+}
 
-	if (bctbx_key_agreement_algo_list()&BCTBX_KEM_X25519) { // Do we have post quantum algo
-		// Use hybrid X25519/Kyber512
-		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
-		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
-		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_KYB512};
-		//PQ algo should force(at config time) the use of SHA512 and AES256 even if we do not explicitely enable them
-		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
-		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+static void zrtp_post_quantum_key_agreement_call(void) {
+#ifdef HAVE_PQCRYPTO
+	ZrtpAlgoString marieAlgo;
+	ZrtpAlgoString paulineAlgo;
+	ZrtpAlgoRes res;
 
-		// Use hybrid X448/Kyber1024
-		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
-		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
-		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_KYB1024};
-		//PQ algo should force the use of SHA512 and AES256
-		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
-		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+	// Use hybrid X25519/Kyber512
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_KYB512";
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_KYB512};
+	//PQ algo should force(at config time) the use of SHA512 and AES256 even if we do not explicitely enable them
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+	res.hash_algo = {MS_ZRTP_HASH_S512};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
-		// Use hybrid X25519/Sike434
-		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_SIK434";
-		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_SIK434";
-		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_SIK434};
-		//PQ algo should force the use of SHA512 and AES256
-		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
-		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+	// Use hybrid X448/Kyber1024
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_KYB1024";
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_KYB1024};
+	//PQ algo should force the use of SHA512 and AES256
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+	res.hash_algo = {MS_ZRTP_HASH_S512};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
 
-		// Use hybrid X448/Sike751
-		marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_SIK751";
-		paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_SIK751";
-		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_SIK751};
-		//PQ algo should force the use of SHA512 and AES256
-		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
-		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
-	}
+	// Use hybrid X25519/Sike434
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_SIK434";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K255_SIK434";
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_SIK434};
+	//PQ algo should force the use of SHA512 and AES256
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+	res.hash_algo = {MS_ZRTP_HASH_S512};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+
+	// Use hybrid X448/Sike751
+	marieAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_SIK751";
+	paulineAlgo.key_agreement_algo = "MS_ZRTP_KEY_AGREEMENT_K448_SIK751";
+	res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_SIK751};
+	//PQ algo should force the use of SHA512 and AES256
+	res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
+	res.hash_algo = {MS_ZRTP_HASH_S512};
+	BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+#else /* HAVE_PQCRYPTO */
+	bctbx_warning("ZRTP post quantum key agreement test skipped as PostQuantum Crypto is disabled");
+#endif /* HAVE_PQCRYPTO */
 }
 
 static void zrtp_hash_call(void) {
@@ -1351,6 +1359,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
 	TEST_NO_TAG("ZRTP Cipher call", zrtp_cipher_call),
 	TEST_NO_TAG("ZRTP Key Agreement call", zrtp_key_agreement_call),
+	TEST_NO_TAG("ZRTP Post Quantum Key Agreement call", zrtp_post_quantum_key_agreement_call),
 	TEST_NO_TAG("ZRTP Hash call", zrtp_hash_call),
 	TEST_NO_TAG("ZRTP Authentication tag call", zrtp_authtag_call),
 	TEST_ONE_TAG("DTLS SRTP call", dtls_srtp_call, "DTLS"),
