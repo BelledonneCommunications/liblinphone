@@ -22,9 +22,6 @@
 
 #include <bctoolbox/list.h>
 #include <algorithm>
-#include <locale>
-#include <codecvt>
-#include <string>
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
@@ -733,18 +730,16 @@ unsigned int MagicSearch::searchInAddress (const LinphoneAddress *lAddress, cons
 
 unsigned int MagicSearch::getWeight (const string &stringWords, const string &filter) const {
 	locale loc;
-	
-	wstring filterLC = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(filter);
-	wstring stringWordsLC = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(stringWords);
-	wstring delimiterLC = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(getDelimiter());
-	size_t weight = wstring::npos;
+	string filterLC = filter;
+	string stringWordsLC = stringWords;
+	size_t weight = string::npos;
 
-	transform(stringWordsLC.begin(), stringWordsLC.end(), stringWordsLC.begin(), [](wchar_t c){ wint_t l = towlower((wint_t)c); if(l==WEOF) return (wint_t)'?'; else return l;});
-	transform(filterLC.begin(), filterLC.end(), filterLC.begin(), [](wchar_t c){ wint_t l = towlower((wint_t)c); if(l==WEOF) return (wint_t)'?'; else return l; });
+	transform(stringWordsLC.begin(), stringWordsLC.end(), stringWordsLC.begin(), [](unsigned char c){ return tolower(c); });
+	transform(filterLC.begin(), filterLC.end(), filterLC.begin(), [](unsigned char c){ return tolower(c); });
 
 	// Finding all occurrences of "filterLC" in "stringWordsLC"
 	for (size_t w = stringWordsLC.find(filterLC);
-		w != wstring::npos;
+		w != string::npos;
 		w = stringWordsLC.find(filterLC, w + filterLC.length())
 	) {
 		// weight max if occurence find at beginning
@@ -754,9 +749,9 @@ unsigned int MagicSearch::getWeight (const string &stringWords, const string &fi
 			bool isDelimiter = false;
 			if (getUseDelimiter()) {
 				// get the char before the matched filterLC
-				const wchar_t l = stringWordsLC.at(w - 1);
+				const char l = stringWordsLC.at(w - 1);
 				// Check if it's a delimiter
-				for (const wchar_t d : delimiterLC) {
+				for (const char d : getDelimiter()) {
 					if (l == d) {
 						isDelimiter = true;
 						break;
@@ -764,14 +759,14 @@ unsigned int MagicSearch::getWeight (const string &stringWords, const string &fi
 				}
 			}
 			unsigned int newWeight = getMaxWeight() - (unsigned int)((isDelimiter) ? 1 : w + 1);
-			weight = (weight != wstring::npos) ? weight + newWeight : newWeight;
+			weight = (weight != string::npos) ? weight + newWeight : newWeight;
 		}
 		// Only one search on the stringWordsLC for the moment
 		// due to weight calcul which dos not take into the case of multiple occurence
 		break;
 	}
 
-	return (weight != wstring::npos) ? (unsigned int)(weight) : getMinWeight();
+	return (weight != string::npos) ? (unsigned int)(weight) : getMinWeight();
 }
 
 bool MagicSearch::checkDomain (const LinphoneFriend *lFriend, const LinphoneAddress *lAddress, const string &withDomain) const{
