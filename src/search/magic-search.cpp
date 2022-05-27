@@ -330,6 +330,7 @@ std::list<std::shared_ptr<SearchResult>> MagicSearch::getLastSearch() const {
 			const char *domain = linphone_proxy_config_get_domain(proxy);
 			if (domain) {
 				string strTmp = d->mFilter;
+				setlocale(LC_ALL, "");
 				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c){ return tolower(c); });
 				LinphoneAddress *lastResult = linphone_core_interpret_url(this->getCore()->getCCore(), strTmp.c_str());
 				if (lastResult) {
@@ -730,6 +731,7 @@ unsigned int MagicSearch::searchInAddress (const LinphoneAddress *lAddress, cons
 
 unsigned int MagicSearch::getWeight (const string &stringWords, const string &filter) const {
 	locale loc;
+	setlocale(LC_ALL, "");
 	string filterLC = filter;
 	string stringWordsLC = stringWords;
 	size_t weight = string::npos;
