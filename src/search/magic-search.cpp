@@ -21,7 +21,6 @@
 #include "search-async-data.h"
 
 #include <bctoolbox/list.h>
-#include <bctoolbox/regex.h>
 #include <algorithm>
 #include <locale>
 #include <codecvt>
@@ -734,16 +733,20 @@ unsigned int MagicSearch::searchInAddress (const LinphoneAddress *lAddress, cons
 
 unsigned int MagicSearch::getWeight (const string &stringWords, const string &filter) const {
 	locale loc;
-	wstring_convert<codecvt_utf8_utf16<wchar_t>, wchar_t> converter;
-// Convert string to wstring in order to take account of wide-chars on utf16
-	wstring stringWordsLC = converter.from_bytes(stringWords);
-	wstring delimiterLC = converter.from_bytes(getDelimiter());
-	size_t weight = wstring::npos;
 	
-	smatch regexResults;
-	bctoolbox::Utils::find(&regexResults, stringWords, filter);
-	for( size_t index = 0 ; index < regexResults.size() ; ++index) {
-		size_t w = (size_t)regexResults.position(index);
+	wstring filterLC = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(filter);
+	wstring stringWordsLC = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(stringWords);
+	wstring delimiterLC = std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().from_bytes(getDelimiter());
+	size_t weight = wstring::npos;
+
+	transform(stringWordsLC.begin(), stringWordsLC.end(), stringWordsLC.begin(), [](wchar_t c){ wint_t l = towlower((wint_t)c); if(l==WEOF) return (wint_t)'?'; else return l;});
+	transform(filterLC.begin(), filterLC.end(), filterLC.begin(), [](wchar_t c){ wint_t l = towlower((wint_t)c); if(l==WEOF) return (wint_t)'?'; else return l; });
+
+	// Finding all occurrences of "filterLC" in "stringWordsLC"
+	for (size_t w = stringWordsLC.find(filterLC);
+		w != wstring::npos;
+		w = stringWordsLC.find(filterLC, w + filterLC.length())
+	) {
 		// weight max if occurence find at beginning
 		if (w == 0) {
 			weight = getMaxWeight();
