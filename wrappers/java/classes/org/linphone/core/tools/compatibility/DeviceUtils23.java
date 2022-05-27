@@ -20,21 +20,29 @@
 package org.linphone.core.tools.compatibility;
 
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.Ringtone;
 import android.os.PowerManager;
 import android.os.Vibrator;
 
 import org.linphone.core.tools.Log;
 
 public class DeviceUtils23 {
-    public static boolean isAppBatteryOptimizationEnabled(Context context) {
-        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        boolean ignoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
-        Log.i("[Platform Helper] Is app in device battery optimization whitelist: " + ignoringBatteryOptimizations);
-        return !ignoringBatteryOptimizations;
-    }
+	public static boolean isAppBatteryOptimizationEnabled(Context context) {
+		PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+		boolean ignoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
+		Log.i("[Platform Helper] Is app in device battery optimization whitelist: " + ignoringBatteryOptimizations);
+		return !ignoringBatteryOptimizations;
+	}
 
 	public static void vibrate(Vibrator vibrator) {
 		long[] pattern = {0, 1000, 1000};
 		vibrator.vibrate(pattern, 1);
+	}
+
+	public static void playRingtone(Ringtone ringtone, AudioAttributes audioAttrs) {
+		ringtone.setAudioAttributes(audioAttrs);
+		ringtone.play();
+		Log.i("[Audio Helper] Ringtone ringing started");
 	}
 }

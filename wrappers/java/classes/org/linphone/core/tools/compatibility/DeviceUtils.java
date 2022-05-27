@@ -21,6 +21,8 @@ package org.linphone.core.tools.compatibility;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.media.AudioAttributes;
+import android.media.Ringtone;
 import android.os.Vibrator;
 
 import org.linphone.mediastream.Version;
@@ -89,5 +91,13 @@ public class DeviceUtils {
 			return DeviceUtils31.isBluetoothConnectPermissionGranted(context);
 		}
 		return true;
+	}
+
+	public static void playRingtone(Ringtone ringtone, AudioAttributes audioAttrs) {
+		if (Version.sdkAboveOrEqual(Version.API28_PIE_90)) {
+			DeviceUtils28.playRingtone(ringtone, audioAttrs);
+		} else {
+			DeviceUtils23.playRingtone(ringtone, audioAttrs);
+		}
 	}
 }

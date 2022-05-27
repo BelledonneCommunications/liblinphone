@@ -22,31 +22,42 @@ package org.linphone.core.tools.compatibility;
 import android.app.ActivityManager;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.Ringtone;
+
+import org.linphone.core.tools.Log;
 
 public class DeviceUtils28 {
-    public static boolean isAppUserRestricted(Context context) {
-        ActivityManager activityManager =
-                (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        return activityManager.isBackgroundRestricted();
-    }
+	public static boolean isAppUserRestricted(Context context) {
+		ActivityManager activityManager =
+				(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		return activityManager.isBackgroundRestricted();
+	}
 
-    public static int getAppStandbyBucket(Context context) {
-        UsageStatsManager usageStatsManager =
-                (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-        return usageStatsManager.getAppStandbyBucket();
-    }
+	public static int getAppStandbyBucket(Context context) {
+		UsageStatsManager usageStatsManager =
+				(UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+		return usageStatsManager.getAppStandbyBucket();
+	}
 
-    public static String getAppStandbyBucketNameFromValue(int bucket) {
-        switch (bucket) {
-            case UsageStatsManager.STANDBY_BUCKET_ACTIVE:
-                return "STANDBY_BUCKET_ACTIVE";
-            case UsageStatsManager.STANDBY_BUCKET_FREQUENT:
-                return "STANDBY_BUCKET_FREQUENT";
-            case UsageStatsManager.STANDBY_BUCKET_RARE:
-                return "STANDBY_BUCKET_RARE";
-            case UsageStatsManager.STANDBY_BUCKET_WORKING_SET:
-                return "STANDBY_BUCKET_WORKING_SET";
-        }
-        return null;
-    }
+	public static String getAppStandbyBucketNameFromValue(int bucket) {
+		switch (bucket) {
+			case UsageStatsManager.STANDBY_BUCKET_ACTIVE:
+				return "STANDBY_BUCKET_ACTIVE";
+			case UsageStatsManager.STANDBY_BUCKET_FREQUENT:
+				return "STANDBY_BUCKET_FREQUENT";
+			case UsageStatsManager.STANDBY_BUCKET_RARE:
+				return "STANDBY_BUCKET_RARE";
+			case UsageStatsManager.STANDBY_BUCKET_WORKING_SET:
+				return "STANDBY_BUCKET_WORKING_SET";
+		}
+		return null;
+	}
+
+	public static void playRingtone(Ringtone ringtone, AudioAttributes audioAttrs) {
+		ringtone.setAudioAttributes(audioAttrs);
+		ringtone.setLooping(true);
+		ringtone.play();
+		Log.i("[Audio Helper] Ringtone ringing started (looping)");
+	}
 }

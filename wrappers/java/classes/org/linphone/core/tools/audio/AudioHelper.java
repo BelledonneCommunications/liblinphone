@@ -42,6 +42,7 @@ import java.lang.SecurityException;
 import org.linphone.core.Core;
 import org.linphone.core.AudioDevice;
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.receiver.HeadsetReceiver;
 import org.linphone.core.tools.service.CoreManager;
 
@@ -128,10 +129,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             } else {
                 mRingtone = RingtoneManager.getRingtone(context, defaultRingtoneUri);
                 if (mRingtone != null) {
-                    mRingtone.setAudioAttributes(audioAttrs);
-                    mRingtone.setLooping(true);
-                    mRingtone.play();
-                    Log.i("[Audio Helper] Ringtone ringing started");
+                    DeviceUtils.playRingtone(mRingtone, audioAttrs);
                 } else {
                     Log.e("[Audio Helper] Couldn't retrieve Ringtone object from manager!");
                 }
