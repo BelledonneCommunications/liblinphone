@@ -18,10 +18,8 @@
  */
 
 #include <algorithm>
-#include <codecvt>
 #include <cstdlib>
 #include <list>
-#include <regex>
 #include <sstream>
 
 #include <bctoolbox/port.h>
@@ -273,6 +271,7 @@ string Utils::quoteStringIfNotAlready(const string &str){
 	if (str.empty() || str[0] == '"') return str;
 	return string("\"") + str + string("\"");
 }
+
 
 map<string, Utils::Version> Utils::parseCapabilityDescriptor(const string &descriptor){
 	map<string, Utils::Version> result;
