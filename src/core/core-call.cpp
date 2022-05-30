@@ -381,7 +381,7 @@ void Core::reportConferenceCallEvent (EventLog::Type type, std::shared_ptr<CallL
 	if (lc->call_logs != NULL) {
 		for (bctbx_list_t *it = lc->call_logs; it != NULL; it = it->next) {
 			LinphoneCallLog *log = (LinphoneCallLog *) it->data;
-			if (strcmp(linphone_call_log_get_call_id(log), callLog->getCallId().c_str()) == 0) {
+			if (bctbx_strcmp(linphone_call_log_get_call_id(log), callLog->getCallId().c_str()) == 0) {
 				lc->call_logs = bctbx_list_remove(lc->call_logs, log);
 				linphone_call_log_unref(log);
 				break;
