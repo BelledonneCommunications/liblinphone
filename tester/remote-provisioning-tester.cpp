@@ -22,7 +22,6 @@
 #include "tester_utils.h"
 
 #include "FlexiAPIClient.hh"
-#include "belcard/belcard.hpp"
 
 #include <json/json.h>
 
