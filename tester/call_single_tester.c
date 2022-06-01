@@ -153,6 +153,17 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 
 static const char *info_content = "<somexml>blabla</somexml>";
 
+static void call_check_log_duration_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
+	if (cstate == LinphoneCallStateEnd || cstate == LinphoneCallStateReleased) {
+		LinphoneCallLog *call_log = linphone_call_get_call_log(call);
+		BC_ASSERT_PTR_NOT_NULL(call_log);
+		if (call_log) {
+			BC_ASSERT_GREATER_STRICT(linphone_call_log_get_duration(call_log), 0, int, "%d");
+		}
+		BC_ASSERT_GREATER_STRICT(linphone_call_get_duration(call), 0, int, "%d");
+	}
+}
+
 void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
@@ -168,6 +179,11 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 	pauline = linphone_core_manager_new(
 		callee_rc ? callee_rc : (transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc")
 	);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_call_state_changed(cbs, call_check_log_duration_cb);
+	linphone_core_add_callbacks(marie->lc, cbs);
+	linphone_core_add_callbacks(pauline->lc, cbs);
 
 	/* with the account manager, we might lose the identity */
 	marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
@@ -254,6 +270,7 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
+	linphone_core_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 
