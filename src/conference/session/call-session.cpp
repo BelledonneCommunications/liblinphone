@@ -148,13 +148,17 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 			lError() << "You must fill a reason when changing call state (from " <<
 				Utils::toString(prevState) << " to " << Utils::toString(state) << ")";
 		}
+
+		// So call log duration will be available in those states in the app listener
+		if ((newState == CallSession::State::End) || (newState == CallSession::State::Error)) {
+			setTerminated();
+		}
+
 		if (listener)
 			listener->onCallSessionStateChanged(q->getSharedFromThis(), newState, message);
 
 		if (newState == CallSession::State::Released) {
 			setReleased(); /* Shall be performed after app notification */
-		} else if ((newState == CallSession::State::End) || (newState == CallSession::State::Error)) {
-			setTerminated();
 		}
 	}
 }
