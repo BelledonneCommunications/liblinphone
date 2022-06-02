@@ -25,10 +25,13 @@
 #include <ostream>
 
 #include "enums.h"
+#include "object/ownership.hh"
 #include "object/clonable-object.h"
 #include "c-wrapper/internal/c-sal.h"
 
 // =============================================================================
+
+using namespace ownership;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -46,14 +49,16 @@ class LINPHONE_PUBLIC Address : public ClonableObject {
 
 public:
 	explicit Address (const std::string &address = "");
-	Address (const Address &other);
-	virtual ~Address ();
+	Address(const Address &other);
+	Address(BorrowedMut<SalAddress> source);
+	virtual ~Address();
 
-	Address* clone () const override {
+	Address *clone() const override {
 		return new Address(*this);
 	}
 
 	Address &operator= (const Address &other);
+	Address &operator=(Address &&other);
 
 	bool operator== (const Address &other) const;
 	bool operator!= (const Address &other) const;
@@ -113,10 +118,11 @@ public:
 	bool setUriParams (const std::string &uriParams);
 	bool removeUriParam (const std::string &uriParamName);
 
-	inline const SalAddress *getInternalAddress () const {
+	inline const Borrowed<SalAddress> getInternalAddress () const {
 		return internalAddress;
 	}
-	void setInternalAddress (const SalAddress *value);
+	/* Set the `internalAddress` with a clone of `value` */
+	void setInternalAddress (const Borrowed<SalAddress> value);
 
 	// This method is necessary when creating static variables of type address as they canot be freed before the leak detector runs
 	void removeFromLeakDetector() const;
@@ -139,7 +145,7 @@ private:
 	// Cqche is required so that getters can return const refs
 	mutable AddressCache cache;
 
-	SalAddress *internalAddress = nullptr;
+	Owned<SalAddress> internalAddress = nullptr;
 };
 
 inline std::ostream &operator<< (std::ostream &os, const Address &address) {

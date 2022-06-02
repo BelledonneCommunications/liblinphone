@@ -102,6 +102,15 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_remote_address (const L
 LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall * call);
 
 /**
+ * The address to which the call has been sent, taken directly from the SIP URI of the INVITE.
+ * Usually equal to the `To` field, except when e.g. using a fallback contact address.
+ * You should probably use getToAddress() instead, unless you know what you're doing.
+ * @param call #LinphoneCall object. @notnil
+ * @return the #LinphoneAddress matching the URI of the INVITE request. @notnil
+**/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_request_address (const LinphoneCall * call);
+
+/**
  * Returns the value of the header name
  * @param call #LinphoneCall object. @notnil
  * @param header_name the name of the header to check. @notnil

@@ -69,6 +69,8 @@ SalOp::~SalOp () {
 		sal_address_unref(mFromAddress);
 	if (mToAddress)
 		sal_address_unref(mToAddress);
+	if (mRequestAddress)
+		sal_address_unref(mRequestAddress.take());
 	if (mServiceRoute)
 		sal_address_unref(mServiceRoute);
 	if (mOriginAddress)
@@ -886,6 +888,12 @@ void SalOp::setRemoteUserAgent (belle_sip_message_t *message) {
 	) {
 		mRemoteUserAgent = userAgentStr;
 	}
+}
+
+void SalOp::setRequestAddress(ownership::BorrowedMut<SalAddress> value) {
+	if (mRequestAddress)
+		sal_address_unref(mRequestAddress.take());
+	mRequestAddress = ownership::owned(sal_address_ref(value));
 }
 
 string SalOp::toString (const Type type) {

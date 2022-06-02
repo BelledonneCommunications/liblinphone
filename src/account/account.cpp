@@ -365,7 +365,7 @@ void Account::setState (LinphoneRegistrationState state, const std::string& mess
 			<< linphone_registration_state_to_string(state) << "] on core [" << mCore << "]";
 
 		if (state == LinphoneRegistrationOk) {
-			const SalAddress *salAddr = mOp->getContactAddress();
+			const auto salAddr = ownership::borrowed(mOp->getContactAddress());
 			if (salAddr) L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress)->setInternalAddress(salAddr);
 			mOldParams = nullptr; // We can drop oldParams, since last registration was successful.
 		}
@@ -466,11 +466,11 @@ LinphoneAddress* Account::getPendingContactAddress () const {
 LinphoneAddress* Account::getServiceRouteAddress () {
 	if (!mOp) return nullptr;
 
-	const SalAddress *salAddr = mOp->getServiceRoute();
+	const auto salAddr = ownership::borrowed(mOp->getServiceRoute());
 	if (!salAddr) return nullptr;
 
 	if (mServiceRouteAddress) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(mServiceRouteAddress)->setInternalAddress(const_cast<SalAddress *>(salAddr));
+		L_GET_CPP_PTR_FROM_C_OBJECT(mServiceRouteAddress)->setInternalAddress(salAddr);
 	} else {
 		char *buf = sal_address_as_string(salAddr);
 		mServiceRouteAddress = linphone_address_new(buf);

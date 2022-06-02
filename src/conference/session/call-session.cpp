@@ -53,6 +53,9 @@ const std::map<CallSession::PredefinedSubjectType, std::string> CallSession::pre
 
 // =============================================================================
 
+const std::string CallSessionPrivate::emptyString = "";
+const Address CallSessionPrivate::emptyAddress = Address("");
+
 int CallSessionPrivate::computeDuration () const {
 	if (log->getConnectedTime() == 0) {
 		if (log->getStartTime() == 0) return 0; 
@@ -1639,9 +1642,10 @@ const LinphoneErrorInfo * CallSession::getErrorInfo () const {
 const Address& CallSession::getLocalAddress () const {
 	L_D();
 	return (d->direction == LinphoneCallIncoming)
-		? 
-			(d->log->getToAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress()) : d->emptyAddress) :
-			(d->log->getFromAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getFromAddress()) : d->emptyAddress);
+			   ? (d->log->getToAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress())
+										 : CallSessionPrivate::emptyAddress)
+			   : (d->log->getFromAddress() ? *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getFromAddress())
+										   : CallSessionPrivate::emptyAddress);
 }
 
 shared_ptr<CallLog> CallSession::getLog () const {
@@ -1701,7 +1705,7 @@ const string &CallSession::getRemoteContact () const {
 		/* sal_op_get_remote_contact preserves header params */
 		return d->op->getRemoteContact();
 	}
-	return d->emptyString;
+	return CallSessionPrivate::emptyString;
 }
 
 const Address *CallSession::getRemoteContactAddress () const {
@@ -1757,6 +1761,16 @@ const Address& CallSession::getToAddress () const {
 	return *L_GET_CPP_PTR_FROM_C_OBJECT(d->log->getToAddress());
 }
 
+const Address &CallSession::getRequestAddress() const {
+	L_D();
+	// Casting to mutable for initialisation
+	auto &mutRequestAddress = const_cast<Address &>(d->requestAddress);
+	if (mutRequestAddress == CallSessionPrivate::emptyAddress)
+		mutRequestAddress = d->op->getRequestAddress();
+
+	return mutRequestAddress;
+}
+
 CallSession::State CallSession::getTransferState () const {
 	L_D();
 	return d->transferState;
@@ -1805,7 +1819,7 @@ const string &CallSession::getRemoteUserAgent () const {
 	L_D();
 	if (d->op)
 		return d->op->getRemoteUserAgent();
-	return d->emptyString;
+	return CallSessionPrivate::emptyString;
 }
 
 shared_ptr<CallSession> CallSession::getReplacedCallSession () const {

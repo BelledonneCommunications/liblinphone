@@ -169,6 +169,10 @@ const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall *call) {
 	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getToAddress());
 }
 
+const LinphoneAddress *linphone_call_get_request_address(const LinphoneCall *call) {
+	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getActiveSession()->getRequestAddress());
+}
+
 const char *linphone_call_get_to_header (const LinphoneCall *call, const char *name) {
 	return Call::toCpp(call)->getToHeader(name);
 }

@@ -25,12 +25,15 @@
 #include <belle-sip/types.h>
 
 #include "c-wrapper/internal/c-sal.h"
-#include "content/content.h"
-#include "content/content-type.h"
 #include "content/content-disposition.h"
+#include "content/content-type.h"
+#include "content/content.h"
 #include "logger/logger.h"
-#include "sal/sal_media_description.h"
+#include "object/ownership.hh"
 #include "sal/sal.h"
+#include "sal/sal_media_description.h"
+
+using namespace ownership;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -61,6 +64,10 @@ public:
 	void setToAddress (const SalAddress *value);
 	const std::string &getTo () const { return mTo; }
 	const SalAddress *getToAddress () const { return mToAddress; }
+
+	BorrowedMut<SalAddress> getRequestAddress() {
+		return mRequestAddress.borrow();
+	}
 
 	void setContactAddress (const SalAddress* value);
 	const SalAddress *getContactAddress() const { return mContactAddress; }
@@ -202,6 +209,7 @@ protected:
 	void setNetworkOriginAddress (SalAddress *value);
 	void setPrivacyFromMessage (belle_sip_message_t *message);
 	void setRemoteUserAgent (belle_sip_message_t *message);
+	void setRequestAddress(BorrowedMut<SalAddress> value);
 
 	belle_sip_response_t *createResponseFromRequest (belle_sip_request_t *request, int code) {
 		return mRoot->createResponseFromRequest(request, code);
@@ -245,6 +253,7 @@ protected:
 	SalAddress* mFromAddress = nullptr;
 	std::string mTo;
 	SalAddress *mToAddress = nullptr;
+	Owned<SalAddress> mRequestAddress = nullptr;
 	std::string mOrigin;
 	SalAddress *mOriginAddress = nullptr;
 	SalAddress *mDiversionAddress = nullptr;

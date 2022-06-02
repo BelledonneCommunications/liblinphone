@@ -109,6 +109,9 @@ public:
 	void onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) override;
 
 protected:
+	static const std::string emptyString;
+	static const Address emptyAddress;
+
 	CallSessionListener *listener = nullptr;
 
 	CallSessionParams *params = nullptr;
@@ -131,13 +134,12 @@ protected:
 	std::shared_ptr<CallLog> log = nullptr;
 	std::string referTo;
 	mutable Address referToAddress;
-	std::string emptyString = "";
-	Address emptyAddress = Address();
 	// This counter is used to keep active track of reINVITEs and UPDATEs under processing at any given time.
 	// In fact Linphone can have multiple active transaction at the same time on the same dialog as the transaction queue is popped after receiving the 100 Trying and not the 200 Ok
 	int nbProcessingUpdates = 0;
 
 	SalCallOp *op = nullptr;
+	Address requestAddress; // Cached from the op
 
 	SalOp *pingOp = nullptr;
 	bool pingReplied = false;

@@ -212,6 +212,17 @@ void Sal::processRequestEventCb (void *userCtx, const belle_sip_request_event_t 
 		}
 	}
 
+	if (!op->mRequestAddress) {
+		auto *address = belle_sip_header_address_new();
+		if (auto *uri = belle_sip_request_get_uri(request)) {
+			belle_sip_header_address_set_uri(address, uri);
+		}
+		if (auto *abs_uri = belle_sip_request_get_absolute_uri(request)) {
+			belle_sip_header_address_set_absolute_uri(address, abs_uri);
+		}
+		op->setRequestAddress(ownership::borrowed_mut(reinterpret_cast<SalAddress *>(address)));
+	}
+
 	auto subjectHeader = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), "Subject");
 	if (subjectHeader){
 		const char *value = belle_sip_header_get_unparsed_value(subjectHeader);

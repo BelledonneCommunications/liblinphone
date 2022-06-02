@@ -4543,7 +4543,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
 		SalAddress *salAddress = nullptr;
 		if (contact)
-			salAddress = sal_address_clone(const_cast<SalAddress *>(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress()));
+			salAddress = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
 		op->setContactAddress(salAddress);
 		if (salAddress)
 			sal_address_unref(salAddress);
@@ -4576,7 +4576,7 @@ void linphone_configure_op_with_account(LinphoneCore *lc, SalOp *op, const Linph
 		const LinphoneAddress *contact = linphone_account_get_contact_address(account);
 		SalAddress *salAddress = nullptr;
 		if (contact)
-			salAddress = sal_address_clone(const_cast<SalAddress *>(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress()));
+			salAddress = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
 		op->setContactAddress(salAddress);
 		if (salAddress)
 			sal_address_unref(salAddress);

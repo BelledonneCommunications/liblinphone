@@ -158,6 +158,7 @@ public:
 	std::shared_ptr<CallSession> getReplacedCallSession () const;
 	CallSession::State getState () const;
 	const Address &getToAddress () const;
+	const Address &getRequestAddress() const;
 	CallSession::State getTransferState () const;
 	std::shared_ptr<CallSession> getTransferTarget () const;
 	const char *getToHeader (const std::string &name) const;

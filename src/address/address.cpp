@@ -30,6 +30,7 @@
 // =============================================================================
 
 using namespace std;
+using namespace ownership;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -62,15 +63,15 @@ namespace {
 	LruCache<string, SalAddressWrap> addressesCache;
 }
 
-static SalAddress *getSalAddressFromCache (const string &uri) {
+static Owned<SalAddress> getSalAddressFromCache(const string &uri) {
 	SalAddressWrap *wrap = addressesCache[uri];
 	if (wrap)
-		return sal_address_clone(wrap->get());
+		return owned(sal_address_clone(wrap->get()));
 
 	SalAddress *address = sal_address_new(L_STRING_TO_C(uri));
 	if (address) {
 		addressesCache.insert(uri, SalAddressWrap(address));
-		return sal_address_clone(address);
+		return owned(sal_address_clone(address));
 	}
 
 	return nullptr;
@@ -84,23 +85,34 @@ Address::Address (const string &address) : ClonableObject(*new ClonableObjectPri
 	}
 }
 
-Address::Address (const Address &other) : ClonableObject(*new ClonableObjectPrivate) {
-	SalAddress *salAddress = other.internalAddress;
-	if (salAddress)
-		internalAddress = sal_address_clone(salAddress);
+Address::Address(const Address &other)
+	: ClonableObject(*new ClonableObjectPrivate),
+	  internalAddress(other.internalAddress ? owned(sal_address_clone(other.internalAddress)) : nullptr) {
+}
+
+Address::Address(BorrowedMut<SalAddress> source)
+	: ClonableObject(*new ClonableObjectPrivate),
+	  internalAddress(source ? owned(sal_address_ref(source)) : nullptr) {
 }
 
 Address::~Address () {
 	if (internalAddress)
-		sal_address_unref(internalAddress);
+		sal_address_unref(internalAddress.take());
 }
 
 Address &Address::operator= (const Address &other) {
 	if (this != &other) {
+		setInternalAddress(other.internalAddress);
+	}
+
+	return *this;
+}
+
+Address &Address::operator=(Address &&other) {
+	if (this != &other) {
 		if (internalAddress)
-			sal_address_unref(internalAddress);
-		SalAddress *salAddress = other.internalAddress;
-		internalAddress = salAddress ? sal_address_clone(salAddress) : nullptr;
+			sal_address_unref(internalAddress.take());
+		internalAddress = std::move(other.internalAddress);
 	}
 
 	return *this;
@@ -122,10 +134,10 @@ bool Address::operator< (const Address &other) const {
 
 // -----------------------------------------------------------------------------
 
-void Address::setInternalAddress (const SalAddress *addr) {
+void Address::setInternalAddress(const Borrowed<SalAddress> addr) {
 	if (internalAddress)
-		sal_address_unref(internalAddress);
-	internalAddress = sal_address_clone(addr);
+		sal_address_unref(internalAddress.take());
+	internalAddress = addr ? owned(sal_address_clone(addr)) : nullptr;
 }
 
 void Address::clearSipAddressesCache () {
@@ -160,7 +172,7 @@ bool Address::setDisplayName (const string &displayName) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_display_name(internalAddress, L_STRING_TO_C(displayName));
+	sal_address_set_display_name(internalAddress.borrow(), L_STRING_TO_C(displayName));
 	return true;
 }
 
@@ -178,7 +190,7 @@ bool Address::setUsername (const string &username) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_username(internalAddress, L_STRING_TO_C(username));
+	sal_address_set_username(internalAddress.borrow(), L_STRING_TO_C(username));
 	return true;
 }
 
@@ -196,7 +208,7 @@ bool Address::setDomain (const string &domain) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_domain(internalAddress, L_STRING_TO_C(domain));
+	sal_address_set_domain(internalAddress.borrow(), L_STRING_TO_C(domain));
 	return true;
 }
 
@@ -208,7 +220,7 @@ bool Address::setPort (int port) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_port(internalAddress, port);
+	sal_address_set_port(internalAddress.borrow(), port);
 	return true;
 }
 
@@ -220,7 +232,7 @@ bool Address::setTransport (Transport transport) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_transport(internalAddress, static_cast<SalTransport>(transport));
+	sal_address_set_transport(internalAddress.borrow(), static_cast<SalTransport>(transport));
 	return true;
 }
 
@@ -232,7 +244,7 @@ bool Address::setSecure (bool enabled) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_secure(internalAddress, enabled);
+	sal_address_set_secure(internalAddress.borrow(), enabled);
 	return true;
 }
 
@@ -254,7 +266,7 @@ bool Address::setMethodParam (const string &methodParam) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_method_param(internalAddress, L_STRING_TO_C(methodParam));
+	sal_address_set_method_param(internalAddress.borrow(), L_STRING_TO_C(methodParam));
 	return true;
 }
 
@@ -272,7 +284,7 @@ bool Address::setPassword (const string &password) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_password(internalAddress, L_STRING_TO_C(password));
+	sal_address_set_password(internalAddress.borrow(), L_STRING_TO_C(password));
 	return true;
 }
 
@@ -280,7 +292,7 @@ bool Address::clean () {
 	if (!internalAddress)
 		return false;
 
-	sal_address_clean(internalAddress);
+	sal_address_clean(internalAddress.borrow());
 	return true;
 }
 
@@ -326,7 +338,7 @@ bool Address::setHeader (const string &headerName, const string &headerValue) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_header(internalAddress, L_STRING_TO_C(headerName), L_STRING_TO_C(headerValue));
+	sal_address_set_header(internalAddress.borrow(), L_STRING_TO_C(headerName), L_STRING_TO_C(headerValue));
 	return true;
 }
 
@@ -350,7 +362,7 @@ bool Address::setParam (const string &paramName, const string &paramValue) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_param(internalAddress, L_STRING_TO_C(paramName), L_STRING_TO_C(paramValue));
+	sal_address_set_param(internalAddress.borrow(), L_STRING_TO_C(paramName), L_STRING_TO_C(paramValue));
 	return true;
 }
 
@@ -358,7 +370,7 @@ bool Address::setParams (const string &params) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_params(internalAddress, L_STRING_TO_C(params));
+	sal_address_set_params(internalAddress.borrow(), L_STRING_TO_C(params));
 	return true;
 }
 
@@ -397,7 +409,7 @@ bool Address::setUriParam (const string &uriParamName, const string &uriParamVal
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_uri_param(internalAddress, L_STRING_TO_C(uriParamName), L_STRING_TO_C(uriParamValue));
+	sal_address_set_uri_param(internalAddress.borrow(), L_STRING_TO_C(uriParamName), L_STRING_TO_C(uriParamValue));
 	return true;
 }
 
@@ -405,7 +417,7 @@ bool Address::setUriParams (const string &uriParams) {
 	if (!internalAddress)
 		return false;
 
-	sal_address_set_uri_params(internalAddress, L_STRING_TO_C(uriParams));
+	sal_address_set_uri_params(internalAddress.borrow(), L_STRING_TO_C(uriParams));
 	return true;
 }
 
@@ -418,7 +430,8 @@ bool Address::removeUriParam (const string &uriParamName) {
 }
 
 void Address::removeFromLeakDetector() const {
-	belle_sip_header_address_t* header_addr = BELLE_SIP_HEADER_ADDRESS(internalAddress);
+	belle_sip_header_address_t *header_addr =
+		BELLE_SIP_HEADER_ADDRESS(static_cast<const SalAddress *>(internalAddress));
 	belle_sip_uri_t* sip_uri = belle_sip_header_address_get_uri(header_addr);
 	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(const_cast<belle_sip_parameters_t*>(belle_sip_uri_get_headers(sip_uri))));
 	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(sip_uri));
