@@ -110,6 +110,12 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             Log.w("[Audio Helper] Already ringing, skipping...");
             return;
         }
+        
+        int ringerMode = mAudioManager.getRingerMode();
+        if (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
+            Log.w("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ")");
+            return;
+        }
 
         requestRingingAudioFocus();
 
