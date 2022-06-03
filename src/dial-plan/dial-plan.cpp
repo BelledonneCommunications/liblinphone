@@ -161,7 +161,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Macedonia", "MK", "389", 8, "00"),
 	DialPlan::create("Madagascar", "MG", "261", 9, "00"),
 	DialPlan::create("Malawi", "MW", "265", 9, "00"),
-	DialPlan::create("Malaysia", "MY", "60", 9, "00"),
+	DialPlan::create("Malaysia", "MY", "60", 10, "00"),
 	DialPlan::create("Maldives", "MV", "960", 7, "00"),
 	DialPlan::create("Mali", "ML", "223", 8, "00"),
 	DialPlan::create("Malta", "MT", "356", 8, "00"),
