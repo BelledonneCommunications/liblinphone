@@ -410,7 +410,13 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
 		notifyIsComposingReceived(fromAddress.asAddress(), false);
 	}
-	chatMessage->getPrivate()->notifyReceiving();
+
+	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(::time(nullptr), chatMessage);
+	_linphone_chat_room_notify_chat_message_received(getCChatRoom(), L_GET_C_BACK_PTR(event));
+	// Legacy.
+	notifyChatMessageReceived(chatMessage);
+
+	sendDeliveryNotification(chatMessage);
 }
 
 void ChatRoomPrivate::onImdnReceived (const shared_ptr<ChatMessage> &chatMessage) {

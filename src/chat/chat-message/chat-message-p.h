@@ -213,7 +213,6 @@ public:
 
 	bool downloadFile ();
 
-	void notifyReceiving ();
 	LinphoneReason receive ();
 	void send ();
 

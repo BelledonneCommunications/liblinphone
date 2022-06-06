@@ -709,29 +709,6 @@ static void forceUtf8Content (Content &content) {
 	L_END_LOG_EXCEPTION
 }
 
-void ChatMessagePrivate::notifyReceiving () {
-	L_Q();
-
-	LinphoneChatRoom *chatRoom = static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom();
-	const auto & contentType = getContentType();
-	if (contentType == ContentType::Imdn ||  contentType == ContentType::ImIsComposing) {
-		// For compatibility, when CPIM is not used
-		positiveDeliveryNotificationRequired = false;
-		negativeDeliveryNotificationRequired = false;
-		displayNotificationRequired = false;
-	}
-
-	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(
-		::time(nullptr), q->getSharedFromThis()
-	);
-	_linphone_chat_room_notify_chat_message_received(chatRoom, L_GET_C_BACK_PTR(event));
-	// Legacy.
-	AbstractChatRoomPrivate *dChatRoom = q->getChatRoom()->getPrivate();
-	dChatRoom->notifyChatMessageReceived(q->getSharedFromThis());
-
-	static_cast<ChatRoomPrivate *>(dChatRoom)->sendDeliveryNotification(q->getSharedFromThis());
-}
-
 LinphoneReason ChatMessagePrivate::receive () {
 	L_Q();
 	int errorCode = 0;
@@ -898,6 +875,10 @@ LinphoneReason ChatMessagePrivate::receive () {
 		}
 	} else {
 		toBeStored = false;
+		// For compatibility, when CPIM is not used
+		positiveDeliveryNotificationRequired = false;
+		negativeDeliveryNotificationRequired = false;
+		displayNotificationRequired = false;
 	}
 
 	handleAutoDownload();
