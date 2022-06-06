@@ -275,6 +275,13 @@ public:
 	virtual void onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
 
 	/*
+	* This fonction is called each time a new participant device session is ringing
+	* @param[in] event informations related to the device's participant whose devices is ringing. @notnil
+	* @param[in] device participant device who rejoined. @notnil
+	*/
+	virtual void onParticipantDeviceAlerting (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+
+	/*
 	* This fonction is called each time a new participant device rejoins the conference after full state notification.
 	* @param[in] event informations related to the device's participant who rejoined. @notnil
 	* @param[in] device participant device who rejoined. @notnil

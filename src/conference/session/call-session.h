@@ -162,6 +162,9 @@ public:
 	std::shared_ptr<CallSession> getTransferTarget () const;
 	const char *getToHeader (const std::string &name) const;
 
+	const std::string getFromTag() const;
+	const std::string getToTag() const;
+
 	void updateContactAddress (Address & contactAddress) const;
 
 	static bool isEarlyState (CallSession::State state);
@@ -176,6 +179,7 @@ public:
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState () const;
+	CallSession::State getLastStableState () const;
 
 private:
 	//bool mIsDeclining = false;

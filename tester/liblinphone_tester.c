@@ -419,6 +419,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&ephemeral_group_chat_basic_test_suite);
 #endif
 	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference);
+	bc_tester_add_suite(&local_conference_test_suite_scheduled_ice_conference);
 	bc_tester_add_suite(&local_conference_test_suite_inpromptu_conference);
 	bc_tester_add_suite(&local_conference_test_suite_chat);
 #endif

@@ -57,6 +57,10 @@ void NotifyConferenceListener::onParticipantDeviceIsMuted (const std::shared_ptr
 	_linphone_conference_notify_participant_device_is_muted(conf->toC(), device->toC(), isMuted);
 }
 
+void NotifyConferenceListener::onParticipantDeviceAlerting (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	_linphone_conference_notify_participant_device_alerting(conf->toC(), device->toC());
+}
+
 void NotifyConferenceListener::onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_joined(conf->toC(), device->toC());
 }

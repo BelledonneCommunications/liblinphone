@@ -63,8 +63,8 @@ void CustomParams::writeCustomParamsToConfigFile (LinphoneConfig *config, std::s
 
 void CustomParams::readCustomParamsFromConfigFile (LinphoneConfig *config, const char * key) {
 	bctbx_list_t * param_names = linphone_config_get_keys_names_list(config, key);
-	for(; param_names != NULL ; param_names = param_names->next) {
-		const char * param_name = (const char *)param_names->data;
+	for(auto param_name_it = param_names; param_name_it != NULL ; param_name_it = param_name_it->next) {
+		const char * param_name = (const char *)param_name_it->data;
 		// If it is a custom parameter
 		if (param_name && strstr(param_name,paramPrefix.c_str())) {
 			const std::string value(linphone_config_get_string(config, key, param_name,""));
@@ -74,6 +74,9 @@ void CustomParams::readCustomParamsFromConfigFile (LinphoneConfig *config, const
 			lInfo() << "Adding custom parameter " << prunedKey << " with value " << value << " from config section " << std::string(key);
 			addCustomParam(prunedKey, value);
 		}
+	}
+	if (param_names) {
+		bctbx_list_free(param_names);
 	}
 }
 

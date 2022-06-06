@@ -123,6 +123,8 @@ protected:
 	std::string messageState;
 	CallSession::State prevState = CallSession::State::Idle;
 	std::string prevMessageState;
+	CallSession::State lastStableState = CallSession::State::Idle;
+	std::string lastStableMessageState;
 	CallSession::State transferState = CallSession::State::Idle;
 	LinphoneProxyConfig *destProxy = nullptr;
 	LinphoneErrorInfo *ei = nullptr;

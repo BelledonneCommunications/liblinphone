@@ -61,35 +61,6 @@ Conference::~Conference () {
 }
 
 // -----------------------------------------------------------------------------
-
-bool Conference::tryAddMeDevice() {
-	if (confParams->localParticipantEnabled() && me->getDevices().empty() && confParams->getAccount()) {
-		char * devAddrStr = linphone_account_get_contact_address(confParams->getAccount()) ? linphone_address_as_string(linphone_account_get_contact_address(confParams->getAccount())) : nullptr;
-		if (devAddrStr) {
-			Address devAddr(devAddrStr);
-			ms_free(devAddrStr);
-			auto meDev = me->addDevice(devAddr);
-			const auto & meSession = me->getSession();
-
-			char label[Conference::labelLength];
-			belle_sip_random_token(label,sizeof(label));
-			meDev->setLabel(label);
-			meDev->setSession(meSession);
-
-			// Initialize media directions
-			meDev->setStreamCapability((confParams->audioEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeAudio);
-			meDev->setStreamCapability((confParams->videoEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeVideo);
-			meDev->setStreamCapability((confParams->chatEnabled() ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive), LinphoneStreamTypeText);
-
-			meDev->updateStreamAvailabilities();
-
-			return true;
-		}
-	}
-
-	return false;
-}
-
 time_t Conference::getStartTime() const {
 	return startTime;
 }
@@ -303,6 +274,27 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	return event;
 }
 
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAlerting (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceStatusChanged,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceAlerting(event, participantDevice);
+	}
+	if (participantDevice) {
+		_linphone_participant_device_notify_conference_alerting(participantDevice->toC());
+	}
+	return event;
+}
+
 shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceJoined (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceStatusChanged,
@@ -410,9 +402,9 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 
 shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const std::string &label) const {
 	for (const auto &participant : participants) {
-		for (const auto &device : participant->getDevices()) {
-			if (device->getLabel() == label)
-				return device;
+		auto device = participant->findDevice(label, false);
+		if (device) {
+			return device;
 		}
 	}
 
@@ -424,9 +416,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const st
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityAddress &addr) const {
 
 	for (const auto &participant : participants) {
-		for (const auto &device : participant->getDevices()) {
-			if (device->getAddress() == addr)
-				return device;
+		auto device = participant->findDevice(addr, false);
+		if (device) {
+			return device;
 		}
 	}
 
@@ -438,9 +430,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityA
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_ptr<const CallSession> &session) const {
 
 	for (const auto &participant : participants) {
-		for (const auto &device : participant->getDevices()) {
-			if (device->getSession() == session)
-				return device;
+		auto device = participant->findDevice(session, false);
+		if (device) {
+			return device;
 		}
 	}
 

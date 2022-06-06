@@ -66,15 +66,20 @@ public:
 	void notifyAll (const std::string &notify);
 	std::string createNotifyFullState (LinphoneEvent * lev);
 	std::string createNotifyMultipart (int notifyId);
+
+	// Conference
+	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
+	std::string createNotifySubjectChanged ();
+
+	// Participant
 	std::string createNotifyParticipantAdded (const Address & pAddress);
 	std::string createNotifyParticipantAdminStatusChanged (const Address & pAddress, bool isAdmin);
 	std::string createNotifyParticipantRemoved (const Address & pAddress);
+
+	// Participant device
 	std::string createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress);
 	std::string createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress);
-	std::string createNotifyParticipantDeviceMediaCapabilityChanged (const Address & pAddress, const Address & dAddress);
-	std::string createNotifyParticipantDeviceStatusChanged (const Address & pAddress, const Address & dAddress);
-	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
-	std::string createNotifySubjectChanged ();
+	std::string createNotifyParticipantDeviceDataChanged (const Address & pAddress, const Address & dAddress);
 
 	static void notifyResponseCb (const LinphoneEvent *ev);
 
@@ -200,7 +205,8 @@ private:
 	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
 
 	void addMediaCapabilities(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
-	void addEndpointStatus(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
+	void addEndpointSessionInfo(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
+	void addEndpointCallInfo(const std::shared_ptr<ParticipantDevice> & device, Xsd::ConferenceInfo::EndpointType & endpoint);
 	void addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, Xsd::ConferenceInfo::ConferenceDescriptionType & confDescr);
 
 	L_DISABLE_COPY(LocalConferenceEventHandler);

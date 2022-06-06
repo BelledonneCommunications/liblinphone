@@ -72,18 +72,17 @@ void liblinphone_tester_set_next_video_frame_decoded_cb(LinphoneCall *call) {
 	if (var) linphone_call_stats_unref(var); \
 	var = value
 
-void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
-	LinphoneCall *c1,*c2;
+
+static void liblinphone_tester_check_rtcp_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneCall *c1, LinphoneCall *c2) {
 	MSTimeSpec ts;
 	int max_time_to_wait;
 	LinphoneCallStats *audio_stats1 = NULL, *video_stats1 = NULL, *audio_stats2 = NULL, *video_stats2 = NULL;
-	c1=linphone_core_get_current_call(caller->lc);
-	c2=linphone_core_get_current_call(callee->lc);
 
 	BC_ASSERT_PTR_NOT_NULL(c1);
 	BC_ASSERT_PTR_NOT_NULL(c2);
 
 	if (!c1 || !c2) return;
+
 	linphone_call_ref(c1);
 	linphone_call_ref(c2);
 	liblinphone_tester_clock_start(&ts);
@@ -149,6 +148,22 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 
 	linphone_call_unref(c1);
 	linphone_call_unref(c2);
+}
+
+void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
+	LinphoneCall *c1,*c2;
+	c1=linphone_core_get_current_call(caller->lc);
+	c2=linphone_core_get_current_call(callee->lc);
+
+	liblinphone_tester_check_rtcp_base(caller, callee, c1, c2);
+}
+
+void liblinphone_tester_check_rtcp_2(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
+	LinphoneCall *c1,*c2;
+	c1=linphone_core_get_call_by_remote_address2(caller->lc, callee->identity);
+	c2=linphone_core_get_call_by_remote_address2(callee->lc, caller->identity);
+
+	liblinphone_tester_check_rtcp_base(caller, callee, c1, c2);
 }
 
 static const char *info_content = "<somexml>blabla</somexml>";

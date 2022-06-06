@@ -265,7 +265,6 @@ private:
 	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
 	SalStreamDescription & addStreamToMd(std::shared_ptr<SalMediaDescription> md, int streamIdx, const std::shared_ptr<SalMediaDescription> & oldMd);
 
-private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
 	static constexpr const int rtpExtHeaderMidNumber = RTP_EXTENSION_MID;
@@ -313,6 +312,8 @@ private:
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool incomingIceReinvitePending = false;
+
+	bool bundleModeAccepted = false;
 
 	AudioDevice * currentOutputAudioDevice = nullptr;
 	AudioDevice * currentInputAudioDevice = nullptr;

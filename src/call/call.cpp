@@ -412,7 +412,6 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	LinphoneCore *lc = getCore()->getCCore();
 	const auto op = session->getPrivate()->getOp();
-
 	switch(state) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
@@ -507,13 +506,13 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		{
 			if (op && !getConference()) {
 				auto conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(Address(op->getTo())), ConferenceAddress(Address(op->getTo()))));
-				const auto & confId = session->getPrivate()->getConferenceId();
 				if (!op->getTo().empty() && conference) {
 					const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
 					if (resourceList.isEmpty()) {
 						tryToAddToConference(conference, session);
 					}
 				} else if (op->getRemoteContactAddress()) {
+					const auto & confId = session->getPrivate()->getConferenceId();
 					char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 					Address remoteContactAddress(remoteContactAddressStr);
 					ms_free(remoteContactAddressStr);

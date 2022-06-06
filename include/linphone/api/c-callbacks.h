@@ -484,9 +484,16 @@ typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *c
 typedef void (*LinphoneConferenceCbsParticipantDeviceLeftCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
 
 /**
- * Callback used to notify a conference that the media of a participant device has rejoined
+ * Callback used to notify a conference that the media of a participant device is alerting (180 Ringing)
  * @param[in] conference #LinphoneConference object @notnil
- * @param[in] device #LinphoneParticipantDevice who rejoined the conference @notnil
+ * @param[in] device #LinphoneParticipantDevice who is alerting (180 Ringing) the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceAlertingCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+
+/**
+ * Callback used to notify a conference that a participant device has joined
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] device #LinphoneParticipantDevice who joined the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceJoinedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
 
@@ -588,6 +595,12 @@ typedef void (*LinphoneParticipantDeviceCbsIsMutedCb) (LinphoneParticipantDevice
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
  */
 typedef void (*LinphoneParticipantDeviceCbsConferenceLeftCb) (LinphoneParticipantDevice *participant_device);
+
+/**
+ * Callback used to notify that participant device is ringing.
+ * @param[in] participant_device #LinphoneParticipantDevice object @notnil
+ */
+typedef void (*LinphoneParticipantDeviceCbsConferenceAlertingCb) (LinphoneParticipantDevice *participant_device);
 
 /**
  * Callback used to notify that participant device has joined the conference.

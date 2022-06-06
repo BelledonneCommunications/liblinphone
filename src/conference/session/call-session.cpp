@@ -87,6 +87,10 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 	if (state != newState){
 		prevState = state;
 		prevMessageState = messageState;
+		if ((newState == CallSession::State::StreamsRunning) || (newState == CallSession::State::Paused)) {
+			lastStableState = state;
+			lastStableMessageState = messageState;
+		}
 		// Make sanity checks with call state changes. Any bad transition can result in unpredictable results
 		// or irrecoverable errors in the application.
 		if ((state == CallSession::State::End) || (state == CallSession::State::Error)) {
@@ -366,9 +370,14 @@ bool CallSessionPrivate::failure () {
 		case CallSession::State::StreamsRunning:
 			if (ei->reason == SalReasonRequestPending){
 				/* there will be a retry. Keep this state. */
-				lInfo() << "Call error on state [" << Utils::toString(state) << "], keeping this state until scheduled retry.";
+				if (op->hasRetryFunction()) {
+					lInfo() << "Call error on state [" << Utils::toString(state) << "], keeping this state until scheduled retry.";
+				} else {
+					lInfo() << "Call error on state [" << Utils::toString(state) << "], no retry function has been found therefore bringing call to last known stable state " << Utils::toString(lastStableState);
+					setState(lastStableState, "Restore stable state because no retry function has been set");
+				}
 				
-				return true;;
+				return true;
 			}
 			if (ei->reason != SalReasonNoMatch ) {
 				lInfo() << "Call error on state [" << Utils::toString(state) << "], restoring previous state [" << Utils::toString(prevState) << "]";
@@ -1682,6 +1691,10 @@ CallSession::State CallSession::getPreviousState () const {
 	L_D();
 	return d->prevState;
 }
+CallSession::State CallSession::getLastStableState () const {
+	L_D();
+	return d->lastStableState;
+}
 
 const Address& CallSession::getToAddress () const {
 	L_D();
@@ -1707,6 +1720,30 @@ const char *CallSession::getToHeader (const string &name) const {
 }
 
 // -----------------------------------------------------------------------------
+
+const string CallSession::getToTag() const {
+	L_D();
+	if (d->op) {
+		if (d->log->getDirection() == LinphoneCallIncoming) {
+			return d->op->getLocalTag();
+		} else {
+			return d->op->getRemoteTag();
+		}
+	}
+	return d->emptyString;
+}
+
+const string CallSession::getFromTag() const {
+	L_D();
+	if (d->op) {
+		if (d->log->getDirection() == LinphoneCallIncoming) {
+			return d->op->getRemoteTag();
+		} else {
+			return d->op->getLocalTag();
+		}
+	}
+	return d->emptyString;
+}
 
 const string &CallSession::getRemoteUserAgent () const {
 	L_D();

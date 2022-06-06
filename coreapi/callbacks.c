@@ -217,11 +217,25 @@ static void call_received(SalCallOp *h) {
 				if (confInfo) {
 					std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
 				} else {
-					auto localConference = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
-					localConference->confirmCreation();
-					linphone_address_unref(toAddr);
-					linphone_address_unref(fromAddr);
-					return;
+					if (sal_address_has_uri_param(h->getToAddress(), "conf-id")) {
+						SalErrorInfo sei;
+						memset(&sei, 0, sizeof(sei));
+						sal_error_info_set(&sei, SalReasonNotFound, "SIP", 0, nullptr, nullptr);
+						h->declineWithErrorInfo(&sei);
+						LinphoneErrorInfo *ei = linphone_error_info_new();
+						linphone_error_info_set(ei, nullptr, LinphoneReasonNotFound, 404, "Conference not found", nullptr);
+						L_GET_CPP_PTR_FROM_C_OBJECT(lc)->reportEarlyCallFailed(LinphoneCallIncoming, fromAddr, toAddr, ei, h->getCallId());
+						h->release();
+						sal_error_info_reset(&sei);
+						return;
+					} else {
+
+						auto localConference = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
+						localConference->confirmCreation();
+						linphone_address_unref(toAddr);
+						linphone_address_unref(fromAddr);
+						return;
+					}
 				}
 			} else if (!resourceList.isEmpty()) {
 				auto localConference = static_pointer_cast<MediaConference::LocalConference>(conference);

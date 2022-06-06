@@ -95,6 +95,20 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceCbsIsMutedCb linphone_participant_devic
 LINPHONE_PUBLIC void linphone_participant_device_cbs_set_is_muted (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsIsMutedCb cb);
 
 /**
+ * Get the participant device conference alerting (180 Ringing) callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @return The current participant device conference alerting (180 Ringing) callback.
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceCbsConferenceAlertingCb linphone_participant_device_cbs_get_conference_alerting (const LinphoneParticipantDeviceCbs *cbs);
+
+/**
+ * Set the participant device conference alerting (180 Ringing) callback.
+ * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
+ * @param[in] cb The participant device conference alerting (180 Ringing) callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_participant_device_cbs_set_conference_alerting (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceAlertingCb cb);
+
+/**
  * Get the participant device conference joined callback.
  * @param[in] cbs The #LinphoneParticipantDeviceCbs object @notnil
  * @return The current participant device conference joined callback.

@@ -63,6 +63,10 @@ bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDe
 	return ParticipantDevice::toCpp(participant_device)->isInConference();
 }
 
+LinphoneParticipantDeviceJoiningMethod linphone_participant_device_get_joining_method (const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneParticipantDeviceJoiningMethod)ParticipantDevice::toCpp(participant_device)->getJoiningMethod();
+}
+
 time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
 }
@@ -134,6 +138,10 @@ void * linphone_participant_device_create_native_video_window_id(const LinphoneP
 
 void _linphone_participant_device_notify_conference_left(LinphoneParticipantDevice *participant_device) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_left);
+}
+
+void _linphone_participant_device_notify_conference_alerting(LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_alerting);
 }
 
 void _linphone_participant_device_notify_conference_joined(LinphoneParticipantDevice *participant_device) {

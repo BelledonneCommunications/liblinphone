@@ -181,6 +181,43 @@ void ParticipantDevice::setUserData (void *ud) {
 	mUserData = ud;
 }
 
+const std::string &ParticipantDevice::getCallId () {
+	if (mCallId.empty() && mSession) {
+		const auto & log = mSession->getLog();
+		mCallId = log->getCallId();
+	}
+
+	return mCallId;
+}
+
+void ParticipantDevice::setCallId (const std::string &callId) {
+	mCallId = callId;
+}
+
+const std::string &ParticipantDevice::getFromTag () {
+	if (mFromTag.empty() && mSession) {
+		mFromTag = mSession->getFromTag();
+	}
+
+	return mFromTag;
+}
+
+void ParticipantDevice::setFromTag (const std::string &tag) {
+	mFromTag = tag;
+}
+
+const std::string &ParticipantDevice::getToTag () {
+	if (mToTag.empty() && mSession) {
+		mToTag = mSession->getToTag();
+	}
+
+	return mToTag;
+}
+
+void ParticipantDevice::setToTag (const std::string &tag) {
+	mToTag = tag;
+}
+
 void ParticipantDevice::setState (State newState) {
 	if (mState != newState) {
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
@@ -194,6 +231,8 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 			return stream << "ScheduledForJoining";
 		case ParticipantDevice::State::Joining:
 			return stream << "Joining";
+		case ParticipantDevice::State::Alerting:
+			return stream << "Alerting";
 		case ParticipantDevice::State::Present:
 			return stream << "Present";
 		case ParticipantDevice::State::OnHold:
@@ -204,6 +243,8 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 			return stream << "Leaving";
 		case ParticipantDevice::State::Left:
 			return stream << "Left";
+		case ParticipantDevice::State::MutedByFocus:
+			return stream << "MutedByFocus";
 	}
 	return stream;
 }
@@ -474,6 +515,14 @@ LinphoneParticipantDeviceCbsIsMutedCb ParticipantDeviceCbs::getIsMuted()const{
 
 void ParticipantDeviceCbs::setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb){
 	mIsMutedCb = cb;
+}
+
+LinphoneParticipantDeviceCbsConferenceAlertingCb ParticipantDeviceCbs::getConferenceAlerting()const {
+	return mConferenceAlertingCb;
+}
+
+void ParticipantDeviceCbs::setConferenceAlerting(LinphoneParticipantDeviceCbsConferenceAlertingCb cb) {
+	mConferenceAlertingCb = cb;
 }
 
 LinphoneParticipantDeviceCbsConferenceJoinedCb ParticipantDeviceCbs::getConferenceJoined()const {

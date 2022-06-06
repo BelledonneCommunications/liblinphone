@@ -1223,8 +1223,8 @@ bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, con
 	sec=linphone_config_find_section(lpconfig,section);
 	if (sec!=NULL){
 		items = lp_section_get_items(sec);
-		for(; items != NULL ; items = items->next) {
-			LpItem *item = (LpItem *)items->data;
+		for(bctbx_list_t * item_it = items ; item_it != NULL ; item_it = item_it->next) {
+			LpItem *item = (LpItem *)item_it->data;
 			keys_names = bctbx_list_append(keys_names, item->key);
 		}
 		if( items)

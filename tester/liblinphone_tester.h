@@ -122,6 +122,7 @@ extern test_suite_t lime_server_auth_test_suite;
 extern test_suite_t vfs_encryption_test_suite;
 extern test_suite_t local_conference_test_suite_chat;
 extern test_suite_t local_conference_test_suite_scheduled_conference;
+extern test_suite_t local_conference_test_suite_scheduled_ice_conference;
 extern test_suite_t local_conference_test_suite_inpromptu_conference;
 extern test_suite_t external_domain_test_suite;
 extern test_suite_t potential_configuration_graph_test_suite;
@@ -397,9 +398,10 @@ typedef struct _stats {
 	int number_of_core_chat_room_subject_changed;
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
-	int number_of_participant_device_media_capability_changed;
-	int number_of_participant_device_left;
-	int number_of_participant_device_joined;
+	int number_of_participant_devices_media_capability_changed;
+	int number_of_participant_devices_left;
+	int number_of_participant_devices_alerting;
+	int number_of_participant_devices_joined;
 	int number_of_participant_state_changed;
 
 	int number_of_SecurityLevelDowngraded;
@@ -594,6 +596,7 @@ void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
 bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats);	// Return all LinphoneChatMessage and count states
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
+void liblinphone_tester_check_rtcp_2(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);
 bool_t liblinphone_tester_clock_elapsed(const MSTimeSpec *start, int value_ms);
 

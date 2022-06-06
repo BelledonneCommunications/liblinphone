@@ -146,6 +146,20 @@ LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceLeftCb linphone_conference
 LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_left (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceLeftCb cb);
 
 /**
+ * Get the participant device alerting callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device alerting callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceAlertingCb linphone_conference_cbs_get_participant_device_alerting (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device alerting callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device alerting callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_alerting (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceAlertingCb cb);
+
+/**
  * Get the participant device joined callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current participant device joined callback.

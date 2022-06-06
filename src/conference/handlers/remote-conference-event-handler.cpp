@@ -224,8 +224,8 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				continue;
 			} else if (participant) {
 				conf->participants.remove(participant);
-
-				if (!isFullState && participant) {
+				lInfo() << "Participant " << *participant << " is successfully removed - conference " << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount() << " participants";
+				if (!isFullState) {
 					conf->notifyParticipantRemoved(
 						creationTime,
 						isFullState,
@@ -302,7 +302,19 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				if (state == StateType::full) {
 					device = participant->addDevice(gruu);
 				} else {
-					device = participant->findDevice(gruu);
+					if (endpoint.getCallInfo().present()) {
+						const auto & callInfo = endpoint.getCallInfo().get();
+						if (callInfo.getSip().present()) {
+							const auto & sip = callInfo.getSip().get();
+							device = participant->findDeviceByCallId(sip.getCallId());
+							if (device) {
+								device->setAddress(gruu);
+							}
+						}
+					}
+					if (!device) {
+						device = participant->findDevice(gruu);
+					}
 				}
 
 				const auto previousDeviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
@@ -370,7 +382,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					}
 
 					// Do not notify media capability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
-					if(mediaCapabilityChanged && !isFullState && (state != StateType::full)) {
+					if(mediaCapabilityChanged && !isFullState && (state != StateType::full) && (previousDeviceState != ParticipantDevice::State::ScheduledForJoining) && (previousDeviceState != ParticipantDevice::State::Joining) && (previousDeviceState != ParticipantDevice::State::Alerting)) {
 						conf->notifyParticipantDeviceMediaCapabilityChanged(
 							creationTime,
 							isFullState,
@@ -381,7 +393,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					bool mediaAvailabilityChanged = device->updateStreamAvailabilities();
 
 					// Do not notify availability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
-					if(mediaAvailabilityChanged && !isFullState && (state != StateType::full)) {
+					if(mediaAvailabilityChanged && !isFullState && (state != StateType::full) && (previousDeviceState != ParticipantDevice::State::ScheduledForJoining) && (previousDeviceState != ParticipantDevice::State::Joining) && (previousDeviceState != ParticipantDevice::State::Alerting)) {
 						conf->notifyParticipantDeviceMediaAvailabilityChanged(
 							creationTime,
 							isFullState,
@@ -389,23 +401,75 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							device);
 					}
 
-					if (endpoint.getStatus().present()) {
-						const auto & status = endpoint.getStatus().get();
-						if ((status == EndpointStatusType::dialing_in) || (status == EndpointStatusType::dialing_out)) {
-							device->setState(ParticipantDevice::State::Joining);
-						} else if (status == EndpointStatusType::pending) {
-							device->setState(ParticipantDevice::State::ScheduledForJoining);
-						} else if (status == EndpointStatusType::connected) {
-							device->setState(ParticipantDevice::State::Present);
-						} else if (status == EndpointStatusType::on_hold) {
-							device->setState(ParticipantDevice::State::OnHold);
-						} else if (status == EndpointStatusType::disconnecting) {
-							device->setState(ParticipantDevice::State::Leaving);
-						} else if (status == EndpointStatusType::disconnected) {
-							device->setState(ParticipantDevice::State::Left);
+					if (endpoint.getJoiningMethod().present()) {
+						const auto & joiningMethod = endpoint.getJoiningMethod().get();
+						switch (joiningMethod) {
+							case JoiningType::dialed_in:
+								device->setJoiningMethod(ParticipantDevice::JoiningMethod::DialedIn);
+								break;
+							case JoiningType::dialed_out:
+								device->setJoiningMethod(ParticipantDevice::JoiningMethod::DialedOut);
+								break;
+							case JoiningType::focus_owner:
+								device->setJoiningMethod(ParticipantDevice::JoiningMethod::FocusOwner);
+								break;
 						}
 					}
 
+					if (endpoint.getJoiningInfo().present()) {
+						const auto & joiningInfo = endpoint.getJoiningInfo().get();
+						auto joiningTime = joiningInfo.getWhen().get();
+						tm timeStruct;
+						timeStruct.tm_year = (joiningTime.year() - 1900),
+						timeStruct.tm_mon = (joiningTime.month() - 1),
+						timeStruct.tm_mday = joiningTime.day(),
+						timeStruct.tm_hour = joiningTime.hours(),
+						timeStruct.tm_min = joiningTime.minutes(),
+						timeStruct.tm_sec = static_cast<int>(joiningTime.seconds());
+
+						device->setTimeOfJoining(Utils::getTmAsTimeT(timeStruct));
+					}
+
+					if (endpoint.getStatus().present()) {
+						const auto & status = endpoint.getStatus().get();
+						switch (status) {
+							case EndpointStatusType::dialing_in:
+							case EndpointStatusType::dialing_out:
+								device->setState(ParticipantDevice::State::Joining);
+								break;
+							case EndpointStatusType::alerting:
+								device->setState(ParticipantDevice::State::Alerting);
+								break;
+							case EndpointStatusType::pending:
+								device->setState(ParticipantDevice::State::ScheduledForJoining);
+								break;
+							case EndpointStatusType::connected:
+								device->setState(ParticipantDevice::State::Present);
+								break;
+							case EndpointStatusType::on_hold:
+								device->setState(ParticipantDevice::State::OnHold);
+								break;
+							case EndpointStatusType::disconnecting:
+								device->setState(ParticipantDevice::State::Leaving);
+								break;
+							case EndpointStatusType::disconnected:
+								device->setState(ParticipantDevice::State::Left);
+								break;
+							case EndpointStatusType::muted_via_focus:
+								device->setState(ParticipantDevice::State::MutedByFocus);
+								break;
+						}
+					}
+
+					if (endpoint.getCallInfo().present()) {
+						const auto & callInfo = endpoint.getCallInfo().get();
+						if (callInfo.getSip().present()) {
+							const auto & sip = callInfo.getSip().get();
+							device->setCallId(sip.getCallId());
+							device->setFromTag(sip.getFromTag());
+							device->setToTag(sip.getToTag());
+						}
+					}
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
 
 					if (!name.empty())
@@ -438,6 +502,12 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								device);
 						} else if ((status == EndpointStatusType::connected) && ((previousDeviceState != ParticipantDevice::State::Present) || (state == StateType::full))) {
 							conf->notifyParticipantDeviceJoined(
+								creationTime,
+								isFullState,
+								participant,
+								device);
+						} else if ((status == EndpointStatusType::alerting) && ((previousDeviceState != ParticipantDevice::State::Alerting) || (state == StateType::full))) {
+							conf->notifyParticipantDeviceAlerting(
 								creationTime,
 								isFullState,
 								participant,

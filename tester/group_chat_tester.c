@@ -222,6 +222,14 @@ void configure_core_for_conference (LinphoneCore *core, const char* username, co
 	linphone_core_set_primary_contact(core, newIdentity);
 	bctbx_free(newIdentity);
 	linphone_core_enable_conference_server(core, server);
+	linphone_core_enable_rtp_bundle(core, TRUE);
+	LinphoneAccount *account = linphone_core_get_default_account(core);
+	const LinphoneAccountParams* account_params = linphone_account_get_params(account);
+	LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
+	linphone_account_params_enable_rtp_bundle(new_account_params, TRUE);
+	linphone_account_set_params(account, new_account_params);
+	linphone_account_params_unref(new_account_params);
+	BC_ASSERT_TRUE(linphone_account_params_rtp_bundle_enabled(linphone_account_get_params(account)));
 	if (factoryAddr) {
 		char *factoryUri = linphone_address_as_string(factoryAddr);
 		LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);

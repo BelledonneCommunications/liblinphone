@@ -95,6 +95,14 @@ void linphone_conference_cbs_set_participant_device_left (LinphoneConferenceCbs 
 	ConferenceCbs::toCpp(cbs)->participantDeviceLeftCb = cb;
 }
 
+LinphoneConferenceCbsParticipantDeviceAlertingCb linphone_conference_cbs_get_participant_device_alerting (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceAlertingCb;
+}
+
+void linphone_conference_cbs_set_participant_device_alerting (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceAlertingCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceAlertingCb = cb;
+}
+
 LinphoneConferenceCbsParticipantDeviceJoinedCb linphone_conference_cbs_get_participant_device_joined (const LinphoneConferenceCbs *cbs) {
 	return ConferenceCbs::toCpp(cbs)->participantDeviceJoinedCb;
 }

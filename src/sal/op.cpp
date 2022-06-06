@@ -1108,6 +1108,10 @@ void SalOp::setRetryFunction(const std::function<void()> & retryFunc){
 	mRetryFunc = retryFunc;
 }
 
+bool SalOp::hasRetryFunction() const {
+	return (mRetryFunc != nullptr);
+}
+
 void SalOp::resetRetryFunction(){
 	mRetryFunc = nullptr;
 }

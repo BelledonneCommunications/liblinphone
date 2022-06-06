@@ -702,7 +702,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		}
 		lInfo() << "Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
 	} else {
-		lError() << __func__ << " Unable to find a suitable configuration for stream of type " << sal_stream_type_to_string(result.type);
+		lDebug() << __func__ << " Unable to find a suitable configuration for stream of type " << sal_stream_type_to_string(result.type);
 		result.disable();
 	}
 
@@ -765,7 +765,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	}
 
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
-	
+
 	/* Handle RTP bundle negociation */
 	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty()){
 		resultCfg.mid = remoteCfg.mid;

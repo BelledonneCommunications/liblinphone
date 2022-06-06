@@ -27,6 +27,7 @@
 #include "linphone/enums/chat-message-enums.h"
 #include "linphone/enums/chat-room-enums.h"
 #include "linphone/enums/conference-enums.h"
+#include "linphone/enums/participant-device-enums.h"
 #include "linphone/enums/encryption-engine-enums.h"
 #include "linphone/enums/event-log-enums.h"
 #include "linphone/enums/security-event-enums.h"

@@ -2304,9 +2304,6 @@ static void simple_conference_with_audio_device_change_using_public_api(void) {
 	LinphoneCoreManager* prev_mgr = NULL;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		LinphoneCore * c = m->lc;
-		lcs=bctbx_list_append(lcs,c);
-
 		if (prev_mgr != NULL) {
 			LinphoneCall *m_called_by_marie=linphone_core_get_current_call(prev_mgr->lc);
 			LinphoneCall *marie_call_m = linphone_core_get_call_by_remote_address2(marie->lc, prev_mgr->identity);

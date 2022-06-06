@@ -100,6 +100,13 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get the joining method or it the device is the focus owner
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return joining method or focus owner
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceJoiningMethod linphone_participant_device_get_joining_method (const LinphoneParticipantDevice *participant_device);
+
+/**
  * Get the stream capability of the device.
  * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio, video or text).
  * @param participant_device A #LinphoneParticipantDevice object @notnil

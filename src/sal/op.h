@@ -142,6 +142,7 @@ public:
 	/* Set a function to be called whenever an operation encouters a "491 request pending" response. 
 	 * The function shall retry the operation, based on the new context. */
 	void setRetryFunction(const std::function<void ()> & retryFunc);
+	bool hasRetryFunction() const;
 	void resetRetryFunction();
 
 	int processRedirect ();
@@ -251,7 +252,7 @@ protected:
 	SalAddress *mRemoteContactAddress = nullptr;
 	std::string mRemoteContact;
 	void *mUserPointer = nullptr;
-	std::string mCallId;
+	std::string mCallId = std::string();
 	std::string mRealm;
 	SalAddress *mServiceRoute = nullptr; // As defined by rfc3608, might be a list
 	SalCustomHeader *mSentCustomHeaders = nullptr;

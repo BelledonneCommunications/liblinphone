@@ -61,6 +61,14 @@ void linphone_participant_device_cbs_set_is_muted (LinphoneParticipantDeviceCbs 
 	ParticipantDeviceCbs::toCpp(cbs)->setIsMuted(cb);
 }
 
+LinphoneParticipantDeviceCbsConferenceAlertingCb linphone_participant_device_cbs_get_conference_alerting (const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getConferenceAlerting();
+}
+
+void linphone_participant_device_cbs_set_conference_alerting (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceAlertingCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setConferenceAlerting(cb);
+}
+
 LinphoneParticipantDeviceCbsConferenceJoinedCb linphone_participant_device_cbs_get_conference_joined (const LinphoneParticipantDeviceCbs *cbs) {
 	return ParticipantDeviceCbs::toCpp(cbs)->getConferenceJoined();
 }

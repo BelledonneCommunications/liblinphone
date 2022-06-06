@@ -49,14 +49,23 @@ class ParticipantDeviceCbs;
 
 class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>, public UserDataAccessor, public CallbacksHolder<ParticipantDeviceCbs> {
 public:
+	// WARNING: Participant device state may be stored in the database (as it is done by the conference server), therefore do not modify the integer value of the enumeration items
 	enum class State {
-		Joining, //an INVITE has been sent
-		Present, //the SIP session has been concluded, participant is part of the conference
-		OnHold, //the SIP session has been concluded, participant is not media mixed
-		Leaving, //A BYE is pending
-		Left, //The Session is terminated
-		ScheduledForJoining, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.
-		ScheduledForLeaving, //Transitional state for a participant that will receive a BYE shortly.
+		Joining = 0, //an INVITE has been sent
+		Present = 1, //the SIP session has been concluded, participant is part of the conference
+		Leaving = 2, //A BYE is pending
+		Left = 3, //The Session is terminated
+		ScheduledForJoining = 4, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.
+		ScheduledForLeaving = 5, //Transitional state for a participant that will receive a BYE shortly.
+		OnHold = 6, //the SIP session has been concluded, participant is not media mixed
+		Alerting = 7, //180 Ringing
+		MutedByFocus = 8, //Some medias have been muted by the focus
+	};
+
+	enum class JoiningMethod {
+		DialedIn = LinphoneParticipantDeviceDialedIn,
+		DialedOut = LinphoneParticipantDeviceDialedOut,
+		FocusOwner = LinphoneParticipantDeviceFocusOwner
 	};
 
 	ParticipantDevice ();
@@ -76,6 +85,12 @@ public:
 	bool updateAddress();
 	inline const std::string &getLabel () const { return mLabel; }
 	inline void setLabel (const std::string &label) { mLabel = label; };
+	const std::string &getCallId ();
+	void setCallId (const std::string &callId);
+	const std::string &getFromTag ();
+	void setFromTag (const std::string &tag);
+	const std::string &getToTag ();
+	void setToTag (const std::string &tag);
 	inline const std::string &getName () const { return mName; }
 	inline void setName (const std::string &name) { mName = name; }
 	inline std::shared_ptr<CallSession> getSession () const { return mSession; }
@@ -83,6 +98,8 @@ public:
 	void setSession (std::shared_ptr<CallSession> session);
 	inline State getState () const { return mState; }
 	void setState (State newState);
+	inline void setJoiningMethod (JoiningMethod joiningMethod) { mJoiningMethod = joiningMethod; };
+	inline JoiningMethod getJoiningMethod () const { return mJoiningMethod; };
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
 
 	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
@@ -93,6 +110,7 @@ public:
 	bool isInConference () const;
 
 	time_t getTimeOfJoining() const;
+	inline void setTimeOfJoining(time_t joiningTime) { mTimeOfJoining = joiningTime; }
 	void setCapabilityDescriptor(const std::string &capabilities);
 	const std::string & getCapabilityDescriptor()const{
 		return mCapabilityDescriptor;
@@ -134,8 +152,12 @@ private:
 	std::string mLabel;
 	std::shared_ptr<CallSession> mSession;
 	std::string mCapabilityDescriptor;
+	std::string mCallId;
+	std::string mFromTag;
+	std::string mToTag;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
+	JoiningMethod mJoiningMethod = JoiningMethod::DialedIn;
 	time_t mTimeOfJoining;
 	uint32_t mSsrc = 0;
 	bool mSupportAdminMode = false;
@@ -162,6 +184,8 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 		void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
 		LinphoneParticipantDeviceCbsIsMutedCb getIsMuted()const;
 		void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
+		LinphoneParticipantDeviceCbsConferenceAlertingCb getConferenceAlerting()const;
+		void setConferenceAlerting(LinphoneParticipantDeviceCbsConferenceAlertingCb cb);
 		LinphoneParticipantDeviceCbsConferenceJoinedCb getConferenceJoined()const;
 		void setConferenceJoined(LinphoneParticipantDeviceCbsConferenceJoinedCb cb);
 		LinphoneParticipantDeviceCbsConferenceLeftCb getConferenceLeft()const;
@@ -173,6 +197,7 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 	private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsIsMutedCb mIsMutedCb = nullptr;
+	LinphoneParticipantDeviceCbsConferenceAlertingCb mConferenceAlertingCb = nullptr;
 	LinphoneParticipantDeviceCbsConferenceJoinedCb mConferenceJoinedCb = nullptr;
 	LinphoneParticipantDeviceCbsConferenceLeftCb mConferenceLeftCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;

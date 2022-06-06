@@ -116,6 +116,17 @@ shared_ptr<ParticipantDevice> Participant::findDevice (const std::string &label,
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Participant::findDeviceByCallId (const std::string &callId, const bool logFailure) const {
+	for (const auto &device : devices) {
+		if (device->getCallId() == callId)
+			return device;
+	}
+	if (logFailure) {
+		lInfo() << "Unable to find device with call id " << callId;
+	}
+	return nullptr;
+}
+
 shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gruu, const bool logFailure) const {
 	for (const auto &device : devices) {
 		if (device->getAddress() == gruu)
