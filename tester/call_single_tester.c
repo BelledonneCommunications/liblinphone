@@ -5007,7 +5007,7 @@ static int rtptm_on_send(RtpTransportModifier *rtptm, mblk_t *msg) {
 		// This is probably a STUN packet, so don't count it (oRTP won't) and don't encrypt it either
 		return (int)msgdsize(msg);
 	}
-	/*ms_message("rtptm_on_send: rtpm=%p seq=%u", rtptm, (int)ntohs(rtp_get_seqnumber(msg)));*/
+	/*ms_message("rtptm_on_send: rtpm=%p seq=%u", rtptm, (int)rtp_get_seqnumber(msg));*/
 
 	data->packetSentCount += 1;
 	ms_queue_put(&data->to_send, dupmsg(msg));
