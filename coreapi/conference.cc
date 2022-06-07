@@ -236,7 +236,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 			if (p->findDevice(*remoteContact, false) == nullptr) {
 				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
-				call->setConference(toC());
 				device->setSession(call->getActiveSession());
 
 				time_t creationTime = time(nullptr);
@@ -441,8 +440,8 @@ LocalConference::LocalConference (
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
 
-#ifdef HAVE_ADVANCED_IM
 	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+#ifdef HAVE_ADVANCED_IM
 	if (eventLogEnabled) {
 		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
 		addListener(eventHandler);
@@ -474,6 +473,10 @@ LocalConference::LocalConference (
 	setState(ConferenceInterface::State::CreationPending);
 	getMe()->setAdmin(true);
 	getMe()->setFocus(true);
+
+	if (!eventLogEnabled) {
+		setConferenceId(ConferenceId(contactAddress, contactAddress));
+	}
 }
 
 LocalConference::~LocalConference() {
@@ -509,8 +512,14 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
 		eventHandler->subscribeReceived(event);
+		return;
+	} else {
+#endif // HAVE_ADVANCED_IM
+		lInfo() << "Unable to accept SUBSCRIBE because conference event package (RFC 4575) is disabled or the SDK was not compiled with ENABLE_ADVANCED_IM flag set to on";
+#ifdef HAVE_ADVANCED_IM
 	}
 #endif // HAVE_ADVANCED_IM
+	linphone_event_deny_subscription(event, LinphoneReasonNotAcceptable);
 }
 
 void LocalConference::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
@@ -796,6 +805,14 @@ bool LocalConference::addParticipant (const IdentityAddress &participantAddress)
 	bool success = Conference::addParticipant(participantAddress);
 	setState(ConferenceInterface::State::Created);
 	enter();
+	return success;
+}
+
+bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
+	bool success = Conference::addParticipantDevice(call);
+	if (success) {
+		call->setConference(toC());
+	}
 	return success;
 }
 

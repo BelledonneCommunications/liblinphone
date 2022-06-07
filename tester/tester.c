@@ -867,14 +867,19 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 
 	int expected_subscriptions = 0;
+	int expected_subscriptions_new_participants = 0;
 	if (conference) {
 		expected_subscriptions = linphone_conference_get_participant_count(conference);
+		expected_subscriptions_new_participants = no_new_participants;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
 			bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 			// If events logs are not enabled, subscribes are not sent
 			if (!event_log_enabled) {
 				expected_subscriptions--;
+				if (bctbx_list_find(new_participants,m)) {
+					expected_subscriptions_new_participants--;
+				}
 			}
 		}
 	}
@@ -892,7 +897,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	if (conf_event_log_enabled) {
 		BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, conf_initial_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 	} else {
-		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(conf_initial_stats.number_of_LinphoneSubscriptionTerminated + no_new_participants),3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(conf_initial_stats.number_of_LinphoneSubscriptionTerminated + expected_subscriptions_new_participants),3000));
 	}
 
 	ms_free(notifyExpected);
@@ -920,8 +925,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			}
 		}
 	}
-
-
 }
 
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
