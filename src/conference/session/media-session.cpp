@@ -1847,7 +1847,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		}
 
 		isVideoConferenceEnabled = currentConfParams.videoEnabled();
-		confLayout = (participantDevice && isInLocalConference) ? getRemoteParams()->getConferenceVideoLayout() : getParams()->getConferenceVideoLayout();
+		confLayout = (participantDevice && isInLocalConference && getRemoteParams()) ? getRemoteParams()->getConferenceVideoLayout() : getParams()->getConferenceVideoLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 		if (isInLocalConference) {
 			// If the conference is dialing out to participants and an internal update (i.e. ICE reINVITE or capability negotiations reINVITE) occurs
@@ -4404,6 +4404,8 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 				params->getPrivate()->setStartTime(timePair.first);
 				params->getPrivate()->setEndTime(timePair.second);
 			}
+		} else {
+			lInfo() << "Unable to retrieve remote streams because op " << d->op << " has not received yet a valid SDP from the other party";
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {
@@ -4419,8 +4421,12 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			params->addCustomContent(content);
 		}
 		d->setRemoteParams(params);
+		if (!params) {
+			lError() << "Failed to compute remote parameters";
+		}
 		return params;
 	}
+	lError() << "Failed to compute remote parameters because no op linked to session " << this << " has been found";
 	return nullptr;
 }
 

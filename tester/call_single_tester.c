@@ -936,7 +936,6 @@ static void call_with_no_audio_codec(void){
 
 	disable_all_codecs(elem, caller);
 
-
 	out_call = linphone_core_invite_address(caller->lc,callee->identity);
 	linphone_call_ref(out_call);
 	BC_ASSERT_TRUE(wait_for(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallOutgoingInit, 1));
