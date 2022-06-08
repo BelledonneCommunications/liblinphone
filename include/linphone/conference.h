@@ -372,6 +372,13 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participants(LinphoneConference *conference, const bctbx_list_t *calls);
 
 /**
+ * Add participants to the conference, by supplying a list of #LinphoneAddress.
+ * @param conference The #LinphoneConference object. @notnil
+ * @param addresses A list of calls to add to the conference. @bctbx_list{LinphoneAddress} @notnil
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participants_2(LinphoneConference *conference, const bctbx_list_t *addresses);
+
+/**
  * Join an existing call to the conference.
  * If the conference is in the state LinphoneConferenceStateCreationPending, then the conference will start on the input and output audio devices used for the currently active call, if any
  * @param conference The #LinphoneConference object. @notnil

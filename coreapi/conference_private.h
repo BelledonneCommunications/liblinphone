@@ -302,6 +302,7 @@ private:
 	void chooseAnotherAdminIfNoneInConference();
 	void checkIfTerminated();
 	std::list<IdentityAddress> getAllowedAddresses() const;
+	bool dialOutAddresses(std::list<const LinphoneAddress *> addressList);
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();

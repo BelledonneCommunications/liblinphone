@@ -286,6 +286,13 @@ LinphoneStatus linphone_conference_add_participants (LinphoneConference *confere
 	return MediaConference::Conference::toCpp(conference)->addParticipants(callList);
 }
 
+LinphoneStatus linphone_conference_add_participants_2 (LinphoneConference *conference, const bctbx_list_t *addresses){
+	list<LinphonePrivate::IdentityAddress> addressList = L_GET_CPP_LIST_FROM_C_LIST_2(addresses, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *address) {
+		return address ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address)) : LinphonePrivate::IdentityAddress();
+	});
+	return MediaConference::Conference::toCpp(conference)->addParticipants(addressList);
+}
+
 LinphoneParticipant *linphone_conference_get_me (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getMe()->toC();
 }

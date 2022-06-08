@@ -420,21 +420,6 @@ void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
 	}
 }
 
-bool Call::attachedToRemoteConference() const {
-	return getConference() && !attachedToLocalConference();
-}
-
-bool Call::attachedToLocalConference() const {
-	const auto & cConference = getConference();
-	if (cConference) {
-		const auto conference = MediaConference::Conference::toCpp(cConference);
-		const auto & conferenceId = conference->getConferenceId();
-	        return (conferenceId.getPeerAddress() == conferenceId.getLocalAddress());
-	}
-
-	return false;
-}
-
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	LinphoneCore *lc = getCore()->getCCore();
 	const auto op = session->getPrivate()->getOp();

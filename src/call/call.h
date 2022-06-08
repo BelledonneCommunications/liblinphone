@@ -297,11 +297,9 @@ public:
 
 	LinphoneConference *getConference () const;
 	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
-	bool attachedToLocalConference() const;
-	bool attachedToRemoteConference() const;
 	void setConference (LinphoneConference *ref);
 	MSAudioEndpoint *getEndpoint () const;
-	void setEndpoint (MSAudioEndpoint *endpoint);	
+	void setEndpoint (MSAudioEndpoint *endpoint);
 	bool canSoundResourcesBeFreed () const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 

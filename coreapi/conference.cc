@@ -621,8 +621,8 @@ LocalConference::LocalConference (const shared_ptr<Core> &core, SalCallOp *op) :
 
 	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 	if (!resourceList.isEmpty()) {
-		auto invitee = Utils::parseResourceLists(resourceList);
-		invitedAddresses.insert(invitedAddresses.begin(), invitee.begin(), invitee.end());
+		auto invitees = Utils::parseResourceLists(resourceList);
+		invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
 	}
 
 	getMe()->setAdmin(true);
@@ -741,8 +741,8 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 	invitedAddresses.clear();
 	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 	if (!resourceList.isEmpty()) {
-		auto invitee = Utils::parseResourceLists(resourceList);
-		invitedAddresses.insert(invitedAddresses.begin(), invitee.begin(), invitee.end());
+		auto invitees = Utils::parseResourceLists(resourceList);
+		invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
 	}
 
 	getMe()->setAdmin(true);
@@ -1170,6 +1170,48 @@ int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePr
 	return AUDIOSTREAMVOLUMES_NOT_FOUND;
 }
 
+bool LocalConference::dialOutAddresses(std::list<const LinphoneAddress *> addressList) {
+	auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
+	linphone_call_params_enable_video(new_params, confParams->videoEnabled());
+
+	linphone_call_params_set_in_conference(new_params, TRUE);
+
+	const Address & conferenceAddress = getConferenceAddress().asAddress();
+	const string & confId = conferenceAddress.getUriParamValue("conf-id");
+	linphone_call_params_set_conference_id(new_params, confId.c_str());
+
+	std::list<IdentityAddress> addresses;
+	if (!invitedAddresses.empty()) {
+		addresses = invitedAddresses;
+	}
+	for (const auto & p : getParticipants()) {
+		const auto & pAddress = p->getAddress();
+		auto pIt = std::find(addresses.begin(), addresses.end(), pAddress);
+		if (pIt == addresses.end()) {
+			addresses.push_back(pAddress);
+		}
+	}
+
+	Content resourceList;
+	resourceList.setBodyFromUtf8(Utils::getResourceLists(addresses));
+	resourceList.setContentType(ContentType::ResourceLists);
+	resourceList.setContentDisposition(ContentDisposition::RecipientList);
+	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
+		resourceList.setContentEncoding("deflate");
+	}
+	if (!resourceList.isEmpty()) {
+		L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
+	}
+
+	Content sipfrag;
+	sipfrag.setBodyFromLocale("From: <" + organizer.asString() + ">");
+	sipfrag.setContentType(ContentType::SipFrag);
+	L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);
+	auto success = (inviteAddresses(addressList, new_params) == 0);
+	linphone_call_params_unref (new_params);
+	return success;
+}
+
 bool LocalConference::addParticipants (const std::list<std::shared_ptr<Call>> &calls) {
 	const auto & coreCurrentCall = getCore()->getCurrentCall();
 	const bool startingConference = (getState() == ConferenceInterface::State::CreationPending);
@@ -1408,26 +1450,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		auto op = session->getPrivate()->getOp();
 		const auto resourceList = op ? op->getContentInRemote(ContentType::ResourceLists) : Content();
 
-		// If no resource list is provided in the INVITE, there is not noeed to call participants
+		// If no resource list is provided in the INVITE, there is not need to call participants
 		if ((initialState == ConferenceInterface::State::CreationPending) && dialout && !resourceList.isEmpty()) {
-			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-			linphone_call_params_enable_video(new_params, confParams->videoEnabled());
-
-			linphone_call_params_set_in_conference(new_params, TRUE);
-
-			const Address & conferenceAddress = getConferenceAddress().asAddress();
-			const string & confId = conferenceAddress.getUriParamValue("conf-id");
-			linphone_call_params_set_conference_id(new_params, confId.c_str());
-
-			if (!resourceList.isEmpty()) {
-				L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(resourceList);
-			}
-
-			Content sipfrag;
-			sipfrag.setBodyFromLocale("From: <" + organizer.asString() + ">");
-			sipfrag.setContentType(ContentType::SipFrag);
-			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContent(sipfrag);
-
 			list<const LinphoneAddress *> addresses;
 			for (auto & addr : invitedAddresses) {
 				// Do not invite organizer as it is already dialing in
@@ -1435,8 +1459,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					addresses.push_back(L_GET_C_BACK_PTR(&(addr.asAddress())));
 				}
 			}
-			inviteAddresses(addresses, new_params);
-			linphone_call_params_unref (new_params);
+			dialOutAddresses(addresses);
 		}
 
 		return true;
@@ -1449,22 +1472,21 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 bool LocalConference::addParticipant (const IdentityAddress &participantAddress) {
 #if 0
 	if (!isConferenceEnded() && isConferenceStarted()) {
-		if (confParams->getParticipantListType() == ConferenceParams::ParticipantListType::Closed) {
-			const auto allowedAddresses = getAllowedAddresses();
-			auto p = std::find(allowedAddresses.begin(), allowedAddresses.end(), IdentityAddress(*remoteAddress));
-			if (p == allowedAddresses.end()) {
-				lError() << "Unable to add participant " << participantAddress << " because it is not in the list of allowed participants of conference " << getConferenceAddress();
-				return false;
-			}
-		}
-		bool success = Conference::addParticipant(participantAddress);
-		if (success) {
-			setState(ConferenceInterface::State::Created);
-			enter();
-		}
-		return success;
-	} else {
 #endif
+		const auto initialState = getState();
+		if ((initialState == ConferenceInterface::State::CreationPending) || (initialState == ConferenceInterface::State::Created)) {
+
+		const auto allowedAddresses = getAllowedAddresses();
+		auto p = std::find(allowedAddresses.begin(), allowedAddresses.end(), participantAddress);
+		if (p == allowedAddresses.end()) {
+			invitedAddresses.push_back(participantAddress);
+		}
+
+			std::list<const LinphoneAddress *> addressesList{L_GET_C_BACK_PTR(&(participantAddress.asAddress()))};
+			return dialOutAddresses(addressesList);
+		}
+#if 0
+	} else {
 		const auto & endTime = confParams->getEndTime();
 		const auto & startTime = confParams->getStartTime();
 		const auto now = time(NULL);
@@ -1482,7 +1504,6 @@ bool LocalConference::addParticipant (const IdentityAddress &participantAddress)
 		lError() << "Now: " << ctime(&now);
 		return false;
 
-#if 0
 	}
 #endif
 	return false;
@@ -2470,6 +2491,9 @@ bool RemoteConference::addParticipant (const IdentityAddress &participantAddress
 	if (callIt != coreCalls.cend()) {
 		std::shared_ptr<Call> call = *callIt;
 		ret = addParticipant(call);
+	} else {
+		const list<IdentityAddress> addresses{participantAddress};
+		ret = addParticipants(addresses);
 	}
 	return ret;
 }
@@ -2906,7 +2930,7 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 			for (const auto & device : getParticipantDevices()) {
 				device->updateStreamAvailabilities();
 			}
-			if (focusContactAddress.hasParam("isfocus") && (!call->mediaInProgress() || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)) && finalized && fullStateReceived && (getState() == ConferenceInterface::State::CreationPending)) {
+			if (focusContactAddress.hasParam("isfocus") && ((call && !call->mediaInProgress()) || !!!linphone_config_get_int(linphone_core_get_config(session->getCore()->getCCore()), "sip", "update_call_when_ice_completed", TRUE)) && finalized && fullStateReceived && (getState() == ConferenceInterface::State::CreationPending)) {
 				setState(ConferenceInterface::State::Created);
 
 				auto requestStreams = [this]() -> LinphoneStatus{
