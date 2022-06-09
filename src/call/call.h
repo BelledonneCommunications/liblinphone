@@ -302,6 +302,7 @@ public:
 	void setEndpoint (MSAudioEndpoint *endpoint);
 	bool canSoundResourcesBeFreed () const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
+	const LinphoneStreamInternalStats *getStreamInternalStats(LinphoneStreamType type)const;
 
 private:
 	std::shared_ptr<Participant> mParticipant;

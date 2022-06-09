@@ -1014,25 +1014,11 @@ void MediaSessionPrivate::updateRemoteSessionIdAndVer () {
 
 // -----------------------------------------------------------------------------
 
-unsigned int MediaSessionPrivate::getAudioStartCount () const {
-	Stream *s = getStreamsGroup().lookupMainStream(SalAudio);
-	return s ? (unsigned int)s->getStartCount() : 0;
+const LinphoneStreamInternalStats *MediaSessionPrivate::getStreamInternalStats(LinphoneStreamType type) const{
+	Stream *s = getStreamsGroup().lookupMainStream(linphone_stream_type_to_sal(type));
+	return s ? &s->getInternalStats() : nullptr;
 }
 
-unsigned int MediaSessionPrivate::getAudioStopCount () const {
-	Stream *s = getStreamsGroup().lookupMainStream(SalAudio);
-	return s ? (unsigned int)s->getStopCount() : 0;
-}
-
-unsigned int MediaSessionPrivate::getVideoStartCount () const {
-	Stream *s = getStreamsGroup().lookupMainStream(SalVideo);
-	return s ? (unsigned int)s->getStartCount() : 0;
-}
-
-unsigned int MediaSessionPrivate::getTextStartCount () const {
-	Stream *s = getStreamsGroup().lookupMainStream(SalText);
-	return s ? (unsigned int)s->getStartCount() : 0;
-}
 
 // -----------------------------------------------------------------------------
 
@@ -2394,17 +2380,6 @@ void MediaSessionPrivate::performMutualAuthentication(){
 }
 
 
-void MediaSessionPrivate::startDtlsOnAllStreams () {
-	OfferAnswerContext params;
-	params.localMediaDescription = op->getLocalMediaDescription();
-	params.remoteMediaDescription = op->getRemoteMediaDescription();
-	params.resultMediaDescription = resultDesc;
-	if (params.remoteMediaDescription && params.resultMediaDescription){
-		getStreamsGroup().startDtls(params);
-	}
-}
-
-
 /*
  * Frees the media resources of the call.
  * This has to be done at the earliest, unlike signaling resources that sometimes need to be kept a bit more longer.
@@ -2484,10 +2459,6 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 		}
 	}
 	runIceCompletionTasks();
-	const char *mode = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "dtls_srtp_start", "ice");
-	if (strcmp(mode, "ice") == 0) {
-		startDtlsOnAllStreams();
-	}
 }
 
 void MediaSessionPrivate::onLosingPairsCompleted(IceService &service){

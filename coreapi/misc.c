@@ -470,6 +470,20 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
 	return ret;
 }
 
+SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type){
+	switch(type){
+		case LinphoneStreamTypeAudio:
+			return SalAudio;
+		case LinphoneStreamTypeVideo:
+			return SalVideo;
+		case LinphoneStreamTypeText:
+			return SalText;
+		case LinphoneStreamTypeUnknown:
+			return SalOther;
+	}
+	return SalOther;
+}
+
 /**
  * Set the name of the mediastreamer2 filter to be used for rendering video.
  * This is for advanced users of the library, mainly to workaround hardware/driver bugs.
@@ -1001,3 +1015,7 @@ void linphone_headers_add(LinphoneHeaders *obj, const char *name, const char *va
 void linphone_headers_remove(LinphoneHeaders *obj, const char *name){
 	sal_custom_header_remove((SalCustomHeader*)obj, name);
 }
+
+
+
+

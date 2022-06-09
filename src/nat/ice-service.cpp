@@ -93,18 +93,54 @@ void IceService::checkSession (IceRole role, bool preferIpv6DefaultCandidates) {
 		return;
 	
 	mIceSession = ice_session_new();
-
+	ice_session_set_default_candidates_ip_version(mIceSession, (bool_t)preferIpv6DefaultCandidates);
 	// For backward compatibility purposes, shall be enabled by default in the future.
 	ice_session_enable_message_integrity_check(mIceSession, mEnableIntegrityCheck);
+	ice_session_set_role(mIceSession, role);
+}
+
+bool IceService::hasRelayCandidates(const SalMediaDescription &md) const {
+	for (size_t i = 0; i < md.streams.size(); i++) {
+		const auto & stream = md.streams[i];
+		if (stream.rtp_port == 0) continue;
+		bool goodForStream = false;
+		for (const auto & candidate : stream.ice_candidates){
+			if (candidate.type == "relay") {
+				goodForStream = true;
+				break;
+			}
+		}
+		if (!goodForStream) return false;
+		
+	}
+	return true;
+}
+
+void IceService::chooseDefaultCandidates(const OfferAnswerContext & ctx){
+	IceCandidateType types[ICT_CandidateTypeMax];
+	
 	if (mDontDefaultToStunCandidates) {
-		IceCandidateType types[ICT_CandidateTypeMax];
 		types[0] = ICT_HostCandidate;
 		types[1] = ICT_RelayedCandidate;
 		types[2] = ICT_CandidateInvalid;
-		ice_session_set_default_candidates_types(mIceSession, types);
+	}else{
+		/* In the case of an offer from remote, if the offer has relay candidates, prefer STUN as default candidate 
+		 * so that the TURN relay is used one side only.
+		 * Otherwise, prefer the Relay as default candidate since it is supposed to always work.
+		 */
+		if (!ctx.localIsOfferer && ctx.remoteMediaDescription && hasRelayCandidates(*ctx.remoteMediaDescription)){
+			types[0] = ICT_ServerReflexiveCandidate;
+			types[1] = ICT_RelayedCandidate;
+		}else{
+			types[0] = ICT_RelayedCandidate;
+			types[1] = ICT_ServerReflexiveCandidate;
+		}
+		types[2] = ICT_HostCandidate;
+		types[3] = ICT_CandidateInvalid;
 	}
-	ice_sesession_set_default_candidates_ip_version(mIceSession, (bool_t)preferIpv6DefaultCandidates);
-	ice_session_set_role(mIceSession, role);
+	ice_session_set_default_candidates_types(mIceSession, types);
+	
+	ice_session_choose_default_candidates(mIceSession);
 }
 
 void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
@@ -126,7 +162,7 @@ void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		
 		ice_session_compute_candidates_foundations(mIceSession);
 		ice_session_eliminate_redundant_candidates(mIceSession);
-		ice_session_choose_default_candidates(mIceSession);
+		chooseDefaultCandidates(ctx);
 		mGatheringFinished = false;
 	}
 	updateLocalMediaDescriptionFromIce(ctx.localMediaDescription);
@@ -401,7 +437,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 			std::string addr = std::string();
 			int port = 0;
 			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate.componentID), md, stream, addr, port);
-			if ((addr.empty() == false) && (candidate.port == port) && (candidate.addr.length() == addr.length()) && (addr.compare(candidate.addr) == 0))
+			if ((addr.empty() == false) && (candidate.port == port) && (addr.compare(candidate.addr) == 0))
 				defaultCandidate = true;
 			int family = AF_INET;
 			if (candidate.addr.find(":") != std::string::npos)
@@ -544,12 +580,19 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 			if (!result) lError() << "No selected valid local candidate but check list is completed, this is a bug.";
 		} else {
 			result = !!ice_check_list_default_local_candidate(ice_session_check_list(mIceSession, (int)i), &rtpCandidate, &rtcpCandidate);
+			if (result){
+				lInfo() << "RTP default candidate is " << L_C_TO_STRING(rtpCandidate->taddr.ip);
+			}else{
+				lWarning() << "No RTP default candidate.";
+			}
 		}
 		if (result) {
 			stream.rtp_addr = L_C_TO_STRING(rtpCandidate->taddr.ip);
 			stream.rtp_port = rtpCandidate->taddr.port;
-			stream.rtcp_addr = L_C_TO_STRING(rtcpCandidate->taddr.ip);
-			stream.rtcp_port = rtcpCandidate->taddr.port;
+			if (rtcpCandidate){
+				stream.rtcp_addr = L_C_TO_STRING(rtcpCandidate->taddr.ip);
+				stream.rtcp_port = rtcpCandidate->taddr.port;
+			}
 		} else {
 			stream.rtp_addr.clear();
 			stream.rtcp_addr.clear();
@@ -780,6 +823,9 @@ void IceService::handleIceEvent(const OrtpEvent *ev){
 		break;
 		case ORTP_EVENT_ICE_RESTART_NEEDED:
 			if (mListener) mListener->onIceRestartNeeded(*this);
+		break;
+		case ORTP_EVENT_ICE_CHECK_LIST_PROCESSING_FINISHED:
+		case ORTP_EVENT_ICE_CHECK_LIST_DEFAULT_CANDIDATE_VERIFIED:
 		break;
 		default:
 			lError() << "IceService::handleIceEvent() is passed with a non-ICE event.";

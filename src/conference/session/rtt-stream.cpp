@@ -103,7 +103,7 @@ void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State t
 	text_stream_start(mStream, textProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt);
 	ms_filter_add_notify_callback(mStream->rttsink, sRealTimeTextCharacterReceived, this, false);
 	ms_filter_call_method(mStream->rttsource, MS_RTT_4103_SOURCE_SET_KEEP_ALIVE_INTERVAL, &interval);
-	mStartCount++;
+	mInternalStats.number_of_starts++;
 }
 
 void MS2RTTStream::stop(){

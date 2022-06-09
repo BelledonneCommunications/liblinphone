@@ -58,6 +58,14 @@ typedef struct _LinphoneCoreToneManagerStats {
 	int number_of_stopTone;
 } LinphoneCoreToneManagerStats;
 
+typedef struct _LinphoneStreamInternalStats{
+	unsigned int number_of_starts;
+	unsigned int number_of_stops;
+	unsigned int number_of_ice_check_list_relay_pair_verified;
+	unsigned int number_of_ice_check_list_processing_finished;
+	unsigned int number_of_dtls_starts;
+}LinphoneStreamInternalStats;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -110,6 +118,7 @@ LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_starts (const LinphoneC
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_stops (const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_video_starts (const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call);
+LINPHONE_PUBLIC const LinphoneStreamInternalStats *_linphone_call_get_stream_internal_stats(const LinphoneCall *call, LinphoneStreamType type);
 LINPHONE_PUBLIC belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call);
 LINPHONE_PUBLIC bool_t _linphone_call_has_dtmf_sequence (const LinphoneCall *call);
 

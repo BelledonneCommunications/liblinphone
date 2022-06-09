@@ -493,6 +493,8 @@ SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bo
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
 void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
+
+SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type);
 LinphoneEventCbs *linphone_event_cbs_new(void);
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
 LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);

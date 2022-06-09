@@ -132,6 +132,8 @@ private:
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
 	int gatherIceCandidates ();
 	int gatherLocalCandidates();
+	bool hasRelayCandidates(const SalMediaDescription &md)const;
+	void chooseDefaultCandidates(const OfferAnswerContext & ctx);
 	StreamsGroup & mStreamsGroup;
 	IceSession * mIceSession = nullptr;
 	IceServiceListener *mListener = nullptr;

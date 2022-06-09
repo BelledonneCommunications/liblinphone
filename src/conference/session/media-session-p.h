@@ -88,10 +88,7 @@ public:
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) const;
 	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys() const;
 
-	unsigned int getAudioStartCount () const;
-	unsigned int getAudioStopCount () const;
-	unsigned int getVideoStartCount () const;
-	unsigned int getTextStartCount () const;
+	const LinphoneStreamInternalStats *getStreamInternalStats(LinphoneStreamType type) const;
 	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }
 
 	LinphoneCallStats *getStats (LinphoneStreamType type) const;
@@ -210,7 +207,6 @@ private:
 	void setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> & md);
 	void transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md);
 	void updateLocalMediaDescriptionFromIce(bool localIsOfferer);
-	void startDtlsOnAllStreams ();
 
 	void freeResources ();
 	void prepareEarlyMediaForking ();

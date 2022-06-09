@@ -45,6 +45,7 @@ LINPHONE_BEGIN_NAMESPACE
 Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription().type), mIndex(params.streamIndex){
 	setPortConfig();
 	initMulticast(params);
+	memset(&mInternalStats, 0, sizeof(mInternalStats));
 }
 
 void Stream::resetMain(){
@@ -95,7 +96,7 @@ void Stream::sessionConfirmed(const OfferAnswerContext &ctx){
 
 void Stream::stop(){
 	mState = Stopped;
-	++mStopCount;
+	mInternalStats.number_of_stops++;
 }
 
 void Stream::setIceCheckList(IceCheckList *cl){

@@ -247,18 +247,17 @@ static bool_t is_matching_a_local_address(const std::string &ip, const bctbx_lis
 	return FALSE;
 }
 
+
+
 /*
- * this test checks the 'dont_default_to_stun_candidates' mode, where the c= line is left to host
- * ip instead of stun candidate when ice is enabled*/
-static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_prefered){
+ * this test checks that default candidates are correct (c= line shall be set to the ICE default candidate).
+ */
+static void _call_with_ice_with_default_candidate(bool_t dont_default_to_stun_candidates, bool_t with_ipv6_prefered){
 	LinphoneCoreManager * marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	char localip[LINPHONE_IPADDR_SIZE]={0};
-	char localip6[LINPHONE_IPADDR_SIZE]={0};
-	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
 	LinphoneCall *pauline_call, *marie_call;
 
-	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", dont_default_to_stun_candidates);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
 
 	enable_stun_in_core(marie, TRUE, TRUE);
@@ -266,9 +265,6 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 
 	enable_stun_in_core(pauline, TRUE, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
-
-	linphone_core_get_local_ip(marie->lc, AF_INET, NULL, localip);
-	linphone_core_get_local_ip(marie->lc, AF_INET6, NULL, localip6);
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
@@ -279,33 +275,41 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 		linphone_call_accept(pauline_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 		/*check immmediately that the offer has a c line with the expected family.*/
-		if (with_ipv6_prefered){
-			/* the address in the c line shall be an ipv6 one.*/
-			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') != std::string::npos);
+		if (dont_default_to_stun_candidates){
+			/* the address in the c line shall be of requested type */
+			if (with_ipv6_prefered && liblinphone_tester_ipv6_available()){
+				BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') != std::string::npos);
+			}else{
+				BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') == std::string::npos);
+			}
 		}else{
-			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress().find(':') == std::string::npos);
+			BC_ASSERT_TRUE(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress().find(':') == std::string::npos);
 		}
+		liblinphone_tester_check_ice_default_candidates(marie,  dont_default_to_stun_candidates ?  TesterIceCandidateHost : TesterIceCandidateSflrx,
+								pauline, TesterIceCandidateSflrx);
+		
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 		check_ice(marie, pauline, LinphoneIceStateHostConnection);
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getConnectionAddress(), local_addresses));
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress(), local_addresses));
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getStreamIdx(0).getRtpAddress(), local_addresses)
-				|| is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getConnectionAddress(), local_addresses)
-		);
+		
+		
 	}
 	end_call(marie, pauline);
-	bctbx_list_free_with_data(local_addresses, bctbx_free);
+	
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_ice_with_default_candidate_not_stun(void){
-	_call_with_ice_with_default_candidate_not_stun(TRUE);
+	_call_with_ice_with_default_candidate(TRUE, TRUE);
 }
 
 static void call_with_ice_with_default_candidate_not_stun_ipv4_prefered(void){
-	_call_with_ice_with_default_candidate_not_stun(FALSE);
+	_call_with_ice_with_default_candidate(TRUE, FALSE);
+}
+
+static void call_with_ice_with_default_candidate_relay_or_stun(void){
+	_call_with_ice_with_default_candidate(FALSE, FALSE);
 }
 
 static void call_with_ice_without_stun(void){
@@ -851,6 +855,7 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE and rtcp-mux not accepted", call_with_ice_and_rtcp_mux_not_accepted,"ICE"),
 	TEST_ONE_TAG("Call with ICE with default candidate not stun", call_with_ice_with_default_candidate_not_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE with default candidate not stun and ipv4 prefered", call_with_ice_with_default_candidate_not_stun_ipv4_prefered, "ICE"),
+	TEST_ONE_TAG("Call with ICE with default default candidate", call_with_ice_with_default_candidate_relay_or_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE without stun server", call_with_ice_without_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE without stun server one side", call_with_ice_without_stun2, "ICE"),
 	TEST_ONE_TAG("Call with ICE and stun server not responding", call_with_ice_stun_not_responding, "ICE"),

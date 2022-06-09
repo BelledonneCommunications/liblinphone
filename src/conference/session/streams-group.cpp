@@ -210,10 +210,15 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	mPostRenderHooks.clear();
 	
 	mIceService->render(params, targetState);
-	const char *mode = linphone_config_get_string(linphone_core_get_config(getCore().getCCore()), "rtp", "dtls_srtp_start", "ice");
-	if (strcmp(mode, "immediate") == 0 || getIceService().hasCompleted()){
-		/* Should not start dtls until ice is completed */
-		startDtls(params);
+	if (!getIceService().isActive() || getIceService().hasCompleted()){
+		/* DTLS is started if ICE is inactive or already completed.
+		 Otherwise, it is started once the check list has validated the relay pair or has finished
+		 ( see MS2Stream::handleIceEvent() )*/
+		for( auto & stream : mStreams){
+			if (!stream) continue;
+			params.scopeStreamToIndex(stream->getIndex());
+			stream->startDtls(params);
+		}
 	}
 	/* Save the state of the offer-answer, so that we are later able to monitor differences in next render() calls. */
 	mCurrentOfferAnswerState.dupFrom(params);
@@ -550,15 +555,6 @@ float StreamsGroup::getAverageQuality(){
 
 float StreamsGroup::getCurrentQuality(){
 	return computeOverallQuality(mem_fun(&Stream::getCurrentQuality));
-}
-
-void StreamsGroup::startDtls(const OfferAnswerContext &params){
-	for( auto & stream : mStreams){
-		if (stream){
-			params.scopeStreamToIndex(stream->getIndex());
-			stream->startDtls(params);
-		}
-	}
 }
 
 int StreamsGroup::getAvpfRrInterval()const{

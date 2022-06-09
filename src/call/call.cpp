@@ -66,21 +66,10 @@ IceSession *Call::getIceSession () const {
 	return nullptr;
 }
 
-unsigned int Call::getAudioStartCount () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioStartCount();
+const LinphoneStreamInternalStats * Call::getStreamInternalStats (LinphoneStreamType type) const {
+	return getMediaSession()->getPrivate()->getStreamInternalStats(type);
 }
 
-unsigned int Call::getAudioStopCount () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioStopCount();
-}
-
-unsigned int Call::getVideoStartCount () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getVideoStartCount();
-}
-
-unsigned int Call::getTextStartCount () const {
-	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getTextStartCount();
-}
 
 std::shared_ptr<MediaSession> Call::getMediaSession()const{
 	return static_pointer_cast<MediaSession>(getActiveSession());

@@ -152,7 +152,6 @@ typedef struct _CallConfig {
 	bool_t turn_tcp;
 	bool_t turn_tls;
 	LinphoneMediaEncryption mode;
-	bool_t dtls_srtp_immediate;
 } CallConfig;
 
 static void ice_turn_call_base(const CallConfig *config) {
@@ -175,11 +174,6 @@ static void ice_turn_call_base(const CallConfig *config) {
 	} else {
 		linphone_core_enable_ipv6(marie->lc, FALSE);
 		linphone_core_enable_ipv6(pauline->lc, FALSE);
-	}
-
-	if (config->dtls_srtp_immediate) {
-		linphone_config_set_string(linphone_core_get_config(marie->lc), "rtp", "dtls_srtp_start", "immediate");
-		linphone_config_set_string(linphone_core_get_config(pauline->lc), "rtp", "dtls_srtp_start", "immediate");
 	}
 
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
@@ -383,16 +377,6 @@ static void relayed_ice_turn_call_with_srtp(void) {
 	ice_turn_call_base(&cfg);
 }
 
-static void relayed_ice_turn_call_with_dtls_srtp_immediate(void) {
-	CallConfig cfg = {0};
-	cfg.forced_relay = TRUE;
-	cfg.caller_turn_enabled = TRUE;
-	cfg.callee_turn_enabled = TRUE;
-	cfg.mode = LinphoneMediaEncryptionDTLS;
-	cfg.dtls_srtp_immediate = TRUE;
-	ice_turn_call_base(&cfg);
-}
-
 static void relayed_ice_turn_tls_with_srtp(void) {
 	CallConfig cfg = {0};
 	cfg.forced_relay = TRUE;
@@ -422,6 +406,129 @@ static void relayed_ice_turn_to_ice_with_dtls_srtp(void){
 	ice_turn_call_base(&cfg);
 }
 
+/* specific test that checks that in the case of a call with DTLS-SRTP, ICE, and TURN
+ * the handshake is started immediately after ICE has succesfully verified the relay pair.
+ */
+static void _ice_turn_dtls_call(const CallConfig *config) {
+	LinphoneCoreManager *marie;
+	LinphoneCoreManager *pauline;
+	LinphoneCall *lcall;
+	LinphoneIceState expected_ice_state = LinphoneIceStateHostConnection;
+	bctbx_list_t *lcs = NULL;
+	int attempts;
+	bool_t dtls_started_as_expected = FALSE;
+
+	marie = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "marie_sips_rc" : "marie_rc");
+	lcs = bctbx_list_append(lcs, marie->lc);
+	pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	if (config->ipv6) {
+		linphone_core_enable_ipv6(marie->lc, TRUE);
+		linphone_core_enable_ipv6(pauline->lc, TRUE);
+	} else {
+		linphone_core_enable_ipv6(marie->lc, FALSE);
+		linphone_core_enable_ipv6(pauline->lc, FALSE);
+	}
+
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
+
+	configure_nat_policy(marie->lc, config->caller_turn_enabled, config->turn_tcp, config->turn_tls);
+	configure_nat_policy(pauline->lc, config->callee_turn_enabled, config->turn_tcp, config->turn_tls);
+	if (config->forced_relay == TRUE) {
+		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
+		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
+		linphone_core_enable_short_turn_refresh(marie->lc, TRUE);
+		linphone_core_enable_short_turn_refresh(pauline->lc, TRUE);
+		expected_ice_state = LinphoneIceStateRelayConnection;
+	}
+	if (config->rtcp_mux_enabled == TRUE) {
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+	}
+
+	if (linphone_core_media_encryption_supported(marie->lc, config->mode)) {
+		linphone_core_set_media_encryption(marie->lc,config->mode);
+		linphone_core_set_media_encryption(pauline->lc,config->mode);
+
+		if (config->mode == LinphoneMediaEncryptionDTLS) { /* for DTLS we must access certificates or at least have a directory to store them */
+			char *path = bc_tester_file("certificates-marie");
+			linphone_core_set_user_certificates_path(marie->lc, path);
+			bc_free(path);
+			path = bc_tester_file("certificates-pauline");
+			linphone_core_set_user_certificates_path(pauline->lc, path);
+			bc_free(path);
+			bctbx_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+			bctbx_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+		}
+	}
+
+	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(pauline, TRUE);
+	
+	linphone_core_set_video_device(pauline->lc,liblinphone_tester_mire_id);
+	linphone_core_set_video_device(marie->lc,liblinphone_tester_mire_id);
+
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	lcall = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(lcall);
+	if (!lcall){
+		goto end;
+	}
+	linphone_call_accept(lcall);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallConnected, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallConnected, 1));
+	/* Pauline shall not start dtls until the check list has verified the default pair */
+	for ( attempts = 0 ; attempts < 100 ; ++attempts){
+		const LinphoneStreamInternalStats *istats = _linphone_call_get_stream_internal_stats(lcall, LinphoneStreamTypeAudio);
+		BC_ASSERT_PTR_NOT_NULL(istats);
+		if (!istats) break;
+		if (istats->number_of_ice_check_list_relay_pair_verified == 0){
+			BC_ASSERT_TRUE(istats->number_of_dtls_starts == 0);
+		}else{
+			/* relay pair verified */
+			if (BC_ASSERT_TRUE(istats->number_of_dtls_starts == 1)){
+				dtls_started_as_expected = TRUE;
+				BC_ASSERT_TRUE(istats->number_of_ice_check_list_processing_finished == 0);
+				break;
+			}
+		}
+		wait_for_list(lcs, NULL, 0 , 10); /* the timer must be short so that ice_check list does not finish */
+	}
+	BC_ASSERT_TRUE(dtls_started_as_expected);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+	liblinphone_tester_check_ice_default_candidates(marie, TesterIceCandidateRelay, pauline, TesterIceCandidateSflrx);
+		
+	/* Wait for the ICE reINVITE to complete */
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+	liblinphone_tester_check_rtcp(marie, pauline);
+	BC_ASSERT_TRUE(check_ice(pauline, marie, expected_ice_state));
+
+	
+	end_call(marie, pauline);
+
+end:	
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+	bctbx_list_free(lcs);
+}
+
+static void relayed_ice_turn_to_turn_with_dtls_srtp(void){
+	CallConfig cfg = {0};
+	cfg.forced_relay = TRUE;
+	cfg.caller_turn_enabled = TRUE;
+	cfg.callee_turn_enabled = TRUE;
+	cfg.rtcp_mux_enabled = TRUE;
+	cfg.mode = LinphoneMediaEncryptionDTLS;
+	_ice_turn_dtls_call(&cfg);
+}
+
+
 
 test_t stun_tests[] = {
 	TEST_ONE_TAG("Basic Stun test (Ping/public IP)", linphone_stun_test_grab_ip, "STUN"),
@@ -440,10 +547,10 @@ test_t stun_tests[] = {
 	TEST_TWO_TAGS("Relayed ICE+TURN call with rtcp-mux", relayed_ice_turn_call_with_rtcp_mux, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN to ICE+STUN call", relayed_ice_turn_to_ice_stun_call, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN call with SRTP", relayed_ice_turn_call_with_srtp, "ICE", "TURN"),
-	TEST_TWO_TAGS("Relayed ICE+TURN call with DTLS-SRTP immediately", relayed_ice_turn_call_with_dtls_srtp_immediate, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call with SRTP", relayed_ice_turn_tls_with_srtp, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call to ICE with SRTP", relayed_ice_turn_tls_to_ice_with_srtp, "ICE", "TURN"),
-	TEST_TWO_TAGS("Relayed ICE+TURN call to ICE with DTLS-SRTP", relayed_ice_turn_to_ice_with_dtls_srtp, "ICE", "TURN")
+	TEST_TWO_TAGS("Relayed ICE+TURN call to ICE with DTLS-SRTP", relayed_ice_turn_to_ice_with_dtls_srtp, "ICE", "TURN"),
+	TEST_TWO_TAGS("Relayed ICE+TURN relayed call with DTLS-SRTP", relayed_ice_turn_to_turn_with_dtls_srtp, "ICE", "TURN")
 };
 
 test_suite_t stun_test_suite = {"Stun", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

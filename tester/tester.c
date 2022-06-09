@@ -435,10 +435,9 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 		if (mgr->rc_local == NULL) {
 			char random_id[8];
 			belle_sip_random_token(random_id, sizeof random_id);
-
-			char * basename = bctbx_basename(mgr->rc_path);
-			mgr->rc_local = bctbx_strdup_printf("%s/%s_%s", bc_tester_get_writable_dir_prefix(), basename, random_id);
-			bctbx_free(basename);
+			char *bn = bctbx_basename(mgr->rc_path);
+			mgr->rc_local = bctbx_strdup_printf("%s/%s_%s", bc_tester_get_writable_dir_prefix(), bn, random_id);
+			bctbx_free(bn);
 		}
 		bctbx_vfs_file_t* in = bctbx_file_open(bctbx_vfs_get_default(), filepath, "r");
 		bctbx_vfs_file_t* out = bctbx_file_open2(bctbx_vfs_get_default(), mgr->rc_local , O_WRONLY|O_CREAT|O_TRUNC);

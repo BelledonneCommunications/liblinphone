@@ -463,6 +463,60 @@ const char * _linphone_call_get_subject(LinphoneCall * call) {
 }
 
 
+
+static std::string get_ice_default_candidate(LinphoneCoreManager *m){
+	std::string rtpAddress;
+	rtpAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(m->lc))->getStreamIdx(0).getRtpAddress();
+	if (!rtpAddress.empty()){
+		return rtpAddress;
+	}else{
+		std::string cAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(m->lc))->getConnectionAddress();
+		return cAddress;
+	}
+}
+
+static bool address_in_list(const std::string &ip, const bctbx_list_t *addresses){
+	if (ip.empty()) return FALSE;
+	for (; addresses != NULL; addresses = addresses->next){
+		if (ip.compare((const char*)addresses->data) == 0) return true;
+	}
+	return false;
+}
+
+	
+static void check_expected_candidate_type(LinphoneCoreManager *m, TesterIceCandidateType expected_type, const bctbx_list_t *local_addresses){
+	std::string ip = get_ice_default_candidate(m);
+	const struct addrinfo *ai = linphone_core_get_stun_server_addrinfo(m->lc);
+	std::string relayIP;
+	
+	//bctbx_message("default-candidate=%s", ip.c_str());
+	if (ai){
+		char rawip[64] = {0};
+		bctbx_addrinfo_to_ip_address(ai, rawip, sizeof(rawip), NULL);
+		relayIP = rawip;
+	}
+	switch(expected_type){
+		case TesterIceCandidateHost:
+			BC_ASSERT_TRUE(address_in_list(ip, local_addresses));
+		break;
+		case TesterIceCandidateSflrx:
+			BC_ASSERT_FALSE(address_in_list(ip, local_addresses));
+			BC_ASSERT_TRUE(ip != relayIP);
+		break;
+		case TesterIceCandidateRelay:
+			BC_ASSERT_TRUE(ip == relayIP);
+		break;
+	}
+}
+
+void liblinphone_tester_check_ice_default_candidates(LinphoneCoreManager *marie, TesterIceCandidateType marie_expected_type, LinphoneCoreManager *pauline, TesterIceCandidateType pauline_expected_type){
+	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
+	
+	check_expected_candidate_type(marie, marie_expected_type, local_addresses);
+	check_expected_candidate_type(pauline, pauline_expected_type, local_addresses);
+	bctbx_list_free_with_data(local_addresses, bctbx_free);
+}
+
 int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type){
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;

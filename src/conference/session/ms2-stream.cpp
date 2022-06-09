@@ -785,9 +785,14 @@ void MS2Stream::initDtlsParams (MediaStream *ms) {
 	}
 }
 
+void MS2Stream::startDtls(){
+	const OfferAnswerContext & ctx = getGroup().getCurrentOfferAnswerContext();
+	ctx.scopeStreamToIndex(getIndex());
+	startDtls(ctx);
+}
+
 void MS2Stream::startDtls(const OfferAnswerContext &params){
 	if (mDtlsStarted) {
-		lWarning() << "DTLS engine on stream session [" << &mSessions << "] is already started";
 		return;
 	}
 	const auto & resultStreamDesc = params.getResultStreamDescription();
@@ -810,6 +815,7 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 		ms_dtls_srtp_set_role(mSessions.dtls_context, (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
 		ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
 		mDtlsStarted = true;
+		mInternalStats.number_of_dtls_starts++;
 	}
 }
 
@@ -1270,7 +1276,7 @@ void MS2Stream::handleEvents () {
 		}
 		if (ms)
 			linphone_call_stats_fill(mStats, ms, ev);
-
+		bool isIceEvent = false;
 		switch(evt){
 			case ORTP_EVENT_ZRTP_ENCRYPTION_CHANGED:
 				if (getType() != SalAudio || !isMain()){
@@ -1280,21 +1286,42 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_DTLS_ENCRYPTION_CHANGED:
 				dtlsEncryptionChanged();
 			break;
+			case ORTP_EVENT_ICE_CHECK_LIST_DEFAULT_CANDIDATE_VERIFIED:
+				mInternalStats.number_of_ice_check_list_relay_pair_verified++;
+				isIceEvent = true;
+				/* DTLS can start immediately since media path should be established */
+				startDtls();
+			break;
+			case ORTP_EVENT_ICE_CHECK_LIST_PROCESSING_FINISHED:
+				/*same*/
+				mInternalStats.number_of_ice_check_list_processing_finished++;
+				startDtls();
+				isIceEvent = true;
+			break;
 			case ORTP_EVENT_ICE_SESSION_PROCESSING_FINISHED:
 			case ORTP_EVENT_ICE_GATHERING_FINISHED:
 			case ORTP_EVENT_ICE_LOSING_PAIRS_COMPLETED:
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
-				/* ICE events are notified directly to the IceService. */
-				iceQueuedEventTask = getCore().createTimer([this, ev](){
-					if(mState != State::Stopped)// Media session has stopped : Ice Service is no more.
-						getIceService().handleIceEvent(ev);
-					ortp_event_destroy(ev);
-					getCore().destroyTimer(iceQueuedEventTask);
-					iceQueuedEventTask = nullptr;
-					return true;
-				}, 0, "ice task");
-				continue; // Go to next event.
+				isIceEvent = true;
 			break;
+		}
+		if (isIceEvent){
+			/* ICE events are deferred to the IceService asynchronously because some ICE events can indirectly
+			 restart the ms2 stream.
+			 However, due to asynchronism, the MediaSession may have release the Streams or be released itself.
+			 We protect against this by taking a shared_ptr on the mediaSession and taking the IceService directly
+			 from the MediaSession, without using 'this'.
+			 */
+			weak_ptr<MediaSession> mediaSession = static_pointer_cast<MediaSession>(getMediaSession().getSharedFromThis());
+			getCore().doLater([mediaSession, ev](){
+				auto sp = mediaSession.lock();
+				/* make sure the MediaSession (and thus the IceService) is still there by verifying the weak_ptr of the media session. */
+				if (sp){
+					sp->getStreamsGroup().getIceService().handleIceEvent(ev);
+				}// Otherwise we can safely ignore the event.
+				ortp_event_destroy(ev);
+			});
+			continue; // Go to next event.
 		}
 		notifyStatsUpdated();
 	
@@ -1466,10 +1493,6 @@ MS2Stream::~MS2Stream(){
 	finish();
 	linphone_call_stats_unref(mStats);
 	mStats = nullptr;
-	if (iceQueuedEventTask) {
-		getCore().destroyTimer(iceQueuedEventTask);
-		iceQueuedEventTask = nullptr;
-	}
 }
 
 LINPHONE_END_NAMESPACE

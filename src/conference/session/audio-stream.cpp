@@ -504,7 +504,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if (vs) audio_stream_link_video(mStream, vs);
 		if (err == 0)
 			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
-		mStartCount++;
+		mInternalStats.number_of_starts++;
 	}
 	
 	if ((targetState == CallSession::State::Paused) && !captcard && !playfile.empty()) {

@@ -109,19 +109,27 @@ int linphone_friend_list_get_revision(const LinphoneFriendList *lfl) {
 }
 
 unsigned int _linphone_call_get_nb_audio_starts (const LinphoneCall *call) {
-	return Call::toCpp(call)->getAudioStartCount();
+	const LinphoneStreamInternalStats * st = _linphone_call_get_stream_internal_stats(call, LinphoneStreamTypeAudio);
+	return st ? st->number_of_starts : 0;
 }
 
 unsigned int _linphone_call_get_nb_audio_stops (const LinphoneCall *call) {
-	return Call::toCpp(call)->getAudioStopCount();
+	const LinphoneStreamInternalStats * st = _linphone_call_get_stream_internal_stats(call, LinphoneStreamTypeAudio);
+	return st ? st->number_of_stops : 0;
 }
 
 unsigned int _linphone_call_get_nb_video_starts (const LinphoneCall *call) {
-	return Call::toCpp(call)->getVideoStartCount();
+	const LinphoneStreamInternalStats * st = _linphone_call_get_stream_internal_stats(call, LinphoneStreamTypeVideo);
+	return st ? st->number_of_starts : 0;
 }
 
 unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call) {
-	return Call::toCpp(call)->getTextStartCount();
+	const LinphoneStreamInternalStats * st = _linphone_call_get_stream_internal_stats(call, LinphoneStreamTypeText);
+	return st ? st->number_of_starts : 0;
+}
+
+const LinphoneStreamInternalStats *_linphone_call_get_stream_internal_stats(const LinphoneCall *call, LinphoneStreamType stream_type){
+	return Call::toCpp(call)->getStreamInternalStats(stream_type);
 }
 
 belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call) {
