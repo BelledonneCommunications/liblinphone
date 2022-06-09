@@ -319,7 +319,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			if (as) audio_stream_link_video(as, mStream);
 		}
 	}
-	mStartCount++;
+	mInternalStats.number_of_starts++;
 
 	if (listener)
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());

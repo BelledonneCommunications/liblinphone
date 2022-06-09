@@ -28,6 +28,13 @@ extern "C" {
 
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
 bool_t check_ice_sdp (LinphoneCall *call);
+
+typedef enum _TesterIceCandidateType{
+	TesterIceCandidateHost,
+	TesterIceCandidateSflrx,
+	TesterIceCandidateRelay
+} TesterIceCandidateType;
+void liblinphone_tester_check_ice_default_candidates(LinphoneCoreManager *marie, TesterIceCandidateType marie_expected_type, LinphoneCoreManager *pauline, TesterIceCandidateType pauline_expected_type);
 bool_t is_srtp_secured (LinphoneCall *call, LinphoneStreamType ctype);
 void check_media_stream(LinphoneCall *call, bool_t is_null);
 void check_local_desc_stream (LinphoneCall *call);

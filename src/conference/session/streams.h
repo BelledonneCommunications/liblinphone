@@ -28,6 +28,7 @@
 #include "call-session.h"
 #include "media-description-renderer.h"
 #include "call/audio-device/audio-device.h"
+#include "tester_utils.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -140,8 +141,7 @@ public:
 	StreamsGroup &getGroup()const{ return mStreamsGroup;}
 	// Returns whether this stream is the "main" one of its own type, in constrat to secondary streams.
 	bool isMain()const{ return mIsMain;}
-	int getStartCount()const{ return mStartCount; }
-	int getStopCount()const{ return mStopCount; }
+	const LinphoneStreamInternalStats & getInternalStats() const { return mInternalStats; };
 	const PortConfig &getPortConfig()const{ return mPortConfig; }
 	virtual ~Stream() = default;
 	static std::string stateToString(State st){
@@ -166,7 +166,7 @@ protected:
 	virtual void zrtpStarted(Stream *mainZrtpStream){};
 	const std::string & getPublicIp() const;
 	PortConfig mPortConfig;
-	int mStartCount = 0; /* The number of time of the underlying stream has been started (or restarted). To be maintained by implementations. */
+	LinphoneStreamInternalStats mInternalStats;
 private:
 	void setMain();
 	void initMulticast(const OfferAnswerContext &params);
@@ -182,7 +182,7 @@ private:
 	State mState = Stopped;
 	StreamMixer *mMixer = nullptr;
 	bool mIsMain = false;
-	int mStopCount = 0; /* Count of stop() */
+	
 };
 
 inline std::ostream &operator<<(std::ostream & ostr, SalStreamType type){
@@ -403,7 +403,6 @@ public:
 	// Returns true if all streams have avpf enabled.
 	bool avpfEnabled() const;
 	int getAvpfRrInterval()const;
-	void startDtls(const OfferAnswerContext &params);
 	void tryEarlyMediaForking(const OfferAnswerContext &ctx);
 	void finishEarlyMediaForking();
 	/*
