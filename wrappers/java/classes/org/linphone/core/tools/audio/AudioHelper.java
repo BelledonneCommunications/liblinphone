@@ -21,6 +21,7 @@ package org.linphone.core.tools.audio;
 
 import android.content.Context;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
@@ -127,17 +128,21 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         if (ringtone == null || ringtone.isEmpty()) {
             Log.i("[Audio Helper] Core ringtone path is null, using device ringtone if possible");
 
-            Uri defaultRingtoneUri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE);
+            Uri defaultRingtoneUri = getDefaultRingtoneUri(context);
             if (defaultRingtoneUri == null) {
-                Log.i("[Audio Helper] Couldn't get default ringtone URI through RingtoneManager, trying with Settings.System.DEFAULT_RINGTONE_URI");
+                Log.w("[Audio Helper] Couldn't get ringtone URI through RingtoneManager, trying with Settings.System.DEFAULT_RINGTONE_URI");
                 ringtone = Settings.System.DEFAULT_RINGTONE_URI.toString();
                 playSoundUsingMediaPlayer(context, audioAttrs, ringtone);
             } else {
-                mRingtone = RingtoneManager.getRingtone(context, defaultRingtoneUri);
-                if (mRingtone != null) {
-                    DeviceUtils.playRingtone(mRingtone, audioAttrs);
-                } else {
-                    Log.e("[Audio Helper] Couldn't retrieve Ringtone object from manager!");
+                try {
+                    mRingtone = RingtoneManager.getRingtone(context, defaultRingtoneUri);
+                    if (mRingtone != null) {
+                        DeviceUtils.playRingtone(mRingtone, audioAttrs);
+                    } else {
+                        Log.e("[Audio Helper] Couldn't retrieve Ringtone object from manager!");
+                    }
+                } catch (Exception e) {
+                    Log.e("[Audio Helper] Failed to play ringtone [", defaultRingtoneUri, "] : ", e);
                 }
             }
 
@@ -371,5 +376,36 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             return false;
         }
         return CoreManager.instance().getCore().getConfig().getBool("audio", "android_disable_audio_focus_requests", false);
+    }
+
+    private Uri getDefaultRingtoneUri(Context context) {
+        Uri uri = null;
+
+        try {
+            uri = RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_RINGTONE);
+        } catch (SecurityException exception) { }
+
+        if (uri == null) {
+            Log.w("[Audio Helper] Failed to get actual default ringtone URI, trying to get a valid one");
+            uri = RingtoneManager.getValidRingtoneUri(context);
+        }
+
+        if (uri == null) {
+            Log.w("[Audio Helper] Failed to get a valid ringtone URI, trying the first one avalaible");
+
+            RingtoneManager ringtoneManager = new RingtoneManager(context);
+            ringtoneManager.setType(RingtoneManager.TYPE_RINGTONE);
+
+            Cursor cursor = ringtoneManager.getCursor();
+            if (cursor.moveToFirst()) {
+                String idString = cursor.getString(RingtoneManager.ID_COLUMN_INDEX);
+                String uriString = cursor.getString(RingtoneManager.URI_COLUMN_INDEX);
+
+                uri = Uri.parse(uriString + '/' + idString);
+            }
+            cursor.close();
+        }
+
+        return uri;
     }
 }
