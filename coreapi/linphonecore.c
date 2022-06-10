@@ -7540,11 +7540,15 @@ static void set_sip_network_reachable(LinphoneCore* lc,bool_t is_sip_reachable, 
 	// second get the list of available proxies
 	const bctbx_list_t *elem = NULL;
 
+	if (is_sip_reachable) {
+		// Update DNS servers even if network was reachable and is still is, a change might have occured
+		getPlatformHelpers(lc)->setDnsServers();
+	}
+
 	if (lc->sip_network_state.global_state==is_sip_reachable) return; // no change, ignore.
 	lc->network_reachable_to_be_notified=TRUE;
 
-	if (is_sip_reachable){
-		getPlatformHelpers(lc)->setDnsServers();
+	if (is_sip_reachable) {
 		if (lc->sip_conf.guess_hostname) update_primary_contact(lc);
 	}
 
