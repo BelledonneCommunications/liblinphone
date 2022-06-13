@@ -20,6 +20,8 @@
 #include "linphone/api/c-call-stats.h"
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
+#include "mediastreamer2/zrtp.h"
+
 
 // =============================================================================
 
@@ -407,4 +409,71 @@ void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *sta
 
 const ZrtpAlgo *linphone_call_stats_get_zrtp_algo (const LinphoneCallStats *stats){
 	return &stats->zrtp_algo;
+}
+
+const char * linphone_call_stats_get_zrtp_cipher_algo (const LinphoneCallStats *stats) {
+	switch(stats->zrtp_algo.cipher_algo) {
+		case(MS_ZRTP_CIPHER_INVALID): return "invalid";
+		case(MS_ZRTP_CIPHER_AES1): return "AES-128";
+		case(MS_ZRTP_CIPHER_AES2): return "AES-192";
+		case(MS_ZRTP_CIPHER_AES3): return "AES-256";
+		case(MS_ZRTP_CIPHER_2FS1): return "TwoFish-128";
+		case(MS_ZRTP_CIPHER_2FS2): return "TwoFish-192";
+		case(MS_ZRTP_CIPHER_2FS3): return "TwoFish-256";
+		default: return "Unknown Algo";
+	}
+}
+const char * linphone_call_stats_get_zrtp_key_agreement_algo (const LinphoneCallStats *stats) {
+	switch( stats->zrtp_algo.key_agreement_algo) {
+		case(MS_ZRTP_KEY_AGREEMENT_INVALID): return "invalid";
+		case(MS_ZRTP_KEY_AGREEMENT_DH2K): return "DHM-2048";
+		case(MS_ZRTP_KEY_AGREEMENT_EC25): return "ECDH-256";
+		case(MS_ZRTP_KEY_AGREEMENT_DH3K): return "DHM-3072";
+		case(MS_ZRTP_KEY_AGREEMENT_EC38): return "ECDH-384";
+		case(MS_ZRTP_KEY_AGREEMENT_EC52): return "ECDH-521";
+		case(MS_ZRTP_KEY_AGREEMENT_X255): return "X25519";
+		case(MS_ZRTP_KEY_AGREEMENT_X448): return "X448";
+		case(MS_ZRTP_KEY_AGREEMENT_K255): return "KEM-X25519";
+		case(MS_ZRTP_KEY_AGREEMENT_K448): return "KEM-X448";
+		case(MS_ZRTP_KEY_AGREEMENT_KYB1): return "KYBER-512";
+		case(MS_ZRTP_KEY_AGREEMENT_KYB2): return "KYBER-768";
+		case(MS_ZRTP_KEY_AGREEMENT_KYB3): return "KYBER-1024";
+		case(MS_ZRTP_KEY_AGREEMENT_SIK1): return "SIKE-434";
+		case(MS_ZRTP_KEY_AGREEMENT_SIK2): return "SIKE-610";
+		case(MS_ZRTP_KEY_AGREEMENT_SIK3): return "SIKE-751";
+		case(MS_ZRTP_KEY_AGREEMENT_K255_KYB512): return "X25519/Kyber512";
+		case(MS_ZRTP_KEY_AGREEMENT_K255_SIK434): return "X25519/Sike434";
+		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024): return "X448/Kyber1024";
+		case(MS_ZRTP_KEY_AGREEMENT_K448_SIK751): return "X448/Sike751";
+		default: return "Unknown Algo";
+	}
+}
+const char * linphone_call_stats_get_zrtp_hash_algo (const LinphoneCallStats *stats) {
+	switch( stats->zrtp_algo.hash_algo) {
+		case(MS_ZRTP_HASH_INVALID): return "invalid";
+		case(MS_ZRTP_HASH_S256): return "SHA-256";
+		case(MS_ZRTP_HASH_S384): return "SHA-384";
+		case(MS_ZRTP_HASH_N256): return "SHA3-256";
+		case(MS_ZRTP_HASH_N384): return "SHA3-384";
+		case(MS_ZRTP_HASH_S512): return "SHA-512";
+		default: return "Unknown Algo";
+	}
+}
+const char * linphone_call_stats_get_zrtp_auth_tag_algo (const LinphoneCallStats *stats) {
+	switch(stats->zrtp_algo.auth_tag_algo) {
+		case(MS_ZRTP_AUTHTAG_INVALID): return "invalid";
+		case(MS_ZRTP_AUTHTAG_HS32): return "HMAC-SHA1-32";
+		case(MS_ZRTP_AUTHTAG_HS80): return "HMAC-SHA1-80";
+		case(MS_ZRTP_AUTHTAG_SK32): return "Skein-32";
+		case(MS_ZRTP_AUTHTAG_SK64): return "Skein-64";
+		default: return "Unknown Algo";
+	}
+}
+const char * linphone_call_stats_get_zrtp_sas_algo (const LinphoneCallStats *stats) {
+	switch(stats->zrtp_algo.sas_algo) {
+		case(MS_ZRTP_SAS_INVALID): return "invalid";
+		case(MS_ZRTP_SAS_B32): return "Base32";
+		case(MS_ZRTP_SAS_B256): return "PGP-WordList";
+		default: return "Unknown Algo";
+	}
 }
