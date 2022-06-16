@@ -97,7 +97,7 @@ LINPHONE_PUBLIC void linphone_account_add_custom_param(LinphoneAccount *account,
  * Get the custom parameter with key to this #LinphoneAccount.
  * @param account The #LinphoneAccount object. @notnil
  * @param key key of the searched parameter. @notnil
- * @return The value of the parameter with key if found or an empty string otherwise
+ * @return The value of the parameter with key if found or an empty string otherwise. @notnil
  */
 LINPHONE_PUBLIC const char * linphone_account_get_custom_param(const LinphoneAccount *account, const char * key);
 
