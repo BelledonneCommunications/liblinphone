@@ -420,12 +420,12 @@ void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, Linphon
 			BC_ASSERT_EQUAL(Call::toCpp(call2)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 		}
 
-		BC_ASSERT_TRUE(Call::toCpp(call1)->checkRtpSession());
-		BC_ASSERT_TRUE(Call::toCpp(call2)->checkRtpSession());
-		BC_ASSERT_TRUE(Call::toCpp(call1)->compareVideoColor(c2, MediaStreamRecvOnly, vstream2s->label));
-		BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamRecvOnly, vstream1s->label));
+		linphone_call_check_rtp_sessions(call1);
+		linphone_call_check_rtp_sessions(call2);
+		linphone_call_compare_video_color(call1, c2, MediaStreamRecvOnly, vstream2s->label);
+		linphone_call_compare_video_color(call2, c1, MediaStreamRecvOnly, vstream1s->label);
 		if (layout != LinphoneConferenceLayoutGrid) {
-			BC_ASSERT_TRUE(Call::toCpp(call2)->compareVideoColor(c1, MediaStreamSendRecv, ""));
+			linphone_call_compare_video_color(call2, c1, MediaStreamSendRecv, "");
 		}
 	}
 }
@@ -451,7 +451,7 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants,Li
 			}
 			BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb, int, "%d");
 			if (video_enabled) {
-				BC_ASSERT_TRUE(Call::toCpp(call)->checkRtpSession());
+				linphone_call_check_rtp_sessions(call);
 			}
 		}
 	}

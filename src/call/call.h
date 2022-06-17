@@ -33,7 +33,6 @@
 //#include "call/audio-device/audio-device.h"
 #include "conference/session/call-session-listener.h"
 #include "utils/background-task.h"
-#include "mediastreamer2/msmire.h"
 
 #include "call/call-log.h"
 
@@ -243,9 +242,6 @@ public:
 	MediaStream *getMediaStream (LinphoneStreamType type) const;
 	int getMediaStreamIndex (LinphoneStreamType type) const;
 	int getMediaStreamsNb (LinphoneStreamType type) const;
-	MediaStream *getVideoStream (MediaStreamDir dir) const;
-	bool compareVideoColor (MSMireControl &cl, MediaStreamDir dir, const std::string &label) const;
-	bool checkRtpSession() const;
 	SalCallOp *getOp () const;
 	bool getSpeakerMuted () const;
 	void setSpeakerMuted (bool muted);

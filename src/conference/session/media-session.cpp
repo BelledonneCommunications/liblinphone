@@ -4228,6 +4228,10 @@ void MediaSession::setSpeakerVolumeGain (float value) {
 		lError() << "Could not set playback volume: no audio stream";
 }
 
+static bool_t compareFunc(Stream *s, const std::string & label) {
+	return s->getType() == SalVideo && label.compare(s->getLabel())==0;
+};
+
 void * MediaSession::getNativeVideoWindowId(const std::string label) const {
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
 		if (label.empty()) {
@@ -4236,7 +4240,7 @@ void * MediaSession::getNativeVideoWindowId(const std::string label) const {
 				return iface->getNativeWindowId();
 			}
 		} else {
-			auto s = getStreamsGroup().lookupStream(SalVideo, label);
+			auto s = getStreamsGroup().lookupStream(compareFunc, label);
 			if (s) {
 				VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
 				if (iface == nullptr){
@@ -4263,7 +4267,7 @@ void MediaSession::setNativeVideoWindowId(void *id, const std::string label) {
 				lError() << "Unable to set window ID because video control interface cannot be found";
 			}
 		} else {
-			auto s = getStreamsGroup().lookupStream(SalVideo, label);
+			auto s = getStreamsGroup().lookupStream(compareFunc, label);
 			if (s) {
 				VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
 				if (iface == nullptr){
@@ -4315,7 +4319,7 @@ void * MediaSession::createNativeVideoWindowId(const std::string label) const {
 				return iface->createNativeWindowId();
 			}
 		} else {
-			auto s = getStreamsGroup().lookupStream(SalVideo, label);
+			auto s = getStreamsGroup().lookupStream(compareFunc, label);
 			if (s) {
 				VideoControlInterface * iface = dynamic_cast<VideoControlInterface*>(s);
 				if (iface == nullptr){

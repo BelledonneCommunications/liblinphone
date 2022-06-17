@@ -31,6 +31,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "conference/session/media-session-p.h"
 #include "event-log/conference/conference-chat-message-event.h"
+#include "mediastreamer2/msanalysedisplay.h"
 
 using namespace std;
 
@@ -235,3 +236,63 @@ size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *
 
 	return L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(abstract))->getPreviousConferenceIds().size();
 }
+
+bool_t linphone_call_check_rtp_sessions(LinphoneCall *call) {
+	std::shared_ptr<LinphonePrivate::MediaSession> ms = Call::toCpp(call)->getMediaSession();
+	if (ms){
+		StreamsGroup & sg = L_GET_PRIVATE(ms)->getStreamsGroup();
+		for (auto &stream : sg.getStreams()){
+			if (!stream) continue;
+			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
+			if(stream->getType() == SalVideo) {
+				MediaStream *ms = s->getMediaStream();
+				RtpSession *rtp_session = ms->sessions.rtp_session;
+				if (!rtp_session) {
+					lInfo() << "checkRtpSession(): session empty";
+					return false;
+				}
+				const rtp_stats_t *rtps = rtp_session_get_stats(rtp_session);
+				switch (media_stream_get_direction(ms)) {
+					case MediaStreamRecvOnly:
+						// Can be 0 if it's not attached with filter
+						break;
+					case MediaStreamSendOnly:
+						if (rtps->packet_sent < 5) {
+							return false;
+						}
+						break;
+					case MediaStreamSendRecv:
+						if (rtps->packet_recv < 5 || rtps->packet_sent < 5) {
+							return false;
+						}
+						break;
+					default:
+						break;
+				}
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, MediaStreamDir dir, const char  *label) {
+#ifdef VIDEO_ENABLED
+	auto lambda = [] (Stream *s, MediaStreamDir dir, const string &label, MSMireControl cl) {
+		if (s->getType() == SalVideo && label.compare(s->getLabel())==0) {
+			MS2VideoStream *vs  =  dynamic_cast<MS2VideoStream *>(s);
+			if (vs && media_stream_get_direction(vs->getMediaStream()) == dir && vs->getVideoStream()->output && ms_filter_get_id(vs->getVideoStream()->output)== MS_ANALYSE_DISPLAY_ID){
+				return ms_filter_call_method(vs->getVideoStream()->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0;
+			}
+		}
+		return false;
+	};
+	std::shared_ptr<LinphonePrivate::MediaSession> ms = Call::toCpp(call)->getMediaSession();
+	if (ms){
+		StreamsGroup & sg = L_GET_PRIVATE(ms)->getStreamsGroup();
+		if (sg.lookupStream(lambda, dir, label, cl)) return true;
+	}
+#endif
+	return false;
+}
+

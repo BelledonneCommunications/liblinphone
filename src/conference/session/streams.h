@@ -375,16 +375,35 @@ public:
 	Stream * getStream(int index){
 		return getStream(static_cast<size_t>(index));
 	}
+
 	/**
 	 * Lookup the main stream for a given stream type.
 	 */
 	Stream * lookupMainStream(SalStreamType type);
-	Stream * lookupStream(const SalStreamType type, const std::string & label) const;
-	VideoStream *lookupItcStream(VideoStream *refStream) const;
-	Stream * lookupVideoStream (MediaStreamDir dir);
-	Stream * lookupVideoStream ( MSFilterId id);
-	bool compareVideoColor(MSMireControl &cl, MediaStreamDir dir, const std::string &label) const;
-	bool checkRtpSession() const;
+
+	template <typename _functor, typename... Args>
+	Stream * lookupStream(_functor func, Args... args) const {
+		for (auto &stream : mStreams){
+			if (!stream) continue;
+			if (func(stream.get(), args...)){
+				return stream.get();
+			}
+		}
+		return nullptr;
+	}
+
+	template <typename _interface, typename _functor, typename... Args>
+	_interface * lookupStreamInterface(_functor func, Args... args){
+		Stream * s = lookupStream(func, args...);
+		if (s){
+			_interface *iface = dynamic_cast<_interface*>(s);
+			if (iface == nullptr){
+				lError() << __func__ << ": stream " << s << " cannot be casted to " << typeid(_interface).name();
+			}
+			return iface;
+		}
+		return nullptr;
+	}
 
 	/*
 	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.
@@ -401,18 +420,7 @@ public:
 		}
 		return nullptr;
 	}
-	template <typename _interface>
-	_interface * lookupVideoStreamInterface(MediaStreamDir dir){
-		Stream *s = lookupVideoStream(dir);
-		if (s){
-			_interface *iface = dynamic_cast<_interface*>(s);
-			if (iface == nullptr){
-				lError() << "lookupVideoStreamInterface(): stream " << s << " cannot be casted to " << typeid(_interface).name();
-			}
-			return iface;
-		}
-		return nullptr;
-	}
+	
 	const std::vector<std::unique_ptr<Stream>> & getStreams(){
 		return mStreams;
 	}

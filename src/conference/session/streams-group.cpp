@@ -31,7 +31,6 @@
 #include "nat/ice-service.h"
 #include "linphone/core.h"
 #include "mixers.h"
-#include "mediastreamer2/msanalysedisplay.h"
 #include "mediastreamer2/mediastream.h"
 
 #include <iomanip>
@@ -349,124 +348,16 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 	mAuthTokenVerified = value;
 }
 
-Stream * StreamsGroup::lookupStream(const SalStreamType type, const std::string & label) const {
-	for (auto &s : mStreams){
-		if (!s) continue;
-		const auto streamLabel = s->getLabel();
-		if ((s->getType() == type) && (label.compare(streamLabel) == 0)) {
-			return s.get();
-		}
-	}
-	return nullptr;
-}
 
-VideoStream *StreamsGroup::lookupItcStream(VideoStream *refStream) const {
-#ifdef VIDEO_ENABLED
-	for (auto &stream : mStreams){
-		if (!stream) continue;
-		const auto streamLabel = stream->getLabel();
-		if ((stream->getType() == SalVideo) && (refStream->label && strcmp(refStream->label, streamLabel.c_str()) == 0)) {
-			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
-			MediaStream *ms = s->getMediaStream();
-			if (ms) {
-				VideoStream *vs = (VideoStream *)ms;
-				if (vs != refStream)
-					return vs;
-			}
-		}
-	}
-#endif // VIDEO_ENABLED
-	return nullptr;
-}
-
-
-bool StreamsGroup::compareVideoColor(MSMireControl &cl, MediaStreamDir dir, const string &label) const {
-	for (auto &stream : mStreams){
-		if (!stream) continue;
-		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
-		if(stream->getType() == SalVideo) {
-			MediaStream *ms = s->getMediaStream();
-			if (ms && media_stream_get_direction(ms) == dir) {
-				VideoStream *vs = (VideoStream *)ms;
-				if ((label.empty() || label.compare(vs->label)==0) && vs->output && ms_filter_get_id(vs->output)== MS_ANALYSE_DISPLAY_ID){
-					return (ms_filter_call_method(vs->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0) ;
-				}
-			}
-		}
-	}
-	return false;
-}
-
-bool StreamsGroup::checkRtpSession() const {
-	for (auto &stream : mStreams){
-		if (!stream) continue;
-		MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
-		if(stream->getType() == SalVideo) {
-			MediaStream *ms = s->getMediaStream();
-			RtpSession *rtp_session = ms->sessions.rtp_session;
-			if (!rtp_session) {
-				lInfo() << "StreamsGroup::checkRtpSession(): session empty";
-				return false;
-			}
-			const rtp_stats_t *rtps = rtp_session_get_stats(rtp_session);
-			switch (media_stream_get_direction(ms)) {
-				case MediaStreamRecvOnly:
-					// Can be 0 if it's not attached with filter
-					break;
-				case MediaStreamSendOnly:
-					if (rtps->packet_sent < 5) {
-						return false;
-					}
-					break;
-				case MediaStreamSendRecv:
-					if (rtps->packet_recv < 5 || rtps->packet_sent < 5) {
-						return false;
-					}
-					break;
-				default:
-					break;
-			}
-		}
-	}
-	return true;
-}
 
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
-	for (auto &stream : mStreams){
-		if (!stream) continue;
-		if (stream->isMain() && stream->getType() == type){
-			return stream.get();
-		}
-	}
-	return nullptr;
+	auto lambda = [] (Stream *s, SalStreamType type) {
+		return s->isMain() && s->getType() == type;
+	};
+	return lookupStream(lambda,type);
 }
 
-Stream * StreamsGroup::lookupVideoStream ( MediaStreamDir dir) {
-	for (auto &stream : mStreams){
-		if (stream && (stream->getType() == SalVideo)){
-			Stream *s = stream.get();
-			MS2Stream *iface = dynamic_cast<MS2Stream*>(s);
-			if (media_stream_get_direction(iface->getMediaStream()) == dir) {
-				return stream.get();
-			}
-		}
-	}
-	return nullptr;
-}
 
-Stream * StreamsGroup::lookupVideoStream ( MSFilterId id) {
-	for (auto &stream : mStreams){
-		if (stream && (stream->getType() == SalVideo)){
-			MS2Stream *s  =  dynamic_cast<MS2Stream *>(stream.get());
-			MediaStream *ms = s->getMediaStream();
-			VideoStream *vs = (VideoStream *)ms;
-			if (vs && vs->source && ms_filter_get_id(vs->source)== id){
-				return stream.get();
-			}
-		}
-	}
-	return nullptr;
-}
 
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
@@ -678,6 +569,5 @@ void StreamsGroup::unjoinMixerSession(){
 	detachMixers();
 	mMixerSession = nullptr;
 }
-
 
 LINPHONE_END_NAMESPACE

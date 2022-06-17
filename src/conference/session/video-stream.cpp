@@ -36,6 +36,7 @@
 #include "linphone/core.h"
 #include "mediastreamer2/msitc.h"
 
+
 using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -427,6 +428,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		}
 		if (ok) {
 			const auto & streamCfg = vstream.getActualConfiguration();
+			auto lambda = [] (Stream *s, const std::string & label, const size_t &index) {
+				return s->getType() == SalVideo && label.compare(s->getLabel())==0 && s->getIndex() != index;
+			};
 
 			// Only activate frame marking if we are using VP8
 			if (streamCfg.getFrameMarkingExtensionId() > 0 && usedPt == 96) {
@@ -435,8 +439,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			}
 
 			if (videoMixer == nullptr && !label.empty() && dir == MediaStreamSendOnly && isThumbnail) {
-				itcStream = getGroup().lookupItcStream(mStream);
-				if (itcStream) {
+				MS2VideoStream *vs = getGroup().lookupStreamInterface<MS2VideoStream>(lambda, label, getIndex());
+				if (vs) {
+					itcStream = vs->getVideoStream();
 					itcFilter = itcStream->itcsink;
 					lInfo() << "[mix to all] this thumbnail stream " << mStream << " find itcStream " << itcStream << " with label " << label;
 				} else {
@@ -455,8 +460,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 
 				if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !isThumbnail) {
 					link_video_stream_with_itc_sink(mStream);
-					itcStream = getGroup().lookupItcStream(mStream);
-					if (itcStream){
+					MS2VideoStream *vs = getGroup().lookupStreamInterface<MS2VideoStream>(lambda, label, getIndex());
+					if (vs){
+						itcStream = vs->getVideoStream();
 						lInfo() << "[mix to all] this normal stream " << mStream << " find itcStream " << itcStream << " with label " << label;
 						ms_filter_call_method(mStream->itcsink,MS_ITC_SINK_CONNECT,itcStream->source);
 					}
