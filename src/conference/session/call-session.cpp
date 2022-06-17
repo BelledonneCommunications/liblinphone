@@ -42,6 +42,15 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const std::map<CallSession::PredefinedSubjectType, std::string> CallSession::predefinedSubject{
+	{ CallSession::PredefinedSubjectType::Conference, "Conference" },
+	{ CallSession::PredefinedSubjectType::InternalUpdate, "ICE processing concluded" },
+	{ CallSession::PredefinedSubjectType::Refresh, "Refreshing" },
+	{ CallSession::PredefinedSubjectType::MediaChange, "Media change" },
+	{ CallSession::PredefinedSubjectType::CallOnHold, "Call on hold" },
+	{ CallSession::PredefinedSubjectType::BothPartiesOnHold, "Call on hold for me too" }
+};
+
 // =============================================================================
 
 int CallSessionPrivate::computeDuration () const {
@@ -765,13 +774,13 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 		}
 		if (!conference) {
 			if (isInConference())
-				newSubject = "Conference";
+				newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::Conference);
 			else if (q->getParams()->getPrivate()->getInternalCallUpdate())
-				newSubject = "ICE processing concluded";
+				newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::InternalUpdate);
 			else if (q->getParams()->getPrivate()->getNoUserConsent())
-				newSubject = "Refreshing";
+				newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::Refresh);
 			else
-				newSubject = "Media change";
+				newSubject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::MediaChange);
 		}
 	}
 	char * contactAddressStr = NULL;
@@ -1799,6 +1808,11 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 	}
 }
 
+void CallSession::addPendingAction(std::function<LinphoneStatus()> f) {
+	L_D();
+	d->pendingActions.push(f);
+}
+
 // -----------------------------------------------------------------------------
 
 bool CallSession::isEarlyState (CallSession::State state) {
@@ -1819,9 +1833,11 @@ bool CallSession::isEarlyState (CallSession::State state) {
 	}
 }
 
-void CallSession::addPendingAction(std::function<LinphoneStatus()> f) {
-	L_D();
-	d->pendingActions.push(f);
+bool CallSession::isPredefinedSubject (const std::string & subject) {
+	return std::find_if(CallSession::predefinedSubject.cbegin(), CallSession::predefinedSubject.cend(), [&subject] (const auto & element) {
+		return (subject.compare(element.second) == 0);
+	}) != CallSession::predefinedSubject.cend();
+
 }
 
 LINPHONE_END_NAMESPACE

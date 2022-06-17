@@ -2752,10 +2752,10 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	}
 	if (!conference) {
 		if (resultDesc->hasDir(SalStreamSendRecv)) {
-			subject = "Call on hold";
+			subject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::CallOnHold);
 		} else if (resultDesc->hasDir(SalStreamRecvOnly)
 					 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote)) {	// Stream is inactive from Remote
-			subject = "Call on hold for me too";
+			subject = CallSession::predefinedSubject.at(CallSession::PredefinedSubjectType::BothPartiesOnHold);
 		} else {
 			lError() << "No reason to pause this call, it is already paused or inactive";
 			return -1;

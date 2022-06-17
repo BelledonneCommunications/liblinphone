@@ -42,6 +42,7 @@ public:
 
 protected:
 	void writeCustomParamsToConfigFile (LinphoneConfig *config, std::string configKey) const;
+	void readCustomParamsFromConfigFile (LinphoneConfig *config, const char * key);
 
 private:
 	static const std::string paramPrefix;

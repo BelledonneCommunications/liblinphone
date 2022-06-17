@@ -655,8 +655,8 @@ void liblinphone_tester_uninit(void);
 int liblinphone_tester_set_log_file(const char *filename);
 
 // Add internal callback for subscriptions and notifications
-LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies);
-void setup_mgr_for_conference(LinphoneCoreManager *mgr);
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies, const char *conference_version);
+void setup_mgr_for_conference(LinphoneCoreManager *mgr, const char *conference_version);
 void setup_conference_info_cbs(LinphoneCoreManager * mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 void check_conference_ssrc(LinphoneConference * local_conference, LinphoneConference * remote_conference);

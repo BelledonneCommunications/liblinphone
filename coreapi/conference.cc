@@ -1972,7 +1972,8 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 					if (participant) {
 						if (device) {
 							const auto deviceAddr = device->getAddress();
-							const auto & remoteContactAddress = IdentityAddress(*cppCall->getActiveSession()->getRemoteContactAddress());
+							const auto & remoteContactAddress(*cppCall->getActiveSession()->getRemoteContactAddress());
+							const IdentityAddress newDeviceAddress(remoteContactAddress);
 							if (device->updateAddress()) {
 								time_t creationTime = time(nullptr);
 								notifyParticipantDeviceAdded(creationTime, false, participant, device);
@@ -1980,13 +1981,13 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 								if (!device->getAddress().isValid()) {
 									lError() << "Device " << device << " linked to session " << session << " and participant " << participant->getAddress() << " has not yet a valid address";
 								}
-							} else if (deviceAddr != remoteContactAddress) {
+							} else if (deviceAddr != newDeviceAddress) {
 								// The remote contact address of the device changed during the call. This may be caused by a call that started before the registration was completed
-								lInfo() << "Updating address of participant device " << device << " with session " << device->getSession() << " from " << deviceAddr << " to " << remoteContactAddress;
+								lInfo() << "Updating address of participant device " << device << " with session " << device->getSession() << " from " << deviceAddr << " to " << newDeviceAddress;
 								time_t creationTime = time(nullptr);
 								// As the device changed address, notify that the current device has been removed
 								notifyParticipantDeviceRemoved(creationTime, false, participant, device);
-								auto otherDevice = participant->findDevice(remoteContactAddress);
+								auto otherDevice = participant->findDevice(newDeviceAddress);
 								// If a device with the same address has been found, then remove it from the participant list and copy subscription event.
 								// Otherwise, notify that it has been added
 								if (otherDevice) {
@@ -2056,13 +2057,17 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 				const auto & device = findParticipantDevice(session);
 				const auto & deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
 				if (session && device && ((deviceState == ParticipantDevice::State::Present) || (deviceState == ParticipantDevice::State::Joining))) {
-
 					const auto op = session->getPrivate()->getOp();
 					// The remote participant requested to change subject
 					if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
-						// Handle subject change
-						lInfo() << "conference " << getConferenceAddress() << " changed subject to \"" << op->getSubject() << "\"";
-						setSubject(op->getSubject());
+						const auto & subject = op->getSubject();
+						auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
+						auto conferenceProtocol = protocols.find("conference");
+						if (((conferenceProtocol != protocols.end()) && (conferenceProtocol->second >= Utils::Version(1, 0))) || !CallSession::isPredefinedSubject(subject)) {
+							// Handle subject change
+							lInfo() << "conference " << getConferenceAddress() << " changed subject to \"" << subject << "\"";
+							setSubject(subject);
+						}
 					}
 				}
 			}
@@ -3222,7 +3227,6 @@ void RemoteConference::setSubject (const std::string &subject) {
 	if (session) {
 		if (subject.compare(pendingSubject) != 0) {
 			pendingSubject = subject;
-			Conference::setSubject(subject);
 			session->update(nullptr, CallSession::UpdateMethod::Default, subject);
 
 			time_t creationTime = time(nullptr);

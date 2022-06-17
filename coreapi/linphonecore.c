@@ -36,8 +36,8 @@
 #include "logger/logger.h"
 #include "sqlite3_bctbx_vfs.h"
 
-#include "../src/chat/modifier/file-transfer-chat-message-modifier.h"
-#include "../src/content/file-transfer-content.h"
+#include "chat/modifier/file-transfer-chat-message-modifier.h"
+#include "content/file-transfer-content.h"
 
 #include <math.h>
 #include <sys/types.h>
@@ -3062,6 +3062,7 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
+		lc->conference_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->conferenceVersionAsString()));
 		lc->groupchat_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->groupChatVersionAsString()));
 		lc->ephemeral_version = ms_strdup(L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->ephemeralVersionAsString()));
 
@@ -7373,6 +7374,10 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
 	lc->call_logs=bctbx_list_free(lc->call_logs);
 
+	if (lc->conference_version){
+		ms_free(lc->conference_version);
+		lc->conference_version = NULL;
+	}
 	if (lc->groupchat_version){
 		ms_free(lc->groupchat_version);
 		lc->groupchat_version = NULL;

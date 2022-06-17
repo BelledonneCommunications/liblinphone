@@ -28,7 +28,11 @@ static void simple_account_creation(void) {
 	int default_index = linphone_config_get_int(linphone_core_get_config(marie->lc), "sip", "default_proxy", 0);
 
 	BC_ASSERT_PTR_NOT_NULL(marie_account);
-	BC_ASSERT_PTR_NOT_NULL(linphone_account_get_params(marie_account));
+	const LinphoneAccountParams *initial_params = linphone_account_get_params(marie_account);
+	BC_ASSERT_PTR_NOT_NULL(initial_params);
+	if (initial_params) {
+		BC_ASSERT_STRING_EQUAL(linphone_account_params_get_custom_param(initial_params, "hidden"), "1");
+	}
 
 	// Use default_index from config file so that the account params is already configured
 	LinphoneAccountParams *params = linphone_account_params_new_with_config(marie->lc, default_index);

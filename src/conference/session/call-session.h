@@ -91,6 +91,17 @@ public:
 		Update = 2
 	};
 
+	enum class PredefinedSubjectType {
+		Conference = 0,
+		InternalUpdate = 1,
+		Refresh = 2,
+		MediaChange = 3,
+		CallOnHold = 4,
+		BothPartiesOnHold = 5
+	};
+
+	static const std::map<PredefinedSubjectType, std::string> predefinedSubject;
+
 	CallSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, CallSessionListener *listener);
 	void setListener(CallSessionListener *listener);
 	void setStateToEnded();
@@ -159,6 +170,8 @@ public:
 	//const LinphoneErrorInfo * getErrorInfoCache () const;
 
 	void addPendingAction(std::function<LinphoneStatus()> f);
+
+	static bool isPredefinedSubject (const std::string & subject);
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);

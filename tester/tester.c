@@ -3736,8 +3736,7 @@ static void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, Li
 	linphone_core_set_user_data(lcm->lc, lcm);
 }
 
-void setup_mgr_for_conference(LinphoneCoreManager *mgr) {
-
+void setup_mgr_for_conference(LinphoneCoreManager *mgr, const char *conference_version) {
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
 	// Add subscribe and notify received here as when a participant is added, we must wait for its notify is the call goes to StreamRunning
@@ -3752,12 +3751,21 @@ void setup_mgr_for_conference(LinphoneCoreManager *mgr) {
 	int* subscription_received = (int *)ms_new0(int, 1);
 	*subscription_received = 0;
 	mgr->user_info = subscription_received;
+
+	configure_core_for_conference (mgr->lc, NULL, NULL, FALSE);
+
+	if (conference_version) {
+		char *spec = bctbx_strdup_printf("conference/%s", conference_version);
+		linphone_core_remove_linphone_spec(mgr->lc, "conference");
+		linphone_core_add_linphone_spec(mgr->lc, spec);
+		bctbx_free(spec);
+	}
 }
 
-LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies) {
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies, const char *conference_version) {
 	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check(rc_file, check_for_proxies);
 
-	setup_mgr_for_conference(mgr);
+	setup_mgr_for_conference(mgr, conference_version);
 
 	return mgr;
 }

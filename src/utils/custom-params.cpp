@@ -61,4 +61,20 @@ void CustomParams::writeCustomParamsToConfigFile (LinphoneConfig *config, std::s
 	}
 }
 
+void CustomParams::readCustomParamsFromConfigFile (LinphoneConfig *config, const char * key) {
+	bctbx_list_t * param_names = linphone_config_get_keys_names_list(config, key);
+	for(; param_names != NULL ; param_names = param_names->next) {
+		const char * param_name = (const char *)param_names->data;
+		// If it is a custom parameter
+		if (param_name && strstr(param_name,paramPrefix.c_str())) {
+			const std::string value(linphone_config_get_string(config, key, param_name,""));
+			std::string param(param_name);
+			const auto start_param_name = param.find(paramPrefix);
+			const auto prunedKey = param.substr(start_param_name + paramPrefix.size());
+			lInfo() << "Adding custom parameter " << prunedKey << " with value " << value << " from config section " << std::string(key);
+			addCustomParam(prunedKey, value);
+		}
+	}
+}
+
 LINPHONE_END_NAMESPACE

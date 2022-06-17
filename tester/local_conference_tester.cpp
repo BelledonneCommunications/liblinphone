@@ -148,7 +148,7 @@ class ClientConference :public CoreManager {
 public:
 	ClientConference(std::string rc,Address factoryUri):CoreManager(rc,[this,factoryUri] {
 		_configure_core_for_conference(mMgr,L_GET_C_BACK_PTR(&factoryUri));
-		setup_mgr_for_conference(getCMgr());
+		setup_mgr_for_conference(getCMgr(), NULL);
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 		linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
@@ -840,7 +840,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		setup_mgr_for_conference(marie.getCMgr());
+		setup_mgr_for_conference(marie.getCMgr(), NULL);
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 
@@ -1027,7 +1027,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		setup_mgr_for_conference(marie.getCMgr());
+		setup_mgr_for_conference(marie.getCMgr(), NULL);
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 
@@ -1149,7 +1149,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		setup_mgr_for_conference(marie.getCMgr());
+		setup_mgr_for_conference(marie.getCMgr(), NULL);
 		coresList = bctbx_list_append(coresList, marie.getLc());
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie.getLc()));
 
@@ -2009,7 +2009,6 @@ static void multidomain_group_chat_room (void) {
 			return true;
 		}));
 
-
 		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "message blabla");
 		linphone_chat_message_send(msg);
 		BC_ASSERT_TRUE(CoreManagerAssert({focusExampleDotOrg,marie,pauline,michelle}).wait([msg] {
@@ -2025,8 +2024,6 @@ static void multidomain_group_chat_room (void) {
 
 
 		// now change focus in order to get conference with multiple domain.
-
-
 		focusAuth1DotExampleDotOrg.registerAsParticipantDevice(marie);
 		focusAuth1DotExampleDotOrg.registerAsParticipantDevice(pauline);
 		focusAuth1DotExampleDotOrg.registerAsParticipantDevice(michelle);
@@ -2074,7 +2071,7 @@ static void multidomain_group_chat_room (void) {
 		//great, now I want to see what happened if marie restart.
 		coresList = bctbx_list_remove(coresList, marie.getLc());
 		marie.reStart();
-		setup_mgr_for_conference(marie.getCMgr());
+		setup_mgr_for_conference(marie.getCMgr(), NULL);
 		coresList = bctbx_list_append(coresList, marie.getLc());
 
 		// Retrieve chat room

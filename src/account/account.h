@@ -136,6 +136,7 @@ private:
 
 	void onInternationalPrefixChanged ();
 	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
+	void onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress *audioVideoConferenceFactoryAddress);
 	void onNatPolicyChanged (LinphoneNatPolicy *policy);
 	bool customContactChanged();
 	std::list<SalAddress*> getOtherContacts();

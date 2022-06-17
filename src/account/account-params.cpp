@@ -196,8 +196,10 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	}
 	mRtpBundleEnabled = !!linphone_config_get_bool(config, key, "rtp_bundle", linphone_core_rtp_bundle_enabled(lc));
 	mRtpBundleAssumption = !!linphone_config_get_bool(config, key, "rtp_bundle_assumption", FALSE);
-	
+
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
+
+	readCustomParamsFromConfigFile (config, key);
 }
 
 AccountParams::AccountParams (const AccountParams &other) : HybridObject(other), CustomParams(other) {

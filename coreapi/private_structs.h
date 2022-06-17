@@ -764,6 +764,7 @@ namespace LinphonePrivate {
 	char *tls_key; \
 	char *ephemeral_version; \
 	char *groupchat_version; \
+	char *conference_version; \
 	LinphoneAddress *default_rls_addr; \
 	LinphoneImEncryptionEngine *im_encryption_engine; \
 	struct _LinphoneAccountCreatorService *default_ac_service; \

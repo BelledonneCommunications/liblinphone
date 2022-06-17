@@ -222,12 +222,14 @@ void configure_core_for_conference (LinphoneCore *core, const char* username, co
 	linphone_core_set_primary_contact(core, newIdentity);
 	bctbx_free(newIdentity);
 	linphone_core_enable_conference_server(core, server);
-	char *factoryUri = linphone_address_as_string(factoryAddr);
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);
-	linphone_proxy_config_edit(proxy);
-	linphone_proxy_config_set_conference_factory_uri(proxy, factoryUri);
-	linphone_proxy_config_done(proxy);
-	bctbx_free(factoryUri);
+	if (factoryAddr) {
+		char *factoryUri = linphone_address_as_string(factoryAddr);
+		LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);
+		linphone_proxy_config_edit(proxy);
+		linphone_proxy_config_set_conference_factory_uri(proxy, factoryUri);
+		linphone_proxy_config_done(proxy);
+		bctbx_free(factoryUri);
+	}
 }
 
 void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr) {

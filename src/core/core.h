@@ -189,6 +189,7 @@ public:
 
 	static const std::string ephemeralVersionAsString();
 	static const std::string groupChatVersionAsString();
+	static const std::string conferenceVersionAsString();
 
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *sal_msg);
 

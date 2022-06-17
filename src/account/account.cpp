@@ -216,6 +216,9 @@ void Account::applyParamsChanges () {
 	if (mOldParams == nullptr || mOldParams->mConferenceFactoryUri != mParams->mConferenceFactoryUri)
 		onConferenceFactoryUriChanged(mParams->mConferenceFactoryUri);
 
+	if (mOldParams == nullptr || ((mOldParams->mAudioVideoConferenceFactoryAddress != nullptr) ^ (mParams->mAudioVideoConferenceFactoryAddress != nullptr)) ||  ((mOldParams->mAudioVideoConferenceFactoryAddress != nullptr) && (mParams->mAudioVideoConferenceFactoryAddress != nullptr) && linphone_address_equal(mOldParams->mAudioVideoConferenceFactoryAddress, mParams->mAudioVideoConferenceFactoryAddress)))
+		onAudioVideoConferenceFactoryAddressChanged(mParams->mAudioVideoConferenceFactoryAddress);
+
 	if (mOldParams == nullptr || mOldParams->mNatPolicy != mParams->mNatPolicy)
 		if (mParams->mNatPolicy != nullptr) onNatPolicyChanged(mParams->mNatPolicy);
 
@@ -1104,15 +1107,55 @@ void Account::onInternationalPrefixChanged () {
 }
 
 void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri) {
-	std::string groupchatSpec("groupchat/"); 
+	std::string conferenceSpec("conference/");
+	conferenceSpec.append(Core::conferenceVersionAsString());
+	std::string groupchatSpec("groupchat/");
 	groupchatSpec.append(Core::groupChatVersionAsString());
 	std::string ephemeralSpec("ephemeral/");
 	ephemeralSpec.append(Core::ephemeralVersionAsString());
 
 	if (!conferenceFactoryUri.empty()) {
 		if (mCore) {
+			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(conferenceSpec));
 			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(groupchatSpec));
 			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(ephemeralSpec));
+		}
+	} else if (mCore) {
+		bool remove = true;
+		bool removeAudioVideoConfAddress = true;
+		//Check that no other account needs the specs before removing it
+		for (bctbx_list_t *it = mCore->sip_conf.accounts; it; it = it->next) {
+			if (it->data != this->toC()) {
+				const char *confUri = linphone_account_params_get_conference_factory_uri(linphone_account_get_params((LinphoneAccount *) it->data));
+				if (confUri && strlen(confUri)) {
+					remove = false;
+					removeAudioVideoConfAddress = false;
+					break;
+				}
+
+				const auto audioVideoConfUri = linphone_account_params_get_audio_video_conference_factory_address(linphone_account_get_params((LinphoneAccount *) it->data));
+				if (audioVideoConfUri) {
+					removeAudioVideoConfAddress = false;
+				}
+			}
+		}
+		if (removeAudioVideoConfAddress) {
+			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(conferenceSpec));
+		}
+		if (remove) {
+			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(groupchatSpec));
+			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(ephemeralSpec));
+		}
+	}
+}
+
+void Account::onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress * audioVideoConferenceFactoryAddress) {
+	std::string conferenceSpec("conference/");
+	conferenceSpec.append(Core::conferenceVersionAsString());
+
+	if (audioVideoConferenceFactoryAddress) {
+		if (mCore) {
+			linphone_core_add_linphone_spec(mCore, L_STRING_TO_C(conferenceSpec));
 		}
 	} else if (mCore) {
 		bool remove = true;
@@ -1120,15 +1163,15 @@ void Account::onConferenceFactoryUriChanged (const std::string &conferenceFactor
 		for (bctbx_list_t *it = mCore->sip_conf.accounts; it; it = it->next) {
 			if (it->data != this->toC()) {
 				const char *confUri = linphone_account_params_get_conference_factory_uri(linphone_account_get_params((LinphoneAccount *) it->data));
-				if (confUri && strlen(confUri)) {
+				const auto audioVideoConfUri = linphone_account_params_get_audio_video_conference_factory_address(linphone_account_get_params((LinphoneAccount *) it->data));
+				if ((confUri && strlen(confUri)) || audioVideoConfUri) {
 					remove = false;
 					break;
 				}
 			}
 		}
 		if (remove) {
-			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(groupchatSpec));
-			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(ephemeralSpec));
+			linphone_core_remove_linphone_spec(mCore, L_STRING_TO_C(conferenceSpec));
 		}
 	}
 }

@@ -72,6 +72,7 @@ public:
 
 	const IdentityAddress & getAddress () const;
 	void setAddress (const IdentityAddress & address);
+	void setAddress (const Address & address);
 	bool updateAddress();
 	inline const std::string &getLabel () const { return mLabel; }
 	inline void setLabel (const std::string &label) { mLabel = label; };

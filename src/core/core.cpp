@@ -49,7 +49,7 @@
 #include "core/core-listener.h"
 #include "core/core-p.h"
 #include "chat/chat-room/chat-room-p.h"
-#include "../ldap/ldap.h"
+#include "ldap/ldap.h"
 #include "logger/logger.h"
 #include "paths/paths.h"
 #include "linphone/utils/utils.h"
@@ -80,6 +80,7 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const Utils::Version CorePrivate::conferenceProtocolVersion(1, 0);
 const Utils::Version CorePrivate::groupChatProtocolVersion(1, 1);
 const Utils::Version CorePrivate::ephemeralProtocolVersion(1, 1);
 
@@ -786,7 +787,11 @@ std::string Core::getSpecs() const {
 	return Utils::join(Utils::toVector(d->specs), ",");
 }
 
-
+const std::string Core::conferenceVersionAsString() {
+	std::ostringstream os;
+	os << CorePrivate::conferenceProtocolVersion;
+	return os.str();
+}
 
 // ---------------------------------------------------------------------------
 // Friends.

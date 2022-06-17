@@ -230,6 +230,10 @@ VideoStream * linphone_core_get_preview_stream(LinphoneCore *lc) {
 	return lc->previewstream;
 }
 
+const char *linphone_core_get_conference_version(const LinphoneCore *lc){
+	return lc->conference_version;
+}
+
 const char *linphone_core_get_groupchat_version(const LinphoneCore *lc){
 	return lc->groupchat_version;
 }

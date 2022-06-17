@@ -50,7 +50,7 @@ ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, 
 	: mParticipant(participant), mGruu(IdentityAddress()), mName(name), mSession(session) {
 	mTimeOfJoining = time(nullptr);
 	if (mSession && mSession->getRemoteContactAddress()) {
-		mGruu = IdentityAddress(*mSession->getRemoteContactAddress());
+		setAddress(*mSession->getRemoteContactAddress());
 	}
 	updateMediaCapabilities();
 	updateStreamAvailabilities();
@@ -86,12 +86,26 @@ const IdentityAddress & ParticipantDevice::getAddress() const {
 }
 
 void ParticipantDevice::setAddress (const IdentityAddress & address) {
+	setAddress (address.asAddress());
+}
+
+void ParticipantDevice::setAddress (const Address & address) {
 	mGruu = address;
+	if (address.hasParam("+org.linphone.specs")) {
+		const auto &linphoneSpecs = address.getParamValue("+org.linphone.specs");
+		setCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size()-2));
+	}
 }
 
 bool ParticipantDevice::updateAddress() {
 	if (!mGruu.isValid() && mSession && mSession->getRemoteContactAddress()) {
-		mGruu = IdentityAddress(*mSession->getRemoteContactAddress());
+		Address remoteContactAddress(*mSession->getRemoteContactAddress());
+		mGruu = IdentityAddress(remoteContactAddress);
+		if (remoteContactAddress.hasParam("+org.linphone.specs")) {
+			const auto &linphoneSpecs = remoteContactAddress.getParamValue("+org.linphone.specs");
+			// First and last characters are ", hence ignore them
+			setCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size()-2));
+		}
 		return true;
 	}
 	return false;
