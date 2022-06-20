@@ -314,6 +314,11 @@ void AccountParams::setOutboundProxyEnabled (bool enable) {
 
 	// Use only the proxy as route
 	if (enable) {
+		if (!mProxyAddress) {
+			lError() << "Can't enable outbound proxy without having set the proxy address first!";
+			return;
+		}
+		
 		mRoutes = bctbx_list_append(mRoutes, linphone_address_clone(mProxyAddress));
 		mRoutesString = bctbx_list_append(mRoutesString, bctbx_strdup(mProxy.c_str()));
 	}
