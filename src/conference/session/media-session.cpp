@@ -894,7 +894,6 @@ void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & 
 			getParams()->enableRealtimeText(true);
 
 		const auto & cCore = q->getCore()->getCCore();
-
 		if (isInLocalConference) {
 			// If the call is in a local conference, then check conference capabilities to know whether the video must be enabled or not
 			bool isConferenceVideoCapabilityOn = false;
@@ -1831,7 +1830,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	encList.push_back(getParams()->getMediaEncryption());
 
-	bool conferenceCreated = true;
+	bool conferenceCreated = false;
 	bool isConferenceLayoutActiveSpeaker = false;
 	bool isVideoConferenceEnabled = false;
 	ConferenceLayout confLayout = ConferenceLayout::ActiveSpeaker;
@@ -1840,6 +1839,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	if (conference) {
 		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 		const auto & currentConfParams = cppConference->getCurrentParams();
+		const auto & conferenceState = cppConference->getState();
 
 		participantDevice = isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(q->getSharedFromThis());
 		if (participantDevice) {
@@ -1850,12 +1850,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		confLayout = (participantDevice && isInLocalConference) ? getRemoteParams()->getConferenceVideoLayout() : getParams()->getConferenceVideoLayout();
 		isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
 		if (isInLocalConference) {
-			// If the conference is dialing out to participants and an internal update (i.e. ICE reINVITE or capability negitiations reINVITE) occurs
+			// If the conference is dialing out to participants and an internal update (i.e. ICE reINVITE or capability negotiations reINVITE) occurs
 			if (getParams()->getPrivate()->getInternalCallUpdate() && (direction == LinphoneCallOutgoing)) {
 				conferenceCreated = (deviceState == ParticipantDevice::State::Present);
+			} else {
+				conferenceCreated = !(conferenceState == ConferenceInterface::State::Instantiated);
 			}
 		} else {
-			const auto & conferenceState = cppConference->getState();
 			conferenceCreated = !((conferenceState == ConferenceInterface::State::Instantiated) || (conferenceState == ConferenceInterface::State::CreationPending));
 		}
 	}
@@ -1884,9 +1885,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
 
-	// If the call is linked to a conference, search stream with content main first
 	auto callVideoEnabled = (!conferenceCreated && conference) ? getCurrentParams()->videoEnabled() : getParams()->videoEnabled();
 	bool addVideoStream = callVideoEnabled;
+	// If the call is linked to a conference, search stream with content main first
 	// Check if there was a main stream earlier on in the SDP.
 	// It is necessary to check for both Grid and ActiveSpeaker layout in order to cover the case when the layout is changed
 	const SalStreamDescription &oldGridLayoutMainVideoStream = refMd ? refMd->findStreamWithContent("main") : Utils::getEmptyConstRefObject<SalStreamDescription>();
@@ -2399,12 +2400,13 @@ void MediaSessionPrivate::queueIceCompletionTask(const std::function<LinphoneSta
 }
 
 void MediaSessionPrivate::runIceCompletionTasks(){
+	L_Q();
 	while(!iceDeferedCompletionTasks.empty()){
 		const auto task = iceDeferedCompletionTasks.front();
 		LinphoneStatus result = task();
 		iceDeferedCompletionTasks.pop();
 		if (result != 0) {
-			pendingActions.push(task);
+			q->addPendingAction(task);
 		}
 	}
 }
@@ -2413,12 +2415,13 @@ void MediaSessionPrivate::queueIceGatheringTask(const std::function<LinphoneStat
 }
 
 void MediaSessionPrivate::runIceGatheringTasks(){
+	L_Q();
 	while(!iceDeferedGatheringTasks.empty()){
 		const auto task = iceDeferedGatheringTasks.front();
 		LinphoneStatus result = task();
 		iceDeferedGatheringTasks.pop();
 		if (result != 0) {
-			pendingActions.push(task);
+			q->addPendingAction(task);
 		}
 	}
 }
@@ -2726,8 +2729,18 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		ms_free(contactAddressStr);
 
 		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE) && contactAddress.hasParam("isfocus")) {
-			lWarning() << "Unable to pause media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") because it is part of a conference. Please use the dedicated conference API to execute the desired actions";
-			return -1;
+			if (listener) {
+				auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
+				if (callConference) {
+					auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
+					if (conference->findParticipantDevice(q->getSharedFromThis())) {
+						lWarning() << "Unable to pause media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") because it is part of a conference. Please use the dedicated conference API to execute the desired actions";
+						return -1;
+					}
+				} else {
+					lWarning() << "The contact address " << contactAddress << " of the call has isfocus attribute however it doesn't seems to be part of a conference.";
+				}
+			}
 		}
 
 		params->getPrivate()->setInConference(false);
@@ -3071,7 +3084,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 // -----------------------------------------------------------------------------
 
 
-void MediaSessionPrivate::startAccept(){
+LinphoneStatus MediaSessionPrivate::startAccept(){
 	L_Q();
 
 	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
@@ -3091,11 +3104,11 @@ void MediaSessionPrivate::startAccept(){
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
 		if ((linphone_core_get_media_resource_mode(q->getCore()->getCCore()) == LinphoneExclusiveMediaResources) && linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
-			pendingActions.push([this] {
+			q->addPendingAction([this] {
 				this->startAccept();
 				return 0;
 			});
-			return;
+			return -1;
 		}
 	}
 
@@ -3138,9 +3151,11 @@ void MediaSessionPrivate::startAccept(){
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
 	} else
 		expectMediaInAck = true;
+
+	return 0;
 }
 
-void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging) {
+LinphoneStatus MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging) {
 	L_Q();
 	if (msp) {
 		setParams(new MediaSessionParams(*msp));
@@ -3160,14 +3175,13 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	auto acceptCompletionTask = [this](){
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
-		startAccept();
-		return 0;
+		return startAccept();
 	};
 	if (linphone_nat_policy_ice_enabled(natPolicy) && getStreamsGroup().prepare()){
 		queueIceGatheringTask(acceptCompletionTask);
-		return; /* Deferred until completion of ICE gathering */
+		return 0; /* Deferred until completion of ICE gathering */
 	}
-	acceptCompletionTask();
+	return acceptCompletionTask();
 }
 
 LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
@@ -3408,9 +3422,13 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 	if (d->listener)
 		wasRinging = d->listener->onCallSessionAccepted(getSharedFromThis());
 
-	d->accept(msp, wasRinging);
-	lInfo() << "MediaSession accepted";
-	return 0;
+	auto ret = d->accept(msp, wasRinging);
+	if (ret == 0) {
+		lInfo() << "MediaSession (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") has been accepted";
+	} else {
+		lInfo() << "Unable to immediately accept session " << this << " (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ")";
+	}
+	return ret;
 }
 
 LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
@@ -3652,15 +3670,14 @@ LinphoneStatus MediaSession::pause () {
 
 LinphoneStatus MediaSession::delayResume() {
 	lInfo() << "Delaying call resume";
-	L_D();
-	d->pendingActions.push([this] {return this->resume();});
+	addPendingAction([this] {return this->resume();});
 	return -1;
 }
 
 LinphoneStatus MediaSession::resume () {
 	L_D();
 	if (d->state == CallSession::State::Pausing) {
-		d->pendingActions.push([this] {return this->resume();});
+		addPendingAction([this] {return this->resume();});
 	} else if (d->state != CallSession::State::Paused) {
 		lWarning() << "we cannot resume a call that has not been established and paused before. Current state: " << Utils::toString(d->state);
 		return -1;
@@ -3672,7 +3689,7 @@ LinphoneStatus MediaSession::resume () {
 		}
 		if (linphone_core_preempt_sound_resources(getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " because sound resources cannot be preempted";
-			d->pendingActions.push([this] {
+			addPendingAction([this] {
 				return this->resume();
 			});
 			return -1;

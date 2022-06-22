@@ -183,9 +183,11 @@ void CallSessionPrivate::onCallStateChanged (LinphoneCall *call, LinphoneCallSta
 void CallSessionPrivate::executePendingActions() {
 	if ((state != CallSession::State::End) && (state != CallSession::State::Released) && (state != CallSession::State::Error)) {
 		std::queue<std::function<LinphoneStatus()>> unsuccessfulActions;
-		while (pendingActions.empty() == false) {
+		auto copyPendingActions = pendingActions;
+		while (copyPendingActions.empty() == false) {
 			// Store std::function in a temporary variable in order to take it out of the queue before executing it
-			const auto f = pendingActions.front();
+			const auto f = copyPendingActions.front();
+			copyPendingActions.pop();
 			pendingActions.pop();
 			// Execute method
 			const auto result = f();

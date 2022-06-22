@@ -3208,6 +3208,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		if (BC_ASSERT_PTR_NOT_NULL(player)){
 			BC_ASSERT_TRUE(linphone_player_open(player, recordfile) == 0);
 			BC_ASSERT_GREATER(linphone_player_get_duration(player), 5000, int, "%i");
+			linphone_player_close(player);
 		}
 		linphone_player_close(player);
 		linphone_player_unref(player);
@@ -8909,6 +8910,9 @@ static void simultaneous_toggle_video_settings_during_conference(void) {
 				BC_ASSERT_PTR_NOT_NULL(call);
 
 				if (call) {
+					const LinphoneCallParams * participant_call_params = linphone_call_get_current_params(call);
+					BC_ASSERT_FALSE(linphone_call_params_video_enabled(participant_call_params) == enable_video);
+					ms_message("%s %s video", linphone_core_get_identity(m->lc), (enable_video ? "enables" : "disables"));
 					LinphoneCallParams * new_params = linphone_core_create_call_params(c, call);
 					linphone_call_params_enable_video (new_params, enable_video);
 					linphone_call_update(call, new_params);
@@ -8921,7 +8925,6 @@ static void simultaneous_toggle_video_settings_during_conference(void) {
 			counter = 0;
 			for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 				LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-
 				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallUpdating, participants_initial_stats[counter].number_of_LinphoneCallUpdating + 1, 5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, participants_initial_stats[counter].number_of_LinphoneCallStreamsRunning + 1, 5000));
 

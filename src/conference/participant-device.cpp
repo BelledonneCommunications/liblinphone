@@ -378,7 +378,6 @@ bool ParticipantDevice::updateMediaCapabilities() {
 				textDir = getStreamDirectionFromSession(LinphoneStreamTypeText);
 			}
 		}
-
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceVideoEnabled, videoEnabled, videoDir), LinphoneStreamTypeVideo);
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceTextEnabled, textEnabled, textDir), LinphoneStreamTypeText);

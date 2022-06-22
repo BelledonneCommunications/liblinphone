@@ -695,7 +695,6 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 				}
 			}
 		}
-
 	} else {
 		lInfo() << "Unable to process event " << ev << " because conference was likely already terminated.";
 	}
@@ -889,7 +888,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
+LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 	char *addrStr = linphone_address_as_string(lAddr);
 	Address participantAddress(addrStr);
@@ -901,7 +900,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 		ConferenceAddress conferenceAddress = conf->getConferenceAddress();
 		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << conferenceAddress << "], no NOTIFY sent";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
-		return;
+		return -1;
 	}
 
 	const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(lev);
@@ -913,7 +912,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 		lError() << "Received SUBSCRIBE for conference [" << conf->getConferenceAddress()
 			<< "], device sending subscribe [" << contactAddr << "] is not known, no NOTIFY sent";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
-		return;
+		return -1;
 	}
 
 	linphone_event_accept_subscription(lev);
@@ -937,6 +936,8 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 				"] should not be higher than last notify sent by server [" << lastNotify << "]";
 		}
 	}
+
+	return 0;
 }
 
 void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state) {

@@ -54,7 +54,7 @@ public:
 	static Xsd::ConferenceInfo::MediaStatusType mediaDirectionToMediaStatus (LinphoneMediaDirection direction);
 	LocalConferenceEventHandler (Conference *conference, ConferenceListener* listener = nullptr);
 
-	void subscribeReceived (LinphoneEvent *lev);
+	LinphoneStatus subscribeReceived (LinphoneEvent *lev);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
 	std::string getNotifyForId (int notifyId, LinphoneEvent *lev);

@@ -139,6 +139,14 @@ LinphoneStatus Conference::updateMainSession() {
 		if (!currentParams->rtpBundleEnabled()) {
 			currentParams->enableRtpBundle(true);
 		}
+
+		// Update parameters based on conference capabilities
+		if (!confParams->audioEnabled()) {
+			currentParams->enableAudio(confParams->audioEnabled());
+		}
+		if (!confParams->videoEnabled()) {
+			currentParams->enableVideo(confParams->videoEnabled());
+		}
 		ret = session->update(currentParams);
 		delete currentParams;
 	}

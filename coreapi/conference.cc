@@ -246,7 +246,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		auto session = call->getActiveSession();
-		p = Participant::create(this, remoteAddress, session);
+		p = Participant::create(this, remoteAddress);
 		p->setFocus(false);
 		Address toAddr;
 		if (session) {
@@ -699,65 +699,90 @@ LocalConference::~LocalConference() {
 }
 
 void LocalConference::updateConferenceInformation(SalCallOp *op) {
+	auto remoteContact = op->getRemoteContactAddress();
+	if (remoteContact) {
+		char * salAddress = sal_address_as_string(remoteContact);
+		Address address = Address(std::string(salAddress));
+		if (salAddress) {
+			ms_free(salAddress);
+		}
+		auto invited = std::find_if(invitedAddresses.begin(), invitedAddresses.end(), [&address] (const auto & invitee) {
+			return address.weakEqual(invitee.asAddress());
+		}) != invitedAddresses.end();
+		if (findParticipantDevice(address) || invited || address.weakEqual(organizer.asAddress())) {
+			lInfo() << "Updating conference informations of conference " << getConferenceAddress();
+			const auto & remoteMd = op->getRemoteMediaDescription();
 
-	const auto & remoteMd = op->getRemoteMediaDescription();
+			const auto times = remoteMd->times;
 
-	const auto times = remoteMd->times;
+			// The following informations are retrieved from the received INVITE:
+			// - start and end time from the SDP active time attribute
+			// - conference active media:
+			//    - if the SDP has at least one active audio stream, audio is enabled
+			//    - if the SDP has at least one active video stream, video is enabled
+			// - Subject is got from the "Subject" header in the INVITE
+			const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
+			auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore())) ? linphone_core_video_enabled(getCore()->getCCore()) : false;
+			if(!linphone_core_conference_server_enabled(getCore()->getCCore())) {
+				lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
+			}
 
-	// The following informations are retrieved from the received INVITE:
-	// - start and end time from the SDP active time attribute
-	// - conference active media:
-	//    - if the SDP has at least one active audio stream, audio is enabled
-	//    - if the SDP has at least one active video stream, video is enabled
-	// - Subject is got from the "Subject" header in the INVITE
-	const auto audioEnabled = (remoteMd->nbActiveStreamsOfType(SalAudio) > 0);
-	auto videoEnabled = (linphone_core_conference_server_enabled(getCore()->getCCore())) ? linphone_core_video_enabled(getCore()->getCCore()) : false;
-	if(!linphone_core_conference_server_enabled(getCore()->getCCore())) {
-		lWarning() << "Video capability in a conference is not supported when a device that is not a server is hosting a conference.";
-	}
-	confParams->enableAudio(audioEnabled);
-	confParams->enableVideo(videoEnabled);
-	confParams->setSubject(op->getSubject());
-	confParams->enableOneParticipantConference(true);
-	confParams->setStatic(true);
+			bool previousVideoEnablement = confParams->videoEnabled();
+			bool previousAudioEnablement = confParams->audioEnabled();
 
-	auto session = const_pointer_cast<LinphonePrivate::MediaSession>(static_pointer_cast<LinphonePrivate::MediaSession>(getMe()->getSession()));
-	auto msp = session->getPrivate()->getParams();
-	msp->enableAudio(audioEnabled);
-	msp->enableVideo(videoEnabled);
-	msp->getPrivate()->setInConference(true);
+			confParams->enableAudio(audioEnabled);
+			confParams->enableVideo(videoEnabled);
 
-	if (times.size() > 0) {
-		const auto startTime = times.front().first;
-		const auto endTime = times.front().second;
-		confParams->setStartTime(startTime);
-		confParams->setEndTime(endTime);
-		msp->getPrivate()->setStartTime(startTime);
-		msp->getPrivate()->setEndTime(endTime);
-	}
+			if ((confParams->videoEnabled() != previousVideoEnablement) || (confParams->audioEnabled() != previousAudioEnablement)){
+				time_t creationTime = time(nullptr);
+				notifyAvailableMediaChanged(creationTime, false, getMediaCapabilities());
+			}
+			setSubject(op->getSubject());
 
-	invitedAddresses.clear();
-	const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
-	if (!resourceList.isEmpty()) {
-		auto invitees = Utils::parseResourceLists(resourceList);
-		invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
-	}
+			confParams->enableOneParticipantConference(true);
+			confParams->setStatic(true);
 
-	getMe()->setAdmin(true);
-	getMe()->setFocus(true);
+			auto session = const_pointer_cast<LinphonePrivate::MediaSession>(static_pointer_cast<LinphonePrivate::MediaSession>(getMe()->getSession()));
+			auto msp = session->getPrivate()->getParams();
+			msp->enableAudio(audioEnabled);
+			msp->enableVideo(videoEnabled);
+			msp->getPrivate()->setInConference(true);
+
+			if (times.size() > 0) {
+				const auto startTime = times.front().first;
+				const auto endTime = times.front().second;
+				confParams->setStartTime(startTime);
+				confParams->setEndTime(endTime);
+				msp->getPrivate()->setStartTime(startTime);
+				msp->getPrivate()->setEndTime(endTime);
+			}
+
+			invitedAddresses.clear();
+			const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
+			if (!resourceList.isEmpty()) {
+				auto invitees = Utils::parseResourceLists(resourceList);
+				invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
+			}
+
+			getMe()->setAdmin(true);
+			getMe()->setFocus(true);
 
 #ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	const auto & conferenceInfo = createConferenceInfo(organizer, invitedAddresses);
-	if (mainDb) {
-		lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
-		mainDb->insertConferenceInfo(conferenceInfo);
-	}
-	auto callLog = session->getLog();
-	if (callLog) {
-		callLog->setConferenceInfo(conferenceInfo);
-	}
+			auto &mainDb = getCore()->getPrivate()->mainDb;
+			const auto & conferenceInfo = createConferenceInfo(organizer, invitedAddresses);
+			if (mainDb) {
+				lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
+				mainDb->insertConferenceInfo(conferenceInfo);
+			}
+			auto callLog = session->getLog();
+			if (callLog) {
+				callLog->setConferenceInfo(conferenceInfo);
+			}
 #endif
+		} else {
+			lWarning() << "Device with address " << address << " is not allowed to update the conference because they have not been invited nor are participants to conference " << getConferenceAddress() << " nor are the organizer";
+		}
+	}
 }
 
 std::list<IdentityAddress> LocalConference::getAllowedAddresses() const {
@@ -893,22 +918,24 @@ void LocalConference::finalizeCreation() {
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
-		eventHandler->subscribeReceived(event);
-		// A client joins when the conference receives the SUBSCRIBE. This allows to ensure that no NOTIFY is missed and we don't have to necessarely wait for the client reINVITE or ICE reINVITE to start sending NOTIFYs regarding the conference to him/her
-		const LinphoneAddress *lAddr = linphone_event_get_from(event);
-		char *addrStr = linphone_address_as_string(lAddr);
-		Address participantAddress(addrStr);
-		bctbx_free(addrStr);
+		const auto ret = eventHandler->subscribeReceived(event);
+		if (ret == 0) {
+			// A client joins when the conference receives the SUBSCRIBE. This allows to ensure that no NOTIFY is missed and we don't have to necessarely wait for the client reINVITE or ICE reINVITE to start sending NOTIFYs regarding the conference to him/her
+			const LinphoneAddress *lAddr = linphone_event_get_from(event);
+			char *addrStr = linphone_address_as_string(lAddr);
+			Address participantAddress(addrStr);
+			bctbx_free(addrStr);
 
-		auto participant = findParticipant(participantAddress);
-		if (participant) {
-			const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
-			char *contactAddrStr = linphone_address_as_string(lContactAddr);
-			IdentityAddress contactAddr(contactAddrStr);
-			bctbx_free(contactAddrStr);
-			auto device = participant->findDevice(contactAddr);
-			if (device) {
-				participantDeviceJoined(participant, device);
+			auto participant = findParticipant(participantAddress);
+			if (participant) {
+				const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
+				char *contactAddrStr = linphone_address_as_string(lContactAddr);
+				IdentityAddress contactAddr(contactAddrStr);
+				bctbx_free(contactAddrStr);
+				auto device = participant->findDevice(contactAddr);
+				if (device) {
+					participantDeviceJoined(participant, device);
+				}
 			}
 		}
 		return;
@@ -1708,9 +1735,10 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		if (!confParams->oneParticipantConferenceEnabled() && (getParticipantCount() == 1) && (!preserveSession)) {
 			std::shared_ptr<LinphonePrivate::Participant> remainingParticipant = participants.front();
 			const bool lastParticipantPreserveSession = remainingParticipant->getPreserveSession();
-			if (lastParticipantPreserveSession && (remainingParticipant->getDevices().size() == 1)) {
+			auto & devices = remainingParticipant->getDevices();
+			if (lastParticipantPreserveSession && (devices.size() == 1)) {
 
-				std::shared_ptr<LinphonePrivate::MediaSession> lastSession = static_pointer_cast<LinphonePrivate::MediaSession>(remainingParticipant->getSession());
+				std::shared_ptr<LinphonePrivate::MediaSession> lastSession = static_pointer_cast<LinphonePrivate::MediaSession>(devices.front()->getSession());
 
 				if (lastSession)  {
 					lInfo() << "Participant [" << remainingParticipant << "] with " << lastSession->getRemoteAddress()->asString() << 
@@ -1810,10 +1838,20 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 }
 
 bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
-	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
-	if (!callSession)
-		return false;
-	return (bool)removeParticipant(callSession, false);
+	const auto devices = participant->getDevices();
+	bool success = true;
+	if (devices.size() > 0) {
+		for (const auto & d : devices) {
+			success &= (removeParticipant(d->getSession(), false) == 0);
+		}
+	} else {
+		lInfo() << "Remove participant with address " << participant->getAddress() << " from conference " << getConferenceAddress();
+		participants.remove(participant);
+		time_t creationTime = time(nullptr);
+		notifyParticipantRemoved(creationTime, false, participant);
+		success = true;
+	}
+	return success;
 }
 
 /* ConferenceInterface */
@@ -1846,11 +1884,18 @@ int LocalConference::terminate () {
 	auto participantIt = participants.begin();
 	while (participantIt != participants.end()) {
 		auto participant = *participantIt;
-		std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(participant->getSession());
+		const auto devices = participant->getDevices();
 		participantIt++;
-		if (session) {
-			lInfo() << "Terminating session of participant " << *participant;
-			session->terminate();
+		if (devices.size() > 0) {
+			for (const auto & d : devices) {
+				std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(d->getSession());
+				if (session) {
+					lInfo() << "Terminating session of participant device " << d->getAddress();
+					session->terminate();
+				}
+			}
+		} else {
+			removeParticipant(participant);
 		}
 	}
 
@@ -2548,15 +2593,15 @@ bool RemoteConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Cal
 
 	if (success) {
 		auto device = findParticipantDevice (call->getActiveSession());
-		const auto & p = device->getParticipant();
-
-		// In a remote conference, the participant has no session attached ot it.
-		device->setSession(nullptr);
-		device->setState(ParticipantDevice::State::Present);
-
-		if (device && p) {
-			time_t creationTime = time(nullptr);
-			notifyParticipantDeviceAdded(creationTime, false, p, device);
+		if (device) {
+			// In a remote conference, the participant has no session attached ot it.
+			device->setSession(nullptr);
+			device->setState(ParticipantDevice::State::Present);
+			const auto & p = device->getParticipant();
+			if (p) {
+				time_t creationTime = time(nullptr);
+				notifyParticipantDeviceAdded(creationTime, false, p, device);
+			}
 		}
 	}
 

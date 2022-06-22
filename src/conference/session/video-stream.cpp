@@ -66,9 +66,11 @@ void MS2VideoStream::configure(const OfferAnswerContext &params) {
 	const auto & localDesc = params.getLocalStreamDescription();
 	const auto & content = localDesc.getContent();
 	const auto & label = localDesc.getLabel();
-	video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
-	if (!label.empty()) {
-		video_stream_set_label(mStream, label.c_str());
+	if (mStream) {
+		video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
+		if (!label.empty()) {
+			video_stream_set_label(mStream, label.c_str());
+		}
 	}
 }
 

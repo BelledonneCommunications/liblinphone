@@ -230,13 +230,13 @@ private:
 	LinphoneStatus pause ();
 	int restartInvite () override;
 	void setTerminated () override;
-	void startAccept();
+	LinphoneStatus startAccept();
 	LinphoneStatus startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo) override;
 	LinphoneStatus startUpdate (const CallSession::UpdateMethod method = CallSession::UpdateMethod::Default, const std::string &subject = "") override;
 	void terminate () override;
 	void updateCurrentParams () const override;
 
-	void accept (const MediaSessionParams *params, bool wasRinging);
+	LinphoneStatus accept (const MediaSessionParams *params, bool wasRinging);
 	LinphoneStatus acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const std::string &stateInfo) override;
 
 	void refreshSockets ();
