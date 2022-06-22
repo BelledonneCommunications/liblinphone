@@ -127,6 +127,8 @@ bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;
 unsigned int liblinphone_tester_max_cpu_count = 2;
 
+const int liblinphone_tester_sip_timeout = 10000; // in ms, use this value for default SIP operation timeout
+					    //
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with our Freebox v6 when connecting to Ipv6 addresses.
 			It was found that the freebox sometimes block SYN-ACK packets, which prevents connection to be succesful.
 			Thanks to the timeout, it will fallback to IPv4*/
@@ -285,7 +287,7 @@ bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int va
 }
 
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value) {
-	return wait_for_until(lc_1, lc_2,counter,value,10000);
+	return wait_for_until(lc_1, lc_2,counter,value,liblinphone_tester_sip_timeout);
 }
 
 bool_t wait_for_list_interval(bctbx_list_t* lcs,int* counter,int min, int max,int timeout_ms) {

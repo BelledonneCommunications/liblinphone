@@ -143,6 +143,7 @@ extern int manager_count;
 extern const char * liblinphone_tester_ipv6_probing_address;
 extern int liblinphone_tester_ipv6_available(void);
 extern int liblinphone_tester_ipv4_available(void);
+extern const int liblinphone_tester_sip_timeout;
 
 /**
  * @brief Tells the tester whether or not to clean the accounts it has created between runs.
