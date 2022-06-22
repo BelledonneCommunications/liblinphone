@@ -277,7 +277,7 @@ static void load_a_lot_of_chatrooms(void) {
 #if __APPLE__
 	BC_ASSERT_LOWER(ms, 1000, long, "%li");
 #else
-	BC_ASSERT_LOWER(ms, 500, long, "%li");
+	BC_ASSERT_LOWER(ms, 600, long, "%li");
 #endif
 }
 

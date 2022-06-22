@@ -168,7 +168,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 			id = response.json()["id"].asInt();
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 2*liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	// Provision it
@@ -179,7 +179,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIWithConfirmationKey.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
 
 	// Re-provision it, without the confirmationKey
 	string remoteProvisioningURIAuthenticated = remoteProvisioningURI;
@@ -189,7 +189,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIAuthenticated.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
 
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
@@ -199,7 +199,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 		fetched = 1;
 	});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
@@ -234,7 +234,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 		contactId0 = response.json()["id"].asInt();
 	});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 2*liblinphone_tester_sip_timeout);
 
 	fetched = code = 0;
 
@@ -246,7 +246,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 			contactId1 = response.json()["id"].asInt();
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 2*liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	fetched = code = 0;
@@ -258,7 +258,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 			contactId2 = response.json()["id"].asInt();
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 2*liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	fetched = code = 0;
@@ -271,7 +271,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 2*liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	// Provision it
@@ -296,10 +296,10 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	linphone_core_set_provisioning_uri(marie->lc, remoteProvisioningURIWithConfirmationKey.c_str());
 	linphone_core_manager_start(marie, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, 3000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
 
 	// Check if the friend list has been parsed
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1, liblinphone_tester_sip_timeout));
 
 	const char *url =
 		linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
@@ -342,13 +342,13 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, 2*liblinphone_tester_sip_timeout);
 
 	LinphoneFriendList *friendList2 = linphone_core_create_friend_list(marie->lc);
 	linphone_friend_list_set_type(friendList2, LinphoneFriendListTypeVCard4);
 	linphone_friend_list_synchronize_friends_from_server(friendList2);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, 5000));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, liblinphone_tester_sip_timeout));
 
 	linphone_friend_list_unref(friendList2);
 
@@ -377,7 +377,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 		fetched = 1;
 	});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	wait_for_until(marie->lc, NULL, &fetched, 1, liblinphone_tester_sip_timeout);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_cbs_unref(cbs);
