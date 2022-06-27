@@ -57,34 +57,34 @@ FlexiAPIClient *FlexiAPIClient::ping() {
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::sendToken(string pnProvider, string pnParam, string pnPrid) {
+FlexiAPIClient *FlexiAPIClient::sendAccountCreationTokenByPush(string pnProvider, string pnParam, string pnPrid) {
 	JsonParams params;
 	params.push("pn_provider", pnProvider);
 	params.push("pn_param", pnParam);
 	params.push("pn_prid", pnPrid);
-	prepareRequest("tokens", "POST", params);
+	prepareRequest("account_creation_tokens/send-by-push", "POST", params);
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string algorithm, string token) {
+FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string password, string algorithm, string accountCreationToken) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("password", password);
 	params.push("algorithm", algorithm);
-	params.push("token", token);
-	prepareRequest("accounts/with-token", "POST", params);
+	params.push("account_creation_token", accountCreationToken);
+	prepareRequest("accounts/with-account-creation-token", "POST", params);
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string domain, string password, string algorithm,
-											  string token) {
+FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string domain, string password, string algorithm,
+											  string accountCreationToken) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("domain", domain);
 	params.push("password", password);
 	params.push("algorithm", algorithm);
-	params.push("token", token);
-	prepareRequest("accounts/with-token", "POST", params);
+	params.push("account_creation_token", accountCreationToken);
+	prepareRequest("accounts/with-account-creation-token", "POST", params);
 	return this;
 }
 

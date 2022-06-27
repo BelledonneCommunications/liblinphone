@@ -394,7 +394,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_send_token_flexiapi(Linpho
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
-	flexiAPIClient->sendToken(creator->pn_provider, creator->pn_param, creator->pn_prid)
+	flexiAPIClient->sendAccountCreationTokenByPush(creator->pn_provider, creator->pn_param, creator->pn_prid)
 		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(send_token, creator, LinphoneAccountCreatorStatusRequestOk,
 											response.body.c_str());
@@ -420,7 +420,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token_
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
-	flexiAPIClient->accountCreate(creator->username, creator->domain, creator->password, creator->algorithm, creator->token)
+	flexiAPIClient->accountCreateWithAccountCreationToken(creator->username, creator->domain, creator->password, creator->algorithm, creator->token)
 		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusRequestOk,
 											response.body.c_str());
