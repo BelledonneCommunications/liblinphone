@@ -186,8 +186,8 @@ std::string Utils::unicodeToUtf8 (const std::vector<uint32_t>& chars) {
 }
 
 string Utils::trim (const string &str) {
-	auto itFront = find_if_not(str.begin(), str.end(), [] (int c) { return isspace(c); });
-	auto itBack = find_if_not(str.rbegin(), str.rend(), [] (int c) { return isspace(c); }).base();
+	auto itFront = find_if_not(str.begin(), str.end(), [] (unsigned char c) { return isspace(c); });
+	auto itBack = find_if_not(str.rbegin(), str.rend(), [] (unsigned char c) { return isspace(c); }).base();
 	return (itBack <= itFront ? string() : string(itFront, itBack));
 }
 
