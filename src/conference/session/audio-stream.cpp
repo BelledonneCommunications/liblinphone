@@ -136,6 +136,13 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
 					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
 					break;
+				/* AEAD GCM suite not supported by ZRTP for now, just force the cipher setting according to key size */
+				case MS_AEAD_AES_128_GCM:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
+					break;
+				case MS_AEAD_AES_256_GCM:
+					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES3;
+					break;
 				case MS_CRYPTO_SUITE_INVALID:
 					break;
 			}

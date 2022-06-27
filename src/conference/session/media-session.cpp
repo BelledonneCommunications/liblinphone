@@ -2044,6 +2044,12 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCrypt
 		case MS_AES_128_SHA1_80_NO_CIPHER: /* Not sure for this one */
 			keylen = 30;
 			break;
+		case MS_AEAD_AES_128_GCM:
+			keylen = 28;
+			break;
+		case MS_AEAD_AES_256_GCM:
+			keylen = 44;
+			break;
 		case MS_AES_256_SHA1_80:
 		case MS_AES_CM_256_SHA1_80:
 		case MS_AES_256_SHA1_32:
@@ -2228,11 +2234,11 @@ MSCryptoSuite LinphoneSrtpSuite2MSCryptoSuite(const LinphoneSrtpSuite suite) {
 		case LinphoneSrtpSuiteAESCM128HMACSHA132 : return MS_AES_128_SHA1_32;
 		case LinphoneSrtpSuiteAES256CMHMACSHA180 : return MS_AES_256_SHA1_80;
 		case LinphoneSrtpSuiteAES256CMHMACSHA132 : return MS_AES_256_SHA1_32;
+		case LinphoneSrtpSuiteAEADAES128GCM : return MS_AEAD_AES_128_GCM;
+		case LinphoneSrtpSuiteAEADAES256GCM : return MS_AEAD_AES_256_GCM;
 		// all these case are not supported by the MS enumeration
 		case LinphoneSrtpSuiteAES192CMHMACSHA180 :
 		case LinphoneSrtpSuiteAES192CMHMACSHA132 :
-		case LinphoneSrtpSuiteAEADAES128GCM :
-		case LinphoneSrtpSuiteAEADAES256GCM :
 		case LinphoneSrtpSuiteInvalid :
 		default:
 			return MS_CRYPTO_SUITE_INVALID;
@@ -2273,6 +2279,8 @@ static LinphoneSrtpSuite MSCryptoSuite2LinphoneSrtpSuite(const MSCryptoSuite sui
 		case MS_AES_256_SHA1_32 : return LinphoneSrtpSuiteAES256CMHMACSHA132;
 		case MS_AES_256_SHA1_80 :
 		case MS_AES_CM_256_SHA1_80 : return LinphoneSrtpSuiteAES256CMHMACSHA180;
+		case MS_AEAD_AES_128_GCM: return LinphoneSrtpSuiteAEADAES128GCM;
+		case MS_AEAD_AES_256_GCM: return LinphoneSrtpSuiteAEADAES256GCM;
 		// all these cases are not supported by the linphone enumeration
 		case MS_AES_128_SHA1_32_NO_AUTH :
 		case MS_AES_128_SHA1_80_NO_AUTH :

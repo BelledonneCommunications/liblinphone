@@ -166,6 +166,15 @@ static void srtp_call_with_crypto_suite_parameters(void) {
 	// Pauline prefers unencrypted but allows encrypted STRP streams
 	mgr_calling_each_other(marie, pauline);
 
+
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AEAD_AES_128_GCM");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AEAD_AES_128_GCM");
+	mgr_calling_each_other(marie, pauline);
+
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AEAD_AES_256_GCM");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AEAD_AES_256_GCM");
+	mgr_calling_each_other(marie, pauline);
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 
