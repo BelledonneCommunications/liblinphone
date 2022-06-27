@@ -37,6 +37,7 @@ static void ecc_init_filters(EcCalibrator *ecc){
 	ecc->ticker=ms_ticker_new_with_params(&params);
 
 	ecc->sndread=ms_snd_card_create_reader(ecc->capt_card);
+	ms_message("[Echo Canceller Calibration] Using capture device ID: %s (%i)", ecc->capt_card->id, ecc->capt_card->internal_id);
 	ms_filter_call_method(ecc->sndread,MS_FILTER_SET_SAMPLE_RATE,&ecc->rate);
 	ms_filter_call_method(ecc->sndread,MS_FILTER_GET_SAMPLE_RATE,&rate);
 	ms_filter_call_method(ecc->sndread,MS_FILTER_SET_NCHANNELS,&ecc_channels);
@@ -61,6 +62,7 @@ static void ecc_init_filters(EcCalibrator *ecc){
 	ms_filter_call_method(ecc->gen,MS_FILTER_SET_SAMPLE_RATE,&ecc->rate);
 	ecc->write_resampler=ms_factory_create_filter(ecc->factory, MS_RESAMPLE_ID);
 	ecc->sndwrite=ms_snd_card_create_writer(ecc->play_card);
+	ms_message("[Echo Canceller Calibration] Using playback device ID: %s (%i)", ecc->play_card->id, ecc->play_card->internal_id);
 
 	ms_filter_call_method(ecc->sndwrite,MS_FILTER_SET_SAMPLE_RATE,&ecc->rate);
 	ms_filter_call_method(ecc->sndwrite,MS_FILTER_GET_SAMPLE_RATE,&rate);
@@ -353,12 +355,12 @@ LinphoneStatus linphone_core_start_echo_canceller_calibration(LinphoneCore *lc) 
 		return -1;
 	}
 	rate = (unsigned int)linphone_config_get_int(lc->config,"sound","echo_cancellation_rate",8000);
+	getPlatformHelpers(lc)->startAudioForEchoTestOrCalibration();
 	lc->ecc=ec_calibrator_new(lc->factory, lc->sound_conf.play_sndcard, lc->sound_conf.capt_sndcard, rate,
 		_ec_calibration_result_cb,
 		_ec_calibration_audio_init_cb,
 		_ec_calibration_audio_uninit_cb, lc);
 	lc->ecc->play_cool_tones = !!linphone_config_get_int(lc->config, "sound", "ec_calibrator_cool_tones", 0);
-	getPlatformHelpers(lc)->startAudioForEchoTestOrCalibration();
 	ec_calibrator_start(lc->ecc);
 	return 0;
 }
