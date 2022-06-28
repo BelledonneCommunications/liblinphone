@@ -1323,7 +1323,7 @@ void MS2Stream::handleEvents () {
 			});
 			continue; // Go to next event.
 		}
-		notifyStatsUpdated();
+		if (isMain()) notifyStatsUpdated();
 	
 		/* Let subclass handle the event.*/
 		handleEvent(ev);
