@@ -293,10 +293,10 @@ public class CoreManager {
                     mAudioHelper.requestRingingAudioFocus();
                 } else if (state == Call.State.StreamsRunning) {
                     Log.i("[Core Manager] Call active, ensure audio focus granted");
-                    mAudioHelper.requestCallAudioFocus();
+                    mAudioHelper.requestCallAudioFocus(false);
                 } else if (state == Call.State.Resuming) {
                     Log.i("[Core Manager] Call resuming, ensure audio focus granted");
-                    mAudioHelper.requestCallAudioFocus();
+                    mAudioHelper.requestCallAudioFocus(false);
                 }
             }
         };
