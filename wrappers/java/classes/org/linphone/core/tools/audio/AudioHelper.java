@@ -83,7 +83,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     }
 
     public void startAudioForEchoTestOrCalibration() {
-        requestCallAudioFocus();
+        requestCallAudioFocus(true);
         routeAudioToSpeaker();
 
         mVolumeBeforeEchoTest = mAudioManager.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
@@ -216,8 +216,8 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         }
     }
 
-    public void requestCallAudioFocus() {
-        if (isAudioFocusDisabled()) {
+    public void requestCallAudioFocus(boolean force) {
+        if (isAudioFocusDisabled() && !force) {
             Log.i("[Audio Helper] We were asked not to require audio focus, skipping");
             return;
         }
