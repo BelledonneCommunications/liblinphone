@@ -3235,6 +3235,7 @@ void MediaSessionPrivate::refreshSockets () {
 void MediaSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 	L_Q();
 	lInfo() << "MediaSession [" << q << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
+	selectOutgoingIpVersion();
 	getStreamsGroup().getIceService().resetSession();
 	MediaSessionParams newParams(*getParams());
 	q->update(&newParams, CallSession::UpdateMethod::Invite, q->isCapabilityNegotiationEnabled());
