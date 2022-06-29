@@ -43,7 +43,12 @@ public:
 	~SmartTransaction () {
 		if (!mIsCommitted) {
 			lDebug() << "Rollback transaction " << this << " in MainDb::" << mName << ".";
-			mSession->rollback();
+			try {
+				mSession->rollback();
+			} catch (std::runtime_error &e) {
+				lError() << "Error during rollback transaction " << this << " in MainDb::" << mName
+						 << ". Error : " << e.what();
+			}
 		}
 	}
 
