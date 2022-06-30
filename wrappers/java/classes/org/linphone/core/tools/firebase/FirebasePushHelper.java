@@ -28,8 +28,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
@@ -46,26 +45,27 @@ public class FirebasePushHelper implements PushNotificationUtils.PushHelperInter
     @Override
     public void init(Context context) {
         try {
-            FirebaseInstanceId.getInstance()
-                    .getInstanceId()
+            FirebaseMessaging.getInstance()
+                    .getToken()
                     .addOnCompleteListener(
-                            new OnCompleteListener<InstanceIdResult>() {
+                            new OnCompleteListener<String>() {
                                 @Override
-                                public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                                public void onComplete(@NonNull Task<String> task) {
                                     if (!task.isSuccessful()) {
                                         Log.e(
-                                                "[Push Notification] firebase getInstanceId failed: "
+                                                "[Push Notification] Firebase getToken failed: "
                                                         + task.getException());
                                         return;
                                     }
-                                    String token = task.getResult().getToken();
+                                    String token = task.getResult();
+                                    Log.i("[Push Notification] Token fetched from Firebase: " + token);
                                     if (CoreManager.isReady()) {
                                         CoreManager.instance().setPushToken(token);
                                     }
                                 }
                             });
         } catch (Exception e) {
-            Log.e("[Push Notification] firebase not available.");
+            Log.e("[Push Notification] Firebase not available.");
         }
     }
 

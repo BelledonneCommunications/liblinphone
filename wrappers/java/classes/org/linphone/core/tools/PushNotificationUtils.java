@@ -36,10 +36,10 @@ public class PushNotificationUtils {
     public static void init(Context context) {
         mHelper = null;
 
-        if (!isFirebaseAvailable()) {
-            Log.w("[Push Utils] Firebase isn't available. Ensure you have at least com.google.firebase:firebase-messaging:19.0.1 dependency in your app's build.gradle file.");
-            return;
+        if (!isFirebaseCloudMessaging23Available()) {
+            Log.w("[Push Utils] Firebase Cloud Messaging 23+ isn't available. Ensure you have a dependency on com.google.firebase:firebase-messaging (23.0.6 or newer) in your app's build.gradle file or that you use a BoM at least 'com.google.firebase:firebase-bom:30.2.0'.");
         }
+
         if (!isGoogleApiAvailable()) {
             Log.w("[Push Utils] Google services aren't available. Ensure you have correctly applied the com.google.gms.google-services plugin in your app's build.gradle file (cf https://firebase.google.com/docs/android/setup#add-config-file).");
             return;
@@ -53,8 +53,8 @@ public class PushNotificationUtils {
         
         FirebaseApp.initializeApp(context);
 
-        String className = "org.linphone.core.tools.firebase.FirebasePushHelper";
         try {
+            String className = "org.linphone.core.tools.firebase.FirebasePushHelper";
             Class pushHelper = Class.forName(className);
             Class[] types = {};
             Constructor constructor = pushHelper.getConstructor(types);
@@ -75,12 +75,11 @@ public class PushNotificationUtils {
         return mHelper.isAvailable(context);
     }
 
-    private static boolean isFirebaseAvailable() {
+    private static boolean isFirebaseCloudMessaging23Available() {
         boolean available = false;
         try {
             Class firebaseApp = Class.forName("com.google.firebase.FirebaseApp");
-            Class firebaseInstanceId = Class.forName("com.google.firebase.iid.FirebaseInstanceId");
-            Class firebaseInstanceIdResult = Class.forName("com.google.firebase.iid.InstanceIdResult");
+            Class firebaseInstallationsId = Class.forName("com.google.firebase.messaging.FirebaseMessaging");
             available = true;
         } catch (ClassNotFoundException e) {
             Log.w("[Push Utils] Couldn't find class: ", e);
