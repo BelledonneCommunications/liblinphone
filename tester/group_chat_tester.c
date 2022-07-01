@@ -5050,6 +5050,7 @@ static void linphone_tester_chat_room_exhumed(LinphoneCore *core, LinphoneChatRo
 }
 
 static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
+	// WARNING: some waits are supposed to timeout in this test: the BC_ASSER_FALSE(wait_for...), do not increase the value or it triggers a timeout on the server side
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *pauline2 = NULL;
@@ -5113,12 +5114,12 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 		pauline2OneToOneCr = check_creation_chat_room_client_side(coresList, pauline2, &initialPauline2Stats, confAddr, initialSubject, 1, FALSE);
 		BC_ASSERT_PTR_NOT_NULL(pauline2OneToOneCr);
 		if (!pauline2OneToOneCr) goto end;
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, 2, 5000));
 
 		LinphoneChatMessage *offline_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "I'll be back.");
 		linphone_chat_message_send(offline_message);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, liblinphone_tester_sip_timeout));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, 5000));
 		linphone_chat_message_unref(offline_message);
 
 		// The other device using Pauline's account received the message as she was online
@@ -5134,18 +5135,18 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, liblinphone_tester_sip_timeout));
 		/* The chatroom from Pauline won't be terminated as it is offline */
-		BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 
 		participantsAddresses = NULL;
 		initialMarieStats = marie->stat;
 		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
-		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000);
+		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout);
 		if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
 		
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, liblinphone_tester_sip_timeout));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
 
 		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
 		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
@@ -5154,7 +5155,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 			LinphoneChatMessage *exhume_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "I'm back.");
 			linphone_chat_message_send(exhume_message);
 			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, liblinphone_tester_sip_timeout));
-			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
 
 			marie_messages = linphone_chat_room_get_history_size(marieOneToOneCr);
@@ -5192,17 +5193,17 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 1, liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
-				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, liblinphone_tester_sip_timeout));
+				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 
 				
 				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int, "%d");
 			} else {
 				// Pauline goes back online
 				linphone_core_set_network_reachable(pauline->lc, TRUE);
-				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));
+				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
-				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, liblinphone_tester_sip_timeout));
+				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 			}
 
 			pauline2_messages = linphone_chat_room_get_history_size(pauline2OneToOneCr);
