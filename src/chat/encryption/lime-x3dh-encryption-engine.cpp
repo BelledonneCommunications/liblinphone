@@ -1015,8 +1015,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessa
 
 	// Check if the message is encrypted
 	if (!isMessageEncrpted(internalContent)) {
-		lError() << "[LIME][server] unexpected content-type: " << internalContent->getContentType();
-		return ChatMessageModifier::Result::Error;
+		return ChatMessageModifier::Result::Skipped;
 	}
 
 	list<Content> contentsList = ContentManager::multipartToContentList(*internalContent);
