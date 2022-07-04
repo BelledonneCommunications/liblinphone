@@ -311,6 +311,7 @@ private:
 	bool forceStreamsReconstruction = false;
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
+	bool localIsTerminator = false;
 	bool incomingIceReinvitePending = false;
 
 	bool bundleModeAccepted = false;

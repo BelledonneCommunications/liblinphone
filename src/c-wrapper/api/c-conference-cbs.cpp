@@ -87,28 +87,12 @@ void linphone_conference_cbs_set_participant_admin_status_changed (LinphoneConfe
 	ConferenceCbs::toCpp(cbs)->participantAdminStatusChangedCb = cb;
 }
 
-LinphoneConferenceCbsParticipantDeviceLeftCb linphone_conference_cbs_get_participant_device_left (const LinphoneConferenceCbs *cbs) {
-	return ConferenceCbs::toCpp(cbs)->participantDeviceLeftCb;
+LinphoneConferenceCbsParticipantDeviceStateChangedCb linphone_conference_cbs_get_participant_device_state_changed (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->participantDeviceStateChangedCb;
 }
 
-void linphone_conference_cbs_set_participant_device_left (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceLeftCb cb) {
-	ConferenceCbs::toCpp(cbs)->participantDeviceLeftCb = cb;
-}
-
-LinphoneConferenceCbsParticipantDeviceAlertingCb linphone_conference_cbs_get_participant_device_alerting (const LinphoneConferenceCbs *cbs) {
-	return ConferenceCbs::toCpp(cbs)->participantDeviceAlertingCb;
-}
-
-void linphone_conference_cbs_set_participant_device_alerting (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceAlertingCb cb) {
-	ConferenceCbs::toCpp(cbs)->participantDeviceAlertingCb = cb;
-}
-
-LinphoneConferenceCbsParticipantDeviceJoinedCb linphone_conference_cbs_get_participant_device_joined (const LinphoneConferenceCbs *cbs) {
-	return ConferenceCbs::toCpp(cbs)->participantDeviceJoinedCb;
-}
-
-void linphone_conference_cbs_set_participant_device_joined (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceJoinedCb cb) {
-	ConferenceCbs::toCpp(cbs)->participantDeviceJoinedCb = cb;
+void linphone_conference_cbs_set_participant_device_state_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceStateChangedCb cb) {
+	ConferenceCbs::toCpp(cbs)->participantDeviceStateChangedCb = cb;
 }
 
 LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb linphone_conference_cbs_get_participant_device_media_availability_changed (const LinphoneConferenceCbs *cbs) {

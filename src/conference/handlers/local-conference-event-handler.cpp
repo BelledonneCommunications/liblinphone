@@ -231,6 +231,19 @@ void LocalConferenceEventHandler::addEndpointSessionInfo(const std::shared_ptr<P
 	const auto &state = device->getState();
 	auto status = EndpointStatusType::pending;
 	const auto &joiningMethod = device->getJoiningMethod();
+	std::string reasonText = std::string();
+	switch (joiningMethod) {
+		case ParticipantDevice::JoiningMethod::DialedIn:
+			reasonText = "Ad-hoc invitation";
+			break;
+		case ParticipantDevice::JoiningMethod::DialedOut:
+			reasonText = "Added by focus";
+			break;
+		case ParticipantDevice::JoiningMethod::FocusOwner:
+			reasonText = "is focus";
+			break;
+	}
+
 	switch (state) {
 		case ParticipantDevice::State::ScheduledForJoining:
 			status = EndpointStatusType::pending;
@@ -299,6 +312,9 @@ void LocalConferenceEventHandler::addEndpointSessionInfo(const std::shared_ptr<P
 		utcTimeStruct.tm_sec
 	);
 	joiningInfoType.setWhen(utcTime);
+
+	std::string reason = std::string("Reason: SIP;text=") + reasonText;
+	joiningInfoType.setReason(reason);
 	endpoint.setJoiningInfo(joiningInfoType);
 }
 
@@ -617,8 +633,58 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const 
 	endpoint.setEntity(dAddress.asStringUriOnly());
 
 	endpoint.setState(StateType::deleted);
-	user.getEndpoint().push_back(endpoint);
 
+	// Call ID
+
+	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
+	if (participant) {
+		shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(dAddress);
+		if (participantDevice) {
+			const auto & timeOfDisconnection = participantDevice->getTimeOfDisconnection();
+			if (timeOfDisconnection > -1) {
+				ExecutionType disconnectionInfoType = ExecutionType();
+				auto utcTimeStruct = Utils::getTimeTAsTm(timeOfDisconnection);
+
+				LinphonePrivate::Xsd::XmlSchema::DateTime utcTime(
+					(utcTimeStruct.tm_year + 1900),
+					static_cast<short unsigned int>(utcTimeStruct.tm_mon + 1),
+					static_cast<short unsigned int>(utcTimeStruct.tm_mday),
+					static_cast<short unsigned int>(utcTimeStruct.tm_hour),
+					static_cast<short unsigned int>(utcTimeStruct.tm_min),
+					utcTimeStruct.tm_sec
+				);
+				disconnectionInfoType.setWhen(utcTime);
+				const auto & reason = participantDevice->getDisconnectionReason();
+				if (!reason.empty()) {
+					disconnectionInfoType.setReason(reason);
+				}
+				endpoint.setDisconnectionInfo(disconnectionInfoType);
+
+				const auto disconnectionMethod = participantDevice->getDisconnectionMethod();
+				auto method = DisconnectionType::departed;
+				switch (disconnectionMethod) {
+					case ParticipantDevice::DisconnectionMethod::Booted:
+						method = DisconnectionType::booted;
+						break;
+					case ParticipantDevice::DisconnectionMethod::Departed:
+						method = DisconnectionType::departed;
+						break;
+					case ParticipantDevice::DisconnectionMethod::Failed:
+						method = DisconnectionType::failed;
+						break;
+					case ParticipantDevice::DisconnectionMethod::Busy:
+						method = DisconnectionType::busy;
+						break;
+				}
+				DisconnectionType disconnectionMethodType = DisconnectionType(method);
+				endpoint.setDisconnectionMethod(disconnectionMethodType);
+			}
+
+			addEndpointCallInfo(participantDevice, endpoint);
+		}
+	}
+
+	user.getEndpoint().push_back(endpoint);
 	confInfo.getUsers()->getUser().push_back(user);
 
 	return createNotify(confInfo);
@@ -1055,23 +1121,11 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 	}
 }
 
-void LocalConferenceEventHandler::onParticipantDeviceLeft (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
-	if (conf) {
-		auto participant = device->getParticipant();
-		notifyAllExceptDevice(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
-//		notifyAll(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
-	} else {
-		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
-	}
-}
-
-void LocalConferenceEventHandler::onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void LocalConferenceEventHandler::onParticipantDeviceStateChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
 		notifyAll(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
-//		notifyAll(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}

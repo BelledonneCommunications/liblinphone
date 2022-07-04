@@ -51,6 +51,10 @@ const LinphoneAddress *linphone_participant_device_get_address(const LinphonePar
 	return L_GET_C_BACK_PTR(&addr);
 }
 
+LinphoneParticipantDeviceState linphone_participant_device_get_state (const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneParticipantDeviceState)(ParticipantDevice::toCpp(participant_device)->getState());
+}
+
 LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
 	return (LinphoneChatRoomSecurityLevel)(ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
 }
@@ -67,8 +71,20 @@ LinphoneParticipantDeviceJoiningMethod linphone_participant_device_get_joining_m
 	return (LinphoneParticipantDeviceJoiningMethod)ParticipantDevice::toCpp(participant_device)->getJoiningMethod();
 }
 
+LinphoneParticipantDeviceDisconnectionMethod linphone_participant_device_get_disconnection_method (const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneParticipantDeviceDisconnectionMethod)ParticipantDevice::toCpp(participant_device)->getDisconnectionMethod();
+}
+
+const char * linphone_participant_device_get_disconnection_reason (const LinphoneParticipantDevice *participant_device) {
+	return L_STRING_TO_C(ParticipantDevice::toCpp(participant_device)->getDisconnectionReason());
+}
+
 time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipantDevice *participant_device) {
 	return ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
+}
+
+time_t linphone_participant_device_get_time_of_disconnection(const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getTimeOfDisconnection();
 }
 
 LinphoneMediaDirection linphone_participant_device_get_stream_capability (const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
@@ -136,16 +152,8 @@ void * linphone_participant_device_create_native_video_window_id(const LinphoneP
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->createWindowId();
 }
 
-void _linphone_participant_device_notify_conference_left(LinphoneParticipantDevice *participant_device) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_left);
-}
-
-void _linphone_participant_device_notify_conference_alerting(LinphoneParticipantDevice *participant_device) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_alerting);
-}
-
-void _linphone_participant_device_notify_conference_joined(LinphoneParticipantDevice *participant_device) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS_NO_ARG(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_conference_joined);
+void _linphone_participant_device_notify_state_changed(LinphoneParticipantDevice *participant_device, const LinphoneParticipantDeviceState state) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_state_changed, state);
 }
 
 void _linphone_participant_device_notify_stream_capability_changed(LinphoneParticipantDevice *participant_device, LinphoneMediaDirection direction, const LinphoneStreamType stream_type) {

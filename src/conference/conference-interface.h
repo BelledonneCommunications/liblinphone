@@ -275,25 +275,11 @@ public:
 	virtual void onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
 
 	/*
-	* This fonction is called each time a new participant device session is ringing
-	* @param[in] event informations related to the device's participant whose devices is ringing. @notnil
-	* @param[in] device participant device who rejoined. @notnil
+	* This fonction is called each time a participant device state changes
+	* @param[in] event informations related to the device's participant whose state changed. @notnil
+	* @param[in] device participant device whose state changed. @notnil
 	*/
-	virtual void onParticipantDeviceAlerting (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
-
-	/*
-	* This fonction is called each time a new participant device rejoins the conference after full state notification.
-	* @param[in] event informations related to the device's participant who rejoined. @notnil
-	* @param[in] device participant device who rejoined. @notnil
-	*/
-	virtual void onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
-
-	/*
-	* This fonction is called each time a new participant device temporarely leaves the conference after full state notification.
-	* @param[in] event informations related to the device's participant who temporarely left. @notnil
-	* @param[in] device participant device who temporarely left. @notnil
-	*/
-	virtual void onParticipantDeviceLeft (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+	virtual void onParticipantDeviceStateChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
 
 	/*
 	* This fonction is called each time a participant device changes the ephemeral mode

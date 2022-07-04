@@ -193,8 +193,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 									(lifetime != 0)
 								);
 							}
-
-
 						}
 					} else if (ephemeralMode.compare("device-managed") == 0) {
 						cgcr->getCurrentParams()->setEphemeralMode(AbstractChatRoom::EphemeralMode::DeviceManaged);
@@ -202,7 +200,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				}
 			}
 		}
-
 	}
 
 	if (isFullState)
@@ -324,22 +321,58 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					participant->removeDevice(gruu);
 
 					if (device) {
+						if (endpoint.getDisconnectionInfo().present()) {
+							const auto & disconnectionInfo = endpoint.getDisconnectionInfo().get();
+							if (disconnectionInfo.getWhen().present()) {
+								auto disconnectionTime = disconnectionInfo.getWhen().get();
+								tm timeStruct;
+								timeStruct.tm_year = (disconnectionTime.year() - 1900),
+								timeStruct.tm_mon = (disconnectionTime.month() - 1),
+								timeStruct.tm_mday = disconnectionTime.day(),
+								timeStruct.tm_hour = disconnectionTime.hours(),
+								timeStruct.tm_min = disconnectionTime.minutes(),
+								timeStruct.tm_sec = static_cast<int>(disconnectionTime.seconds());
+								device->setTimeOfDisconnection(Utils::getTmAsTimeT(timeStruct));
+							}
+
+							if (disconnectionInfo.getReason().present()) {
+								device->setDisconnectionReason(disconnectionInfo.getReason().get());
+							}
+						}
+
+						if (endpoint.getDisconnectionMethod().present()) {
+							const auto & disconnectionMethod = endpoint.getDisconnectionMethod().get();
+							switch (disconnectionMethod) {
+								case DisconnectionType::booted:
+									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Booted);
+									break;
+								case DisconnectionType::departed:
+									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Departed);
+									break;
+								case DisconnectionType::busy:
+									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Busy);
+									break;
+								case DisconnectionType::failed:
+									device->setDisconnectionMethod(ParticipantDevice::DisconnectionMethod::Failed);
+									break;
+							}
+						}
+
 						// Set participant device state to left in case the application regularly checks its state
 						device->setState(ParticipantDevice::State::Left);
-					}
 
-					if (!isFullState && device && participant) {
-						conf->notifyParticipantDeviceRemoved(
-							creationTime,
-							isFullState,
-							participant,
-							device
-						);
+						if (!isFullState && participant) {
+							conf->notifyParticipantDeviceRemoved(
+								creationTime,
+								isFullState,
+								participant,
+								device
+							);
+						}
 					}
 				} else if (device) {
 /*
 					auto & deviceAnySequence (endpoint.get().getAny());
-
 					for (auto anyElementIt = deviceAnySequence.begin(); anyElementIt != deviceAnySequence.end (); ++anyElementIt) {
 						const xercesc_3_1::DOMElement& anyElement (*anyElementIt);
 						string name (xsd::cxx::xml::transcode<char>(anyElement.getLocalName()));
@@ -418,16 +451,18 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 					if (endpoint.getJoiningInfo().present()) {
 						const auto & joiningInfo = endpoint.getJoiningInfo().get();
-						auto joiningTime = joiningInfo.getWhen().get();
-						tm timeStruct;
-						timeStruct.tm_year = (joiningTime.year() - 1900),
-						timeStruct.tm_mon = (joiningTime.month() - 1),
-						timeStruct.tm_mday = joiningTime.day(),
-						timeStruct.tm_hour = joiningTime.hours(),
-						timeStruct.tm_min = joiningTime.minutes(),
-						timeStruct.tm_sec = static_cast<int>(joiningTime.seconds());
+						if (joiningInfo.getWhen().present()) {
+							auto joiningTime = joiningInfo.getWhen().get();
+							tm timeStruct;
+							timeStruct.tm_year = (joiningTime.year() - 1900),
+							timeStruct.tm_mon = (joiningTime.month() - 1),
+							timeStruct.tm_mday = joiningTime.day(),
+							timeStruct.tm_hour = joiningTime.hours(),
+							timeStruct.tm_min = joiningTime.minutes(),
+							timeStruct.tm_sec = static_cast<int>(joiningTime.seconds());
 
-						device->setTimeOfJoining(Utils::getTmAsTimeT(timeStruct));
+							device->setTimeOfJoining(Utils::getTmAsTimeT(timeStruct));
+						}
 					}
 
 					if (endpoint.getStatus().present()) {
@@ -491,30 +526,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					} else {
 						lInfo() << "Participant device " << gruu.asString() << " has been successfully updated";
 					}
-
-					if (endpoint.getStatus().present()) {
-						const auto & status = endpoint.getStatus().get();
-						if ((status == EndpointStatusType::on_hold) && ((previousDeviceState != ParticipantDevice::State::OnHold) || (state == StateType::full))) {
-							conf->notifyParticipantDeviceLeft(
-								creationTime,
-								isFullState,
-								participant,
-								device);
-						} else if ((status == EndpointStatusType::connected) && ((previousDeviceState != ParticipantDevice::State::Present) || (state == StateType::full))) {
-							conf->notifyParticipantDeviceJoined(
-								creationTime,
-								isFullState,
-								participant,
-								device);
-						} else if ((status == EndpointStatusType::alerting) && ((previousDeviceState != ParticipantDevice::State::Alerting) || (state == StateType::full))) {
-							conf->notifyParticipantDeviceAlerting(
-								creationTime,
-								isFullState,
-								participant,
-								device);
-						}
-					}
-
 				} else {
 					lError() << "Unable to update media direction of device " << gruu << " because it has not been found in conference " << conf->getConferenceAddress();
 				}

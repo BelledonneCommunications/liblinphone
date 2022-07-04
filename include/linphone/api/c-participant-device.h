@@ -72,6 +72,13 @@ LINPHONE_PUBLIC void linphone_participant_device_set_user_data(LinphoneParticipa
 LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_get_address (const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get the state of a participant device.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return The #LinphoneParticipantDeviceState of the device
+*/
+LINPHONE_PUBLIC LinphoneParticipantDeviceState linphone_participant_device_get_state (const LinphoneParticipantDevice *participant_device);
+
+/**
  * Get the security level of a participant's device.
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return The #LinphoneChatRoomSecurityLevel of the device
@@ -100,18 +107,39 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Get the timestamp the device left a conference.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return time of disconnection a conference as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
+ */
+LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_disconnection(const LinphoneParticipantDevice *participant_device);
+
+/**
  * Get the joining method or it the device is the focus owner
  * @param participant_device A #LinphoneParticipantDevice object @notnil
- * @return joining method or focus owner
+ * @return joining method or focus owner #LinphoneParticipantDeviceJoiningMethod
  */
 LINPHONE_PUBLIC LinphoneParticipantDeviceJoiningMethod linphone_participant_device_get_joining_method (const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the disconnection method
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return disconnection method #LinphoneParticipantDeviceDisconnectionMethod
+ */
+LINPHONE_PUBLIC LinphoneParticipantDeviceDisconnectionMethod linphone_participant_device_get_disconnection_method (const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the disconnection reason
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return disconnection reason @maybenil
+ */
+LINPHONE_PUBLIC const char * linphone_participant_device_get_disconnection_reason (const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the stream capability of the device.
  * The capability information represents the capability for the #ParticipantDevice to handle a given stream type (audio, video or text).
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @param stream_type A #LinphoneStreamType
- * @return the capability of stream of type stream_type of the device
+ * @return the capability of stream of type stream_type of the device #LinphoneMediaDirection
  */
 LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_stream_capability(const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 

@@ -140,6 +140,7 @@ public:
 
 	StreamsGroup & getStreamsGroup()const;
 	bool pausedByApp()const;
+	bool isTerminator()const;
 	void notifySpeakingDevice(uint32_t ssrc, bool isSpeaking);
 	void notifyMutedDevice(uint32_t ssrc, bool muted);
 

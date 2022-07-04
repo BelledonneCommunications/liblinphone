@@ -86,9 +86,7 @@ public:
 	LinphoneConferenceCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
 	LinphoneConferenceCbsParticipantDeviceMediaCapabilityChangedCb participantDeviceMediaCapabilityChangedCb;
 	LinphoneConferenceCbsParticipantDeviceMediaAvailabilityChangedCb participantDeviceMediaAvailabilityChangedCb;
-	LinphoneConferenceCbsParticipantDeviceAlertingCb participantDeviceAlertingCb;
-	LinphoneConferenceCbsParticipantDeviceJoinedCb participantDeviceJoinedCb;
-	LinphoneConferenceCbsParticipantDeviceLeftCb participantDeviceLeftCb;
+	LinphoneConferenceCbsParticipantDeviceStateChangedCb participantDeviceStateChangedCb;
 	LinphoneConferenceCbsStateChangedCb stateChangedCb;
 	LinphoneConferenceCbsSubjectChangedCb subjectChangedCb;
 	LinphoneConferenceCbsAvailableMediaChangedCb availableMediaChangedCb;
@@ -280,9 +278,7 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAlerting (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceJoined (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceLeft (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
 	virtual void notifyFullState () override;
 
@@ -388,7 +384,7 @@ public:
 
 	virtual void onParticipantDeviceAdded(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	virtual void onParticipantDeviceRemoved(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
-	virtual void onParticipantDeviceJoined(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	virtual void onParticipantDeviceStateChanged(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	virtual void onParticipantDeviceMediaAvailabilityChanged(const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	virtual void onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) override;
 	virtual void onFullStateReceived() override;

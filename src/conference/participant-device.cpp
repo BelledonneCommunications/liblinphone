@@ -47,7 +47,7 @@ ParticipantDevice::ParticipantDevice () {
 }
 
 ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name)
-	: mParticipant(participant), mGruu(IdentityAddress()), mName(name), mSession(session) {
+	: mParticipant(participant), mGruu(participant->getAddress()), mName(name), mSession(session) {
 	mTimeOfJoining = time(nullptr);
 	if (mSession && mSession->getRemoteContactAddress()) {
 		setAddress(*mSession->getRemoteContactAddress());
@@ -97,20 +97,6 @@ void ParticipantDevice::setAddress (const Address & address) {
 	}
 }
 
-bool ParticipantDevice::updateAddress() {
-	if (!mGruu.isValid() && mSession && mSession->getRemoteContactAddress()) {
-		Address remoteContactAddress(*mSession->getRemoteContactAddress());
-		mGruu = IdentityAddress(remoteContactAddress);
-		if (remoteContactAddress.hasParam("+org.linphone.specs")) {
-			const auto &linphoneSpecs = remoteContactAddress.getParamValue("+org.linphone.specs");
-			// First and last characters are ", hence ignore them
-			setCapabilityDescriptor(linphoneSpecs.substr(1, linphoneSpecs.size()-2));
-		}
-		return true;
-	}
-	return false;
-}
-
 std::shared_ptr<Participant> ParticipantDevice::getParticipant() const {
 	if (mParticipant.expired()) {
 		lWarning() << "The participant owning device " << getAddress().asString() << " has already been deleted";
@@ -141,6 +127,10 @@ AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 }
 
 time_t ParticipantDevice::getTimeOfJoining () const {
+	return mTimeOfJoining;
+}
+
+time_t ParticipantDevice::getTimeOfDisconnection () const {
 	return mTimeOfJoining;
 }
 
@@ -222,6 +212,11 @@ void ParticipantDevice::setState (State newState) {
 	if (mState != newState) {
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
+		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
+		const auto & conference = getConference();
+		if (conference) {
+			conference->notifyParticipantDeviceStateChanged (ms_time(nullptr), false, getParticipant(), getSharedFromThis());
+		}
 	}
 }
 
@@ -500,6 +495,21 @@ bool ParticipantDevice::getIsMuted() const {
 	return mIsMuted;
 }
 
+void ParticipantDevice::setDisconnectionData(bool initiated, int code, LinphoneReason reason) {
+	mTimeOfDisconnection = ms_time(NULL);
+	if(reason == LinphoneReasonNone) {
+		mDisconnectionMethod = initiated ? DisconnectionMethod::Booted : DisconnectionMethod::Departed;
+		mDisconnectionReason = std::string();
+	} else {
+		if (reason == LinphoneReasonBusy) {
+			mDisconnectionMethod = DisconnectionMethod::Busy;
+		} else {
+			mDisconnectionMethod = DisconnectionMethod::Failed;
+		}
+		mDisconnectionReason = std::string("Reason: SIP;cause=") + std::to_string(code) + ";text=" + std::string(linphone_reason_to_string(reason));
+	}
+}
+
 LinphoneParticipantDeviceCbsIsSpeakingChangedCb ParticipantDeviceCbs::getIsSpeakingChanged()const{
 	return mIsSpeakingChangedCb;
 }
@@ -516,28 +526,12 @@ void ParticipantDeviceCbs::setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb){
 	mIsMutedCb = cb;
 }
 
-LinphoneParticipantDeviceCbsConferenceAlertingCb ParticipantDeviceCbs::getConferenceAlerting()const {
-	return mConferenceAlertingCb;
+LinphoneParticipantDeviceCbsStateChangedCb ParticipantDeviceCbs::getStateChanged()const {
+	return mStateChangedCb;
 }
 
-void ParticipantDeviceCbs::setConferenceAlerting(LinphoneParticipantDeviceCbsConferenceAlertingCb cb) {
-	mConferenceAlertingCb = cb;
-}
-
-LinphoneParticipantDeviceCbsConferenceJoinedCb ParticipantDeviceCbs::getConferenceJoined()const {
-	return mConferenceJoinedCb;
-}
-
-void ParticipantDeviceCbs::setConferenceJoined(LinphoneParticipantDeviceCbsConferenceJoinedCb cb) {
-	mConferenceJoinedCb = cb;
-}
-
-LinphoneParticipantDeviceCbsConferenceLeftCb ParticipantDeviceCbs::getConferenceLeft()const {
-	return mConferenceLeftCb;
-}
-
-void ParticipantDeviceCbs::setConferenceLeft(LinphoneParticipantDeviceCbsConferenceLeftCb cb){
-	mConferenceLeftCb = cb;
+void ParticipantDeviceCbs::setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb){
+	mStateChangedCb = cb;
 }
 
 LinphoneParticipantDeviceCbsStreamCapabilityChangedCb ParticipantDeviceCbs::getStreamCapabilityChanged()const {

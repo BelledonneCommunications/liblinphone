@@ -47,7 +47,6 @@ typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *ac
  * @}
 **/
 
-
 /**
  * @addtogroup call_control
  * @{
@@ -477,25 +476,11 @@ typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *con
 typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
- * Callback used to notify a conference that the media of a participant device has temporarely left
+ * Callback used to notify a conference that a participant device has changed state
  * @param[in] conference #LinphoneConference object @notnil
- * @param[in] device #LinphoneParticipantDevice who temporarely left the conference @notnil
+ * @param[in] device #LinphoneParticipantDevice who change state @notnil
  */
-typedef void (*LinphoneConferenceCbsParticipantDeviceLeftCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
-
-/**
- * Callback used to notify a conference that the media of a participant device is alerting (180 Ringing)
- * @param[in] conference #LinphoneConference object @notnil
- * @param[in] device #LinphoneParticipantDevice who is alerting (180 Ringing) the conference @notnil
- */
-typedef void (*LinphoneConferenceCbsParticipantDeviceAlertingCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
-
-/**
- * Callback used to notify a conference that a participant device has joined
- * @param[in] conference #LinphoneConference object @notnil
- * @param[in] device #LinphoneParticipantDevice who joined the conference @notnil
- */
-typedef void (*LinphoneConferenceCbsParticipantDeviceJoinedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device);
+typedef void (*LinphoneConferenceCbsParticipantDeviceStateChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device, const LinphoneParticipantDeviceState state);
 
 /**
  * Callback used to notify a conference that the media availability of a participant device has been changed.
@@ -591,22 +576,10 @@ typedef void (*LinphoneParticipantDeviceCbsIsSpeakingChangedCb) (LinphonePartici
 typedef void (*LinphoneParticipantDeviceCbsIsMutedCb) (LinphoneParticipantDevice *participant_device, bool_t is_muted);
 
 /**
- * Callback used to notify that participant device has left the conference.
+ * Callback used to notify that participant device changed state
  * @param[in] participant_device #LinphoneParticipantDevice object @notnil
  */
-typedef void (*LinphoneParticipantDeviceCbsConferenceLeftCb) (LinphoneParticipantDevice *participant_device);
-
-/**
- * Callback used to notify that participant device is ringing.
- * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- */
-typedef void (*LinphoneParticipantDeviceCbsConferenceAlertingCb) (LinphoneParticipantDevice *participant_device);
-
-/**
- * Callback used to notify that participant device has joined the conference.
- * @param[in] participant_device #LinphoneParticipantDevice object @notnil
- */
-typedef void (*LinphoneParticipantDeviceCbsConferenceJoinedCb) (LinphoneParticipantDevice *participant_device);
+typedef void (*LinphoneParticipantDeviceCbsStateChangedCb) (LinphoneParticipantDevice *participant_device, const LinphoneParticipantDeviceState state);
 
 /**
  * Callback used to notify that participant device stream capability has changed.

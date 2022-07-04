@@ -87,7 +87,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 	if (state != newState){
 		prevState = state;
 		prevMessageState = messageState;
-		if ((newState == CallSession::State::StreamsRunning) || (newState == CallSession::State::Paused)) {
+		if ((state == CallSession::State::StreamsRunning) || (state == CallSession::State::Paused)) {
 			lastStableState = state;
 			lastStableMessageState = messageState;
 		}
@@ -832,7 +832,6 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 	string newSubject(subject);
 
 	if (newSubject.empty()) {
-
 		LinphoneConference * conference = nullptr;
 		if (listener) {
 			conference = listener->getCallSessionConference(q->getSharedFromThis());
@@ -887,6 +886,7 @@ void CallSessionPrivate::terminate () {
 			nonOpError = true;
 		}
 	}
+
 	setState(CallSession::State::End, "Call terminated");
 
 	if (op && !op->hasDialog()) {

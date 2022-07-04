@@ -320,6 +320,13 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 				linphone_event_terminate(event);
 			}
 
+			const auto ei = session->getErrorInfo();
+			device->setDisconnectionData(static_pointer_cast<LinphonePrivate::MediaSession>(session)->isTerminator(), linphone_error_info_get_protocol_code(ei), linphone_error_info_get_reason(ei));
+			device->setState(ParticipantDevice::State::Left);
+
+			time_t creationTime = time(nullptr);
+			notifyParticipantDeviceRemoved(creationTime, false, p, device);
+
 			lInfo() << "Removing device with session " << session << " from participant " << p->getAddress() << " in conference " << getConferenceAddress();
 			p->removeDevice(session);
 
@@ -328,8 +335,6 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 			if (call) {
 				call->setConference(nullptr);
 			}
-			time_t creationTime = time(nullptr);
-			notifyParticipantDeviceRemoved(creationTime, false, p, device);
 			return 0;
 		}
 	}
@@ -1105,11 +1110,9 @@ int LocalConference::participantDeviceAlerting(const std::shared_ptr<LinphonePri
 
 int LocalConference::participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
 	lInfo() << "Device " << device->getAddress() << " changed state to alerting";
-	device->setState(ParticipantDevice::State::Alerting);
 	device->updateMediaCapabilities();
 	device->updateStreamAvailabilities();
-	time_t creationTime = time(nullptr);
-	notifyParticipantDeviceAlerting(creationTime, false, participant, device);
+	device->setState(ParticipantDevice::State::Alerting);
 	return 0;
 }
 
@@ -1131,11 +1134,9 @@ int LocalConference::participantDeviceJoined(const std::shared_ptr<LinphonePriva
 	int success = -1;
 	if ((device->updateMediaCapabilities() || (device->getState() != ParticipantDevice::State::Present)) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Device " << device->getAddress() << " joined conference " << getConferenceAddress();
-		device->setState(ParticipantDevice::State::Present);
 		device->updateMediaCapabilities();
 		device->updateStreamAvailabilities();
-		time_t creationTime = time(nullptr);
-		notifyParticipantDeviceJoined(creationTime, false, participant, device);
+		device->setState(ParticipantDevice::State::Present);
 		return 0;
 	}
 	return success;
@@ -1159,10 +1160,8 @@ int LocalConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivate
 	int success = -1;
 	if ((device->updateMediaCapabilities() || (device->getState() != ParticipantDevice::State::OnHold)) && (getState() == ConferenceInterface::State::Created)) {
 		lInfo() << "Device " << device->getAddress() << " left conference " << getConferenceAddress();
-		device->setState(ParticipantDevice::State::OnHold);
 		device->updateStreamAvailabilities();
-		time_t creationTime = time(nullptr);
-		notifyParticipantDeviceLeft(creationTime, false, participant, device);
+		device->setState(ParticipantDevice::State::OnHold);
 		return 0;
 	}
 	return success;
@@ -1881,10 +1880,12 @@ int LocalConference::terminate () {
 	const auto ref = getSharedFromThis();
 	setState(ConferenceInterface::State::TerminationPending);
 
+	size_t noDevices = 0;
 	auto participantIt = participants.begin();
 	while (participantIt != participants.end()) {
 		auto participant = *participantIt;
 		const auto devices = participant->getDevices();
+		noDevices += devices.size();
 		participantIt++;
 		if (devices.size() > 0) {
 			for (const auto & d : devices) {
@@ -1899,13 +1900,13 @@ int LocalConference::terminate () {
 		}
 	}
 
+	if ((noDevices == 0)
 #ifdef HAVE_ADVANCED_IM
-	if (!eventHandler) {
+		|| !eventHandler
 #endif // HAVE_ADVANCED_IM
+	) {
 		setState(ConferenceInterface::State::Terminated);
-#ifdef HAVE_ADVANCED_IM
 	}
-#endif // HAVE_ADVANCED_IM
 
 	return 0;
 }
@@ -2083,21 +2084,21 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 							const auto deviceAddr = device->getAddress();
 							const auto & remoteContactAddress(*cppCall->getActiveSession()->getRemoteContactAddress());
 							const IdentityAddress newDeviceAddress(remoteContactAddress);
-							if (device->updateAddress()) {
-								// In state streams running, the address of the device must be available. Adding check to ease debugging.
-								if (!device->getAddress().isValid()) {
-									lError() << "Device " << device << " linked to session " << session << " and participant " << participant->getAddress() << " has not yet a valid address";
-								}
-							} else if (deviceAddr != newDeviceAddress) {
+							if (deviceAddr != newDeviceAddress) {
 								// The remote contact address of the device changed during the call. This may be caused by a call that started before the registration was completed
 								lInfo() << "Updating address of participant device " << device << " with session " << device->getSession() << " from " << deviceAddr << " to " << newDeviceAddress;
-								time_t creationTime = time(nullptr);
-								// As the device changed address, notify that the current device has been removed
-								notifyParticipantDeviceRemoved(creationTime, false, participant, device);
 								auto otherDevice = participant->findDevice(newDeviceAddress);
 								// If a device with the same address has been found, then remove it from the participant list and copy subscription event.
 								// Otherwise, notify that it has been added
 								if (otherDevice) {
+									time_t creationTime = time(nullptr);
+									device->setTimeOfDisconnection(creationTime);
+									device->setDisconnectionMethod (ParticipantDevice::DisconnectionMethod::Booted);
+									const auto reason("Reason: SIP;text=address changed");
+									device->setDisconnectionReason (reason);
+									// As the device changed address, notify that the current device has been removed
+									notifyParticipantDeviceRemoved(creationTime, false, participant, device);
+
 									if (!device->getConferenceSubscribeEvent() && otherDevice->getConferenceSubscribeEvent()) {
 										// Move subscription event pointer to device.
 										// This is required because if the call starts before the registration process, the device address may have an unresolved address whereas the subscription may have started after the device is fully registered, hence the full device address is known.
@@ -2105,6 +2106,7 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 										otherDevice->setConferenceSubscribeEvent(nullptr);
 									}
 									// Delete device having the same address
+									// First remove device from the device list to avoid sending a participant device removed
 									participant->removeDevice(otherDevice->getAddress());
 									auto otherDeviceSession = otherDevice->getSession();
 									if (otherDeviceSession) {
@@ -2180,7 +2182,11 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 			case LinphoneCallStateEnd:
 			case LinphoneCallStateError:
 				lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << session->getRemoteAddress()->asString() << ") from conference " << this << "(" << getConferenceAddress() << ")";
-				removeParticipant(session, false);
+				if (session->getErrorInfo() && (linphone_error_info_get_reason(session->getErrorInfo()) == LinphoneReasonBusy)) {
+					removeParticipantDevice(session);
+				} else {
+					removeParticipant(session, false);
+				}
 				break;
 			default:
 				break;
@@ -2249,22 +2255,10 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	return nullptr;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAlerting (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceAlerting (creationTime, isFullState, participant, participantDevice);
-}
-
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceJoined (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
-	return Conference::notifyParticipantDeviceJoined (creationTime, isFullState, participant, participantDevice);
-}
-
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceLeft (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
-	return Conference::notifyParticipantDeviceLeft (creationTime, isFullState, participant, participantDevice);
+	return Conference::notifyParticipantDeviceStateChanged (creationTime, isFullState, participant, participantDevice);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
@@ -2488,13 +2482,8 @@ int RemoteConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivat
 }
 
 int RemoteConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
-	time_t creationTime = time(nullptr);
-	notifyParticipantDeviceLeft(creationTime, false, participant, device);
-	if (device) {
-		_linphone_participant_device_notify_conference_left(device->toC());
-		return 0;
-	}
-	return -1;
+	device->setState(ParticipantDevice::State::OnHold);
+	return 0;
 }
 
 int RemoteConference::participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
@@ -2503,13 +2492,8 @@ int RemoteConference::participantDeviceAlerting(const std::shared_ptr<LinphonePr
 }
 
 int RemoteConference::participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
-	time_t creationTime = time(nullptr);
-	notifyParticipantDeviceAlerting(creationTime, false, participant, device);
-	if (device) {
-		_linphone_participant_device_notify_conference_alerting(device->toC());
-		return 0;
-	}
-	return -1;
+	device->setState(ParticipantDevice::State::Alerting);
+	return 0;
 }
 
 int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
@@ -2518,13 +2502,8 @@ int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePriv
 }
 
 int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
-	time_t creationTime = time(nullptr);
-	notifyParticipantDeviceJoined(creationTime, false, participant, device);
-	if (device) {
-		_linphone_participant_device_notify_conference_joined(device->toC());
-		return 0;
-	}
-	return -1;
+	device->setState(ParticipantDevice::State::Present);
+	return 0;
 }
 
 int RemoteConference::participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
@@ -3475,7 +3454,7 @@ void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<Confere
 	}
 }
 
-void RemoteConference::onParticipantDeviceJoined (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+void RemoteConference::onParticipantDeviceStateChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
@@ -3486,7 +3465,7 @@ void RemoteConference::onParticipantDeviceJoined (const std::shared_ptr<Conferen
 		return (devAddr == contactAddress);
 	});
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn()) {
+	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && (callIt == m_pendingCalls.cend()) && isIn() && (device->getState() == ParticipantDevice::State::Present)) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE in order to get streams for participant device " << device->getAddress() << " that joined recently the conference " << getConferenceAddress();
 			auto ret = updateMainSession();

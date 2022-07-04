@@ -19,16 +19,44 @@
 
 #ifndef _L_PARTICIPANT_DEVICE_ENUMS_H_
 #define _L_PARTICIPANT_DEVICE_ENUMS_H_
-
 // =============================================================================
+
+// WARNING: Participant device state may be stored in the database (as it is done by the conference server), therefore do not modify the integer value of the enumeration items
+/**
+ * #LinphoneParticipantDeviceState is used to list all states a participant device can be in
+ * @ingroup conference
+ */
+typedef enum _LinphoneParticipantDeviceState {
+	LinphoneParticipantDeviceStateJoining = 0,  /**< an INVITE has been sent */
+	LinphoneParticipantDeviceStatePresent = 1,  /**< the SIP session has been concluded, participant is part of the conference */
+	LinphoneParticipantDeviceStateLeaving = 2,  /**< A BYE is pending */
+	LinphoneParticipantDeviceStateLeft = 3,  /**< The Session is terminated */
+	LinphoneParticipantDeviceStateScheduledForJoining = 4,  /**< Initial state for the server group chatroom, when the participant has not yet been INVITEd. */
+	LinphoneParticipantDeviceStateScheduledForLeaving = 5,  /**< Transitional state for a participant that will receive a BYE shortly. */
+	LinphoneParticipantDeviceStateOnHold = 6,  /**< the SIP session has been concluded, participant is not media mixed */
+	LinphoneParticipantDeviceStateAlerting = 7,  /**< 180 Ringing */
+	LinphoneParticipantDeviceStateMutedByFocus = 8  /**< Some medias have been muted by the focus */
+} LinphoneParticipantDeviceState;
+
 /**
  * #LinphoneParticipantDeviceJoiningMethod is used to indicate how a participant joined a conference or if it is the focus.
  * @ingroup conference
  */
 typedef enum _LinphoneParticipantDeviceJoiningMethod {
-		LinphoneParticipantDeviceDialedIn = 0,
-		LinphoneParticipantDeviceDialedOut = 1,
-		LinphoneParticipantDeviceFocusOwner = 2
+	LinphoneParticipantDeviceJoiningMethodDialedIn = 0, /**< device called the conference */
+	LinphoneParticipantDeviceJoiningMethodDialedOut = 1, /**< device is called the conference */
+	LinphoneParticipantDeviceJoiningMethodFocusOwner = 2 /**< device is the focus */
 } LinphoneParticipantDeviceJoiningMethod;
+
+/**
+ * #LinphoneParticipantDeviceDisconnectionMethod is used to indicate how a participant left a conference.
+ * @ingroup conference
+ */
+typedef enum _LinphoneParticipantDeviceDisconnectionMethod {
+	LinphoneParticipantDeviceDisconnectionMethodBooted = 0, /**< an admin removes the device from a conference */
+	LinphoneParticipantDeviceDisconnectionMethodDeparted = 1, /**< the device disconnects from the conference */
+	LinphoneParticipantDeviceDisconnectionMethodBusy = 2, /**< device is busy */
+	LinphoneParticipantDeviceDisconnectionMethodFailed = 3 /**< an error occurred while the device is leaving the conference or he declined a call from the server */
+} LinphoneParticipantDeviceDisconnectionMethod;
 
 #endif // ifndef _L_PARTICIPANT_DEVICE_ENUMS_H_

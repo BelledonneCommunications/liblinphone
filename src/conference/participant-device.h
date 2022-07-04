@@ -49,23 +49,29 @@ class ParticipantDeviceCbs;
 
 class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>, public UserDataAccessor, public CallbacksHolder<ParticipantDeviceCbs> {
 public:
-	// WARNING: Participant device state may be stored in the database (as it is done by the conference server), therefore do not modify the integer value of the enumeration items
 	enum class State {
-		Joining = 0, //an INVITE has been sent
-		Present = 1, //the SIP session has been concluded, participant is part of the conference
-		Leaving = 2, //A BYE is pending
-		Left = 3, //The Session is terminated
-		ScheduledForJoining = 4, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.
-		ScheduledForLeaving = 5, //Transitional state for a participant that will receive a BYE shortly.
-		OnHold = 6, //the SIP session has been concluded, participant is not media mixed
-		Alerting = 7, //180 Ringing
-		MutedByFocus = 8, //Some medias have been muted by the focus
+		Joining = LinphoneParticipantDeviceStateJoining,
+		Present = LinphoneParticipantDeviceStatePresent,
+		Leaving = LinphoneParticipantDeviceStateLeaving,
+		Left = LinphoneParticipantDeviceStateLeft,
+		ScheduledForJoining = LinphoneParticipantDeviceStateScheduledForJoining,
+		ScheduledForLeaving = LinphoneParticipantDeviceStateScheduledForLeaving,
+		OnHold = LinphoneParticipantDeviceStateOnHold,
+		Alerting = LinphoneParticipantDeviceStateAlerting,
+		MutedByFocus = LinphoneParticipantDeviceStateMutedByFocus,
 	};
 
 	enum class JoiningMethod {
-		DialedIn = LinphoneParticipantDeviceDialedIn,
-		DialedOut = LinphoneParticipantDeviceDialedOut,
-		FocusOwner = LinphoneParticipantDeviceFocusOwner
+		DialedIn = LinphoneParticipantDeviceJoiningMethodDialedIn,
+		DialedOut = LinphoneParticipantDeviceJoiningMethodDialedOut,
+		FocusOwner = LinphoneParticipantDeviceJoiningMethodFocusOwner
+	};
+
+	enum class DisconnectionMethod {
+		Booted = LinphoneParticipantDeviceDisconnectionMethodBooted,
+		Departed = LinphoneParticipantDeviceDisconnectionMethodDeparted,
+		Busy = LinphoneParticipantDeviceDisconnectionMethodBusy,
+		Failed = LinphoneParticipantDeviceDisconnectionMethodFailed
 	};
 
 	ParticipantDevice ();
@@ -82,7 +88,6 @@ public:
 	const IdentityAddress & getAddress () const;
 	void setAddress (const IdentityAddress & address);
 	void setAddress (const Address & address);
-	bool updateAddress();
 	inline const std::string &getLabel () const { return mLabel; }
 	inline void setLabel (const std::string &label) { mLabel = label; };
 	const std::string &getCallId ();
@@ -100,6 +105,11 @@ public:
 	void setState (State newState);
 	inline void setJoiningMethod (JoiningMethod joiningMethod) { mJoiningMethod = joiningMethod; };
 	inline JoiningMethod getJoiningMethod () const { return mJoiningMethod; };
+	void setDisconnectionData(bool initiated, int code, LinphoneReason reason);
+	inline void setDisconnectionMethod (DisconnectionMethod disconnectionMethod) { mDisconnectionMethod = disconnectionMethod; };
+	inline DisconnectionMethod getDisconnectionMethod () const { return mDisconnectionMethod; };
+	inline const std::string & getDisconnectionReason () const { return mDisconnectionReason; }
+	inline void setDisconnectionReason (const std::string &disconnectionReason) { mDisconnectionReason = disconnectionReason; }
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
 
 	inline bool isSubscribedToConferenceEventPackage () const { return mConferenceSubscribeEvent != nullptr; }
@@ -109,8 +119,10 @@ public:
 	bool isValid () const { return getAddress().isValid(); }
 	bool isInConference () const;
 
-	time_t getTimeOfJoining() const;
 	inline void setTimeOfJoining(time_t joiningTime) { mTimeOfJoining = joiningTime; }
+	time_t getTimeOfJoining() const;
+	inline void setTimeOfDisconnection(time_t disconnectionTime) { mTimeOfDisconnection = disconnectionTime; }
+	time_t getTimeOfDisconnection() const;
 	void setCapabilityDescriptor(const std::string &capabilities);
 	const std::string & getCapabilityDescriptor()const{
 		return mCapabilityDescriptor;
@@ -158,7 +170,10 @@ private:
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	JoiningMethod mJoiningMethod = JoiningMethod::DialedIn;
+	DisconnectionMethod mDisconnectionMethod = DisconnectionMethod::Departed;
+	std::string mDisconnectionReason = std::string();
 	time_t mTimeOfJoining;
+	time_t mTimeOfDisconnection = -1;
 	uint32_t mSsrc = 0;
 	bool mSupportAdminMode = false;
 	mutable void * mWindowId = NULL;
@@ -184,12 +199,8 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 		void setIsSpeakingChanged(LinphoneParticipantDeviceCbsIsSpeakingChangedCb cb);
 		LinphoneParticipantDeviceCbsIsMutedCb getIsMuted()const;
 		void setIsMuted(LinphoneParticipantDeviceCbsIsMutedCb cb);
-		LinphoneParticipantDeviceCbsConferenceAlertingCb getConferenceAlerting()const;
-		void setConferenceAlerting(LinphoneParticipantDeviceCbsConferenceAlertingCb cb);
-		LinphoneParticipantDeviceCbsConferenceJoinedCb getConferenceJoined()const;
-		void setConferenceJoined(LinphoneParticipantDeviceCbsConferenceJoinedCb cb);
-		LinphoneParticipantDeviceCbsConferenceLeftCb getConferenceLeft()const;
-		void setConferenceLeft(LinphoneParticipantDeviceCbsConferenceLeftCb cb);
+		LinphoneParticipantDeviceCbsStateChangedCb getStateChanged()const;
+		void setStateChanged(LinphoneParticipantDeviceCbsStateChangedCb cb);
 		LinphoneParticipantDeviceCbsStreamCapabilityChangedCb getStreamCapabilityChanged()const;
 		void setStreamCapabilityChanged(LinphoneParticipantDeviceCbsStreamCapabilityChangedCb cb);
 		LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb getStreamAvailabilityChanged()const;
@@ -197,9 +208,7 @@ class ParticipantDeviceCbs : public bellesip::HybridObject<LinphoneParticipantDe
 	private:
 	LinphoneParticipantDeviceCbsIsSpeakingChangedCb mIsSpeakingChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsIsMutedCb mIsMutedCb = nullptr;
-	LinphoneParticipantDeviceCbsConferenceAlertingCb mConferenceAlertingCb = nullptr;
-	LinphoneParticipantDeviceCbsConferenceJoinedCb mConferenceJoinedCb = nullptr;
-	LinphoneParticipantDeviceCbsConferenceLeftCb mConferenceLeftCb = nullptr;
+	LinphoneParticipantDeviceCbsStateChangedCb mStateChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamCapabilityChangedCb mStreamCapabilityChangedCb = nullptr;
 	LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb mStreamAvailabilityChangedCb = nullptr;
 };

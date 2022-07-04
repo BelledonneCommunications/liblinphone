@@ -2848,6 +2848,7 @@ void MediaSessionPrivate::terminate () {
 		q->stopRecording();
 	}
 	stopStreams();
+	localIsTerminator = true;
 	CallSessionPrivate::terminate();
 }
 
@@ -4522,6 +4523,11 @@ void MediaSession::queueIceCompletionTask(const std::function<LinphoneStatus()> 
 StreamsGroup & MediaSession::getStreamsGroup()const{
 	L_D();
 	return d->getStreamsGroup();
+}
+
+bool MediaSession::isTerminator() const {
+	L_D();
+	return d->localIsTerminator;
 }
 
 bool MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {

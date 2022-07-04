@@ -61,28 +61,12 @@ void linphone_participant_device_cbs_set_is_muted (LinphoneParticipantDeviceCbs 
 	ParticipantDeviceCbs::toCpp(cbs)->setIsMuted(cb);
 }
 
-LinphoneParticipantDeviceCbsConferenceAlertingCb linphone_participant_device_cbs_get_conference_alerting (const LinphoneParticipantDeviceCbs *cbs) {
-	return ParticipantDeviceCbs::toCpp(cbs)->getConferenceAlerting();
+LinphoneParticipantDeviceCbsStateChangedCb linphone_participant_device_cbs_get_state_changed (const LinphoneParticipantDeviceCbs *cbs) {
+	return ParticipantDeviceCbs::toCpp(cbs)->getStateChanged();
 }
 
-void linphone_participant_device_cbs_set_conference_alerting (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceAlertingCb cb) {
-	ParticipantDeviceCbs::toCpp(cbs)->setConferenceAlerting(cb);
-}
-
-LinphoneParticipantDeviceCbsConferenceJoinedCb linphone_participant_device_cbs_get_conference_joined (const LinphoneParticipantDeviceCbs *cbs) {
-	return ParticipantDeviceCbs::toCpp(cbs)->getConferenceJoined();
-}
-
-void linphone_participant_device_cbs_set_conference_joined (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceJoinedCb cb) {
-	ParticipantDeviceCbs::toCpp(cbs)->setConferenceJoined(cb);
-}
-
-LinphoneParticipantDeviceCbsConferenceLeftCb linphone_participant_device_cbs_get_conference_left (const LinphoneParticipantDeviceCbs *cbs) {
-	return ParticipantDeviceCbs::toCpp(cbs)->getConferenceLeft();
-}
-
-void linphone_participant_device_cbs_set_conference_left (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsConferenceLeftCb cb) {
-	ParticipantDeviceCbs::toCpp(cbs)->setConferenceLeft(cb);
+void linphone_participant_device_cbs_set_state_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStateChangedCb cb) {
+	ParticipantDeviceCbs::toCpp(cbs)->setStateChanged(cb);
 }
 
 void linphone_participant_device_cbs_set_stream_availability_changed (LinphoneParticipantDeviceCbs *cbs, LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb cb) {
