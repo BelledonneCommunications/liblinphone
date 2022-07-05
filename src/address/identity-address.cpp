@@ -35,19 +35,21 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 IdentityAddress::IdentityAddress (const string &address) {
-
-	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
-	if (parsedAddress != nullptr) {
-		char *tmp;
-		setScheme(parsedAddress->getScheme());
-		tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
-		setUsername(tmp);
-		ms_free(tmp);
-		setDomain(parsedAddress->getDomain());
-		setGruu(parsedAddress->getGruu());
-	} else {
-		Address tmpAddress(address);
-		fillFromAddress(tmpAddress);
+	if (!address.empty()){
+		shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
+		if (parsedAddress != nullptr) {
+			char *tmp;
+			setScheme(parsedAddress->getScheme());
+			tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
+			setUsername(tmp);
+			ms_free(tmp);
+			setDomain(parsedAddress->getDomain());
+			setGruu(parsedAddress->getGruu());
+		} else {
+			//lInfo() << "Fallback parsing used for " <<address;
+			Address tmpAddress(address);
+			fillFromAddress(tmpAddress);
+		}
 	}
 }
 
@@ -146,7 +148,7 @@ void IdentityAddress::setGruu (const string &gruu) {
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
-	Address address(asString());
+	IdentityAddress address(*this);
 	address.removeUriParam("gr");
 	return address;
 }

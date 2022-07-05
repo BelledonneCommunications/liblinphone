@@ -224,7 +224,6 @@ void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler 
 	}
 
 	if (!isHandlerInSameDomainAsCore(conferenceId)){
-		lError() << "RemoteConferenceListEventHandler::addHandler conference address is in a difference domain than conference factory.";
 		return;
 	}
 
@@ -257,7 +256,6 @@ void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandl
 	}
 
 	if (!isHandlerInSameDomainAsCore(conferenceId)){
-		lError() << "RemoteConferenceListEventHandler::removeHandler() conference address is in a difference domain than conference factory.";
 		return;
 	}
 

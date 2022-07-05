@@ -552,21 +552,20 @@ bool RemoteConferenceEventHandler::alreadySubscribed() const {
 void RemoteConferenceEventHandler::subscribe () {
 	if (!alreadySubscribed())
 		return; // Already subscribed or application did not request subscription
-
-
-	const string &peerAddress = getConferenceId().getPeerAddress().asString();
+	
 	const string &localAddress = getConferenceId().getLocalAddress().asString();
-
 	LinphoneAddress *lAddr = linphone_address_new(localAddress.c_str());
-	LinphoneAddress *peerAddr = linphone_address_new(peerAddress.c_str());
+	
 	LinphoneCore *lc = conf->getCore()->getCCore();
 	LinphoneProxyConfig *cfg = linphone_core_lookup_proxy_by_identity(lc, lAddr);
 
 	if (!cfg || (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk)) {
 		linphone_address_unref(lAddr);
-		linphone_address_unref(peerAddr);
 		return;
 	}
+	
+	const string &peerAddress = getConferenceId().getPeerAddress().asString();
+	LinphoneAddress *peerAddr = linphone_address_new(peerAddress.c_str());
 
 	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), peerAddr, cfg, "conference", 600);
 	lev->op->setFrom(localAddress);

@@ -22,7 +22,7 @@
 /* Address manipulation API*/
 SalAddress * sal_address_new(const char *uri){
 	belle_sip_header_address_t*  result;
-	if (uri) {
+	if (uri && uri[0] != '\0') {
 		result=belle_sip_header_address_fast_parse (uri);
 		/*may return NULL*/
 	} else {

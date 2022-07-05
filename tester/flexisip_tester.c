@@ -1758,25 +1758,27 @@ void sequential_forking(void) {
 
 	linphone_core_invite_address(pauline->lc,marie->identity);
 	/*pauline should hear ringback*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,10000));
 	/*first device from Marie should be ringing*/
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallIncomingReceived,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallIncomingReceived,1,10000));
 	/*the second should not*/
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
 
 	LinphoneCall *call = linphone_core_get_current_call(marie->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(call)) goto end;
 
-	/*marie accepts the call on its second device*/
+	/* Marie accepts the call on its first device*/
 	linphone_call_accept(call);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallConnected,1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 
-	/*second device should have received nothing*/
+	/* Second device shall receive nothing */
+	
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived,1,13000));
 	BC_ASSERT_EQUAL(marie2->stat.number_of_LinphoneCallEnd, 0, int, "%d");
-
+	
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
