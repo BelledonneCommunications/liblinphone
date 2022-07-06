@@ -801,6 +801,7 @@ static void simple_conference_notify_speaking_device(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,initial_laure_stat.number_of_LinphoneCallStreamsRunning+1,2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,initial_marie_stat.number_of_LinphoneCallStreamsRunning+2,3000));
 	
+	// Set Laure is_speaking callback for all participants to check that pauline is speaking
 	LinphoneConference *laure_conf = linphone_call_get_conference(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NOT_NULL(laure_conf);
 	if (!laure_conf) goto end;
@@ -821,9 +822,30 @@ static void simple_conference_notify_speaking_device(void) {
 	}
 	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 
-	// need time to be notified
+	// Set Pauline is_speaking callback for herself to check that she is speaking
+	LinphoneConference *pauline_conf = linphone_call_get_conference(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_PTR_NOT_NULL(pauline_conf);
+	if (!pauline_conf) goto end;
+
+	LinphoneParticipant *p = linphone_conference_get_me(pauline_conf);
+	bctbx_list_t *devices = linphone_participant_get_devices(p);
+	for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+		LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
+		linphone_participant_device_set_user_data(d, pauline->lc);
+		LinphoneParticipantDeviceCbs *cbs = linphone_factory_create_participant_device_cbs(linphone_factory_get());
+		linphone_participant_device_cbs_set_is_speaking_changed(cbs, on_speaking_notified);
+		linphone_participant_device_add_callbacks(d, cbs);
+		linphone_participant_device_cbs_unref(cbs);
+	}
+	bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
+
+	// Need time to be notified
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 1, 50000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneParticipantDeviceStopSpeaking, 1, 50000));
+
+	// No need to wait as much this time as pauline should also be notified at the same time
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneParticipantDeviceStartSpeaking, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneParticipantDeviceStopSpeaking, 1, 10000));
 	
 	terminate_conference(new_participants, marie, NULL, NULL);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
