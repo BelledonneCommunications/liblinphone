@@ -369,7 +369,9 @@ void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call);
 LinphoneChatRoomCbs * _linphone_chat_room_cbs_new (void);
 void _linphone_chat_room_notify_is_composing_received(LinphoneChatRoom *cr, const LinphoneAddress *remoteAddr, bool_t isComposing);
 void _linphone_chat_room_notify_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
+void _linphone_chat_room_notify_messages_received(LinphoneChatRoom *cr, const bctbx_list_t* chat_messages);
 void _linphone_chat_room_notify_new_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+void _linphone_chat_room_notify_new_events(LinphoneChatRoom *cr, const bctbx_list_t *event_logs);
 void _linphone_chat_room_notify_participant_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_removed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_device_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
@@ -385,6 +387,7 @@ void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom
 void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+void _linphone_chat_room_notify_chat_messages_received(LinphoneChatRoom *cr, const bctbx_list_t *event_logs);
 void _linphone_chat_room_notify_chat_message_sending(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_chat_message_sent(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_conference_address_generation(LinphoneChatRoom *cr);
@@ -611,6 +614,7 @@ void linphone_core_notify_call_log_updated(LinphoneCore *lc, LinphoneCallLog *ne
 void linphone_core_notify_call_id_updated(LinphoneCore *lc, const char*previous, const char *current);
 void linphone_core_notify_text_message_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message);
 void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages);
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_chat_room_read(LinphoneCore *lc, LinphoneChatRoom *room);

@@ -81,6 +81,10 @@ public:
 		chatRoom->getPrivate()->notifyChatMessageReceived(chatMessage);
 	}
 
+	inline void notifyAggregatedChatMessages () override {
+		chatRoom->getPrivate()->notifyAggregatedChatMessages();
+	}
+
 	inline void notifyUndecryptableChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->notifyUndecryptableChatMessageReceived(chatMessage);
 	}

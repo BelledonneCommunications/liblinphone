@@ -340,7 +340,7 @@ LINPHONE_PUBLIC LinphoneCore* linphone_chat_room_get_core(const LinphoneChatRoom
 
 /**
  * When realtime text is enabled linphone_call_params_realtime_text_enabled(), #LinphoneCoreIsComposingReceivedCb is call everytime a char is received from peer.
- * At the end of remote typing a regular #LinphoneChatMessage is received with committed data from #LinphoneCoreMessageReceivedCb.
+ * At the end of remote typing a regular #LinphoneChatMessage is received with committed data from #LinphoneCoreCbsMessageReceivedCb.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return  RFC 4103/T.140 char
  */

@@ -226,7 +226,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreAuthenticationRequestedCb authentication_requested; /**< Ask the application some authentication information */
 	LinphoneCoreCallLogUpdatedCb call_log_updated; /**< Notifies that call log list has been updated */
 	LinphoneCoreCallIdUpdatedCb call_id_updated;/**< Notifies that callid of a call has been updated */
-	LinphoneCoreMessageReceivedCb message_received; /**< a message is received, can be text or external body*/
+	LinphoneCoreCbsMessageReceivedCb message_received; /**< a message is received, can be text or external body*/
+	LinphoneCoreCbsMessagesReceivedCb messages_received; /**< one or more messages are received, can be text or external body*/
 	LinphoneCoreCbsMessageReceivedUnableDecryptCb message_received_unable_decrypt; /**< an encrypted message is received but we can't decrypt it*/
 	LinphoneCoreIsComposingReceivedCb is_composing_received; /**< An is-composing notification has been received */
 	LinphoneCoreDtmfReceivedCb dtmf_received; /**< A dtmf has been received received */
@@ -262,7 +263,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsEcCalibrationResultCb ec_calibration_result;
 	LinphoneCoreCbsEcCalibrationAudioInitCb ec_calibration_audio_init;
 	LinphoneCoreCbsEcCalibrationAudioUninitCb ec_calibration_audio_uninit;
-	LinphoneCoreCbsMessageReceivedCb message_sent;
+	LinphoneCoreCbsMessageSentCb message_sent;
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
 	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
@@ -506,6 +507,34 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_message_received(LinphoneCoreCbs *cbs
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsMessagesReceivedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_messages_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessagesReceivedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsMessagesReceivedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsMessagesReceivedCb linphone_core_cbs_get_messages_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsMessagesReceivedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_messages_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessagesReceivedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsMessagesReceivedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsMessagesReceivedCb linphone_core_cbs_get_messages_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessageSentCb callback.
@@ -6373,6 +6402,21 @@ LINPHONE_PUBLIC void linphone_core_remove_ldap(LinphoneCore *core, LinphoneLdap 
  * @return \bctbx_list{LinphoneLdap} @maybenil @tobefreed
 **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *core);
+
+/**
+ * Returns whether chat messages grouping is enabled or not
+ * @param core The #LinphoneCore object @notnil
+ * @return TRUE if received chat messages will be notified as a bundle, FALSE otherwise.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_get_chat_messages_aggregation_enabled(LinphoneCore *core);
+
+/**
+ * Sets whether chat messages grouping is enabled or not.
+ * Set [sip] chat_messages_aggregation in your configuration file for the timer, default is 500ms.
+ * @param core The #LinphoneCore object @notnil
+ * @param enabled TRUE to wait for chat messages and notify them as at once, FALSE to keep legacy behavior.
+**/
+LINPHONE_PUBLIC void linphone_core_set_chat_messages_aggregation_enabled(LinphoneCore *core, bool_t enabled);
 
 /**
  * Writes the config file to disk.

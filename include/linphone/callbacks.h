@@ -194,6 +194,16 @@ typedef LinphoneCoreCbsCallIdUpdatedCb LinphoneCoreCallIdUpdatedCb;
 typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
+ * Chat messages callback prototype.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single message received callback.
+ * @param core #LinphoneCore object @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be created by the framework in case the From-URI is not present in any chat room. @notnil
+ * @param messages The \bctbx_list{LinphoneChatMessage} of incoming messages @notnil
+ */
+typedef void (*LinphoneCoreCbsMessagesReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, const bctbx_list_t *messages);
+
+/**
  * Called after the #send method of the #LinphoneChatMessage was called.
  * The message will be in state InProgress.
  * In case of resend this callback won't be called.

@@ -847,16 +847,43 @@ const std::string Core::ephemeralVersionAsString() {
 	return os.str();
 }
 
+void CorePrivate::stopChatMessagesAggregationTimer () {
+	L_Q();
+
+	if (chatMessagesAggregationTimer) {
+		LinphoneCore *cCore = q->getCCore();
+
+		if (cCore && cCore->sal) {
+			cCore->sal->cancelTimer(chatMessagesAggregationTimer);
+		}
+
+		belle_sip_object_unref(chatMessagesAggregationTimer);
+		chatMessagesAggregationTimer = nullptr;
+	}
+
+	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
+		chatRoom->getPrivate()->notifyAggregatedChatMessages();
+	} 
+
+	chatMessagesAggregationBackgroundTask.stop();
+}
+
+bool Core::isCurrentlyAggregatingChatMessages () {
+	L_D();
+
+	return d->chatMessagesAggregationTimer != nullptr;
+}
+
 LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) {
 	L_D();
 
+	LinphoneCore *cCore = getCCore();
 	LinphoneReason reason = LinphoneReasonNotAcceptable;
 	string peerAddress;
 	string localAddress;
 
-	const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
-
-	if (linphone_core_conference_server_enabled(getCCore())) {
+	if (linphone_core_conference_server_enabled(cCore)) {
 		localAddress = peerAddress = op->getTo();
 	} else {
 		peerAddress = op->getFrom();
@@ -868,9 +895,24 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 		ConferenceAddress(localAddress)
 	};
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
-	if (chatRoom)
+	if (chatRoom) {
+		bool_t chatMessagesAggregationEnabled = linphone_core_get_chat_messages_aggregation_enabled(cCore);
+		int chatMessagesAggregationDelay = linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
+		if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
+			if (!d->chatMessagesAggregationTimer) {
+				d->chatMessagesAggregationTimer = cCore->sal->createTimer([d]() -> bool {
+					d->stopChatMessagesAggregationTimer();
+					return false; // BELLE_SIP_STOP
+				}, (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
+			} else {
+				belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer, (unsigned int)chatMessagesAggregationDelay);
+			}
+			d->chatMessagesAggregationBackgroundTask.start(getSharedFromThis());
+		}
+
 		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
-	else if (!linphone_core_conference_server_enabled(getCCore())) {
+	} else if (!linphone_core_conference_server_enabled(cCore)) {
+		const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
 		/* Client mode but check that it is really for basic chatroom before creating it.*/
 		if (session_mode && strcasecmp(session_mode, "true") == 0) {
 			lError() << "Message is received in the context of a client chatroom for which we have no context.";

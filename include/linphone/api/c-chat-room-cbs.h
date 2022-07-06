@@ -90,6 +90,24 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsMessageReceivedCb linphone_chat_room_cbs_get_
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageReceivedCb cb);
 
 /**
+ * Get the chat messages received callback.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single message received callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current chat messages received callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsMessagesReceivedCb linphone_chat_room_cbs_get_messages_received (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the chat message received callback.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single message received callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The chat messages received callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_messages_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessagesReceivedCb cb);
+
+/**
  * Get the new event log callback.
  * This callback will be called before every other #LinphoneEventLog related callback.
  * @param cbs #LinphoneChatRoomCbs object. @notnil
@@ -106,6 +124,22 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsNewEventCb linphone_chat_room_cbs_get_new_eve
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_new_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsNewEventCb cb);
 
 /**
+ * Get the new event logs callback.
+ * This callback will be called before every other #LinphoneEventLog related callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current event logs created callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsNewEventsCb linphone_chat_room_cbs_get_new_events (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the new event logs callback.
+ * This callback will be called before every other #LinphoneEventLog related callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The event logs created callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_new_events (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsNewEventsCb cb);
+
+/**
  * Get the chat message received callback.
  * @param cbs #LinphoneChatRoomCbs object. @notnil
  * @return The current chat message received callback.
@@ -118,6 +152,24 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsChatMessageReceivedCb linphone_chat_room_cbs_
  * @param cb The chat message received callback to be used.
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageReceivedCb cb);
+
+/**
+ * Get the chat messages received callback.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single chat message received callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current chat message received callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsChatMessagesReceivedCb linphone_chat_room_cbs_get_chat_messages_received (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the chat messages received callback.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single chat message received callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The chat message received callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_messages_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessagesReceivedCb cb);
 
 /**
  * Get the chat message sending callback.

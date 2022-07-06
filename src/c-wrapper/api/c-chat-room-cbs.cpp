@@ -28,6 +28,7 @@ struct _LinphoneChatRoomCbs {
 	void *userData;
 	LinphoneChatRoomCbsIsComposingReceivedCb isComposingReceivedCb;
 	LinphoneChatRoomCbsMessageReceivedCb messageReceivedCb;
+	LinphoneChatRoomCbsMessagesReceivedCb messagesReceivedCb;
 	LinphoneChatRoomCbsParticipantAddedCb participantAddedCb;
 	LinphoneChatRoomCbsParticipantRemovedCb participantRemovedCb;
 	LinphoneChatRoomCbsParticipantDeviceAddedCb participantDeviceAddedCb;
@@ -40,6 +41,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsConferenceLeftCb conferenceLeftCb;
 	LinphoneChatRoomCbsUndecryptableMessageReceivedCb undecryptableMessageReceivedCb;
 	LinphoneChatRoomCbsChatMessageReceivedCb chatMessageReceivedCb;
+	LinphoneChatRoomCbsChatMessagesReceivedCb chatMessagesReceivedCb;
 	LinphoneChatRoomCbsChatMessageSendingCb chatMessageSendingCb;
 	LinphoneChatRoomCbsChatMessageSentCb chatMessageSentCb;
 	LinphoneChatRoomCbsConferenceAddressGenerationCb conferenceAddressGenerationCb;
@@ -51,6 +53,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
 	LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb chatMessageParticipantImdnStateChangedCb;
 	LinphoneChatRoomCbsNewEventCb newEventCb;
+	LinphoneChatRoomCbsNewEventsCb newEventsCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -103,6 +106,14 @@ void linphone_chat_room_cbs_set_message_received (LinphoneChatRoomCbs *cbs, Linp
 	cbs->messageReceivedCb = cb;
 }
 
+void linphone_chat_room_cbs_set_chat_messages_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessagesReceivedCb cb) {
+	cbs->chatMessagesReceivedCb = cb;
+}
+
+LinphoneChatRoomCbsMessagesReceivedCb linphone_chat_room_cbs_get_messages_received (const LinphoneChatRoomCbs *cbs) {
+	return cbs->messagesReceivedCb;
+}
+
 LinphoneChatRoomCbsNewEventCb linphone_chat_room_cbs_get_new_event (const LinphoneChatRoomCbs *cbs) {
 	return cbs->newEventCb;
 }
@@ -111,12 +122,28 @@ void linphone_chat_room_cbs_set_new_event (LinphoneChatRoomCbs *cbs, LinphoneCha
 	cbs->newEventCb = cb;
 }
 
+LinphoneChatRoomCbsNewEventsCb linphone_chat_room_cbs_get_new_events (const LinphoneChatRoomCbs *cbs) {
+	return cbs->newEventsCb;
+}
+
+void linphone_chat_room_cbs_set_new_events (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsNewEventsCb cb) {
+	cbs->newEventsCb = cb;
+}
+
 LinphoneChatRoomCbsChatMessageReceivedCb linphone_chat_room_cbs_get_chat_message_received (const LinphoneChatRoomCbs *cbs) {
 	return cbs->chatMessageReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageReceivedCb cb) {
 	cbs->chatMessageReceivedCb = cb;
+}
+
+LinphoneChatRoomCbsChatMessagesReceivedCb linphone_chat_room_cbs_get_chat_messages_received (const LinphoneChatRoomCbs *cbs) {
+	return cbs->chatMessagesReceivedCb;
+}
+
+void linphone_chat_room_cbs_set_messages_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessagesReceivedCb cb) {
+	cbs->messagesReceivedCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageSendingCb linphone_chat_room_cbs_get_chat_message_sending (const LinphoneChatRoomCbs *cbs) {

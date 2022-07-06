@@ -200,6 +200,11 @@ void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *r
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages) {
+	NOTIFY_IF_EXIST(messages_received, lc, room, messages);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message){
 	NOTIFY_IF_EXIST(message_sent, lc, room, message);
 	cleanup_dead_vtable_refs(lc);

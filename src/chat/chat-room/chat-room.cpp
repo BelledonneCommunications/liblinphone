@@ -410,13 +410,67 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
 		notifyIsComposingReceived(fromAddress.asAddress(), false);
 	}
+	
+	bool_t chatMessagesAggregation = linphone_core_get_chat_messages_aggregation_enabled(cCore);
+	if (chatMessagesAggregation || core->isCurrentlyAggregatingChatMessages()) {
+		aggregatedMessages.push_back(chatMessage);
+		if (!core->isCurrentlyAggregatingChatMessages()) {
+			notifyAggregatedChatMessages();
+		}
+	} else {
+		// No aggregation, notify right away
+		notifyMessageReceived(chatMessage);
+	}
+}
 
+void ChatRoomPrivate::notifyMessageReceived(const shared_ptr<ChatMessage> &chatMessage) {
 	shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(::time(nullptr), chatMessage);
 	_linphone_chat_room_notify_chat_message_received(getCChatRoom(), L_GET_C_BACK_PTR(event));
 	// Legacy.
 	notifyChatMessageReceived(chatMessage);
 
 	sendDeliveryNotification(chatMessage);
+}
+
+void ChatRoomPrivate::notifyAggregatedChatMessages () {
+	L_Q();
+
+	if (aggregatedMessages.empty()) {
+		return;
+	}
+	
+	size_t aggregatedMessagesSize = aggregatedMessages.size();
+	if (aggregatedMessagesSize == 1) {
+		lDebug() << "[Chat Room] There is 1 aggregated message to notify";
+	} else {
+		lDebug() << "[Chat Room] There are " << aggregatedMessagesSize << " aggregated messages to notify";
+	}
+	LinphoneChatRoom *cChatRoom = getCChatRoom();
+	auto core = q->getCore()->getCCore();
+
+	// Notify as ChatMessages
+	bctbx_list_t *cMessages = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(aggregatedMessages);
+	_linphone_chat_room_notify_messages_received(cChatRoom, cMessages);
+	linphone_core_notify_messages_received(core, cChatRoom, cMessages);
+
+	// Notify as Events
+	std::list<std::shared_ptr<ConferenceChatMessageEvent>> eventsList;
+	for (auto &chatMessage : aggregatedMessages) {
+		shared_ptr<ConferenceChatMessageEvent> event = make_shared<ConferenceChatMessageEvent>(::time(nullptr), chatMessage);
+		eventsList.push_back(event);
+	}
+	bctbx_list_t *cEvents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(eventsList);
+	_linphone_chat_room_notify_chat_messages_received(cChatRoom, cEvents);
+
+	// Notify delivery
+	for (auto &chatMessage : aggregatedMessages) {
+		sendDeliveryNotification(chatMessage);
+	}
+
+	bctbx_list_free_with_data(cMessages,  (bctbx_list_free_func) linphone_chat_message_unref);
+	bctbx_list_free_with_data(cEvents, (bctbx_list_free_func) linphone_event_unref);
+
+	aggregatedMessages.clear();
 }
 
 void ChatRoomPrivate::onImdnReceived (const shared_ptr<ChatMessage> &chatMessage) {
@@ -694,6 +748,16 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId, Chat
 
 void ChatRoom::markAsRead () {
 	L_D();
+	
+	// Mark any message currently waiting aggregation as read
+	for (auto &chatMessage : d->aggregatedMessages) {
+		chatMessage->getPrivate()->markAsRead();
+		
+		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
+		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
+			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
+		}
+	}
 
 	CorePrivate *dCore = getCore()->getPrivate();
 	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {

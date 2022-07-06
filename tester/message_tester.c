@@ -4114,6 +4114,49 @@ static void migration_from_messages_db (void) {
 	bctbx_free(tmp_db);
 }
 
+static void received_messages_with_aggregation_enabled(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+	/* enable chat messages aggregation */
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "sip", "chat_messages_aggregation", TRUE);
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "sip", "chat_messages_aggregation", TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "chat_messages_aggregation_delay", 2000);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "chat_messages_aggregation_delay", 2000);
+
+	/* create a chatroom on pauline's side */
+	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+
+	LinphoneChatMessage *chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, "Bla bla bla bla");
+	linphone_chat_message_send(chat_msg);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
+
+	// check message is received using only new callback
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
+	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	
+	linphone_chat_message_unref(chat_msg);
+	reset_counters(&pauline->stat);
+	reset_counters(&marie->stat);
+
+	for (int i = 0; i < 10; i++) {
+		LinphoneChatMessage *chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, "Bla bli bla blu");
+		linphone_chat_message_send(chat_msg);
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, i+1));
+		linphone_chat_message_unref(chat_msg);
+	}
+
+	// check messages are received using only new callback
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 10, 5000));
+	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 10));
+
+	// Give some time for IMDN's 200 OK to be received so it doesn't leak
+	wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t message_tests[] = {
 	TEST_NO_TAG("File transfer content", file_transfer_content),
 	TEST_NO_TAG("Create two basic chat rooms with same remote", create_two_basic_chat_room_with_same_remote),
@@ -4174,6 +4217,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth server accepting multiple auth domain - download auth fail", transfer_message_digest_auth_fail_any_domain_down),
 	TEST_NO_TAG("Transfer message - file size limited pass", transfer_message_small_files_pass),
 	TEST_NO_TAG("Transfer message - file size limited fail", transfer_message_small_files_fail),
+	TEST_NO_TAG("Aggregated messages", received_messages_with_aggregation_enabled),
 	TEST_NO_TAG("Text message denied", text_message_denied),
 #ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),

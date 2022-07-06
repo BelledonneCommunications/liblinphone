@@ -1943,6 +1943,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	linphone_core_cbs_set_auth_info_requested(mgr->cbs, auth_info_requested);
 	linphone_core_cbs_set_call_state_changed(mgr->cbs, call_state_changed);
 	linphone_core_cbs_set_message_received(mgr->cbs, message_received);
+	linphone_core_cbs_set_messages_received(mgr->cbs, messages_received);
 	linphone_core_cbs_set_is_composing_received(mgr->cbs, is_composing_received);
 	linphone_core_cbs_set_new_subscription_requested(mgr->cbs, new_subscription_requested);
 	linphone_core_cbs_set_notify_presence_received(mgr->cbs, notify_presence_received);
@@ -2522,6 +2523,13 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 	default:
 		BC_FAIL("unexpected event");break;
 	}
+}
+
+void messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages) {
+	stats* counters;
+	counters = get_stats(lc);
+	int count = (int)bctbx_list_size(messages);
+	counters->number_of_LinphoneAggregatedMessagesReceived += count;
 }
 
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {

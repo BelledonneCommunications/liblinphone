@@ -145,6 +145,8 @@ public:
 		const IdentityAddress &participantAddress,
 		bool encrypted) const;
 	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
+	
+	void stopChatMessagesAggregationTimer ();
 
 	// Cancel task scheduled on the main loop
 	void doLater(const std::function<void ()> &something);
@@ -196,6 +198,9 @@ private:
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
 	belle_sip_source_t *ephemeralTimer = nullptr;
+
+	belle_sip_source_t *chatMessagesAggregationTimer = nullptr;
+	BackgroundTask chatMessagesAggregationBackgroundTask { "Chat messages aggregation" };
 
 	BackgroundTask pushReceivedBackgroundTask {"Push received background task"};
 	std::string lastPushReceivedCallId = "";

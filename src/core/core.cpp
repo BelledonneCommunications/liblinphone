@@ -255,6 +255,8 @@ void CorePrivate::shutdown() {
 	stopEphemeralMessageTimer();
 	ephemeralMessages.clear();
 
+	stopChatMessagesAggregationTimer();
+
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const auto &chatRoomPrivate = chatRoom->getPrivate();

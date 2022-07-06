@@ -81,6 +81,8 @@ public:
 	void sendDeliveryNotifications (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void sendDisplayNotification (const std::shared_ptr<ChatMessage> &chatMessage);
 
+	void notifyAggregatedChatMessages () override;
+	void notifyMessageReceived(const std::shared_ptr<ChatMessage> &chatMessage);
 	void notifyChatMessageReceived (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void notifyIsComposingReceived (const Address &remoteAddress, bool isComposing);
 	void notifyStateChanged ();
@@ -104,6 +106,7 @@ public:
 	std::list<IdentityAddress> remoteIsComposing;
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
+	std::list<std::shared_ptr<ChatMessage>> aggregatedMessages;
 
 	std::shared_ptr<ChatRoomParams> params;
 

@@ -245,6 +245,15 @@ typedef void (*LinphoneChatRoomCbsIsComposingReceivedCb) (LinphoneChatRoom *chat
 typedef void (*LinphoneChatRoomCbsMessageReceivedCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
+ * Callback used to notify a chat room that many chat messages have been received.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single message received callback.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param chat_messages The \bctbx_list{LinphoneChatMessage} list of events to be notified @notnil
+ */
+typedef void (*LinphoneChatRoomCbsMessagesReceivedCb) (LinphoneChatRoom *chat_room, const bctbx_list_t *chat_messages);
+
+/**
  * Callback used to notify a chat room that an event log has been created.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
@@ -252,11 +261,27 @@ typedef void (*LinphoneChatRoomCbsMessageReceivedCb) (LinphoneChatRoom *chat_roo
 typedef void (*LinphoneChatRoomCbsNewEventCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
+ * Callback used to notify a chat room that many event logs have been created.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param event_logs The \bctbx_list{LinphoneEventLog} list of events to be notified @notnil
+ */
+typedef void (*LinphoneChatRoomCbsNewEventsCb) (LinphoneChatRoom *chat_room, const bctbx_list_t *event_logs);
+
+/**
  * Callback used to notify a chat room that a chat message has been received.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
 typedef void (*LinphoneChatRoomCbsChatMessageReceivedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
+
+/**
+ * Callback used to notify a chat room that one or many chat messages have been received.
+ * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using linphone_core_set_chat_messages_aggregation_enabled()),
+ * it replaces the single chat message received callback.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param event_logs The \bctbx_list{LinphoneEventLog} list of events to be notified @notnil
+ */
+typedef void (*LinphoneChatRoomCbsChatMessagesReceivedCb) (LinphoneChatRoom *chat_room, const bctbx_list_t *event_logs);
 
 /**
  * Callback used to notify a chat room that a chat message is being sent.

@@ -553,8 +553,16 @@ void _linphone_chat_room_notify_message_received(LinphoneChatRoom *cr, LinphoneC
 	NOTIFY_IF_EXIST(MessageReceived, message_received, cr, msg);
 }
 
+void _linphone_chat_room_notify_messages_received(LinphoneChatRoom *cr, const bctbx_list_t *chat_messages) {
+	NOTIFY_IF_EXIST(MessagesReceived, messages_received, cr, chat_messages);
+}
+
 void _linphone_chat_room_notify_new_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	NOTIFY_IF_EXIST(NewEvent, new_event, cr, event_log);
+}
+
+void _linphone_chat_room_notify_new_events(LinphoneChatRoom *cr, const bctbx_list_t *event_logs) {
+	NOTIFY_IF_EXIST(NewEvents, new_events, cr, event_logs);
 }
 
 void _linphone_chat_room_notify_participant_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
@@ -628,6 +636,11 @@ void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom 
 void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	_linphone_chat_room_notify_new_event(cr, event_log);
 	NOTIFY_IF_EXIST(ChatMessageReceived, chat_message_received, cr, event_log);
+}
+
+void _linphone_chat_room_notify_chat_messages_received(LinphoneChatRoom *cr, const bctbx_list_t *event_logs) {
+	_linphone_chat_room_notify_new_events(cr, event_logs);
+	NOTIFY_IF_EXIST(ChatMessagesReceived, chat_messages_received, cr, event_logs);
 }
 
 void _linphone_chat_room_notify_chat_message_sending(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {

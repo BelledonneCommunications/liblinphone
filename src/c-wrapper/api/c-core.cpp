@@ -287,3 +287,10 @@ bctbx_list_t *linphone_core_get_ldap_list(LinphoneCore *lc){
 	return Ldap::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getLdapList());
 }
 
+bool_t linphone_core_get_chat_messages_aggregation_enabled(LinphoneCore *core) {
+	return linphone_config_get_bool(linphone_core_get_config(core), "sip", "chat_messages_aggregation", FALSE);
+}
+
+void linphone_core_set_chat_messages_aggregation_enabled(LinphoneCore *core, bool_t enabled) {
+	linphone_config_set_bool(linphone_core_get_config(core), "sip", "chat_messages_aggregation", enabled);
+}

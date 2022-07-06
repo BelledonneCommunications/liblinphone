@@ -341,6 +341,14 @@ void linphone_core_cbs_set_message_received(LinphoneCoreCbs *cbs, LinphoneCoreCb
 	cbs->vtable->message_received = cb;
 }
 
+LinphoneCoreCbsMessagesReceivedCb linphone_core_cbs_get_messages_received(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->messages_received;
+}
+
+void linphone_core_cbs_set_messages_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessagesReceivedCb cb) {
+	cbs->vtable->messages_received = cb;
+}
+
 LinphoneCoreCbsMessageReceivedUnableDecryptCb linphone_core_cbs_get_message_received_unable_decrypt(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->message_received_unable_decrypt;
 }

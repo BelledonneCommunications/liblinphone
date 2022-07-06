@@ -62,6 +62,8 @@ public:
 
 	virtual void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call) = 0;
 	virtual void setCallId (const std::string &value) = 0;
+
+	virtual void notifyAggregatedChatMessages() = 0;
 };
 
 LINPHONE_END_NAMESPACE

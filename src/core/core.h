@@ -308,6 +308,7 @@ public:
 	std::shared_ptr<CallSession> createConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants);
 	std::shared_ptr<CallSession> createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants, const ConferenceAddress &confAddr);
 
+	bool isCurrentlyAggregatingChatMessages ();
 private:
 	Core ();
 
