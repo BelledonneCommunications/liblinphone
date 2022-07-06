@@ -897,11 +897,11 @@ void linphone_core_set_default_account(LinphoneCore *lc, LinphoneAccount *accoun
 		if (bctbx_list_find(lc->sip_conf.accounts,account)==NULL){
 			ms_warning("Bad account address: it is not in the list !");
 			lc->default_account=NULL;
-			return ;
+			return;
 		}
 	}
 	lc->default_account=account;
-	lc->default_proxy=Account::toCpp(account)->getConfig();
+	lc->default_proxy= account ? Account::toCpp(account)->getConfig() : NULL;
 	if (linphone_core_ready(lc)) {
 		linphone_config_set_int(lc->config,"sip","default_proxy",linphone_core_get_default_account_index(lc));
 		/* Invalidate phone numbers in friends maps when default account changes because the new one may have a different dial prefix */
