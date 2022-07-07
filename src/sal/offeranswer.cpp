@@ -769,8 +769,15 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	/* Handle RTP bundle negociation */
 	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty()){
 		resultCfg.mid = remoteCfg.mid;
+
+		if (remoteCfg.mid_rtp_ext_header_id == 0) {
+			lWarning() << "Found mid but the corresponding extmap attribute is missing";
+			success = false;
+			return std::make_pair(resultCfg, success);
+		}
+
 		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
-		
+
 		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
