@@ -249,18 +249,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			}
 		}
 
-		MediaStreamDir dir = media_stream_get_direction(&mStream->ms);
-		if (videoMixer == nullptr && !label.empty() && dir != MediaStreamRecvOnly && !isThumbnail) {
-			lInfo() << "Restarting stream because it has to be linked to ITC sink.";
-			stop();
-		} else {
-			if (!label.empty() && label.compare(getLabel()) != 0) {
-				lInfo() << "Handling label change - previously it was " << getLabel() << " and now it is " << label;
-				setNativeWindowId(label.empty() ? getMediaSession().getParticipantWindowId(label) : NULL);
-				video_stream_set_label(mStream, L_STRING_TO_C(label));
-			}
-			return;
+		if (!label.empty() && label.compare(getLabel()) != 0) {
+			lInfo() << "Handling label change - previously it was " << getLabel() << " and now it is " << label;
+			setNativeWindowId(label.empty() ? getMediaSession().getParticipantWindowId(label) : NULL);
+			video_stream_set_label(mStream, L_STRING_TO_C(label));
 		}
+		return;
 	}
 
 	int usedPt = -1;
