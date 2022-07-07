@@ -83,6 +83,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Imdn;
 	friend class LocalConferenceEventHandler;
+	friend class LocalConference;
 	friend class MainDb;
 	friend class MainDbEventKey;
 	friend class MS2Stream;

@@ -1076,6 +1076,30 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	_linphone_chat_room_notify_participant_admin_status_changed(cr, L_GET_C_BACK_PTR(event));
 }
 
+void ClientGroupChatRoom::onParticipantDeviceStateChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	L_D();
+
+	if (event->getFullState())
+		return;
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_participant_device_state_changed(cr, L_GET_C_BACK_PTR(event), (LinphoneParticipantDeviceState)device->getState());
+}
+
+void ClientGroupChatRoom::onParticipantDeviceMediaAvailabilityChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	L_D();
+
+	if (event->getFullState())
+		return;
+
+	d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_participant_device_media_availability_changed(cr, L_GET_C_BACK_PTR(event));
+}
+
 void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEvent> &event) {
 	L_D();
 	shared_ptr<ConferenceSecurityEvent> finalEvent = nullptr;

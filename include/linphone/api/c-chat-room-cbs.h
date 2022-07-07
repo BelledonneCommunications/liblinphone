@@ -326,6 +326,34 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantDeviceRemovedCb linphone_chat_room
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_device_removed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceRemovedCb cb);
 
 /**
+ * Get the participant device state callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current participant device state callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantDeviceStateChangedCb linphone_chat_room_cbs_get_participant_device_state_changed (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the participant device state callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The participant device state callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_device_state_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceStateChangedCb cb);
+
+/**
+ * Get the participant device media availability changed callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current participant device media availability changed callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb linphone_chat_room_cbs_get_participant_device_media_availability_changed (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the participant device media availability changed callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The participant device media availability changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_device_media_availability_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb cb);
+
+/**
  * Get the conference joined callback.
  * @param cbs LinphoneChatRoomCbs object. @notnil
  * @return The current conference joined callback.

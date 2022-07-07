@@ -644,7 +644,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 		};
 		auto it = find_if(devices.cbegin(), devices.cend(), predicate);
 		if (it == devices.cend()){
-			lInfo() << q << "Device " << device << " is no longer registered, it will be removed from the chatroom.";
+			lInfo() << q << " Device " << device << " is no longer registered, it will be removed from the chatroom.";
 			devicesToRemove.push_back(device);
 		}
 	}
@@ -1573,6 +1573,8 @@ void ServerGroupChatRoom::setState (ConferenceInterface::State state) {
 
 void ServerGroupChatRoom::subscribeReceived (LinphoneEvent *event) {
 	static_pointer_cast<LocalConference>(getConference())->subscribeReceived(event);
+	// Store last notify ID in the database
+	getCore()->getPrivate()->mainDb->insertChatRoom(getSharedFromThis(), getConference()->getLastNotify());
 }
 
 // -----------------------------------------------------------------------------

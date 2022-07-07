@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/event.h"
@@ -179,7 +180,10 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceStateChanged (creationTime,  isFullState, participant, participantDevice);
+	// This method is called by participant devices whenever they change state
+	auto event = Conference::notifyParticipantDeviceStateChanged (creationTime,  isFullState, participant, participantDevice);
+	getCore()->getPrivate()->mainDb->addEvent(event);
+	return event;
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {

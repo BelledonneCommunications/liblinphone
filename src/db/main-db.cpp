@@ -1451,7 +1451,6 @@ long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLo
 		return -1;
 
 	const unsigned int &lastNotifyId = static_pointer_cast<ConferenceNotifiedEvent>(eventLog)->getNotifyId();
-
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_notified_event (event_id, notify_id)"
 		" VALUES (:eventId, :notifyId)", soci::use(eventId), soci::use(lastNotifyId);

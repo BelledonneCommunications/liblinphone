@@ -361,6 +361,21 @@ typedef void (*LinphoneChatRoomCbsParticipantDeviceAddedCb) (LinphoneChatRoom *c
 typedef void (*LinphoneChatRoomCbsParticipantDeviceRemovedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
+ * Callback used to notify a conference that a participant device has changed state
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param event_log #LinphoneEventLog The event to be notified @notnil
+ * @param state new participant device state
+ */
+typedef void (*LinphoneChatRoomCbsParticipantDeviceStateChangedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log, const LinphoneParticipantDeviceState state);
+
+/**
+ * Callback used to notify a conference that the media availability of a participant device has been changed.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param event_log #LinphoneEventLog The event to be notified @notnil
+ */
+typedef void (*LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
+
+/**
  * Callback used to notify a chat room has been joined.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
@@ -504,6 +519,7 @@ typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *c
  * Callback used to notify a conference that a participant device has changed state
  * @param[in] conference #LinphoneConference object @notnil
  * @param[in] device #LinphoneParticipantDevice who change state @notnil
+ * @param[in] state new participant device state
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceStateChangedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *device, const LinphoneParticipantDeviceState state);
 

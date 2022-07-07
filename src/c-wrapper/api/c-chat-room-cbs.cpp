@@ -33,6 +33,8 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsParticipantRemovedCb participantRemovedCb;
 	LinphoneChatRoomCbsParticipantDeviceAddedCb participantDeviceAddedCb;
 	LinphoneChatRoomCbsParticipantDeviceRemovedCb participantDeviceRemovedCb;
+	LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb participantDeviceMediaAvailabilityChangedCb;
+	LinphoneChatRoomCbsParticipantDeviceStateChangedCb participantDeviceStateChangedCb;
 	LinphoneChatRoomCbsParticipantAdminStatusChangedCb participantAdminStatusChangedCb;
 	LinphoneChatRoomCbsStateChangedCb stateChangedCb;
 	LinphoneChatRoomCbsSecurityEventCb securityEventCb;
@@ -232,6 +234,22 @@ LinphoneChatRoomCbsParticipantDeviceRemovedCb linphone_chat_room_cbs_get_partici
 
 void linphone_chat_room_cbs_set_participant_device_removed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceRemovedCb cb) {
 	cbs->participantDeviceRemovedCb = cb;
+}
+
+LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb linphone_chat_room_cbs_get_participant_device_media_availability_changed (const LinphoneChatRoomCbs *cbs) {
+	return cbs->participantDeviceMediaAvailabilityChangedCb;
+}
+
+void linphone_chat_room_cbs_set_participant_device_media_availability_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceMediaAvailabilityChangedCb cb) {
+	cbs->participantDeviceMediaAvailabilityChangedCb = cb;
+}
+
+LinphoneChatRoomCbsParticipantDeviceStateChangedCb linphone_chat_room_cbs_get_participant_device_state_changed (const LinphoneChatRoomCbs *cbs) {
+	return cbs->participantDeviceStateChangedCb;
+}
+
+void linphone_chat_room_cbs_set_participant_device_state_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsParticipantDeviceStateChangedCb cb) {
+	cbs->participantDeviceStateChangedCb = cb;
 }
 
 LinphoneChatRoomCbsConferenceJoinedCb linphone_chat_room_cbs_get_conference_joined (const LinphoneChatRoomCbs *cbs) {

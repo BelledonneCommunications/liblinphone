@@ -585,6 +585,16 @@ void _linphone_chat_room_notify_participant_device_removed(LinphoneChatRoom *cr,
 	NOTIFY_IF_EXIST(ParticipantDeviceRemoved, participant_device_removed, cr, event_log);
 }
 
+void _linphone_chat_room_notify_participant_device_state_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log, const LinphoneParticipantDeviceState state) {
+	_linphone_chat_room_notify_new_event(cr, event_log);
+	NOTIFY_IF_EXIST(ParticipantDeviceStateChanged, participant_device_state_changed, cr, event_log, state);
+}
+
+void _linphone_chat_room_notify_participant_device_media_availability_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_new_event(cr, event_log);
+	NOTIFY_IF_EXIST(ParticipantDeviceMediaAvailabilityChanged, participant_device_media_availability_changed, cr, event_log);
+}
+
 void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	_linphone_chat_room_notify_new_event(cr, event_log);
 	NOTIFY_IF_EXIST(ParticipantAdminStatusChanged, participant_admin_status_changed, cr, event_log);
