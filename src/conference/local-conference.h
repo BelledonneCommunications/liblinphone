@@ -55,6 +55,10 @@ public:
 	virtual std::shared_ptr<ConferenceEphemeralMessageEvent> notifyEphemeralLifetimeChanged (time_t creationTime, const bool isFullState, const long lifetime) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+
+	virtual std::shared_ptr<ConferenceAvailableMediaEvent> notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
 	virtual void notifyFullState () override;
 	virtual std::shared_ptr<Call> getCall() const override;

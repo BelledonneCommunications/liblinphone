@@ -1900,7 +1900,8 @@ int LocalConference::terminate () {
 		}
 	}
 
-	if ((noDevices == 0)
+	const auto zeroDevices = (noDevices == 0);
+	if (zeroDevices
 #ifdef HAVE_ADVANCED_IM
 		|| !eventHandler
 #endif // HAVE_ADVANCED_IM

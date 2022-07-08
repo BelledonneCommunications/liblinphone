@@ -176,4 +176,23 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
 }
 
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceStateChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceStateChanged (creationTime,  isFullState, participant, participantDevice);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceMediaCapabilityChanged (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceMediaCapabilityChanged (creationTime,  isFullState, participant, participantDevice);
+}
+
+shared_ptr<ConferenceAvailableMediaEvent> LocalConference::notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyAvailableMediaChanged (creationTime, isFullState, mediaCapabilities);
+}
+
+
 LINPHONE_END_NAMESPACE
