@@ -421,50 +421,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			if (linphone_core_get_calls_nb(lc) == 1) {
 				linphone_core_notify_first_call_started(lc);
 			}
-			if ((state == CallSession::State::IncomingReceived) && op) {
-				const Address to(op->getTo());
-				// Local conference
-				if (to.hasUriParam("conf-id")) {
-					shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(to), ConferenceAddress(to)));
-					// If the call is for a conference stored in the core, then accept it automatically without video
-					if (conference) {
-						const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
-						const auto dialout = (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
-						if (resourceList.isEmpty() || ((conference->getState() == ConferenceInterface::State::CreationPending) && dialout)) {
-							conference->addParticipant(getSharedFromThis());
-						} else {
-							const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(L_GET_PRIVATE(getParams()))->setInConference(true);
-							setConferenceId(to.getUriParamValue("conf-id"));
-						}
-						auto params = linphone_core_create_call_params(getCore()->getCCore(), toC());
-						linphone_call_params_enable_audio(params, TRUE);
-						linphone_call_params_enable_video(params, (getRemoteParams()->videoEnabled() && conference->getCurrentParams().videoEnabled()) ? TRUE : FALSE);
-						linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
-						linphone_call_params_set_start_time(params, conference->getCurrentParams().getStartTime());
-						linphone_call_params_set_end_time(params, conference->getCurrentParams().getEndTime());
-						static_pointer_cast<MediaSession>(session)->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
-						linphone_call_params_unref(params);
-					}
-				} else if (op->getRemoteContactAddress()) {
-					char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
-					Address remoteContactAddress(remoteContactAddressStr);
-					ms_free(remoteContactAddressStr);
-					if (remoteContactAddress.hasParam("isfocus")) {
-						const auto & conferenceInfo = Utils::createConferenceInfoFromOp(op, true);
-						if (conferenceInfo->getUri().isValid()) {
-						#ifdef HAVE_DB_STORAGE
-							auto &mainDb = getCore()->getPrivate()->mainDb;
-							if (mainDb) {
-								lInfo() << "Inserting conference information to database related to conference " << conferenceInfo->getUri();
-								mainDb->insertConferenceInfo(conferenceInfo);
-							}
-						#endif // HAVE_DB_STORAGE
-							auto log = session->getLog();
-							log->setConferenceInfo(conferenceInfo);
-						}
-					}
-				}
-			}
 			break;
 		case CallSession::State::Released:
 			getPlatformHelpers(lc)->releaseWifiLock();

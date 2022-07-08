@@ -112,7 +112,61 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 			messageState = message;
 		}
 
+		auto lc = q->getCore()->getCCore();
+
 		switch (newState) {
+			case CallSession::State::IncomingReceived:
+			{
+				if (op) {
+					auto call = q->getCore()->getCallByCallId(op->getCallId());
+					// If there is an active call with the same call ID as the session, then this session may belong to a conference
+					if (call) {
+						const Address to(op->getTo());
+						// Local conference
+						if (to.hasUriParam("conf-id")) {
+							shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(to), ConferenceAddress(to)));
+							// If the call is for a conference stored in the core, then accept it automatically without video
+							if (conference) {
+								const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
+								const auto dialout = (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+								if (resourceList.isEmpty() || ((conference->getState() == ConferenceInterface::State::CreationPending) && dialout)) {
+									conference->addParticipant(call);
+								} else {
+									const_cast<LinphonePrivate::CallSessionParamsPrivate *>(q->getParams()->getPrivate())->setInConference(true);
+									setConferenceId(to.getUriParamValue("conf-id"));
+								}
+								auto params = linphone_core_create_call_params(lc, call->toC());
+								linphone_call_params_enable_audio(params, TRUE);
+								linphone_call_params_enable_video(params, (call->getRemoteParams()->videoEnabled() && conference->getCurrentParams().videoEnabled()) ? TRUE : FALSE);
+								linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
+								linphone_call_params_set_start_time(params, conference->getCurrentParams().getStartTime());
+								linphone_call_params_set_end_time(params, conference->getCurrentParams().getEndTime());
+								call->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+								linphone_call_params_unref(params);
+							}
+						} else if (op->getRemoteContactAddress()) {
+							char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
+							Address remoteContactAddress(remoteContactAddressStr);
+							ms_free(remoteContactAddressStr);
+							if (remoteContactAddress.hasParam("isfocus")) {
+								const auto & conferenceInfo = Utils::createConferenceInfoFromOp(op, true);
+								if (conferenceInfo->getUri().isValid()) {
+								#ifdef HAVE_DB_STORAGE
+									auto &mainDb = q->getCore()->getPrivate()->mainDb;
+									if (mainDb) {
+										lInfo() << "Inserting conference information to database related to conference " << conferenceInfo->getUri();
+										mainDb->insertConferenceInfo(conferenceInfo);
+									}
+								#endif // HAVE_DB_STORAGE
+									auto log = q->getLog();
+									log->setConferenceInfo(conferenceInfo);
+								}
+							}
+						}
+					}
+				}
+			}
+				break;
 			case CallSession::State::End:
 			case CallSession::State::Error:
 				switch (linphone_error_info_get_reason(q->getErrorInfo())) {
