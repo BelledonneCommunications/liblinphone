@@ -1773,7 +1773,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sal->enableSipUpdateMethod(!!linphone_config_get_int(lc->config,"sip","sip_update",1));
 	lc->sip_conf.vfu_with_info = !!linphone_config_get_int(lc->config,"sip","vfu_with_info",1);
 	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 63000));
-	lc->sal->setSupportedTags(linphone_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
+	lc->sal->setSupportedTags(linphone_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu, path"));
 	LinphoneSupportLevel level_100rel = linphone_core_get_tag_100rel_support_level(lc);
 	if (level_100rel != LinphoneSupportLevelNoSupport) {
 		linphone_core_add_supported_tag(lc, "100rel");
