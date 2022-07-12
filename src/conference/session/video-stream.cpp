@@ -224,6 +224,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	const auto & label = stream.getLabel();
 	const auto & content = stream.getContent();
 	MSFilter *source = nullptr;
+	MSWebCam *cam = getVideoDevice(targetState);
+	const MSWebCam *currentCam = video_stream_get_camera(mStream);
+	const bool cameraChanged = currentCam && cam && (currentCam != cam);
 
 	/* Shutdown preview */
 	if (getCCore()->previewstream) {
@@ -254,7 +257,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			setNativeWindowId(label.empty() ? getMediaSession().getParticipantWindowId(label) : NULL);
 			video_stream_set_label(mStream, L_STRING_TO_C(label));
 		}
-		return;
+		if (!cameraChanged) {
+			return;
+		}
+	}
+
+	if (cameraChanged) {
+		lInfo() << "Camera device changed from " << ms_web_cam_get_name(currentCam) << " to " << ms_web_cam_get_name(cam);
+		stop();
 	}
 
 	int usedPt = -1;
@@ -373,8 +383,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}else if (vstream.multicast_role == SalMulticastSender){
 		dir = MediaStreamSendOnly;
 	}
-
-	MSWebCam *cam = getVideoDevice(targetState);
 
 	getMediaSession().getLog()->setVideoEnabled(true);
 	media_stream_set_direction(&mStream->ms, dir);

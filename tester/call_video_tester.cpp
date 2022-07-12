@@ -180,6 +180,75 @@ static void call_paused_updated_resumed_with_no_sdp_ack_using_video_policy_and_a
 	call_paused_resumed_with_video_base(TRUE, TRUE,TRUE,TRUE);
 }
 
+static void call_paused_resumed_with_video_enabled(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall* call_pauline, *call_marie;
+	bctbx_list_t *lcs = NULL;
+	LinphoneVideoPolicy vpol;
+	bool_t call_ok;
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_call_state_changed(cbs, call_paused_resumed_with_video_base_call_cb);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, marie->lc);
+
+	vpol.automatically_accept = TRUE;
+	vpol.automatically_initiate = TRUE; /* needed to present a video mline*/
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
+	linphone_core_set_video_policy(marie->lc, &vpol);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+
+	vpol.automatically_accept = TRUE;
+	vpol.automatically_initiate = TRUE;
+
+	linphone_core_set_video_policy(pauline->lc, &vpol);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	BC_ASSERT_TRUE((call_ok=call(marie, pauline)));
+
+	if (!call_ok) goto end;
+
+	call_pauline = linphone_core_get_current_call(pauline->lc);
+	call_marie = linphone_core_get_current_call(marie->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(call_pauline)) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(call_marie)) goto end;
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
+
+	linphone_call_pause(call_pauline);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausing,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,1));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_remote_params(call_marie)));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
+
+	/*stay in pause a little while in order to generate traffic*/
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
+
+	/*check if video stream is still offered even if disabled*/
+	BC_ASSERT_EQUAL((int)_linphone_call_get_local_desc(call_pauline)->getNbStreams(), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)_linphone_call_get_local_desc(call_marie)->getNbStreams(), 2, int, "%i");
+
+	linphone_call_resume(call_pauline);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallResuming,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_marie)));
+	end_call(marie, pauline);
+
+end:
+	linphone_core_cbs_unref(cbs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+}
 static void zrtp_video_call(void) {
 	call_base(LinphoneMediaEncryptionZRTP,TRUE,FALSE,LinphonePolicyNoFirewall,FALSE);
 }
@@ -2475,6 +2544,7 @@ end:
 
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
+	TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
 	TEST_NO_TAG("Call paused resumed with automatic video accept", call_paused_resumed_with_automatic_video_accept),
 	TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
 	TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers", call_paused_resumed_with_no_sdp_ack_using_video_policy),

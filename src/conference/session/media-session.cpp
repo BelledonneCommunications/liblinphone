@@ -1218,7 +1218,9 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 		switch (stateToConsider) {
 			case CallSession::State::Pausing:
 			case CallSession::State::Paused:
-				if (sd.getDirection() != SalStreamInactive) {
+				if (sd.getDirection() == SalStreamRecvOnly) {
+					sd.setDirection(SalStreamInactive);
+				} else if (sd.getDirection() != SalStreamInactive) {
 					sd.setDirection(SalStreamSendOnly);
 					if ((sd.type == SalVideo) && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 						sd.setDirection(SalStreamInactive);
@@ -1231,8 +1233,8 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 		if (sd.getType() == SalAudio) {
 			getCurrentParams()->setAudioDirection(sd.getDirection());
 		} else if (sd.getType() == SalVideo) {
-			SalStreamDir streamDir = SalStreamInactive;
 			LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
+			SalStreamDir streamDir = SalStreamInactive;
 			bool isInLocalConference = getParams()->getPrivate()->getInConference();
 			if (conference) {
 				if (isInLocalConference) {
