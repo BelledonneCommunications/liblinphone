@@ -24,6 +24,7 @@
 #include "ortp/payloadtype.h"
 #include "mediastreamer2/msinterfaces.h"
 #include "mediastreamer2/msvideo.h"
+#include "mediastreamer2/zrtp.h"
 #include "linphone/defs.h"
 
 // For migration purpose.
@@ -771,6 +772,33 @@ typedef enum _LinphoneZrtpPeerStatus {
 	LinphoneZrtpPeerStatusInvalid = 1, /**< Peer URI SAS rejected in database */
 	LinphoneZrtpPeerStatusValid = 2 /**< Peer URI SAS validated in database */
 } LinphoneZrtpPeerStatus;
+
+/**
+ * @brief Enum describing the ZRTP key exchange algorithns
+ * @ingroup media_parameters
+ **/
+typedef enum _LinphoneZrtpKeyAgreement {
+LinphoneZrtpKeyAgreementInvalid = 0,
+LinphoneZrtpKeyAgreementDh2k = 1,
+LinphoneZrtpKeyAgreementDh3k = 2,
+LinphoneZrtpKeyAgreementEc25 = 3,
+LinphoneZrtpKeyAgreementEc38 = 4,
+LinphoneZrtpKeyAgreementEc52 = 5,
+LinphoneZrtpKeyAgreementX255 = 6,
+LinphoneZrtpKeyAgreementX448 = 7,
+LinphoneZrtpKeyAgreementK255 = 8,
+LinphoneZrtpKeyAgreementK448 = 9,
+LinphoneZrtpKeyAgreementKyb1 = 10,
+LinphoneZrtpKeyAgreementKyb2 = 11,
+LinphoneZrtpKeyAgreementKyb3 = 12,
+LinphoneZrtpKeyAgreementSik1 = 13,
+LinphoneZrtpKeyAgreementSik2 = 14,
+LinphoneZrtpKeyAgreementSik3 = 15,
+LinphoneZrtpKeyAgreementK255Kyb512 = 16,
+LinphoneZrtpKeyAgreementK255Sik434 = 17,
+LinphoneZrtpKeyAgreementK448Kyb1024 = 18,
+LinphoneZrtpKeyAgreementK448Sik751 = 19
+} LinphoneZrtpKeyAgreement;
 
 /**
  * @brief Policy to use to pass through NATs/firewalls.

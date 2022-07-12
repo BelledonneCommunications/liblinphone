@@ -696,7 +696,107 @@ static char * seperate_string_list(char **str) {
 	}
 }
 
-MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]){
+bool_t linphone_core_get_post_quantum_available(void) {
+	return ms_zrtp_is_PQ_available();
+}
+
+static LinphoneZrtpKeyAgreement MS2_to_Linphone_ZrtpKeyAgreement(MSZrtpKeyAgreement key_agreement) {
+	switch (key_agreement) {
+		case MS_ZRTP_KEY_AGREEMENT_DH2K: return LinphoneZrtpKeyAgreementDh2k;
+		case MS_ZRTP_KEY_AGREEMENT_DH3K: return LinphoneZrtpKeyAgreementDh3k;
+		case MS_ZRTP_KEY_AGREEMENT_EC25: return LinphoneZrtpKeyAgreementEc25;
+		case MS_ZRTP_KEY_AGREEMENT_EC38: return LinphoneZrtpKeyAgreementEc38;
+		case MS_ZRTP_KEY_AGREEMENT_EC52: return LinphoneZrtpKeyAgreementEc52;
+		case MS_ZRTP_KEY_AGREEMENT_X255: return LinphoneZrtpKeyAgreementX255;
+		case MS_ZRTP_KEY_AGREEMENT_X448: return LinphoneZrtpKeyAgreementX448;
+		case MS_ZRTP_KEY_AGREEMENT_K255: return LinphoneZrtpKeyAgreementK255;
+		case MS_ZRTP_KEY_AGREEMENT_K448: return LinphoneZrtpKeyAgreementK448;
+		case MS_ZRTP_KEY_AGREEMENT_KYB1: return LinphoneZrtpKeyAgreementKyb1;
+		case MS_ZRTP_KEY_AGREEMENT_KYB2: return LinphoneZrtpKeyAgreementKyb2;
+		case MS_ZRTP_KEY_AGREEMENT_KYB3: return LinphoneZrtpKeyAgreementKyb3;
+		case MS_ZRTP_KEY_AGREEMENT_SIK1: return LinphoneZrtpKeyAgreementSik1;
+		case MS_ZRTP_KEY_AGREEMENT_SIK2: return LinphoneZrtpKeyAgreementSik2;
+		case MS_ZRTP_KEY_AGREEMENT_SIK3: return LinphoneZrtpKeyAgreementSik3;
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512: return LinphoneZrtpKeyAgreementK255Kyb512;
+		case MS_ZRTP_KEY_AGREEMENT_K255_SIK434: return LinphoneZrtpKeyAgreementK255Sik434;
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024: return LinphoneZrtpKeyAgreementK448Kyb1024;
+		case MS_ZRTP_KEY_AGREEMENT_K448_SIK751: return LinphoneZrtpKeyAgreementK448Sik751;
+		default: return LinphoneZrtpKeyAgreementInvalid;
+	}
+}
+
+static bctbx_list_t *MS2_to_Linphone_ZrtpKeyAgreement_array(MSZrtpKeyAgreement *key_agreements, uint8_t key_agreements_size) {
+	uint8_t i=0;
+	bctbx_list_t *linphone_key_agreements = NULL;
+	for (i=0; i<key_agreements_size; i++) {
+		LinphoneZrtpKeyAgreement key_agreement = MS2_to_Linphone_ZrtpKeyAgreement(key_agreements[i]);
+		if (key_agreement != LinphoneZrtpKeyAgreementInvalid) {
+			linphone_key_agreements = bctbx_list_append(linphone_key_agreements, LINPHONE_INT_TO_PTR(key_agreement));
+		}
+	}
+	return linphone_key_agreements;
+
+}
+
+static MSZrtpKeyAgreement Linphone_to_MS2_ZrtpKeyAgreement(LinphoneZrtpKeyAgreement key_agreement) {
+	switch (key_agreement) {
+		case LinphoneZrtpKeyAgreementDh2k: return MS_ZRTP_KEY_AGREEMENT_DH2K;
+		case LinphoneZrtpKeyAgreementDh3k: return MS_ZRTP_KEY_AGREEMENT_DH3K;
+		case LinphoneZrtpKeyAgreementEc25: return MS_ZRTP_KEY_AGREEMENT_EC25;
+		case LinphoneZrtpKeyAgreementEc38: return MS_ZRTP_KEY_AGREEMENT_EC38;
+		case LinphoneZrtpKeyAgreementEc52: return MS_ZRTP_KEY_AGREEMENT_EC52;
+		case LinphoneZrtpKeyAgreementX255: return MS_ZRTP_KEY_AGREEMENT_X255;
+		case LinphoneZrtpKeyAgreementX448: return MS_ZRTP_KEY_AGREEMENT_X448;
+		case LinphoneZrtpKeyAgreementK255: return MS_ZRTP_KEY_AGREEMENT_K255;
+		case LinphoneZrtpKeyAgreementK448: return MS_ZRTP_KEY_AGREEMENT_K448;
+		case LinphoneZrtpKeyAgreementKyb1: return MS_ZRTP_KEY_AGREEMENT_KYB1;
+		case LinphoneZrtpKeyAgreementKyb2: return MS_ZRTP_KEY_AGREEMENT_KYB2;
+		case LinphoneZrtpKeyAgreementKyb3: return MS_ZRTP_KEY_AGREEMENT_KYB3;
+		case LinphoneZrtpKeyAgreementSik1: return MS_ZRTP_KEY_AGREEMENT_SIK1;
+		case LinphoneZrtpKeyAgreementSik2: return MS_ZRTP_KEY_AGREEMENT_SIK2;
+		case LinphoneZrtpKeyAgreementSik3: return MS_ZRTP_KEY_AGREEMENT_SIK3;
+		case LinphoneZrtpKeyAgreementK255Kyb512: return MS_ZRTP_KEY_AGREEMENT_K255_KYB512;
+		case LinphoneZrtpKeyAgreementK255Sik434: return MS_ZRTP_KEY_AGREEMENT_K255_SIK434;
+		case LinphoneZrtpKeyAgreementK448Kyb1024: return MS_ZRTP_KEY_AGREEMENT_K448_KYB1024;
+		case LinphoneZrtpKeyAgreementK448Sik751: return MS_ZRTP_KEY_AGREEMENT_K448_SIK751;
+		default: return MS_ZRTP_KEY_AGREEMENT_INVALID;
+	}
+}
+
+
+bctbx_list_t *linphone_core_get_zrtp_available_key_agreement_list(LinphoneCore *lc) {
+	MSZrtpKeyAgreement algos[256];
+	uint8_t nb_algos = ms_zrtp_available_key_agreement(algos);
+	return	MS2_to_Linphone_ZrtpKeyAgreement_array(algos, nb_algos);
+}
+
+bctbx_list_t *linphone_core_get_zrtp_key_agreement_list(LinphoneCore *lc) {
+	MSZrtpKeyAgreement algos[MS_MAX_ZRTP_CRYPTO_TYPES];
+	uint8_t nb_algos = linphone_core_get_zrtp_key_agreement_suites(lc, algos);
+	return	MS2_to_Linphone_ZrtpKeyAgreement_array(algos, nb_algos);
+}
+
+void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *lc, bctbx_list_t *key_agreements) {
+	// Turn the bctbx_list in a comma separated list
+	size_t list_size = 0;
+	bctbx_list_t *string_list = NULL;
+	for(; key_agreements != NULL && list_size<7; key_agreements = bctbx_list_next(key_agreements))	{
+		// Get the linphone enum
+		LinphoneZrtpKeyAgreement l_key_agreement = (LinphoneZrtpKeyAgreement)(LINPHONE_PTR_TO_INT(bctbx_list_get_data(key_agreements)));
+		// Convert it to MS2 enum
+		MSZrtpKeyAgreement ms2_key_agreement = Linphone_to_MS2_ZrtpKeyAgreement(l_key_agreement);
+		// Convert it to a string and concatenate it to what we already have
+		if (ms2_key_agreement != MS_ZRTP_KEY_AGREEMENT_INVALID) {
+			string_list = bctbx_list_append(string_list, bctbx_strdup(ms_zrtp_key_agreement_to_string(ms2_key_agreement)));
+			list_size++;
+		}
+	}
+	// set it
+	linphone_config_set_string_list(lc->config, "sip", "zrtp_key_agreements_suites", string_list);
+	bctbx_list_free_with_data(string_list, bctbx_free);
+}
+
+MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]) {
 	char * zrtpConfig = (char*)linphone_config_get_string(lc->config, "sip", "zrtp_key_agreements_suites", NULL);
 	MsZrtpCryptoTypesCount key_agreements_count = 0;
 	char * entry, * origPtr;

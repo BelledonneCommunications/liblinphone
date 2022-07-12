@@ -7850,6 +7850,42 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_call_logs_database_pa
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char * linphone_core_get_call_logs_database_path(LinphoneCore *core);
 
+/**
+ * Are PostQuantum algoritms available
+ * @return  TRUE if Post Quantum algorithms are available FALSE otherwise
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_get_post_quantum_available(void);
+
+/**
+ * Return the list of the available ZRTP key agreement algorithns.
+ * @param lc The core. @notnil
+ * @return A freshly allocated list of the available algorithms. The list
+ * must be destroyed with bctbx_list_free() after usage. The elements of the list
+ * haven't to be unref. @bctbx_list{LinphoneZrtpKeyAgreement} @maybenil @tobefreed
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_available_key_agreement_list(LinphoneCore *lc);
+
+/**
+ * Return the ordonated list of the ZRTP key agreement algorithns currently configured.
+ * @param lc The core. @notnil
+ * @return A freshly allocated list of the available algorithms. The list
+ * must be destroyed with bctbx_list_free() after usage. The elements of the list
+ * haven't to be unref. @bctbx_list{LinphoneZrtpKeyAgreement} @maybenil @tobefreed
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_zrtp_key_agreement_list(LinphoneCore *lc);
+
+/**
+ * Redefine the list of prefered ZRTP key agreement algorithms.
+ * @param lc The core. @notnil
+ * @param key_agreements The new list of key agreements algorithms, in order of preference. The core does not take
+ * ownership on it. The setting accepts a maximum of 7 algorithms, if the list is longer, only the first 7 available
+ * algorithms are selected \bctbx_list{LinphoneZrtpKeyAgreement} @maybenil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_zrtp_key_agreement_suites(LinphoneCore *lc, bctbx_list_t *key_agreements);
 
 #ifdef __cplusplus
 }

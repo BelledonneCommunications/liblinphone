@@ -82,7 +82,6 @@ option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive 
 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
-cmake_dependent_option(ENABLE_PQCRYPTO_TESTS "Enable Post-Quantum Crypto in tests." NO "ENABLE_UNIT_TESTS" NO)
 
 # Hidden non-cache options:
 # * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
@@ -304,10 +303,6 @@ endif()
 
 if(ENABLE_DEBUG_LOGS)
 	add_definitions("-DDEBUG_LOGS")
-endif()
-
-if(ENABLE_PQCRYPTO_TESTS)
-	add_definitions("-DHAVE_PQCRYPTO")
 endif()
 
 # Enable stdint.h limit macros on C++ files. (Windows only.)
