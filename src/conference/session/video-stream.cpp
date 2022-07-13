@@ -226,7 +226,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	MSFilter *source = nullptr;
 	MSWebCam *cam = getVideoDevice(targetState);
 	const MSWebCam *currentCam = video_stream_get_camera(mStream);
-	const bool cameraChanged = currentCam && cam && (currentCam != cam);
+	bool cameraChanged = currentCam && cam && (currentCam != cam);
 
 	/* Shutdown preview */
 	if (getCCore()->previewstream) {
@@ -249,6 +249,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				/* We were in early media, now we want to enable real media */
 				mMuted = false;
 				enableCamera(mCameraEnabled);
+				// Update video device
+				cam = getVideoDevice(targetState);
+				cameraChanged = currentCam && cam && (currentCam != cam);
 			}
 		}
 
