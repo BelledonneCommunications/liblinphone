@@ -35,6 +35,7 @@ namespace Ics {
 	class LINPHONE_PUBLIC Event {
 		friend class Icalendar;
 	public:
+
 		Event () = default;
 		~Event () = default;
 
@@ -49,6 +50,12 @@ namespace Ics {
 
 		tm getDuration () const;
 		void setDuration (tm duration);
+
+		unsigned int getSequence () const;
+		void setSequence (unsigned int duration);
+
+		const std::string &getUid () const;
+		void setUid (const std::string &uid);
 
 		const std::string &getSummary () const;
 		void setSummary (const std::string &summary);
@@ -66,17 +73,29 @@ namespace Ics {
 		std::list<std::string> mAttendees;
 		tm mDateTimeStart;
 		tm mDuration;
+		unsigned int mSequence = 0;
 		std::string mSummary;
 		std::string mDescription;
 		std::string mXConfUri;
+		mutable std::string mUid;
 
 		time_t mCreationTime = (time_t) -1; // Used by tester
 	};
 
 	class LINPHONE_PUBLIC Icalendar {
 	public:
+
+		enum class Method {
+			Request = 0,
+			Cancel = 1,
+		};
+
 		Icalendar () = default;
 		~Icalendar () = default;
+
+		const Method &getMethod () const;
+		void setMethod (const std::string &method);
+		void setMethod (const Method &method);
 
 		void addEvent (std::shared_ptr<Event> event);
 
@@ -89,9 +108,12 @@ namespace Ics {
 		// Used by the tester
 		void setCreationTime(time_t time);
 	private:
+		Method mMethod = Method::Request;
 		std::list<std::shared_ptr<Event>> mEvents;
 	};
 }
+
+std::ostream &operator<< (std::ostream &stream, Ics::Icalendar::Method method);
 
 LINPHONE_END_NAMESPACE
 

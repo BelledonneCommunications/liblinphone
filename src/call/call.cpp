@@ -141,7 +141,7 @@ int Call::getMediaStreamsNb (LinphoneStreamType type) const {
 			return nb;
 	}
 	for (auto &stream : sg.getStreams()){
-		if (stream && (stream->getType() == nType) &&( stream->getState() == Stream::Running)){
+		if (stream && (stream->getType() == nType) && (stream->getState() == Stream::Running)){
 			nb ++;
 		}
 	}

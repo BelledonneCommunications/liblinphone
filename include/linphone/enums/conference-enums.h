@@ -84,4 +84,15 @@ typedef enum _LinphoneConferenceSchedulerState {
 	LinphoneConferenceSchedulerStateUpdating = 4, /**< Conference has been updated */
 } LinphoneConferenceSchedulerState;
 
+
+// WARNING: Conference info state may be stored in the database, therefore do not modify the integer value of the enumeration items
+/**
+ * #LinphoneConferenceInfoState is used to list all states of a conference info object
+ * @ingroup conference
+ */
+typedef enum _LinphoneConferenceInfoState {
+	LinphoneConferenceInfoStateNew = 0,  /**< New conference */
+	LinphoneConferenceInfoStateUpdated = 1,  /**< Conference has been updated */
+	LinphoneConferenceInfoStateCancelled = 2,  /**< Canceling a conference */
+} LinphoneConferenceInfoState;
 #endif // ifndef _L_CONFERENCE_ENUMS_H_

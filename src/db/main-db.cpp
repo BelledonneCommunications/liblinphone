@@ -552,53 +552,74 @@ void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long 
 #endif
 }
 
-long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
+long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo, const std::shared_ptr<ConferenceInfo> &oldConferenceInfo) {
 #ifdef HAVE_DB_STORAGE
 	if (!conferenceInfo->getOrganizer().isValid() || !conferenceInfo->getUri().isValid()) {
 		lError() << "Trying to insert a Conference Info without organizer or URI!";
 		return -1;
 	}
-
 	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizer().asString());
 	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
 	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
 	const unsigned int duration = conferenceInfo->getDuration();
 	const string &subject = conferenceInfo->getSubject();
 	const string &description = conferenceInfo->getDescription();
+	const unsigned int state = static_cast<unsigned int>(conferenceInfo->getState());
+	const unsigned int& sequence = conferenceInfo->getIcsSequence();
+	const string& uid = conferenceInfo->getIcsUid();
 
 	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
+	std::list<IdentityAddress> dbParticipantList;
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
 		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
+
+		dbParticipantList = oldConferenceInfo->getParticipants();
 
 		*dbSession.getBackendSession() << "UPDATE conference_info SET"
 			"  organizer_sip_address_id = :organizerSipAddressId,"
 			"  start_time = :startTime,"
 			"  duration = :duration,"
 			"  subject = :subject,"
-			"  description = :description"
+			"  description = :description,"
+			"  state = :state,"
+			"  ics_sequence = :sequence,"
+			"  ics_uid = :uid"
 			" WHERE id = :conferenceInfoId",
 			soci::use(organizerSipAddressId), soci::use(startTime), soci::use(duration),
-			soci::use(subject), soci::use(description), soci::use(conferenceInfoId);
+			soci::use(subject), soci::use(description), soci::use(state),
+			soci::use(sequence), soci::use(uid), soci::use(conferenceInfoId);
 	} else {
 		lInfo() << "Insert new conference info in database.";
 
 		*dbSession.getBackendSession() << "INSERT INTO conference_info ("
-		"  organizer_sip_address_id, uri_sip_address_id, start_time, duration, subject, description"
+		"  organizer_sip_address_id, uri_sip_address_id, start_time, duration, subject, description, state, ics_sequence, ics_uid"
 		") VALUES ("
-		"  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, :subject, :description"
+		"  :organizerSipAddressId, :uriSipAddressid, :startTime, :duration, :subject, :description, :state, :sequence, :uid"
 		")",
 		soci::use(organizerSipAddressId), soci::use(uriSipAddressid), soci::use(startTime),
-		soci::use(duration), soci::use(subject), soci::use(description);
+		soci::use(duration),  soci::use(subject), soci::use(description), soci::use(state),
+		soci::use(sequence), soci::use(uid);
 
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
 
-	for (const auto & participantAddress : conferenceInfo->getParticipants()) {
+	const auto & participantList = conferenceInfo->getParticipants();
+	for (const auto & participantAddress : participantList) {
 		insertConferenceInfoParticipant(
 			conferenceInfoId,
 			insertSipAddress(participantAddress.asString())
 		);
+	}
+
+	for (const auto & oldParticipantAddress : dbParticipantList) {
+		const bool deleted = (std::find(participantList.cbegin(), participantList.cend(), oldParticipantAddress) == participantList.cend());
+		if (deleted) {
+			deleteConferenceInfoParticipant(
+				conferenceInfoId,
+				insertSipAddress(oldParticipantAddress.asString())
+			);
+		}
 	}
 
 	cache(conferenceInfo, conferenceInfoId);
@@ -626,6 +647,14 @@ long long MainDbPrivate::insertConferenceInfoParticipant (long long conferenceIn
 #endif
 }
 
+void MainDbPrivate::deleteConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId) {
+#ifdef HAVE_DB_STORAGE
+	*dbSession.getBackendSession() << "DELETE FROM conference_info_participant"
+		" WHERE conference_info_id = :conferenceInfoId AND participant_sip_address_id = :participantSipAddressId",
+		soci::use(conferenceInfoId), soci::use(participantSipAddressId);
+#endif
+}
+
 long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
 #ifdef HAVE_DB_STORAGE
 	long long conferenceInfoId = -1;
@@ -634,7 +663,7 @@ long long MainDbPrivate::insertOrUpdateConferenceCall (const std::shared_ptr<Cal
 		const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
 		conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
 		if (conferenceInfoId < 0) {
-			conferenceInfoId = insertConferenceInfo(conferenceInfo);
+			conferenceInfoId = insertConferenceInfo(conferenceInfo, nullptr);
 		}
 		callLog->setConferenceInfoId(conferenceInfoId);
 	}
@@ -1751,6 +1780,9 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
 	conferenceInfo->setSubject(row.get<string>(5));
 	conferenceInfo->setDescription(row.get<string>(6));
+	conferenceInfo->setState(ConferenceInfo::State(dbSession.getUnsignedInt(row,7,0)));
+	conferenceInfo->setIcsSequence(dbSession.getUnsignedInt(row,8,0));
+	conferenceInfo->setIcsUid(row.get<string>(9));
 
 	static const string query = "SELECT sip_address.value"
 		" FROM sip_address, conference_info, conference_info_participant"
@@ -2877,6 +2909,9 @@ void MainDb::init () {
 			// /!\ Warning : if these varchar columns are indexed, their size must be set back to 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 			"  subject VARCHAR(256) NOT NULL,"
 			"  description VARCHAR(2048),"
+			"  state TINYINT UNSIGNED NOT NULL,"
+			"  ics_sequence INT UNSIGNED,"
+			"  ics_uid VARCHAR(2048),"
 
 			"  FOREIGN KEY (organizer_sip_address_id)"
 			"    REFERENCES sip_address(id)"
@@ -4632,7 +4667,7 @@ void MainDb::deleteChatRoomParticipantDevice (
 std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (time_t afterThisTime) const {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-		" start_time, duration, subject, description"
+		" start_time, duration, subject, description, state, ics_sequence, ics_uid"
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id";
 	if (afterThisTime > -1) query += " AND start_time >= :startTime";
@@ -4677,7 +4712,7 @@ std::list<std::shared_ptr<ConferenceInfo>> MainDb::getConferenceInfos (time_t af
 std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo (long long conferenceInfoId) const {
 #ifdef HAVE_DB_STORAGE
 	static const string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-		" start_time, duration, subject, description"
+		" start_time, duration, subject, description, state, ics_sequence, ics_uid"
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id"
 		"  AND conference_info.id = :conferenceInfoId";
@@ -4708,7 +4743,7 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfo (long long conferenceI
 std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const ConferenceAddress &uri) const {
 #ifdef HAVE_DB_STORAGE
 	string query = "SELECT conference_info.id, organizer_sip_address.value, uri_sip_address.value,"
-		" start_time, duration, subject, description"
+		" start_time, duration, subject, description, state, ics_sequence, ics_uid"
 		" FROM conference_info, sip_address AS organizer_sip_address, sip_address AS uri_sip_address"
 		" WHERE conference_info.organizer_sip_address_id = organizer_sip_address.id AND conference_info.uri_sip_address_id = uri_sip_address.id"
 		"  AND uri_sip_address.value = '" + uri.asString() + "'";
@@ -4738,10 +4773,11 @@ std::shared_ptr<ConferenceInfo> MainDb::getConferenceInfoFromURI (const Conferen
 
 void MainDb::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo) {
 #ifdef HAVE_DB_STORAGE
+	auto dbConfInfo = getConferenceInfoFromURI(conferenceInfo->getUri());
 	L_DB_TRANSACTION {
 		L_D();
 
-		d->insertConferenceInfo(conferenceInfo);
+		d->insertConferenceInfo(conferenceInfo, dbConfInfo);
 		tr.commit();
 	};
 #endif

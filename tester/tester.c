@@ -1200,7 +1200,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 						BC_ASSERT_PTR_NOT_NULL(participant_call);
 						if (participant_call) {
 							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdating,(participants_initial_stats[idx].number_of_LinphoneCallUpdating+1),liblinphone_tester_sip_timeout));
-							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+1),liblinphone_tester_sip_timeout));
+							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+(bctbx_list_find(new_participants,m) ? 2 : 1)),liblinphone_tester_sip_timeout));
 						}
 					}
 

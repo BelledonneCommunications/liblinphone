@@ -208,6 +208,42 @@ namespace Ics {
 			mAttendees.push_back(attendee);
 		}
 
+		void setUid (const string &xUid) {
+			string uid = Utils::trim(xUid);
+			size_t p = uid.find(":");
+			if (p != string::npos) {
+				string name = uid.substr(0, p);
+				string value = uid.substr(p + 1, uid.size());
+
+				p = name.find(";");
+				if (p != string::npos) {
+					name = name.substr(0, p - 1);
+				}
+
+				if (name == "UID") {
+					mUid = value;
+				}
+			}
+		}
+
+		void setSequence (const string &xSequence) {
+			string sequence = Utils::trim(xSequence);
+			size_t p = sequence.find(":");
+			if (p != string::npos) {
+				string name = sequence.substr(0, p);
+				string value = sequence.substr(p + 1, sequence.size());
+
+				p = name.find(";");
+				if (p != string::npos) {
+					name = name.substr(0, p - 1);
+				}
+
+				if (name == "SEQUENCE") {
+					mSequence = static_cast<unsigned int>(Utils::stoi(value));
+				}
+			}
+		}
+
 		void setDateStart (const shared_ptr<DateTimeNode> &dateStart) {
 			mDateStart = dateStart;
 		}
@@ -230,6 +266,9 @@ namespace Ics {
 				event->addAttendee(attendee);
 			}
 
+			event->setUid(mUid);
+			event->setSequence(mSequence);
+
 			return event;
 		}
 
@@ -238,6 +277,8 @@ namespace Ics {
 		string mDescription;
 		string mXConfUri;
 		string mOrganizer;
+		string mUid;
+		unsigned int mSequence = 0;
 		list<string> mAttendees;
 		shared_ptr<DateTimeNode> mDateStart;
 		shared_ptr<DurationNode> mDuration;
@@ -246,6 +287,24 @@ namespace Ics {
 	class IcalendarNode : public Node {
 	public:
 		IcalendarNode () = default;
+
+		void setMethod (const string &xMethod) {
+			string method = Utils::trim(xMethod);
+			size_t p = method.find(":");
+			if (p != string::npos) {
+				string name = method.substr(0, p);
+				string value = method.substr(p + 1, method.size());
+
+				p = name.find(";");
+				if (p != string::npos) {
+					name = name.substr(0, p - 1);
+				}
+
+				if (name == "METHOD") {
+					mMethod = value;
+				}
+			}
+		}
 
 		void addEvent (const shared_ptr<EventNode> &event) {
 			mEvents.push_back(event);
@@ -256,6 +315,7 @@ namespace Ics {
 
 			auto calendar = make_shared<Icalendar>();
 
+			calendar->setMethod(mMethod);
 			// An Ics file can have multiple Events but we only use one
 			calendar->addEvent(mEvents.front()->createEvent());
 
@@ -263,6 +323,7 @@ namespace Ics {
 		}
 
 	private:
+		string mMethod;
 		list<shared_ptr<EventNode>> mEvents;
 	};
 }
@@ -283,7 +344,8 @@ Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 	d->parser = make_shared<belr::Parser<shared_ptr<Node>>>(grammar);
 	
 	d->parser->setHandler("icalobject", belr::make_fn(make_shared<IcalendarNode>))
-		->setCollector("eventc", belr::make_sfn(&IcalendarNode::addEvent));
+		->setCollector("eventc", belr::make_sfn(&IcalendarNode::addEvent))
+		->setCollector("method", belr::make_sfn(&IcalendarNode::setMethod));
 
 	d->parser->setHandler("eventc", belr::make_fn(make_shared<EventNode>))
 		->setCollector("summvalue", belr::make_sfn(&EventNode::setSummary))
@@ -292,6 +354,8 @@ Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 		->setCollector("dur-value", belr::make_sfn(&EventNode::setDuration))
 		->setCollector("orgvalue", belr::make_sfn(&EventNode::setOrganizer))
 		->setCollector("attvalue", belr::make_sfn(&EventNode::addAttendee))
+		->setCollector("uid", belr::make_sfn(&EventNode::setUid))
+		->setCollector("seq", belr::make_sfn(&EventNode::setSequence))
 		->setCollector("x-prop", belr::make_sfn(&EventNode::setXProp));
 
 	d->parser->setHandler("dtstval", belr::make_fn(make_shared<DateTimeNode>))

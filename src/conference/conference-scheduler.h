@@ -77,7 +77,8 @@ private:
 	void setState (State newState);
 	std::string stateToString (State state);
 
-	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom);
+	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom, bool cancel);
+	void fillCancelList(const std::list<IdentityAddress> &oldList, const std::list<IdentityAddress> &newList);
 	
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;
@@ -86,6 +87,7 @@ private:
 
 	unsigned long mInvitationsSent = 0;
 	std::list<IdentityAddress> mInvitationsToSend;
+	std::list<IdentityAddress> mCancelToSend;
 	std::list<Address> mInvitationsInError;
 };
 

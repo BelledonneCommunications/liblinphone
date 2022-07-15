@@ -1483,6 +1483,9 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 		return nullptr;
 	}
 
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	auto params = linphone_core_create_call_params(lc, nullptr);
+
 	Address conferenceFactoryUri;
 	if (confAddr == ConferenceAddress()) {
 		LinphoneAddress *factoryUri = Core::getAudioVideoConferenceFactoryAddress(getSharedFromThis(), localAddr);
@@ -1510,11 +1513,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 		}
 	}
 
-	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
-	auto params = linphone_core_create_call_params(lc, nullptr);
 	// Participant with the focus call is admin
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
-	L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomHeader("Require", "recipient-list-invite");
 	auto addressesList(participants);
 
 	addressesList.sort();

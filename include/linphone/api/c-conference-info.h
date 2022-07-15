@@ -45,6 +45,13 @@ LINPHONE_PUBLIC LinphoneConferenceInfo* linphone_conference_info_new(void);
 LINPHONE_PUBLIC LinphoneConferenceInfo* linphone_conference_info_ref(LinphoneConferenceInfo *conference_info);
 
 /**
+ * Clone an object #LinphoneConferenceInfo.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return the cloned #LinphoneConferenceInfo object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfo* linphone_conference_info_clone(const LinphoneConferenceInfo *conference_info);
+
+/**
  * Release a #LinphoneConferenceInfo.
  * @param conference_info The #LinphoneConferenceInfo object. @notnil
  */
@@ -84,6 +91,13 @@ LINPHONE_PUBLIC void linphone_conference_info_set_participants(LinphoneConferenc
  * @param participant The participant (#LinphoneAddress) to add. @notnil
  */
 LINPHONE_PUBLIC void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant);
+
+/**
+ * Remove a participant from the conference.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @param participant The participant (#LinphoneAddress) to remove. @notnil
+ */
+LINPHONE_PUBLIC void linphone_conference_info_remove_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant);
 
 /**
  * Retrieve the URI of the conference.
@@ -154,6 +168,14 @@ LINPHONE_PUBLIC void linphone_conference_info_set_description(LinphoneConference
  * @return The conference as an Icalendar string. The returned char* must be freed by the caller. @maybenil @tobefreed
  */
 LINPHONE_PUBLIC char *linphone_conference_info_get_icalendar_string(const LinphoneConferenceInfo *conference_info);
+
+/**
+ * Retrieve the state of the conference info.
+ * @param conference_info The #LinphoneConferenceInfo object. @notnil
+ * @return #LinphoneConferenceInfoState object. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConferenceInfoState linphone_conference_info_get_state(const LinphoneConferenceInfo *conference_info);
+
 
 /**
  * @}

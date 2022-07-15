@@ -2801,7 +2801,7 @@ static void conference_scheduler_invitations_sent(LinphoneConferenceScheduler *s
 	stat->number_of_ConferenceSchedulerInvitationsSent++;
 }
 
-static void check_conference_info(LinphoneCoreManager * mgr, LinphoneAddress *confAddr, LinphoneCoreManager * organizer, size_t no_members, long long start_time, int duration, const char * subject, const char *description) {
+static void check_conference_info(LinphoneCoreManager * mgr, LinphoneAddress *confAddr, LinphoneCoreManager * organizer, size_t no_members, long long start_time, int duration, const char * subject, const char *description, unsigned int sequence, LinphoneConferenceInfoState state) {
 	LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
 	if (BC_ASSERT_PTR_NOT_NULL(info)) {
 		BC_ASSERT_TRUE(linphone_address_weak_equal(organizer->identity, linphone_conference_info_get_organizer(info)));
@@ -2828,6 +2828,9 @@ static void check_conference_info(LinphoneCoreManager * mgr, LinphoneAddress *co
 		} else {
 			BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(info));
 		}
+		const unsigned int ics_sequence = linphone_conference_info_get_ics_sequence(info);
+		BC_ASSERT_EQUAL(ics_sequence, sequence, int, "%d");
+		BC_ASSERT_EQUAL((int)linphone_conference_info_get_state(info), (int)state, int, "%d");
 		linphone_conference_info_unref(info);
 	}
 }
@@ -2919,6 +2922,20 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 		BC_ASSERT_TRUE(wait_for_list(coresList, &organizer.getStats().number_of_ConferenceSchedulerInvitationsSent, organizer_stat.number_of_ConferenceSchedulerInvitationsSent + 1, liblinphone_tester_sip_timeout));
 	}
 
+	char * uid = NULL;
+	LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(organizer.getLc(), conference_address);
+	if (BC_ASSERT_PTR_NOT_NULL(info)) {
+		uid = ms_strdup(linphone_conference_info_get_ics_uid(info));
+		if (!!send_ics) {
+			BC_ASSERT_PTR_NOT_NULL(uid);
+		} else {
+			BC_ASSERT_PTR_NULL(uid);
+		}
+		linphone_conference_info_unref(info);
+	}
+
+	check_conference_info(organizer.getCMgr(), conference_address, organizer.getCMgr(), participants.size() + ((dialout) ? 1 : 0), start_time, ((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time)/60 : 0, subject, description, 0, LinphoneConferenceInfoStateNew);
+
 	idx = 0;
 	for (auto & mgr : participants) {
 		auto old_stats = participant_stats[idx];
@@ -2939,7 +2956,6 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 			bctbx_list_t *chat_room_participants = bctbx_list_append(NULL, mgr->identity);
 			LinphoneChatRoom *cr = linphone_core_search_chat_room(organizer.getLc(), NULL, organizer_address, NULL, chat_room_participants);
 			bctbx_list_free(chat_room_participants);
-
 			BC_ASSERT_PTR_NOT_NULL(cr);
 			if (cr) {
 				LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
@@ -2995,6 +3011,12 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 							BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(conf_info_from_original_content));
 							BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(conf_info_in_db));
 						}
+						BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_ics_uid(conf_info_from_original_content), uid);
+						BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_ics_uid(conf_info_in_db), linphone_conference_info_get_ics_uid(conf_info_from_original_content));
+
+						const unsigned int ics_sequence = linphone_conference_info_get_ics_sequence(conf_info_in_db);
+						BC_ASSERT_EQUAL(ics_sequence, 0, int, "%d");
+						BC_ASSERT_EQUAL(linphone_conference_info_get_ics_sequence(conf_info_in_db), linphone_conference_info_get_ics_sequence(conf_info_from_original_content), unsigned int, "%0u");
 						linphone_conference_info_unref(conf_info_from_original_content);
 						linphone_conference_info_unref(conf_info_in_db);
 					}
@@ -3010,7 +3032,7 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 				if(!BC_ASSERT_PTR_NOT_NULL(conf_info_in_db)) {
 					return conference_address;
 				}
-				check_conference_info(mgr, conference_address, organizer.getCMgr(), participants.size() + ((dialout) ? 1 : 0), start_time, ((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time)/60 : 0, subject, (!!send_ics) ? description : NULL);
+				check_conference_info(mgr, conference_address, organizer.getCMgr(), participants.size() + ((dialout) ? 1 : 0), start_time, ((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time)/60 : 0, subject, (!!send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew);
 				if (conf_info_in_db) {
 					linphone_conference_info_unref(conf_info_in_db);
 				}
@@ -3020,9 +3042,13 @@ static LinphoneAddress * create_conference_on_server(Focus & focus, ClientConfer
 		idx++;
 	}
 
+	if (uid) {
+		ms_free(uid);
+	}
+
 	if (!!send_ics || ((end_time <= 0) && (start_time <= 0))) {
 		if (conference_address) {
-			check_conference_info(organizer.getCMgr(), conference_address, organizer.getCMgr(), participants.size() + ((dialout) ? 1 : 0), start_time, (((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time)/60 : 0), subject, description);
+			check_conference_info(organizer.getCMgr(), conference_address, organizer.getCMgr(), participants.size() + ((dialout) ? 1 : 0), start_time, (((start_time > 0) && (end_time > 0)) ? (int)(end_time - start_time)/60 : 0), subject, description, 0, LinphoneConferenceInfoStateNew);
 		}
 		linphone_address_unref(organizer_address);
 
@@ -3333,7 +3359,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), pauline.getCMgr(), laure.getCMgr(), michelle.getCMgr(), lise.getCMgr()}) {
 			if (enable_video) {
-				if (!audio_only_participant || (mgr != pauline.getCMgr())) {
+				if ((audio_only_participant == FALSE) || (mgr != pauline.getCMgr())) {
 					LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 					linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 					linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
@@ -3550,12 +3576,14 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 					int no_streams_audio = 1;
 					int no_streams_video = (enabled) ? 4 : 0;
+					int no_active_streams_video = (enabled) ? ((video_direction == LinphoneMediaDirectionSendRecv) ? no_streams_video : 2) : 0;
 					int no_streams_text = 0;
 
 					LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
 						_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -3573,6 +3601,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 					BC_ASSERT_PTR_NOT_NULL(ccall);
 					if (ccall) {
 						_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_active_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -3732,12 +3761,14 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 						int no_streams_audio = 1;
 						int no_streams_video = (enabled) ? 4 : 0;
+						int no_active_streams_video = (enabled) ? ((video_direction == LinphoneMediaDirectionSendRecv) ? no_streams_video : 2) : 0;
 						int no_streams_text = 0;
 
 						LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 						BC_ASSERT_PTR_NOT_NULL(pcall);
 						if (pcall) {
 							_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+							_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video, no_streams_text);
 							const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 							BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 							const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -3749,6 +3780,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 						BC_ASSERT_PTR_NOT_NULL(ccall);
 						if (ccall) {
 							_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+							_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_active_streams_video, no_streams_text);
 							const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 							BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 							const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -4048,14 +4080,16 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneSubscriptionActive, 1, 5000));
 
-				if (!audio_only_participant) {
-					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdating, pauline_stat2.number_of_LinphoneCallUpdating + 1, 10000));
-					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+				if (enable_video) {
+					if (audio_only_participant == FALSE) {
+						BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdating, pauline_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+						BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+					}
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallUpdating, marie_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallUpdating, laure_stat2.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallStreamsRunning, laure_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
 				}
-				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallUpdating, marie_stat2.number_of_LinphoneCallUpdating + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallUpdating, laure_stat2.number_of_LinphoneCallUpdating + 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneCallStreamsRunning, laure_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participants_added, focus_stat2.number_of_participants_added + 1, 10000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_participant_devices_added, focus_stat2.number_of_participant_devices_added + 1, 10000));
@@ -4131,18 +4165,22 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 						int no_streams_audio = 1;
 						int no_streams_video = 0;
+						int no_active_streams_video = 0;
 						int no_streams_text = 0;
 						if (pcall) {
 							const LinphoneCallParams* call_cparams = linphone_call_get_current_params(pcall);
 							const bool_t enabled = linphone_call_params_video_enabled(call_cparams);
 							no_streams_video = (enabled && (participant_list_type == LinphoneConferenceParticipantListTypeOpen)) ? 5 : (enable_video) ? 4 : 0;
+							no_active_streams_video = (enabled) ? (((layout == LinphoneConferenceLayoutGrid) && (linphone_call_params_get_video_direction(call_cparams) == LinphoneMediaDirectionRecvOnly)) ? (no_streams_video - 2) : no_streams_video) : 0;
 							_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+							_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video, no_streams_text);
 						}
 
 						LinphoneCall * fcall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
 						BC_ASSERT_PTR_NOT_NULL(fcall);
 						if (fcall) {
 							_linphone_call_check_nb_streams(fcall, no_streams_audio, no_streams_video, no_streams_text);
+							_linphone_call_check_nb_active_streams(fcall, no_streams_audio, no_active_streams_video, no_streams_text);
 						}
 
 					}
@@ -4167,6 +4205,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 		std::list <LinphoneCoreManager*> mgrsToRemove {pauline.getCMgr()};
 		if (remove_participant) {
 			stats pauline_stat=pauline.getStats();
+			stats michelle_stat=michelle.getStats();
 
 			LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(marie.getLc()));
 			LinphoneConference * pconference = linphone_core_search_conference(marie.getLc(), NULL, uri, confAddr, NULL);
@@ -4210,9 +4249,22 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participants_removed, pauline_stat.number_of_participants_removed + 1, 10000));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_participant_devices_removed, pauline_stat.number_of_participant_devices_removed + 1, 10000));
 
+			if (enable_video) {
+				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallUpdating, marie_stat.number_of_LinphoneCallUpdating + 1, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat.number_of_LinphoneCallStreamsRunning + 1, 10000));
+
+				if (audio_only_participant == FALSE) {
+					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdating, pauline_stat.number_of_LinphoneCallUpdating + 1, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat.number_of_LinphoneCallStreamsRunning + 1, 10000));
+				}
+			}
+
 			if ((uninvited_participant_dials) && (participant_list_type == LinphoneConferenceParticipantListTypeOpen)) {
-				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participants_removed, 1, 10000));
-				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_removed, 1, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participants_removed, michelle_stat.number_of_participants_removed + 1, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_participant_devices_removed, michelle_stat.number_of_participant_devices_removed + 1, 10000));
+
+				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneCallUpdating, michelle_stat.number_of_LinphoneCallUpdating + 1, 10000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &michelle.getStats().number_of_LinphoneCallStreamsRunning, michelle_stat.number_of_LinphoneCallStreamsRunning + 1, 10000));
 			}
 
 			LinphoneConference * conference = linphone_core_search_conference(laure.getLc(), NULL, puri, confAddr, NULL);
@@ -4249,7 +4301,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 					BC_ASSERT_TRUE(wait_for_list(coresList, &lise.getStats().number_of_LinphoneSubscriptionOutgoingProgress, 1, 5000));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &lise.getStats().number_of_LinphoneSubscriptionActive, 1, 5000));
 
-					if (!audio_only_participant) {
+					if (audio_only_participant == FALSE) {
 						BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallUpdating, pauline_stat2.number_of_LinphoneCallUpdating + 1, 10000));
 						BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneCallStreamsRunning, pauline_stat2.number_of_LinphoneCallStreamsRunning + 1, 10000));
 					}
@@ -4328,18 +4380,22 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 							int no_streams_audio = 1;
 							int no_streams_video = 0;
+							int no_active_streams_video = 0;
 							int no_streams_text = 0;
 							if (pcall) {
 								const LinphoneCallParams* call_cparams = linphone_call_get_current_params(pcall);
 								const bool_t enabled = linphone_call_params_video_enabled(call_cparams);
 								no_streams_video = (enabled && (participant_list_type == LinphoneConferenceParticipantListTypeOpen)) ? 5 : (enable_video) ? 4 : 0;
+								no_active_streams_video = (enabled) ? (((layout == LinphoneConferenceLayoutGrid) && (linphone_call_params_get_video_direction(call_cparams) == LinphoneMediaDirectionRecvOnly)) ? (no_streams_video - 2) : no_streams_video) : 0;
 								_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+								_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video, no_streams_text);
 							}
 
 							LinphoneCall * fcall = linphone_core_get_call_by_remote_address2(focus.getLc(), mgr->identity);
 							BC_ASSERT_PTR_NOT_NULL(fcall);
 							if (fcall) {
 								_linphone_call_check_nb_streams(fcall, no_streams_audio, no_streams_video, no_streams_text);
+								_linphone_call_check_nb_active_streams(fcall, no_streams_audio, no_active_streams_video, no_streams_text);
 							}
 
 							// Substracting one because we conference server is not in the conference
@@ -4793,7 +4849,7 @@ static void create_conference_dial_out_base (bool_t send_ics, LinphoneConference
 
 		if (confAddr) {
 			for (auto mgr : participants) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), members.size(), 0, 0, initialSubject, (accept && send_ics) ? description : NULL);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), members.size(), 0, 0, initialSubject, (accept && send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew);
 
 				LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -4817,7 +4873,7 @@ static void create_conference_dial_out_base (bool_t send_ics, LinphoneConference
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyReceived, 1, liblinphone_tester_sip_timeout));
 
-				check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, (send_ics) ? description : NULL);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, (send_ics) ? description : NULL, 0, LinphoneConferenceInfoStateNew);
 
 				LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -4917,6 +4973,7 @@ static void create_conference_dial_out_base (bool_t send_ics, LinphoneConference
 						BC_ASSERT_PTR_NOT_NULL(pcall);
 						if (pcall) {
 							_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+							_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 							const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 							BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 							const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -4929,6 +4986,7 @@ static void create_conference_dial_out_base (bool_t send_ics, LinphoneConference
 						BC_ASSERT_PTR_NOT_NULL(ccall);
 						if (ccall) {
 							_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+							_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
 							const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 							BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 							const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -5125,7 +5183,7 @@ static void create_conference_dial_out_base (bool_t send_ics, LinphoneConference
 				}
 				bctbx_list_free_with_data(mgr_focus_call_log, (bctbx_list_free_func) linphone_call_log_unref);
 			}
-			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, ((accept && send_ics) || (mgr == marie.getCMgr())) ? description : NULL);
+			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, ((accept && send_ics) || (mgr == marie.getCMgr())) ? description : NULL, 0, LinphoneConferenceInfoStateNew);
 		}
 
 		//wait bit more to detect side effect if any
@@ -5249,7 +5307,7 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base (Lin
 
 		if (confAddr) {
 			for (auto mgr : participants) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, NULL);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, NULL, 0, LinphoneConferenceInfoStateNew);
 
 				LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5275,7 +5333,7 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base (Lin
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyReceived, 1, liblinphone_tester_sip_timeout));
 
-			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, NULL);
+			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, NULL, 0, LinphoneConferenceInfoStateNew);
 
 			LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5380,6 +5438,7 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base (Lin
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
 						_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -5392,6 +5451,7 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base (Lin
 					BC_ASSERT_PTR_NOT_NULL(ccall);
 					if (ccall) {
 						_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -5555,7 +5615,7 @@ static void create_simple_conference_dial_out_with_some_calls_declined_base (Lin
 				}
 				bctbx_list_free_with_data(mgr_focus_call_log, (bctbx_list_free_func) linphone_call_log_unref);
 			}
-			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, (mgr == marie.getCMgr()) ? description : NULL);
+			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, (mgr == marie.getCMgr()) ? description : NULL, 0, LinphoneConferenceInfoStateNew);
 		}
 
 		//wait bit more to detect side effect if any
@@ -5679,7 +5739,7 @@ static void create_conference_with_late_participant_addition_base (time_t start_
 
 		if (confAddr) {
 			for (auto mgr : participants) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), members.size(), start_time, duration, initialSubject, description);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), members.size(), start_time, duration, initialSubject, description, 0, LinphoneConferenceInfoStateNew);
 
 				LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 				BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5700,7 +5760,7 @@ static void create_conference_with_late_participant_addition_base (time_t start_
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_NotifyReceived, 1, liblinphone_tester_sip_timeout));
 
-			check_conference_info(mgr, confAddr, marie.getCMgr(), members.size(), start_time, duration, initialSubject, description);
+			check_conference_info(mgr, confAddr, marie.getCMgr(), members.size(), start_time, duration, initialSubject, description, 0, LinphoneConferenceInfoStateNew);
 
 			LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 			BC_ASSERT_PTR_NOT_NULL(pcall);
@@ -5789,6 +5849,7 @@ static void create_conference_with_late_participant_addition_base (time_t start_
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
 						_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -5801,6 +5862,7 @@ static void create_conference_with_late_participant_addition_base (time_t start_
 					BC_ASSERT_PTR_NOT_NULL(ccall);
 					if (ccall) {
 						_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -6086,7 +6148,7 @@ static void create_conference_with_late_participant_addition_base (time_t start_
 				bctbx_list_free_with_data(mgr_focus_call_log, (bctbx_list_free_func) linphone_call_log_unref);
 			}
 
-			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, ((!one_addition && (mgr == michelle.getCMgr())) || (mgr == lise.getCMgr())) ? NULL : description);
+			check_conference_info(mgr, confAddr, marie.getCMgr(), 5, 0, 0, initialSubject, ((!one_addition && (mgr == michelle.getCMgr())) || (mgr == lise.getCMgr())) ? NULL : description, 0, LinphoneConferenceInfoStateNew);
 		}
 
 		//wait bit more to detect side effect if any
@@ -6586,8 +6648,8 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 		// Chat room creation to send ICS
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));
 
-		const char *subject = "Test characters: <S-F12><S-F11><S-F6> £$%§ (+Michelle)";
-		const char *description2 = "Testing characters (+Michelle)";
+		const char *subject = "Test characters: <S-F12><S-F11><S-F6> £$%§ (+edits)";
+		const char *description2 = "Testing characters (+edits)";
 
 		stats manager_editing_stat=manager_editing->stat;
 		LinphoneAccount *editing_account = NULL;
@@ -6604,17 +6666,36 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 			linphone_account_params_unref(account_params);
 		}
 
-		LinphoneConferenceInfo * conf_info = linphone_core_find_conference_information_from_uri(manager_editing->lc, confAddr);
-		linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);
-		linphone_conference_info_set_subject(conf_info, subject);
-		linphone_conference_info_set_description(conf_info, description2);
+		char * uid = NULL;
+		unsigned int sequence = 0;
+		LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);
+		if (BC_ASSERT_PTR_NOT_NULL(info)) {
+			uid = ms_strdup(linphone_conference_info_get_ics_uid(info));
+			BC_ASSERT_PTR_NOT_NULL(uid);
+			sequence = linphone_conference_info_get_ics_sequence(info);
+			linphone_conference_info_unref(info);
+		}
 
+		bool_t add = TRUE;
 		for (int attempt = 0; attempt < 3; attempt++) {
 			char * conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
 			ms_message("%s is trying to update conference %s - attempt %0d", linphone_core_get_identity(manager_editing->lc), conference_address_str, attempt);
 			ms_free(conference_address_str);
 
 			stats focus_stat=focus.getStats();
+
+			LinphoneConferenceInfo * conf_info = linphone_core_find_conference_information_from_uri(manager_editing->lc, confAddr);
+			linphone_conference_info_set_subject(conf_info, subject);
+			linphone_conference_info_set_description(conf_info, description2);
+			if (add) {
+				linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);
+			} else {
+				linphone_conference_info_remove_participant(conf_info, michelle.getCMgr()->identity);
+			}
+
+			const bctbx_list_t * ics_participants = linphone_conference_info_get_participants(conf_info);
+			BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), (add) ? 3 : 2, size_t, "%zu");
+			bctbx_list_free((bctbx_list_t *)ics_participants);
 
 			std::list<stats> participant_stats;
 			for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
@@ -6664,11 +6745,13 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 						LinphoneChatRoom *pcr = linphone_core_search_chat_room(mgr->lc, NULL, mgr->identity, NULL, participant_chat_room_participants);
 						bctbx_list_free(participant_chat_room_participants);
 						BC_ASSERT_PTR_NOT_NULL(pcr);
-
 						bctbx_list_t *chat_room_participants = bctbx_list_append(NULL, mgr->identity);
+
 						LinphoneChatRoom *cr = linphone_core_search_chat_room(manager_editing->lc, NULL, manager_editing->identity, NULL, chat_room_participants);
 						bctbx_list_free(chat_room_participants);
 						BC_ASSERT_PTR_NOT_NULL(cr);
+
+						BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_chat_rooms(mgr->lc)), (from_organizer || (mgr == michelle.getCMgr())) ? 1 : 2, int, "%d");
 
 						if (cr) {
 							LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
@@ -6684,7 +6767,7 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 									BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
 
 									const bctbx_list_t * ics_participants = linphone_conference_info_get_participants(conf_info_from_original_content);
-									BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 3, size_t, "%zu");
+									BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), (add) ? 3 : 2, size_t, "%zu");
 									bctbx_list_free((bctbx_list_t *)ics_participants);
 
 									if (start_time > 0) {
@@ -6706,6 +6789,18 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 									} else {
 										BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(conf_info_from_original_content));
 									}
+									BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_ics_uid(conf_info_from_original_content), uid);
+									const unsigned int ics_sequence = linphone_conference_info_get_ics_sequence(conf_info_from_original_content);
+									BC_ASSERT_EQUAL(ics_sequence, (sequence + attempt + 1), int, "%d");
+
+									LinphoneConferenceInfoState exp_state = LinphoneConferenceInfoStateNew;
+									if ((mgr == michelle.getCMgr()) && !add) {
+										exp_state = LinphoneConferenceInfoStateCancelled;
+									} else {
+										exp_state = LinphoneConferenceInfoStateUpdated;
+									}
+									BC_ASSERT_EQUAL((int)linphone_conference_info_get_state(conf_info_from_original_content), (int)exp_state, int, "%d");
+
 									linphone_conference_info_unref(conf_info_from_original_content);
 								}
 							}
@@ -6740,14 +6835,30 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 							exp_description = description;
 						}
 					}
-					check_conference_info(mgr, confAddr, marie.getCMgr(), (use_default_account) ? 3 : 2, start_time, duration, exp_subject, exp_description);
+
+					unsigned int exp_sequence = 0;
+					LinphoneConferenceInfoState exp_state = LinphoneConferenceInfoStateNew;
+					if ((mgr == focus.getCMgr()) || !use_default_account) {
+						exp_sequence = 0;
+						exp_state = use_default_account ? LinphoneConferenceInfoStateUpdated : LinphoneConferenceInfoStateNew;
+					} else {
+						exp_sequence = (sequence + attempt + 1);
+						if ((mgr == michelle.getCMgr()) && !add) {
+							exp_state = LinphoneConferenceInfoStateCancelled;
+						} else {
+							exp_state = LinphoneConferenceInfoStateUpdated;
+						}
+					}
+					check_conference_info(mgr, confAddr, marie.getCMgr(), (use_default_account && add) ? 3 : 2, start_time, duration, exp_subject, exp_description, exp_sequence, exp_state);
 				}
 				if (info) {
 					linphone_conference_info_unref(info);
 				}
 			}
+			linphone_conference_info_unref(conf_info);
+			add = !add;
 		}
-		linphone_conference_info_unref(conf_info);
+		ms_free(uid);
 		linphone_address_unref(alternative_address);
 		linphone_address_unref(confAddr);
 		bctbx_list_free(coresList);
@@ -6768,6 +6879,437 @@ static void participant_edits_simple_conference (void) {
 
 static void participant_edits_simple_conference_using_different_account (void) {
 	edit_simple_conference_base(FALSE, FALSE, FALSE);
+}
+
+static void conference_edition_with_simultaneous_participant_add_remove (void) {
+	Focus focus("chloe_rc");
+	{//to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+		focus.registerAsParticipantDevice(laure);
+		focus.registerAsParticipantDevice(michelle);
+
+		setup_conference_info_cbs(marie.getCMgr());
+		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+
+		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+		coresList = bctbx_list_append(coresList, laure.getLc());
+		coresList = bctbx_list_append(coresList, michelle.getLc());
+
+		std::list<LinphoneCoreManager *> participants{pauline.getCMgr(), laure.getCMgr()};
+
+		time_t start_time = time(NULL) + 600; // Start in 10 minutes
+		int duration = 60; // minutes
+		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
+		const char *initialSubject = "Test characters: <S-F12><S-F11><S-F6> £$%§";
+		const char *description = "Testing characters";
+
+		LinphoneAddress * confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time, initialSubject, description, TRUE);
+		BC_ASSERT_PTR_NOT_NULL(confAddr);
+
+		// Chat room creation to send ICS
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));
+
+		const char *subject = "Test characters: <S-F12><S-F11><S-F6> £$%§ (+edits)";
+		const char *description2 = "Testing characters (+edits)";
+
+		stats marie_stat=marie.getStats();
+		LinphoneAccount *editing_account = linphone_core_get_default_account(marie.getLc());
+		BC_ASSERT_PTR_NOT_NULL(editing_account);
+
+		char * uid = NULL;
+		unsigned int sequence = 0;
+		LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);
+		if (BC_ASSERT_PTR_NOT_NULL(info)) {
+			uid = ms_strdup(linphone_conference_info_get_ics_uid(info));
+			BC_ASSERT_PTR_NOT_NULL(uid);
+			sequence = linphone_conference_info_get_ics_sequence(info);
+			linphone_conference_info_unref(info);
+		}
+
+		char * conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		ms_message("%s is trying to update conference %s - adding %s and removing %s", linphone_core_get_identity(marie.getLc()), conference_address_str, linphone_core_get_identity(michelle.getLc()), linphone_core_get_identity(laure.getLc()));
+		ms_free(conference_address_str);
+
+		stats focus_stat=focus.getStats();
+
+		LinphoneConferenceInfo * conf_info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);
+		linphone_conference_info_set_subject(conf_info, subject);
+		linphone_conference_info_set_description(conf_info, description2);
+		linphone_conference_info_add_participant(conf_info, michelle.getCMgr()->identity);
+		linphone_conference_info_remove_participant(conf_info, laure.getCMgr()->identity);
+
+		const bctbx_list_t * ics_participants = linphone_conference_info_get_participants(conf_info);
+		BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 2, size_t, "%zu");
+		bctbx_list_free((bctbx_list_t *)ics_participants);
+
+		std::list<stats> participant_stats;
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
+			participant_stats.push_back(mgr->stat);
+		}
+
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
+		linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
+		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+		linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+		linphone_conference_scheduler_cbs_unref(cbs);
+		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateUpdating, marie_stat.number_of_ConferenceSchedulerStateUpdating + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateReady, marie_stat.number_of_ConferenceSchedulerStateReady + 1, liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived, focus_stat.number_of_LinphoneCallIncomingReceived + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat.number_of_LinphoneCallStreamsRunning + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd, focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased, focus_stat.number_of_LinphoneCallReleased + 1, liblinphone_tester_sip_timeout));
+
+		LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(marie.getLc());
+		linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendBasic);
+		linphone_conference_scheduler_send_invitations(conference_scheduler, chat_room_params);
+		linphone_chat_room_params_unref(chat_room_params);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerInvitationsSent, marie_stat.number_of_ConferenceSchedulerInvitationsSent + 1, liblinphone_tester_sip_timeout));
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
+			auto old_stats = participant_stats.front();
+			if ((mgr != focus.getCMgr()) && (mgr != marie.getCMgr())) {
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceived, old_stats.number_of_LinphoneMessageReceived + 1, liblinphone_tester_sip_timeout));
+				if (!linphone_core_conference_ics_in_message_body_enabled(marie.getLc())) {
+					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceivedWithFile, old_stats.number_of_LinphoneMessageReceivedWithFile + 1, liblinphone_tester_sip_timeout));
+				}
+
+				BC_ASSERT_PTR_NOT_NULL(mgr->stat.last_received_chat_message);
+				if (mgr->stat.last_received_chat_message != NULL) {
+					const string expected = ContentType::Icalendar.getMediaType();
+					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(mgr->stat.last_received_chat_message), expected.c_str());
+				}
+
+				bctbx_list_t *participant_chat_room_participants = bctbx_list_append(NULL, marie.getCMgr()->identity);
+				LinphoneChatRoom *pcr = linphone_core_search_chat_room(mgr->lc, NULL, mgr->identity, NULL, participant_chat_room_participants);
+				bctbx_list_free(participant_chat_room_participants);
+				BC_ASSERT_PTR_NOT_NULL(pcr);
+				bctbx_list_t *chat_room_participants = bctbx_list_append(NULL, mgr->identity);
+
+				LinphoneChatRoom *cr = linphone_core_search_chat_room(marie.getLc(), NULL, marie.getCMgr()->identity, NULL, chat_room_participants);
+				bctbx_list_free(chat_room_participants);
+				BC_ASSERT_PTR_NOT_NULL(cr);
+
+				BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_chat_rooms(mgr->lc)), 1, int, "%d");
+
+				if (cr) {
+					LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
+					linphone_chat_room_unref(cr);
+
+					const bctbx_list_t* original_contents = linphone_chat_message_get_contents(msg);
+					BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+					LinphoneContent *original_content = (LinphoneContent *) bctbx_list_get_data(original_contents);
+					if (BC_ASSERT_PTR_NOT_NULL(original_content)) {
+						LinphoneConferenceInfo *conf_info_from_original_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
+						if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
+							BC_ASSERT_TRUE(linphone_address_weak_equal(marie.getCMgr()->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
+							BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
+
+							const bctbx_list_t * ics_participants = linphone_conference_info_get_participants(conf_info_from_original_content);
+							BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 2, size_t, "%zu");
+							bctbx_list_free((bctbx_list_t *)ics_participants);
+
+							if (start_time > 0) {
+								BC_ASSERT_EQUAL((long long)linphone_conference_info_get_date_time(conf_info_from_original_content), (long long)start_time, long long, "%lld");
+								if (end_time > 0) {
+									const int duration_m = linphone_conference_info_get_duration(conf_info_from_original_content);
+									const int duration_s = duration_m * 60;
+									BC_ASSERT_EQUAL(duration_s, (int)(end_time - start_time), int, "%d");
+									BC_ASSERT_EQUAL(duration_m, duration, int, "%d");
+								}
+							}
+							if (subject) {
+								BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_subject(conf_info_from_original_content), subject);
+							} else {
+								BC_ASSERT_PTR_NULL(linphone_conference_info_get_subject(conf_info_from_original_content));
+							}
+							if (description2) {
+								BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_description(conf_info_from_original_content), description2);
+							} else {
+								BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(conf_info_from_original_content));
+							}
+							BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_ics_uid(conf_info_from_original_content), uid);
+							const unsigned int ics_sequence = linphone_conference_info_get_ics_sequence(conf_info_from_original_content);
+							BC_ASSERT_EQUAL(ics_sequence, (sequence + 1), int, "%d");
+
+							LinphoneConferenceInfoState exp_state = LinphoneConferenceInfoStateNew;
+							if (mgr == laure.getCMgr()) {
+								exp_state = LinphoneConferenceInfoStateCancelled;
+							} else {
+								exp_state = LinphoneConferenceInfoStateUpdated;
+							}
+							BC_ASSERT_EQUAL((int)linphone_conference_info_get_state(conf_info_from_original_content), (int)exp_state, int, "%d");
+
+							linphone_conference_info_unref(conf_info_from_original_content);
+						}
+					}
+					linphone_chat_message_unref(msg);
+				}
+			}
+			participant_stats.pop_front();
+		}
+		linphone_conference_scheduler_unref(conference_scheduler);
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
+			LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+			if (BC_ASSERT_PTR_NOT_NULL(info)) {
+
+				const char * exp_subject = subject;
+
+				const char * exp_description = NULL;
+				if (mgr != focus.getCMgr()) {
+						exp_description = description2;
+				}
+
+				unsigned int exp_sequence = 0;
+				LinphoneConferenceInfoState exp_state = LinphoneConferenceInfoStateNew;
+				if (mgr == focus.getCMgr()) {
+					exp_sequence = 0;
+					exp_state = LinphoneConferenceInfoStateUpdated;
+				} else {
+					exp_sequence = (sequence + 1);
+					if (mgr == laure.getCMgr()) {
+						exp_state = LinphoneConferenceInfoStateCancelled;
+					} else {
+						exp_state = LinphoneConferenceInfoStateUpdated;
+					}
+				}
+				check_conference_info(mgr, confAddr, marie.getCMgr(), 2, start_time, duration, exp_subject, exp_description, exp_sequence, exp_state);
+			}
+			if (info) {
+				linphone_conference_info_unref(info);
+			}
+		}
+		linphone_conference_info_unref(conf_info);
+		ms_free(uid);
+		linphone_address_unref(confAddr);
+		bctbx_list_free(coresList);
+	}
+}
+
+static void conference_cancelled_through_edit (void) {
+	Focus focus("chloe_rc");
+	{//to make sure focus is destroyed after clients.
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
+
+		focus.registerAsParticipantDevice(marie);
+		focus.registerAsParticipantDevice(pauline);
+		focus.registerAsParticipantDevice(laure);
+		focus.registerAsParticipantDevice(michelle);
+
+		setup_conference_info_cbs(marie.getCMgr());
+		linphone_core_set_file_transfer_server(marie.getLc(), file_transfer_url);
+
+		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
+		coresList = bctbx_list_append(coresList, marie.getLc());
+		coresList = bctbx_list_append(coresList, pauline.getLc());
+		coresList = bctbx_list_append(coresList, laure.getLc());
+		coresList = bctbx_list_append(coresList, michelle.getLc());
+
+		std::list<LinphoneCoreManager *> participants{michelle.getCMgr(), pauline.getCMgr(), laure.getCMgr()};
+
+		time_t start_time = time(NULL) + 600; // Start in 10 minutes
+		int duration = 60; // minutes
+		time_t end_time = (duration <= 0) ? -1 : (start_time + duration * 60);
+		const char *initialSubject = "Test characters: <S-F12><S-F11><S-F6> £$%§";
+		const char *description = "Testing characters";
+
+		LinphoneAddress * confAddr = create_conference_on_server(focus, marie, participants, start_time, end_time, initialSubject, description, TRUE);
+		BC_ASSERT_PTR_NOT_NULL(confAddr);
+
+		// Chat room creation to send ICS
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneConferenceStateCreated, 2, liblinphone_tester_sip_timeout));
+
+		const char *subject = "Test characters: <S-F12><S-F11><S-F6> £$%§ (+cancelled)";
+		const char *description2 = "Testing characters (+cancelled)";
+
+		stats manager_editing_stat=marie.getStats();
+
+		char * uid = NULL;
+		unsigned int sequence = 0;
+		LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);
+		if (BC_ASSERT_PTR_NOT_NULL(info)) {
+			uid = ms_strdup(linphone_conference_info_get_ics_uid(info));
+			BC_ASSERT_PTR_NOT_NULL(uid);
+			sequence = linphone_conference_info_get_ics_sequence(info);
+			linphone_conference_info_unref(info);
+		}
+
+		char * conference_address_str = (confAddr) ? linphone_address_as_string(confAddr) : ms_strdup("<unknown>");
+		ms_message("%s is trying to cancel conference %s", linphone_core_get_identity(marie.getLc()), conference_address_str);
+		ms_free(conference_address_str);
+
+		stats focus_stat=focus.getStats();
+
+		LinphoneConferenceInfo * conf_info = linphone_core_find_conference_information_from_uri(marie.getLc(), confAddr);
+		linphone_conference_info_set_subject(conf_info, subject);
+		linphone_conference_info_set_description(conf_info, description2);
+		linphone_conference_info_set_participants(conf_info, NULL);
+		const bctbx_list_t * ics_participants = linphone_conference_info_get_participants(conf_info);
+		BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 0, size_t, "%zu");
+		bctbx_list_free((bctbx_list_t *)ics_participants);
+
+		std::list<stats> participant_stats;
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
+			participant_stats.push_back(mgr->stat);
+		}
+
+		LinphoneConferenceScheduler *conference_scheduler = linphone_core_create_conference_scheduler(marie.getLc());
+		LinphoneAccount *editing_account = linphone_core_get_default_account(marie.getLc());
+		BC_ASSERT_PTR_NOT_NULL(editing_account);
+		linphone_conference_scheduler_set_account(conference_scheduler, editing_account);
+		LinphoneConferenceSchedulerCbs *cbs = linphone_factory_create_conference_scheduler_cbs(linphone_factory_get());
+		linphone_conference_scheduler_cbs_set_state_changed(cbs, conference_scheduler_state_changed);
+		linphone_conference_scheduler_cbs_set_invitations_sent(cbs, conference_scheduler_invitations_sent);
+		linphone_conference_scheduler_add_callbacks(conference_scheduler, cbs);
+		linphone_conference_scheduler_cbs_unref(cbs);
+		linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateUpdating, manager_editing_stat.number_of_ConferenceSchedulerStateUpdating + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerStateReady, manager_editing_stat.number_of_ConferenceSchedulerStateReady + 1, liblinphone_tester_sip_timeout));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallIncomingReceived, focus_stat.number_of_LinphoneCallIncomingReceived + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat.number_of_LinphoneCallStreamsRunning + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallEnd, focus_stat.number_of_LinphoneCallEnd + 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallReleased, focus_stat.number_of_LinphoneCallReleased + 1, liblinphone_tester_sip_timeout));
+
+		LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(marie.getLc());
+		linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendBasic);
+		linphone_conference_scheduler_send_invitations(conference_scheduler, chat_room_params);
+		linphone_chat_room_params_unref(chat_room_params);
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_ConferenceSchedulerInvitationsSent, manager_editing_stat.number_of_ConferenceSchedulerInvitationsSent + 1, liblinphone_tester_sip_timeout));
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
+			auto old_stats = participant_stats.front();
+			if ((mgr != focus.getCMgr()) && (mgr != marie.getCMgr())) {
+				BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceived, old_stats.number_of_LinphoneMessageReceived + 1, liblinphone_tester_sip_timeout));
+				if (!linphone_core_conference_ics_in_message_body_enabled(marie.getLc())) {
+					BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneMessageReceivedWithFile, old_stats.number_of_LinphoneMessageReceivedWithFile + 1, liblinphone_tester_sip_timeout));
+				}
+
+				BC_ASSERT_PTR_NOT_NULL(mgr->stat.last_received_chat_message);
+				if (mgr->stat.last_received_chat_message != NULL) {
+					const string expected = ContentType::Icalendar.getMediaType();
+					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(mgr->stat.last_received_chat_message), expected.c_str());
+				}
+
+				bctbx_list_t *participant_chat_room_participants = bctbx_list_append(NULL, marie.getCMgr()->identity);
+				LinphoneChatRoom *pcr = linphone_core_search_chat_room(mgr->lc, NULL, mgr->identity, NULL, participant_chat_room_participants);
+				bctbx_list_free(participant_chat_room_participants);
+				BC_ASSERT_PTR_NOT_NULL(pcr);
+				bctbx_list_t *chat_room_participants = bctbx_list_append(NULL, mgr->identity);
+
+				LinphoneChatRoom *cr = linphone_core_search_chat_room(marie.getLc(), NULL, marie.getCMgr()->identity, NULL, chat_room_participants);
+				bctbx_list_free(chat_room_participants);
+				BC_ASSERT_PTR_NOT_NULL(cr);
+
+				BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_chat_rooms(mgr->lc)), 1, int, "%d");
+
+				if (cr) {
+					LinphoneChatMessage *msg = linphone_chat_room_get_last_message_in_history(cr);
+					linphone_chat_room_unref(cr);
+
+					const bctbx_list_t* original_contents = linphone_chat_message_get_contents(msg);
+					BC_ASSERT_EQUAL((int)bctbx_list_size(original_contents), 1, int, "%d");
+					LinphoneContent *original_content = (LinphoneContent *) bctbx_list_get_data(original_contents);
+					if (BC_ASSERT_PTR_NOT_NULL(original_content)) {
+						LinphoneConferenceInfo *conf_info_from_original_content = linphone_factory_create_conference_info_from_icalendar_content(linphone_factory_get(), original_content);
+						if (BC_ASSERT_PTR_NOT_NULL(conf_info_from_original_content)) {
+							BC_ASSERT_TRUE(linphone_address_weak_equal(marie.getCMgr()->identity, linphone_conference_info_get_organizer(conf_info_from_original_content)));
+							BC_ASSERT_TRUE(linphone_address_weak_equal(confAddr, linphone_conference_info_get_uri(conf_info_from_original_content)));
+
+							const bctbx_list_t * ics_participants = linphone_conference_info_get_participants(conf_info_from_original_content);
+							BC_ASSERT_EQUAL(bctbx_list_size(ics_participants), 0, size_t, "%zu");
+							bctbx_list_free((bctbx_list_t *)ics_participants);
+
+							if (start_time > 0) {
+								BC_ASSERT_EQUAL((long long)linphone_conference_info_get_date_time(conf_info_from_original_content), (long long)start_time, long long, "%lld");
+								if (end_time > 0) {
+									const int duration_m = linphone_conference_info_get_duration(conf_info_from_original_content);
+									const int duration_s = duration_m * 60;
+									BC_ASSERT_EQUAL(duration_s, (int)(end_time - start_time), int, "%d");
+									BC_ASSERT_EQUAL(duration_m, duration, int, "%d");
+								}
+							}
+							if (subject) {
+								BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_subject(conf_info_from_original_content), subject);
+							} else {
+								BC_ASSERT_PTR_NULL(linphone_conference_info_get_subject(conf_info_from_original_content));
+							}
+							if (description2) {
+								BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_description(conf_info_from_original_content), description2);
+							} else {
+								BC_ASSERT_PTR_NULL(linphone_conference_info_get_description(conf_info_from_original_content));
+							}
+							BC_ASSERT_STRING_EQUAL(linphone_conference_info_get_ics_uid(conf_info_from_original_content), uid);
+							const unsigned int ics_sequence = linphone_conference_info_get_ics_sequence(conf_info_from_original_content);
+							BC_ASSERT_EQUAL(ics_sequence, (sequence + 1), int, "%d");
+
+							LinphoneConferenceInfoState exp_state = LinphoneConferenceInfoStateNew;
+							if (mgr == focus.getCMgr()) {
+								exp_state = LinphoneConferenceInfoStateUpdated;
+							} else {
+								exp_state = LinphoneConferenceInfoStateCancelled;
+							}
+							BC_ASSERT_EQUAL((int)linphone_conference_info_get_state(conf_info_from_original_content), (int)exp_state, int, "%d");
+
+							linphone_conference_info_unref(conf_info_from_original_content);
+						}
+					}
+					linphone_chat_message_unref(msg);
+				}
+			}
+			participant_stats.pop_front();
+		}
+		linphone_conference_scheduler_unref(conference_scheduler);
+
+		for (auto mgr : {focus.getCMgr(), marie.getCMgr(), laure.getCMgr(), pauline.getCMgr(), michelle.getCMgr()}) {
+			LinphoneConferenceInfo * info = linphone_core_find_conference_information_from_uri(mgr->lc, confAddr);
+			if (BC_ASSERT_PTR_NOT_NULL(info)) {
+
+				const char * exp_subject = subject;
+
+				const char * exp_description = NULL;
+				if (mgr != focus.getCMgr()) {
+					exp_description = description2;
+				}
+
+				unsigned int exp_sequence = 0;
+				LinphoneConferenceInfoState exp_state = LinphoneConferenceInfoStateCancelled;
+				unsigned int exp_participant_number = 0;
+				if (mgr == focus.getCMgr()) {
+					exp_sequence = 0;
+				} else {
+					exp_sequence = (sequence + 1);
+				}
+				check_conference_info(mgr, confAddr, marie.getCMgr(), exp_participant_number, start_time, duration, exp_subject, exp_description, exp_sequence, exp_state);
+			}
+			if (info) {
+				linphone_conference_info_unref(info);
+			}
+		}
+		linphone_conference_info_unref(conf_info);
+		ms_free(uid);
+		linphone_address_unref(confAddr);
+		bctbx_list_free(coresList);
+	}
 }
 
 #if 0
@@ -7601,6 +8143,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 				if (focus_call) {
 					BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(focus_call));
 					BC_ASSERT_TRUE(linphone_call_is_in_conference(focus_call));
+					_linphone_call_check_nb_active_streams(focus_call, 1, (toggle_video) ? 4 : 0, 0);
 				}
 
 				// Remote  conference
@@ -7610,11 +8153,12 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 					BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
 					BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
 					//BC_ASSERT_TRUE(linphone_call_get_microphone_muted(participant_call) == (mgr == pauline.getCMgr()));
+					_linphone_call_check_nb_active_streams(participant_call, 1, (toggle_video) ? 4 : 0, 0);
 				}
 			}
 
 			if (confAddr) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), 3, 0, 0, initialSubject, NULL);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), 3, 0, 0, initialSubject, NULL, 0, LinphoneConferenceInfoStateNew);
 			}
 		}
 
@@ -7642,7 +8186,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 			auto old_stats = participant_stats.front();
 			BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_subject_changed, old_stats.number_of_subject_changed + 1, liblinphone_tester_sip_timeout));
 			if (confAddr) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), 3, 0, 0, newSubject, NULL);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), 3, 0, 0, newSubject, NULL, 0, LinphoneConferenceInfoStateNew);
 			}
 			participant_stats.pop_front();
 		}
@@ -7771,7 +8315,7 @@ static void create_simple_conference_merging_calls_base(bool_t enable_ice, Linph
 			}
 
 			if (confAddr) {
-				check_conference_info(mgr, confAddr, marie.getCMgr(), 3, 0, 0, newSubject, NULL);
+				check_conference_info(mgr, confAddr, marie.getCMgr(), 3, 0, 0, newSubject, NULL, 0, LinphoneConferenceInfoStateNew);
 			}
 		}
 
@@ -8658,6 +9202,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 
 		int no_streams_audio = 1;
 		int no_streams_video = 2;
+		int no_active_streams_video = (layout == LinphoneConferenceLayoutGrid) ? 0 : 1;
 		int no_streams_text = 0;
 
 		for (auto mgr : {focus.getCMgr(), marie.getCMgr()}) {
@@ -8689,6 +9234,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
 						_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -8700,6 +9246,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 					BC_ASSERT_PTR_NOT_NULL(ccall);
 					if (ccall) {
 						_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 						BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -8776,6 +9323,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 
 		if (marie_calls_focus) {
 			_linphone_call_check_nb_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(marie_calls_focus, no_streams_audio, no_active_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(marie_calls_focus);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_calls_focus);
@@ -8785,6 +9333,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 		}
 		if (focus_called_by_marie) {
 			_linphone_call_check_nb_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(focus_called_by_marie, no_streams_audio, no_active_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams) != (layout == LinphoneConferenceLayoutGrid));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
@@ -8831,6 +9380,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 
 		if (marie_calls_focus) {
 			_linphone_call_check_nb_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(marie_calls_focus);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_calls_focus);
@@ -8840,6 +9390,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 		}
 		if (focus_called_by_marie) {
 			_linphone_call_check_nb_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
@@ -8886,6 +9437,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 
 		if (marie_calls_focus) {
 			_linphone_call_check_nb_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(marie_calls_focus, no_streams_audio, 0, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(marie_calls_focus);
 			BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_calls_focus);
@@ -8895,6 +9447,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 		}
 		if (focus_called_by_marie) {
 			_linphone_call_check_nb_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(focus_called_by_marie, no_streams_audio, 0, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
 			BC_ASSERT_FALSE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
@@ -8949,6 +9502,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 
 		if (marie_calls_focus) {
 			_linphone_call_check_nb_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(marie_calls_focus, no_streams_audio, no_active_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(marie_calls_focus);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_calls_focus);
@@ -8958,6 +9512,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 		}
 		if (focus_called_by_marie) {
 			_linphone_call_check_nb_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(focus_called_by_marie, no_streams_audio, no_active_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams) != (layout == LinphoneConferenceLayoutGrid));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
@@ -9003,6 +9558,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 
 		if (marie_calls_focus) {
 			_linphone_call_check_nb_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(marie_calls_focus, no_streams_audio, no_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(marie_calls_focus);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_calls_focus);
@@ -9012,6 +9568,7 @@ static void create_one_participant_conference_toggle_video_base (LinphoneConfere
 		}
 		if (focus_called_by_marie) {
 			_linphone_call_check_nb_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
+			_linphone_call_check_nb_active_streams(focus_called_by_marie, no_streams_audio, no_streams_video, no_streams_text);
 			const LinphoneCallParams* call_lparams = linphone_call_get_params(focus_called_by_marie);
 			BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
 			const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(focus_called_by_marie);
@@ -9428,12 +9985,14 @@ static void create_conference_with_active_call_base (bool_t dialout) {
 					bool_t video_strem_enabled = dialout && (mgr->lc == marie.getLc());
 					int no_streams_audio = 1;
 					int no_streams_video = (video_strem_enabled) ? 1 : 0;
+					int no_active_streams_video = 0;
 					int no_streams_text = 0;
 
 					LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
 					BC_ASSERT_PTR_NOT_NULL(pcall);
 					if (pcall) {
 						_linphone_call_check_nb_streams(pcall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(pcall, no_streams_audio, no_active_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(pcall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pcall);
@@ -9446,6 +10005,7 @@ static void create_conference_with_active_call_base (bool_t dialout) {
 					BC_ASSERT_PTR_NOT_NULL(ccall);
 					if (ccall) {
 						_linphone_call_check_nb_streams(ccall, no_streams_audio, no_streams_video, no_streams_text);
+						_linphone_call_check_nb_active_streams(ccall, no_streams_audio, no_active_streams_video, no_streams_text);
 						const LinphoneCallParams* call_lparams = linphone_call_get_params(ccall);
 						BC_ASSERT_EQUAL(linphone_call_params_video_enabled(call_lparams), enabled, int, "%0d");
 						const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(ccall);
@@ -9649,10 +10209,13 @@ static test_t local_conference_chat_tests[] = {
 static test_t local_conference_scheduled_conference_tests[] = {
 	TEST_NO_TAG("Call to inexisting conference address", LinphoneTest::call_to_inexisting_conference_address),
 	TEST_NO_TAG("Create simple conference", LinphoneTest::create_simple_conference),
+	TEST_NO_TAG("Create simple SRTP conference", LinphoneTest::create_simple_srtp_conference),
 	TEST_NO_TAG("Organizer edits simple conference", LinphoneTest::organizer_edits_simple_conference),
 	TEST_NO_TAG("Organizer edits simple conference using different account", LinphoneTest::organizer_edits_simple_conference_using_different_account),
 	TEST_NO_TAG("Participant edits simple conference", LinphoneTest::participant_edits_simple_conference),
 	TEST_NO_TAG("Participant edits simple conference using different account", LinphoneTest::participant_edits_simple_conference_using_different_account),
+	TEST_NO_TAG("Conference cancelled through edit", LinphoneTest::conference_cancelled_through_edit),
+	TEST_NO_TAG("Conference edition with simultanoues participant added removed", LinphoneTest::conference_edition_with_simultaneous_participant_add_remove),
 	TEST_NO_TAG("Create simple conference with server restart", LinphoneTest::create_simple_conference_with_server_restart),
 	TEST_NO_TAG("Create simple conference with update deferred", LinphoneTest::create_simple_conference_with_update_deferred),
 	TEST_ONE_TAG("Create simple conference with client restart", LinphoneTest::create_simple_conference_with_client_restart, "LeaksMemory"), /* because of coreMgr restart*/
@@ -9680,7 +10243,6 @@ static test_t local_conference_scheduled_conference_tests[] = {
 static test_t local_conference_scheduled_ice_conference_tests[] = {
 	TEST_NO_TAG("Create simple ICE conference", LinphoneTest::create_simple_ice_conference),
 	TEST_NO_TAG("Create simple STUN+ICE conference", LinphoneTest::create_simple_stun_ice_conference),
-	TEST_NO_TAG("Create simple SRTP conference", LinphoneTest::create_simple_srtp_conference),
 	TEST_NO_TAG("Create simple ICE SRTP conference", LinphoneTest::create_simple_ice_srtp_conference),
 	TEST_NO_TAG("Create simple STUN+ICE SRTP conference", LinphoneTest::create_simple_stun_ice_srtp_conference),
 	TEST_NO_TAG("Create simple ICE conference with audio only participant", LinphoneTest::create_simple_ice_conference_with_audio_only_participant),

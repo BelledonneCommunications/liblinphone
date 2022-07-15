@@ -36,6 +36,10 @@ LinphoneConferenceInfo* linphone_conference_info_ref(LinphoneConferenceInfo *con
 	return conference_info;
 }
 
+LinphoneConferenceInfo *linphone_conference_info_clone (const LinphoneConferenceInfo *info) {
+	return static_cast<ConferenceInfo*>(ConferenceInfo::toCpp(info)->clone())->toC();
+}
+
 void linphone_conference_info_unref(LinphoneConferenceInfo *conference_info) {
 	ConferenceInfo::toCpp(conference_info)->unref();
 }
@@ -68,6 +72,10 @@ void linphone_conference_info_set_participants(LinphoneConferenceInfo *conferenc
 
 void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant) {
 	ConferenceInfo::toCpp(conference_info)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(participant));
+}
+
+void linphone_conference_info_remove_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant) {
+	ConferenceInfo::toCpp(conference_info)->removeParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(participant));
 }
 
 const LinphoneAddress *linphone_conference_info_get_uri(const LinphoneConferenceInfo *conference_info) {
@@ -103,6 +111,14 @@ void linphone_conference_info_set_subject(LinphoneConferenceInfo *conference_inf
 	ConferenceInfo::toCpp(conference_info)->setSubject(L_C_TO_STRING(subject));
 }
 
+unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info) {
+	return ConferenceInfo::toCpp(conference_info)->getIcsSequence();
+}
+
+const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info) {
+	return L_STRING_TO_C(ConferenceInfo::toCpp(conference_info)->getIcsUid());
+}
+
 const char *linphone_conference_info_get_description(const LinphoneConferenceInfo *conference_info) {
 	return L_STRING_TO_C(ConferenceInfo::toCpp(conference_info)->getDescription());
 }
@@ -118,4 +134,8 @@ char *linphone_conference_info_get_icalendar_string(const LinphoneConferenceInfo
 	}
 
 	return NULL;
+}
+
+LinphoneConferenceInfoState linphone_conference_info_get_state(const LinphoneConferenceInfo *conference_info) {
+	return (LinphoneConferenceInfoState)ConferenceInfo::toCpp(conference_info)->getState();
 }

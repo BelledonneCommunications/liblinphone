@@ -210,7 +210,15 @@ static void call_received(SalCallOp *h) {
 		// Create a conference if remote is trying to schedule one or it is calling a conference focus
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(h->getTo()), ConferenceAddress(h->getTo())));
-			const auto & resourceList = h->getContentInRemote(ContentType::ResourceLists);
+			const auto & remoteMd = h->getRemoteMediaDescription();
+			const auto times = remoteMd->times;
+			time_t startTime = -1;
+			time_t endTime = -1;
+			if (times.size() > 0) {
+				startTime = times.front().first;
+				endTime = times.front().second;
+			}
+
 			if (!conference) {
 				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
 
@@ -237,7 +245,7 @@ static void call_received(SalCallOp *h) {
 						return;
 					}
 				}
-			} else if (!resourceList.isEmpty()) {
+			} else if ((startTime != -1) || (endTime != -1)) {
 				auto localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
 				localConference->updateConferenceInformation(h);
 			}

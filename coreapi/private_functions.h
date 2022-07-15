@@ -730,6 +730,9 @@ bctbx_list_t * linphone_core_get_supported_media_encryptions_at_compile_time();
 LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneChatRoomState state);
 LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState state);
 
+LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
+
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new(void);
 LinphoneDigestAuthenticationPolicy * linphone_digest_authentication_policy_new_from_config(LinphoneConfig *config);
 void linphone_digest_authentication_policy_save(const LinphoneDigestAuthenticationPolicy* policy, LinphoneConfig *config);

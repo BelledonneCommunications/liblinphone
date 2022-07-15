@@ -35,10 +35,6 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceInfo::ConferenceInfo () {
 }
 
-ConferenceInfo::~ConferenceInfo () {
-
-}
-
 const IdentityAddress &ConferenceInfo::getOrganizer () const {
 	return mOrganizer;
 }
@@ -57,6 +53,15 @@ void ConferenceInfo::setParticipants (const std::list<IdentityAddress> participa
 
 void ConferenceInfo::addParticipant (const IdentityAddress participant) {
 	mParticipants.push_back(participant);
+}
+
+void ConferenceInfo::removeParticipant (const IdentityAddress participant) {
+	const auto it = std::find(mParticipants.cbegin(), mParticipants.cend(), participant);
+	if (it == mParticipants.cend()) {
+		lInfo() << "Unable to find participant with address " << participant << " in conference info " << this << " (address " << getUri() << ")";
+	} else {
+		mParticipants.erase(it);
+	}
 }
 
 const ConferenceAddress &ConferenceInfo::getUri () const {
@@ -91,6 +96,22 @@ void ConferenceInfo::setSubject (const std::string &subject) {
 	mSubject = Utils::trim(subject);
 }
 
+unsigned int ConferenceInfo::getIcsSequence () const {
+	return mIcsSequence;
+}
+
+void ConferenceInfo::setIcsSequence (unsigned int icsSequence) {
+	mIcsSequence = icsSequence;
+}
+
+const std::string &ConferenceInfo::getIcsUid () const {
+	return mIcsUid;
+}
+
+void ConferenceInfo::setIcsUid (const std::string &uid) {
+	mIcsUid = Utils::trim(uid);
+}
+
 const string &ConferenceInfo::getDescription () const {
 	return mDescription;
 }
@@ -99,10 +120,34 @@ void ConferenceInfo::setDescription (const string &description) {
 	mDescription = Utils::trim(description);
 }
 
-const string ConferenceInfo::toIcsString () const {
-	Ics::Icalendar cal;
-	auto event = make_shared<Ics::Event>();
+const ConferenceInfo::State &ConferenceInfo::getState () const {
+	return mState;
+}
 
+void ConferenceInfo::setState (const ConferenceInfo::State &state) {
+	mState = state;
+}
+
+const string ConferenceInfo::toIcsString (bool cancel) const {
+	Ics::Icalendar cal;
+
+	Ics::Icalendar::Method method = Ics::Icalendar::Method::Request;
+	if (cancel) {
+		method = Ics::Icalendar::Method::Cancel;
+	} else {
+		switch (getState()) {
+			case ConferenceInfo::State::New:
+			case ConferenceInfo::State::Updated:
+				method = Ics::Icalendar::Method::Request;
+				break;
+			case ConferenceInfo::State::Cancelled:
+				method = Ics::Icalendar::Method::Cancel;
+				break;
+		}
+	}
+	cal.setMethod(method);
+
+	auto event = make_shared<Ics::Event>();
 	if (mOrganizer.isValid()) {
 		const auto uri = mOrganizer.getAddressWithoutGruu().asString();
 		event->setOrganizer(uri);
@@ -130,13 +175,27 @@ const string ConferenceInfo::toIcsString () const {
 	duration.tm_min = mDuration % 60;
 	event->setDuration(duration);
 
+	event->setSequence(mIcsSequence);
+
+	if (!mIcsUid.empty()) {
+		event->setUid(mIcsUid);
+	}
+
 	cal.addEvent(event);
 
 	if (mCreationTime != (time_t) -1) {
 		cal.setCreationTime(mCreationTime);
 	}
+	const auto icsString = cal.asString();
 
-	return cal.asString();
+	if (mIcsUid.empty()) {
+		mIcsUid = event->getUid();
+	}
+	if (mIcsSequence == 0) {
+		mIcsSequence = event->getSequence();
+	}
+
+	return icsString;
 }
 
 void ConferenceInfo::setCreationTime(time_t time) {

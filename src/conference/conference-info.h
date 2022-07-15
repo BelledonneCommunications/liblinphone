@@ -36,8 +36,17 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
+	enum class State {
+		New = LinphoneConferenceInfoStateNew,
+		Updated = LinphoneConferenceInfoStateUpdated,
+		Cancelled = LinphoneConferenceInfoStateCancelled,
+	};
+
 	ConferenceInfo ();
-	virtual ~ConferenceInfo ();
+
+	ConferenceInfo *clone()const override{
+		return new ConferenceInfo(*this);
+	}
 
 	const IdentityAddress &getOrganizer () const;
 	void setOrganizer (IdentityAddress organizer);
@@ -45,6 +54,7 @@ public:
 	const std::list<IdentityAddress> &getParticipants () const;
 	void setParticipants (const std::list<IdentityAddress> participants);
 	void addParticipant (const IdentityAddress participant);
+	void removeParticipant (const IdentityAddress participant);
 
 	const ConferenceAddress &getUri () const;
 	void setUri (const ConferenceAddress uri);
@@ -58,10 +68,19 @@ public:
 	const std::string &getSubject () const;
 	void setSubject (const std::string &subject);
 
+	unsigned int getIcsSequence () const;
+	void setIcsSequence (unsigned int icsSequence);
+
+	const std::string &getIcsUid () const;
+	void setIcsUid (const std::string &uid);
+
 	const std::string &getDescription () const;
 	void setDescription (const std::string &description);
 
-	const std::string toIcsString () const;
+	const ConferenceInfo::State &getState () const;
+	void setState (const ConferenceInfo::State &state);
+
+	const std::string toIcsString (bool cancel = false) const;
 
 	// Used only by the tester
 	void setCreationTime(time_t time);
@@ -73,6 +92,9 @@ private:
 	unsigned int mDuration = 0;
 	std::string mSubject = "";
 	std::string mDescription = "";
+	mutable unsigned int mIcsSequence = 0;
+	mutable std::string mIcsUid = "";
+	State mState = State::New;
 
 	time_t mCreationTime = (time_t) -1;
 };

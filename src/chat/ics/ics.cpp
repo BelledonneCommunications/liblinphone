@@ -71,6 +71,22 @@ void Ics::Event::setSummary (const std::string &summary) {
 	mSummary = Utils::trim(summary);
 }
 
+unsigned int Ics::Event::getSequence () const {
+	return mSequence;
+}
+
+void Ics::Event::setSequence (unsigned int sequence) {
+	mSequence = sequence;
+}
+
+const std::string &Ics::Event::getUid () const {
+	return mUid;
+}
+
+void Ics::Event::setUid (const std::string &uid) {
+	mUid = Utils::trim(uid);
+}
+
 const std::string &Ics::Event::getDescription () const {
 	return mDescription;
 }
@@ -135,6 +151,7 @@ std::string Ics::Event::asString () const {
 	if (!mXConfUri.empty()) output << "X-CONFURI:" << mXConfUri << "\r\n";
 	if (!mSummary.empty()) output << "SUMMARY:" << escape(mSummary) << "\r\n";
 	if (!mDescription.empty()) output << "DESCRIPTION:" << escape(mDescription) << "\r\n";
+	if (mSequence != 0) output << "SEQUENCE:" << mSequence << "\r\n";
 
 	// An EVENT needs two mandatory attributes DTSTAMP AND UID
 	time_t usedTime = mCreationTime != (time_t) -1 ? mCreationTime : ms_time(NULL);
@@ -150,27 +167,51 @@ std::string Ics::Event::asString () const {
 		<< "Z\r\n";
 
 	// For UID RFC recommends to use a DATE-TIME [some unique value] @ domain
-	output << setfill('0') << "UID:"
-		<< setw(4) << (stamp.tm_year + 1900)
-		<< setw(2) << (stamp.tm_mon + 1)
-		<< setw(2) << stamp.tm_mday
-		<< "T"
-		<< setw(2) << stamp.tm_hour
-		<< setw(2) << stamp.tm_min
-		<< setw(2) << stamp.tm_sec
-		<< "Z";
+	output << setfill('0') << "UID:";
 
-	size_t p;
-	if (!mOrganizer.empty() && (p = mOrganizer.find("@")) != string::npos) {
-		string domain = mOrganizer.substr(p + 1, mOrganizer.size());
-		output << "@" << domain << "\r\n";
-	} else {
-		output << "@sip.linphone.org\r\n";
+	if (mUid.empty()) {
+		ostringstream uid;
+		uid << setw(4) << (stamp.tm_year + 1900)
+			<< setw(2) << (stamp.tm_mon + 1)
+			<< setw(2) << stamp.tm_mday
+			<< "T"
+			<< setw(2) << stamp.tm_hour
+			<< setw(2) << stamp.tm_min
+			<< setw(2) << stamp.tm_sec
+			<< "Z";
+
+		size_t p;
+		if (!mOrganizer.empty() && (p = mOrganizer.find("@")) != string::npos) {
+			string domain = mOrganizer.substr(p + 1, mOrganizer.size());
+			uid << "@" << domain;
+		} else {
+			uid << "@domain.invalid";
+		}
+		mUid = uid.str();
 	}
+	output << mUid << "\r\n";
 
 	output << "END:VEVENT\r\n";
 
 	return output.str();
+}
+
+const Ics::Icalendar::Method &Ics::Icalendar::getMethod () const {
+	return mMethod;
+}
+
+void Ics::Icalendar::setMethod (const std::string &method) {
+	if (method.compare("REQUEST") == 0) {
+		setMethod(Ics::Icalendar::Method::Request);
+	} else if (method.compare("CANCEL") == 0) {
+		setMethod(Ics::Icalendar::Method::Cancel);
+	} else {
+		lError() << "ICS method " << method << " is not currently supported";
+	}
+}
+
+void Ics::Icalendar::setMethod (const Ics::Icalendar::Method &method) {
+	mMethod = method;
 }
 
 void Ics::Icalendar::addEvent (shared_ptr<Event> event) {
@@ -181,7 +222,9 @@ std::string Ics::Icalendar::asString () const {
 	ostringstream output;
 
 	output << "BEGIN:VCALENDAR\r\n";
-	output << "METHOD:REQUEST\r\n";
+	output << "METHOD:";
+	output << mMethod;
+	output << "\r\n";
 	output << "PRODID:-//Linphone//Conference calendar//EN\r\n";
 	output << "VERSION:2.0\r\n";
 	for (const auto &event : mEvents) {
@@ -243,6 +286,19 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 		confInfo->setCreationTime(event->mCreationTime);
 	}
 
+	confInfo->setIcsSequence(event->getSequence());
+	confInfo->setIcsUid(event->getUid());
+
+	ConferenceInfo::State state = ConferenceInfo::State::New;
+	switch (mMethod) {
+		case Ics::Icalendar::Method::Request:
+			state = ((event->getSequence() == 0) ? ConferenceInfo::State::New : ConferenceInfo::State::Updated);
+			break;
+		case Ics::Icalendar::Method::Cancel:
+			state = ConferenceInfo::State::Cancelled;
+			break;
+	}
+	confInfo->setState(state);
 	return confInfo;
 }
 
@@ -256,4 +312,13 @@ void Ics::Icalendar::setCreationTime(time_t time) {
 	}
 }
 
+ostream &operator<< (ostream &stream, Ics::Icalendar::Method method) {
+	switch (method) {
+		case Ics::Icalendar::Method::Request:
+			return stream << "REQUEST";
+		case Ics::Icalendar::Method::Cancel:
+			return stream << "CANCEL";
+	}
+	return stream;
+}
 LINPHONE_END_NAMESPACE

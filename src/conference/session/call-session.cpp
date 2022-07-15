@@ -128,11 +128,20 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 						// Local conference
 						if (to.hasUriParam("conf-id")) {
 							shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(ConferenceId(ConferenceAddress(to), ConferenceAddress(to)));
+
+							std::shared_ptr<ConferenceInfo> confInfo = nullptr;
+							#ifdef HAVE_DB_STORAGE
+							auto &mainDb = q->getCore()->getPrivate()->mainDb;
+							if (mainDb) {
+								confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(to));
+							}
+							#endif
+
 							// If the call is for a conference stored in the core, then accept it automatically without video
-							if (conference) {
+							if (conference || confInfo) {
 								const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
-								const auto dialout = (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
-								if (resourceList.isEmpty() || ((conference->getState() == ConferenceInterface::State::CreationPending) && dialout)) {
+								const auto dialout = conference && (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
+								if (conference && (resourceList.isEmpty() || ((conference->getState() == ConferenceInterface::State::CreationPending) && dialout))) {
 									conference->addParticipant(call);
 								} else {
 									const_cast<LinphonePrivate::CallSessionParamsPrivate *>(q->getParams()->getPrivate())->setInConference(true);
@@ -140,10 +149,13 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 								}
 								auto params = linphone_core_create_call_params(lc, call->toC());
 								linphone_call_params_enable_audio(params, TRUE);
-								linphone_call_params_enable_video(params, (call->getRemoteParams()->videoEnabled() && conference->getCurrentParams().videoEnabled()) ? TRUE : FALSE);
+								const bool videoConferencing = conference ? conference->getCurrentParams().videoEnabled() : true;
+								linphone_call_params_enable_video(params, (call->getRemoteParams()->videoEnabled() && videoConferencing) ? TRUE : FALSE);
 								linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
-								linphone_call_params_set_start_time(params, conference->getCurrentParams().getStartTime());
-								linphone_call_params_set_end_time(params, conference->getCurrentParams().getEndTime());
+								const auto & startTime = conference ? conference->getCurrentParams().getStartTime() : confInfo->getDateTime();
+								linphone_call_params_set_start_time(params, startTime);
+								const auto & endTime = conference ? conference->getCurrentParams().getEndTime() : confInfo->getDateTime() + confInfo->getDuration();
+								linphone_call_params_set_end_time(params, endTime);
 								call->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 								linphone_call_params_unref(params);
 							}

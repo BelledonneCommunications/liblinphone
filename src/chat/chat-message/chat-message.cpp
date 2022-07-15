@@ -936,16 +936,19 @@ void ChatMessagePrivate::handleAutoDownload() {
 		ContentType contentType = c->getContentType();
 
 		if (contentType.strongEqual(ContentType::Icalendar)) {
-			LinphoneConferenceInfo *confInfo = linphone_factory_create_conference_info_from_icalendar_content(
+			LinphoneConferenceInfo *cConfInfo = linphone_factory_create_conference_info_from_icalendar_content(
 				linphone_factory_get(),
 				L_GET_C_BACK_PTR(c)
 			);
 
-			if (confInfo != nullptr) {
+			if (cConfInfo != nullptr) {
+				auto confInfo = ConferenceInfo::toCpp(cConfInfo)->getSharedFromThis();
+#ifdef HAVE_DB_STORAGE
 				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
-				mainDb->insertConferenceInfo(ConferenceInfo::toCpp(confInfo)->getSharedFromThis());
-				linphone_core_notify_conference_info_received(q->getCore()->getCCore(), confInfo);
-				linphone_conference_info_unref(confInfo);
+				mainDb->insertConferenceInfo(confInfo);
+#endif // HAVE_DB_STORAGE
+				linphone_core_notify_conference_info_received(q->getCore()->getCCore(), cConfInfo);
+				linphone_conference_info_unref(cConfInfo);
 			}
 		}
 	}

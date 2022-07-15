@@ -122,6 +122,8 @@ static void build_ics () {
 	event->addAttendee("sip:pauline@sip.linphone.org");
 	event->addAttendee("sip:laure@sip.linphone.org");
 	event->setXConfUri("sip:videoconf1@sip.linphone.org");
+	event->setSequence(10);
+	event->setUid("uidtest");
 
 	tm date = {0};
 	date.tm_year = 2021 - 1900;
@@ -154,8 +156,9 @@ static void build_ics () {
 		"SUMMARY:Conf chat audio\\\\vidéo\r\n"
 		"DESCRIPTION:Parler de la vidéo conférence et \\nrépartir les tâches\\, p\r\n"
 		" uis le développement \\;-\\\\.\r\n"
+		"SEQUENCE:10\r\n"
 		"DTSTAMP:19700101T000000Z\r\n"
-		"UID:19700101T000000Z@sip.linphone.org\r\n"
+		"UID:uidtest\r\n"
 		"END:VEVENT\r\n"
 		"END:VCALENDAR\r\n";
 
@@ -167,6 +170,8 @@ static void build_ics () {
 	BC_ASSERT_TRUE(confInfo->getUri().isValid());
 	BC_ASSERT_EQUAL(confInfo->getParticipants().size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(confInfo->getDuration(), 165, int, "%d");
+	BC_ASSERT_EQUAL(confInfo->getIcsSequence(), 10, int, "%d");
+	BC_ASSERT_STRING_EQUAL(confInfo->getIcsUid().c_str(), "uidtest");
 
 	const string confStr = confInfo->toIcsString();
 	BC_ASSERT_STRING_EQUAL(confStr.c_str(), expectedIcs.c_str());
@@ -186,7 +191,9 @@ static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceS
 		int failed_addresses_size = (int)(bctbx_list_size(failed_addresses));
 		BC_ASSERT_EQUAL(failed_addresses_size, 1, int, "%d");
 		LinphoneAddress *failed = (LinphoneAddress *)bctbx_list_get_data(failed_addresses);
-		BC_ASSERT_STRING_EQUAL(linphone_address_as_string(failed), "sip:error404@sip.example.org");
+		char * failed_str = linphone_address_as_string(failed);
+		BC_ASSERT_STRING_EQUAL(failed_str, "sip:error404@sip.example.org");
+		ms_free(failed_str);
 	}
 }
 
@@ -195,7 +202,7 @@ void setup_conference_info_cbs(LinphoneCoreManager * mgr) {
 	linphone_core_set_file_transfer_server(mgr->lc, file_transfer_url);
 }
 
-static void send_conference_invitations(bool_t enable_group, bool_t enable_encryption, const char *subject, int curveId, bool_t add_participant_in_error) {
+static void send_conference_invitations(bool_t enable_encryption, const char *subject, int curveId, bool_t add_participant_in_error) {
 	bctbx_list_t *coresManagerList = NULL;
 	LinphoneCoreManager* marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_create( "pauline_lime_x3dh_rc");
@@ -252,17 +259,16 @@ static void send_conference_invitations(bool_t enable_group, bool_t enable_encry
 	linphone_conference_scheduler_cbs_unref(cbs);
 
 	linphone_conference_scheduler_set_info(conference_scheduler, conf_info);
+
 	LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(marie->lc);
-	if (enable_group || enable_encryption) {
+	if (enable_encryption) {
 		linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendFlexisipChat);
 		linphone_chat_room_params_set_subject(chat_room_params, subject);
-		linphone_chat_room_params_enable_group(chat_room_params, enable_group);
-		linphone_chat_room_params_enable_encryption(chat_room_params, enable_encryption);
+		linphone_chat_room_params_enable_encryption(chat_room_params, TRUE);
 	}
 	linphone_conference_scheduler_send_invitations(conference_scheduler, chat_room_params);
 	linphone_chat_room_params_unref(chat_room_params);
-
-	if (enable_encryption || enable_group) {
+	if (enable_encryption) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneConferenceStateCreated, 1, 30000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneChatRoomConferenceJoined, 1, 30000));
 	}
@@ -300,9 +306,7 @@ static void send_conference_invitations(bool_t enable_group, bool_t enable_encry
 		}
 		linphone_chat_message_unref(msg);
 
-		if (!enable_group) {
-			linphone_chat_room_unref(marieCr);
-		}
+		linphone_chat_room_unref(marieCr);
 	}
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageReceived,1));
@@ -363,42 +367,30 @@ static void send_conference_invitations(bool_t enable_group, bool_t enable_encry
 	}
 
 	linphone_address_unref(conf_uri);
-	if (enable_group && marieCr) {
-		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
-	}
 
 	bctbx_list_free(coresManagerList);
+	bctbx_list_free(coresList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 }
 
 static void send_conference_invitations_1(void) {
-	send_conference_invitations(FALSE, FALSE, NULL, 0, FALSE);
+	send_conference_invitations(FALSE, NULL, 0, FALSE);
 }
 
 static void send_conference_invitations_2(void) {
-	send_conference_invitations(FALSE, TRUE, "dummy subject", 25519, FALSE);
-	//send_conference_invitations(FALSE, TRUE, "dummy subject", 448, FALSE);
-}
-
-static void send_conference_invitations_3(void) {
-	send_conference_invitations(TRUE, TRUE, "conference group!", 25519, FALSE);
-	//send_conference_invitations(TRUE, TRUE, "conference group!", 448, FALSE);
+	send_conference_invitations(TRUE, "dummy subject", 25519, FALSE);
+	//send_conference_invitations(TRUE, "dummy subject", 448, FALSE);
 }
 
 static void send_conference_invitations_error_1(void) {
-	send_conference_invitations(FALSE, FALSE, NULL, 0, TRUE);
+	send_conference_invitations(FALSE, NULL, 0, TRUE);
 }
 
 static void send_conference_invitations_error_2(void) {
-	send_conference_invitations(FALSE, TRUE, "dummy subject", 25519, TRUE);
-	//send_conference_invitations(FALSE, TRUE, "dummy subject", 448, TRUE);
-}
-
-static void send_conference_invitations_error_3(void) {
-	send_conference_invitations(TRUE, TRUE, "conference group!", 25519, TRUE);
-	//send_conference_invitations(TRUE, TRUE, "conference group!", 448, TRUE);
+	send_conference_invitations(TRUE, "dummy subject", 25519, TRUE);
+	//send_conference_invitations(TRUE, "dummy subject", 448, TRUE);
 }
 
 test_t ics_tests[] = {
@@ -408,10 +400,8 @@ test_t ics_tests[] = {
 	TEST_NO_TAG("Build Ics", build_ics),
 	TEST_NO_TAG("Send conference invitations in basic chat room", send_conference_invitations_1),
 	TEST_NO_TAG("Send conference invitations in one-to-one encrypted chat room", send_conference_invitations_2),
-	TEST_NO_TAG("Send conference invitations in a group encrypted chat room", send_conference_invitations_3),
 	TEST_NO_TAG("Send conference invitations error in basic chat room", send_conference_invitations_error_1),
 	TEST_NO_TAG("Send conference invitations error in one-to-one encrypted chat room", send_conference_invitations_error_2),
-	TEST_NO_TAG("Send conference invitations error in a group encrypted chat room", send_conference_invitations_error_3),
 };
 
 static int suite_begin(void) {

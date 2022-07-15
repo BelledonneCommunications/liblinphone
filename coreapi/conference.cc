@@ -765,19 +765,26 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				msp->getPrivate()->setEndTime(endTime);
 			}
 
+			getMe()->setAdmin(true);
+			getMe()->setFocus(true);
+
 			invitedAddresses.clear();
 			const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 			if (!resourceList.isEmpty()) {
 				auto invitees = Utils::parseResourceLists(resourceList);
 				invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
 			}
-
-			getMe()->setAdmin(true);
-			getMe()->setFocus(true);
-
 #ifdef HAVE_DB_STORAGE
-			auto &mainDb = getCore()->getPrivate()->mainDb;
 			const auto & conferenceInfo = createConferenceInfo(organizer, invitedAddresses);
+			auto infoState = ConferenceInfo::State::New;
+			if (resourceList.isEmpty()) {
+				infoState = ConferenceInfo::State::Cancelled;
+			} else {
+				infoState = ConferenceInfo::State::Updated;
+			}
+			conferenceInfo->setState(infoState);
+
+			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
 				lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
 				mainDb->insertConferenceInfo(conferenceInfo);
@@ -787,6 +794,9 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				callLog->setConferenceInfo(conferenceInfo);
 			}
 #endif
+			if (resourceList.isEmpty()) {
+				setState(ConferenceInterface::State::TerminationPending);
+			}
 		} else {
 			lWarning() << "Device with address " << address << " is not allowed to update the conference because they have not been invited nor are participants to conference " << getConferenceAddress() << " nor are the organizer";
 		}

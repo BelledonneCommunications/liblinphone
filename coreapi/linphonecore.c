@@ -9060,7 +9060,8 @@ LinphoneConferenceInfo *linphone_core_find_conference_information_from_uri(Linph
 	auto confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)));
 
 	if (confInfo != nullptr) {
-		return linphone_conference_info_ref(confInfo->toC());
+		// Clone the conference information so that the application can freely change it without modifying the object stored in the cached of the DB
+		return linphone_conference_info_clone(confInfo->toC());
 	}
 
 	return NULL;

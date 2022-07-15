@@ -382,6 +382,13 @@ bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphonePar
 	return FALSE;
 }
 
+
+void _linphone_call_check_nb_active_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
+	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeAudio), nb_audio_streams, int, "%d");
+	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeVideo), nb_video_streams, int, "%d");
+	BC_ASSERT_EQUAL(Call::toCpp(call)->getMediaStreamsNb(LinphoneStreamTypeText), nb_text_streams, int, "%d");
+}
+
 void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout) {
 	LinphoneCall *call1=linphone_core_get_current_call(lc1->lc);
 	LinphoneCall *call2=linphone_core_get_current_call(lc2->lc);
