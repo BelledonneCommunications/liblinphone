@@ -284,7 +284,7 @@ public:
 	void addLdap(std::shared_ptr<Ldap> ldap);
 	void removeLdap(std::shared_ptr<Ldap> ldap);
 
-	Address interpretUrl (const std::string &url) const;
+	Address interpretUrl (const std::string &url, bool chatOrCallUse) const;
 
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.
 	void doLater(const std::function<void ()> &something);

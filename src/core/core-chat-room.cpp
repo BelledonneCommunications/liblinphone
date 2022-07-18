@@ -806,12 +806,12 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 }
 
 shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const std::string& localAddressUri, const std::string &peerAddressUri) {
-	Address peerAddress(interpretUrl(peerAddressUri));
+	Address peerAddress(interpretUrl(peerAddressUri, true));
 	if (!peerAddress.isValid()) {
 		lError() << "Cannot make a valid address with: `" << peerAddressUri << "`.";
 		return nullptr;
 	}
-	Address localAddress(interpretUrl(localAddressUri));
+	Address localAddress(interpretUrl(localAddressUri, true));
 	if (!localAddress.isValid()) {
 		lError() << "Cannot make a valid address with: `" << localAddressUri << "`.";
 		return nullptr;

@@ -1298,8 +1298,25 @@ LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *core, const char
  * @param url the url to parse @notnil
  * @return the #LinphoneAddress matching the url or NULL in case of failure. @maybenil @tobefreed
  * @ingroup misc
+ * @deprecated on 18/07/2022, use linphone_core_interpret_url_2() instead.
  */
 LINPHONE_PUBLIC LinphoneAddress * linphone_core_interpret_url(LinphoneCore *core, const char *url);
+
+/**
+ * Constructs a #LinphoneAddress from the given string if possible.
+ *
+ * In case of just a username, characters will be unescaped.
+ * If a phone number is detected, it will be flattened.
+ * sip: or sips: prefix will be added if not present.
+ * Finally, @domain will be added if not present using default proxy config.
+ * @see linphone_proxy_config_normalize_sip_uri() for documentation.
+ * @param core The core @notnil
+ * @param url the url to parse @notnil
+ * @param apply_international_prefix whether or not to try to format url as phone number using default account prefix if it set (and if url is a number).
+ * @return the #LinphoneAddress matching the url or NULL in case of failure. @maybenil @tobefreed
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC LinphoneAddress * linphone_core_interpret_url_2(LinphoneCore *core, const char *url, bool_t apply_international_prefix);
 
 /**
  * @brief Initiates an outgoing call.

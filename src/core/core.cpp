@@ -1309,8 +1309,17 @@ void Core::removeLdap(std::shared_ptr<Ldap> ldap){
 }
 // -----------------------------------------------------------------------------
 
-Address Core::interpretUrl (const std::string &url) const {
-	LinphoneAddress *cAddress = linphone_core_interpret_url(getCCore(), url.c_str());
+Address Core::interpretUrl (const std::string &url, bool chatOrCallUse) const {
+	bool applyPrefix = true;
+	if (chatOrCallUse) {
+		LinphoneAccount *account = linphone_core_get_default_account(getCCore());
+		if (account) {
+			const LinphoneAccountParams *params = linphone_account_get_params(account);
+			applyPrefix = linphone_account_params_get_use_international_prefix_for_calls_and_chats(params);
+		}
+	}
+
+	LinphoneAddress *cAddress = linphone_core_interpret_url_2(getCCore(), url.c_str(), applyPrefix);
 	if (!cAddress) return Address();
 
 	char *str = linphone_address_as_string(cAddress);

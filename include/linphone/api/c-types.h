@@ -117,7 +117,7 @@ typedef struct _LinphoneAccountCbs LinphoneAccountCbs;
  * A SIP address is made of display name, username, domain name, port, and various
  * uri headers (such as tags). It looks like 'Alice <sip:alice@example.net>'.
  * 
- * You can create an address using linphone_factory_create_address() or linphone_core_interpret_url()
+ * You can create an address using linphone_factory_create_address() or linphone_core_interpret_url_2()
  * and both will return a NULL object if it doesn't match the grammar defined by the standard.
  * 
  * This object is used in almost every other major objects to identity people (including yourself) & servers.

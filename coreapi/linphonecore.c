@@ -4177,16 +4177,24 @@ void linphone_core_iterate(LinphoneCore *lc){
 }
 
 LinphoneAddress * linphone_core_interpret_url(LinphoneCore *lc, const char *url) {
+	return linphone_core_interpret_url_2(lc, url, TRUE);
+}
+
+LinphoneAddress * linphone_core_interpret_url_2(LinphoneCore *lc, const char *url, bool_t apply_international_prefix) {
 	if (!url) return NULL;
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
+	LinphoneAccount *account = linphone_core_get_default_account(lc);
 	LinphoneAddress *result = NULL;
 
-	char *normalized_number = linphone_proxy_config_normalize_phone_number(proxy, url);
-	if (normalized_number) {
-		result = linphone_proxy_config_normalize_sip_uri(proxy, normalized_number);
-		ms_free(normalized_number);
+	if (apply_international_prefix && linphone_account_is_phone_number(account, url)) {
+		char *normalized_number = linphone_account_normalize_phone_number(account, url);
+		if (normalized_number) {
+			result = linphone_account_normalize_sip_uri(account, normalized_number);
+			ms_free(normalized_number);
+		} else {
+			result = linphone_account_normalize_sip_uri(account, url);
+		}
 	} else {
-		result = linphone_proxy_config_normalize_sip_uri(proxy, url);
+		result = linphone_account_normalize_sip_uri(account, url);
 	}
 
 	return result;
@@ -4489,10 +4497,15 @@ LinphoneCall * linphone_core_invite(LinphoneCore *lc, const char *url){
 }
 
 LinphoneCall * linphone_core_invite_with_params(LinphoneCore *lc, const char *url, const LinphoneCallParams *p){
-	LinphoneAddress *addr=linphone_core_interpret_url(lc,url);
-	if (addr){
-		LinphoneCall *call;
-		call=linphone_core_invite_address_with_params(lc,addr,p);
+	bool_t apply_prefix = TRUE; 
+	LinphoneAccount *account = linphone_core_get_default_account(lc);
+	if (account) {
+		const LinphoneAccountParams *params = linphone_account_get_params(account);
+		apply_prefix = linphone_account_params_get_use_international_prefix_for_calls_and_chats(params);
+	}
+	LinphoneAddress *addr = linphone_core_interpret_url_2(lc, url, apply_prefix);
+	if (addr) {
+		LinphoneCall *call = linphone_core_invite_address_with_params(lc, addr, p);
 		linphone_address_unref(addr);
 		return call;
 	}

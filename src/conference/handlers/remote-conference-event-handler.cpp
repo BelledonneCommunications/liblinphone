@@ -210,7 +210,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	// 4. Notify changes on users.
 	for (auto &user : users->getUser()) {
-		Address address(conf->getCore()->interpretUrl(user.getEntity().get()));
+		Address address(conf->getCore()->interpretUrl(user.getEntity().get(), false));
 		StateType state = user.getState();
 
 		shared_ptr<Participant> participant = conf->findParticipant(address);

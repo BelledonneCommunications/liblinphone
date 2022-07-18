@@ -1418,7 +1418,7 @@ void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 }
 
 LinphoneStatus CallSession::redirect (const string &redirectUri) {
-	Address address(getCore()->interpretUrl(redirectUri));
+	Address address(getCore()->interpretUrl(redirectUri, true));
 	if (!address.isValid()) {
 		/* Bad url */
 		lError() << "Bad redirect URI: " << redirectUri;
@@ -1576,7 +1576,7 @@ LinphoneStatus CallSession::transfer (const Address &address) {
 }
 
 LinphoneStatus CallSession::transfer (const string &dest) {
-	Address address(getCore()->interpretUrl(dest));
+	Address address(getCore()->interpretUrl(dest, true));
 	return transfer(address);
 }
 
