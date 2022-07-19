@@ -96,7 +96,8 @@ void ChatRoomPrivate::addEvent (const shared_ptr<EventLog> &eventLog) {
 
 	EventLog::Type type = eventLog->getType();
 	if (type == EventLog::Type::ConferenceParticipantDeviceAdded
-		|| type == EventLog::Type::ConferenceParticipantDeviceRemoved) {
+		|| type == EventLog::Type::ConferenceParticipantDeviceRemoved
+		|| type == EventLog::Type::ConferenceParticipantDeviceStatusChanged) {
 		// Do not update last event time on the chat room for those events
 		// because they are invisible and will cause the chat room to move
 		// up in the list and the user won't know why
