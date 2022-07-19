@@ -220,6 +220,14 @@ LINPHONE_PUBLIC const char * linphone_call_stats_get_zrtp_cipher_algo (const Lin
 LINPHONE_PUBLIC const char * linphone_call_stats_get_zrtp_key_agreement_algo (const LinphoneCallStats *stats);
 
 /**
+ * Did ZRTP used a Post Quantum algorithm to perform a key exchange
+ * @param stats #LinphoneCallStats object @notnil
+ * @return TRUE if the ZRTP key exchange was performed using a PQ algo
+ *         FALSE otherwise: ZRTP exchange not completed or not using a PQ algo
+ */
+LINPHONE_PUBLIC bool_t linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum (const LinphoneCallStats *stats);
+
+/**
  * Get the ZRTP algorithm statistics details (cipher)
  * @param stats #LinphoneCallStats object @notnil
  * @return The hash algo

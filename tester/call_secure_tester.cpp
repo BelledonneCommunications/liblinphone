@@ -372,7 +372,7 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4(vo
  *		- the algorithm owned by Marie (or Pauline)
  *		- or the default algorithm
  */
-int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpAlgoRes res) {
+int zrtp_params_call2(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpAlgoRes res, bool_t isPQ) {
 	bool_t call_ok;
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
@@ -408,6 +408,9 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 
 		LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
 		LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
+
+		BC_ASSERT_EQUAL(linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum(marieStats), isPQ, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum(paulineStats), isPQ, int, "%d");
 
 		const ZrtpAlgo *marieZrtpInfo = linphone_call_stats_get_zrtp_algo(marieStats);
 		const ZrtpAlgo *paulineZrtpInfo = linphone_call_stats_get_zrtp_algo(paulineStats);
@@ -463,6 +466,10 @@ int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpA
 	linphone_core_manager_destroy(pauline);
 
 	return 0;
+}
+
+int zrtp_params_call(ZrtpAlgoString marieAlgo, ZrtpAlgoString paulineAlgo, ZrtpAlgoRes res) {
+	return zrtp_params_call2(marieAlgo, paulineAlgo, res, FALSE);
 }
 
 static void zrtp_call(void) {
@@ -666,7 +673,7 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		//PQ algo should force(at config time) the use of SHA512 and AES256 even if we do not explicitely enable them
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+		BC_ASSERT_EQUAL(zrtp_params_call2(marieAlgo, paulineAlgo, res, TRUE), 0, int, "%d");
 		bctbx_list_free(ka_list);
 		ka_list=NULL;
 
@@ -678,7 +685,7 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		//PQ algo should force the use of SHA512 and AES256
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+		BC_ASSERT_EQUAL(zrtp_params_call2(marieAlgo, paulineAlgo, res, TRUE), 0, int, "%d");
 		bctbx_list_free(ka_list);
 		ka_list=NULL;
 
@@ -690,7 +697,7 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		//PQ algo should force the use of SHA512 and AES256
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+		BC_ASSERT_EQUAL(zrtp_params_call2(marieAlgo, paulineAlgo, res, TRUE), 0, int, "%d");
 		bctbx_list_free(ka_list);
 		ka_list=NULL;
 
@@ -702,7 +709,7 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		//PQ algo should force the use of SHA512 and AES256
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		res.hash_algo = {MS_ZRTP_HASH_S512};
-		BC_ASSERT_EQUAL(zrtp_params_call(marieAlgo, paulineAlgo, res), 0, int, "%d");
+		BC_ASSERT_EQUAL(zrtp_params_call2(marieAlgo, paulineAlgo, res, TRUE), 0, int, "%d");
 		bctbx_list_free(ka_list);
 		ka_list=NULL;
 	} else {

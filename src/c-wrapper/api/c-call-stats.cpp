@@ -448,6 +448,28 @@ const char * linphone_call_stats_get_zrtp_key_agreement_algo (const LinphoneCall
 		default: return "Unknown Algo";
 	}
 }
+
+
+bool_t linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum (const LinphoneCallStats *stats) {
+	switch( stats->zrtp_algo.key_agreement_algo) {
+		case(MS_ZRTP_KEY_AGREEMENT_K255):
+		case(MS_ZRTP_KEY_AGREEMENT_K448):
+		case(MS_ZRTP_KEY_AGREEMENT_KYB1):
+		case(MS_ZRTP_KEY_AGREEMENT_KYB2):
+		case(MS_ZRTP_KEY_AGREEMENT_KYB3):
+		case(MS_ZRTP_KEY_AGREEMENT_SIK1):
+		case(MS_ZRTP_KEY_AGREEMENT_SIK2):
+		case(MS_ZRTP_KEY_AGREEMENT_SIK3):
+		case(MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
+		case(MS_ZRTP_KEY_AGREEMENT_K255_SIK434):
+		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
+		case(MS_ZRTP_KEY_AGREEMENT_K448_SIK751):
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
 const char * linphone_call_stats_get_zrtp_hash_algo (const LinphoneCallStats *stats) {
 	switch( stats->zrtp_algo.hash_algo) {
 		case(MS_ZRTP_HASH_INVALID): return "invalid";
