@@ -338,14 +338,12 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 
-	bool windowSet = false;
 #if TARGET_OS_IPHONE || defined(__ANDROID__)
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-		windowSet = true;
-	}
+	} else
 #endif
-	if (!windowSet && !label.empty()) {
+	if (!label.empty()) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
