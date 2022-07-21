@@ -767,15 +767,8 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
 
 	/* Handle RTP bundle negociation */
-	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty()){
+	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty() && remoteCfg.mid_rtp_ext_header_id != 0) {
 		resultCfg.mid = remoteCfg.mid;
-
-		if (remoteCfg.mid_rtp_ext_header_id == 0) {
-			lWarning() << "Found mid but the corresponding extmap attribute is missing";
-			success = false;
-			return std::make_pair(resultCfg, success);
-		}
-
 		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
 
 		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
