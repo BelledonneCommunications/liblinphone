@@ -105,17 +105,15 @@ void linphone_android_log_handler(int prio, char *str) {
 
 static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel lev, const char *fmt, va_list args) {
 	char* str = bctbx_strdup_vprintf(fmt, args);
-	const char *levname = "undef";
-
 	if (str == nullptr) return;
 
 	int prio;
 	switch(lev) {
-		case ORTP_DEBUG:	prio = ANDROID_LOG_DEBUG;	levname="debug"; break;
-		case ORTP_MESSAGE:	prio = ANDROID_LOG_INFO;	levname="message"; break;
-		case ORTP_WARNING:	prio = ANDROID_LOG_WARN;	levname="warning"; break;
-		case ORTP_ERROR:	prio = ANDROID_LOG_ERROR;	levname="error"; break;
-		case ORTP_FATAL:	prio = ANDROID_LOG_FATAL;	levname="fatal"; break;
+		case ORTP_DEBUG:	prio = ANDROID_LOG_DEBUG; break;
+		case ORTP_MESSAGE:	prio = ANDROID_LOG_INFO; break;
+		case ORTP_WARNING:	prio = ANDROID_LOG_WARN; break;
+		case ORTP_ERROR:	prio = ANDROID_LOG_ERROR; break;
+		case ORTP_FATAL:	prio = ANDROID_LOG_FATAL; break;
 		default:			prio = ANDROID_LOG_DEFAULT;	break;
 	}
 
