@@ -918,6 +918,20 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device
  */
 LINPHONE_PUBLIC void linphone_call_notify_ringing(LinphoneCall *call);
 
+/**
+ * Sets the video source of a call.
+ * @param call The #LinphoneCall @notnil
+ * @param descriptor The #LinphoneVideoSourceDescriptor describing the video source to set @maybenil
+ */
+LINPHONE_PUBLIC void linphone_call_set_video_source(LinphoneCall *call, const LinphoneVideoSourceDescriptor *descriptor);
+
+/**
+ * Gets the video source of a call.
+ * @param call The #LinphoneCall @notnil
+ * @return The #LinphoneVideoSourceDescriptor describing the video source that is set @maybenil
+ */
+LINPHONE_PUBLIC const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const LinphoneCall *call);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

@@ -287,6 +287,17 @@ typedef enum _LinphoneRecorderState {
 	LinphoneRecorderRunning /**< The recorder is running. */
 } LinphoneRecorderState;
 
+/**
+ * @brief Enum representing the type of a video source.
+ * @ingroup call_control
+**/
+typedef enum _LinphoneVideoSourceType {
+	LinphoneVideoSourceUnknown,
+	LinphoneVideoSourceCall, /**< The video source is another call. */
+	LinphoneVideoSourceCamera, /**< The video source is a camera. */
+	LinphoneVideoSourceImage /**< The video source is an image. */
+} LinphoneVideoSourceType;
+
 // -----------------------------------------------------------------------------
 // Friends.
 // -----------------------------------------------------------------------------

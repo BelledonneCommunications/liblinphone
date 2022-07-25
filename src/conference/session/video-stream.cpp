@@ -595,6 +595,73 @@ MS2VideoMixer *MS2VideoStream::getVideoMixer(){
 	return nullptr;
 }
 
+void MS2VideoStream::setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor) {
+	if (mStream == nullptr) {
+		lError() << "Could not find video stream while attempting to change video source on MS2VideoStream [" << this << "]";
+		return;
+	}
+
+	switch(descriptor->getType()) {
+		case VideoSourceDescriptor::Type::Call:
+			{
+				const auto &call = descriptor->getCall();
+
+				MS2VideoStream *source_stream = call->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+
+				if (source_stream->mStream == nullptr) {
+					lError() << "Could not find video stream of supplied call while attempting to change video source on MS2VideoStream [" << this << "]";
+					return;
+				}
+
+				video_stream_forward_source_stream(mStream, source_stream->mStream);
+			}
+			break;
+		case VideoSourceDescriptor::Type::Camera:
+			{
+				const auto &id = descriptor->getCameraId();
+
+				MSFactory *factory = linphone_core_get_ms_factory(getCCore());
+				MSWebCam *cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(factory), id.c_str());
+
+				if (cam == nullptr) {
+					lError() << "Could not find camera id \"" << id << "\" while attempting to change video source on MS2VideoStream [" << this << "]";
+					return;
+				}
+
+				video_stream_change_camera(mStream, cam);
+			}
+			break;
+		case VideoSourceDescriptor::Type::Image:
+			{
+				const auto &imagePath = descriptor->getImage();
+
+				MSFactory *factory = linphone_core_get_ms_factory(getCCore());
+				MSWebCam *cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(factory), "StaticImage: Static picture");
+				MSFilter *imageFilter = ms_web_cam_create_reader(cam);
+
+				if (imageFilter == nullptr) {
+					lError() << "Could not create filter for image while attempting to change video source on MS2VideoStream [" << this << "]";
+					return;
+				}
+
+				ms_filter_call_method(imageFilter, MS_STATIC_IMAGE_SET_IMAGE, (void *) (imagePath.c_str()));
+
+				video_stream_change_source_filter(mStream, NULL, imageFilter, FALSE);
+			}
+			break;
+		case VideoSourceDescriptor::Type::Unknown:
+			lError() << "Cannot change video source with an unknown video source type";
+			mVideoSourceDescriptor = nullptr;
+			return;
+	}
+
+	mVideoSourceDescriptor = descriptor;
+}
+
+std::shared_ptr<const VideoSourceDescriptor> MS2VideoStream::getVideoSource () const {
+	return mVideoSourceDescriptor;
+}
+
 MS2VideoStream::~MS2VideoStream(){
 	if (mStream) video_stream_stop(mStream);
 }

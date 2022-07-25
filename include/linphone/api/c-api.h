@@ -60,5 +60,6 @@
 #include "linphone/api/c-search-result.h"
 #include "linphone/api/c-digest-authentication-policy.h"
 #include "linphone/api/c-types.h"
+#include "linphone/api/c-video-source-descriptor.h"
 
 #endif // ifndef _L_C_API_H_

@@ -309,6 +309,13 @@ typedef struct _LinphoneRecorderParams LinphoneRecorderParams;
 **/
 typedef struct _LinphoneCallLog LinphoneCallLog;
 
+/**
+ * Object that is used to describe a video source.
+ *
+ * @ingroup call_control
+ */
+typedef struct _LinphoneVideoSourceDescriptor LinphoneVideoSourceDescriptor;
+
 // -----------------------------------------------------------------------------
 // Audio.
 // -----------------------------------------------------------------------------

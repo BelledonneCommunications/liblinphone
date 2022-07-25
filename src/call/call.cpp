@@ -1296,5 +1296,14 @@ void Call::setEndpoint (MSAudioEndpoint *endpoint) {
 	mEndpoint = endpoint;
 }
 
+// -----------------------------------------------------------------------------
+
+void Call::setVideoSource (std::shared_ptr<const VideoSourceDescriptor> descriptor) {
+	getMediaSession()->setVideoSource(descriptor);
+}
+
+std::shared_ptr<const VideoSourceDescriptor> Call::getVideoSource () const {
+	return getMediaSession()->getVideoSource();
+}
 
 LINPHONE_END_NAMESPACE

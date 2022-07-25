@@ -23,6 +23,7 @@
 #include "call-session.h"
 #include "conference/params/media-session-params.h"
 #include "call/audio-device/audio-device.h"
+#include "call/video-source/video-source-descriptor.h"
 
 // =============================================================================
 
@@ -145,6 +146,9 @@ public:
 	void notifyMutedDevice(uint32_t ssrc, bool muted);
 
 	void queueIceCompletionTask(const std::function<LinphoneStatus()> &lambda);
+
+	void setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor);
+	std::shared_ptr<const VideoSourceDescriptor> getVideoSource () const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

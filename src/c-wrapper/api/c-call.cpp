@@ -664,3 +664,12 @@ const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneC
 	}
 	return NULL;
 }
+
+void linphone_call_set_video_source(LinphoneCall *call, const LinphoneVideoSourceDescriptor *descriptor) {
+	Call::toCpp(call)->setVideoSource(VideoSourceDescriptor::toCpp(descriptor)->getSharedFromThis());
+}
+
+const LinphoneVideoSourceDescriptor *linphone_call_get_video_source(const LinphoneCall *call) {
+	auto descriptor = Call::toCpp(call)->getVideoSource();
+	return descriptor == nullptr ? NULL : descriptor->toC();
+}

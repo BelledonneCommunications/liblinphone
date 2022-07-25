@@ -4650,4 +4650,23 @@ void * MediaSession::getParticipantWindowId(const std::string label) {
 	return nullptr;
 }
 
+void MediaSession::setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor) {
+#ifdef VIDEO_ENABLED
+	MS2VideoStream *stream = getStreamsGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+	stream->setVideoSource(descriptor);
+#else
+	lError() << "Cannot change the video source as video support is not enabled";
+#endif
+}
+
+std::shared_ptr<const VideoSourceDescriptor> MediaSession::getVideoSource () const {
+#ifdef VIDEO_ENABLED
+	MS2VideoStream *stream = getStreamsGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+	return stream ? stream->getVideoSource() : nullptr;
+#else
+	lError() << "Cannot retrieve the video source as video support is not enabled";
+	return nullptr;
+#endif
+}
+
 LINPHONE_END_NAMESPACE

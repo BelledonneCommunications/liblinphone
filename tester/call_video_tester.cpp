@@ -2541,6 +2541,178 @@ end:
 	ms_free(hellowav);
 }
 
+static void video_call_with_video_forwarding_base(bool_t forwardee_end_call) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_rc_udp");
+	LinphoneVideoPolicy marie_policy, pauline_policy, laure_policy;
+	int dummy = 0;
+
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+
+	marie_policy.automatically_initiate=TRUE;
+	marie_policy.automatically_accept=TRUE;
+	linphone_core_set_video_policy(marie->lc, &marie_policy);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+
+	// Set Marie to shared media resources so that she can have two calls without pause
+	linphone_core_set_media_resource_mode(marie->lc, LinphoneSharedMediaResources);
+
+	pauline_policy.automatically_initiate=TRUE;
+	pauline_policy.automatically_accept=TRUE;
+	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+
+	laure_policy.automatically_initiate=TRUE;
+	laure_policy.automatically_accept=TRUE;
+	linphone_core_set_video_policy(laure->lc, &laure_policy);
+	linphone_core_enable_video_capture(laure->lc, TRUE);
+	linphone_core_enable_video_display(laure->lc, TRUE);
+
+	// Make first a call from marie to pauline
+	if (BC_ASSERT_TRUE(call(marie, pauline))) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+
+		// Put pauline on "pause" by changing the audio direction to inactive and video to recvonly
+		LinphoneCall *marie_pauline_call = linphone_core_get_current_call(marie->lc);
+		LinphoneCallParams *params = linphone_core_create_call_params(marie->lc, marie_pauline_call);
+
+		linphone_call_params_set_audio_direction(params, LinphoneMediaDirectionInactive);
+		linphone_call_params_set_video_direction(params, LinphoneMediaDirectionRecvOnly);
+
+		linphone_call_update(marie_pauline_call, params);
+		linphone_call_params_unref(params);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1, 10000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+
+		wait_for_list(lcs, &dummy, 1, 2000);
+
+		// Make a call from marie to laure, since Marie has media resource mode to shared it shouldn't pause it
+		if (BC_ASSERT_TRUE(call(marie, laure))) {
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+
+			LinphoneCall *marie_laure_call = linphone_core_get_call_by_remote_address2(marie->lc, laure->identity);
+			LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
+			linphone_video_source_descriptor_set_call(descriptor, marie_pauline_call);
+			linphone_call_set_video_source(marie_laure_call, descriptor);
+			linphone_video_source_descriptor_unref(descriptor);
+
+			VideoStream *vstream = (VideoStream *) linphone_call_get_stream(marie_laure_call, LinphoneStreamTypeVideo);
+			BC_ASSERT_TRUE(vstream->is_forwarding);
+			BC_ASSERT_STRING_EQUAL(ms_filter_get_name(vstream->source), "MSItcSource");
+
+			if (forwardee_end_call) {
+				end_call(pauline, marie);
+			}
+
+			descriptor = linphone_video_source_descriptor_new();
+			linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_static_image_id);
+			linphone_call_set_video_source(marie_laure_call, descriptor);
+			linphone_video_source_descriptor_unref(descriptor);
+
+			BC_ASSERT_FALSE(vstream->is_forwarding);
+			BC_ASSERT_STRING_EQUAL(ms_filter_get_name(vstream->source), "MSStaticImage");
+
+			const MSWebCam *current_cam = video_stream_get_camera(vstream);
+			if (BC_ASSERT_PTR_NOT_NULL(current_cam))
+				BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(current_cam), "Static picture");
+
+			end_call(laure, marie);
+		}
+
+		if (!forwardee_end_call) {
+			// Stop the "pause"
+			params = linphone_core_create_call_params(marie->lc, marie_pauline_call);
+
+			linphone_call_params_set_audio_direction(params, LinphoneMediaDirectionSendRecv);
+			linphone_call_params_set_video_direction(params, LinphoneMediaDirectionSendRecv);
+
+			linphone_call_update(marie_pauline_call, params);
+			linphone_call_params_unref(params);
+
+			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 3, 10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3, 10000));
+
+			end_call(marie, pauline);
+		}
+	}
+
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+}
+
+static void video_call_with_video_forwarding(void) {
+	video_call_with_video_forwarding_base(FALSE);
+}
+
+static void video_call_with_video_forwarding_forwardee_ends_first(void) {
+	video_call_with_video_forwarding_base(TRUE);
+}
+
+static void video_call_set_image_as_video_source(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneVideoPolicy marie_policy, pauline_policy;
+
+	char *qrcode_image = bc_tester_res("images/linphonesiteqr.jpg");
+
+	marie_policy.automatically_initiate=TRUE;
+	marie_policy.automatically_accept=TRUE;
+	linphone_core_set_video_policy(marie->lc, &marie_policy);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+
+	pauline_policy.automatically_initiate=TRUE;
+	pauline_policy.automatically_accept=TRUE;
+	linphone_core_set_video_policy(pauline->lc, &pauline_policy);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+
+	// Make first a call from marie to pauline
+	if (BC_ASSERT_TRUE(call(marie, pauline))) {
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+
+		LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+		LinphoneVideoSourceDescriptor *descriptor = linphone_video_source_descriptor_new();
+		linphone_video_source_descriptor_set_image(descriptor, qrcode_image);
+		linphone_call_set_video_source(marie_call, descriptor);
+		linphone_video_source_descriptor_unref(descriptor);
+
+		VideoStream *vstream = (VideoStream *) linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
+		BC_ASSERT_STRING_EQUAL(ms_filter_get_name(vstream->source), "MSStaticImage");
+
+		descriptor = linphone_video_source_descriptor_new();
+		linphone_video_source_descriptor_set_camera_id(descriptor, liblinphone_tester_mire_id);
+		linphone_call_set_video_source(marie_call, descriptor);
+		linphone_video_source_descriptor_unref(descriptor);
+
+		BC_ASSERT_STRING_EQUAL(ms_filter_get_name(vstream->source), "MSMire");
+
+		end_call(marie, pauline);
+	}
+
+	if (qrcode_image) bctbx_free(qrcode_image);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
 
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
@@ -2613,7 +2785,10 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
 	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
 	TEST_NO_TAG("Video call with mire and analyse", video_call_with_mire_and_analyse),
- 	TEST_NO_TAG("Video call with file streaming", call_with_video_mkv_file_player)
+	TEST_NO_TAG("Video call with file streaming", call_with_video_mkv_file_player),
+	TEST_NO_TAG("Video call with video forwarding", video_call_with_video_forwarding),
+	TEST_NO_TAG("Video call with video forwarding forwardee ends first", video_call_with_video_forwarding_forwardee_ends_first),
+	TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source)
 };
 
 int init_msogl_call_suite(){

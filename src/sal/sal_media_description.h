@@ -144,7 +144,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		SalStreamDir dir = SalStreamSendRecv;
 		std::vector<SalStreamDescription> streams;
 		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
-		OrtpRtcpXrConfiguration rtcp_xr;
+		OrtpRtcpXrConfiguration rtcp_xr{};
 		std::string ice_ufrag;
 		std::string ice_pwd;
 		std::list<SalStreamBundle> bundles;

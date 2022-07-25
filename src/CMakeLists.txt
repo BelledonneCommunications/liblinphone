@@ -133,6 +133,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	c-wrapper/internal/c-tools.h
 	call/call-log.h
 	call/call.h
+	call/video-source/video-source-descriptor.h
 	call/audio-device/audio-device.h
 	call/audio-device/audio-device.cpp
 	chat/chat-message/chat-message-p.h
@@ -383,10 +384,12 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-recorder.cpp
 	c-wrapper/api/c-recorder-params.cpp
 	c-wrapper/api/c-search-result.cpp
+	c-wrapper/api/c-video-source-descriptor.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	call/call-log.cpp
 	call/call.cpp
+	call/video-source/video-source-descriptor.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
 	chat/chat-message/is-composing-message.cpp

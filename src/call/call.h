@@ -35,6 +35,7 @@
 #include "utils/background-task.h"
 
 #include "call/call-log.h"
+#include "call/video-source/video-source-descriptor.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -217,6 +218,7 @@ public:
 	AudioDevice *getOutputAudioDevice() const;
 	
 	// -----------------------------------------------------------------------------
+
 	void createPlayer () const;
 	void initiateIncoming ();
 	bool initiateOutgoing (const std::string &subject = "", const Content *content = nullptr);
@@ -230,6 +232,7 @@ public:
 	std::shared_ptr<Call> startReferredCall (const MediaSessionParams *params);
 	
 	// -----------------------------------------------------------------------------
+
 	std::shared_ptr<CallSession> getActiveSession () const;
 	std::shared_ptr<AbstractChatRoom> getChatRoom ();
 	LinphoneProxyConfig *getDestProxy () const;
@@ -249,8 +252,14 @@ public:
 	void setMicrophoneMuted (bool muted);
 	
 	// -----------------------------------------------------------------------------
+
 	void terminateBecauseOfLostMedia ();
-	
+
+	// -----------------------------------------------------------------------------
+
+	void setVideoSource (std::shared_ptr<const VideoSourceDescriptor> descriptor);
+	std::shared_ptr<const VideoSourceDescriptor> getVideoSource () const;
+
 	// -----------------------------------------------------------------------------
 	/* CallSessionListener */
 	void onAckBeingSent (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;

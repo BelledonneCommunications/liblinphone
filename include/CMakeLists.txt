@@ -113,6 +113,7 @@ set(C_API_HEADER_FILES
 	c-search-result.h
 	c-digest-authentication-policy.h
 	c-types.h
+	c-video-source-descriptor.h
 )
 
 set(ENUMS_HEADER_FILES

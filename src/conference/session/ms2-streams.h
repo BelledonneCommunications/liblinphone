@@ -21,6 +21,7 @@
 #define ms2_streams_h
 
 #include "streams.h"
+#include "call/video-source/video-source-descriptor.h"
 
 struct _MSAudioEndpoint;
 struct _MSVideoEndpoint;
@@ -286,6 +287,9 @@ public:
 	void oglRender();
 	MSWebCam * getVideoDevice(CallSession::State targetState)const;
 
+	void setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor);
+	std::shared_ptr<const VideoSourceDescriptor> getVideoSource () const;
+
 	virtual ~MS2VideoStream();
 protected:
 	AudioStream *getPeerAudioStream();
@@ -302,6 +306,7 @@ private:
 	MS2VideoMixer *getVideoMixer();
 	VideoStream *mStream = nullptr;
 	struct _MSVideoEndpoint *mConferenceEndpoint = nullptr;
+	std::shared_ptr<const VideoSourceDescriptor> mVideoSourceDescriptor = nullptr;
 };
 
 /*
