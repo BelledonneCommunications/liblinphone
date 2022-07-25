@@ -10855,8 +10855,6 @@ static void conference_mix_created_by_merging_video_calls_base (LinphoneConferen
 	negotiated_call_params = linphone_call_get_current_params(marie_call_laure);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params));
 	laure_called_by_marie=linphone_core_get_current_call(laure->lc);
-	// for conference focus test
-	linphone_call_set_microphone_muted(laure_called_by_marie, TRUE);
 	negotiated_call_params = linphone_call_get_current_params(laure_called_by_marie);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(negotiated_call_params));
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
@@ -10952,6 +10950,7 @@ static void conference_mix_created_by_merging_video_calls_base (LinphoneConferen
 	wait_for_list(lcs ,NULL, 0, 3000);
 	/* In case of active speaker, mute other participants to ensure that the output video is from pauline. */
 	linphone_core_enable_mic(marie->lc, FALSE);
+	linphone_core_enable_mic(laure->lc, FALSE);
 	check_video_conference(lcs, pauline, laure, layout);
 	terminate_conference(participants, marie, conf, focus_mgr);
 

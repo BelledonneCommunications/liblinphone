@@ -404,7 +404,7 @@ void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, Linphon
 			ms_filter_call_method(vstream2s->source, MS_MIRE_SET_COLOR, &c2);
 		}
 
-		wait_for_list(lcs, NULL, 5, 5000);
+		wait_for_list(lcs, NULL, 5, liblinphone_tester_sip_timeout);
 
 		LinphoneConference * conference1 = linphone_call_get_conference(call1);
 		BC_ASSERT_PTR_NOT_NULL(conference1);
@@ -422,10 +422,10 @@ void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, Linphon
 
 		linphone_call_check_rtp_sessions(call1);
 		linphone_call_check_rtp_sessions(call2);
-		linphone_call_compare_video_color(call1, c2, MediaStreamRecvOnly, vstream2s->label);
-		linphone_call_compare_video_color(call2, c1, MediaStreamRecvOnly, vstream1s->label);
+		BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c2, MediaStreamRecvOnly, vstream2s->label));
+		BC_ASSERT_TRUE(linphone_call_compare_video_color(call2, c1, MediaStreamRecvOnly, vstream1s->label));
 		if (layout != LinphoneConferenceLayoutGrid) {
-			linphone_call_compare_video_color(call2, c1, MediaStreamSendRecv, "");
+			BC_ASSERT_TRUE(linphone_call_compare_video_color(call2, c1, MediaStreamSendRecv, ""));
 		}
 	}
 }
@@ -456,6 +456,54 @@ void check_video_conference_with_local_participant(bctbx_list_t *participants,Li
 		}
 	}
 }
+
+void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, LinphoneCoreManager *mgr3) {
+	MSMireControl c1 = {{0,5,10,15,20,25}};
+	MSMireControl c3 = {{100,120,140,160,180,200}};
+
+	for (LinphoneCoreManager *mgr : {mgr1, mgr2, mgr3}) {
+		LinphoneCall *call=linphone_core_get_current_call(mgr->lc);
+		BC_ASSERT_PTR_NOT_NULL(call);
+		if (!call) return;
+		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+		if (mgr != mgr2) { // mgr2 is audio only
+			BC_ASSERT_TRUE(vstream && vstream->source && ms_filter_get_id(vstream->source)== MS_MIRE_ID);
+			if (vstream && vstream->source && ms_filter_get_id(vstream->source)== MS_MIRE_ID) {
+				if (mgr == mgr1)
+					ms_filter_call_method(vstream->source, MS_MIRE_SET_COLOR, &c1);
+				else
+					ms_filter_call_method(vstream->source, MS_MIRE_SET_COLOR, &c3);
+			}
+		} else {
+			BC_ASSERT_PTR_NULL(vstream);
+		}
+	}
+
+	LinphoneCall *call1=linphone_core_get_current_call(mgr1->lc);
+	// mgr3 speaks and mgr1's video change
+	linphone_core_enable_mic(mgr1->lc, FALSE);
+	linphone_core_enable_mic(mgr2->lc, FALSE);
+	lInfo() << __func__ << ": mgr3 speaks";
+	wait_for_list(lcs, NULL, 5, liblinphone_tester_sip_timeout);
+	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+	
+	// mgr2 speaks until mgr1's video change
+	linphone_core_enable_mic(mgr2->lc, TRUE);
+	linphone_core_enable_mic(mgr3->lc, FALSE);
+	lInfo() << __func__ << ": mgr2 speaks";
+	wait_for_list(lcs, NULL, 5, liblinphone_tester_sip_timeout);
+	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
+	
+	// mgr1 speaks and mgr1's video not change
+	lInfo() << __func__ << ": mgr1 speaks";
+	linphone_core_enable_mic(mgr2->lc, FALSE);
+	linphone_core_enable_mic(mgr1->lc, TRUE);
+	wait_for_list(lcs, NULL, 5, liblinphone_tester_sip_timeout);
+	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
+}
+
 
 const char * _linphone_call_get_subject(LinphoneCall * call) {
 	SalCallOp * op = Call::toCpp(call)->getOp();

@@ -279,7 +279,7 @@ bool_t linphone_call_check_rtp_sessions(LinphoneCall *call) {
 bool_t linphone_call_compare_video_color(LinphoneCall *call, MSMireControl cl, MediaStreamDir dir, const char  *label) {
 #ifdef VIDEO_ENABLED
 	auto lambda = [] (Stream *s, MediaStreamDir dir, const string &label, MSMireControl cl) {
-		if (s->getType() == SalVideo && label.compare(s->getLabel())==0) {
+		if (s->getType() == SalVideo && (label.empty() ||  label.compare(s->getLabel())==0)) {
 			MS2VideoStream *vs  =  dynamic_cast<MS2VideoStream *>(s);
 			if (vs && media_stream_get_direction(vs->getMediaStream()) == dir && vs->getVideoStream()->output && ms_filter_get_id(vs->getVideoStream()->output)== MS_ANALYSE_DISPLAY_ID){
 				return ms_filter_call_method(vs->getVideoStream()->output, MS_ANALYSE_DISPLAY_COMPARE_COLOR, &cl) == 0;
