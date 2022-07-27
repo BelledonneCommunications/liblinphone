@@ -125,8 +125,11 @@
 
 - (void)didRegisterForRemotePushWithStringifiedToken:(const char *)tokenStr {
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
-	if (!core) return;
-	
+	if (!core || core->getCCore()->state == LinphoneGlobalShutdown || core->getCCore()->state == LinphoneGlobalOff) {
+		ms_warning("Received remote push token but the core is currently destroyed, Shutdown or Off. Push configuration updates skipped");
+		return;
+	}
+		
 	if (tokenStr) {
 		linphone_push_notification_config_set_remote_token(core->getCCore()->push_config, tokenStr);
 	} else {
@@ -159,9 +162,13 @@
 
 //  PushKit Functions
 - (void)pushRegistry:(PKPushRegistry *)registry didUpdatePushCredentials:(PKPushCredentials *)credentials forType:(PKPushType)type {
-	ms_message("[PushKit] credentials updated with voip token: %s", [credentials.token.description UTF8String]);
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
-	if (!core) return;
+	if (!core || core->getCCore()->state == LinphoneGlobalShutdown || core->getCCore()->state == LinphoneGlobalOff) {
+		ms_warning("Received voip push token but the core is currently destroyed, Shutdown or Off. Push configurations update skipped");
+		return;
+	}
+	
+	ms_message("[PushKit] credentials updated with voip token: %s", [credentials.token.description UTF8String]);
 	NSData *pushToken = credentials.token;
 
 	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, [self stringFromToken:pushToken forType:@"voip"].UTF8String);
@@ -177,9 +184,13 @@
 }
 
 - (void)pushRegistry:(PKPushRegistry *)registry didInvalidatePushTokenForType:(NSString *)type {
-    ms_message("[PushKit] Token invalidated");
 	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
-	if (!core) return;
+	if (!core || core->getCCore()->state == LinphoneGlobalShutdown || core->getCCore()->state == LinphoneGlobalOff) {
+		ms_warning("[PushKit] Token was invalidated, but the core is currently destroyed, Shutdown or Off. Push configurations update skipped");
+		return;
+	}
+	
+	ms_message("[PushKit] Token invalidated");
 	linphone_push_notification_config_set_voip_token(core->getCCore()->push_config, nullptr);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core->getCCore());
 	for (; accounts != NULL; accounts = accounts->next) {
