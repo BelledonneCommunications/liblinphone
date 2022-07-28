@@ -22,6 +22,7 @@
 
 #include "core/core.h"
 #include "conference/conference-params.h"
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 
@@ -70,15 +71,12 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 			setMe(identity ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(identity)) : IdentityAddress());
 			if(m_useDefaultFactoryAddress) {
 				auto core = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_account_get_core(account));
-				auto factory_addr = Core::getAudioVideoConferenceFactoryAddress(core->getSharedFromThis(), account);
+				const LinphoneAddress* factory_addr = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 				char * conferenceFactoryAddressString = factory_addr ? linphone_address_as_string(factory_addr) : NULL;
 				const Address conferenceFactoryAddress(L_C_TO_STRING(conferenceFactoryAddressString));
 				m_factoryAddress = Address(conferenceFactoryAddress);
 				if (linphone_core_get_global_state(linphone_account_get_core(account)) != LinphoneGlobalStartup) {
 					ms_message("Update conference parameters from account, factory:%s", conferenceFactoryAddressString);
-				}
-				if (factory_addr) {
-					linphone_address_unref(factory_addr);
 				}
 				if (conferenceFactoryAddressString) {
 					ms_free(conferenceFactoryAddressString);

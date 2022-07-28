@@ -652,6 +652,7 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin);
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server);
 void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
+void _configure_core_for_audio_video_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
 void _start_core(LinphoneCoreManager *lcm);
 extern const char *sFactoryUri;
 

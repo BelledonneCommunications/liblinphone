@@ -154,6 +154,7 @@ class ClientConference :public CoreManager {
 public:
 	ClientConference(std::string rc,Address factoryUri):CoreManager(rc,[this,factoryUri] {
 		_configure_core_for_conference(mMgr,L_GET_C_BACK_PTR(&factoryUri));
+		_configure_core_for_audio_video_conference(mMgr,L_GET_C_BACK_PTR(&factoryUri));
 		setup_mgr_for_conference(getCMgr(), NULL);
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);

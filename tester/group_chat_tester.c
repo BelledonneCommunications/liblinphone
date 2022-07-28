@@ -272,6 +272,16 @@ void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *
 	configure_core_for_conference(lcm->lc, NULL, factoryAddr, FALSE);
 }
 
+void _configure_core_for_audio_video_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr) {
+	if (factoryAddr) {
+		LinphoneAccount *account = linphone_core_get_default_account(lcm->lc);
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(account));
+		linphone_account_params_set_audio_video_conference_factory_address(params, factoryAddr);
+		linphone_account_set_params(account, params);
+		linphone_account_params_unref(params);
+	}
+}
+
 void configure_core_for_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
 	// Remove is-composing callback from the core, we use our own on the chat room
 	linphone_core_cbs_set_is_composing_received(lcm->cbs, NULL);
