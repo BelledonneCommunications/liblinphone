@@ -6809,7 +6809,7 @@ MSVideoSize linphone_core_get_current_preview_video_size(const LinphoneCore *lc)
 
 LinphoneVideoDefinition * linphone_core_get_current_preview_video_definition(const LinphoneCore *lc) {
 #ifdef VIDEO_ENABLED
-	MSVideoSize vsize;
+	MSVideoSize vsize={0};
 	if (lc->previewstream) {
 		vsize = video_preview_get_current_size(lc->previewstream);
 	}
