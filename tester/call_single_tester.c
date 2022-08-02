@@ -1797,9 +1797,10 @@ static void call_declined_with_retry_after(void) {
 	linphone_core_manager_destroy(caller_mgr);
 }
 
-static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia) {
+static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia, bool_t request_timeout) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneReason reason = use_timeout ? LinphoneReasonBusy : (request_timeout ? LinphoneReasonNotAnswered : LinphoneReasonDeclined);
 
 	LinphoneCall* in_call;
 	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
@@ -1814,22 +1815,31 @@ static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia) {
 		linphone_call_ref(in_call);
 		if (use_earlymedia)
 			linphone_call_accept_early_media(in_call);
+
 		BC_ASSERT_EQUAL(marieToneManagerStats->number_of_startRingtone, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,(int*)&paulineToneManagerStats->number_of_startRingbackTone,1));
-		if (!use_timeout)
+		if (!use_timeout && !request_timeout)
 			linphone_call_terminate(in_call);
+		
+		if (request_timeout)
+			wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallEnd, 1, 2*liblinphone_tester_sip_timeout);
+
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
 		BC_ASSERT_EQUAL(marieToneManagerStats->number_of_stopRingtone, 1, int, "%d");
+
+		if (request_timeout || use_timeout)
+			BC_ASSERT_EQUAL(marieToneManagerStats->number_of_startErrorTone, 0, int, "%d");
+
 		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_stopRingbackTone, 1, int, "%d");
 		BC_ASSERT_EQUAL(paulineToneManagerStats->number_of_startErrorTone, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd,1, int, "%d");
-		BC_ASSERT_EQUAL(use_timeout ? pauline->stat.number_of_LinphoneCallError : pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
+		BC_ASSERT_EQUAL((use_timeout || request_timeout) ? pauline->stat.number_of_LinphoneCallError : pauline->stat.number_of_LinphoneCallEnd,1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc, (int*)&paulineToneManagerStats->number_of_stopTone, 1));
-		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call), use_timeout ? LinphoneReasonBusy : LinphoneReasonDeclined, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)), use_timeout ? LinphoneCallMissed : LinphoneCallDeclined, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_get_reason(out_call), use_timeout ? LinphoneReasonBusy : LinphoneReasonDeclined, int, "%d");
-		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)), use_timeout ? LinphoneCallAborted : LinphoneCallDeclined, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_get_reason(in_call), reason, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(in_call)), (use_timeout || request_timeout) ? LinphoneCallMissed : LinphoneCallDeclined, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_get_reason(out_call), reason, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)), (use_timeout || request_timeout) ? LinphoneCallAborted : LinphoneCallDeclined, int, "%d");
 
 		if (use_timeout) BC_ASSERT_EQUAL(linphone_call_get_duration(out_call), 0, int, "%d");
 		linphone_call_unref(in_call);
@@ -1842,19 +1852,23 @@ static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia) {
 }
 
 static void call_declined(void) {
-	call_declined_base(FALSE,FALSE);
+	call_declined_base(FALSE,FALSE, FALSE);
 }
 
 static void call_declined_in_early_media(void) {
-	call_declined_base(FALSE,TRUE);
+	call_declined_base(FALSE,TRUE, FALSE);
 }
 
 static void call_declined_on_timeout(void) {
-	call_declined_base(TRUE,FALSE);
+	call_declined_base(TRUE,FALSE,FALSE);
 }
 
 static void call_declined_on_timeout_in_early_media(void) {
-	call_declined_base(TRUE,TRUE);
+	call_declined_base(TRUE,TRUE,FALSE);
+}
+
+static void call_cancelled_on_request_timeout_in_early_media(void) {
+	call_declined_base(FALSE,TRUE,TRUE);
 }
 
 static void call_terminated_by_caller(void) {
@@ -6583,6 +6597,7 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call declined on timeout",call_declined_on_timeout),
 	TEST_NO_TAG("Call declined in Early Media", call_declined_in_early_media),
 	TEST_NO_TAG("Call declined on timeout in Early Media",call_declined_on_timeout_in_early_media),
+	TEST_NO_TAG("Call cancelled on request timeout in Early Media",call_cancelled_on_request_timeout_in_early_media),
 	TEST_NO_TAG("Call declined with error", call_declined_with_error),
 	TEST_NO_TAG("Call declined with reasons", call_declined_with_reasons),
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),

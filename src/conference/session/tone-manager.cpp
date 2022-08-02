@@ -688,8 +688,8 @@ void ToneManager::notifyState(const std::shared_ptr<CallSession> &callSession, C
 		case CallSession::State::Error:
 		{
 			LinphoneReason reason = session->getReason();
-			// Do not play tone for incoming calls when declining them with Busy or DoNotDisturb reason
-			if (session->getDirection() == LinphoneCallOutgoing || (reason != LinphoneReasonBusy && reason != LinphoneReasonDoNotDisturb)) {
+			// Do not play tone for incoming calls when declining them with Busy or DoNotDisturb or NotAnswered reason
+			if (session->getDirection() == LinphoneCallOutgoing || (reason != LinphoneReasonBusy && reason != LinphoneReasonDoNotDisturb && reason != LinphoneReasonNotAnswered)) {
 				notifyToneIndication(reason);
 			}
 		}
