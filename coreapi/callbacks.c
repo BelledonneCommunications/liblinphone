@@ -308,11 +308,16 @@ static void call_received(SalCallOp *h) {
 			linphone_address_unref(fromAddressToSearchIfMe);
 	}
 
-	LinphoneCall *call = linphone_core_get_call_by_callid(lc, h->getCallId().c_str());
-	if (call) {
-		lInfo() << "There is already a call created when PushIncomingReceived, do configure";
-		LinphonePrivate::Call::toCpp(call)->configure(LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(fromAddr), *L_GET_CPP_PTR_FROM_C_OBJECT(toAddr), nullptr, h, nullptr);
-		LinphonePrivate::Call::toCpp(call)->initiateIncoming();
+	auto *call = [&] {
+		auto *call = linphone_core_get_call_by_callid(lc, h->getCallId().c_str());
+		return call ? LinphonePrivate::Call::toCpp(call) : nullptr;
+	}();
+
+	if (call && call->getState() == LinphonePrivate::CallSession::State::PushIncomingReceived) {
+		lInfo() << "There is already a call created on PushIncomingReceived, do configure";
+		call->configure(LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(fromAddr),
+						*L_GET_CPP_PTR_FROM_C_OBJECT(toAddr), nullptr, h, nullptr);
+		call->initiateIncoming();
 	} else {
 		LinphoneCallLog *calllog = linphone_core_find_call_log(lc, h->getCallId().c_str(), linphone_config_get_int(linphone_core_get_config(lc), "misc", "call_logs_search_limit", 5));
 		if (calllog && linphone_call_log_get_status(calllog) == LinphoneCallDeclined) {
@@ -328,10 +333,10 @@ static void call_received(SalCallOp *h) {
 		}
 		if (calllog)
 			linphone_call_log_unref(calllog);
-		call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
+		call = LinphonePrivate::Call::toCpp(linphone_call_new_incoming(lc, fromAddr, toAddr, h));
 	}
 
-	LinphonePrivate::Call::toCpp(call)->startIncomingNotification();
+	call->startIncomingNotification();
 
 	linphone_address_unref(fromAddr);
 	linphone_address_unref(toAddr);
