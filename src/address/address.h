@@ -21,13 +21,13 @@
 #define _L_ADDRESS_H_
 
 #include <bctoolbox/map.h>
-#include <unordered_map>
+#include <bctoolbox/ownership.hh>
 #include <ostream>
+#include <unordered_map>
 
-#include "enums.h"
-#include "object/ownership.hh"
-#include "object/clonable-object.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "enums.h"
+#include "object/clonable-object.h"
 
 // =============================================================================
 

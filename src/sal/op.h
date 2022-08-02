@@ -21,6 +21,7 @@
 #define _L_SAL_OP_H_
 
 #include <bctoolbox/list.h>
+#include <bctoolbox/ownership.hh>
 #include <bctoolbox/port.h>
 #include <belle-sip/types.h>
 
@@ -29,7 +30,6 @@
 #include "content/content-type.h"
 #include "content/content.h"
 #include "logger/logger.h"
-#include "object/ownership.hh"
 #include "sal/sal.h"
 #include "sal/sal_media_description.h"
 
