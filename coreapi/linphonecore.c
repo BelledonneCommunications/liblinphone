@@ -2736,6 +2736,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 		// FlexiAPI specific endpoints
 		linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_send_token_flexiapi);
 		linphone_account_creator_service_set_create_account_with_token_cb(service, linphone_account_creator_create_account_with_token_flexiapi);
+		linphone_account_creator_service_set_create_account_cb(service, linphone_account_creator_admin_create_account_flexiapi);
 	}
 	#endif
 

@@ -2155,6 +2155,7 @@ LINPHONE_PUBLIC void linphone_core_set_account_creator_url(LinphoneCore *lc, con
  * Set the #LinphoneAccountCreator backend on the #LinphoneCore
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
  * @param backend The #LinphoneAccountCreatorBackend
+ * @ingroup account_creator
 **/
 LINPHONE_PUBLIC void linphone_core_set_account_creator_backend(LinphoneCore *lc, LinphoneAccountCreatorBackend backend);
 
