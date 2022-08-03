@@ -840,9 +840,12 @@ void Sal::enableNatHelper (bool enable) {
 }
 
 void Sal::setDnsServers (const bctbx_list_t *servers) {
+#if TARGET_OS_IPHONE
+	belle_sip_stack_set_dns_engine(mStack, bctbx_list_size(servers)>0?BELLE_SIP_DNS_DNS_C:BELLE_SIP_DNS_APPLE_DNS_SERVICE); // Make sure we are not using Apple DNS Service when a custom DNS server is set
+#endif
 	belle_sip_stack_set_dns_servers(mStack, servers);
 }
-
+	
 void Sal::setDnsUserHostsFile (const string &value) {
 	belle_sip_stack_set_dns_user_hosts_file(mStack, value.c_str());
 }

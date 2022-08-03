@@ -218,10 +218,6 @@ void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
 	setup_dns(lc, path);
 }
 
-void configure_belle_sip_stack_dns_engine_for_ios_simulator(LinphoneCore *lc) {
-	belle_sip_stack_set_dns_engine(sal_get_stack_impl(linphone_core_get_sal(lc)), BELLE_SIP_DNS_DNS_C);
-}
-
 LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, LinphoneConfig *config, void *user_data) {
 	LinphoneCore *lc;
 	char *ringpath         = NULL;
