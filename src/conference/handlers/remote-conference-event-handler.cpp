@@ -328,7 +328,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					device = participant->findDevice(gruu);
 				}
 
-				if (state != StateType::deleted) {
+				if (state != StateType::deleted && device) {
 /*
 					auto & deviceAnySequence (endpoint.get().getAny());
 
