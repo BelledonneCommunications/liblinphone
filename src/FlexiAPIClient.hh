@@ -128,7 +128,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 
 	// Authentication
 	FlexiAPIClient *setApiKey(const char *key);
-	FlexiAPIClient *setTest(bool test);
+	FlexiAPIClient *useTestAdminAccount(bool test);
 
 	// Callbacks handlers
 	FlexiAPIClient *then(function<void(Response)> success);
@@ -138,7 +138,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	LinphoneCore *mCore;
 	Callbacks mRequestCallbacks;
 	const char *mApiKey;
-	bool mTest;
+	bool mUseTestAdminAccount;
 
 	void prepareRequest(string path);
 	void prepareRequest(string path, string type);

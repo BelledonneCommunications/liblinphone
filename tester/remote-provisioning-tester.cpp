@@ -147,6 +147,7 @@ static void flexiapi_remote_provisioning_flow(void) {
 							   "http://provisioning.example.org:10080/flexiapi/provisioning");
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	flexiAPIClient->useTestAdminAccount(true);
 
 	int code = 0;
 	int fetched = 0;
@@ -158,7 +159,8 @@ static void flexiapi_remote_provisioning_flow(void) {
 	string confirmationKey;
 	int id;
 
-	flexiAPIClient->adminAccountCreate(username, "1234", "MD5", activated)
+	flexiAPIClient
+		->adminAccountCreate(username, "1234", "MD5", activated)
 		->then([&code, &fetched, &confirmationKey, &id](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
@@ -209,6 +211,8 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 							   "http://provisioning.example.org:10080/flexiapi/provisioning");
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	flexiAPIClient->useTestAdminAccount(true);
+
 	int code = 0;
 	int fetched = 0;
 	string remoteProvisioningURI = linphone_core_get_provisioning_uri(marie->lc);
@@ -334,6 +338,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	fetched = 0;
 
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+
 	flexiAPIClient->adminAccountContactDelete(contactId0, contactId2)
 		->then([&code, &fetched](FlexiAPIClient::Response response) {
 			code = response.code;

@@ -42,7 +42,7 @@ using namespace std;
 FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
 	mCore = lc;
 	mApiKey = nullptr;
-	mTest = false;
+	mUseTestAdminAccount = false;
 
 	// Assign the core there as well to keep it in the callback contexts
 	mRequestCallbacks.core = lc;
@@ -296,8 +296,8 @@ FlexiAPIClient *FlexiAPIClient::setApiKey(const char *key) {
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::setTest(bool test) {
-	mTest = test;
+FlexiAPIClient *FlexiAPIClient::useTestAdminAccount(bool test) {
+	mUseTestAdminAccount = test;
 	return this;
 }
 
@@ -338,15 +338,15 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
 									belle_sip_header_accept_create("application", "json"), NULL);
 
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
-	if (cfg != nullptr) {
+	if (mUseTestAdminAccount) {
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
+									 belle_http_header_create("From", "sip:admin_test@sip.example.org"));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", "no_secret_at_all"));
+	} else if (cfg != nullptr) {
 		char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", addr));
 
 		ms_free(addr);
-	} else if (mTest) {
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
-									 belle_http_header_create("From", "sip:admin_test@sip.example.org"));
-		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", "no_secret_at_all"));
 	}
 
 	if (!params.empty()) {
