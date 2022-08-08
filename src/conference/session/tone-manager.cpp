@@ -301,7 +301,6 @@ void ToneManager::scheduleRingStreamDestruction(){
 		}
 		/* otherwise the ring stream is no longer needed, destroy it. */
 		lInfo() << "RingStream no longer needed.";
-		mStats.number_of_stopTone++;
 		destroyRingStream();
 		return false;
 	} , 1000, "Tone player cleanup");
@@ -318,6 +317,7 @@ void ToneManager::destroyRingStream(){
 	if (mRingStreamTimer){
 		getCore().destroyTimer(mRingStreamTimer);
 		mRingStreamTimer = nullptr;
+		mStats.number_of_stopTone++;
 	}
 }
 
@@ -530,6 +530,10 @@ void ToneManager::notifyIncomingCall(const std::shared_ptr<CallSession> &session
 			lInfo() << "Callkit mode is enabled, will not play ring tone from liblinphone.";
 			return;
 		}
+		/*
+		 For ios, only one write sound card is allowed. To ensure this, free audio resources before a new incoming call.
+		 */
+		freeAudioResources();
 		startRingtone();
 		/* Setup the way this incoming call notification has to be stopped */
 		mSessionRingingStopFunction = [this](){

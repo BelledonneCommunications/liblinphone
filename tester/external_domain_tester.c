@@ -22,7 +22,7 @@
 static const int x3dhServer_creationTimeout = 15000;
 
 static void simple_call(void) {
-	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE);
+	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE, FALSE);
 };
 
 static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, LinphoneChatRoom *senderCr, bctbx_list_t *recipients, const char *msgText, bool_t send_file) {
