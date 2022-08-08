@@ -179,7 +179,7 @@ static void call_check_log_duration_cb(LinphoneCore *lc, LinphoneCall *call, Lin
 	}
 }
 
-void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
+void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body, bool_t double_call) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	const LinphoneAddress *from;
@@ -285,6 +285,24 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
+	if (double_call)
+	{
+		stats pStats = pauline->stat;
+		int nStop = linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone;
+		LinphoneCall *call = linphone_core_invite_address(marie->lc, pauline->identity);
+		BC_ASSERT_PTR_NOT_NULL(call);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, pStats.number_of_LinphoneCallIncomingReceived + 1));
+		LinphoneCall *pCall = linphone_core_get_current_call(pauline->lc);
+		BC_ASSERT_PTR_NOT_NULL(pCall);
+		if (call && pCall) {
+			BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone, nStop+1, int, "%d");
+			linphone_call_accept(pCall);
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, pStats.number_of_LinphoneCallStreamsRunning + 1));
+			liblinphone_tester_check_rtcp(marie, pauline);
+			end_call(marie, pauline);
+		}
+	}
+
 	linphone_core_cbs_unref(cbs);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -295,11 +313,11 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 }
 
 void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
-	simple_call_base_with_rcs(NULL, NULL, enable_multicast_recv_side, disable_soundcard, use_multipart_invite_body);
+	simple_call_base_with_rcs(NULL, NULL, enable_multicast_recv_side, disable_soundcard, use_multipart_invite_body, FALSE);
 }
 
-static void simple_call(void) {
-	simple_call_base(FALSE, FALSE, FALSE);
+static void simple_double_call(void) {
+	simple_call_base_with_rcs(NULL, NULL, FALSE, FALSE, FALSE, TRUE);
 }
 
 static void simple_call_without_soundcard(void) {
@@ -6500,7 +6518,7 @@ static void simple_call_with_display_name(void) {
 }
 
 test_t call_tests[] = {
-	TEST_NO_TAG("Simple call", simple_call),
+	TEST_NO_TAG("Simple double call", simple_double_call),
 	TEST_NO_TAG("Simple call with no SIP transport", simple_call_with_no_sip_transport),
 	TEST_NO_TAG("Simple call with UDP", simple_call_with_udp),
 	TEST_NO_TAG("Simple call without soundcard", simple_call_without_soundcard),
