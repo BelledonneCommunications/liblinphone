@@ -72,7 +72,7 @@ public:
 	std::shared_ptr<Participant> getActiveParticipant () const;
 
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<ParticipantDevice> findParticipantDevice (const IdentityAddress &addr) const;
+	std::shared_ptr<ParticipantDevice> findParticipantDevice (const IdentityAddress &pAddr, const IdentityAddress &dAddr) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel (const std::string &label) const;
 
 	virtual const std::shared_ptr<CallSession> getMainSession() const;

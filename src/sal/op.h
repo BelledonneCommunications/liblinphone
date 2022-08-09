@@ -41,6 +41,11 @@ class SalMessageOpInterface;
 
 class LINPHONE_PUBLIC SalOp {
 public:
+	enum class Dir {
+		Incoming = 0,
+		Outgoing = 1
+	};
+
 	SalOp (Sal *sal);
 	virtual ~SalOp ();
 
@@ -54,6 +59,8 @@ public:
 
 	void setSubject (const std::string &value) { mSubject = value; }
 	const std::string &getSubject () const { return mSubject; }
+
+	const Dir &getDir () const { return mDir; }
 
 	void setFrom (const std::string &value);
 	void setFromAddress (const SalAddress *value);
@@ -163,11 +170,6 @@ protected:
 	};
 
 	static std::string toString (const State value);
-
-	enum class Dir {
-		Incoming = 0,
-		Outgoing = 1
-	};
 
 	enum class Type {
 		Unknown = 0,

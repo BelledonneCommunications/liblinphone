@@ -345,7 +345,7 @@ void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
 	NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
 	NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
 	NSNumber *ttl = [NSNumber numberWithUnsignedLongLong:ms_get_cur_time_ms()];
-	NSNumber *isIcalendar = [NSNumber numberWithBool: linphone_chat_message_has_conference_invitation_content(msg)];
+	NSNumber *isIcalendar = [NSNumber numberWithBool: (BOOL)linphone_chat_message_has_conference_invitation_content(msg)];
 
 	NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, isIcalendar, nil]
 							forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", @"ttl", @"isIcalendar", nil]];

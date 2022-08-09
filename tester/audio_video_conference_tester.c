@@ -2895,6 +2895,26 @@ static void simple_conference(void) {
 	destroy_mgr_in_conference(laure);
 }
 
+static void simple_conference_two_devices_same_address(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE, NULL);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE, NULL);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE, NULL);
+	linphone_core_remove_supported_tag(pauline->lc, "gruu");
+	linphone_core_remove_supported_tag(laure->lc, "gruu");
+
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 2));
+	linphone_core_set_network_reachable(laure->lc, FALSE);
+	linphone_core_set_network_reachable(laure->lc, TRUE);
+	BC_ASSERT_TRUE(wait_for(laure->lc, NULL, &laure->stat.number_of_LinphoneRegistrationOk, 2));
+	simple_conference_base(marie,pauline,laure, NULL, FALSE);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+}
+
 static void simple_conference_through_inviting_participants(bool_t check_for_proxies) {
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", check_for_proxies, NULL);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", check_for_proxies, NULL);
@@ -11003,6 +11023,7 @@ test_t audio_video_conference_basic_tests[] = {
 	TEST_NO_TAG("Simple conference with active speaker layout", simple_conference_with_active_speaker_layout),
 	TEST_NO_TAG("Simple conference with grid layout", simple_conference_with_grid_layout),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
+	TEST_NO_TAG("Simple conference with 2 devices with same address", simple_conference_two_devices_same_address),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating conference", simple_4_participants_conference_ended_by_terminating_conference),
 	TEST_NO_TAG("Simple 4 participant conference ended by terminating all calls", simple_4_participants_conference_ended_by_terminating_calls),
 //	TEST_NO_TAG("Simple conference with multi device", simple_conference_with_multi_device),

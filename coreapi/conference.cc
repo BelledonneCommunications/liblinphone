@@ -714,7 +714,10 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 		auto invited = std::find_if(invitedAddresses.begin(), invitedAddresses.end(), [&address] (const auto & invitee) {
 			return address.weakEqual(invitee.asAddress());
 		}) != invitedAddresses.end();
-		if (findParticipantDevice(address) || invited || address.weakEqual(organizer.asAddress())) {
+
+		auto remoteAddress = IdentityAddress((op->getDir() == SalOp::Dir::Incoming) ? op->getFrom() : op->getTo());
+
+		if (findParticipantDevice(remoteAddress, address) || invited || address.weakEqual(organizer.asAddress())) {
 			lInfo() << "Updating conference informations of conference " << getConferenceAddress();
 			const auto & remoteMd = op->getRemoteMediaDescription();
 
@@ -1418,7 +1421,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		const auto & remoteContactAddress = session->getRemoteContactAddress();
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 
-		auto participantDevice = (remoteContactAddress && remoteContactAddress->isValid()) ? findParticipantDevice(*remoteContactAddress) : nullptr;
+		auto participantDevice = (remoteContactAddress && remoteContactAddress->isValid()) ? findParticipantDevice(*session->getRemoteAddress(), *remoteContactAddress) : nullptr;
 		if (participantDevice) {
 			auto deviceSession = participantDevice->getSession();
 			if (deviceSession) {

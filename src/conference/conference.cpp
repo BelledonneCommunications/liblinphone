@@ -376,16 +376,18 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDeviceByLabel (const st
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityAddress &addr) const {
+shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const IdentityAddress &pAddr, const IdentityAddress &dAddr) const {
 
 	for (const auto &participant : participants) {
-		auto device = participant->findDevice(addr, false);
-		if (device) {
-			return device;
+		if (pAddr == participant->getAddress()) {
+			auto device = participant->findDevice(dAddr, false);
+			if (device) {
+				return device;
+			}
 		}
 	}
 
-	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with address " << addr.asString();
+	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with device address " << dAddr << " belonging to participant " << pAddr;
 
 	return nullptr;
 }
