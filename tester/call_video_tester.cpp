@@ -1548,7 +1548,7 @@ void two_accepted_call_in_send_only(void) {
 	linphone_core_set_use_files(marie->lc, TRUE);
 	linphone_core_set_media_resource_mode (marie->lc, LinphoneSharedMediaResources);
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	laure = linphone_core_manager_new("laure_rc_udp");
+	laure = linphone_core_manager_new("laure_tcp_rc");
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,marie->lc);

@@ -703,7 +703,7 @@ int SalOp::sendRequestAndCreateRefresher (belle_sip_request_t *request, int expi
 	return 0;
 }
 
-belle_sip_header_contact_t *SalOp::createContact () {
+belle_sip_header_contact_t *SalOp::createContact (bool forceSipInstance) {
 	belle_sip_header_contact_t *contactHeader = nullptr;
 	if (getContactAddress()) {
 		contactHeader = belle_sip_header_contact_create(BELLE_SIP_HEADER_ADDRESS(getContactAddress()));
@@ -721,14 +721,15 @@ belle_sip_header_contact_t *SalOp::createContact () {
 	belle_sip_uri_set_secure(contactUri, isSecure());
 	if (mPrivacy != SalPrivacyNone)
 		belle_sip_uri_set_user(contactUri, nullptr);
-
-	// Don't touch contact in case of gruu
-	if (!belle_sip_parameters_has_parameter(
+	
+	bool hasGruuContact = belle_sip_parameters_has_parameter(
 		BELLE_SIP_PARAMETERS(belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(contactHeader))),
 		"gr"
-		)
-	) {
-		belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
+		);
+
+	// Don't touch contact in case of gruu, unless instructed with forceSipInstance parameter.
+	if (forceSipInstance || hasGruuContact) {
+		if (!hasGruuContact) belle_sip_header_contact_set_automatic(contactHeader, mRoot->mAutoContacts);
 		if (!mRoot->mUuid.empty()
 			&& !belle_sip_parameters_has_parameter(BELLE_SIP_PARAMETERS(contactHeader), "+sip.instance")
 		) {

@@ -48,7 +48,7 @@ int SalRegisterOp::sendRegister (const string &proxy, const string &from, int ex
 		"application/sdp, text/plain, application/vnd.gsma.rcs-ft-http+xml"
 	);
 	belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), acceptHeader);
-	belle_sip_message_set_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(createContact()));
+	belle_sip_message_set_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(createContact(true)));
 
 	for (const SalAddress * customContact : customContacts) {
 		auto contactHeader = belle_sip_header_contact_create(BELLE_SIP_HEADER_ADDRESS(customContact));

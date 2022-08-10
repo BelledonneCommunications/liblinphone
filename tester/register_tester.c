@@ -1602,14 +1602,8 @@ static void unreliable_channels_cleanup(void){
 	linphone_core_manager_destroy(lcm);
 }
 
-
-//FIXME: uncomment CUSTOM_CONTACT_TEST when fs-test machines are updated with the necessary feature to get 
-// registration_with_custom_contact() working.
-
-//#define CUSTOM_CONTACT_TEST 1
-
-#ifdef CUSTOM_CONTACT_TEST
 static void registration_with_custom_contact(void){
+#if REACTIVATE_ME_ASAP
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_rc" );
 	LinphoneCoreManager* marie  = linphone_core_manager_new( "marie_rc" );
 	LinphoneCoreManager* laure  = linphone_core_manager_new( "laure_rc_udp" );
@@ -1667,25 +1661,23 @@ static void registration_with_custom_contact(void){
 	/* Pauline goes offline. Marie makes a call, no one should receive this call.*/
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	c = linphone_core_invite_address(marie->lc, pauline->identity);
-	linphone_call_ref(c);
-	BC_ASSERT_FALSE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 2, 15000));
+	if (BC_ASSERT_PTR_NOT_NULL(c)){
+		linphone_call_ref(c);
+		BC_ASSERT_FALSE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 2, 15000));
 
-	if (linphone_call_get_state(c) != LinphoneCallError){
-		linphone_call_terminate(c);
+		if (linphone_call_get_state(c) != LinphoneCallError){
+			linphone_call_terminate(c);
+		}
+		linphone_call_unref(c);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 3, 10000));
 	}
-	linphone_call_unref(c);
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased, 3, 10000));
 	
 	bctbx_list_free(lcs);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
-}
-#else
-static void registration_with_custom_contact(void){
-}
 #endif
-
+}
 
 test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),

@@ -77,6 +77,8 @@ public:
 	}
 
 	void setContactAddress (const SalAddress* value);
+	/* The contact address returned here is be pub-gruu provided by the proxy during REGISTER transaction, if "gruu"
+	 is supported by client and server, otherwise the low-level transport address.*/
 	const SalAddress *getContactAddress() const { return mContactAddress; }
 
 	void setRoute (const std::string &value);
@@ -219,7 +221,7 @@ protected:
 	belle_sip_response_t *createResponseFromRequest (belle_sip_request_t *request, int code) {
 		return mRoot->createResponseFromRequest(request, code);
 	}
-	belle_sip_header_contact_t *createContact ();
+	belle_sip_header_contact_t *createContact(bool forceSipInstance = false);
 
 	void setOrUpdateDialog (belle_sip_dialog_t *dialog);
 	belle_sip_dialog_t *linkOpWithDialog (belle_sip_dialog_t *dialog);

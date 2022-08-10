@@ -253,9 +253,12 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 	// Marie sends a new plain message
 	marieMessage = "Hey again";
 	msg = _send_message(mariePlainCr, marieMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), marieMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, liblinphone_tester_sip_timeout));
+	if (BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message)){
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), marieMessage);
+		
+	}
 	linphone_chat_message_unref(msg);
 
 	// Check that the recreated regular chat room address is the same as before and the capabilities are correct
@@ -279,9 +282,11 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 	// Marie sends a new encrypted message
 	marieMessage = "Hey again from the encrypted chatroom";
 	msg = _send_message(marieEncryptedCr, marieMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), marieMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, liblinphone_tester_sip_timeout));
+	if (BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message)){
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), marieMessage);
+	}
 	linphone_chat_message_unref(msg);
 
 	// Check that the recreated encrypted chat room address is the same as before and the capabilities are correct
@@ -1326,7 +1331,7 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 		BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	} else {
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	linphone_chat_message_unref(msg);
+		linphone_chat_message_unref(msg);
 	}
 
 	// Pauline sends a response
@@ -4044,9 +4049,11 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	// Marie sends a message
 	const char *textMessage = "Hello";
 	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), textMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, liblinphone_tester_sip_timeout));
+	if (BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message)){
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), textMessage);
+	}
 	linphone_chat_message_unref(message);
 
 	// Marie deletes the chat room
@@ -4065,9 +4072,11 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	// Pauline sends a new message
 	textMessage = "Hey you";
 	message = _send_message(paulineCr, textMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, initialPaulineStats.number_of_LinphoneMessageDelivered + 1, 3000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marie->stat.last_received_chat_message), textMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, initialPaulineStats.number_of_LinphoneMessageDelivered + 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	if (BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message)){
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marie->stat.last_received_chat_message), textMessage);
+	}
 	linphone_chat_message_unref(message);
 
 	// Check that the chat room has been correctly recreated on Marie's side

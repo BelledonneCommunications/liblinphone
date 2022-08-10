@@ -79,7 +79,11 @@ int manager_count = 0;
 int leaked_objects_count = 0;
 const MSAudioDiffParams audio_cmp_params = {10,200};
 
+
+/* Default test server infrastructure. You may change to sandbox infrastructure to test changes to the infrastructure first. */
 const char* flexisip_tester_dns_server = "fs-test-4.linphone.org";
+//const char* flexisip_tester_dns_server = "fs-test-sandbox.linphone.org";
+
 bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
