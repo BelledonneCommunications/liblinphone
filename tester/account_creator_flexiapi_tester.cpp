@@ -17,7 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "FlexiAPIClient.hh"
+#include "linphone/FlexiAPIClient.hh"
 
 #include "liblinphone_tester.h"
 #include "account/account-params.h"

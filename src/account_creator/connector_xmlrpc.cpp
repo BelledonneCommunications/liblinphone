@@ -25,7 +25,7 @@
 #include "dial-plan/dial-plan.h"
 
 #ifdef HAVE_FLEXIAPI
-#include "FlexiAPIClient.hh"
+#include "linphone/FlexiAPIClient.hh"
 #endif
 
 #include "bctoolbox/crypto.h"

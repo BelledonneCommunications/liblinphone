@@ -20,7 +20,7 @@
 #include "object/clonable-object-p.h"
 #include "object/clonable-object.h"
 
-#include "FlexiAPIClient.hh"
+#include "linphone/FlexiAPIClient.hh"
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"

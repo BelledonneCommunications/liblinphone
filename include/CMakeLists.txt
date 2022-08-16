@@ -38,6 +38,7 @@ set(ROOT_HEADER_FILES
 	error_info.h
 	event.h
 	factory.h
+	FlexiAPIClient.hh
 	friend.h
 	friendlist.h
 	headers.h

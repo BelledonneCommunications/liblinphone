@@ -21,7 +21,7 @@
 #include "linphone/core.h"
 #include "tester_utils.h"
 
-#include "FlexiAPIClient.hh"
+#include "linphone/FlexiAPIClient.hh"
 
 #include <json/json.h>
 

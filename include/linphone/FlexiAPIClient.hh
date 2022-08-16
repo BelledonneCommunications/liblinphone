@@ -89,6 +89,8 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountInfo(string sip);
 	FlexiAPIClient *accountActivateEmail(string sip, string code);
 	FlexiAPIClient *accountActivatePhone(string sip, string code);
+	FlexiAPIClient *accountAuthTokenCreate();
+	FlexiAPIClient *accountApiKeyFromAuthTokenGenerate(string authToken);
 
 	// Public unsecure endpoints
 	FlexiAPIClient *accountInfoByPhone(string phone);
@@ -109,6 +111,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountEmailChangeRequest(string email);
 	FlexiAPIClient *accountPhoneChangeRequest(string phone);
 	FlexiAPIClient *accountPhoneChange(string code);
+	FlexiAPIClient *accountAuthTokenAttach(string authToken);
 
 	// Admin endpoints
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm);
@@ -147,9 +150,9 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	const char *mApiKey;
 	bool mUseTestAdminAccount;
 
-	void prepareRequest(string path);
-	void prepareRequest(string path, string type);
-	void prepareRequest(string path, string type, JsonParams params);
+	void prepareAndSendRequest(string path);
+	void prepareAndSendRequest(string path, string type);
+	void prepareAndSendRequest(string path, string type, JsonParams params);
 	static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
 	static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
 	string urlEncode(const string &value);

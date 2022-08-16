@@ -21,7 +21,7 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#include "FlexiAPIClient.hh"
+#include "linphone/FlexiAPIClient.hh"
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
@@ -53,7 +53,7 @@ FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
  */
 
 FlexiAPIClient *FlexiAPIClient::ping() {
-	prepareRequest("ping");
+	prepareAndSendRequest("ping");
 	return this;
 }
 
@@ -62,7 +62,7 @@ FlexiAPIClient *FlexiAPIClient::sendAccountCreationTokenByPush(string pnProvider
 	params.push("pn_provider", pnProvider);
 	params.push("pn_param", pnParam);
 	params.push("pn_prid", pnPrid);
-	prepareRequest("account_creation_tokens/send-by-push", "POST", params);
+	prepareAndSendRequest("account_creation_tokens/send-by-push", "POST", params);
 	return this;
 }
 
@@ -72,7 +72,7 @@ FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string use
 	params.push("password", password);
 	params.push("algorithm", algorithm);
 	params.push("account_creation_token", accountCreationToken);
-	prepareRequest("accounts/with-account-creation-token", "POST", params);
+	prepareAndSendRequest("accounts/with-account-creation-token", "POST", params);
 	return this;
 }
 
@@ -84,26 +84,36 @@ FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string use
 	params.push("password", password);
 	params.push("algorithm", algorithm);
 	params.push("account_creation_token", accountCreationToken);
-	prepareRequest("accounts/with-account-creation-token", "POST", params);
+	prepareAndSendRequest("accounts/with-account-creation-token", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountInfo(string sip) {
-	prepareRequest(string("accounts/").append(urlEncode(sip)).append("/info"));
+	prepareAndSendRequest(string("accounts/").append(urlEncode(sip)).append("/info"));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountActivateEmail(string sip, string code) {
 	JsonParams params;
 	params.push("code", code);
-	prepareRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
+	prepareAndSendRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountActivatePhone(string sip, string code) {
 	JsonParams params;
 	params.push("code", code);
-	prepareRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
+	prepareAndSendRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountAuthTokenCreate() {
+	prepareAndSendRequest("accounts/auth_token", "POST");
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountApiKeyFromAuthTokenGenerate(string authToken) {
+	prepareAndSendRequest(string("accounts/me/api_key/").append(authToken));
 	return this;
 }
 
@@ -134,24 +144,24 @@ FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, 
 		params.push("domain", domain);
 	}
 
-	prepareRequest("accounts/public", "POST", params);
+	prepareAndSendRequest("accounts/public", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountInfoByPhone(string phone) {
-	prepareRequest(string("accounts/").append(phone).append("/info-by-phone"));
+	prepareAndSendRequest(string("accounts/").append(phone).append("/info-by-phone"));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountRecoverByPhone(string phone) {
 	JsonParams params;
 	params.push("phone", phone);
-	prepareRequest(string("accounts/recover-by-phone"), "POST", params);
+	prepareAndSendRequest(string("accounts/recover-by-phone"), "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountRecoverUsingRecoverKey(string sip, string recoverKey) {
-	prepareRequest(string("accounts/").append(urlEncode(sip)).append("/recover/").append(recoverKey));
+	prepareAndSendRequest(string("accounts/").append(urlEncode(sip)).append("/recover/").append(recoverKey));
 	return this;
 }
 
@@ -160,12 +170,12 @@ FlexiAPIClient *FlexiAPIClient::accountRecoverUsingRecoverKey(string sip, string
  */
 
 FlexiAPIClient *FlexiAPIClient::me() {
-	prepareRequest("accounts/me");
+	prepareAndSendRequest("accounts/me");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountDelete() {
-	prepareRequest("accounts/me", "DELETE");
+	prepareAndSendRequest("accounts/me", "DELETE");
 	return this;
 }
 
@@ -182,48 +192,53 @@ FlexiAPIClient *FlexiAPIClient::accountPasswordChange(string algorithm, string p
 		params.push("old_password", oldPassword);
 	}
 
-	prepareRequest("accounts/me/password", "POST", params);
+	prepareAndSendRequest("accounts/me/password", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountEmailChangeRequest(string email) {
 	JsonParams params;
 	params.push("email", email);
-	prepareRequest("accounts/me/email/request", "POST", params);
+	prepareAndSendRequest("accounts/me/email/request", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountDevices() {
-	prepareRequest("accounts/me/devices");
+	prepareAndSendRequest("accounts/me/devices");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountDevice(string uuid) {
-	prepareRequest(string("accounts/me/devices/").append(uuid));
+	prepareAndSendRequest(string("accounts/me/devices/").append(uuid));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountContacts() {
-	prepareRequest("accounts/me/contacts");
+	prepareAndSendRequest("accounts/me/contacts");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountContact(string sip) {
-	prepareRequest(string("accounts/me/contacts/").append(urlEncode(sip)));
+	prepareAndSendRequest(string("accounts/me/contacts/").append(urlEncode(sip)));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountPhoneChangeRequest(string phone) {
 	JsonParams params;
 	params.push("phone", phone);
-	prepareRequest("accounts/me/phone/request", "POST", params);
+	prepareAndSendRequest("accounts/me/phone/request", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountPhoneChange(string code) {
 	JsonParams params;
 	params.push("code", code);
-	prepareRequest("accounts/me/phone", "POST", params);
+	prepareAndSendRequest("accounts/me/phone", "POST", params);
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountAuthTokenAttach(string authToken) {
+	prepareAndSendRequest(string("accounts/auth_token/").append(authToken).append("/attach"));
 	return this;
 }
 
@@ -278,52 +293,52 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 	if (!dtmfProtocol.empty()) {
 		params.push("dtmf_protocol", dtmfProtocol);
 	}
-	prepareRequest("accounts", "POST", params);
+	prepareAndSendRequest("accounts", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccounts() {
-	prepareRequest("accounts");
+	prepareAndSendRequest("accounts");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountSearch(string sip) {
-	prepareRequest(string("accounts/").append(urlEncode(sip).substr(6)).append("/search"));
+	prepareAndSendRequest(string("accounts/").append(urlEncode(sip).substr(6)).append("/search"));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccount(int id) {
-	prepareRequest(string("accounts/").append(to_string(id)));
+	prepareAndSendRequest(string("accounts/").append(to_string(id)));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountDelete(int id) {
-	prepareRequest(string("accounts/").append(to_string(id)), "DELETE");
+	prepareAndSendRequest(string("accounts/").append(to_string(id)), "DELETE");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountActivate(int id) {
-	prepareRequest(string("accounts/").append(to_string(id)).append("/activate"));
+	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/activate"));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountDeactivate(int id) {
-	prepareRequest(string("accounts/").append(to_string(id)).append("/deactivate"));
+	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/deactivate"));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContacts(int id) {
-	prepareRequest(string("accounts/").append(to_string(id)).append("/contacts"));
+	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts"));
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContactAdd(int id, int contactId) {
-	prepareRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)), "POST");
+	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)), "POST");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContactDelete(int id, int contactId) {
-	prepareRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
+	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
 				   "DELETE");
 	return this;
 }
@@ -356,17 +371,17 @@ FlexiAPIClient *FlexiAPIClient::error(function<void(FlexiAPIClient::Response)> e
 	return this;
 }
 
-void FlexiAPIClient::prepareRequest(string path) {
+void FlexiAPIClient::prepareAndSendRequest(string path) {
 	JsonParams params;
-	prepareRequest(path, "GET", params);
+	prepareAndSendRequest(path, "GET", params);
 }
 
-void FlexiAPIClient::prepareRequest(string path, string type) {
+void FlexiAPIClient::prepareAndSendRequest(string path, string type) {
 	JsonParams params;
-	prepareRequest(path, type, params);
+	prepareAndSendRequest(path, type, params);
 }
 
-void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params) {
+void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams params) {
 	mRequestCallbacks.mSelf = shared_from_this();
 	belle_http_request_listener_callbacks_t internalCallbacks = {};
 	belle_http_request_listener_t *listener;

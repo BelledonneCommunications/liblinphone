@@ -21,7 +21,7 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#include "FlexiAPIClient.hh"
+#include "linphone/FlexiAPIClient.hh"
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
 
