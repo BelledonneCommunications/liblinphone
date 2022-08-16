@@ -90,6 +90,13 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountActivateEmail(string sip, string code);
 	FlexiAPIClient *accountActivatePhone(string sip, string code);
 
+	// Public unsecure endpoints
+	FlexiAPIClient *accountInfoByPhone(string phone);
+	FlexiAPIClient *accountRecoverByPhone(string phone);
+	FlexiAPIClient *accountRecoverUsingRecoverKey(string sip, string recoverKey);
+	FlexiAPIClient *accountCreate(string username, string password, string email);
+	FlexiAPIClient *accountCreate(string username, string password, string algorithm, string domain, string email, string phone);
+
 	// Authenticated endpoints
 	FlexiAPIClient *me();
 	FlexiAPIClient *accountDelete();

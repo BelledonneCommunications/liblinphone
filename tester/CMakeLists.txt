@@ -313,7 +313,7 @@ set(SOURCE_FILES_CXX
 )
 
 if(ENABLE_FLEXIAPI)
-	list(APPEND SOURCE_FILES_C account_creator_flexiapi_tester.c)
+	list(APPEND SOURCE_FILES_CXX account_creator_flexiapi_tester.cpp)
 	list(APPEND SOURCE_FILES_CXX flexiapiclient-tester.cpp)
 endif()
 

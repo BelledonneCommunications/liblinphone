@@ -108,14 +108,55 @@ FlexiAPIClient *FlexiAPIClient::accountActivatePhone(string sip, string code) {
 }
 
 /**
- * Authenticated endpoints
+ * Public unsecure endpoint
  */
+FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string email) {
+	return accountCreate(username, password, "", "", email, "");
+}
+
+FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string algorithm, string domain, string email, string phone) {
+	JsonParams params;
+
+	if (!username.empty()) {
+		params.push("username", username);
+	}
+
+	params.push("password", password);
+	params.push("algorithm", (!algorithm.empty()) ? algorithm : "MD5");
+
+	if (!email.empty()) {
+		params.push("email", email);
+	}
+	if (!phone.empty()) {
+		params.push("phone", phone);
+	}
+	if (!domain.empty()) {
+		params.push("domain", domain);
+	}
+
+	prepareRequest("accounts/public", "POST", params);
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountInfoByPhone(string phone) {
+	prepareRequest(string("accounts/").append(phone).append("/info-by-phone"));
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountRecoverByPhone(string phone) {
+	JsonParams params;
+	params.push("phone", phone);
+	prepareRequest(string("accounts/recover-by-phone"), "POST", params);
+	return this;
+}
+
+FlexiAPIClient *FlexiAPIClient::accountRecoverUsingRecoverKey(string sip, string recoverKey) {
+	prepareRequest(string("accounts/").append(urlEncode(sip)).append("/recover/").append(recoverKey));
+	return this;
+}
 
 /**
- * Change the account password
- * @param [in] algorithm can be SHA-256 or MD5
- * @param [in] the new password
- * @param [in] the old password if already set
+ * Authenticated endpoints
  */
 
 FlexiAPIClient *FlexiAPIClient::me() {
