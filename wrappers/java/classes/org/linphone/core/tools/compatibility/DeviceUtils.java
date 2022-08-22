@@ -19,11 +19,19 @@
 
 package org.linphone.core.tools.compatibility;
 
+import android.app.NotificationManager;
 import android.content.Context;
+import android.database.Cursor;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.media.AudioAttributes;
 import android.media.Ringtone;
+import android.provider.ContactsContract;
 import android.os.Vibrator;
+
+import org.linphone.core.Address;
+import org.linphone.core.tools.Log;
 
 import org.linphone.mediastream.Version;
 
@@ -100,4 +108,45 @@ public class DeviceUtils {
 			DeviceUtils23.playRingtone(ringtone, audioAttrs);
 		}
 	}
+
+    public static boolean checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(Context context) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager.Policy policy = notificationManager.getNotificationPolicy();
+        return policy.priorityCallSenders == NotificationManager.Policy.PRIORITY_SENDERS_STARRED;
+    }
+
+    public static boolean checkIfIsFavoriteContact(Context context, Address caller) {
+        if (caller == null) {
+            return false;
+        }
+
+        if (context.checkSelfPermission(android.Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            Log.e("[Device Utils] Can't check for favorite contact, permission hasn't been granted yet");
+            return false;
+        }
+        
+        String number = caller.getUsername();
+        String address = caller.asStringUriOnly();
+        try {
+            Cursor cursor = context.getContentResolver().query(
+                ContactsContract.Data.CONTENT_URI,
+                new String[] { ContactsContract.CommonDataKinds.Phone.STARRED },
+                ContactsContract.CommonDataKinds.Phone.NORMALIZED_NUMBER + " LIKE ? OR " + ContactsContract.CommonDataKinds.SipAddress.SIP_ADDRESS + " LIKE ?",
+                new String[] { number, address },
+                null
+            );
+
+            while (cursor != null && cursor.moveToNext()) {
+                int favorite = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.STARRED));
+                if (favorite == 1) {
+                    Log.i("[Device Utils] Found phone number or SIP address in favorite contact");
+                    return true;
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            Log.e("[Device Utils] Failed to check if username / SIP address is part of a favorite contact: ", e);
+        }
+        
+        return false;
+    }
 }

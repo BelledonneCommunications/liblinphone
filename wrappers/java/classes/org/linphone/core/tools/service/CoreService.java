@@ -34,6 +34,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.linphone.core.Address;
 import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
@@ -91,7 +92,7 @@ public class CoreService extends Service {
                 Call call = core.getCurrentCall();
                 if (call != null) {
                     if (call.getDir() == Call.Dir.Incoming && core.isVibrationOnIncomingCallEnabled()) {
-                        vibrate();
+                        vibrate(call.getRemoteAddress());
                     }
                 } else {
                     Log.w("[Core Service] Couldn't find current call...");
@@ -132,7 +133,7 @@ public class CoreService extends Service {
                     if (call != null) {
                         // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
                         if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
-                            vibrate();
+                            vibrate(call.getRemoteAddress());
                         }
                     } else {
                         Log.w("[Core Service] Couldn't find current call...");
@@ -250,10 +251,21 @@ public class CoreService extends Service {
         mIsInForegroundMode = false;
     }
 
-    private void vibrate() {
+    private void vibrate(Address caller) {
         if (mVibrator != null && mVibrator.hasVibrator()) {
             if (mAudioManager.getRingerMode() == AudioManager.RINGER_MODE_SILENT) {
-                Log.i("[Core Service] Do not vibrate as ringer mode is set to silent");
+                if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(this)) {
+                    boolean isContactFavorite = DeviceUtils.checkIfIsFavoriteContact(this, caller);
+                    if (isContactFavorite) {
+                        Log.i("[Core Service] Ringer mode is set to silent unless for favorite contact, which seems to be the case here, so starting vibrator");
+                        DeviceUtils.vibrate(mVibrator);
+                        mIsVibrating = true;
+                    } else {
+                        Log.i("[Core Service] Do not vibrate as ringer mode is set to silent and calling username / SIP address isn't part of a favorite contact");
+                    }
+                } else {
+                    Log.i("[Core Service] Do not vibrate as ringer mode is set to silent");
+                }
             } else {
                 Log.i("[Core Service] Starting vibrator");
                 DeviceUtils.vibrate(mVibrator);

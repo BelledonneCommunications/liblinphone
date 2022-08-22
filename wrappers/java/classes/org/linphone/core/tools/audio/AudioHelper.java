@@ -40,8 +40,9 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.lang.SecurityException;
 
-import org.linphone.core.Core;
+import org.linphone.core.Address;
 import org.linphone.core.AudioDevice;
+import org.linphone.core.Core;
 import org.linphone.core.tools.Log;
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.receiver.HeadsetReceiver;
@@ -106,7 +107,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         releaseCallAudioFocus();
     }
 
-    public void startRinging(Context context, String ringtone) {
+    public void startRinging(Context context, String ringtone, Address caller) {
         if (mPlayer != null || mRingtone != null) {
             Log.w("[Audio Helper] Already ringing, skipping...");
             return;
@@ -114,8 +115,18 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         
         int ringerMode = mAudioManager.getRingerMode();
         if (ringerMode == AudioManager.RINGER_MODE_SILENT || ringerMode == AudioManager.RINGER_MODE_VIBRATE) {
-            Log.w("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ")");
-            return;
+            if (DeviceUtils.checkIfDoNotDisturbAllowsExceptionForFavoriteContacts(context)) {
+                boolean isContactFavorite = DeviceUtils.checkIfIsFavoriteContact(context, caller);
+                if (isContactFavorite) {
+                    Log.w("[Audio Helper] Ringer mode is set to silent or vibrate (", ringerMode, ") unless for favorite contact, which seems to be the case here, so ringing");
+                } else {
+                    Log.w("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ") and calling username / SIP address isn't part of a favorite contact");
+                    return;
+                }
+            } else {
+                Log.w("[Audio Helper] Do not play ringtone as ringer mode is set to silent or vibrate (", ringerMode, ")");
+                return;
+            }
         }
 
         requestRingingAudioFocus();
