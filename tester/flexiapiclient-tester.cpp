@@ -126,6 +126,7 @@ static void flexiapiCreateAccount() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	flexiAPIClient->useTestAdminAccount(true);
 
 	int code = 0;
 	int fetched = 0;

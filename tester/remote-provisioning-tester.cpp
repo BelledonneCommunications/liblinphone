@@ -338,6 +338,7 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	fetched = 0;
 
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
+	flexiAPIClient->useTestAdminAccount(true);
 
 	flexiAPIClient->adminAccountContactDelete(contactId0, contactId2)
 		->then([&code, &fetched](FlexiAPIClient::Response response) {
