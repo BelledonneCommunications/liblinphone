@@ -60,6 +60,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * This class is instanciated directly by the linphone library in order to access specific features only accessible in java.
@@ -75,6 +77,7 @@ public class AndroidPlatformHelper {
     private WakeLock mWakeLock;
     private Resources mResources;
     private TextureView mPreviewTextureView, mVideoTextureView;
+    private Map<Long, TextureView> mParticipantTextureView;
     private BroadcastReceiver mDozeReceiver;
     private boolean mWifiOnly;
     private boolean mUsingHttpProxy;
@@ -558,6 +561,16 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized void setParticipantDeviceVideoRenderingView(long participantDevice, Object view) {
+        if (mParticipantTextureView == null) {
+            mParticipantTextureView = new HashMap<Long, TextureView>();
+        }
+
+        if (mParticipantTextureView.containsKey(participantDevice)) {
+            Log.w("[Platform Helper] Found an existing TextureView for participant device, let's destroy it first");
+            mParticipantTextureView.get(participantDevice).setSurfaceTextureListener(null);
+            mParticipantTextureView.remove(participantDevice);
+        }
+
         if (view == null) {
             Log.i("[Platform Helper] Participant device video window surface set to null");
             setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, null);
@@ -585,10 +598,35 @@ public class AndroidPlatformHelper {
                     "so you can keep using your existing application code for managing video views.");
         }
 
-        TextureView textureView = (TextureView) view;
-        if (textureView.isAvailable()) {
-            Log.i("[Platform Helper] Rendering participant device window surface is directly available for texture view [" + textureView + "]");
-            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, textureView);
+        mParticipantTextureView.put(participantDevice, (TextureView) view);
+        mParticipantTextureView.get(participantDevice).setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+               Log.i("[Platform Helper] Rendering window surface texture [" + surface + "] is available for texture view [" + mParticipantTextureView.get(participantDevice) + "]");
+               setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, mParticipantTextureView.get(participantDevice));
+            }
+
+            @Override
+            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+                Log.i("[Platform Helper] Surface texture [" + surface + "] size changed: " + width + "x" + height);
+            }
+
+            @Override
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+               Log.w("[Platform Helper] TextureView [" + surface + "] for participant device has been destroyed");
+               mParticipantTextureView.remove(participantDevice);
+               setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, null);
+               return true;
+            }
+
+            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+                Log.d("[Platform Helper] Surface texture [" + surface + "] has been updated");
+            }
+        });
+
+        if (mParticipantTextureView.get(participantDevice).isAvailable()) {
+            Log.i("[Platform Helper] Rendering participant device window surface is directly available for texture view [" + mParticipantTextureView.get(participantDevice) + "]");
+            setParticipantDeviceNativeVideoWindowId(mNativePtr, participantDevice, mParticipantTextureView.get(participantDevice));
         } else {
             Log.i("[Platform Helper] Rendering participant device window surface is not available !");
         }

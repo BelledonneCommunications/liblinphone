@@ -165,7 +165,8 @@ void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *par
 void linphone_participant_device_set_native_video_window_id(const LinphoneParticipantDevice *participant_device,
                                                             void *window_id) {
 #ifdef __ANDROID__
-	shared_ptr<LinphonePrivate::Core> core = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getCore();
+	shared_ptr<const LinphonePrivate::ParticipantDevice> device = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSharedFromThis();
+	shared_ptr<LinphonePrivate::Core> core = device->getCore();
 	if (core) {
 		LinphoneCore *lc = core->getCCore();
 		getPlatformHelpers(lc)->setParticipantDeviceVideoWindow(participant_device, window_id);

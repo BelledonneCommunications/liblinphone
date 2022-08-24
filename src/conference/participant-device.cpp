@@ -631,7 +631,11 @@ void ParticipantDevice::setWindowId(void *newWindowId) const {
 	const auto &conference = getConference();
 	const auto session = getSession() ? getSession() : (conference ? conference->getMainSession() : nullptr);
 	if (!mLabel.empty() && session) {
-		static_pointer_cast<MediaSession>(session)->setNativeVideoWindowId(mWindowId, mLabel);
+		if (conference->isMe(getAddress())) {
+			linphone_core_set_native_preview_window_id(getCore()->getCCore(), mWindowId);
+		} else {
+			static_pointer_cast<MediaSession>(session)->setNativeVideoWindowId(mWindowId, mLabel);
+		}
 	} else {
 		lError() << "Unable to set window ID for device " << getAddress() << " because either label is empty (actual "
 		         << (mLabel.empty() ? "<not-defined>" : mLabel) << ") or no session is linked to this device (actual "
