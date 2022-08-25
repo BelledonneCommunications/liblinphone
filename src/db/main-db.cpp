@@ -63,7 +63,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 17);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 19);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -2150,6 +2150,12 @@ void MainDbPrivate::updateSchema () {
 
 	}
 
+	if (version < makeVersion(1, 0, 19)) {
+		*session << "ALTER TABLE conference_info ADD COLUMN state TINYINT UNSIGNED NOT NULL DEFAULT 0";
+		*session << "ALTER TABLE conference_info ADD COLUMN ics_sequence INT UNSIGNED DEFAULT 0";
+		*session << "ALTER TABLE conference_info ADD COLUMN ics_uid VARCHAR(2048) DEFAULT ''";
+	}
+
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
 
 #endif
@@ -2909,9 +2915,6 @@ void MainDb::init () {
 			// /!\ Warning : if these varchar columns are indexed, their size must be set back to 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
 			"  subject VARCHAR(256) NOT NULL,"
 			"  description VARCHAR(2048),"
-			"  state TINYINT UNSIGNED NOT NULL,"
-			"  ics_sequence INT UNSIGNED,"
-			"  ics_uid VARCHAR(2048),"
 
 			"  FOREIGN KEY (organizer_sip_address_id)"
 			"    REFERENCES sip_address(id)"
