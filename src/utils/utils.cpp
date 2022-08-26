@@ -389,7 +389,9 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op
 	}
 	if (!resourceList.isEmpty()) {
 		auto invitees = Utils::parseResourceLists(resourceList);
-		info->setParticipants(invitees);
+		for (const auto &i : invitees) {
+			info->addParticipant(i);
+		}
 	}
 
 	char * remoteContactAddressStr = sal_address_as_string(remote ? op->getRemoteContactAddress() : op->getContactAddress());

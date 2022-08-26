@@ -9764,7 +9764,7 @@ static void simple_conference_with_participant_with_no_event_log(void) {
 	destroy_mgr_in_conference(marie);
 }
 
-void simple_remote_conference(void) {
+void simple_remote_conference_base(bool_t enable_ice) {
 	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE, NULL);
 	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE, NULL);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE, NULL);
@@ -9776,6 +9776,13 @@ void simple_remote_conference(void) {
 	LinphoneProxyConfig *laure_proxy_config = linphone_core_get_default_proxy_config(laure->lc);
 	const char *laure_proxy_uri = linphone_proxy_config_get_server_addr(laure_proxy_config);
 	const char *focus_uri = linphone_proxy_config_get_identity(focus_proxy_config);
+
+	if (enable_ice) {
+		linphone_core_set_firewall_policy(focus_mgr->lc,LinphonePolicyUseIce);
+		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+	}
 
 	linphone_config_set_string(marie_config, "misc", "conference_type", "remote");
 	LinphoneProxyConfig *marie_proxy = linphone_core_get_default_proxy_config(marie->lc);
@@ -9793,6 +9800,14 @@ void simple_remote_conference(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
+}
+
+void simple_remote_conference(void) {
+	simple_remote_conference_base(FALSE);
+}
+
+void simple_ice_remote_conference(void) {
+	simple_remote_conference_base(TRUE);
 }
 
 void simple_remote_conference_shut_down_focus(void) {
@@ -10808,7 +10823,7 @@ static void multiple_conferences_in_server_mode(void) {
 	destroy_mgr_in_conference(chloe);
 }
 
-static void conference_mix_created_by_merging_video_calls_base (LinphoneConferenceLayout layout) {
+static void conference_mix_created_by_merging_video_calls_base (LinphoneConferenceLayout layout, bool_t enable_ice) {
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LinphoneCoreManager* focus_mgr = (LinphoneCoreManager*)focus;
 	linphone_core_enable_conference_server(focus_mgr->lc,TRUE);
@@ -10857,6 +10872,10 @@ static void conference_mix_created_by_merging_video_calls_base (LinphoneConferen
 		LinphoneVideoActivationPolicy * cpol = linphone_core_get_video_activation_policy(c);
 		BC_ASSERT_TRUE(linphone_video_activation_policy_get_automatically_accept(cpol) == TRUE);
 		linphone_video_activation_policy_unref(cpol);
+
+		if (enable_ice) {
+			linphone_core_set_firewall_policy(c,LinphonePolicyUseIce);
+		}
 	}
 
 	linphone_video_activation_policy_unref(pol);
@@ -10999,11 +11018,11 @@ static void conference_mix_created_by_merging_video_calls_base (LinphoneConferen
 }
 
 static void video_conference_created_by_merging_video_calls_with_grid_layout_2(void) {
-	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutGrid);
+	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutGrid, TRUE);
 }
 
 static void video_conference_created_by_merging_video_calls_with_active_speaker_layout_2(void) {
-	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutActiveSpeaker);
+	conference_mix_created_by_merging_video_calls_base(LinphoneConferenceLayoutActiveSpeaker, FALSE);
 }
 
 test_t audio_video_conference_basic_tests[] = {
@@ -11049,6 +11068,7 @@ test_t audio_video_conference_basic_tests[] = {
 	TEST_NO_TAG("Conference with back to back call invite and accept without ICE", conference_with_back_to_back_call_invite_accept_without_ice),
 //	TEST_ONE_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice, "ICE"),
 	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
+	TEST_NO_TAG("Simple ICE remote conference", simple_ice_remote_conference),
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
 	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference)
 };
@@ -11105,7 +11125,7 @@ test_t video_conference_tests[] = {
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_NO_TAG("Video conference by merging video calls without conference event package", video_conference_created_by_merging_video_calls_without_conference_event_package),
 	TEST_NO_TAG("Video conference by merging video calls with grid layout", video_conference_created_by_merging_video_calls_with_grid_layout),
-	TEST_NO_TAG("Video conference by merging video calls with grid layout 2", video_conference_created_by_merging_video_calls_with_grid_layout_2),
+	TEST_ONE_TAG("Video conference by merging video calls with grid layout 2", video_conference_created_by_merging_video_calls_with_grid_layout_2, "ICE"),
 	TEST_ONE_TAG("ICE video conference by merging video calls with grid layout", ice_video_conference_created_by_merging_video_calls_with_grid_layout, "ICE"),
 	TEST_ONE_TAG("One participant ICE video conference with grid layout", ice_video_conference_one_participant_grid_layout, "ICE"),
 	TEST_ONE_TAG("One participant ICE video conference with active speaker layout", ice_video_conference_one_participant_active_speaker_layout, "ICE"),

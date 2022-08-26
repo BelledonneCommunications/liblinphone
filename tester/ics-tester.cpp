@@ -93,6 +93,10 @@ static void parse_folded_example () {
 		"DTSTAMP:19960704T120000Z\r\n"
 		"UID:uid1@example.com\r\n"
 		"ORGANIZER:mailto:jsmith@example.com\r\n"
+		"ATTENDEE;X-PARAM=TEST;RSVP=TRUE:sip:jdoe@sip.example.org\r\n"
+		"ATTENDEE;ROLE=CHAIR:sip:pwhite@sip.example.org\r\n"
+		//"ATTENDEE;MEMBER=\"sips:devs@example.com\";X-PARAM=TEST-EN:sip:tmurphy@sip.example.org\r\n"
+		"ATTENDEE;X-PARAM=TEST-EN:sip:tmurphy@sip.example.org\r\n"
 		"DTSTART:19960918T143000Z\r\n"
 		"DTEND:19960920T220000Z\r\n"
 		"STATUS:CONFIRMED\r\n"
@@ -107,9 +111,66 @@ static void parse_folded_example () {
 	shared_ptr<const Ics::Icalendar> ics = Ics::Icalendar::createFromString(str);
 	BC_ASSERT_PTR_NOT_NULL(ics);
 
-	const string expectedDescription = "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\nAtlanta, Georgia";
-	auto confInfo = ics->toConferenceInfo();
-	BC_ASSERT_STRING_EQUAL(confInfo->getDescription().c_str(), expectedDescription.c_str());
+	if (ics) {
+		const string expectedDescription = "Networld+Interop Conference and Exhibit\nAtlanta World Congress Center\nAtlanta, Georgia";
+		auto confInfo = ics->toConferenceInfo();
+		BC_ASSERT_PTR_NOT_NULL(confInfo);
+		if (confInfo) {
+			BC_ASSERT_STRING_EQUAL(confInfo->getDescription().c_str(), expectedDescription.c_str());
+			const auto & participants = confInfo->getParticipants();
+			BC_ASSERT_EQUAL(participants.size(), 3, size_t, "%0zu");
+			for (const auto & participant : participants) {
+				const auto & address = participant.first;
+				const auto & params = participant.second;
+				size_t no_params = 0;
+				bool found = false;
+				if (address == IdentityAddress("sip:jdoe@sip.example.org")) {
+					no_params = 2;
+					for (const auto & param : params) {
+						const auto & name = param.first;
+						const auto & value = param.second;
+						BC_ASSERT_TRUE((name.compare("RSVP") == 0) || (name.compare("X-PARAM") == 0));
+						if (name.compare("RSVP") == 0) {
+							BC_ASSERT_STRING_EQUAL(value.c_str(), "TRUE");
+							found = true;
+						} else if (name.compare("X-PARAM") == 0) {
+							BC_ASSERT_STRING_EQUAL(value.c_str(), "TEST");
+							found = true;
+						}
+					}
+				} else if (address == IdentityAddress("sip:pwhite@sip.example.org")) {
+					no_params = 1;
+					for (const auto & param : params) {
+						const auto & name = param.first;
+						const auto & value = param.second;
+						BC_ASSERT_TRUE((name.compare("ROLE") == 0));
+						if (name.compare("ROLE") == 0) {
+							BC_ASSERT_STRING_EQUAL(value.c_str(), "CHAIR");
+							found = true;
+						}
+					}
+				} else if (address == IdentityAddress("sip:tmurphy@sip.example.org")) {
+					//no_params = 2;
+					no_params = 1;
+					for (const auto & param : params) {
+						const auto & name = param.first;
+						const auto & value = param.second;
+						BC_ASSERT_TRUE((name.compare("MEMBER") == 0) || (name.compare("X-PARAM") == 0));
+						if (name.compare("MEMBER") == 0) {
+							BC_ASSERT_STRING_EQUAL(value.c_str(), "mailto:devs@example.com");
+							found = true;
+						} else if (name.compare("X-PARAM") == 0) {
+							BC_ASSERT_STRING_EQUAL(value.c_str(), "TEST-EN");
+							found = true;
+						}
+					}
+				}
+				BC_ASSERT_TRUE(found);
+				BC_ASSERT_EQUAL(params.size(), no_params, size_t, "%0zu");
+				BC_ASSERT_GREATER_STRICT(params.size(), 0, size_t, "%0zu");
+			}
+		}
+	}
 }
 
 static void build_ics () {
@@ -119,8 +180,10 @@ static void build_ics () {
 	event->setSummary("\n\n    Conf chat audio\\vidéo");
 	event->setDescription("Parler de la vidéo conférence et \nrépartir les tâches, puis le développement ;-\\.\n\n\n    ");
 	event->setOrganizer("sip:marie@sip.linphone.org");
-	event->addAttendee("sip:pauline@sip.linphone.org");
-	event->addAttendee("sip:laure@sip.linphone.org");
+	Ics::Event::attendee_params_t params;
+	params.insert(std::make_pair("X-TEST", "99"));
+	event->addAttendee("sip:pauline@sip.linphone.org", params);
+	event->addAttendee("sip:laure@sip.linphone.org", params);
 	event->setXConfUri("sip:videoconf1@sip.linphone.org");
 	event->setSequence(10);
 	event->setUid("uidtest");
@@ -150,8 +213,8 @@ static void build_ics () {
 		"DTSTART:20210822T103000Z\r\n"
 		"DURATION:PT2H45M\r\n"
 		"ORGANIZER:sip:marie@sip.linphone.org\r\n"
-		"ATTENDEE:sip:pauline@sip.linphone.org\r\n"
-		"ATTENDEE:sip:laure@sip.linphone.org\r\n"
+		"ATTENDEE;X-TEST=99:sip:laure@sip.linphone.org\r\n"
+		"ATTENDEE;X-TEST=99:sip:pauline@sip.linphone.org\r\n"
 		"X-CONFURI:sip:videoconf1@sip.linphone.org\r\n"
 		"SUMMARY:Conf chat audio\\\\vidéo\r\n"
 		"DESCRIPTION:Parler de la vidéo conférence et \\nrépartir les tâches\\, p\r\n"

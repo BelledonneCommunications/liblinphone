@@ -58,6 +58,10 @@ void linphone_conference_scheduler_set_info(LinphoneConferenceScheduler *confere
 	ConferenceScheduler::toCpp(conference_scheduler)->setInfo(ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
 }
 
+void linphone_conference_scheduler_cancel_conference(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceInfo* conference_info) {
+	ConferenceScheduler::toCpp(conference_scheduler)->cancelConference(ConferenceInfo::toCpp(conference_info)->getSharedFromThis());
+}
+
 void linphone_conference_scheduler_send_invitations(LinphoneConferenceScheduler *conference_scheduler, LinphoneChatRoomParams* chat_room_params) {
 	ConferenceScheduler::toCpp(conference_scheduler)->sendInvitations(ChatRoomParams::toCpp(chat_room_params)->getSharedFromThis());
 }

@@ -6231,6 +6231,97 @@ static void call_with_early_media_accepted_state_changed_callback(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_audio_stream_added_later_on(void){
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+
+	bool_t call_ok;
+
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_audio(marie_params,TRUE);
+	linphone_call_params_enable_video(marie_params,TRUE);
+
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_audio(pauline_params,FALSE);
+	linphone_call_params_enable_video(pauline_params,TRUE);
+
+	BC_ASSERT_TRUE((call_ok=call_with_params(pauline,marie,pauline_params,marie_params)));
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
+
+	if (!call_ok) goto end;
+
+	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
+	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
+
+	if (marie_call) {
+		const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_call);
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(call_rparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+		const LinphoneCallParams* call_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(call_params));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+	}
+	if (pauline_call) {
+		const LinphoneCallParams* call_lparams = linphone_call_get_params(pauline_call);
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(call_lparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+		const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pauline_call);
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(call_rparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+		const LinphoneCallParams* call_cparams = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_FALSE(linphone_call_params_audio_enabled(call_cparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_cparams));
+	}
+
+	stats initial_pauline_stat = pauline->stat;
+	stats initial_marie_stat = marie->stat;
+	LinphoneCallParams * pauline_new_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_audio (pauline_new_params, TRUE);
+	linphone_call_update(pauline_call, pauline_new_params);
+	linphone_call_params_unref (pauline_new_params);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, initial_marie_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdating, initial_pauline_stat.number_of_LinphoneCallUpdating + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	if (marie_call) {
+		const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(marie_call);
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(call_rparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+		const LinphoneCallParams* call_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(call_params));
+	}
+	if (pauline_call) {
+		const LinphoneCallParams* call_lparams = linphone_call_get_params(pauline_call);
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(call_lparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_lparams));
+		const LinphoneCallParams* call_rparams = linphone_call_get_remote_params(pauline_call);
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(call_rparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_rparams));
+		const LinphoneCallParams* call_cparams = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_TRUE(linphone_call_params_audio_enabled(call_cparams));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(call_cparams));
+	}
+
+	end_call(pauline, marie);
+
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+}
+
 static void call_with_two_audio_streams(void){
 	const char * crashing_invite =
 	"INVITE sip:631453@212.55.48.36:51230;transport=udp SIP/2.0\r\n"
@@ -6620,6 +6711,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call without automatic 180 ringing but early media", call_without_automatic_180_ringing_but_early_media),
 	TEST_NO_TAG("Call with early media accepted in state changed callback", call_with_early_media_accepted_state_changed_callback),
 	TEST_NO_TAG("Call with same codecs ordered differently", call_with_same_codecs_ordered_differently),
+	TEST_NO_TAG("Call with audio stream added later on", call_with_audio_stream_added_later_on),
 	TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams),
 	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted),
 	TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),

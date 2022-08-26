@@ -81,14 +81,25 @@ const std::shared_ptr<ConferenceInfo> ConferenceScheduler::getInfo () const {
 	return mConferenceInfo;
 }
 
-void ConferenceScheduler::fillCancelList(const std::list<IdentityAddress> &oldList, const std::list<IdentityAddress> &newList) {
+void ConferenceScheduler::fillCancelList(const ConferenceInfo::participant_list_t &oldList, const ConferenceInfo::participant_list_t &newList) {
 	mCancelToSend.clear();
 	for (const auto & address : oldList) {
-		const bool participantFound = (std::find(newList.cbegin(), newList.cend(), address) != newList.cend());
+		const bool participantFound = (std::find_if(newList.cbegin(), newList.cend(), [&address] (const auto &e) {
+		return (e.first == address.first);
+	}) != newList.cend());
 		if (!participantFound) {
-			mCancelToSend.push_back(address);
+			mCancelToSend.push_back(address.first);
 		}
 	}
+}
+
+void ConferenceScheduler::cancelConference (std::shared_ptr<ConferenceInfo> info) {
+	while (!info->getParticipants().empty()) {
+		const auto & participants = info->getParticipants();
+		const auto & participant = *(participants.begin());
+		info->removeParticipant(participant.first);
+	}
+	setInfo(info);
 }
 
 void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
@@ -114,7 +125,9 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	const auto & organizer = info->getOrganizer();
 	const auto & participants = info->getParticipants();
 	const auto participantListEmpty = participants.empty();
-	const bool participantFound = (std::find(participants.cbegin(), participants.cend(), creator) != participants.cend());
+	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator] (const auto &p) {
+			return (p.first == creator);
+		}) != participants.cend());
 	if ((creator != organizer) && !participantFound) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Unable to find the address " << creator << " setting the conference information among the list of participants or the organizer (" << info->getOrganizer() << ") of conference " << info->getUri();
 		setState(State::Error);
@@ -122,18 +135,15 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	}
 
 	bool isUpdate = false;
-	ConferenceAddress conferenceAddress;
 #ifdef HAVE_DB_STORAGE
 	if (info->getUri().isValid()) {
 		auto &mainDb = getCore()->getPrivate()->mainDb;
 		auto confInfo = mainDb->getConferenceInfoFromURI(info->getUri());
 		if (confInfo) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Found matching conference info in database for address [" << info->getUri() << "]";
-			conferenceAddress = info->getUri();
 			isUpdate = true;
 			setState(State::Updating);
-			info->setIcsUid(confInfo->getIcsUid());
-			info->setIcsSequence(confInfo->getIcsSequence() + 1);
+			info->updateFrom(confInfo);
 			fillCancelList(confInfo->getParticipants(), info->getParticipants());
 		}
 	}
@@ -155,9 +165,8 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 			return;
 		}
 	} else if (mConferenceInfo != nullptr) {
-		conferenceAddress = mConferenceInfo->getUri();
-		info->setUri(conferenceAddress);
 		setState(State::Updating);
+		info->updateFrom(mConferenceInfo);
 		fillCancelList(mConferenceInfo->getParticipants(), info->getParticipants());
 	}
 
@@ -193,12 +202,17 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 		}
 	}
 
+	std::list<IdentityAddress> invitees;
+	for (const auto &p : mConferenceInfo->getParticipants()) {
+		invitees.push_back(p.first);
+	}
+
 	if (isUpdate) {
 		// Updating an existing conference
-		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, mConferenceInfo->getParticipants(), conferenceAddress);
+		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, info->getUri());
 	} else {
 		// Creating conference
-		mSession = getCore()->createConferenceOnServer(conferenceParams, identityAddress, mConferenceInfo->getParticipants());
+		mSession = getCore()->createConferenceOnServer(conferenceParams, identityAddress, invitees);
 	}
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
@@ -291,7 +305,10 @@ void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSessi
 			auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 			// Participant with the focus call is admin
 			L_GET_CPP_PTR_FROM_C_OBJECT(new_params)->addCustomContactParameter("admin", Utils::toString(true));
-			auto addressesList(mConferenceInfo->getParticipants());
+			std::list<IdentityAddress> addressesList;
+			for (const auto &p : mConferenceInfo->getParticipants()) {
+				addressesList.push_back(p.first);
+			}
 
 			addressesList.sort();
 			addressesList.unique();
@@ -371,7 +388,9 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 	}
 
 	const auto & participants = mConferenceInfo->getParticipants();
-	const bool participantFound = (std::find(participants.cbegin(), participants.cend(), sender) != participants.cend());
+	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&sender] (const auto &p) {
+		return (p.first == sender);
+	}) != participants.cend());
 	if ((sender != mConferenceInfo->getOrganizer()) && !participantFound) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Unable to find the address " << sender << " sending invitations among the list of participants or the organizer (" << mConferenceInfo->getOrganizer() << ") of conference " << mConferenceInfo->getUri();
 		return;
@@ -386,7 +405,10 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		return;
 	}
 
-	auto invitees = participants;
+	std::list<IdentityAddress> invitees;
+	for (const auto &p :participants) {
+		invitees.push_back(p.first);
+	}
 	invitees.insert(invitees.begin(), mCancelToSend.begin(), mCancelToSend.end());
 
 	mInvitationsToSend.clear();

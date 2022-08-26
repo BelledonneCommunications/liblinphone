@@ -32,6 +32,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const std::string ConferenceInfo::sequenceParam = "X-SEQ";
+
 ConferenceInfo::ConferenceInfo () {
 }
 
@@ -43,20 +45,28 @@ void ConferenceInfo::setOrganizer (const IdentityAddress organizer) {
 	mOrganizer = organizer;
 }
 
-const std::list<IdentityAddress> & ConferenceInfo::getParticipants () const {
+const ConferenceInfo::participant_list_t & ConferenceInfo::getParticipants () const {
 	return mParticipants;
 }
 
-void ConferenceInfo::setParticipants (const std::list<IdentityAddress> participants) {
+void ConferenceInfo::setParticipants (const participant_list_t & participants) {
 	mParticipants = participants;
 }
 
-void ConferenceInfo::addParticipant (const IdentityAddress participant) {
-	mParticipants.push_back(participant);
+void ConferenceInfo::addParticipant (const IdentityAddress & participant) {
+	ConferenceInfo::participant_params_t params;
+	params.insert(std::make_pair(ConferenceInfo::sequenceParam, "0"));
+	addParticipant(participant, params);
 }
 
-void ConferenceInfo::removeParticipant (const IdentityAddress participant) {
-	const auto it = std::find(mParticipants.cbegin(), mParticipants.cend(), participant);
+void ConferenceInfo::addParticipant (const IdentityAddress & participant, const participant_params_t & params) {
+	mParticipants.insert(std::make_pair(participant, params));
+}
+
+void ConferenceInfo::removeParticipant (const IdentityAddress & participant) {
+	const auto it = std::find_if(mParticipants.cbegin(), mParticipants.cend(), [&participant] ( const auto & p) {
+	return (p.first == participant);
+	});
 	if (it == mParticipants.cend()) {
 		lInfo() << "Unable to find participant with address " << participant << " in conference info " << this << " (address " << getUri() << ")";
 	} else {
@@ -128,6 +138,24 @@ void ConferenceInfo::setState (const ConferenceInfo::State &state) {
 	mState = state;
 }
 
+void ConferenceInfo::updateFrom (const std::shared_ptr<ConferenceInfo> & info) {
+	setUri(info->getUri());
+	setIcsUid(info->getIcsUid());
+	setIcsSequence(info->getIcsSequence() + 1);
+
+	const auto & participants = info->getParticipants();
+
+	for (auto & participant : mParticipants) {
+		const auto & otherParticipant = std::find_if(participants.cbegin(), participants.cend(), [&participant] (const auto & p) {
+			return (p.first == participant.first);
+		});
+
+		if (otherParticipant != participants.cend()) {
+			participant.second = otherParticipant->second;
+		}
+	}
+}
+
 const string ConferenceInfo::toIcsString (bool cancel) const {
 	Ics::Icalendar cal;
 
@@ -162,9 +190,10 @@ const string ConferenceInfo::toIcsString (bool cancel) const {
 	}
 	
 	for (const auto & participant : mParticipants) {
-		if (participant.isValid()) {
-			const auto uri = participant.getAddressWithoutGruu().asString();
-			event->addAttendee(uri);
+		const auto & address = participant.first;
+		if (address.isValid()) {
+			const auto uri = address.getAddressWithoutGruu().asString();
+			event->addAttendee(uri, participant.second);
 		}
 	}
 
@@ -202,4 +231,14 @@ void ConferenceInfo::setCreationTime(time_t time) {
 	mCreationTime = time;
 }
 
+const std::string ConferenceInfo::paramsToString(const ConferenceInfo::participant_params_t & params) {
+	std::string str;
+	for (const auto & param : params) {
+		if (!str.empty()) {
+			str.append(";");
+		}
+		str.append(param.first + "=" + param.second);
+	}
+	return str;
+}
 LINPHONE_END_NAMESPACE

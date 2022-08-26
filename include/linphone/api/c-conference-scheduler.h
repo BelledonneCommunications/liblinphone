@@ -75,6 +75,13 @@ LINPHONE_PUBLIC LinphoneAccount *linphone_conference_scheduler_get_account(const
 LINPHONE_PUBLIC const LinphoneConferenceInfo* linphone_conference_scheduler_get_info(const LinphoneConferenceScheduler *conference_scheduler);
 
 /**
+ * Cancel the conference linked to the #LinphoneConferenceInfo provided as argument
+ * @param conference_scheduler the #LinphoneConferenceScheduler object. @notnil
+ * @param conference_info the #LinphoneConferenceInfo object to linked to the conference to cancel. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_conference_scheduler_cancel_conference(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceInfo* conference_info);
+
+/**
  * Sets the #LinphoneConferenceInfo to use to create/update the conference, which will be done right away.
  * @param conference_scheduler the #LinphoneConferenceScheduler object. @notnil
  * @param conference_info the #LinphoneConferenceInfo object to use to start creating/updating the remote conference. @maybenil

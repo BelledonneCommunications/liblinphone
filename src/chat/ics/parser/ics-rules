@@ -45,7 +45,7 @@ icalparameter = altrepparam       ; Alternate text representation
 				/ valuetypeparam    ; Property value data type
 				/ other-param
 
-other-param = x-param ;/ iana-param
+other-param = (iana-param / x-param)
 
 iana-param = iana-token "=" param-value *("," param-value)
 

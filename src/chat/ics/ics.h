@@ -21,7 +21,7 @@
 #define _L_ICS_H_
 
 #include <ctime>
-#include <list>
+#include <map>
 #include <string>
 
 #include "conference/conference-info.h"
@@ -35,6 +35,8 @@ namespace Ics {
 	class LINPHONE_PUBLIC Event {
 		friend class Icalendar;
 	public:
+		using attendee_params_t = std::map<std::string, std::string>;
+		using attendee_list_t = std::map<std::string, attendee_params_t>;
 
 		Event () = default;
 		~Event () = default;
@@ -42,8 +44,9 @@ namespace Ics {
 		const std::string &getOrganizer () const;
 		void setOrganizer (const std::string &organizer);
 
-		const std::list<std::string> &getAttendees () const;
+		const attendee_list_t &getAttendees () const;
 		void addAttendee (const std::string &attendee);
+		void addAttendee (const std::string &attendee, const attendee_params_t & params);
 
 		tm getDateTimeStart () const;
 		void setDateTimeStart (tm dateTimeStart);
@@ -70,7 +73,7 @@ namespace Ics {
 
 	private:
 		std::string mOrganizer;
-		std::list<std::string> mAttendees;
+		attendee_list_t mAttendees;
 		tm mDateTimeStart;
 		tm mDuration;
 		unsigned int mSequence = 0;

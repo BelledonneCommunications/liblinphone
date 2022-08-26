@@ -63,7 +63,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 19);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 20);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -569,7 +569,7 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 	const string& uid = conferenceInfo->getIcsUid();
 
 	long long conferenceInfoId = selectConferenceInfoId(uriSipAddressid);
-	std::list<IdentityAddress> dbParticipantList;
+	ConferenceInfo::participant_list_t dbParticipantList;
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
 		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
@@ -606,18 +606,24 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 
 	const auto & participantList = conferenceInfo->getParticipants();
 	for (const auto & participantAddress : participantList) {
-		insertConferenceInfoParticipant(
+		insertOrUpdateConferenceInfoParticipant(
 			conferenceInfoId,
-			insertSipAddress(participantAddress.asString())
+			insertSipAddress(participantAddress.first.asString()),
+			false,
+			participantAddress.second
 		);
 	}
 
 	for (const auto & oldParticipantAddress : dbParticipantList) {
-		const bool deleted = (std::find(participantList.cbegin(), participantList.cend(), oldParticipantAddress) == participantList.cend());
+		const bool deleted = (std::find_if(participantList.cbegin(), participantList.cend(), [&oldParticipantAddress] (const auto & p) {
+			return (p.first == oldParticipantAddress.first);
+		}) == participantList.cend());
 		if (deleted) {
-			deleteConferenceInfoParticipant(
+			insertOrUpdateConferenceInfoParticipant(
 				conferenceInfoId,
-				insertSipAddress(oldParticipantAddress.asString())
+				insertSipAddress(oldParticipantAddress.first.asString()),
+				true,
+				oldParticipantAddress.second
 			);
 		}
 	}
@@ -630,28 +636,29 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 #endif
 }
 
-long long MainDbPrivate::insertConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId) {
+long long MainDbPrivate::insertOrUpdateConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId, bool deleted, const ConferenceInfo::participant_params_t params) {
 #ifdef HAVE_DB_STORAGE
 	long long conferenceInfoParticipantId = selectConferenceInfoParticipantId(conferenceInfoId, participantSipAddressId);
+	auto paramsStr = ConferenceInfo::paramsToString(params);
+	int participantDeleted = deleted ? 1 : 0;
 	if (conferenceInfoParticipantId >= 0) {
+		*dbSession.getBackendSession() << "UPDATE conference_info_participant SET"
+		" deleted = :deleted, params = :paramsStr"
+		" WHERE conference_info_id  = :conferenceInfoId AND participant_sip_address_id = :participantSipAddressId",
+		soci::use(participantDeleted), soci::use(paramsStr),
+		soci::use(conferenceInfoId), soci::use(participantSipAddressId);
+
 		return conferenceInfoParticipantId;
 	}
 
-	*dbSession.getBackendSession() << "INSERT INTO conference_info_participant (conference_info_id, participant_sip_address_id)"
-		" VALUES (:conferenceInfoId, :participantSipAddressId)",
-		soci::use(conferenceInfoId), soci::use(participantSipAddressId);
+	*dbSession.getBackendSession() << "INSERT INTO conference_info_participant (conference_info_id, participant_sip_address_id, deleted, params)"
+		" VALUES (:conferenceInfoId, :participantSipAddressId, :deleted, :paramsStr)",
+		soci::use(conferenceInfoId), soci::use(participantSipAddressId),
+		soci::use(participantDeleted), soci::use(paramsStr);
 
 	return dbSession.getLastInsertId();
 #else
 	return -1;
-#endif
-}
-
-void MainDbPrivate::deleteConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId) {
-#ifdef HAVE_DB_STORAGE
-	*dbSession.getBackendSession() << "DELETE FROM conference_info_participant"
-		" WHERE conference_info_id = :conferenceInfoId AND participant_sip_address_id = :participantSipAddressId",
-		soci::use(conferenceInfoId), soci::use(participantSipAddressId);
 #endif
 }
 
@@ -1059,7 +1066,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent (
 			soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(conferenceInfoId));
 			for (const auto &participantRow : participantRows) {
 				IdentityAddress participant(participantRow.get<string>(0));
-				conferenceInfo->addParticipant(participant);
+				ConferenceInfo::participant_params_t participantParams;
+				conferenceInfo->addParticipant(participant, participantParams);
 			}
 
 			cache(conferenceInfo, conferenceInfoId);
@@ -1796,7 +1804,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	conferenceInfo->setIcsSequence(dbSession.getUnsignedInt(row,8,0));
 	conferenceInfo->setIcsUid(row.get<string>(9));
 
-	static const string query = "SELECT sip_address.value"
+	static const string query = "SELECT sip_address.value, conference_info_participant.deleted, conference_info_participant.params"
 		" FROM sip_address, conference_info, conference_info_participant"
 		" WHERE conference_info.id = :conferenceInfoId"
 		" AND sip_address.id = conference_info_participant.participant_sip_address_id"
@@ -1805,8 +1813,22 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	soci::session *session = dbSession.getBackendSession();
 	soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(dbConferenceInfoId));
 	for (const auto &participantRow : participantRows) {
-		IdentityAddress participant(participantRow.get<string>(0));
-		conferenceInfo->addParticipant(participant);
+		int deleted = participantRow.get<int>(1);
+		if (deleted == 0) {
+			IdentityAddress participant(participantRow.get<string>(0));
+			ConferenceInfo::participant_params_t participantParams;
+			const string params = participantRow.get<string>(2);
+			if (!params.empty()) {
+				const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(params), ";");
+				for (const auto & param : splittedValue) {
+					auto equal = param.find("=");
+					string name = param.substr(0, equal);
+					string value = param.substr(equal + 1, param.size());
+					participantParams.insert(std::make_pair(name, value));
+				}
+			}
+			conferenceInfo->addParticipant(participant, participantParams);
+		}
 	}
 
 	cache(conferenceInfo, dbConferenceInfoId);
@@ -2166,6 +2188,11 @@ void MainDbPrivate::updateSchema () {
 		*session << "ALTER TABLE conference_info ADD COLUMN state TINYINT UNSIGNED NOT NULL DEFAULT 0";
 		*session << "ALTER TABLE conference_info ADD COLUMN ics_sequence INT UNSIGNED DEFAULT 0";
 		*session << "ALTER TABLE conference_info ADD COLUMN ics_uid VARCHAR(2048) DEFAULT ''";
+	}
+
+	if (version < makeVersion(1, 0, 20)) {
+		*session << "ALTER TABLE conference_info_participant ADD COLUMN deleted BOOLEAN NOT NULL DEFAULT 0";
+		*session << "ALTER TABLE conference_info_participant ADD COLUMN params VARCHAR(2048) DEFAULT ''";
 	}
 
 	// /!\ Warning : if varchar columns < 255 were to be indexed, their size must be set back to 191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in column creation)
@@ -3427,13 +3454,12 @@ void MainDb::updateChatRoomEphemeralEnabled (const ConferenceId &conferenceId, b
 	"  SET ephemeral_enabled = :ephemeralEnabled"
 	" WHERE id = :chatRoomId";
 
-	int ephemeralEnabledInt = ephemeralEnabled ? 1 : 0;
+	int isEphemeralEnabled = ephemeralEnabled ? 1 : 0;
 
 	L_DB_TRANSACTION {
 		L_D();
 		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::use(ephemeralEnabledInt), soci::use(dbChatRoomId);
-
+		*d->dbSession.getBackendSession() << query, soci::use(isEphemeralEnabled), soci::use(dbChatRoomId);
 		tr.commit();
 	};
 #endif

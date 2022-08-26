@@ -205,7 +205,29 @@ namespace Ics {
 		}
 
 		void addAttendee (const string &attendee) {
-			mAttendees.push_back(attendee);
+			if (!attendee.empty()) {
+				Ics::Event::attendee_params_t params;
+				size_t paramStart = attendee.find("ATTENDEE");
+				// Chop off ATTENDEE
+				const auto & paramAddress = attendee.substr(paramStart+strlen("ATTENDEE"));
+				size_t addressStart = paramAddress.find(":");
+				// Split parameters and address.
+				// Parameters end at the first : sign
+				const auto & paramsStr = paramAddress.substr(0, addressStart);
+				const auto & address = paramAddress.substr(addressStart + 1, attendee.size());
+				if (!paramsStr.empty()) {
+					const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsStr), ";");
+					for (const auto & param : splittedValue) {
+						if (!param.empty()) {
+							auto equal = param.find("=");
+							string name = param.substr(0, equal);
+							string value = param.substr(equal + 1, param.size());
+							params.insert(std::make_pair(name, value));
+						}
+					}
+				}
+				mAttendees.insert(std::make_pair(address, params));
+			}
 		}
 
 		void setUid (const string &xUid) {
@@ -263,7 +285,7 @@ namespace Ics {
 			event->setXConfUri(mXConfUri);
 
 			for (const auto &attendee : mAttendees) {
-				event->addAttendee(attendee);
+				event->addAttendee(attendee.first, attendee.second);
 			}
 
 			event->setUid(mUid);
@@ -279,7 +301,7 @@ namespace Ics {
 		string mOrganizer;
 		string mUid;
 		unsigned int mSequence = 0;
-		list<string> mAttendees;
+		Ics::Event::attendee_list_t mAttendees;
 		shared_ptr<DateTimeNode> mDateStart;
 		shared_ptr<DurationNode> mDuration;
 	};
@@ -337,10 +359,11 @@ public:
 
 Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 	L_D();
-	
+
 	shared_ptr<belr::Grammar> grammar = belr::GrammarLoader::get().load(IcsGrammar);
 	if (!grammar)
 		lFatal() << "Unable to load CPIM grammar.";
+
 	d->parser = make_shared<belr::Parser<shared_ptr<Node>>>(grammar);
 	
 	d->parser->setHandler("icalobject", belr::make_fn(make_shared<IcalendarNode>))
@@ -353,7 +376,7 @@ Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 		->setCollector("dtstval", belr::make_sfn(&EventNode::setDateStart))
 		->setCollector("dur-value", belr::make_sfn(&EventNode::setDuration))
 		->setCollector("orgvalue", belr::make_sfn(&EventNode::setOrganizer))
-		->setCollector("attvalue", belr::make_sfn(&EventNode::addAttendee))
+		->setCollector("attendee", belr::make_sfn(&EventNode::addAttendee))
 		->setCollector("uid", belr::make_sfn(&EventNode::setUid))
 		->setCollector("seq", belr::make_sfn(&EventNode::setSequence))
 		->setCollector("x-prop", belr::make_sfn(&EventNode::setXProp));

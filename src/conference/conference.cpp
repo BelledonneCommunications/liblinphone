@@ -674,7 +674,9 @@ std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {
 std::shared_ptr<ConferenceInfo> Conference::createConferenceInfo(const IdentityAddress & organizer, const std::list<IdentityAddress> invitedParticipants) const {
 	std::shared_ptr<ConferenceInfo> info = ConferenceInfo::create();
 	info->setOrganizer(organizer);
-	info->setParticipants(invitedParticipants);
+	for (const auto & participant : invitedParticipants) {
+		info->addParticipant(participant);
+	}
 
 	const auto & conferenceAddress = getConferenceAddress();
 	if (conferenceAddress.isValid()) {
@@ -716,12 +718,12 @@ void Conference::updateParticipantsInConferenceInfo(const IdentityAddress & part
 	if ((getState() == ConferenceInterface::State::CreationPending) || (getState() == ConferenceInterface::State::Created)) {
 		auto info = createOrGetConferenceInfo();
 		if (info) {
-			std::list<IdentityAddress> currentParticipants = info->getParticipants();
-			const auto participantAddressIt = std::find(currentParticipants.begin(), currentParticipants.end(), participantAddress);
+			const auto & currentParticipants = info->getParticipants();
+			const auto participantAddressIt = std::find_if(currentParticipants.begin(), currentParticipants.end(), [&participantAddress] (const auto & p) {
+				return (p.first == participantAddress);
+			});
 			if (participantAddressIt == currentParticipants.end()) {
-				currentParticipants.push_back(participantAddress);
-				info->setParticipants(currentParticipants);
-
+				info->addParticipant(participantAddress);
 
 				// Store into DB after the start incoming notification in order to have a valid conference address being the contact address of the call
 				auto &mainDb = getCore()->getPrivate()->mainDb;

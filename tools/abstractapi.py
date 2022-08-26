@@ -538,7 +538,8 @@ class CParser:
 			'LinphonePresenceActivityType'               : 'LinphonePresenceActivity',
 			'LinphoneTunnelMode'                         : 'LinphoneTunnel',
 			'LinphoneAudioDeviceType'                    : 'LinphoneAudioDevice',
-			'LinphoneAudioDeviceCapabilities'            : 'LinphoneAudioDevice'
+			'LinphoneAudioDeviceCapabilities'            : 'LinphoneAudioDevice',
+			'LinphoneConferenceInfoState'                : 'LinphoneConferenceInfo'
 		}
 
 		self.cProject = cProject

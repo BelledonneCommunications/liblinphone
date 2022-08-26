@@ -70,8 +70,7 @@ private:
 	void insertChatRoomParticipantDevice (long long participantId, long long participantDeviceSipAddressId, const std::string &deviceName);
 	void insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime);
 	long long insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo, const std::shared_ptr<ConferenceInfo> &oldConferenceInfo);
-	long long insertConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId);
-	void deleteConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId);
+	long long insertOrUpdateConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId, bool deleted, const ConferenceInfo::participant_params_t params);
 	long long insertOrUpdateConferenceCall (const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
 	long long selectSipAddressId (const std::string &sipAddress) const;

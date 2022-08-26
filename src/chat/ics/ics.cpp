@@ -39,12 +39,17 @@ void Ics::Event::setOrganizer (const std::string &organizer) {
 	mOrganizer = organizer;
 }
 
-const std::list<std::string> &Ics::Event::getAttendees () const {
+const Ics::Event::attendee_list_t &Ics::Event::getAttendees () const {
 	return mAttendees;
 }
 
 void Ics::Event::addAttendee (const std::string &attendee) {
-	mAttendees.push_back(attendee);
+	Ics::Event::attendee_params_t params;
+	addAttendee(attendee, params);
+}
+
+void Ics::Event::addAttendee (const std::string &attendee, const attendee_params_t & params) {
+	mAttendees.insert(std::make_pair(attendee, params));
 }
 
 tm Ics::Event::getDateTimeStart () const {
@@ -145,7 +150,14 @@ std::string Ics::Event::asString () const {
 	if (!mOrganizer.empty()) output << "ORGANIZER:" << mOrganizer << "\r\n";
 	if (!mAttendees.empty()) {
 		for (const auto &attendee : mAttendees) {
-			output << "ATTENDEE:" << attendee << "\r\n";
+			output << "ATTENDEE";
+			const auto & params = attendee.second;
+			for (const auto &param : params) {
+				output << ";" << param.first << "=" << param.second;
+			}
+			const auto & address = attendee.first;
+			output << ":" << address;
+			output << "\r\n";
 		}
 	}
 	if (!mXConfUri.empty()) output << "X-CONFURI:" << mXConfUri << "\r\n";
@@ -172,12 +184,12 @@ std::string Ics::Event::asString () const {
 	if (mUid.empty()) {
 		ostringstream uid;
 		uid << setw(4) << (stamp.tm_year + 1900)
-			<< setw(2) << (stamp.tm_mon + 1)
-			<< setw(2) << stamp.tm_mday
+			<< (stamp.tm_mon + 1)
+			<< stamp.tm_mday
 			<< "T"
-			<< setw(2) << stamp.tm_hour
-			<< setw(2) << stamp.tm_min
-			<< setw(2) << stamp.tm_sec
+			<< stamp.tm_hour
+			<< stamp.tm_min
+			<< stamp.tm_sec
 			<< "Z";
 
 		size_t p;
@@ -251,12 +263,14 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	}
 
 	for (const auto &attendee : event->getAttendees()) {
-		if (!attendee.empty()) {
-			const auto & addr = IdentityAddress(attendee);
+		auto address = attendee.first;
+		auto params = attendee.second;
+		if (!address.empty()) {
+			const auto & addr = IdentityAddress(address);
 			if (addr.isValid()) {
-				confInfo->addParticipant(addr);
+				confInfo->addParticipant(addr, params);
 			} else {
-				lWarning() << "Could not parse attendee's address:" << attendee << " because it is not a valid address";
+				lWarning() << "Could not parse attendee's address:" << address << " because it is not a valid address";
 			}
 		}
 	}

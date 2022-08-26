@@ -535,7 +535,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 			}
 			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};
 			for (const auto & participant : conferenceInfo->getParticipants()) {
-				invitees.push_back(participant);
+				invitees.push_back(participant.first);
 			}
 
 			const ConferenceAddress confAddr(conferenceInfo->getUri());

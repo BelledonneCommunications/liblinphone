@@ -681,7 +681,7 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 
 	const auto & participants = info->getParticipants();
 	for (const auto & p : participants) {
-		invitedAddresses.push_back(p);
+		invitedAddresses.push_back(p.first);
 	}
 
 	getMe()->setAdmin(true);

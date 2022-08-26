@@ -642,7 +642,11 @@ void Core::setEncryptionEngine (EncryptionEngine *imee) {
 
 EncryptionEngine *Core::getEncryptionEngine () const {
 	L_D();
-	return d->imee.get();
+	const auto & imee = d->imee;
+	if (imee) {
+		return imee.get();
+	}
+	return nullptr;
 }
 
 void Core::enableLimeX3dh (bool enable) {

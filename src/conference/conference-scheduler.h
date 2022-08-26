@@ -64,6 +64,7 @@ public:
 	State getState () const;
 
 	const std::shared_ptr<ConferenceInfo> getInfo () const;
+	void cancelConference (std::shared_ptr<ConferenceInfo> info);
 	void setInfo(const std::shared_ptr<ConferenceInfo> info);
 
 	void setConferenceAddress(const ConferenceAddress& conferenceAddress);
@@ -78,7 +79,7 @@ private:
 	std::string stateToString (State state);
 
 	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom, bool cancel);
-	void fillCancelList(const std::list<IdentityAddress> &oldList, const std::list<IdentityAddress> &newList);
+	void fillCancelList(const ConferenceInfo::participant_list_t &oldList, const ConferenceInfo::participant_list_t &newList);
 	
 	ConferenceScheduler::State mState;
 	std::shared_ptr<ConferenceInfo> mConferenceInfo = nullptr;

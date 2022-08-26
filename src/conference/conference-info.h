@@ -21,6 +21,7 @@
 #define _L_CONFERENCE_INFO_H_
 
 #include <ctime>
+#include <map>
 #include <string>
 
 #include "address/address.h"
@@ -36,6 +37,10 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC ConferenceInfo : public bellesip::HybridObject<LinphoneConferenceInfo, ConferenceInfo> {
 public:
+	static const std::string sequenceParam;
+	using participant_params_t = std::map<std::string, std::string>;
+	using participant_list_t = std::map<IdentityAddress, participant_params_t>;
+
 	enum class State {
 		New = LinphoneConferenceInfoStateNew,
 		Updated = LinphoneConferenceInfoStateUpdated,
@@ -48,13 +53,16 @@ public:
 		return new ConferenceInfo(*this);
 	}
 
+	static const std::string paramsToString(const participant_params_t & params);
+
 	const IdentityAddress &getOrganizer () const;
 	void setOrganizer (IdentityAddress organizer);
 
-	const std::list<IdentityAddress> &getParticipants () const;
-	void setParticipants (const std::list<IdentityAddress> participants);
-	void addParticipant (const IdentityAddress participant);
-	void removeParticipant (const IdentityAddress participant);
+	const participant_list_t &getParticipants () const;
+	void setParticipants (const participant_list_t & participants);
+	void addParticipant (const IdentityAddress & participant);
+	void addParticipant (const IdentityAddress & participant, const participant_params_t & params);
+	void removeParticipant (const IdentityAddress & participant);
 
 	const ConferenceAddress &getUri () const;
 	void setUri (const ConferenceAddress uri);
@@ -82,11 +90,13 @@ public:
 
 	const std::string toIcsString (bool cancel = false) const;
 
+	void updateFrom (const std::shared_ptr<ConferenceInfo> & info);
+
 	// Used only by the tester
 	void setCreationTime(time_t time);
 private:
 	IdentityAddress mOrganizer;
-	std::list<IdentityAddress> mParticipants;
+	participant_list_t mParticipants;
 	ConferenceAddress mUri;
 	time_t mDateTime = (time_t) -1;
 	unsigned int mDuration = 0;

@@ -57,7 +57,7 @@ const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConf
 	const auto & participants = ConferenceInfo::toCpp(conference_info)->getParticipants();
 	bctbx_list_t * participant_addresses = NULL;
 	for (const auto & participant : participants) {
-		const auto & address = participant.asAddress();
+		const auto & address = participant.first.asAddress();
 		participant_addresses = bctbx_list_append(participant_addresses, L_GET_C_BACK_PTR(&address));
 	}
 	return participant_addresses;
@@ -67,7 +67,13 @@ void linphone_conference_info_set_participants(LinphoneConferenceInfo *conferenc
 	const std::list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
 		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
 	});
-	ConferenceInfo::toCpp(conference_info)->setParticipants(participantsList);
+
+	ConferenceInfo::participant_list_t participantsMap;
+	ConferenceInfo::participant_params_t participantsParams;
+	for (const auto & p : participantsList) {
+		participantsMap[p] = participantsParams;
+	}
+	ConferenceInfo::toCpp(conference_info)->setParticipants(participantsMap);
 }
 
 void linphone_conference_info_add_participant(LinphoneConferenceInfo *conference_info, LinphoneAddress *participant) {
