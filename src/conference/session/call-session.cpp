@@ -154,7 +154,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 								linphone_call_params_set_video_direction(params, LinphoneMediaDirectionInactive);
 								const auto & startTime = conference ? conference->getCurrentParams().getStartTime() : confInfo->getDateTime();
 								linphone_call_params_set_start_time(params, startTime);
-								const auto & endTime = static_cast<time_t>(conference ? conference->getCurrentParams().getEndTime() : confInfo->getDateTime() + confInfo->getDuration());
+								const auto & endTime = conference ? conference->getCurrentParams().getEndTime() : confInfo->getDateTime() + static_cast<time_t>(confInfo->getDuration());
 								linphone_call_params_set_end_time(params, endTime);
 								call->accept(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 								linphone_call_params_unref(params);
