@@ -508,7 +508,8 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceMediaChanged (c
 
 	EndpointType endpoint = EndpointType();
 	endpoint.setEntity(dAddress.asStringUriOnly());
-	shared_ptr<Participant> participant = conf->findParticipant(pAddress);
+	endpoint.setState(StateType::partial);
+	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
 		shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(dAddress);
 		if (participantDevice) {
@@ -518,10 +519,8 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceMediaChanged (c
 
 			// Media capabilities
 			addMediaCapabilities(participantDevice, endpoint);
-
 		}
 	}
-	endpoint.setState(StateType::full);
 	user.getEndpoint().push_back(endpoint);
 
 	confInfo.getUsers()->getUser().push_back(user);
@@ -747,6 +746,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 		content.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	linphone_event_notify(ev, cContent);
+	linphone_core_notify_notify_sent(conf->getCore()->getCCore(),ev, cContent);
 }
 
 // -----------------------------------------------------------------------------
@@ -793,9 +793,10 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev) {
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
 			notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device, true);
 		} else if (evLastNotify > lastNotify) {
-			lError() << "Last notify received by client [" << evLastNotify << "] for conference [" <<
+			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference [" <<
 				conf->getConferenceAddress() <<
-				"] should not be higher than last notify sent by server [" << lastNotify << "]";
+				"] should not be higher than last notify sent by server [" << lastNotify << "] - sending a notify full state in an attempt to recover from this situation";
+			notifyFullState(createNotifyFullState(lev), device);
 		}
 	}
 }

@@ -293,6 +293,7 @@ typedef struct _stats {
 	int number_of_IframeDecoded;
 
 	int number_of_NewSubscriptionRequest;
+	int number_of_NotifySent;
 	int number_of_NotifyReceived;
 	int number_of_NotifyPresenceReceived;
 	int number_of_NotifyPresenceReceivedForUriOrTel;
@@ -524,6 +525,7 @@ void info_message_received(LinphoneCore *lc, LinphoneCall *call, const LinphoneI
 void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url);
 void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *ev, LinphoneSubscriptionState state);
 void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state);
+void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *content);
 void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content);
 void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content);
 void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);

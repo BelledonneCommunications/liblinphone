@@ -24,12 +24,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SalEventOp : public SalOp {
+class LINPHONE_PUBLIC SalEventOp : public SalOp {
 public:
 	SalEventOp (Sal *sal) : SalOp(sal) {}
 };
 
-class SalSubscribeOp: public SalEventOp {
+class LINPHONE_PUBLIC SalSubscribeOp: public SalEventOp {
 public:
 	SalSubscribeOp (Sal *sal);
 

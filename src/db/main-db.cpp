@@ -1107,8 +1107,10 @@ long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLo
 #ifdef HAVE_DB_STORAGE
 	long long curChatRoomId;
 	const long long &eventId = insertConferenceEvent(eventLog, &curChatRoomId);
-	if (eventId < 0)
+	if (eventId < 0) {
+		lError() << "Unable to insert participant event of type " << eventLog->getType() << " in database.";
 		return -1;
+	}
 
 	const unsigned int &lastNotifyId = static_pointer_cast<ConferenceNotifiedEvent>(eventLog)->getNotifyId();
 
@@ -1179,8 +1181,10 @@ long long MainDbPrivate::insertConferenceParticipantDeviceEvent (const shared_pt
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceParticipantEvent(eventLog, &chatRoomId);
-	if (eventId < 0)
+	if (eventId < 0) {
+		lError() << "Unable to insert participant device event of type " << eventLog->getType() << " in database.";
 		return -1;
+	}
 
 	shared_ptr<ConferenceParticipantDeviceEvent> participantDeviceEvent =
 		static_pointer_cast<ConferenceParticipantDeviceEvent>(eventLog);
@@ -1227,8 +1231,10 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
-	if (eventId < 0)
+	if (eventId < 0) {
+		lError() << "Unable to insert security event of type " << eventLog->getType() << " in database.";
 		return -1;
+	}
 
 	const int &securityEventType = int(static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getSecurityEventType());
 	const string &faultyDevice = static_pointer_cast<ConferenceSecurityEvent>(eventLog)->getFaultyDeviceAddress().asString();
@@ -1248,8 +1254,10 @@ long long MainDbPrivate::insertConferenceAvailableMediaEvent (const shared_ptr<E
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
-	if (eventId < 0)
+	if (eventId < 0) {
+		lError() << "Unable to insert conference available media event of type " << eventLog->getType() << " in database.";
 		return -1;
+	}
 
 	const int audio = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog)->audioEnabled() ? 1 : 0;
 	const int video = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog)->videoEnabled() ? 1 : 0;
@@ -1272,8 +1280,10 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
 	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
-	if (eventId < 0)
+	if (eventId < 0) {
+		lError() << "Unable to insert conference subject event of type " << eventLog->getType() << " in database.";
 		return -1;
+	}
 
 	const string &subject = static_pointer_cast<ConferenceSubjectEvent>(eventLog)->getSubject();
 
@@ -1293,9 +1303,11 @@ long long MainDbPrivate::insertConferenceSubjectEvent (const shared_ptr<EventLog
 long long MainDbPrivate::insertConferenceEphemeralMessageEvent (const shared_ptr<EventLog> &eventLog) {
 #ifdef HAVE_DB_STORAGE
 	long long chatRoomId;
-	const long long &eventId = insertConferenceEvent(eventLog, &chatRoomId);
-	if (eventId < 0)
+	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
+	if (eventId < 0) {
+		lError() << "Unable to insert conference ephemeral message event of type " << eventLog->getType() << " in database.";
 		return -1;
+	}
 
 	long lifetime = static_pointer_cast<ConferenceEphemeralMessageEvent>(eventLog)->getEphemeralMessageLifetime();
 
@@ -2413,7 +2425,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 
 			return true;
 		}
-		lError() << "MainDb::addEvent() failed.";
+		lError() << "MainDb::addEvent() of type " << type << " failed.";
 		return false;
 	};
 #else
@@ -2740,10 +2752,12 @@ void MainDb::updateChatRoomEphemeralEnabled (const ConferenceId &conferenceId, b
 	"  SET ephemeral_enabled = :ephemeralEnabled"
 	" WHERE id = :chatRoomId";
 
+	int ephemeralEnabledInt = ephemeralEnabled ? 1 : 0;
+
 	L_DB_TRANSACTION {
 		L_D();
 		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
-		*d->dbSession.getBackendSession() << query, soci::use(ephemeralEnabled ? 1:0), soci::use(dbChatRoomId);
+		*d->dbSession.getBackendSession() << query, soci::use(ephemeralEnabledInt), soci::use(dbChatRoomId);
 
 		tr.commit();
 	};

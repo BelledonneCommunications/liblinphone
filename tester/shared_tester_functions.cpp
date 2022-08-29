@@ -408,5 +408,3 @@ end:
 	bctbx_socket_close(sock);
 	return err;
 }
-
-

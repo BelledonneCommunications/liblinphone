@@ -68,7 +68,6 @@ public:
 	LinphoneCallCbsRemoteRecordingCb remoteRecordingCb;
 };
 
-
 class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>, 
 				public CoreAccessor, 
 				public CallSessionListener,

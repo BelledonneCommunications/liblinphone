@@ -300,11 +300,13 @@ int SalSubscribeOp::subscribe (const string &eventName, int expires, const SalBo
 }
 
 int SalSubscribeOp::accept () {
-	auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
-	auto expiresHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
-	auto response = createResponseFromRequest(request, 200);
-	belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(expiresHeader));
-	belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+	if (mPendingServerTransaction) {
+		auto request = belle_sip_transaction_get_request(BELLE_SIP_TRANSACTION(mPendingServerTransaction));
+		auto expiresHeader = belle_sip_message_get_header_by_type(request, belle_sip_header_expires_t);
+		auto response = createResponseFromRequest(request, 200);
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(response), BELLE_SIP_HEADER(expiresHeader));
+		belle_sip_server_transaction_send_response(mPendingServerTransaction, response);
+	}
 	return 0;
 }
 

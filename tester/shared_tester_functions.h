@@ -40,7 +40,6 @@ void check_media_stream(LinphoneCall *call, bool_t is_null);
 void check_local_desc_stream (LinphoneCall *call);
 void check_result_desc_rtp_rtcp_ports (LinphoneCall *call, int rtp_port, int rtcp_port);
 
-
 int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type);
 
 #ifdef __cplusplus

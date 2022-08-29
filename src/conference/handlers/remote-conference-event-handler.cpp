@@ -77,18 +77,32 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 		return;
 	}
 
+	const auto & core = conf->getCore();
+	auto chatRoom = core->findChatRoom(getConferenceId());
+
 	IdentityAddress entityAddress(confInfo->getEntity().c_str());
 	if (entityAddress != getConferenceId().getPeerAddress())
 		return;
+
+	bool isFullState = confInfo->getState() == StateType::full;
+
+	if (waitingFullState && !isFullState) {
+		lError() << "Unable to process received NOTIFY because conference " << conf->getConferenceAddress() << " is waiting a full state";
+		return;
+	} else {
+		waitingFullState = false;
+	}
 
 	auto &confDescription = confInfo->getConferenceDescription();
 
 	// 1. Compute event time.
 	time_t creationTime = time(nullptr);
 	{
-		auto &freeText = confDescription->getFreeText();
-		if (freeText.present())
-			creationTime = static_cast<time_t>(Utils::stoll(freeText.get()));
+		if (confDescription.present()) {
+			auto &freeText = confDescription->getFreeText();
+			if (freeText.present())
+				creationTime = static_cast<time_t>(Utils::stoll(freeText.get()));
+		}
 	}
 
 	// 2. Update last notify.
@@ -99,13 +113,12 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 			if (getLastNotify() >= notifyVersion) {
 				lWarning() << "Ignoring conference notify for: " << getConferenceId() << ", notify version received is: "
 					<< notifyVersion << ", should be stricly more than last notify id of conference: " << getLastNotify();
+				requestFullState();
 				return;
 			}
 			conf->setLastNotify(version.get());
 		}
 	}
-
-	bool isFullState = confInfo->getState() == StateType::full;
 
 	// 3. Notify ephemeral settings, media, subject and keywords.
 	if (confDescription.present()) {
@@ -162,8 +175,6 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				auto ephemeralLifetime = ephemeral.getLifetime();
 				auto ephemeralMode = ephemeral.getMode();
 
-				const auto & core = conf->getCore();
-				auto chatRoom = core->findChatRoom(getConferenceId());
 				std::shared_ptr<LinphonePrivate::ClientGroupChatRoom> cgcr = nullptr;
 				if (chatRoom && (chatRoom->getConference().get() == conf)) {
 					cgcr = dynamic_pointer_cast<LinphonePrivate::ClientGroupChatRoom>(chatRoom);
@@ -200,8 +211,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	}
 
-	if (isFullState)
+	auto oldParticipants = conf->getParticipants();
+	if (isFullState) {
 		confListener->onParticipantsCleared();
+	}
 
 	auto &users = confInfo->getUsers();
 	if (!users.present()) return;
@@ -212,6 +225,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 		StateType state = user.getState();
 
 		shared_ptr<Participant> participant = conf->findParticipant(address);
+
+		const auto & pIt = std::find_if(oldParticipants.cbegin(), oldParticipants.cend(), [&address] (const auto & currentParticipant) {
+			return (address == currentParticipant->getAddress().asAddress());
+		});
 
 		if (state == StateType::deleted) {
 			if (conf->isMe(address)) {
@@ -241,7 +258,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				participant = Participant::create(conf,address);
 				conf->participants.push_back(participant);
 
-				if (!isFullState) {
+				if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()))) {
 					conf->notifyParticipantAdded(
 						creationTime,
 						isFullState,
@@ -258,7 +275,8 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 			participant = conf->findParticipant(address);
 
 		if (!participant) {
-			lWarning() << "Participant " << address.asString() << " is not in the list of participants however it is trying to change the list of devices or change role!";
+			lDebug() << "Participant " << address.asString() << " is not in the list of participants however it is trying to change the list of devices or change role! Resubscribing to conference " << conf->getConferenceAddress() << " to clear things up.";
+			requestFullState();
 		} else {
 
 			auto &roles = user.getRoles();
@@ -373,6 +391,40 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	}
 
 	if (isFullState) {
+		auto currentParticipants = conf->getParticipants();
+		// Send participant and participant device removed notifys if the full state has less participants than the current chat room
+		for (const auto & p : oldParticipants) {
+			const auto & pIt = std::find_if(currentParticipants.cbegin(), currentParticipants.cend(), [&p] (const auto & currentParticipant) {
+				return (p->getAddress() == currentParticipant->getAddress());
+			});
+			for (const auto & d : p->getDevices()) {
+				bool deviceFound = false;
+				if (pIt == currentParticipants.cend()) {
+					deviceFound = false;
+				} else {
+					const auto & currentDevices = (*pIt)->getDevices();
+					const auto & dIt = std::find_if(currentDevices.cbegin(), currentDevices.cend(), [&d] (const auto & currentDevice) {
+						return (d->getAddress() == currentDevice->getAddress());
+					});
+					deviceFound = (dIt != currentDevices.cend());
+				}
+				if (!deviceFound) {
+					conf->notifyParticipantDeviceRemoved(
+						creationTime,
+						isFullState,
+						p,
+						d
+					);
+				}
+			}
+			if (pIt == currentParticipants.cend()) {
+				conf->notifyParticipantRemoved(
+					creationTime,
+					isFullState,
+					p
+				);
+			}
+		}
 		confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
 		conf->notifyFullState();
 		if (conf->getState() == ConferenceInterface::State::CreationPending) {
@@ -380,6 +432,13 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 			conf->setState(ConferenceInterface::State::Created);
 		}
 	}
+}
+
+void RemoteConferenceEventHandler::requestFullState() {
+	lInfo() << "Requesting full state for conference " << conf->getConferenceAddress();
+	unsubscribe();
+	conf->setLastNotify(0);
+	subscribe(getConferenceId());
 }
 
 LinphoneMediaDirection RemoteConferenceEventHandler::mediaStatusToMediaDirection (MediaStatusType status) {
@@ -473,6 +532,7 @@ void RemoteConferenceEventHandler::invalidateSubscription () {
 void RemoteConferenceEventHandler::subscribe (const ConferenceId &conferenceId) {
 	conf->setConferenceId(conferenceId);
 	subscriptionWanted = true;
+	waitingFullState = (getLastNotify() == 0);
 	subscribe();
 }
 

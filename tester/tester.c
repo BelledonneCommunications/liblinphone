@@ -2519,6 +2519,14 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 	linphone_content_unref(content);
 }
 
+void linphone_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *content){
+	LinphoneCoreManager *mgr;
+	mgr = get_manager(lc);
+	mgr->stat.number_of_NotifySent++;
+
+	linphone_event_set_user_data(lev, (void*)linphone_content_copy(content));
+}
+
 void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
 	LinphoneCoreManager *mgr;
 	const char * ua = linphone_event_get_custom_header(lev, "User-Agent");
