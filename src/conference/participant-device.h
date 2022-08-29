@@ -102,7 +102,7 @@ public:
 	std::shared_ptr<Participant> getParticipant () const;
 	void setSession (std::shared_ptr<CallSession> session);
 	inline State getState () const { return mState; }
-	void setState (State newState);
+	void setState (State newState, bool notify = true);
 	inline void setJoiningMethod (JoiningMethod joiningMethod) { mJoiningMethod = joiningMethod; };
 	inline JoiningMethod getJoiningMethod () const { return mJoiningMethod; };
 	void setDisconnectionData(bool initiated, int code, LinphoneReason reason);
@@ -187,6 +187,7 @@ private:
 	LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 	bool computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 	LinphoneMediaDirection getStreamDirectionFromSession(const LinphoneStreamType type) const;
+	static bool isLeavingState(const ParticipantDevice::State & state);
 
 	L_DISABLE_COPY(ParticipantDevice);
 };

@@ -38,9 +38,14 @@ typedef struct _SalOp SalOp;
 #ifdef __cplusplus
 LINPHONE_BEGIN_NAMESPACE
 	class SalMediaDescription;
+	class SalEventOp;
+	class SalSubscribeOp;
 LINPHONE_END_NAMESPACE
 LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
 LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
+extern "C" {
+	LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
+}
 #endif
 
 typedef enum _LinphoneProxyConfigAddressComparisonResult{
@@ -296,6 +301,18 @@ LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCal
 LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
 LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
+
+LINPHONE_PUBLIC LinphoneContent * linphone_content_copy(const LinphoneContent *ref);
+
+LINPHONE_PUBLIC void sal_custom_header_unref(SalCustomHeader *ch);
+LINPHONE_PUBLIC SalCustomHeader *sal_custom_header_append(SalCustomHeader *ch, const char *name, const char *value);
+
+LINPHONE_PUBLIC SalAddress * sal_address_clone(const SalAddress *addr);
+LINPHONE_PUBLIC void sal_address_unref(SalAddress *addr);
+
+LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
+
+LINPHONE_PUBLIC void linphone_participant_device_set_state (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceState state);
 
 #endif  // !defined(__cplusplus)
 

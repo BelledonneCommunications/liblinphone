@@ -823,6 +823,14 @@ void SalOp::assignRecvHeaders (belle_sip_message_t *message) {
 		mRecvCustomHeaders = reinterpret_cast<SalCustomHeader *>(message);
 }
 
+void SalOp::setRecvCustomHeaders (SalCustomHeader *ch) {
+	assignRecvHeaders(reinterpret_cast<belle_sip_message_t *>(ch));
+}
+
+void SalOp::overrideRemoteContact (const string &value) {
+	setRemoteContact(value);
+}
+
 void SalOp::setRemoteContact (const string &value) {
 	assignAddress(&mRemoteContactAddress, value);
 	mRemoteContact = value; // To preserve header params

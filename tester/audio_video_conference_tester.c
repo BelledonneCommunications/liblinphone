@@ -464,7 +464,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	} else {
 		if(focus_is_up) {
 			lcs2=bctbx_list_append(lcs2,focus->lc);
-			add_calls_to_remote_conference(lcs2, focus, marie, new_participants, NULL);
+			add_calls_to_remote_conference(lcs2, focus, marie, new_participants, NULL, FALSE);
 
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -501,7 +501,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(marie_call_pauline));
 		BC_ASSERT_TRUE(linphone_call_is_in_conference(marie_call_pauline));
 	} else {
-		add_calls_to_remote_conference(lcs, focus, marie, new_participants, NULL);
+		add_calls_to_remote_conference(lcs, focus, marie, new_participants, NULL, TRUE);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -1052,7 +1052,7 @@ static void simple_conference_with_admin_changed(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 	participants=bctbx_list_append(participants,chloe);
-	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL);
+	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -1311,7 +1311,7 @@ static void simple_conference_with_participant_removal_from_non_admin(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 	participants=bctbx_list_append(participants,chloe);
-	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL);
+	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL, FALSE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -1429,7 +1429,7 @@ static void simple_conference_with_participant_addition_from_non_admin(void) {
 	participants=bctbx_list_append(participants,michelle);
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
-	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL);
+	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL, TRUE);
 
 	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
 	wait_for_list(lcs,NULL,0,1000);
@@ -1651,7 +1651,7 @@ static void simple_conference_with_subject_change_from_non_admin(void) {
 	participants=bctbx_list_append(participants,michelle);
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
-	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL);
+	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, NULL, TRUE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -1985,7 +1985,7 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateInstantiated, 1, 5000));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 
-	add_calls_to_remote_conference(lcs, focus_mgr, marie, participants, conf);
+	add_calls_to_remote_conference(lcs, focus_mgr, marie, participants, conf, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &focus_mgr->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
@@ -2330,7 +2330,7 @@ static void simple_conference_with_user_defined_layout(const LinphoneConferenceL
 		bctbx_list_t* participants2=NULL;
 		participants2=bctbx_list_append(participants2,chloe);
 		all_manangers_in_conf = bctbx_list_append(all_manangers_in_conf, chloe);
-		add_calls_to_remote_conference(lcs2, focus_mgr, marie, participants2, conf);
+		add_calls_to_remote_conference(lcs2, focus_mgr, marie, participants2, conf, TRUE);
 		bctbx_list_free(participants2);
 		stats marie_stats = marie->stat;
 		linphone_conference_enter(conf);
@@ -2717,7 +2717,7 @@ static void simple_conference_with_subject_change_from_admin_base(bool_t enable_
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 0, int, "%0d");
 
-	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, conf);
+	add_calls_to_remote_conference(lcs, (LinphoneCoreManager *)focus, marie, participants, conf, FALSE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -3371,7 +3371,7 @@ static void video_conference_by_merging_calls(void){
 	// She adds Pauline and Laure to the conference.
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_remote_conference(lcs, focus_mgr, marie, new_participants, conf);
+	add_calls_to_remote_conference(lcs, focus_mgr, marie, new_participants, conf, TRUE);
 
 	// Now check that both Pauline and Laure have video.
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -6362,7 +6362,8 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference), conf_parts_no, int, "%d");
 
 		// NOTIFY to resend list of conference participants
-		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_devices_joined,marie_stats.number_of_participant_devices_joined+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_participant_devices_joined,pauline_stats.number_of_participant_devices_joined+1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_participant_devices_joined,marie_stats.number_of_participant_devices_joined+1,3000));
 
 		// Notify that Pauline media capabilities changed
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_participant_devices_joined,michelle_stats.number_of_participant_devices_joined+1,3000));
@@ -7506,7 +7507,7 @@ static void remote_participant_adds_video_during_conference(void) {
 	linphone_conference_params_unref(conf_params);
 	BC_ASSERT_PTR_NOT_NULL(conf);
 
-	add_calls_to_remote_conference(lcs, focus_mgr, marie, participants, conf);
+	add_calls_to_remote_conference(lcs, focus_mgr, marie, participants, conf, FALSE);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
@@ -10899,7 +10900,7 @@ static void conference_mix_created_by_merging_video_calls_base (LinphoneConferen
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_remote_conference(lcs, focus_mgr, marie, new_participants, conf);
+	add_calls_to_remote_conference(lcs, focus_mgr, marie, new_participants, conf, FALSE);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 

@@ -831,6 +831,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		lev = linphone_event_new_with_out_of_dialog_op(lc,op,LinphoneSubscriptionOutgoing,eventname);
 		lev->unref_when_terminated = TRUE;
 	}
+	linphone_event_ref(lev);
 	{
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 		if (ct) {
@@ -847,6 +848,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 			linphone_event_set_state(lev,linphone_subscription_state_from_sal(st));
 		}
 	}
+	linphone_event_unref(lev);
 }
 
 static void subscribe_received(SalSubscribeOp *op, const char *eventname, const SalBodyHandler *body_handler){

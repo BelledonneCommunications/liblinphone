@@ -1051,6 +1051,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 	// Notify to everyone the retirement of this device.
 	auto deviceEvent = q->getConference()->notifyParticipantDeviceRemoved(time(nullptr), false, participant, participantDevice);
 	q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
+
 	// First set it as left, so that it may eventually trigger the destruction of the chatroom if no device are present for any participant.
 	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left);
 	participantCopy->removeDevice(deviceAddress);

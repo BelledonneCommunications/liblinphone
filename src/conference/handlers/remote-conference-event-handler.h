@@ -75,9 +75,11 @@ protected:
 	LinphoneEvent *lev = nullptr;
 
 	bool subscriptionWanted = false;
+	bool waitingFullState = false;
 
 private:
 	void unsubscribePrivate ();
+	void requestFullState();
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

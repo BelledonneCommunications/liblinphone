@@ -308,6 +308,11 @@ void linphone_core_notify_network_reachable(LinphoneCore *lc, bool_t reachable) 
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body) {
+	NOTIFY_IF_EXIST(notify_sent, lc, lev, body);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *notified_event, const LinphoneContent *body) {
 	NOTIFY_IF_EXIST_INTERNAL(notify_received, linphone_event_is_internal(lev), lc, lev, notified_event, body);
 	cleanup_dead_vtable_refs(lc);

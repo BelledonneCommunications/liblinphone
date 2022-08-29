@@ -208,13 +208,34 @@ void ParticipantDevice::setToTag (const std::string &tag) {
 	mToTag = tag;
 }
 
-void ParticipantDevice::setState (State newState) {
+bool ParticipantDevice::isLeavingState(const ParticipantDevice::State & state) {
+	switch (state) {
+		case ParticipantDevice::State::ScheduledForJoining:
+		case ParticipantDevice::State::Joining:
+		case ParticipantDevice::State::Alerting:
+		case ParticipantDevice::State::Present:
+		case ParticipantDevice::State::OnHold:
+		case ParticipantDevice::State::MutedByFocus:
+			return false;
+		case ParticipantDevice::State::ScheduledForLeaving:
+		case ParticipantDevice::State::Leaving:
+		case ParticipantDevice::State::Left:
+			return true;
+	}
+	return false;
+}
+
+void ParticipantDevice::setState (State newState, bool notify) {
 	if (mState != newState) {
+		const auto currentStateLeavingState = ParticipantDevice::isLeavingState(mState);
+		const auto newStateLeavingState = ParticipantDevice::isLeavingState(newState);
+		// Send NOTIFY only if not transitionig from a leaving state to another one
+		const bool sendNotify = !(newStateLeavingState && currentStateLeavingState) && notify;
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
 		const auto & conference = getConference();
-		if (conference) {
+		if (conference && sendNotify) {
 			conference->notifyParticipantDeviceStateChanged (ms_time(nullptr), false, getParticipant(), getSharedFromThis());
 		}
 	}

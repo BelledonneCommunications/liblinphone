@@ -97,8 +97,10 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 			if (device) {
 				vector<string> acceptedContents = vector<string>();
 				const auto message = (belle_sip_message_t*)event->op->getRecvCustomHeaders();
-				for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
-					acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+				if (message) {
+					for (belle_sip_header_t *acceptHeader=belle_sip_message_get_header(message,"Accept"); acceptHeader != NULL; acceptHeader = belle_sip_header_get_next(acceptHeader)) {
+						acceptedContents.push_back(L_C_TO_STRING(belle_sip_header_get_unparsed_value(acceptHeader)));
+					}
 				}
 				const auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
 				const auto ephemeral = protocols.find("ephemeral");
@@ -197,6 +199,5 @@ shared_ptr<ConferenceAvailableMediaEvent> LocalConference::notifyAvailableMediaC
 	++lastNotify;
 	return Conference::notifyAvailableMediaChanged (creationTime, isFullState, mediaCapabilities);
 }
-
 
 LINPHONE_END_NAMESPACE

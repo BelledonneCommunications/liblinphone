@@ -239,6 +239,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCallStatsUpdatedCb call_stats_updated; /**<Notifies on refreshing of call's statistics. */
 	LinphoneCoreInfoReceivedCb info_received; /**<Notifies an incoming informational message received.*/
 	LinphoneCoreSubscriptionStateChangedCb subscription_state_changed; /**<Notifies subscription state change */
+	LinphoneCoreCbsNotifySentCb notify_sent; /**< Notifies a an event notification, see linphone_core_subscribe() */
 	LinphoneCoreNotifyReceivedCb notify_received; /**< Notifies a an event notification, see linphone_core_subscribe() */
 	LinphoneCoreSubscribeReceivedCb subscribe_received; /**< Notifies a subscribe has been received, see linphone_core_subscribe() */
 	LinphoneCorePublishStateChangedCb publish_state_changed;/**Notifies publish state change (only from #LinphoneEvent api)*/
@@ -733,6 +734,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_subscription_state_changed(LinphoneCo
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsSubscriptionStateChangedCb linphone_core_cbs_get_subscription_state_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsNotifySentCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_notify_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsNotifySentCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsNotifySentCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsNotifySentCb linphone_core_cbs_get_notify_sent(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsNotifyReceivedCb callback.

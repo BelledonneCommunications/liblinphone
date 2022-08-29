@@ -358,6 +358,8 @@ void _linphone_participant_device_notify_stream_capability_changed(LinphoneParti
 void linphone_conference_scheduler_notify_state_changed(LinphoneConferenceScheduler *conference_scheduler, LinphoneConferenceSchedulerState state);
 void linphone_conference_scheduler_notify_invitations_sent(LinphoneConferenceScheduler *conference_scheduler, bctbx_list_t *failed_invites);
 
+LINPHONE_PUBLIC void linphone_participant_device_set_state (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceState state);
+
 LINPHONE_PUBLIC bool_t linphone_conference_params_is_static(const LinphoneConferenceParams *params);
 
 /*account*/
@@ -491,7 +493,8 @@ void linphone_configure_op_2(LinphoneCore *lc, LinphonePrivate::SalOp *op, const
 void linphone_configure_op_with_proxy(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact, LinphoneProxyConfig *proxy);
 void linphone_configure_op_with_account(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact, LinphoneAccount *account);
 LinphoneContent * linphone_content_new(void);
-LinphoneContent * linphone_content_copy(const LinphoneContent *ref);
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
+LINPHONE_PUBLIC LinphoneContent * linphone_content_copy(const LinphoneContent *ref);
 SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bool parseMultipart = true);
 SalReason linphone_reason_to_sal(LinphoneReason reason);
 LinphoneReason linphone_reason_from_sal(SalReason reason);
@@ -500,7 +503,9 @@ void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
 SalStreamType linphone_stream_type_to_sal(LinphoneStreamType type);
 LinphoneEventCbs *linphone_event_cbs_new(void);
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
-LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
+
+// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
+LINPHONE_PUBLIC LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
 LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
@@ -510,7 +515,7 @@ void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *c
 LinphoneEvent *linphone_event_new_with_out_of_dialog_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
 void linphone_event_set_internal(LinphoneEvent *lev, bool_t internal);
 bool_t linphone_event_is_internal(LinphoneEvent *lev);
-void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
+LINPHONE_PUBLIC void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state);
 void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState state);
 void _linphone_event_notify_notify_response(LinphoneEvent *lev);
 LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatus ss);
@@ -643,6 +648,7 @@ void linphone_core_notify_info_received(LinphoneCore *lc, LinphoneCall *call, co
 void linphone_core_notify_configuring_status(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);
 void linphone_core_notify_network_reachable(LinphoneCore *lc, bool_t reachable);
 
+void linphone_core_notify_notify_sent(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body);
 void linphone_core_notify_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *notified_event, const LinphoneContent *body);
 void linphone_core_notify_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body);
 void linphone_core_notify_subscription_state_changed(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state);

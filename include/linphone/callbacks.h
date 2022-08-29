@@ -534,6 +534,15 @@ typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *c
 **/
 
 /**
+ * Callback prototype for notifying the application about notification that is being sent.
+ * @param core #LinphoneCore object @notnil
+ * @param linphone_event the #LinphoneEvent received @notnil
+ * @param notified_event The event as string @notnil
+ * @param body the #LinphoneContent of the event @notnil
+ */
+typedef void (*LinphoneCoreCbsNotifySentCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const LinphoneContent *body);
+
+/**
  * Callback prototype for notifying the application about notification received from the network.
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil

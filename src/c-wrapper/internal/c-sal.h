@@ -151,7 +151,7 @@ const char* sal_transport_to_string(SalTransport transport);
 SalTransport sal_transport_parse(const char*);
 /* Address manipulation API*/
 LINPHONE_PUBLIC SalAddress * sal_address_new(const char *uri);
-SalAddress * sal_address_clone(const SalAddress *addr);
+LINPHONE_PUBLIC SalAddress * sal_address_clone(const SalAddress *addr);
 SalAddress * sal_address_ref(SalAddress *addr);
 LINPHONE_PUBLIC void sal_address_unref(SalAddress *addr);
 const char *sal_address_get_scheme(const SalAddress *addr);
@@ -484,8 +484,8 @@ extern "C" {
 #endif
 
 SalCustomHeader *sal_custom_header_ref(SalCustomHeader *ch);
-void sal_custom_header_unref(SalCustomHeader *ch);
-SalCustomHeader *sal_custom_header_append(SalCustomHeader *ch, const char *name, const char *value);
+LINPHONE_PUBLIC void sal_custom_header_unref(SalCustomHeader *ch);
+LINPHONE_PUBLIC SalCustomHeader *sal_custom_header_append(SalCustomHeader *ch, const char *name, const char *value);
 const char *sal_custom_header_find(const SalCustomHeader *ch, const char *name);
 SalCustomHeader *sal_custom_header_remove(SalCustomHeader *ch, const char *name);
 void sal_custom_header_free(SalCustomHeader *ch);

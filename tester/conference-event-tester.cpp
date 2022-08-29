@@ -36,9 +36,12 @@
 #include "private.h"
 #include "tester_utils.h"
 #include "tools/private-access.h"
+#include "shared_tester_functions.h"
 
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference.h"
+
+#include "xml/conference-info.h"
 
 using namespace LinphonePrivate;
 using namespace std;
@@ -142,6 +145,140 @@ static const char *first_notify = \
 "        <type>audio</type>"\
 "        <label>34567</label>"\
 "        <src-id>534232</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"     </user>"\
+"    </users>"\
+"   </conference-info>";
+
+static const char *sync_full_state_notify = \
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?> "\
+"   <conference-info"\
+"    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
+"    entity=\"%s\""\
+"    state=\"full\" version=\"%0d\">"\
+"   <!--"\
+"     CONFERENCE INFO"\
+"   -->"\
+"    <conference-description xmlns:p1=\"linphone:xml:ns:conference-info-linphone-extension\">"\
+"     <subject>Agenda: This month's goals</subject>"\
+"      <service-uris>"\
+"       <entry>"\
+"        <uri>http://sharepoint/salesgroup/</uri>"\
+"        <purpose>web-page</purpose>"\
+"       </entry>"\
+"      </service-uris>"\
+"     </conference-description>"\
+"   <!--"\
+"      CONFERENCE STATE"\
+"   -->"\
+"    <conference-state>"\
+"     <user-count>33</user-count>"\
+"    </conference-state>"\
+"   <!--"\
+"     USERS"\
+"   -->"\
+"    <users>"\
+"     <user entity=\"sip:bob@example.com\" state=\"full\">"\
+"      <display-text>Bob Hoskins</display-text>"\
+"   <!--"\
+"     ENDPOINTS"\
+"   -->"\
+"      <endpoint entity=\"sip:bob@pc33.example.com\">"\
+"       <display-text>Bob's Laptop</display-text>"\
+"       <status>disconnected</status>"\
+"       <disconnection-method>departed</disconnection-method>"\
+"       <disconnection-info>"\
+"        <when>2005-03-04T20:00:00Z</when>"\
+"        <reason>bad voice quality</reason>"\
+"        <by>sip:mike@example.com</by>"\
+"       </disconnection-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>432424</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"     </user>"\
+"   <!--"\
+"     USER"\
+"   -->"\
+"     <user entity=\"sip:alice@example.com\" state=\"full\">"\
+"      <display-text>Alice</display-text>"\
+"      <roles>"\
+"      	<entry>admin</entry>"\
+"      	<entry>participant</entry>"\
+"      </roles>"\
+"   <!--"\
+"     ENDPOINTS"\
+"   -->"\
+"      <endpoint entity=\"sip:4kfk4j392jsu@example.com;grid=433kj4j3u\">"\
+"       <status>connected</status>"\
+"       <joining-method>dialed-out</joining-method>"\
+"       <joining-info>"\
+"        <when>2005-03-04T20:00:00Z</when>"\
+"        <by>sip:mike@example.com</by>"\
+"       </joining-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>534232</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"      <endpoint entity=\"sip:aliced48ed45@example.com;grid=54def54e8\">"\
+"       <status>connected</status>"\
+"       <joining-method>dialed-out</joining-method>"\
+"       <joining-info>"\
+"        <when>2005-03-04T20:00:00Z</when>"\
+"        <by>sip:mike@example.com</by>"\
+"       </joining-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>534232</src-id>"\
+"        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"     </user>"\
+"   <!--"\
+"     USER"\
+"   -->"\
+"     <user entity=\"sip:frank@example.com\" state=\"full\">"\
+"      <display-text>Bob Hoskins</display-text>"\
+"   <!--"\
+"     ENDPOINTS"\
+"   -->"\
+"      <endpoint entity=\"sip:frank@pc33.example.com\">"\
+"       <display-text>Frank's Laptop</display-text>"\
+"       <status>connected</status>"\
+"       <joining-method>dialed-out</joining-method>"\
+"       <joining-info>"\
+"        <when>2005-03-04T20:06:00Z</when>"\
+"        <by>sip:mike@example.com</by>"\
+"       </joining-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34567</label>"\
+"        <src-id>432424</src-id>"\
 "        <status>sendrecv</status>"\
 "       </media>"\
 "      </endpoint>"\
@@ -380,6 +517,43 @@ static const char *participant_not_added_notify = \
 "        <label>34567</label>"\
 "        <src-id>432424</src-id>"\
 "        <status>sendrecv</status>"\
+"       </media>"\
+"      </endpoint>"\
+"     </user>"\
+"    </users>"\
+"   </conference-info>";
+
+static const char *participant_device_not_added_notify = \
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?> "\
+"   <conference-info"\
+"    xmlns=\"urn:ietf:params:xml:ns:conference-info\""\
+"    entity=\"%s\""\
+"    state=\"partial\" version=\"%0d\">"\
+"   <!--"\
+"     USERS"\
+"   -->"\
+"    <users state=\"full\">"\
+"     <user entity=\"sip:frank@example.com\" state=\"partial\">"\
+"   <!--"\
+"     ENDPOINTS"\
+"   -->"\
+"      <endpoint entity=\"sip:frank@pc34.example.com\" state=\"partial\">"\
+"       <display-text>Frank's Laptop</display-text>"\
+"       <status>connected</status>"\
+"       <joining-method>dialed-out</joining-method>"\
+"       <joining-info>"\
+"        <when>2005-03-04T20:01:00Z</when>"\
+"        <by>sip:mike@example.com</by>"\
+"       </joining-info>"\
+"   <!--"\
+"     MEDIA"\
+"   -->"\
+"       <media id=\"1\">"\
+"        <display-text>main audio</display-text>"\
+"        <type>audio</type>"\
+"        <label>34517</label>"\
+"        <src-id>432494</src-id>"\
+"        <status>sendonly</status>"\
 "       </media>"\
 "      </endpoint>"\
 "     </user>"\
@@ -962,6 +1136,7 @@ void participant_added_parsing() {
 
 void participant_not_added_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	setup_mgr_for_conference(marie, NULL);
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
 	char *confAddressStr = linphone_address_as_string(confAddress);
 	Address addr(confAddressStr);
@@ -975,8 +1150,13 @@ void participant_not_added_parsing() {
 	char *notify = new char[size];
 	size_t size2 = strlen(participant_not_added_notify) + strlen(confUri);
 	char *notify_not_added = new char[size2];
+	size_t size3 = strlen(sync_full_state_notify) + strlen(confUri) + sizeof(int);
+	char *notify_full_state_sync = new char[size3];
+	size_t size4 = strlen(participant_device_not_added_notify) + strlen(confUri) + sizeof(int);
+	char *notify_device_not_added = new char[size4];
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
+	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getLocalAddress()) = ConferenceAddress(linphone_core_get_identity(marie->lc));
 	snprintf(notify, size, first_notify, confUri);
 
 	Content content;
@@ -988,6 +1168,7 @@ void participant_not_added_parsing() {
 
 	char * bobAddrStr = linphone_address_as_string(bobAddr);
 	char * aliceAddrStr = linphone_address_as_string(aliceAddr);
+	char *frankAddrStr = linphone_address_as_string(frankAddr);
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 2, int, "%d");
@@ -999,6 +1180,7 @@ void participant_not_added_parsing() {
 	bctbx_free(bobAddrStr);
 	bctbx_free(aliceAddrStr);
 
+	stats initial_marie_stats = marie->stat;
 	snprintf(notify_not_added, size2, participant_not_added_notify, confUri);
 
 	Content content_not_added;
@@ -1009,9 +1191,40 @@ void participant_not_added_parsing() {
 	delete[] notify_not_added;
 
 	BC_ASSERT_EQUAL((int)tester->participants.size(), 2, int, "%d");
-	char *frankAddrStr = linphone_address_as_string(frankAddr);
 	BC_ASSERT_FALSE(tester->participants.find(frankAddrStr) != tester->participants.end());
+
+	// Add a short wait to ensure that all NOTIFYs are replied
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_marie_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
+
+	snprintf(notify_full_state_sync, size3, sync_full_state_notify, confUri, tester->handler->getLastNotify()+1);
+	Content content_full_state_updated;
+	content_full_state_updated.setBodyFromUtf8(notify_full_state_sync);
+	content_full_state_updated.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_full_state_updated);
+
+	delete[] notify_full_state_sync;
+
+	BC_ASSERT_EQUAL((int)tester->participants.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 3, int, "%d");
+	BC_ASSERT_TRUE(tester->participants.find(frankAddrStr) != tester->participants.end());
+
+	snprintf(notify_device_not_added, size4, participant_device_not_added_notify, confUri, tester->handler->getLastNotify()+1);
+
+	initial_marie_stats = marie->stat;
+	Content content_device_not_added;
+	content_device_not_added.setBodyFromUtf8(notify_device_not_added);
+	content_device_not_added.setContentType(ContentType::ConferenceInfo);
+	tester->handler->notifyReceived(content_device_not_added);
+
+	delete[] notify_device_not_added;
+
+	BC_ASSERT_EQUAL((int)tester->participants.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 3, int, "%d");
+	BC_ASSERT_TRUE(tester->participants.find(frankAddrStr) != tester->participants.end());
 	bctbx_free(frankAddrStr);
+
+	// Add a short wait to ensure that all NOTIFYs are replied
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_marie_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
 
 	linphone_address_unref(bobAddr);
 	linphone_address_unref(aliceAddr);
@@ -1895,20 +2108,24 @@ void send_subject_changed_notify () {
 }
 
 void send_device_added_notify() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_notify_sent(cbs, linphone_notify_sent);
+	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
+	linphone_core_cbs_unref(cbs);
+
 	char *identityStr = linphone_address_as_string(pauline->identity);
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	shared_ptr<LocalConferenceTester> localConf = make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
-	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
+	LinphoneAddress *cBobAddr = linphone_core_interpret_url(pauline->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
 	bctbx_free(bobAddrStr);
 	linphone_address_unref(cBobAddr);
-	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
+	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(pauline->lc, aliceUri);
 	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
 	Address aliceAddr(aliceAddrStr);
 	bctbx_free(aliceAddrStr);
@@ -1939,14 +2156,54 @@ void send_device_added_notify() {
 	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
 
+	for (const auto & p : localConf->getParticipants()) {
+		for (const auto & d : p->getDevices()) {
+			linphone_participant_device_set_state(d->toC(), LinphoneParticipantDeviceStatePresent);
+		}
+	}
+
+	stats initial_pauline_stats = pauline->stat;
+
+	auto op = new SalSubscribeOp(pauline->lc->sal.get());
+	SalAddress * toAddr = sal_address_new(linphone_core_get_identity(pauline->lc));
+	op->setToAddress(toAddr);
+	op->setFrom(bobAddr.asString().c_str());
+	op->overrideRemoteContact(bobAddr.asString().c_str());
+	LinphoneAccount * default_account = linphone_core_get_default_account(pauline->lc);
+	op->setRealm(linphone_account_params_get_realm(linphone_account_get_params(default_account)));
+	const LinphoneAddress *contact = linphone_account_get_contact_address(default_account);
+	SalAddress * contactAddr = sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
+	op->setContactAddress(contactAddr);
+	SalCustomHeader* ch = sal_custom_header_append(NULL, "Last-Notify-Version", std::to_string(localConf->getLastNotify()+10).c_str());
+	op->setRecvCustomHeaders(ch);
+
+	LinphoneEvent *lev=linphone_event_new_with_op(pauline->lc, op, LinphoneSubscriptionIncoming, "conference");
+	linphone_event_set_state(lev,LinphoneSubscriptionIncomingReceived);
+
+	localConf->subscribeReceived(lev);
+
+	linphone_event_unref(lev);
+	sal_address_unref(toAddr);
+	sal_address_unref(contactAddr);
+	sal_custom_header_unref(ch);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_NotifySent,(initial_pauline_stats.number_of_NotifySent + 1),5000));
+	void * notify_body = linphone_event_get_user_data(lev);
+	BC_ASSERT_PTR_NOT_NULL(notify_body);
+	if (notify_body) {
+		LinphoneContent * notify_content = (LinphoneContent *)notify_body;
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(notify_content), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(notify_content), "conference-info+xml");
+		BC_ASSERT_TRUE(linphone_conference_type_is_full_state(linphone_content_get_utf8_text(notify_content)));
+		linphone_content_unref(notify_content);
+	}
+
 	localConf = nullptr;
 	alice = nullptr;
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 void send_device_removed_notify() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	char *identityStr = linphone_address_as_string(pauline->identity);
 	Address addr(identityStr);
@@ -1954,12 +2211,12 @@ void send_device_removed_notify() {
 	shared_ptr<LocalConferenceTester> localConf = make_shared<LocalConferenceTester>(pauline->lc->cppPtr, addr, nullptr);
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
-	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
+	LinphoneAddress *cBobAddr = linphone_core_interpret_url(pauline->lc, bobUri);
 	char *bobAddrStr = linphone_address_as_string(cBobAddr);
 	Address bobAddr(bobAddrStr);
 	bctbx_free(bobAddrStr);
 	linphone_address_unref(cBobAddr);
-	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(marie->lc, aliceUri);
+	LinphoneAddress *cAliceAddr = linphone_core_interpret_url(pauline->lc, aliceUri);
 	char *aliceAddrStr = linphone_address_as_string(cAliceAddr);
 	Address aliceAddr(aliceAddrStr);
 	bctbx_free(aliceAddrStr);
@@ -1996,7 +2253,6 @@ void send_device_removed_notify() {
 
 	localConf = nullptr;
 	alice = nullptr;
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 

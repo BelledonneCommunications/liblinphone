@@ -445,6 +445,14 @@ void linphone_core_cbs_set_subscription_state_changed(LinphoneCoreCbs *cbs, Linp
 	cbs->vtable->subscription_state_changed = cb;
 }
 
+LinphoneCoreCbsNotifySentCb linphone_core_cbs_get_notify_sent(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->notify_sent;
+}
+
+void linphone_core_cbs_set_notify_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsNotifySentCb cb) {
+	cbs->vtable->notify_sent = cb;
+}
+
 LinphoneCoreCbsNotifyReceivedCb linphone_core_cbs_get_notify_received(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->notify_received;
 }

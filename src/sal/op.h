@@ -112,7 +112,10 @@ public:
 	const std::string &getCallId () const { return  mCallId; }
 	std::string getDialogId () const;
 	int getAddressFamily () const;
+	void setRecvCustomHeaders (SalCustomHeader *ch);
 	const SalCustomHeader *getRecvCustomHeaders () const { return mRecvCustomHeaders; }
+	// overrideRemoteContact: Used by testers. Do not use in production code
+	void overrideRemoteContact (const std::string &value);
 	const std::string &getRemoteContact () const { return mRemoteContact; }
 	const SalAddress *getRemoteContactAddress () const { return mRemoteContactAddress; }
 	const std::string &getRemoteUserAgent () const { return mRemoteUserAgent; }

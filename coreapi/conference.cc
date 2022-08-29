@@ -2840,9 +2840,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 					auto res = referOp->sendRefer(referToAddr.getInternalAddress());
 					referOp->unref();
 
-					if (res == 0)
-						return Conference::removeParticipant(p);
-					else {
+					if (res != 0) {
 						lError() << "Conference: could not remove participant \'" << addr << "\': REFER with BYE has failed";
 						return -1;
 					}

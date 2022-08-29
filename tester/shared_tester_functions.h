@@ -48,11 +48,12 @@ LinphoneConferenceLayout _linphone_participant_device_get_layout(const LinphoneP
 bool_t _linphone_participant_device_get_audio_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_video_enabled(const LinphoneParticipantDevice * participant_device);
 bool_t _linphone_participant_device_get_real_time_text_enabled(const LinphoneParticipantDevice * participant_device);
+
+bool_t linphone_conference_type_is_full_state(const char * text);
 void check_video_conference(bctbx_list_t *lcs, LinphoneCoreManager* lc1, LinphoneCoreManager *lc2, LinphoneConferenceLayout layout);
 void check_video_conference_with_local_participant(bctbx_list_t *participants, LinphoneConferenceLayout layout, bool_t local_partifipant);
 const char * _linphone_call_get_subject(LinphoneCall * call);
 void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *mgr1, LinphoneCoreManager *mgr2, LinphoneCoreManager *mgr3);
-
 
 int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type);
 
