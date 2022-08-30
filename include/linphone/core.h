@@ -276,6 +276,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsChatRoomExhumedCb chat_room_exhumed;
 	LinphoneCoreCbsAccountRegistrationStateChangedCb account_registration_state_changed;
 	LinphoneCoreCbsConferenceInfoReceivedCb conference_info_received;
+	LinphoneCoreCbsPushNotificationReceivedCb push_notification_received;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -396,6 +397,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_conference_info_received(LinphoneCore
  * @return The current conference info received callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsConferenceInfoReceivedCb linphone_core_cbs_get_conference_info_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the push notification received callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The push notification received callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_push_notification_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsPushNotificationReceivedCb cb);
+
+/**
+ * Get the push notification received callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The current push notification received callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsPushNotificationReceivedCb linphone_core_cbs_get_push_notification_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallStateChangedCb callback.
@@ -6020,6 +6035,17 @@ LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *core);
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_process_push_notification(LinphoneCore *lc, const char *call_id);
+
+/**
+ * This method is called by Android & iOS platform helpers to notify the Core of a received push notification.
+ * It will simply call Core->pushNotificationReceived() like linphone_core_process_push_notification().
+ * @param core The #LinphoneCore @notnil
+ * @param payload the payload of the push notification if any. @maybenil
+ * @param call_id the Call-ID of the MESSAGE or INVITE for which the push was received and to wait for. @maybenil
+ * @ingroup misc
+ * @donotwrap
+**/
+LINPHONE_PUBLIC void linphone_core_push_notification_received(LinphoneCore *lc, const char* payload, const char *call_id);
 
 /**
  * Get the chat message with the call_id included in the push notification body

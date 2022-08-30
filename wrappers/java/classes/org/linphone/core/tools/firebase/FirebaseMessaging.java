@@ -67,16 +67,17 @@ public class FirebaseMessaging extends FirebaseMessagingService {
         if (!CoreManager.isReady()) {
             notifyAppPushReceivedWithoutCoreAvailable();
         } else {
-            Log.i("[Push Notification] " + remoteMessageToString(remoteMessage));
-
+            Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
             if (CoreManager.instance() != null) {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
                     String callId = remoteMessage.getData().getOrDefault("call-id", "");
-                    Log.i("[Push Notification] Notifying Core we have received a push for Call-ID: " + callId);
-                    CoreManager.instance().processPushNotification(callId);
+
+                    String payload = remoteMessage.getData().toString();
+                    Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
+                    CoreManager.instance().processPushNotification(callId, payload);
                 } else {
-                    Log.i("[Push Notification] Notifying application");
+                    Log.w("[Push Notification] No Core found, notifying application directly");
                     notifyAppPushReceivedWithoutCoreAvailable();
                 }
             }

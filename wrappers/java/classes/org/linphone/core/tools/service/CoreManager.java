@@ -97,7 +97,7 @@ public class CoreManager {
     private native void reloadSoundDevices(long ptr);
     private native void enterBackground(long ptr);
     private native void enterForeground(long ptr);
-    private native void processPushNotification(long ptr, String callId);
+    private native void processPushNotification(long ptr, String callId, String payload);
 
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
@@ -206,8 +206,8 @@ public class CoreManager {
         return mCore;
     }
 
-    public void processPushNotification(String callId) {
-        processPushNotification(mCore.getNativePointer(), callId);
+    public void processPushNotification(String callId, String payload) {
+        processPushNotification(mCore.getNativePointer(), callId, payload);
     }
 
     public void onLinphoneCoreStart() {

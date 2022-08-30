@@ -631,6 +631,7 @@ void linphone_core_notify_last_call_ended(LinphoneCore *lc);
 void linphone_core_notify_audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
 void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc);
 void linphone_core_notify_conference_info_received(LinphoneCore *lc, const LinphoneConferenceInfo *conference_info);
+void linphone_core_notify_push_notification_received(LinphoneCore *lc, const char *payload);
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore* lc);

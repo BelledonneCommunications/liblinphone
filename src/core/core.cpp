@@ -1082,7 +1082,7 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
  * If not, we must start or restart them.
  */
-void Core::pushNotificationReceived (const string& callId) {
+void Core::pushNotificationReceived (const string& callId, const string& payload) {
 	L_D();
 
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
@@ -1188,6 +1188,10 @@ void Core::pushNotificationReceived (const string& callId) {
 		lc->sal->cleanUnreliableConnections();
 	}
 	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers.
+
+	char *c_payload = ms_strdup(payload.c_str());
+	linphone_core_notify_push_notification_received(lc, c_payload);
+	if (c_payload != nullptr) ms_free(c_payload);
 }
 
 int Core::getUnreadChatMessageCount () const {

@@ -261,6 +261,14 @@ LinphoneCoreCbsConferenceInfoReceivedCb linphone_core_cbs_get_conference_info_re
 	return cbs->vtable->conference_info_received;
 }
 
+void linphone_core_cbs_set_push_notification_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsPushNotificationReceivedCb cb) {
+	cbs->vtable->push_notification_received = cb;
+}
+
+LinphoneCoreCbsPushNotificationReceivedCb linphone_core_cbs_get_push_notification_received(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->push_notification_received;
+}
+
 LinphoneCoreCbsCallStateChangedCb linphone_core_cbs_get_call_state_changed(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->call_state_changed;
 }

@@ -413,6 +413,11 @@ void linphone_core_notify_conference_info_received(LinphoneCore *lc, const Linph
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_push_notification_received(LinphoneCore *lc, const char *payload) {
+	NOTIFY_IF_EXIST(push_notification_received, lc, payload);
+	cleanup_dead_vtable_refs(lc);
+}
+
 static VTableReference * v_table_reference_new(LinphoneCoreCbs *cbs, bool_t internal){
 	VTableReference *ref=ms_new0(VTableReference,1);
 	ref->valid=TRUE;

@@ -252,7 +252,7 @@
 	// It will initiate socket connections, which seems to be required.
 	// Indeed it is observed that if no network action is done in the notification handler, then
 	// iOS kills us.
-	linphone_core_process_push_notification(lc, [callId UTF8String]);
+	linphone_core_push_notification_received(lc, [userInfo.description UTF8String], [callId UTF8String]);
 }
 
 @end

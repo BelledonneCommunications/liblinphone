@@ -595,6 +595,13 @@ typedef LinphoneCoreCbsPublishStateChangedCb LinphoneCorePublishStateChangedCb;
 typedef void (*LinphoneCoreCbsConferenceInfoReceivedCb)(LinphoneCore *core, const LinphoneConferenceInfo *conference_info);
 
 /**
+ * Callback prototype for notifying the application a push notification was received.
+ * @param core #LinphoneCore object @notnil
+ * @param payload the body of the push notification, if any @maybenil
+ */
+typedef void (*LinphoneCoreCbsPushNotificationReceivedCb)(LinphoneCore *core, const char *payload);
+
+/**
  * @}
 **/
 
