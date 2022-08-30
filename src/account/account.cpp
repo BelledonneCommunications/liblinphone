@@ -628,12 +628,17 @@ std::list<SalAddress*> Account::getOtherContacts(){
 
 void Account::registerAccount () {
 	if (mParams->mRegisterEnabled) {
+
 		LinphoneAddress* proxy = linphone_address_new(mParams->mProxy.c_str());
-		char *proxy_string;
-		char *from = linphone_address_as_string(mParams->mIdentityAddress);
+		if (proxy == nullptr) {
+			lError() << "Can't register LinphoneAccount [" << this << "] without a proxy";
+			return;
+		}
+
 		lInfo() << "LinphoneAccount [" << this << "] about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
-		proxy_string=linphone_address_as_string_uri_only(proxy);
+		char *proxy_string = linphone_address_as_string_uri_only(proxy);
 		linphone_address_unref(proxy);
+
 		if (mOp)
 			mOp->release();
 		mOp = new SalRegisterOp(mCore->sal.get());
@@ -665,8 +670,7 @@ void Account::registerAccount () {
 		} else {
 			setState(LinphoneRegistrationFailed, "Registration failed");
 		}
-		ms_free(proxy_string);
-		ms_free(from);
+		if (proxy_string != nullptr) ms_free(proxy_string);
 		for (auto ct : otherContacts) sal_address_unref(ct);
 	} else {
 		/* unregister if registered*/
