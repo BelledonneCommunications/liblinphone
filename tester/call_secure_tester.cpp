@@ -628,15 +628,15 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 	if (ms_zrtp_is_PQ_available() == TRUE) {
 		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementKyb1);
 		key_agreement = bctbx_list_next(key_agreement);
-		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementSik1);
+		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementHqc1);
 		key_agreement = bctbx_list_next(key_agreement);
 		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementKyb2);
 		key_agreement = bctbx_list_next(key_agreement);
-		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementSik2);
+		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementHqc2);
 		key_agreement = bctbx_list_next(key_agreement);
 		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementKyb3);
 		key_agreement = bctbx_list_next(key_agreement);
-		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementSik3);
+		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementHqc3);
 		key_agreement = bctbx_list_next(key_agreement);
 	}
 	BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementDh2k);
@@ -648,11 +648,11 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		key_agreement = bctbx_list_next(key_agreement);
 		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementK255Kyb512);
 		key_agreement = bctbx_list_next(key_agreement);
-		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementK255Sik434);
+		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementK255Hqc128);
 		key_agreement = bctbx_list_next(key_agreement);
 		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementK448Kyb1024);
 		key_agreement = bctbx_list_next(key_agreement);
-		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementK448Sik751);
+		BC_ASSERT_TRUE((LinphoneZrtpKeyAgreement)(intptr_t)(bctbx_list_get_data(key_agreement)) == LinphoneZrtpKeyAgreementK448Hqc256);
 		key_agreement = bctbx_list_next(key_agreement);
 	}
 	BC_ASSERT_PTR_NULL(key_agreement);
@@ -689,11 +689,11 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		bctbx_list_free(ka_list);
 		ka_list=NULL;
 
-		// Use hybrid X25519/Sike434
-		ka_list = bctbx_list_append(ka_list, (void *)(intptr_t)(LinphoneZrtpKeyAgreementK255Sik434));
+		// Use hybrid X25519/HQC128
+		ka_list = bctbx_list_append(ka_list, (void *)(intptr_t)(LinphoneZrtpKeyAgreementK255Hqc128));
 		marieAlgo.key_agreement_algo = ka_list;
 		paulineAlgo.key_agreement_algo = ka_list;
-		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_SIK434};
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K255_HQC128};
 		//PQ algo should force the use of SHA512 and AES256
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		res.hash_algo = {MS_ZRTP_HASH_S512};
@@ -701,11 +701,11 @@ static void zrtp_post_quantum_key_agreement_call(void) {
 		bctbx_list_free(ka_list);
 		ka_list=NULL;
 
-		// Use hybrid X448/Sike751
-		ka_list = bctbx_list_append(ka_list, (void *)(intptr_t)(LinphoneZrtpKeyAgreementK448Sik751));
+		// Use hybrid X448/HQC256
+		ka_list = bctbx_list_append(ka_list, (void *)(intptr_t)(LinphoneZrtpKeyAgreementK448Hqc256));
 		marieAlgo.key_agreement_algo = ka_list;
 		paulineAlgo.key_agreement_algo = ka_list;
-		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_SIK751};
+		res.key_agreement_algo = {MS_ZRTP_KEY_AGREEMENT_K448_HQC256};
 		//PQ algo should force the use of SHA512 and AES256
 		res.cipher_algo = {MS_ZRTP_CIPHER_AES3};
 		res.hash_algo = {MS_ZRTP_HASH_S512};

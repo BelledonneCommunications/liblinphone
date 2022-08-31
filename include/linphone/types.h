@@ -802,13 +802,13 @@ LinphoneZrtpKeyAgreementK448 = 9,
 LinphoneZrtpKeyAgreementKyb1 = 10,
 LinphoneZrtpKeyAgreementKyb2 = 11,
 LinphoneZrtpKeyAgreementKyb3 = 12,
-LinphoneZrtpKeyAgreementSik1 = 13,
-LinphoneZrtpKeyAgreementSik2 = 14,
-LinphoneZrtpKeyAgreementSik3 = 15,
+LinphoneZrtpKeyAgreementHqc1 = 13,
+LinphoneZrtpKeyAgreementHqc2 = 14,
+LinphoneZrtpKeyAgreementHqc3 = 15,
 LinphoneZrtpKeyAgreementK255Kyb512 = 16,
-LinphoneZrtpKeyAgreementK255Sik434 = 17,
+LinphoneZrtpKeyAgreementK255Hqc128 = 17,
 LinphoneZrtpKeyAgreementK448Kyb1024 = 18,
-LinphoneZrtpKeyAgreementK448Sik751 = 19
+LinphoneZrtpKeyAgreementK448Hqc256 = 19
 } LinphoneZrtpKeyAgreement;
 
 /**

@@ -438,13 +438,13 @@ const char * linphone_call_stats_get_zrtp_key_agreement_algo (const LinphoneCall
 		case(MS_ZRTP_KEY_AGREEMENT_KYB1): return "KYBER-512";
 		case(MS_ZRTP_KEY_AGREEMENT_KYB2): return "KYBER-768";
 		case(MS_ZRTP_KEY_AGREEMENT_KYB3): return "KYBER-1024";
-		case(MS_ZRTP_KEY_AGREEMENT_SIK1): return "SIKE-434";
-		case(MS_ZRTP_KEY_AGREEMENT_SIK2): return "SIKE-610";
-		case(MS_ZRTP_KEY_AGREEMENT_SIK3): return "SIKE-751";
+		case(MS_ZRTP_KEY_AGREEMENT_HQC1): return "HQC-128";
+		case(MS_ZRTP_KEY_AGREEMENT_HQC2): return "HQC-192";
+		case(MS_ZRTP_KEY_AGREEMENT_HQC3): return "HQC-256";
 		case(MS_ZRTP_KEY_AGREEMENT_K255_KYB512): return "X25519/Kyber512";
-		case(MS_ZRTP_KEY_AGREEMENT_K255_SIK434): return "X25519/Sike434";
+		case(MS_ZRTP_KEY_AGREEMENT_K255_HQC128): return "X25519/HQC128";
 		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024): return "X448/Kyber1024";
-		case(MS_ZRTP_KEY_AGREEMENT_K448_SIK751): return "X448/Sike751";
+		case(MS_ZRTP_KEY_AGREEMENT_K448_HQC256): return "X448/HQC256";
 		default: return "Unknown Algo";
 	}
 }
@@ -457,13 +457,13 @@ bool_t linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum (const Linpho
 		case(MS_ZRTP_KEY_AGREEMENT_KYB1):
 		case(MS_ZRTP_KEY_AGREEMENT_KYB2):
 		case(MS_ZRTP_KEY_AGREEMENT_KYB3):
-		case(MS_ZRTP_KEY_AGREEMENT_SIK1):
-		case(MS_ZRTP_KEY_AGREEMENT_SIK2):
-		case(MS_ZRTP_KEY_AGREEMENT_SIK3):
+		case(MS_ZRTP_KEY_AGREEMENT_HQC1):
+		case(MS_ZRTP_KEY_AGREEMENT_HQC2):
+		case(MS_ZRTP_KEY_AGREEMENT_HQC3):
 		case(MS_ZRTP_KEY_AGREEMENT_K255_KYB512):
-		case(MS_ZRTP_KEY_AGREEMENT_K255_SIK434):
+		case(MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
 		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
-		case(MS_ZRTP_KEY_AGREEMENT_K448_SIK751):
+		case(MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
 			return TRUE;
 		default:
 			return FALSE;
