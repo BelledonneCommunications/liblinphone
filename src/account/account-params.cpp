@@ -168,7 +168,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mDialEscapePlusEnabled = !!linphone_config_get_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
 	mInternationalPrefix = linphone_config_get_string(config, key, "dial_prefix", mInternationalPrefix.c_str());
 	mUseInternationalPrefixForCallsAndChats = !!linphone_config_get_int(config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
-	mAllowCpimMessagesInBasicChatRooms = !!linphone_config_get_default_int(config, key, "cpim_in_basic_chat_rooms_enabled", mAllowCpimMessagesInBasicChatRooms);
+	mAllowCpimMessagesInBasicChatRooms = !!linphone_config_get_int(config, key, "cpim_in_basic_chat_rooms_enabled", mAllowCpimMessagesInBasicChatRooms);
 
 	mPrivacy = static_cast<LinphonePrivacyMask>(linphone_config_get_int(config, key, "privacy", static_cast<int>(mPrivacy)));
 
