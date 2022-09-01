@@ -78,7 +78,6 @@ public:
 
 	std::shared_ptr<LimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
-	std::string getX3dhServerUrl () const;
 	lime::CurveId getCurveId () const;
 
 	// EncryptionEngine overrides

@@ -148,7 +148,6 @@ set(RC_FILES
 	rcfiles/laure_lime_x3dh_rc
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
-	rcfiles/lime_x3dh_xml_rc
 	rcfiles/lise_rc
 	rcfiles/marie2_rc
 	rcfiles/marie_bodyless_rc
@@ -181,10 +180,11 @@ set(RC_FILES
 	rcfiles/marie_sips_rc
 	rcfiles/marie_transient_remote_rc
 	rcfiles/marie_v4proxy_rc
-        rcfiles/marie_well_known_port_rc
+	rcfiles/marie_well_known_port_rc
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
+	rcfiles/multi_account_lime_x3dh_rc
 	rcfiles/pauline_alt_rc
 	rcfiles/pauline_as_friend_rc
 	rcfiles/pauline_dtls_srtp_immediate_rc

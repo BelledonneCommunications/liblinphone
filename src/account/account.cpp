@@ -24,6 +24,7 @@
 #include "linphone/api/c-account-params.h"
 #include "push-notification/push-notification-config.h"
 #include "linphone/core.h"
+#include "core/core-p.h"
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
@@ -62,6 +63,7 @@ Account::~Account () {
 	if (mServiceRouteAddress) linphone_address_unref(mServiceRouteAddress);
 	if (mContactAddress) linphone_address_unref(mContactAddress);
 	if (mContactAddressWithoutParams) linphone_address_unref(mContactAddressWithoutParams);
+
 	releaseOps();
 }
 
@@ -209,7 +211,6 @@ bool Account::customContactChanged(){
 }
 
 void Account::applyParamsChanges () {
-
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
 		onInternationalPrefixChanged();
 
@@ -221,6 +222,11 @@ void Account::applyParamsChanges () {
 
 	if (mOldParams == nullptr || mOldParams->mNatPolicy != mParams->mNatPolicy)
 		if (mParams->mNatPolicy != nullptr) onNatPolicyChanged(mParams->mNatPolicy);
+
+	if (mOldParams == nullptr || mOldParams->mLimeServerUrl != mParams->mLimeServerUrl) {
+		onLimeServerUrlChanged(mParams->mLimeServerUrl);
+		mRegisterChanged = true;
+	}
 
 	if (mOldParams == nullptr
 		|| mOldParams->mRegisterEnabled != mParams->mRegisterEnabled
@@ -1196,13 +1202,27 @@ LinphoneAccountAddressComparisonResult Account::isServerConfigChanged() {
 	return isServerConfigChanged(mOldParams, mParams);
 }
 
-
 LinphoneAccountCbsRegistrationStateChangedCb AccountCbs::getRegistrationStateChanged()const{
 	return mRegistrationStateChangedCb;
 }
 
 void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationStateChangedCb cb){
 	mRegistrationStateChangedCb = cb;
+}
+
+void Account::onLimeServerUrlChanged (const std::string& limeServerUrl) {
+#ifdef HAVE_LIME_X3DH
+	if (mCore == nullptr) {
+		lWarning() << "Account created without a Core!";
+		return;
+	}
+
+	if (!limeServerUrl.empty()) {
+		linphone_core_add_linphone_spec(mCore, "lime");
+	}
+#else
+	lWarning() << "Lime X3DH support is not available";
+#endif
 }
 
 LINPHONE_END_NAMESPACE

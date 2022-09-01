@@ -24,6 +24,11 @@
 
 #include "c-wrapper/c-wrapper.h"
 
+#include "chat/encryption/encryption-engine.h"
+#ifdef HAVE_LIME_X3DH
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
+#endif
+
 #include "account-params.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "linphone/api/c-types.h"
@@ -138,9 +143,9 @@ private:
 	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
 	void onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress *audioVideoConferenceFactoryAddress);
 	void onNatPolicyChanged (LinphoneNatPolicy *policy);
+	void onLimeServerUrlChanged (const std::string& limeServerUrl);
 	bool customContactChanged();
 	std::list<SalAddress*> getOtherContacts();
-
 
 	std::shared_ptr<AccountParams> mParams;
 

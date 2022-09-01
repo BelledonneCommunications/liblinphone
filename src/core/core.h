@@ -69,6 +69,7 @@ namespace MediaConference {
 }
 
 class LINPHONE_PUBLIC Core : public Object {
+	friend class Account;
 	friend class BasicToClientGroupChatRoom;
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class Call;
@@ -223,6 +224,7 @@ public:
 	std::string getX3dhServerUrl () const;
 	bool limeX3dhEnabled () const;
 	bool limeX3dhAvailable () const;
+	std::string getX3dhDbPath () const;
 
 	// ---------------------------------------------------------------------------
 	// Specs.

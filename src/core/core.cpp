@@ -94,8 +94,20 @@ void CorePrivate::init () {
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
 #endif
 
+	if (q->limeX3dhAvailable()) {
+		// Always try to enable x3dh.
+		q->enableLimeX3dh(true);
+	}
+
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	int tmp = linphone_config_get_int(lc->config,"sip", "lime", LinphoneLimeDisabled);
+	LinphoneLimeState limeState = static_cast<LinphoneLimeState>(tmp);
+	if (limeState != LinphoneLimeDisabled && q->limeX3dhEnabled()) {
+		bctbx_fatal("You can't have both LIME and LIME X3DH enabled at the same time !\nConflicting settings are [sip] lime and [lime] lime_server_url");
+	}
+	linphone_core_enable_lime(lc, limeState);
+
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
-		LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", nullptr));
 		if (!uri.empty())
@@ -667,25 +679,34 @@ void Core::enableLimeX3dh (bool enable) {
 		} else {
 			string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 			if (serverUrl.empty()) {
-				lInfo() << "Lime X3DH server URL not set, can't enable";
-				//Do not enable encryption engine if url is undefined
-				return;
+				lWarning() << "Lime X3DH server URL not set, make sure you set it in Account's params";
 			}
-			string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
-			if (dbAccess.empty()) {
-				dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
-			}
+
+			string dbAccess = getX3dhDbPath();
 			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 
 			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
 			setEncryptionEngine(engine);
 			d->registerListener(engine);
+
+			// Legacy behavior
+			if (!serverUrl.empty()) {
+				addSpec("lime");
+			}
 		}
-		addSpec("lime");
 	}
 #else
 	lWarning() << "Lime X3DH support is not available";
 #endif
+}
+
+std::string Core::getX3dhDbPath() const {
+	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
+	string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
+	if (dbAccess.empty()) {
+		dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
+	}
+	return dbAccess;
 }
 
 //Note: this will re-initialise	or start x3dh encryption engine if url is different from existing one
@@ -697,9 +718,7 @@ void Core::setX3dhServerUrl(const std::string &url) {
 	string prevUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 	linphone_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
 	linphone_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
-	if (url.empty()) {
-		enableLimeX3dh(false);
-	} else if (url.compare(prevUrl)) {
+	if (url.compare(prevUrl)) {
 		//Force re-initialisation
 		enableLimeX3dh(false);
 		enableLimeX3dh(true);

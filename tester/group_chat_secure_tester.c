@@ -671,13 +671,13 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	stats initialPaulineStats = pauline->stat;
 	stats initialLaureStats = laure->stat;
 
-	linphone_core_enable_lime_x3dh(laure->lc, FALSE);
-	linphone_core_add_linphone_spec(laure->lc, "lime"); //Forcing lime_x3dh spec even if encryption engine is disabled
-
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
+
+	linphone_core_enable_lime_x3dh(laure->lc, FALSE);
+	linphone_core_add_linphone_spec(laure->lc, "lime"); //Forcing lime_x3dh spec even if encryption engine is disabled
 
 	// Wait for lime users to be created on X3DH server (not for Laure which is not actually created on server)
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));

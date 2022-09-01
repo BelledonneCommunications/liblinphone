@@ -80,6 +80,7 @@ public:
 	void enableRtpBundle(bool value);
 	void enableRtpBundleAssumption(bool value);
 	void setCustomContact(const LinphoneAddress* contact);
+	void setLimeServerUrl(const std::string &url);
 
 	// Getters
 	int getExpires () const;
@@ -121,6 +122,7 @@ public:
 	bool rtpBundleEnabled()const;
 	bool rtpBundleAssumptionEnabled()const;
 	const LinphoneAddress * getCustomContact()const;
+	const std::string &getLimeServerUrl() const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -167,6 +169,7 @@ private:
 	std::string mConferenceFactoryUri;
 	std::string mFileTransferServer;
 	std::string mIdentity;
+	std::string mLimeServerUrl;
 
 	bctbx_list_t *mRoutes = nullptr;
 	bctbx_list_t *mRoutesString = nullptr;

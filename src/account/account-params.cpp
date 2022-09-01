@@ -111,6 +111,9 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	
 	string customContact = lc ? linphone_config_get_default_string(lc->config, "proxy", "custom_contact", "") : "";
 	setCustomContact(customContact);
+
+	string limeServerUrl = lc ? linphone_config_get_default_string(lc->config, "proxy", "lime_server_url", "") : "";
+	setLimeServerUrl(limeServerUrl);
 }
 
 AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
@@ -199,6 +202,8 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 
 	setCustomContact(linphone_config_get_string(config, key, "custom_contact", ""));
 
+	setLimeServerUrl(linphone_config_get_string(config, key, "lime_server_url", ""));
+
 	readCustomParamsFromConfigFile (config, key);
 }
 
@@ -249,6 +254,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other),
 	mRtpBundleEnabled = other.mRtpBundleEnabled;
 	mRtpBundleAssumption = other.mRtpBundleAssumption;
 	mCustomContact = other.mCustomContact ? linphone_address_clone(other.mCustomContact) : nullptr;
+	mLimeServerUrl = other.mLimeServerUrl;
 }
 
 AccountParams::~AccountParams () {
@@ -706,6 +712,14 @@ const LinphoneAddress *AccountParams::getCustomContact()const{
 	return mCustomContact;
 }
 
+void AccountParams::setLimeServerUrl(const std::string &url) {
+	mLimeServerUrl = url;
+}
+
+const std::string& AccountParams::getLimeServerUrl() const {
+	return mLimeServerUrl;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress (const LinphoneAddress *serverAddr) {
@@ -852,6 +866,8 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleAssumption);
 
 	writeCustomParamsToConfigFile (config, key);
+
+	linphone_config_set_string(config, key, "lime_server_url", mLimeServerUrl.c_str());
 }
 
 LINPHONE_END_NAMESPACE

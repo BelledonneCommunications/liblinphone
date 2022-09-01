@@ -245,9 +245,14 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 	belle_sip_body_handler_t *first_part_bh;
 
 	bool isFileEncryptionEnabled = false;
+	auto chatRoom = message->getChatRoom();
+	if (chatRoom == nullptr) { // Can be null in file_transfer_success_after_destroying_chatroom test from Message suite
+		return nullptr;
+	}
+
 	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 	if (imee)
-		isFileEncryptionEnabled = imee->isEncryptionEnabledForFileTransfer(message->getChatRoom());
+		isFileEncryptionEnabled = imee->isEncryptionEnabledForFileTransfer(chatRoom);
 
 	FileTransferContent *fileTransferContent = new FileTransferContent();
 	fileTransferContent->setContentType(ContentType::FileTransfer);

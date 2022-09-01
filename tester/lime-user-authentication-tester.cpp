@@ -341,6 +341,60 @@ static void Digest_Auth_multidomains(void) {
 	Digest_Auth_multidomains_curve(448);
 }
 
+static void Digest_Auth_multiservers_curve(const int curveId) {
+	LinphoneCoreManager *manager = linphone_core_manager_create("multi_account_lime_x3dh_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, manager);
+
+	if (curveId == 448) {
+		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
+	} else {
+		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
+	}
+
+	LinphoneAccount *marie_account = linphone_core_get_account_by_idkey(manager->lc, "marie");
+	BC_ASSERT_PTR_NOT_NULL(marie_account);
+	if (marie_account) {
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(marie_account));
+		if (curveId == 448) {
+			linphone_account_params_set_lime_server_url(params, lime_server_c448_url);
+		} else {
+			linphone_account_params_set_lime_server_url(params, lime_server_c25519_url);
+		}
+		linphone_account_set_params(marie_account, params);
+		linphone_account_params_unref(params);
+	}
+
+	LinphoneAccount *pauline_account = linphone_core_get_account_by_idkey(manager->lc, "pauline");
+	BC_ASSERT_PTR_NOT_NULL(pauline_account);
+	if (pauline_account) {
+		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(pauline_account));
+		if (curveId == 448) {
+			linphone_account_params_set_lime_server_url(params, lime_server_any_domain_c448_url);
+		} else {
+			linphone_account_params_set_lime_server_url(params, lime_server_any_domain_c25519_url);
+		}
+		linphone_account_set_params(pauline_account, params);
+		linphone_account_params_unref(params);
+	}
+	
+	stats initialStats = manager->stat;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime users to be created on X3DH server, but only for Marie & Pauline
+	BC_ASSERT_FALSE(wait_for_list(coresList, &manager->stat.number_of_X3dhUserCreationSuccess, initialStats.number_of_X3dhUserCreationSuccess+3, x3dhServer_creationTimeout));
+	BC_ASSERT_EQUAL(manager->stat.number_of_X3dhUserCreationSuccess, 2, int, "%d");
+	
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(manager);
+}
+
+static void Digest_Auth_multiservers(void) {
+	Digest_Auth_multiservers_curve(25519);
+	Digest_Auth_multiservers_curve(448);
+}
 
 test_t lime_server_auth_tests[] = {
 	TEST_ONE_TAG("sip:uri in altname DNS", identity_in_altName_one_DNS_entry, "LimeX3DH"),
@@ -353,6 +407,7 @@ test_t lime_server_auth_tests[] = {
 	TEST_ONE_TAG("CN and From mismatch on TLS optional server", TLS_optional_CN_UserId_mismatch, "LimeX3DH"),
 	TEST_ONE_TAG("Connect two users with client certificate to TLS mandatory server", TLS_mandatory_two_users, "LimeX3DH"),
 	TEST_ONE_TAG("Digest Auth - multiple domains", Digest_Auth_multidomains, "LimeX3DH"),
+	TEST_ONE_TAG("Digest Auth - multiple servers", Digest_Auth_multiservers, "LimeX3DH"),
 };
 
 test_suite_t lime_server_auth_test_suite = {

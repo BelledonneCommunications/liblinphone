@@ -37,8 +37,9 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::encode (
 	const shared_ptr<ChatMessage> &message,
 	int &errorCode
 ) {
-	if (message->getCore()->getEncryptionEngine() != nullptr) {
-		ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processOutgoingMessage(message, errorCode);
+	auto imee = message->getCore()->getEncryptionEngine();
+	if (imee != nullptr) {
+		ChatMessageModifier::Result result = imee->processOutgoingMessage(message, errorCode);
 		if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
 			message->setIsSecured(true);
 		}
@@ -51,8 +52,9 @@ ChatMessageModifier::Result EncryptionChatMessageModifier::decode (
 	const shared_ptr<ChatMessage> &message,
 	int &errorCode
 ) {
-	if (message->getCore()->getEncryptionEngine() != nullptr) {
-		ChatMessageModifier::Result result = message->getCore()->getEncryptionEngine()->processIncomingMessage(message, errorCode);
+	auto imee = message->getCore()->getEncryptionEngine();
+	if (imee != nullptr) {
+		ChatMessageModifier::Result result = imee->processIncomingMessage(message, errorCode);
 		if (result == ChatMessageModifier::Result::Suspended || result == ChatMessageModifier::Result::Done) {
 			message->setIsSecured(true);
 		}

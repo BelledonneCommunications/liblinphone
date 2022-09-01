@@ -18,6 +18,7 @@
  */
 
 #include "bctoolbox/crypto.h"
+#include "account/account.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
@@ -161,16 +162,10 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	x3dhServerUrl = serverUrl;
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccessWithParam, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
-	if (x3dhServerUrl.empty())
-		lError() << "[LIME] server URL unavailable for encryption engine";
 }
 
 LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine () {
 	lInfo()<<"[LIME] destroy LimeX3dhEncryption engine "<<this;
-}
-
-string LimeX3dhEncryptionEngine::getX3dhServerUrl () const {
-	return x3dhServerUrl;
 }
 
 lime::CurveId LimeX3dhEncryptionEngine::getCurveId () const {
@@ -938,8 +933,15 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	if (state != LinphoneRegistrationState::LinphoneRegistrationOk)
 		return;
 
-	if (x3dhServerUrl.empty()) {
-		lError() << "[LIME] server URL unavailable for encryption engine: can't create user";
+	auto account = Account::toCpp(cfg->account);
+	auto accountParams = account->getAccountParams();
+	string accountLimeServerUrl = accountParams->getLimeServerUrl();
+	if (accountLimeServerUrl.empty()) {
+		lWarning() << "[LIME] No LIME server URL in account params, trying to fallback on Core's default LIME server URL";
+		accountLimeServerUrl = x3dhServerUrl;
+	}
+	if (accountLimeServerUrl.empty()) {
+		lError() << "[LIME] Server URL unavailable for encryption engine: can't create user";
 		return;
 	}
 
@@ -957,7 +959,7 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	try {
 		if (!limeManager->is_user(localDeviceId)) {
 			// create user if not exist
-			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, [lc, localDeviceId](lime::CallbackReturn returnCode, string info) {
+			limeManager->create_user(localDeviceId, accountLimeServerUrl, curve, [lc, localDeviceId](lime::CallbackReturn returnCode, string info) {
 						if (returnCode==lime::CallbackReturn::success) {
 							lInfo() << "[LIME] user "<< localDeviceId <<" creation successful";
 						} else {
@@ -967,7 +969,7 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 					});
 			lastLimeUpdate = ms_time(NULL);
 		} else {
-			limeManager->set_x3dhServerUrl(localDeviceId,x3dhServerUrl);
+			limeManager->set_x3dhServerUrl(localDeviceId, accountLimeServerUrl);
 			// update keys if necessary
 			int limeUpdateThreshold = linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
 			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {

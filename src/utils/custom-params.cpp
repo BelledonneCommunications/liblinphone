@@ -47,7 +47,7 @@ const std::string & CustomParams::getCustomParam(const std::string & key) const 
 	try {
 		return params.at(key);
 	} catch (std::out_of_range&) {
-		lError() << "Unable to find parameter with key " << key;
+		lDebug() << "Unable to find parameter with key " << key;
 		return Utils::getEmptyConstRefObject<std::string>();
 	}
 }

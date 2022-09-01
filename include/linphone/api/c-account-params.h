@@ -685,7 +685,6 @@ LINPHONE_PUBLIC void linphone_account_params_set_transport(LinphoneAccountParams
 LINPHONE_PUBLIC LinphoneTransportType linphone_account_params_get_transport(const LinphoneAccountParams *params);
 
 /**
-<<<<<<< HEAD
  * Enables or disables RTP bundle mode (Media Multiplexing).
  * See https://datatracker.ietf.org/doc/html/rfc8843 for more information about the feature.
  * When enabled, liblinphone will try to negociate the use of a single port for all streams when doing an outgoing call.
@@ -773,6 +772,22 @@ LINPHONE_PUBLIC void linphone_account_params_set_custom_contact(LinphoneAccountP
  * @return a #LinphoneAddress @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_account_params_get_custom_contact(const LinphoneAccountParams *params);
+
+/**
+ * Set the x3dh server url.
+ * If empty, this function will disable LIME X3DH from core.
+ * Otherwise, or if different from the existing value, this will (re-)initialize the LIME X3DH engine.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param url The x3dh server url. @maybenil
+**/
+LINPHONE_PUBLIC void linphone_account_params_set_lime_server_url(LinphoneAccountParams *params, const char *url);
+
+/**
+ * Get the x3dh server url.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The x3dh server url. @maybenil
+**/
+LINPHONE_PUBLIC const char *linphone_account_params_get_lime_server_url(const LinphoneAccountParams *params);
 
 
 /**

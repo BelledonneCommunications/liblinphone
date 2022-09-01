@@ -786,18 +786,16 @@ static void custom_tones_setup_before_start(void){
 	linphone_core_unref(lc);
 }
 
-static void lime_x3dh_setup(void) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
-	char* xml_path = bc_tester_res("rcfiles/lime_x3dh_xml_rc");
+static void lime_x3dh_server_url_migration(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_lime_x3dh_rc");
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	linphone_core_manager_destroy(marie);
 
-	if (linphone_core_lime_x3dh_available(mgr->lc)) {
-		BC_ASSERT_FALSE(linphone_core_lime_x3dh_enabled(mgr->lc));
-		linphone_core_load_config_from_xml(mgr->lc, xml_path);
-		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(mgr->lc));
-	}
-
-	ms_free(xml_path);
-	linphone_core_manager_destroy(mgr);
+	marie = linphone_core_manager_new("marie_lime_x3dh_no_server_rc");
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	linphone_core_manager_destroy(marie);
 }
 
 static void search_friend_in_alphabetical_order(void) {
@@ -3180,7 +3178,6 @@ static void migration_from_call_history_db (void) {
 	bctbx_free(tmp_db);
 }
 
-
 test_t setup_tests[] = {
 	TEST_NO_TAG("Version check", linphone_version_test),
 	TEST_NO_TAG("Version update check", linphone_version_update_test),
@@ -3209,7 +3206,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Codec setup", codec_setup),
 	TEST_NO_TAG("Custom tones setup", custom_tones_setup),
 	TEST_NO_TAG("Custom tones setup before start", custom_tones_setup_before_start),
-	TEST_NO_TAG("Lime X3DH setup", lime_x3dh_setup),
+	TEST_ONE_TAG("LIME X3DH server URL migration from Core to Account", lime_x3dh_server_url_migration, "LimeX3DH"),
 	TEST_NO_TAG("Appropriate software echo canceller check", echo_canceller_check),
 	TEST_ONE_TAG("Return friend list in alphabetical order", search_friend_in_alphabetical_order, "MagicSearch"),
 	TEST_ONE_TAG("Search friend without filter and domain", search_friend_without_filter, "MagicSearch"),
@@ -3242,7 +3239,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
 	TEST_NO_TAG("Dialplan", dial_plan),
 	TEST_NO_TAG("Audio devices", audio_devices),
-	TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db)
+	TEST_NO_TAG("Migrate from call history database", migration_from_call_history_db),
 };
 
 test_suite_t setup_test_suite = {"Setup", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

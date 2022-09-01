@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<config xmlns="http://www.linphone.org/xsds/lpconfig.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.linphone.org/xsds/lpconfig.xsd lpconfig.xsd">
-    <section name="lime">
-        <entry name="lime_server_url" overwrite="true">https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php</entry>
-    </section>
-</config>

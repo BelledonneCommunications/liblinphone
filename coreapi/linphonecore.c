@@ -1687,18 +1687,6 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=linphone_config_get_int(lc->config,"sip","guess_hostname",1);
 	linphone_core_set_guess_hostname(lc, !!tmp);
 
-	if (linphone_core_lime_x3dh_available(lc)) {
-		//Always try to enable x3dh. Will actually be enabled only if there is a server url configured
-		linphone_core_enable_lime_x3dh(lc, true);
-	}
-
-	tmp=linphone_config_get_int(lc->config,"sip", "lime", LinphoneLimeDisabled);
-	LinphoneLimeState limeState = static_cast<LinphoneLimeState>(tmp);
-	if (limeState != LinphoneLimeDisabled && linphone_core_lime_x3dh_enabled(lc)) {
-		bctbx_fatal("You can't have both LIME and LIME X3DH enabled at the same time !\nConflicting settings are [sip] lime and [lime] lime_server_url");
-	}
-	linphone_core_enable_lime(lc, limeState);
-
 #if defined(__ANDROID__) || TARGET_OS_IPHONE
 	tmp=linphone_config_get_int(lc->config,"sip","inc_timeout",45);
 #else
@@ -2436,11 +2424,6 @@ void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri) 
 	if (error) {
 		bctbx_error("Couldn't load config from xml: %s", error);
 		return;
-	}
-
-	// We should call _linphone_core_read_config(lc); in the future but currently this is dangerous
-	if (linphone_core_lime_x3dh_available(lc)) {
-		linphone_core_enable_lime_x3dh(lc, true);
 	}
 }
 

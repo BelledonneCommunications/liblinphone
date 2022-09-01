@@ -1557,6 +1557,7 @@ LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *core, bool_t e
  * @param core LinphoneCore object @notnil
  * @return The current lime state
  * @ingroup misc
+ * @deprecated 26/08/2022 Use linphone_account_get_lime_x3dh_enabled() instead.
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *core);
 
@@ -1567,16 +1568,18 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *core)
  * @param core LinphoneCore object @notnil
  * @param url The x3dh server url. @maybenil
  * @ingroup misc
+ * @deprecated 26/08/2022 Use linphone_account_params_set_lime_server_url() instead.
 **/
-LINPHONE_PUBLIC void linphone_core_set_lime_x3dh_server_url(LinphoneCore *core, const char *url);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_set_lime_x3dh_server_url(LinphoneCore *core, const char *url);
 
 /**
  * Get the x3dh server url.
  * @param core LinphoneCore object @notnil
  * @return The x3dh server url. @maybenil
  * @ingroup misc
+ * @deprecated 26/08/2022 Use linphone_account_params_get_lime_server_url() instead.
 **/
-LINPHONE_PUBLIC const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *core);
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *core);
 
 /**
  * Tells if LIME X3DH is available
