@@ -721,6 +721,8 @@ static LinphoneZrtpKeyAgreement MS2_to_Linphone_ZrtpKeyAgreement(MSZrtpKeyAgreem
 		case MS_ZRTP_KEY_AGREEMENT_K255_HQC128: return LinphoneZrtpKeyAgreementK255Hqc128;
 		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024: return LinphoneZrtpKeyAgreementK448Kyb1024;
 		case MS_ZRTP_KEY_AGREEMENT_K448_HQC256: return LinphoneZrtpKeyAgreementK448Hqc256;
+		case MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128: return LinphoneZrtpKeyAgreementK255Kyb512Hqc128;
+		case MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256: return LinphoneZrtpKeyAgreementK448Kyb1024Hqc256;
 		default: return LinphoneZrtpKeyAgreementInvalid;
 	}
 }
@@ -759,6 +761,8 @@ static MSZrtpKeyAgreement Linphone_to_MS2_ZrtpKeyAgreement(LinphoneZrtpKeyAgreem
 		case LinphoneZrtpKeyAgreementK255Hqc128: return MS_ZRTP_KEY_AGREEMENT_K255_HQC128;
 		case LinphoneZrtpKeyAgreementK448Kyb1024: return MS_ZRTP_KEY_AGREEMENT_K448_KYB1024;
 		case LinphoneZrtpKeyAgreementK448Hqc256: return MS_ZRTP_KEY_AGREEMENT_K448_HQC256;
+		case LinphoneZrtpKeyAgreementK255Kyb512Hqc128: return MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128;
+		case LinphoneZrtpKeyAgreementK448Kyb1024Hqc256: return MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256;
 		default: return MS_ZRTP_KEY_AGREEMENT_INVALID;
 	}
 }

@@ -445,6 +445,8 @@ const char * linphone_call_stats_get_zrtp_key_agreement_algo (const LinphoneCall
 		case(MS_ZRTP_KEY_AGREEMENT_K255_HQC128): return "X25519/HQC128";
 		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024): return "X448/Kyber1024";
 		case(MS_ZRTP_KEY_AGREEMENT_K448_HQC256): return "X448/HQC256";
+		case(MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128): return "X25519/Kyber512/HQC128";
+		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256): return "X448/Kyber1024/HQC256";
 		default: return "Unknown Algo";
 	}
 }
@@ -464,6 +466,8 @@ bool_t linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum (const Linpho
 		case(MS_ZRTP_KEY_AGREEMENT_K255_HQC128):
 		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024):
 		case(MS_ZRTP_KEY_AGREEMENT_K448_HQC256):
+		case(MS_ZRTP_KEY_AGREEMENT_K255_KYB512_HQC128):
+		case(MS_ZRTP_KEY_AGREEMENT_K448_KYB1024_HQC256):
 			return TRUE;
 		default:
 			return FALSE;

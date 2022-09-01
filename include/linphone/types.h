@@ -808,7 +808,9 @@ LinphoneZrtpKeyAgreementHqc3 = 15,
 LinphoneZrtpKeyAgreementK255Kyb512 = 16,
 LinphoneZrtpKeyAgreementK255Hqc128 = 17,
 LinphoneZrtpKeyAgreementK448Kyb1024 = 18,
-LinphoneZrtpKeyAgreementK448Hqc256 = 19
+LinphoneZrtpKeyAgreementK448Hqc256 = 19,
+LinphoneZrtpKeyAgreementK255Kyb512Hqc128 = 20,
+LinphoneZrtpKeyAgreementK448Kyb1024Hqc256 = 21
 } LinphoneZrtpKeyAgreement;
 
 /**
