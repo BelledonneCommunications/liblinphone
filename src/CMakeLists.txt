@@ -31,11 +31,7 @@ set(PUBLIC_LINK_LIBS
 )
 
 if (ENABLE_FLEXIAPI)
-	if (XCODE)
-		list(APPEND LINK_LIBS jsoncpp_static)
-	else()
-		list(APPEND LINK_LIBS jsoncpp_object)
-	endif()
+	list(APPEND LINK_LIBS jsoncpp_static)
 endif()
 
 #APPLE_LIBS is mandatory for apple compilation

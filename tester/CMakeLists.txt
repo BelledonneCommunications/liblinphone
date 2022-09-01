@@ -30,14 +30,6 @@ set(OTHER_LIBS_FOR_TESTER
 	${XML2_LIBRARIES} ${XSD_LIBRARIES}
 )
 
-if (ENABLE_FLEXIAPI)
-	if (XCODE)
-		list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_static)
-	else()
-		list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_object)
-	endif()
-endif()
-
 if(INTL_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${INTL_LIBRARIES})
 endif()
