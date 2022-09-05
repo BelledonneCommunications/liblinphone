@@ -1557,7 +1557,6 @@ LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *core, bool_t e
  * @param core LinphoneCore object @notnil
  * @return The current lime state
  * @ingroup misc
- * @deprecated 26/08/2022 Use linphone_account_get_lime_x3dh_enabled() instead.
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *core);
 

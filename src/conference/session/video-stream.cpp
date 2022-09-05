@@ -36,7 +36,9 @@
 #include "linphone/core.h"
 #include "mediastreamer2/msitc.h"
 
+#ifdef HAVE_LIME_X3DH
 #include "bzrtp/bzrtp.h"
+#endif
 
 using namespace::std;
 

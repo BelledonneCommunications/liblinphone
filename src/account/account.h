@@ -24,11 +24,6 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-#include "chat/encryption/encryption-engine.h"
-#ifdef HAVE_LIME_X3DH
-#include "chat/encryption/lime-x3dh-encryption-engine.h"
-#endif
-
 #include "account-params.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "linphone/api/c-types.h"

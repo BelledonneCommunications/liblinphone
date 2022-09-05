@@ -24,7 +24,6 @@
 #include "linphone/api/c-account-params.h"
 #include "push-notification/push-notification-config.h"
 #include "linphone/core.h"
-#include "core/core-p.h"
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
