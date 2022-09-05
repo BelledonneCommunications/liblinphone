@@ -735,7 +735,7 @@ static void call_with_ice_and_dual_stack_stun_server(void){
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 
 	if (marie_call && pauline_call){
-		std::string paulineConnectionAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress();
+		std::string paulineConnectionAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc))->getStreamIdx(0).getRtpAddress();
 		std::string marieConnectionAddress = _linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->getStreamIdx(0).getRtpAddress();
 		
 		/* The stun server shall provide marie with an IPv4 address, that we should find in c= of SDP.*/
