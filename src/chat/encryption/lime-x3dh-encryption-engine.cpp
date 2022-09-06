@@ -941,7 +941,7 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		accountLimeServerUrl = x3dhServerUrl;
 	}
 	if (accountLimeServerUrl.empty()) {
-		lError() << "[LIME] Server URL unavailable for encryption engine: can't create user";
+		lWarning() << "[LIME] Server URL unavailable for encryption engine: can't create user";
 		return;
 	}
 

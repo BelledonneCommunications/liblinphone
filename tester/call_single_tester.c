@@ -1640,6 +1640,19 @@ static void cancelled_ringing_call(void) {
 	linphone_call_ref(out_call);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallIncomingReceived,1));
 
+	/* Wait a bit. */
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,NULL,0,2000));
+
+	// Make sure the call duration is increased during the ringing
+	BC_ASSERT_GREATER_STRICT(linphone_call_get_duration(out_call), 0, int, "%d");
+
+	LinphoneCall *in_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(in_call);
+	if (in_call) {
+		// Make sure the call duration is increased during the ringing
+		BC_ASSERT_GREATER_STRICT(linphone_call_get_duration(in_call), 0, int, "%d");
+	}
+
 	linphone_call_terminate(out_call);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
@@ -1649,7 +1662,10 @@ static void cancelled_ringing_call(void) {
 	call_history = linphone_core_get_call_history(marie->lc);
 	if (BC_ASSERT_PTR_NOT_NULL(call_history)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(call_history),1, int,"%i");
-		BC_ASSERT_EQUAL(linphone_call_log_get_status((LinphoneCallLog*)bctbx_list_get_data(call_history)), LinphoneCallMissed, LinphoneCallStatus, "%i");
+		LinphoneCallLog *call_log = (LinphoneCallLog*)bctbx_list_get_data(call_history);
+		BC_ASSERT_EQUAL(linphone_call_log_get_status(call_log), LinphoneCallMissed, LinphoneCallStatus, "%i");
+		// Make sure the call log duration is 0 as the call wasn't connected
+		BC_ASSERT_EQUAL(linphone_call_log_get_duration(call_log), 0, int , "%d");
 	}
 
 	linphone_call_unref(out_call);
@@ -1859,7 +1875,7 @@ static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia, bool_t
 		BC_ASSERT_EQUAL(linphone_call_get_reason(out_call), reason, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_log_get_status(linphone_call_get_call_log(out_call)), (use_timeout || request_timeout) ? LinphoneCallAborted : LinphoneCallDeclined, int, "%d");
 
-		if (use_timeout) BC_ASSERT_EQUAL(linphone_call_get_duration(out_call), 0, int, "%d");
+		if (use_timeout) BC_ASSERT_EQUAL(linphone_call_log_get_duration(linphone_call_get_call_log(out_call)), 0, int, "%d");
 		linphone_call_unref(in_call);
 	}
 

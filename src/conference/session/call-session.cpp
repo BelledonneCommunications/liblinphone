@@ -1000,7 +1000,8 @@ void CallSessionPrivate::onRegistrationStateChanged (LinphoneProxyConfig *cfg, L
 
 void CallSessionPrivate::completeLog () {
 	L_Q();
-	log->setDuration(computeDuration()); /* Store duration since connected */
+	int duration = log->getConnectedTime() == 0 ? 0 : computeDuration(); /* Store duration since connected */
+	log->setDuration(duration);
 	log->setErrorInfo(linphone_error_info_ref(ei));
 	if (log->getStatus() == LinphoneCallMissed)
 		q->getCore()->getCCore()->missed_calls++;
@@ -1638,9 +1639,9 @@ int CallSession::getDuration () const {
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		case CallSession::State::Released:
-			return d->log->getConnectedTime() == 0 ? 0 : d->log->getDuration();
+			return d->log->getDuration();
 		default:
-			return d->log->getConnectedTime() == 0 ? 0 : d->computeDuration();
+			return d->computeDuration();
 	}
 }
 
