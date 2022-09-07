@@ -2719,6 +2719,10 @@ void linphone_core_set_account_creator_url(LinphoneCore *lc, const char *url) {
 	linphone_config_set_string(lc->config, "account_creator", "url", url);
 }
 
+const char *linphone_core_get_account_creator_url(LinphoneCore *lc){
+	return linphone_config_get_string(lc->config,"account_creator","url",NULL);
+}
+
 void linphone_core_set_account_creator_backend(LinphoneCore *lc, LinphoneAccountCreatorBackend backend) {
 	linphone_config_set_int(lc->config, "account_creator", "backend", (int)backend);
 }

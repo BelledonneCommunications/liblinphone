@@ -21,13 +21,17 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#include "c-wrapper/c-wrapper.h"
-
 #include <functional>
 #include <json/json.h>
 
 using namespace LinphonePrivate;
 using namespace std;
+
+struct belle_http_response_event;
+struct belle_sip_auth_event;
+
+typedef struct belle_http_response_event belle_http_response_event_t;
+typedef struct belle_sip_auth_event belle_sip_auth_event_t;
 
 class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
   public:
@@ -36,19 +40,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 		int code = 0;
 		string body = "";
 
-		Json::Value json() {
-			JSONCPP_STRING err;
-			Json::CharReaderBuilder builder;
-			Json::Value obj;
-
-			const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-
-			if (!reader->parse(body.c_str(), body.c_str() + body.length(), &obj, &err)) {
-				lError() << err;
-			}
-
-			return obj;
-		};
+		Json::Value json();
 	};
 
 	class JsonParams {

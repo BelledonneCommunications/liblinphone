@@ -39,6 +39,21 @@
 using namespace LinphonePrivate;
 using namespace std;
 
+
+Json::Value FlexiAPIClient::Response::json(){
+	JSONCPP_STRING err;
+			Json::CharReaderBuilder builder;
+			Json::Value obj;
+
+			const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+
+			if (!reader->parse(body.c_str(), body.c_str() + body.length(), &obj, &err)) {
+				lError() << err;
+			}
+
+			return obj;
+}
+
 FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
 	mCore = lc;
 	mApiKey = nullptr;
@@ -387,12 +402,16 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 	belle_http_request_listener_t *listener;
 	belle_http_request_t *req;
 
-	string uri = linphone_config_get_string(mCore->config, "account_creator", "url", NULL);
+	const char *accountCreatorUrl = linphone_core_get_account_creator_url(mCore);
+	string uri = accountCreatorUrl ? accountCreatorUrl : "";
 
 	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
 									belle_sip_header_content_type_create("application", "json"),
 									belle_sip_header_accept_create("application", "json"), NULL);
-
+	if(!req) {
+		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]" ;
+		return;
+	}
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
 	if (mUseTestAdminAccount) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req),
