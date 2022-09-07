@@ -64,6 +64,7 @@ option(ENABLE_DEBUG_LOGS "Turn on or off debug level logs." NO)
 option(ENABLE_DOC "Enable API documentation generation." NO)
 option(ENABLE_JAVA_WRAPPER "Build the Java wrapper for Liblinphone." OFF)
 option(ENABLE_JAVADOC "Add a target to generate documentation for Java API" NO)
+option(ENABLE_JPEG "Enable JPEG support for QRCode file generation" YES)
 option(ENABLE_LIME "Enable Instant Messaging Encryption. (Deprecated)" NO)
 option(ENABLE_LIME_X3DH "Enable LIMEv2 and X3DH encryption protocol." YES)
 option(ENABLE_LDAP "Enable LDAP support." NO)
@@ -85,6 +86,7 @@ cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENAB
 option(ENABLE_SRTP "Build with the SRTP transport support." YES)
 cmake_dependent_option(ENABLE_ZRTP "Build with ZRTP support." YES "ENABLE_SRTP" NO)
 cmake_dependent_option(ENABLE_GOCLEAR "Build with ZRTP GoClear message support (RFC 6189 - section 5.11)." YES "ENABLE_ZRTP" NO)
+cmake_dependent_option(ENABLE_QRCODE "Enable QRCode support" YES "ENABLE_VIDEO" NO)
 
 # Hidden non-cache options:
 # * DISABLE_BC_PACKAGE_SEARCH: skip find_package() for every BC package (bctoolbox, ortp, etc.)
@@ -240,6 +242,17 @@ if (ENABLE_FLEXIAPI)
 	find_package(jsoncpp REQUIRED)
 	set(HAVE_FLEXIAPI TRUE)
 endif()
+
+if(ENABLE_QRCODE)
+	find_package(Zxing REQUIRED)
+	add_definitions(-DQRCODE_ENABLED)
+	if(ENABLE_JPEG)# only needed for QRCode. Move from it for other
+		add_definitions(-DJPEG_ENABLED)
+		find_package(TurboJpeg REQUIRED)
+	endif()
+endif()
+
+
 
 if(UNIX AND NOT APPLE)
 	include(CheckIncludeFiles)

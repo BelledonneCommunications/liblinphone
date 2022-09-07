@@ -717,6 +717,35 @@ LINPHONE_PUBLIC LinphoneConferenceInfo *linphone_factory_create_conference_info_
  */
 LINPHONE_PUBLIC LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs(LinphoneFactory *factory);
 
+/**
+ * Indicates if the QRCode feature is available.
+ * @param factory the #LinphoneFactory @maybenil
+ * @return TRUE if QRCodes can be used
+ */
+LINPHONE_PUBLIC bool_t linphone_factory_is_qrcode_available(LinphoneFactory *factory);
+
+/**
+ * Creates a Bitmap QRCode and return it into an object #LinphoneContent
+ * @param factory the #LinphoneFactory @notnil
+ * @param code The code to be generated into an image. It must not be empty. @notnil
+ * @param width The requested width of the QRCode image. It will be 100 if 0.
+ * @param height The requested height of the QRCode image. It will be 100 if 0.
+ * @param margin The requested margin of the QRCode image.
+ * @return a #LinphoneContent @maybenil
+ */
+LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_qrcode(LinphoneFactory *factory, const char * code, unsigned int width, unsigned int height, unsigned int margin);
+
+/**
+ * Creates a QRCode and write it into a JPEG file specified by file_path (only if build with JPEG).
+ * @param factory the #LinphoneFactory @notnil
+ * @param file_path The file where to write the QRCode JPEG image. @notnil
+ * @param code The code to be generated into an image. It must not be empty. @notnil
+ * @param width The requested width of the QRCode image. It will be 100 if 0.
+ * @param height The requested height of the QRCode image. It will be 100 if 0.
+ * @param margin The requested margin of the QRCode image.
+ * @return 0 if successful, -2 if JPEG is not supported, -1 otherwise
+ */
+LINPHONE_PUBLIC int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *file_path, const char * code, unsigned int width, unsigned int height, unsigned int margin);
 
 /************ */
 /* DEPRECATED */

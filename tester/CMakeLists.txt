@@ -52,6 +52,14 @@ if(OPENLDAP_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${OPENLDAP_LIBRARIES})
 endif()
 
+if(ZXING_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${ZXING_LIBRARIES})
+endif()
+
+if(TURBOJPEG_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER ${TURBOJPEG_LIBRARIES})
+endif()
+
 set(SOUND_FILES
 	sounds/ahbahouaismaisbon.wav
 	sounds/continuous_48000_stereo.wav

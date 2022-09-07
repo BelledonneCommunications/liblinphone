@@ -25,8 +25,6 @@
 #include "linphone/lpconfig.h"
 #include <mediastreamer2/msqrcodereader.h>
 
-
-
 static void enable_disable_camera_after_camera_switches(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -112,7 +110,7 @@ typedef struct struct_image_rect {
 	int h;
 }image_rect;
 
-static void _decode_qrcode(const char* image_path, image_rect *rect) {
+static void _decode_qrcode(const char* image_path, image_rect *rect, bool_t image_from_res) {
 	qrcode_callback_data qrcode_data;
 	char *qrcode_image;
 	LinphoneCoreManager* lcm = NULL;
@@ -128,8 +126,10 @@ static void _decode_qrcode(const char* image_path, image_rect *rect) {
 	qrcode_data.qrcode_found = FALSE;
 	qrcode_data.text = NULL;
 	linphone_core_manager_start(lcm, FALSE);
-
-	qrcode_image = bc_tester_res(image_path);
+	if(image_from_res)
+		qrcode_image = bc_tester_res(image_path);
+	else
+		qrcode_image =  bctbx_strdup(image_path);
 
 	linphone_core_set_video_device(lcm->lc, liblinphone_tester_static_image_id);
 	linphone_core_set_static_picture(lcm->lc, qrcode_image);
@@ -161,7 +161,7 @@ end:
 }
 
 static void decode_qrcode_from_image(void) {
-	_decode_qrcode("images/linphonesiteqr.jpg", NULL);
+	_decode_qrcode("images/linphonesiteqr.jpg", NULL, TRUE);
 }
 
 static void decode_qrcode_from_zone(void) {
@@ -170,13 +170,40 @@ static void decode_qrcode_from_zone(void) {
 	rect.y = 470;
 	rect.w = 268;
 	rect.h = 262;
-	_decode_qrcode("images/linphonesiteqr_captured.jpg", &rect);
+	_decode_qrcode("images/linphonesiteqr_captured.jpg", &rect, TRUE);
 }
+
+#if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
+static void encode_qrcode(void){
+	unsigned int w = 200;
+	unsigned int h = 150;
+	LinphoneFactory * factory = linphone_factory_get();
+	char * file_path = NULL;
+	
+	file_path = bc_tester_file("video_tester_qrcode.jpg");
+	
+	int error = linphone_factory_write_qrcode_file(factory, file_path,"https://www.linphone.org/", w, h, 0);
+	
+	if( error != 0 ){
+		BC_ASSERT_EQUAL(error, 0, int, "%i");
+		goto end;
+	}
+	
+// Decode the encoded qrcode from file
+	_decode_qrcode(file_path, NULL, FALSE);
+end:
+	if(file_path) free(file_path);
+}
+
+#endif
 
 test_t video_tests[] = {
 	TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
 	TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
 	TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode"),
+#if defined(QRCODE_ENABLED) && defined(JPEG_ENABLED)
+	TEST_ONE_TAG("Encode QRCode", encode_qrcode, "QRCode"),
+#endif
 	TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview)
 };
 

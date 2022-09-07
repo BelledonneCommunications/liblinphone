@@ -19,6 +19,21 @@
 
 #include "factory.h"
 
+#ifdef QRCODE_ENABLED
+#define ZX_USE_UTF8
+#include <ZXing/BarcodeFormat.h>
+#include <ZXing/BitMatrix.h>
+#include <ZXing/BitMatrixIO.h>
+#include <ZXing/CharacterSet.h>
+#include <ZXing/MultiFormatWriter.h>
+#include <ZXing/TextUtfEncoding.h>
+#ifdef JPEG_ENABLED
+#include <mediastreamer2/msvideo.h>
+#include <turbojpeg.h>
+#endif
+#endif
+
+
 #include <cstdio>
 #include <fstream>
 #include <sstream>
@@ -29,6 +44,7 @@
 #include "bctoolbox/crypto.h"
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
+#include "logger/logger.h"
 #include "sqlite3_bctbx_vfs.h"
 
 // TODO: From coreapi. Remove me later.
@@ -729,6 +745,115 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 	auto ics = Ics::Icalendar::createFromString(buffer.str());
 
 	return ics ? ics->toConferenceInfo() : nullptr;
+}
+
+LinphoneContent *Factory::createQRCode(const std::string& code, const unsigned int& width, const unsigned int& height, const unsigned int& margin) const{
+#ifdef QRCODE_ENABLED
+	int eccLevel = -1;
+	ZXing::CharacterSet encoding = ZXing::CharacterSet::Unknown;
+	ZXing::BarcodeFormat format = ZXing::BarcodeFormat::QRCode;
+	
+	if(code.empty()) {
+		lError() << "Cannot generate a QRCode because the code is empty";
+		return nullptr;
+	}
+	if( width == 0 || height == 0){
+		lError() << "Cannot generate a QRCode because sizes are 0";
+		return nullptr;
+	}
+	
+	auto writer = ZXing::MultiFormatWriter(format).setMargin((int)margin).setEncoding(encoding).setEccLevel(eccLevel);
+	auto matrix = writer.encode(ZXing::TextUtfEncoding::FromUtf8(code), (int)width, (int)height);
+	auto bitmap = ZXing::ToMatrix<uint8_t>(matrix);
+	
+	LinphoneContent * content = Factory::createContent();
+	linphone_content_set_buffer(content, bitmap.data(), static_cast<size_t>(bitmap.width() * bitmap.height()));
+	linphone_content_add_content_type_parameter(content, "height", std::to_string(bitmap.height()).c_str());
+	linphone_content_add_content_type_parameter(content, "width", std::to_string(bitmap.width()).c_str());
+	linphone_content_add_content_type_parameter(content, "margin", std::to_string(margin).c_str());
+		
+	return content;
+#else
+	lError() << "linphone_factory_create_qrcode() : not supported";
+	return nullptr;
+#endif
+}
+
+int Factory::writeQRCodeFile(const std::string& code, const std::string& filePath, const unsigned int& width, const unsigned int& height, const unsigned int& margin) const{
+#ifdef JPEG_ENABLED
+	FILE * outFile = NULL;
+	size_t bytesWritten = 0;
+	int exitCode = 0;
+	int error = 0;
+	tjhandle turboJpeg = nullptr;
+	MSPicture yuvbuf;
+	LinphoneContent * bitmapContent = nullptr;
+	unsigned char *jpegBuffer = nullptr;
+	unsigned long jpegSize = 0;
+	uint8_t* buffer = nullptr;
+	
+	remove(filePath.c_str());
+	outFile = fopen(filePath.c_str(), "wb");
+	if(!outFile){
+		ms_error("Can't open %s for writing: %s\n",filePath.c_str(),strerror(errno));
+		exitCode = -1;
+		goto cleanMemory;
+	}
+	
+	turboJpeg = tjInitCompress();
+	if (!turboJpeg) {
+		ms_error("TurboJpeg init error:%s", tjGetErrorStr());
+		exitCode = -1;
+		goto cleanMemory;
+	}
+	bitmapContent = createQRCode(code, width, height, margin);
+	if(!bitmapContent){// error has been specified by createQRCode()
+		exitCode = -1;
+		goto cleanMemory;
+	}
+	buffer = (uint8_t*)(linphone_content_get_buffer(bitmapContent)); 
+	ms_yuv_buf_init(&yuvbuf, (int)width, (int)height, (int)width, buffer);
+	
+	error = tjCompressFromYUVPlanes(
+				turboJpeg,
+				//This auto cast has the purpose to support multiple versions of turboJPEG where it can be a const parameter.
+				bctoolbox::Utils::auto_cast<unsigned char **>(yuvbuf.planes),
+				yuvbuf.w,
+				yuvbuf.strides,
+				yuvbuf.h,
+				TJSAMP_GRAY,
+				&jpegBuffer,
+				&jpegSize,
+				100,
+				TJFLAG_ACCURATEDCT
+				);
+	
+	if (error != 0) {
+		ms_error("tjCompressFromYUVPlanes() failed: %s", tjGetErrorStr());
+		exitCode = -1;
+		goto cleanMemory;
+	}
+	bytesWritten = fwrite(jpegBuffer, 1, jpegSize, outFile);
+	if ( bytesWritten == 0 || bytesWritten != jpegSize) {
+		ms_error("Error writing QRCode written bytes : %li [%s]",bytesWritten, strerror(errno));
+		exitCode = -1;
+	}
+	
+cleanMemory:
+	if (jpegBuffer != NULL) tjFree(jpegBuffer);
+	if(bitmapContent) linphone_content_unref(bitmapContent);
+	if(turboJpeg){
+		error = tjDestroy(turboJpeg);
+		if (error != 0){
+			ms_error("TurboJpeg destroy error:%s", tjGetErrorStr());
+		}
+	}
+	if(outFile) fclose(outFile);
+	
+	return exitCode;
+#else
+	return -2;
+#endif
 }
 
 LINPHONE_END_NAMESPACE

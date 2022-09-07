@@ -494,6 +494,22 @@ LinphoneConferenceSchedulerCbs *linphone_factory_create_conference_scheduler_cbs
 	return Factory::toCpp(factory)->createConferenceSchedulerCbs();
 }
 
+bool_t linphone_factory_is_qrcode_available(LinphoneFactory *factory){
+#ifdef QRCODE_ENABLED
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
+
+LinphoneContent *linphone_factory_create_qrcode(LinphoneFactory *factory, const char* code, unsigned int width, unsigned int height, unsigned int margin){
+	return Factory::toCpp(factory)->createQRCode(code ? code : "", width > 0 ? width : 100 , height > 0 ? height : 0, margin);
+}
+
+int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *file_path, const char * code, unsigned int width, unsigned int height, unsigned int margin){
+	return Factory::toCpp(factory)->writeQRCodeFile(code ? code : "", file_path ? file_path : "", width > 0 ? width : 100 , height > 0 ? height : 0, margin);
+}
+
 LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label) {
 	return linphone_friend_phone_number_new(phone_number, label);
 }

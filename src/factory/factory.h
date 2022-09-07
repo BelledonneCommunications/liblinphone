@@ -224,6 +224,9 @@ public:
 	std::shared_ptr<ConferenceInfo> createConferenceInfoFromIcalendarContent(LinphoneContent *content) const;
 	
 	LinphoneConferenceSchedulerCbs *createConferenceSchedulerCbs() const;
+	
+	LinphoneContent *createQRCode(const std::string& code, const unsigned int& width = 100, const unsigned int& height = 100, const unsigned int& margin = 0) const;// Return a raw bitmap
+	int writeQRCodeFile(const std::string& code, const std::string& filePath, const unsigned int& width = 100, const unsigned int& height = 100, const unsigned int& margin = 0) const;// Write a jpeg image (TODO: check file path extension to select format). -2=SDK has not been build for jpeg.
 
 protected:
 	static void _DestroyingCb(void);

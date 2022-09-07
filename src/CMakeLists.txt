@@ -115,6 +115,14 @@ if(ENABLE_LDAP)
 	add_definitions(-DBUILD_LDAP)
 endif()
 
+if(ZXING_FOUND)
+	list(APPEND LINK_LIBS ${ZXING_LIBRARIES})
+endif()
+
+if(TURBOJPEG_FOUND)
+	list(APPEND LINK_LIBS ${TURBOJPEG_LIBRARIES})
+endif()
+
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	account/account.h
 	account/account-params.h
