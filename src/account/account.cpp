@@ -1211,13 +1211,31 @@ void AccountCbs::setRegistrationStateChanged(LinphoneAccountCbsRegistrationState
 
 void Account::onLimeServerUrlChanged (const std::string& limeServerUrl) {
 #ifdef HAVE_LIME_X3DH
-	if (mCore == nullptr) {
-		lWarning() << "Account created without a Core!";
-		return;
-	}
-
 	if (!limeServerUrl.empty()) {
-		linphone_core_add_linphone_spec(mCore, "lime");
+		if (mCore) {
+			linphone_core_add_linphone_spec(mCore, "lime");
+		}
+	} else if (mCore) {
+		// If LIME server URL is still set in the Core, do not remove the spec
+		const char *core_lime_server_url = linphone_core_get_lime_x3dh_server_url(mCore);
+		if (core_lime_server_url && strlen(core_lime_server_url)) {
+			return;
+		}
+
+		bool remove = true;
+		//Check that no other account needs the spec before removing it
+		for (bctbx_list_t *it = mCore->sip_conf.accounts; it; it = it->next) {
+			if (it->data != this->toC()) {
+				const char *lime_server_url = linphone_account_params_get_lime_server_url(linphone_account_get_params((LinphoneAccount *) it->data));
+				if (lime_server_url && strlen(lime_server_url)) {
+					remove = false;
+					break;
+				}
+			}
+		}
+		if (remove) {
+			linphone_core_remove_linphone_spec(mCore, "lime");
+		}
 	}
 #else
 	lWarning() << "Lime X3DH support is not available";
