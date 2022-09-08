@@ -2433,6 +2433,18 @@ void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri) 
 		bctbx_error("Couldn't load config from xml: %s", error);
 		return;
 	}
+
+	// To apply any changes to LIME configuration
+	if (linphone_core_lime_x3dh_available(lc)) {
+		bool limeEnabled = linphone_config_get_bool(lc->config, "lime", "enabled", TRUE);
+
+		if (linphone_core_lime_x3dh_enabled(lc)) {
+			linphone_core_enable_lime_x3dh(lc, FALSE);
+		}
+		if (limeEnabled) {
+			linphone_core_enable_lime_x3dh(lc, TRUE);
+		}
+ 	}
 }
 
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
