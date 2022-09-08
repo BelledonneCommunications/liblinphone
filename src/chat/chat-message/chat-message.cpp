@@ -243,7 +243,8 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 	_linphone_chat_message_notify_msg_state_changed(msg, (LinphoneChatMessageState)state);
 
-	for (auto &listener : listeners) {
+	auto listenersCopy = listeners; // To allow listener to be removed while iterating
+	for (auto &listener : listenersCopy) {
 		listener->onChatMessageStateChanged(q->getSharedFromThis(), state);
 	}
 	if (state == ChatMessage::State::Displayed) {
@@ -1666,6 +1667,11 @@ void ChatMessage::fileUploadEndBackgroundTask () {
 void ChatMessage::addListener(shared_ptr<ChatMessageListener> listener) {
 	L_D();
 	d->listeners.push_back(listener);
+}
+
+void ChatMessage::removeListener(shared_ptr<ChatMessageListener> listener) {
+	L_D();
+	d->listeners.remove(listener);
 }
 
 std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e) {

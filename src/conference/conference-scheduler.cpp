@@ -243,9 +243,12 @@ void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessag
 				}
 			}
 		}
-	} else if (state == ChatMessage::State::Delivered) { // Message was delivered
-		lInfo() << "[Conference Scheduler] [" << this << "] Invitation to participant [" << participantAddress << "] was delivered";
+	} else if (state == ChatMessage::State::Delivered || 
+			state == ChatMessage::State::DeliveredToUser ||
+			state == ChatMessage::State::Displayed) { // Message was delivered (first received state can be any of those 3)
+		lInfo() << "[Conference Scheduler] [" << this << "] Invitation to participant [" << participantAddress << "] was delivered (" << state << ")";
 		mInvitationsSent += 1;
+		message->removeListener(getSharedFromThis());
 	} else {
 		return;
 	}

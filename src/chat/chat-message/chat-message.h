@@ -155,6 +155,7 @@ public:
 	void fileUploadEndBackgroundTask ();
 
 	void addListener(std::shared_ptr<ChatMessageListener> listener);
+	void removeListener(std::shared_ptr<ChatMessageListener> listener);
 
 protected:
 	explicit ChatMessage (ChatMessagePrivate &p);
