@@ -264,7 +264,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Uzbekistan", "UZ", "998", 9, "8"),
 	DialPlan::create("Vanuatu", "VU", "678", 7, "00"),
 	DialPlan::create("Venezuela", "VE", "58", 10, "00"),
-	DialPlan::create("Vietnam", "VN", "84", 9, "00"),
+	DialPlan::create("Vietnam", "VN", "84", 10, "00"),
 	DialPlan::create("Wallis and Futuna", "WF", "681", 5, "00"),
 	DialPlan::create("Yemen", "YE", "967", 9, "00"),
 	DialPlan::create("Zambia", "ZM", "260", 9, "00"),
