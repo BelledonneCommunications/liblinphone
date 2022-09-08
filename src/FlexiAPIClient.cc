@@ -39,19 +39,18 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-
-Json::Value FlexiAPIClient::Response::json(){
+Json::Value FlexiAPIClient::Response::json() {
 	JSONCPP_STRING err;
-			Json::CharReaderBuilder builder;
-			Json::Value obj;
+	Json::CharReaderBuilder builder;
+	Json::Value obj;
 
-			const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+	const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
 
-			if (!reader->parse(body.c_str(), body.c_str() + body.length(), &obj, &err)) {
-				lError() << err;
-			}
+	if (!reader->parse(body.c_str(), body.c_str() + body.length(), &obj, &err)) {
+		lError() << err;
+	}
 
-			return obj;
+	return obj;
 }
 
 FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
@@ -81,7 +80,8 @@ FlexiAPIClient *FlexiAPIClient::sendAccountCreationTokenByPush(string pnProvider
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string password, string algorithm, string accountCreationToken) {
+FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string password,
+																	  string algorithm, string accountCreationToken) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("password", password);
@@ -91,8 +91,8 @@ FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string use
 	return this;
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string domain, string password, string algorithm,
-											  string accountCreationToken) {
+FlexiAPIClient *FlexiAPIClient::accountCreateWithAccountCreationToken(string username, string domain, string password,
+																	  string algorithm, string accountCreationToken) {
 	JsonParams params;
 	params.push("username", username);
 	params.push("domain", domain);
@@ -139,7 +139,8 @@ FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, 
 	return accountCreate(username, password, "", "", email, "");
 }
 
-FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string algorithm, string domain, string email, string phone) {
+FlexiAPIClient *FlexiAPIClient::accountCreate(string username, string password, string algorithm, string domain,
+											  string email, string phone) {
 	JsonParams params;
 
 	if (!username.empty()) {
@@ -257,6 +258,11 @@ FlexiAPIClient *FlexiAPIClient::accountAuthTokenAttach(string authToken) {
 	return this;
 }
 
+FlexiAPIClient *FlexiAPIClient::accountProvision() {
+	prepareAndSendRequest("accounts/me/provision");
+	return this;
+}
+
 /**
  * Admin endpoints
  */
@@ -348,13 +354,14 @@ FlexiAPIClient *FlexiAPIClient::adminAccountContacts(int id) {
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContactAdd(int id, int contactId) {
-	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)), "POST");
+	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
+						  "POST");
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::adminAccountContactDelete(int id, int contactId) {
 	prepareAndSendRequest(string("accounts/").append(to_string(id)).append("/contacts/").append(to_string(contactId)),
-				   "DELETE");
+						  "DELETE");
 	return this;
 }
 
@@ -408,8 +415,8 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 	req = belle_http_request_create(type.c_str(), belle_generic_uri_parse(uri.append(path).c_str()),
 									belle_sip_header_content_type_create("application", "json"),
 									belle_sip_header_accept_create("application", "json"), NULL);
-	if(!req) {
-		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]" ;
+	if (!req) {
+		lError() << "FlexiAPIClient cannot create a http request from [" << path << "] and config url [" << uri << "]";
 		return;
 	}
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);

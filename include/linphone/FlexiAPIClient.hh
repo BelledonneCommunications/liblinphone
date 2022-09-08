@@ -104,6 +104,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 	FlexiAPIClient *accountPhoneChangeRequest(string phone);
 	FlexiAPIClient *accountPhoneChange(string code);
 	FlexiAPIClient *accountAuthTokenAttach(string authToken);
+	FlexiAPIClient *accountProvision();
 
 	// Admin endpoints
 	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm);
