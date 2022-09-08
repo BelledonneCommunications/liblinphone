@@ -78,6 +78,7 @@ void linphone_core_set_im_encryption_engine (LinphoneCore *lc, LinphoneImEncrypt
 }
 
 void linphone_core_enable_lime_x3dh (LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_bool(linphone_core_get_config(lc), "lime", "enabled", enable);
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->enableLimeX3dh(enable ? true : false);
 }
 

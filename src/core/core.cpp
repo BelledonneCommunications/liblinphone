@@ -94,12 +94,14 @@ void CorePrivate::init () {
 	localListEventHandler = makeUnique<LocalConferenceListEventHandler>(q->getSharedFromThis());
 #endif
 
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	if (q->limeX3dhAvailable()) {
-		// Always try to enable x3dh.
-		q->enableLimeX3dh(true);
+		bool limeEnabled = linphone_config_get_bool(lc->config, "lime", "enabled", TRUE);
+		if (limeEnabled) {
+			q->enableLimeX3dh(true);
+		}
 	}
 
-	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	int tmp = linphone_config_get_int(lc->config,"sip", "lime", LinphoneLimeDisabled);
 	LinphoneLimeState limeState = static_cast<LinphoneLimeState>(tmp);
 	if (limeState != LinphoneLimeDisabled && q->limeX3dhEnabled()) {
@@ -646,6 +648,7 @@ EncryptionEngine *Core::getEncryptionEngine () const {
 void Core::enableLimeX3dh (bool enable) {
 #ifdef HAVE_LIME_X3DH
 	L_D();
+
 	if (!enable) {
 		if (d->imee != nullptr) {
 			CoreListener *listener = dynamic_cast<CoreListener *>(getEncryptionEngine());
@@ -678,9 +681,6 @@ void Core::enableLimeX3dh (bool enable) {
 			d->registerListener(engine);
 		} else {
 			string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
-			if (serverUrl.empty()) {
-				lWarning() << "Lime X3DH server URL not set, make sure you set it in Account's params";
-			}
 
 			string dbAccess = getX3dhDbPath();
 			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
@@ -719,9 +719,12 @@ void Core::setX3dhServerUrl(const std::string &url) {
 	linphone_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
 	linphone_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
 	if (url.compare(prevUrl)) {
-		//Force re-initialisation
-		enableLimeX3dh(false);
-		enableLimeX3dh(true);
+		bool limeEnabled = linphone_config_get_bool(lpconfig, "lime", "enabled", TRUE);
+		if (limeEnabled) {
+			//Force re-initialisation
+			enableLimeX3dh(false);
+			enableLimeX3dh(true);
+		}
 	}
 }
 
