@@ -1035,7 +1035,7 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 
 string LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent *lev) {
 	unsigned int lastNotify = conf->getLastNotify();
-	if (notifyId == 0)
+	if ((notifyId == 0) || (notifyId > static_cast<int>(lastNotify)))
 		return createNotifyFullState(lev);
 	else if (notifyId < static_cast<int>(lastNotify))
 		return createNotifyMultipart(notifyId);
