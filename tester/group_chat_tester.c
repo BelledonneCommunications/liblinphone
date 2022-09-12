@@ -2305,7 +2305,7 @@ static void group_chat_room_reinvited_after_removed_base (bool_t offline_when_re
 			nbLaureConferenceCreatedEventsBeforeRestart++;
 	}
 	bctbx_list_free_with_data(laureHistory, (bctbx_list_free_func)linphone_event_log_unref);
-	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 2, unsigned int, "%u");
+	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 1, unsigned int, "%u");
 
 	if (restart_after_reinvited) {
 		coresList = bctbx_list_remove(coresList, laure->lc);
@@ -3345,7 +3345,6 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		// Activate groupchat on Pauline's side and wait for 5 seconds, the migration should now be done on next message sending
 		_linphone_chat_room_enable_migration(paulineCr, TRUE);
 
-		linphone_chat_room_unref(paulineCr);
 		coresList = bctbx_list_remove(coresList, pauline->lc);
 		linphone_core_manager_reinit(pauline);
 		tmpCoresManagerList = bctbx_list_append(NULL, pauline);
@@ -5780,7 +5779,7 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 			nbLaureConferenceCreatedEventsBeforeRestart++;
 	}
 	bctbx_list_free_with_data(laureHistory, (bctbx_list_free_func)linphone_event_log_unref);
-	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 2, unsigned int, "%u");
+	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 1, unsigned int, "%u");
 
 	initialLaureStats = laure->stat;
 	linphone_proxy_config_refresh_register(linphone_core_get_default_proxy_config(laure->lc));

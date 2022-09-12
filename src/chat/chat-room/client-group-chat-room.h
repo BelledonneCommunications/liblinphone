@@ -148,6 +148,7 @@ private:
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
+	void onFullStateReceived () override;
 	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
 	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;

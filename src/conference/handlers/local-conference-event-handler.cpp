@@ -631,8 +631,6 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const 
 
 	endpoint.setState(StateType::deleted);
 
-	// Call ID
-
 	shared_ptr<Participant> participant = conf->isMe(pAddress) ? conf->getMe() : conf->findParticipant(pAddress);
 	if (participant) {
 		shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(dAddress);
@@ -963,7 +961,8 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 	IdentityAddress contactAddr(contactAddrStr);
 	bctbx_free(contactAddrStr);
 	shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
-	if (!device || ((device->getState() != ParticipantDevice::State::Present) && (device->getState() != ParticipantDevice::State::Joining))) {
+	const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
+	if (!device || ((deviceState != ParticipantDevice::State::Present) && (deviceState != ParticipantDevice::State::Joining))) {
 		lError() << "Received SUBSCRIBE for conference [" << conf->getConferenceAddress()
 			<< "], device sending subscribe [" << contactAddr << "] is not known, no NOTIFY sent";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
@@ -974,12 +973,20 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
 		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
 		device->setConferenceSubscribeEvent(lev);
-		if (evLastNotify == 0 || (device->getState() == ParticipantDevice::State::Joining)) {
-			conf->setLastNotify(lastNotify+1);
-			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
+		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
+			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress() << " with last notif set to " << conf->getLastNotify();
+			if (deviceState == ParticipantDevice::State::Present) {
+				lInfo() << "Participant " << device->getAddress() << " is already part of conference [" << conf->getConferenceAddress() << "] hence send full state to be sure the client and the server are on the same page";
+			} else {
+				conf->setLastNotify(lastNotify+1);
+			}
 			notifyFullState(createNotifyFullState(lev), device);
-			// Notify everybody that a participant device has been added and its capabilities after receiving the SUBSCRIBE
-			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
+			// Do not notify everybody that a particiant has been added if it was already part of the conference. It may mean that the client and the server wanted to synchronize to each other
+			if (deviceState != ParticipantDevice::State::Present) {
+				// Notify everybody that a participant device has been added and its capabilities after receiving the SUBSCRIBE
+				const auto notify = createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress());
+				notifyAllExceptDevice(makeContent(notify), device);
+			}
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
@@ -1019,10 +1026,15 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 
 Content LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent *lev) {
 	unsigned int lastNotify = conf->getLastNotify();
-	if ((notifyId == 0) || (notifyId > static_cast<int>(lastNotify)))
-		return createNotifyFullState(lev);
-	else if (notifyId < static_cast<int>(lastNotify))
+	if ((notifyId == 0) || (notifyId > static_cast<int>(lastNotify))) {
+		auto content = createNotifyFullState(lev);
+		list<Content *> contentPtrs;
+		contentPtrs.push_back(&content);
+		auto multipart = ContentManager::contentListToMultipart(contentPtrs);
+		return multipart;
+	} else if (notifyId < static_cast<int>(lastNotify)) {
 		return createNotifyMultipart(notifyId);
+	}
 
 	return Content();
 }

@@ -198,6 +198,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	for (const shared_ptr<Participant> &participant : participants) {
 		int nbDevice = 0;
 		const list<shared_ptr<ParticipantDevice>> devices = participant->getDevices();
+lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_identity(message->getCore()->getCCore())) << " participant " << participant->getAddress() << " devices empty " << devices.empty();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
 			recipients->emplace_back(device->getAddress().asString());
 			nbDevice++;

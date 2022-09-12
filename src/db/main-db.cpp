@@ -4488,6 +4488,26 @@ long long MainDb::addConferenceParticipantEventToDb (
 	return d->insertConferenceParticipantEvent(eventLog, chatRoomId, false);
 }
 
+void MainDb::updateNotifyId (
+	const shared_ptr<AbstractChatRoom> &chatRoom,
+	const unsigned int lastNotify
+) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+		if (dbChatRoomId >= 0) {
+			*d->dbSession.getBackendSession() << "UPDATE chat_room"
+				" SET last_notify_id = :lastNotifyId "
+				" WHERE id = :chatRoomId",
+				soci::use(lastNotify), soci::use(dbChatRoomId);
+			tr.commit();
+		}
+	};
+#endif
+}
+
 void MainDb::migrateBasicToClientGroupChatRoom (
 	const shared_ptr<AbstractChatRoom> &basicChatRoom,
 	const shared_ptr<AbstractChatRoom> &clientGroupChatRoom

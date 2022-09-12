@@ -101,7 +101,6 @@ void RemoteConference::onEphemeralMessageEnabled (const shared_ptr<ConferenceEph
 void RemoteConference::onEphemeralLifetimeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {}
 
 void RemoteConference::onFullStateReceived() {
-
 	time_t creationTime = time(nullptr);
 
 	// Subject event

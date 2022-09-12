@@ -88,6 +88,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	}
 
 	bool isFullState = confInfo->getState() == StateType::full;
+	bool synchronizing = fullStateRequested;
+	if (isFullState && fullStateRequested) {
+		fullStateRequested = false;
+	}
 
 	if (waitingFullState && !isFullState) {
 		lError() << "Unable to process received NOTIFY because conference " << conf->getConferenceAddress() << " is waiting a full state";
@@ -110,16 +114,22 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	// 2. Update last notify.
 	{
+		const auto previousLastNotify = getLastNotify();
 		auto &version = confInfo->getVersion();
 		if (version.present()) {
 			unsigned int notifyVersion = version.get();
-			if (getLastNotify() >= notifyVersion) {
+			synchronizing |= isFullState && (previousLastNotify >= notifyVersion);
+			if (!isFullState && (previousLastNotify >= notifyVersion)) {
 				lWarning() << "Ignoring conference notify for: " << getConferenceId() << ", notify version received is: "
-					<< notifyVersion << ", should be stricly more than last notify id of conference: " << getLastNotify();
+					<< notifyVersion << ", should be stricly more than last notify id of conference: " << previousLastNotify;
 				requestFullState();
 				return;
 			}
 			conf->setLastNotify(version.get());
+			if (chatRoom) {
+				// Update last notify ID in the DB just in case the notify does not generate any further event
+				conf->getCore()->getPrivate()->mainDb->updateNotifyId(chatRoom, getLastNotify());
+			}
 		}
 	}
 
@@ -598,7 +608,9 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				);
 			}
 		}
-		confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
+		if (!synchronizing) {
+			confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
+		}
 		conf->notifyFullState();
 	}
 }
@@ -608,6 +620,7 @@ void RemoteConferenceEventHandler::requestFullState() {
 	unsubscribe();
 	conf->setLastNotify(0);
 	subscribe(getConferenceId());
+	fullStateRequested = true;
 }
 
 LinphoneMediaDirection RemoteConferenceEventHandler::mediaStatusToMediaDirection (MediaStatusType status) {
