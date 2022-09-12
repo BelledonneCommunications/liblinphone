@@ -835,7 +835,7 @@ int Factory::writeQRCodeFile(const std::string& code, const std::string& filePat
 	}
 	bytesWritten = fwrite(jpegBuffer, 1, jpegSize, outFile);
 	if ( bytesWritten == 0 || bytesWritten != jpegSize) {
-		ms_error("Error writing QRCode written bytes : %li [%s]",bytesWritten, strerror(errno));
+		ms_error("Error writing QRCode written bytes : %zu [%s]",bytesWritten, strerror(errno));
 		exitCode = -1;
 	}
 	
