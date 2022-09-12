@@ -1380,8 +1380,8 @@ void MediaSessionPrivate::fillRtpParameters(SalStreamDescription & stream) const
 	auto & cfg = stream.cfgs[stream.getActualConfigurationIndex()];
 	if (cfg.dir != SalStreamInactive)  {
 		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
-		/* rtcp-mux must be enabled when bundle mode is proposed.*/
-		cfg.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled();
+		/* rtcp-mux must be enabled when bundle mode is proposed or we're using DTLS-SRTP.*/
+		cfg.rtcp_mux = rtcpMux || getParams()->rtpBundleEnabled() || getParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS;
 		cfg.rtcp_cname = getMe()->getAddress().asString();
 
 		if (stream.rtp_port == 0 && !cfg.isBundleOnly()) {
