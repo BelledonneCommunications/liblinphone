@@ -990,6 +990,44 @@ static void session_timer_cancel_timer(void)
 	linphone_core_manager_destroy(marie);
 }
 
+static void session_timer_update_during_paused_call(void) {
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *marie_call;
+
+	marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_session_expires_enabled(marie->lc, TRUE);
+	linphone_core_set_session_expires_value(marie->lc, 8);
+
+	pauline = linphone_core_manager_new("pauline_rc");
+	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
+	linphone_core_set_session_expires_value(pauline->lc, 8);
+	linphone_core_set_session_expires_refresher_value(pauline->lc, LinphoneSessionExpiresRefresherUAC);
+
+	if (BC_ASSERT_TRUE(call(marie, pauline))) {
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000));
+
+		marie_call = linphone_core_get_current_call(marie->lc);
+		linphone_call_pause(marie_call);
+
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 1, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1, 10000));
+
+		// Wait for an update
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1, 10000));
+
+		// The call should still be in pause
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 2, 10000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 2, 10000));
+
+		end_call(marie, pauline);
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t session_timers_tests[] = {
 	TEST_ONE_TAG("Session timer disabled", session_timer_disabled, "Session Timer"),
 	TEST_ONE_TAG("Session timer disabled client", session_timer_disabled_client, "Session Timer"),
@@ -1007,6 +1045,8 @@ test_t session_timers_tests[] = {
 	TEST_ONE_TAG("Session timer invite OK, c = uas, s = auto", session_timer_interval_ok_refresher_uas_uas, "Session Timer"),
 	TEST_ONE_TAG("Session timer invite OK, c = none, s = uac", session_timer_interval_ok_refresher_none_uac, "Session Timer"),
 	TEST_ONE_TAG("Session timer cancel OK", session_timer_cancel_timer, "Session Timer"),
+
+	TEST_ONE_TAG("Session timer update during a paused call", session_timer_update_during_paused_call, "Session Timer"),
 };
 
 test_suite_t session_timers_test_suite = {"Session Timers", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
