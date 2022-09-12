@@ -2379,7 +2379,6 @@ static void group_chat_room_server_ephemeral_mode_changed (void) {
 		bctbx_list_free(coresList);
 	}
 }
-
 }
 
 static test_t local_conference_tests[] = {

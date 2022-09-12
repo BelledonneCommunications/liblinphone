@@ -408,3 +408,8 @@ end:
 	bctbx_socket_close(sock);
 	return err;
 }
+
+bool_t linphone_conference_type_is_full_state(const char * text) {
+	std::string data(text);
+	return ((data.find("state=\"full\"") != std::string::npos) && (data.find("state=\"partial\"") == std::string::npos) && (data.find("state=\"deleted\"") == std::string::npos)) ? TRUE : FALSE;
+}

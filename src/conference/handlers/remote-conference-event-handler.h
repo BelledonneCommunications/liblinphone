@@ -57,6 +57,7 @@ public:
 
 	const ConferenceId &getConferenceId() const;
 	unsigned int getLastNotify () const;
+	void requestFullState();
 
 protected:
 	void conferenceInfoNotifyReceived (const std::string &xmlBody);
@@ -75,10 +76,10 @@ protected:
 
 	bool subscriptionWanted = false;
 	bool waitingFullState = false;
+	bool fullStateRequested = false;
 
 private:
 	void unsubscribePrivate ();
-	void requestFullState();
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 

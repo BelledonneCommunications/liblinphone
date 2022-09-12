@@ -42,6 +42,8 @@ void check_result_desc_rtp_rtcp_ports (LinphoneCall *call, int rtp_port, int rtc
 
 int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type);
 
+bool_t linphone_conference_type_is_full_state(const char * text);
+
 #ifdef __cplusplus
 }
 #endif

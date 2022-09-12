@@ -50,6 +50,15 @@ const LinphoneAddress *linphone_participant_device_get_address(const LinphonePar
 	return L_GET_C_BACK_PTR(&addr);
 }
 
+void linphone_participant_device_set_state (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceState state) {
+	ParticipantDevice::toCpp(participant_device)->setState(static_cast<ParticipantDevice::State>(state));
+}
+
+
+LinphoneParticipantDeviceState linphone_participant_device_get_state (const LinphoneParticipantDevice *participant_device) {
+	return (LinphoneParticipantDeviceState)(ParticipantDevice::toCpp(participant_device)->getState());
+}
+
 LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
 	return (LinphoneChatRoomSecurityLevel)(ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
 }

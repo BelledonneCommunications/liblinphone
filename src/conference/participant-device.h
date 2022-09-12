@@ -50,12 +50,12 @@ class ParticipantDeviceCbs;
 class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice>, public UserDataAccessor, public CallbacksHolder<ParticipantDeviceCbs> {
 public:
 	enum class State {
-		Joining, //an INVITE has been sent
-		Present, //the SIP session has been concluded, participant is part of the conference
-		Leaving, //A BYE is pending
-		Left, //The Session is terminated
-		ScheduledForJoining, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.
-		ScheduledForLeaving, //Transitional state for a participant that will receive a BYE shortly.
+		Joining = LinphoneParticipantDeviceStateJoining, //an INVITE has been sent
+		Present = LinphoneParticipantDeviceStatePresent, //the SIP session has been concluded, participant is part of the conference
+		Leaving = LinphoneParticipantDeviceStateLeaving, //A BYE is pending
+		Left = LinphoneParticipantDeviceStateLeft, //The Session is terminated
+		ScheduledForJoining = LinphoneParticipantDeviceStateScheduledForJoining, //Initial state for the server group chatroom, when the participant has not yet been INVITEd.
+		ScheduledForLeaving = LinphoneParticipantDeviceStateScheduledForLeaving, //Transitional state for a participant that will receive a BYE shortly.
 	};
 
 	ParticipantDevice ();

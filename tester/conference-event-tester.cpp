@@ -1136,7 +1136,7 @@ void participant_added_parsing() {
 
 void participant_not_added_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	setup_mgr_for_conference(marie, NULL);
+	setup_mgr_for_conference(marie);
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
 	char *confAddressStr = linphone_address_as_string(confAddress);
 	Address addr(confAddressStr);

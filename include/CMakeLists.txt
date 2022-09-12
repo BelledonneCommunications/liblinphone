@@ -122,6 +122,7 @@ set(ENUMS_HEADER_FILES
 	encryption-engine-enums.h
 	event-log-enums.h
 	security-event-enums.h
+	participant-device-enums.h
 )
 
 set(UTILS_HEADER_FILES

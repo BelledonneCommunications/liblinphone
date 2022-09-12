@@ -335,6 +335,8 @@ void _linphone_conference_notify_subject_changed(LinphoneConference *conference,
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 
+LINPHONE_PUBLIC void linphone_participant_device_set_state (LinphoneParticipantDevice *participant_device, LinphoneParticipantDeviceState state);
+
 /*account*/
 void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);
 

@@ -3451,7 +3451,6 @@ void setup_mgr_for_conference(LinphoneCoreManager *mgr) {
 	int* subscription_received = (int *)ms_new0(int, 1);
 	*subscription_received = 0;
 	mgr->user_info = subscription_received;
-
 }
 
 LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies) {

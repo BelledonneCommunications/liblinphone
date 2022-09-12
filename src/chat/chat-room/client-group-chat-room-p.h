@@ -54,6 +54,7 @@ public:
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
 	void onChatRoomInsertInDatabaseRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
 	void onChatRoomDeleteRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
+	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 
 	// CallSessionListener
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;

@@ -202,6 +202,27 @@ void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 	q->setState(ConferenceInterface::State::Deleted);
 }
 
+LinphoneReason ClientGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *message) {
+	L_Q();
+
+	auto reason = ChatRoomPrivate::onSipMessageReceived (op, message);
+	auto capabilities = q->getCapabilities();
+
+	if ((!(capabilities & ChatRoom::Capabilities::Basic)) && (q->getParticipants().empty())) {
+		lWarning() << "Chatroom " << q->getConferenceAddress() << " received a message but it looks like it has no participants. Request a full state to enquire the server if we missed anything";
+		q->getConference()->setLastNotify(0);
+		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
+			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
+		} else {
+			static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->requestFullState();
+		}
+	}
+
+	return reason;
+
+}
+
+
 // -----------------------------------------------------------------------------
 
 void ClientGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
@@ -978,6 +999,24 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 		return;
 	}
 
+	auto event = make_shared<ConferenceEvent>(
+		EventLog::Type::ConferenceCreated,
+		time(nullptr),
+		getConferenceId()
+	);
+
+	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
+	if (!forceFullState) //to avoid this event to be repeated for each full state
+		d->addEvent(event);
+
+	LinphoneChatRoom *cr = d->getCChatRoom();
+	_linphone_chat_room_notify_conference_joined(cr, L_GET_C_BACK_PTR(event));
+
+	d->bgTask.stop();
+}
+
+void ClientGroupChatRoom::onFullStateReceived () {
+	L_D();
 	bool performMigration = false;
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
@@ -999,21 +1038,6 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	else {
 		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
 	}
-
-	auto event = make_shared<ConferenceEvent>(
-		EventLog::Type::ConferenceCreated,
-		time(nullptr),
-		getConferenceId()
-	);
-
-	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
-	if (!forceFullState) //to avoid this event to be repeated for each full state
-		d->addEvent(event);
-
-	LinphoneChatRoom *cr = d->getCChatRoom();
-	_linphone_chat_room_notify_conference_joined(cr, L_GET_C_BACK_PTR(event));
-
-	d->bgTask.stop();
 }
 
 void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
