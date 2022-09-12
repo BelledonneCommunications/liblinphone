@@ -665,7 +665,8 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 		}else if (rtcp_is_SR(block)){
 			MediaStream *ms = (stats_type == 0)
 				? Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio)
-			: Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo);
+			: ((stats_type == 1) ? Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo)
+			: Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText));
 			float rtt = rtp_session_get_round_trip_propagation(ms->sessions.rtp_session);
 
 			if (rtt > 1e-6){

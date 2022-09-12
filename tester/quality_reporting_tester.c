@@ -392,8 +392,7 @@ static void quality_reporting_sent_using_custom_route(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-#ifdef VIDEO_ENABLED
-static void quality_reporting_interval_report_video_and_rtt (void) {
+static void quality_reporting_interval_report_video_and_rtt_base (bool_t enable_video) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc_rtcp_xr");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc_rtcp_xr");
 	LinphoneCall *call_marie = NULL;
@@ -407,10 +406,10 @@ static void quality_reporting_interval_report_video_and_rtt (void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, FALSE);
 	marie_params = linphone_core_create_call_params(marie->lc, NULL);
-	linphone_call_params_enable_video(marie_params, TRUE);
+	linphone_call_params_enable_video(marie_params, enable_video);
 	linphone_call_params_enable_realtime_text(marie_params, TRUE);
 	pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
-	linphone_call_params_enable_video(pauline_params, TRUE);
+	linphone_call_params_enable_video(pauline_params, enable_video);
 	linphone_call_params_enable_realtime_text(pauline_params, TRUE);
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, marie_params, pauline_params)) {
@@ -421,7 +420,7 @@ static void quality_reporting_interval_report_video_and_rtt (void) {
 		linphone_proxy_config_done(config);
 
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 3000));
-		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)) == enable_video);
 		BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(call_pauline)));
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
@@ -461,6 +460,15 @@ static void quality_reporting_interval_report_video_and_rtt (void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void quality_reporting_interval_report_rtt (void) {
+	quality_reporting_interval_report_video_and_rtt_base(FALSE);
+}
+
+#ifdef VIDEO_ENABLED
+static void quality_reporting_interval_report_video_and_rtt (void) {
+	quality_reporting_interval_report_video_and_rtt_base(TRUE);
 }
 #endif
 
@@ -507,6 +515,7 @@ test_t quality_reporting_tests[] = {
 	TEST_NO_TAG("Call term session report invalid if missing mandatory fields", quality_reporting_invalid_report),
 	TEST_NO_TAG("Call term session report sent if call ended normally", quality_reporting_at_call_termination),
 	TEST_NO_TAG("Interval report if interval is configured", quality_reporting_interval_report),
+	TEST_NO_TAG("Interval report if interval is configured with realtime text", quality_reporting_interval_report_rtt),
 	#ifdef VIDEO_ENABLED
 		TEST_NO_TAG("Interval report if interval is configured with video and realtime text", quality_reporting_interval_report_video_and_rtt),
 		TEST_NO_TAG("Session report sent if video stopped during call", quality_reporting_session_report_if_video_stopped),

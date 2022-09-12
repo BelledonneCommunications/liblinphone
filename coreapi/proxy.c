@@ -271,8 +271,8 @@ void linphone_proxy_config_enable_quality_reporting(LinphoneProxyConfig *cfg, bo
 }
 
 bool_t linphone_proxy_config_quality_reporting_enabled(LinphoneProxyConfig *cfg){
-	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
-	return linphone_account_params_get_quality_reporting_enabled(params);
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : ((cfg->account) ? linphone_account_get_params(cfg->account) : NULL);
+	return (params ? linphone_account_params_get_quality_reporting_enabled(params) : !!linphone_config_get_default_int(linphone_core_get_config(linphone_proxy_config_get_core(cfg)), "proxy", "quality_reporting_enabled", false));
 }
 
 void linphone_proxy_config_set_quality_reporting_interval(LinphoneProxyConfig *cfg, int interval) {
