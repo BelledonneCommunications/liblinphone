@@ -450,6 +450,8 @@ void FlexiAPIClient::prepareAndSendRequest(string path, string type, JsonParams 
 
 void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_t *event) noexcept {
 	auto cb = static_cast<Callbacks *>(ctx);
+	auto self = cb->mSelf; // Keep an instance of self.
+	cb->mSelf = nullptr;   // Allow callbacks to reset cb if needed.
 
 	try {
 		FlexiAPIClient::Response response;
@@ -475,8 +477,6 @@ void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_
 	} catch (const std::exception &e) {
 		lError() << e.what();
 	}
-
-	cb->mSelf = nullptr;
 }
 
 void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept {

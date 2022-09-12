@@ -2194,16 +2194,18 @@ LINPHONE_PUBLIC const LinphoneDigestAuthenticationPolicy * linphone_core_get_dig
 /**
  * Set the #LinphoneAccountCreator url on the #LinphoneCore
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
- * @param url The URL to reach
+ * @param url The URL to reach @maybenil
+ * @ingroup account_creator
 **/
-LINPHONE_PUBLIC void linphone_core_set_account_creator_url(LinphoneCore *lc, const char *url);
+LINPHONE_PUBLIC void linphone_core_set_account_creator_url(LinphoneCore *core, const char *url);
 
 /**
  * Get the #LinphoneAccountCreator url on the #LinphoneCore
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
  * @return url The URL to reach. @maybenil
+ * @ingroup account_creator
 **/
-LINPHONE_PUBLIC const char *linphone_core_get_account_creator_url(LinphoneCore *lc);
+LINPHONE_PUBLIC const char *linphone_core_get_account_creator_url(LinphoneCore *core);
 
 /**
  * Set the #LinphoneAccountCreator backend on the #LinphoneCore
@@ -2211,7 +2213,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_account_creator_url(LinphoneCore *
  * @param backend The #LinphoneAccountCreatorBackend
  * @ingroup account_creator
 **/
-LINPHONE_PUBLIC void linphone_core_set_account_creator_backend(LinphoneCore *lc, LinphoneAccountCreatorBackend backend);
+LINPHONE_PUBLIC void linphone_core_set_account_creator_backend(LinphoneCore *core, LinphoneAccountCreatorBackend backend);
 
 
 /**

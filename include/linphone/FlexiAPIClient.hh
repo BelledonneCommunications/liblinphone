@@ -35,7 +35,7 @@ typedef struct belle_sip_auth_event belle_sip_auth_event_t;
 
 class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
   public:
-	class Response {
+	class LINPHONE_PUBLIC Response {
 	  public:
 		int code = 0;
 		string body = "";
@@ -43,7 +43,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 		Json::Value json();
 	};
 
-	class JsonParams {
+	class LINPHONE_PUBLIC JsonParams {
 	  public:
 		Json::Value jsonParameters;
 
@@ -63,7 +63,7 @@ class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPICl
 		};
 	};
 
-	class Callbacks {
+	class LINPHONE_PUBLIC Callbacks {
 	  public:
 		function<void(const Response &)> success;
 		function<void(const Response &)> error;
