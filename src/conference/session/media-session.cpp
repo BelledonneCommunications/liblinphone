@@ -243,16 +243,22 @@ void MediaSessionPrivate::accepted () {
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::Updating:
 			case CallSession::State::UpdatedByRemote:
-				// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
-				if (!localDesc->hasDir(SalStreamInactive)
-					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
-					nextState = CallSession::State::PausedByRemote;
-					nextStateMsg = "Call paused by remote";
+				if (state == CallSession::State::Updating && prevState == CallSession::State::Paused) {
+					// If previous state was paused and we are in Updating, there is no reason to set it to anything else than paused
+					nextState = CallSession::State::Paused;
+					nextStateMsg = "Call paused";
 				} else {
-					if (!getParams()->getPrivate()->getInConference() && listener)
-						listener->onSetCurrentSession(q->getSharedFromThis());
-					nextState = CallSession::State::StreamsRunning;
-					nextStateMsg = "Streams running";
+					// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
+					if (!localDesc->hasDir(SalStreamInactive)
+						&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
+						nextState = CallSession::State::PausedByRemote;
+						nextStateMsg = "Call paused by remote";
+					} else {
+						if (!getParams()->getPrivate()->getInConference() && listener)
+							listener->onSetCurrentSession(q->getSharedFromThis());
+						nextState = CallSession::State::StreamsRunning;
+						nextStateMsg = "Streams running";
+					}
 				}
 				break;
 			case CallSession::State::EarlyUpdating:
