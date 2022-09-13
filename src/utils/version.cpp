@@ -53,7 +53,7 @@ namespace Utils{
 				mBuildMetaData = matches[5].str();
 			}
 		} else {
-			bctbx_warning("Version [%s] doesn't matches semantic versioning regex", version.c_str());
+			bctbx_debug("Version [%s] doesn't matches semantic versioning regex", version.c_str());
 			const char *ptr = version.c_str();
 			const char *next;
 			
