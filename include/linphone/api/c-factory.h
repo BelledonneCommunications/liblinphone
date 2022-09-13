@@ -747,6 +747,13 @@ LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_qrcode(LinphoneFactory 
  */
 LINPHONE_PUBLIC int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *file_path, const char * code, unsigned int width, unsigned int height, unsigned int margin);
 
+/**
+ * Creates an object #LinphoneVideoSourceDescriptor
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneVideoSourceDescriptor @notnil
+ */
+LINPHONE_PUBLIC LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(LinphoneFactory *factory);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

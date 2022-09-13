@@ -513,3 +513,7 @@ int linphone_factory_write_qrcode_file(LinphoneFactory *factory, const char *fil
 LinphoneFriendPhoneNumber* linphone_factory_create_friend_phone_number(const LinphoneFactory *factory, const char *phone_number, const char *label) {
 	return linphone_friend_phone_number_new(phone_number, label);
 }
+
+LinphoneVideoSourceDescriptor *linphone_factory_create_video_source_descriptor(LinphoneFactory *factory) {
+	return linphone_video_source_descriptor_new();
+}
