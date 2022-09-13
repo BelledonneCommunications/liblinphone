@@ -28,13 +28,21 @@
 
 find_path(ZXING_INCLUDE_DIRS
 	NAMES
+		ZXing/BarcodeFormat.h
+		ZXing/BitHacks.h
+		ZXing/ByteArray.h
+		ZXing/CharacterSet.h
+		ZXing/Flags.h
+		ZXing/GTIN.h
+		ZXing/TextUtfEncoding.h
+		ZXing/ZXAlgorithms.h
 		ZXing/ZXConfig.h
 	PATH_SUFFIXES include
 )
 
 find_library(ZXING_LIBRARIES
 	NAMES ZXing libZXing
-	PATH_SUFFIXES bin lib lib64
+	PATH_SUFFIXES Frameworks bin lib lib64
 )
 
 include(FindPackageHandleStandardArgs)
