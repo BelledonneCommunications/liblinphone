@@ -4069,6 +4069,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	linphone_core_refresh_registers(marie->lc);
 	linphone_core_refresh_registers(pauline->lc);
 	wait_for_list(coresList, 0, 1, 2000);
+
 	// Pauline sends a new message
 	textMessage = "Hey you";
 	message = _send_message(paulineCr, textMessage);

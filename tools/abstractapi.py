@@ -539,6 +539,7 @@ class CParser:
 			'LinphoneTunnelMode'                         : 'LinphoneTunnel',
 			'LinphoneAudioDeviceType'                    : 'LinphoneAudioDevice',
 			'LinphoneAudioDeviceCapabilities'            : 'LinphoneAudioDevice',
+			'LinphoneConferenceSchedulerState'           : 'LinphoneConferenceScheduler',
 			'LinphoneConferenceInfoState'                : 'LinphoneConferenceInfo'
 		}
 
