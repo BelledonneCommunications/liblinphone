@@ -316,11 +316,10 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						}
 						addAcapToStream(localMediaDesc, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
 
-						const std::string ssrcAttrName("ssrc");
-						const auto rtpSsrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
-						const auto rtcpCname = getMediaSessionPrivate().getMe()->getAddress().asString();
-						const std::string ssrcAttribute = std::to_string(rtpSsrc) + " cname:" + rtcpCname;
-						addAcapToStream(localMediaDesc, streamIndex, ssrcAttrName, ssrcAttribute);
+						// When offering DTLS, we must use rtcp-mux
+						const std::string rtcpMuxAttrName("rtcp-mux");
+						const std::string rtcpMuxAttrValue{}; // rtcp-mux attribute has no value
+						addAcapToStream(localMediaDesc, streamIndex, rtcpMuxAttrName, rtcpMuxAttrValue);
 
 						const std::string setupAttrName("setup");
 						/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */

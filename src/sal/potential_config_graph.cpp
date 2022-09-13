@@ -134,7 +134,7 @@ PotentialCfgGraph::media_description_acap PotentialCfgGraph::createACapabilities
 		std::shared_ptr<acapability> elem = std::make_shared<acapability>();
 		elem->index = static_cast<unsigned int>(belle_sdp_acap_attribute_get_id(lAttribute));
 		elem->name = belle_sdp_acap_attribute_get_name(lAttribute);
-		elem->value = belle_sdp_acap_attribute_get_value(lAttribute);
+		elem->value = belle_sdp_acap_attribute_get_value(lAttribute) == NULL?std::string{}:belle_sdp_acap_attribute_get_value(lAttribute);
 		elem->type = cap;
 		caps.push_back(elem);
 	}

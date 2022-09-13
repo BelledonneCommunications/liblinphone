@@ -928,7 +928,13 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 			const auto & name = nameValuePair.first;
 			const auto & value = nameValuePair.second;
 
-			std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+			std::string acapValue{};
+			if (value.empty()) {
+				acapValue = std::to_string(idx) + " " + name;
+			} else {
+				acapValue = std::to_string(idx) + " " + name + ":" + value;
+			}
+
 			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
 		}
 

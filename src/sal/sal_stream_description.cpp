@@ -385,8 +385,6 @@ SalStreamConfiguration SalStreamDescription::createBasePotentialCfg() const {
 	// DTLS
 	baseCfg.dtls_fingerprint.clear();
 	baseCfg.dtls_role = SalDtlsRoleInvalid;
-	baseCfg.rtp_ssrc = 0;
-	baseCfg.rtcp_cname.clear();
 
 	return baseCfg;
 }
@@ -453,19 +451,10 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 				} else if (capName.compare("setup") == 0) {
 					cfg.dtls_role = SalStreamConfiguration::getDtlsRoleFromSetupAttribute(capValue);
 					cfgAcaps.push_back(capIndex);
-				} else if (capName.compare("ssrc") == 0) {
-
-					unsigned int rtpSsrc;
-					char rtcpName[256]={0};
-					const auto nb = sscanf ( capValue.c_str(), "%u cname:%s", &rtpSsrc, rtcpName);
-					if (nb == 2) {
-						cfgAcaps.push_back(capIndex);
-						cfg.rtp_ssrc = rtpSsrc;
-						cfg.rtcp_cname = rtcpName;
-					} else {
-						lError() << "Unable to retrieve rtp ssrc and rtcp cname from atribute " << capValue;
-					}
+				} else if (capName.compare("rtcp-mux") == 0) {
+					cfg.rtcp_mux=true;
 				}
+
 			}
 			cfg.acapIndexes.push_back(cfgAcaps);
 		} else if (enc == LinphoneMediaEncryptionZRTP) {
@@ -1211,7 +1200,12 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 			const auto & nameValuePair = acap.second;
 			const auto & name = nameValuePair.first;
 			const auto & value = nameValuePair.second;
-			std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+			std::string acapValue{};
+			if (value.empty()) {
+				acapValue = std::to_string(idx) + " " + name;
+			} else {
+				acapValue = std::to_string(idx) + " " + name + ":" + value;
+			}
 			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
 		}
 
@@ -1269,25 +1263,15 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 }
 
 void SalStreamDescription::addDtlsAttributesToMediaDesc(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const {
-
-	/*
-	 * rfc5576
-	 * 4.1.  The "ssrc" Media Attribute
-	 * <ssrc-id> is the synchronization source (SSRC) ID of the
-	 * source being described, interpreted as a 32-bit unsigned integer in
-	 * network byte order and represented in decimal.*/
-
 	if ((cfg.proto == SalProtoUdpTlsRtpSavpf) || (cfg.proto == SalProtoUdpTlsRtpSavp)) {
-		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",cfg.rtp_ssrc,L_STRING_TO_C(cfg.rtcp_cname));
 		if ((cfg.dtls_role != SalDtlsRoleInvalid) && (!cfg.dtls_fingerprint.empty())) {
 			const auto setupAttrValue = SalStreamConfiguration::getSetupAttributeForDtlsRole(cfg.dtls_role);
 			if (!setupAttrValue.empty()) {
 				belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup",setupAttrValue.c_str()));
 			}
 			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("fingerprint",L_STRING_TO_C(cfg.dtls_fingerprint)));
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 		}
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
-		ms_free(ssrc_attribute);
 	}
 }
 
