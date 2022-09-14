@@ -453,6 +453,7 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 					cfgAcaps.push_back(capIndex);
 				} else if (capName.compare("rtcp-mux") == 0) {
 					cfg.rtcp_mux=true;
+					cfgAcaps.push_back(capIndex);
 				}
 
 			}
@@ -1270,7 +1271,6 @@ void SalStreamDescription::addDtlsAttributesToMediaDesc(const SalStreamConfigura
 				belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup",setupAttrValue.c_str()));
 			}
 			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("fingerprint",L_STRING_TO_C(cfg.dtls_fingerprint)));
-			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create ("rtcp-mux",NULL ) );
 		}
 	}
 }
