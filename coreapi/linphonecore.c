@@ -2426,6 +2426,18 @@ static void _linphone_core_read_config(LinphoneCore * lc) {
 	lc->auto_net_state_mon=lc->sip_conf.auto_net_state_mon;
 }
 
+static void linphone_core_reload_lime(LinphoneCore *lc) {
+	if (linphone_core_lime_x3dh_available(lc)) {
+		bool limeEnabled = linphone_config_get_bool(lc->config, "lime", "enabled", TRUE);
+		if (linphone_core_lime_x3dh_enabled(lc)) {
+			linphone_core_enable_lime_x3dh(lc, FALSE);
+		}
+		if (limeEnabled) {
+			linphone_core_enable_lime_x3dh(lc, TRUE);
+		}
+ 	}
+}
+
 void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri) {
 	// As for today assume the URI is a local file
 	const char *error = linphone_config_load_from_xml_file(lc->config, xml_uri);
@@ -2435,16 +2447,7 @@ void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri) 
 	}
 
 	// To apply any changes to LIME configuration
-	if (linphone_core_lime_x3dh_available(lc)) {
-		bool limeEnabled = linphone_config_get_bool(lc->config, "lime", "enabled", TRUE);
-
-		if (linphone_core_lime_x3dh_enabled(lc)) {
-			linphone_core_enable_lime_x3dh(lc, FALSE);
-		}
-		if (limeEnabled) {
-			linphone_core_enable_lime_x3dh(lc, TRUE);
-		}
- 	}
+	linphone_core_reload_lime(lc);
 }
 
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message) {
@@ -2456,6 +2459,9 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 		}
 
 		_linphone_core_read_config(lc);
+
+		// To apply any changes to LIME configuration
+		linphone_core_reload_lime(lc);
 	}
 
 	if (lc->provisioning_http_listener){
