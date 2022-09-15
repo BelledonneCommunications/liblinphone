@@ -54,7 +54,9 @@ public:
 	bool operator== (const Content &other) const;
 
 	void copy(const Content &other);
-
+	
+	/* This accessor returns a modifiable ContentType, which is useful to add parameters to an already constructed Content */
+	ContentType &getContentType();
 	const ContentType &getContentType () const;
 	void setContentType (const ContentType &contentType);
 

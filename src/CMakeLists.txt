@@ -564,6 +564,8 @@ if(ENABLE_ADVANCED_IM)
 		xml/rlmi.cpp
 		xml/xml.cpp
 	)
+	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-server-engine.h)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-server-engine.cpp)
 endif()
 
 if (ENABLE_DB_STORAGE)

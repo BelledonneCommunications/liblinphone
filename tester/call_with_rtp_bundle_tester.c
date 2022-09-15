@@ -263,6 +263,8 @@ static void audio_video_call(const params_t *params) {
 		/* This method is deprecated, but we still use to test that disablement of bundle 
 		 * is working. */
 		linphone_call_params_enable_rtp_bundle (new_params, FALSE);
+	}else if (bundle_accepted){
+		BC_ASSERT_TRUE(linphone_call_params_rtp_bundle_enabled(new_params));
 	}
 	linphone_call_update(pauline_call, new_params);
 	linphone_call_params_unref (new_params);
@@ -299,6 +301,12 @@ static void audio_video_call(const params_t *params) {
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(pauline_call_params));
 	marie_call_params = linphone_call_get_current_params(marie_call);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_params));
+	
+	/* Check that bundle is still activated*/
+	if (!params->disable_bundle) {
+		check_rtp_bundle(pauline_call, bundle_accepted, bundle_accepted);
+		check_rtp_bundle(marie_call, bundle_accepted, bundle_accepted);
+	}
 	
 	liblinphone_tester_check_rtcp(marie,pauline);
 	liblinphone_tester_set_next_video_frame_decoded_cb(pauline_call);

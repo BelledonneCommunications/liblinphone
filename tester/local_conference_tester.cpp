@@ -1441,7 +1441,7 @@ static void group_chat_room_bulk_notify_to_participant (void) {
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
-		ClientConference michelle("michelle_rc_udp", focus.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -1810,7 +1810,7 @@ static void group_chat_room_add_participant_with_invalid_address (void) {
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress());
-		ClientConference michelle("michelle_rc_udp", focus.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress());
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -2158,7 +2158,7 @@ static void multidomain_group_chat_room (void) {
 	{ //to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focusExampleDotOrg.getIdentity().asAddress());
 		ClientConference pauline("pauline_rc", focusExampleDotOrg.getIdentity().asAddress());
-		ClientConference michelle("michelle_rc_udp", focusExampleDotOrg.getIdentity().asAddress());
+		ClientConference michelle("michelle_rc", focusExampleDotOrg.getIdentity().asAddress());
 
 		focusExampleDotOrg.registerAsParticipantDevice(marie);
 		focusExampleDotOrg.registerAsParticipantDevice(pauline);

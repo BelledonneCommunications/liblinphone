@@ -42,6 +42,7 @@
 #ifdef HAVE_LIME_X3DH
 #include "chat/encryption/lime-x3dh-encryption-engine.h"
 #endif
+#include "chat/encryption/lime-x3dh-server-engine.h"
 #ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
@@ -650,9 +651,8 @@ EncryptionEngine *Core::getEncryptionEngine () const {
 }
 
 void Core::enableLimeX3dh (bool enable) {
-#ifdef HAVE_LIME_X3DH
 	L_D();
-
+	
 	if (!enable) {
 		if (d->imee != nullptr) {
 			CoreListener *listener = dynamic_cast<CoreListener *>(getEncryptionEngine());
@@ -664,10 +664,9 @@ void Core::enableLimeX3dh (bool enable) {
 		removeSpec("lime");
 		return;
 	}
-
 	if (limeX3dhEnabled())
 		return;
-
+	
 	if (d->imee != nullptr) {
 		lWarning() << "Enabling LIME X3DH over previous non LIME X3DH encryption engine";
 		CoreListener *listener = dynamic_cast<CoreListener *>(getEncryptionEngine());
@@ -678,14 +677,10 @@ void Core::enableLimeX3dh (bool enable) {
 	}
 
 	if (d->imee == nullptr) {
-		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-		if (linphone_core_conference_server_enabled(getCCore())) {
-			LimeX3dhEncryptionServerEngine *engine = new LimeX3dhEncryptionServerEngine(getSharedFromThis());
-			setEncryptionEngine(engine);
-			d->registerListener(engine);
-		} else {
+		if (!linphone_core_conference_server_enabled(getCCore())) {
+#ifdef HAVE_LIME_X3DH
+			LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
 			string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
-
 			string dbAccess = getX3dhDbPath();
 			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 
@@ -697,11 +692,18 @@ void Core::enableLimeX3dh (bool enable) {
 			if (!serverUrl.empty()) {
 				addSpec("lime");
 			}
+#else
+			lWarning() << "Lime X3DH support is not available";
+#endif
+		}else{
+#ifdef HAVE_ADVANCED_IM
+			/* Server mode does not need the lime library dependency. */
+			LimeX3dhEncryptionServerEngine *engine = new LimeX3dhEncryptionServerEngine(getSharedFromThis());
+			setEncryptionEngine(engine);
+			d->registerListener(engine);
+#endif
 		}
 	}
-#else
-	lWarning() << "Lime X3DH support is not available";
-#endif
 }
 
 std::string Core::getX3dhDbPath() const {

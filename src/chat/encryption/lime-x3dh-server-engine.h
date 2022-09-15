@@ -17,27 +17,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_CONTENT_MANAGER_H_
-#define _L_CONTENT_MANAGER_H_
+#ifndef _L_LIME_X3DH_SERVER_ENGINE_H_
+#define _L_LIME_X3DH_SERVER_ENGINE_H_
 
-#include <list>
 
-#include "linphone/utils/general.h"
+#include "core/core-listener.h"
+#include "encryption-engine.h"
+
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Content;
+class LimeX3dhUtils{
+public:
+	static bool isMessageEncrypted(const Content *internalContent);
+};
 
-namespace ContentManager {
-	LINPHONE_PUBLIC std::list<Content> multipartToContentList (const Content &content);
-	LINPHONE_PUBLIC Content contentListToMultipart (const std::list<Content *> &contents, const std::string &boundary, bool encrypted);
-	/* There is no reason to set the boundary, prefer this form of the encode method: */
-	LINPHONE_PUBLIC Content contentListToMultipart (const std::list<Content *> &contents, bool encrypted);
-	LINPHONE_PUBLIC Content contentListToMultipart (const std::list<Content *> &contents);
-}
+class LimeX3dhEncryptionServerEngine: public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
+public:
+	LimeX3dhEncryptionServerEngine (const std::shared_ptr<Core> core);
+	~LimeX3dhEncryptionServerEngine ();
+	ChatMessageModifier::Result processOutgoingMessage (
+		const std::shared_ptr<ChatMessage> &message,
+		int &errorCode
+	) override;
+	EncryptionEngine::EngineType getEngineType () override;
+};
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_CONTENT_MANAGER_H_
+#endif // _L_LIME_X3DH_SERVER_ENGINE_H_

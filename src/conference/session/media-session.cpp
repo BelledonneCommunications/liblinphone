@@ -3523,6 +3523,16 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->selectOutgoingIpVersion();
 		isOfferer = makeLocalDescription = !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		remote = to;
+		/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
+		 * Then the value is stored and later updated into MediaSessionParams. */
+		bool rtpBundleEnabled = false;
+		if (d->destProxy){
+			rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
+		}else{
+			lInfo() << "No account set for this call, using rtp bundle enablement from LinphoneCore.";
+			rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
+		}
+		d->getParams()->enableRtpBundle(rtpBundleEnabled);
 	} else if (direction == LinphoneCallIncoming) {
 		d->selectIncomingIpVersion();
 		/* Note that the choice of IP version for streams is later refined by setCompatibleIncomingCallParams() when examining the
@@ -3533,19 +3543,11 @@ void MediaSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cf
 		d->params->initDefault(getCore(), LinphoneCallIncoming);
 		d->initializeParamsAccordingToIncomingCallParams();
 		isOfferer = op->getRemoteMediaDescription() ? false : true;
+		/* For incoming calls, the bundle enablement is set according to remote call params and core's policy,
+		 * in fixCallParams() */
 	}
 		
-	/* The enablement of rtp bundle is controlled at first by the Account, then the Core.
-	 * Then the value is stored and later updated into MediaSessionParams. */
-	bool rtpBundleEnabled = false;
-	if (d->destProxy){
-		rtpBundleEnabled = Account::toCpp(d->destProxy->account)->getAccountParams()->rtpBundleEnabled();
-	}else{
-		lInfo() << "No account set for this call, using rtp bundle enablement from LinphoneCore.";
-		rtpBundleEnabled = linphone_core_rtp_bundle_enabled(getCore()->getCCore());
-	}
-	lInfo() << "Rtp bundle is " << (rtpBundleEnabled ? "enabled." : "disabled.");
-	d->getParams()->enableRtpBundle(rtpBundleEnabled);
+	lInfo() << "Rtp bundle is " << (d->getParams()->rtpBundleEnabled() ? "enabled." : "disabled.");
 	
 	if (makeLocalDescription){
 		/* Do not make a local media description when sending an empty INVITE. */

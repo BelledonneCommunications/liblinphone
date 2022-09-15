@@ -25,6 +25,7 @@
 #include "carddav.h"
 #include "core/core-listener.h"
 #include "encryption-engine.h"
+#include "lime-x3dh-server-engine.h"
 #include "lime/lime.hpp"
 
 // =============================================================================
@@ -65,7 +66,7 @@ private:
 	static void processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept;
 };
 
-class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener {
+class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener, private LimeX3dhUtils {
 public:
 	LimeX3dhEncryptionEngine (
 		const std::string &db_access,
@@ -172,17 +173,6 @@ private:
 	std::string x3dhServerUrl;
 	std::string _dbAccess;
 	lime::CurveId curve;
-};
-
-class LimeX3dhEncryptionServerEngine: public EncryptionEngine, public CoreListener {
-public:
-	LimeX3dhEncryptionServerEngine (const std::shared_ptr<Core> core);
-	~LimeX3dhEncryptionServerEngine ();
-	ChatMessageModifier::Result processOutgoingMessage (
-		const std::shared_ptr<ChatMessage> &message,
-		int &errorCode
-	) override;
-	EncryptionEngine::EngineType getEngineType () override;
 };
 
 LINPHONE_END_NAMESPACE

@@ -217,16 +217,11 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 			localDesc.rtcp_port = mPortConfig.rtcpPort;
 		}
 	}
-	if (!isTransportOwner()){
-		if (localDesc.getChosenConfiguration().mid.empty()) {
-			lInfo() << "Local stream configuration has no MID defined, hence remove session " << mSessions.rtp_session << " of stream " << *this << " from rtp bundle " << mRtpBundle;
-			removeFromBundle();
-		} else {
-			/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
-			localDesc.rtp_addr = "";
-			localDesc.rtp_port = 0;
-			localDesc.setBundleOnly(TRUE);
-		}
+	if (!localDesc.getChosenConfiguration().mid.empty() && !isTransportOwner()){
+		/* A secondary stream part of a bundle must set port to zero and add the bundle-only attribute. */
+		localDesc.rtp_addr = "";
+		localDesc.rtp_port = 0;
+		localDesc.setBundleOnly(TRUE);
 	}
 
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = mSessions.rtp_session? rtp_session_get_send_ssrc(mSessions.rtp_session) : 0;
@@ -559,6 +554,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
 	const auto & stream = params.getResultStreamDescription();
 	
+	initRtpBundle(params);
 	if ((stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) || stream.getDirection() == SalStreamInactive || !stream.enabled()){
 		/* In this case all we have to do is to ensure that the stream is stopped. */
 		if (getState() != Stopped) stop();
@@ -592,19 +588,16 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 		changesToHandle &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
 
 		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED){
-			stop();
-			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
-			return false;
+			/* TODO */
+			//changesToHandle &= ~SAL_MEDIA_DESCRIPTION_MIXER_TO_CLIENT_EXTENSION_CHANGED;
 		}
 		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED) {
-			stop();
-			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED;
-			return false;
+			/* TODO */
+			//changesToHandle &= ~SAL_MEDIA_DESCRIPTION_CLIENT_TO_MIXER_EXTENSION_CHANGED;
 		}
 		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_FRAME_MARKING_EXTENSION_CHANGED) {
-			stop();
-			changesToHandle &= ~SAL_MEDIA_DESCRIPTION_FRAME_MARKING_EXTENSION_CHANGED;
-			return false;
+			/* TODO */
+			//changesToHandle &= ~SAL_MEDIA_DESCRIPTION_FRAME_MARKING_EXTENSION_CHANGED;
 		}
 
 		if (changesToHandle == 0){

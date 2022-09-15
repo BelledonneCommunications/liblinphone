@@ -40,16 +40,6 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-static bool isMessageEncrpted(const Content *internalContent) {
-	ContentType incomingContentType = internalContent->getContentType();
-	ContentType expectedContentType = ContentType::Encrypted;
-	expectedContentType.addParameter("protocol", "\"application/lime\"");
-	expectedContentType.addParameter("boundary", MultipartBoundary);
-	ContentType legacyContentType = ContentType::Encrypted; //for backward compatibility with limev2 early access
-	legacyContentType.addParameter("boundary", MultipartBoundary);
-
-	return incomingContentType == expectedContentType || incomingContentType == legacyContentType;
-}
 
 struct X3dhServerPostContext {
 	const lime::limeX3DHServerResponseProcess responseProcess;
@@ -321,19 +311,25 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				cipherMessage->addHeader("Content-Description", "Encrypted message");
 				contents.push_back(move(cipherMessage));
 
-				Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
+				Content finalContent = ContentManager::contentListToMultipart(contents, true);
 
-				// Insert protocol param before boundary for flexisip
-				ContentType contentType(finalContent.getContentType());
+				/* Septembre 2022 note:
+				 * Because of a scandalous ancient bug in belle-sip, we are forced to set
+				 * the boundary as the last parameter of the content-type header.
+				 * After this is fixed, only the line that adds the protocol parameter is necessary.
+				 */
+				ContentType &contentType = finalContent.getContentType();
+				string boundary = contentType.getParameter("boundary").getValue();
 				contentType.removeParameter("boundary");
-				if (!linphone_config_get_bool(linphone_core_get_config(message->getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE)) {
-					contentType.addParameter("protocol", "\"application/lime\"");
+				contentType.addParameter("protocol", "\"application/lime\"");
+				contentType.addParameter("boundary", boundary);
+				
+				if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
+					//finalContent.setContentEncoding("deflate");
 				}
-				contentType.addParameter("boundary", MultipartBoundary);
-				finalContent.setContentType(contentType);
 
 				message->setInternalContent(finalContent);
-				message->getPrivate()->send(); // seems to leak when called for the second time
+				message->getPrivate()->send();
 				*result = ChatMessageModifier::Result::Done;
 
 				// TODO can be improved
@@ -376,7 +372,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		internalContent = message->getContents().front();
 
 	// Check if the message is encrypted and unwrap the multipart
-	if (!isMessageEncrpted(internalContent)) {
+	if (!isMessageEncrypted(internalContent)) {
 		lError() << "[LIME] unexpected content-type: " << internalContent->getContentType();
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
@@ -983,68 +979,5 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	}
 }
 
-// -----------------------------------------------  LimeX3dhEncryptionServerEngine
-
-LimeX3dhEncryptionServerEngine::LimeX3dhEncryptionServerEngine (const shared_ptr<Core> core) : EncryptionEngine(core) {
-	engineType = EncryptionEngine::EngineType::LimeX3dhServer;
-	lInfo() << "[LIME][server] instanciate a LimeX3dhEncryptionServer engine "<<this;
-}
-
-LimeX3dhEncryptionServerEngine::~LimeX3dhEncryptionServerEngine () {
-	lInfo()<<"[LIME][server] destroy LimeX3dhEncryptionServer engine "<<this;
-}
-
-ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessage (
-	const std::shared_ptr<ChatMessage> &message,
-	int &errorCode) {
-	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
-	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &toDeviceId = message->getToAddress().asString();
-	const Content *internalContent;
-
-	// Check if chatroom is encrypted or not
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
-		lInfo() << "[LIME][server] this chatroom is encrypted, proceed to encrypt outgoing message";
-	} else {
-		lInfo() << "[LIME][server] this chatroom is not encrypted, no need to encrypt outgoing message";
-		return ChatMessageModifier::Result::Skipped;
-	}
-
-	if (!message->getInternalContent().isEmpty())
-		internalContent = &(message->getInternalContent());
-	else
-		internalContent = message->getContents().front();
-
-	// Check if the message is encrypted
-	if (!isMessageEncrpted(internalContent)) {
-		return ChatMessageModifier::Result::Skipped;
-	}
-
-	list<Content> contentsList = ContentManager::multipartToContentList(*internalContent);
-	list<Content *> contents;
-	bool hasKey = FALSE;
-	for (auto &content : contentsList) {
-		if (content.getContentType() != ContentType::LimeKey) {
-			contents.push_back(&content);
-		} else if (content.getHeader("Content-Id").getValueWithParams() == toDeviceId) {
-			contents.push_back(&content);
-			hasKey = TRUE;
-		}
-	}
-
-	if (!hasKey) {
-		lError() << "[LIME][server] this message doesn't contain the cipher key for participant " << toDeviceId;
-		return ChatMessageModifier::Result::Error;
-	}
-
-	Content finalContent = ContentManager::contentListToMultipart(contents, MultipartBoundary, true);
-	finalContent.setContentType(internalContent->getContentType());
-	message->setInternalContent(finalContent);
-	return ChatMessageModifier::Result::Done;
-}
-
-EncryptionEngine::EngineType LimeX3dhEncryptionServerEngine::getEngineType () {
-	return engineType;
-}
 
 LINPHONE_END_NAMESPACE

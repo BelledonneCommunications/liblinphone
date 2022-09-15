@@ -29,7 +29,6 @@
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
-#include "content/content.h"
 #include "core/core-p.h"
 #include "db/main-db.h"
 #include "event-log/events.h"
@@ -57,22 +56,22 @@ LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference
 
 // -----------------------------------------------------------------------------
 
-void LocalConferenceEventHandler::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
-	notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
+void LocalConferenceEventHandler::notifyFullState (const Content &notify, const shared_ptr<ParticipantDevice> &device) {
+	notifyParticipantDevice(notify, device);
 }
 
-void LocalConferenceEventHandler::notifyAllExceptDevice (const string &notify, const shared_ptr<ParticipantDevice> &exceptDevice) {
+void LocalConferenceEventHandler::notifyAllExceptDevice (const Content &notify, const shared_ptr<ParticipantDevice> &exceptDevice) {
 	for (const auto &participant : conf->getParticipants()) {
 		for (const auto &device : participant->getDevices()){
 			if (device != exceptDevice) {
 				/* Only notify to device that are present in the conference. */
-				notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
+				notifyParticipantDevice(notify, device);
 			}
 		}
 	}
 }
 
-void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const shared_ptr<Participant> &exceptParticipant) {
+void LocalConferenceEventHandler::notifyAllExcept (const Content &notify, const shared_ptr<Participant> &exceptParticipant) {
 	for (const auto &participant : conf->getParticipants()) {
 		if (participant != exceptParticipant) {
 			notifyParticipant(notify, participant);
@@ -80,13 +79,13 @@ void LocalConferenceEventHandler::notifyAllExcept (const string &notify, const s
 	}
 }
 
-void LocalConferenceEventHandler::notifyAll (const string &notify) {
+void LocalConferenceEventHandler::notifyAll (const Content &notify) {
 	for (const auto &participant : conf->getParticipants()) {
 		notifyParticipant(notify, participant);
 	}
 }
 
-string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
+Content LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) {
 	vector<string> acceptedContents = vector<string>();
 	if (lev) {
 		const auto message = (belle_sip_message_t*)lev->op->getRecvCustomHeaders();
@@ -202,9 +201,7 @@ string LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev) 
 
 		confInfo.getUsers()->getUser().push_back(user);
 	}
-
-	const auto conferenceInfoNotify = createNotify(confInfo, true);
-	return conferenceInfoNotify;
+	return makeContent(createNotify(confInfo, true));
 }
 
 void LocalConferenceEventHandler::addAvailableMediaCapabilities(const LinphoneMediaDirection audioDirection, const LinphoneMediaDirection videoDirection, const LinphoneMediaDirection textDirection, ConferenceDescriptionType & confDescr) {
@@ -354,7 +351,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	endpoint.getMedia().push_back(text);
 }
 
-string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
+Content LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 	list<shared_ptr<EventLog>> events = conf->getCore()->getPrivate()->mainDb->getConferenceNotifiedEvents(
 		ConferenceId(conf->getConferenceAddress(), conf->getConferenceAddress()),
 		static_cast<unsigned int>(notifyId)
@@ -462,18 +459,18 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 				L_ASSERT(false);
 				continue;
 		}
-		contents.emplace_back(Content());
-		contents.back().setContentType(ContentType::ConferenceInfo);
-		contents.back().setBodyFromUtf8(body);
+		contents.emplace_back(makeContent(body));
 	}
 
 	if (contents.empty())
-		return Utils::getEmptyConstRefObject<string>();
+		return Content();
 
 	list<Content *> contentPtrs;
 	for (auto &content : contents)
 		contentPtrs.push_back(&content);
-	string multipart = ContentManager::contentListToMultipart(contentPtrs).getBodyAsUtf8String();
+	Content multipart = ContentManager::contentListToMultipart(contentPtrs);
+	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
+		multipart.setContentEncoding("deflate");
 	return multipart;
 }
 
@@ -909,7 +906,7 @@ string LocalConferenceEventHandler::createNotifyAvailableMediaChanged (const std
 }
 
 
-void LocalConferenceEventHandler::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
+void LocalConferenceEventHandler::notifyParticipant (const Content &notify, const shared_ptr<Participant> &participant) {
 	for (const auto &device : participant->getDevices()){
 		/* Only notify to device that are present in the conference. */
 		switch(device->getState()){
@@ -919,7 +916,7 @@ void LocalConferenceEventHandler::notifyParticipant (const string &notify, const
 			case ParticipantDevice::State::Present:
 			case ParticipantDevice::State::OnHold:
 			case ParticipantDevice::State::MutedByFocus:
-				notifyParticipantDevice(notify, device, (notify.find(MultipartBoundary) != std::string::npos));
+				notifyParticipantDevice(notify, device);
 				break;
 			case ParticipantDevice::State::Leaving:
 			case ParticipantDevice::State::Left:
@@ -929,9 +926,9 @@ void LocalConferenceEventHandler::notifyParticipant (const string &notify, const
 	}
 }
 
-void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify, const shared_ptr<ParticipantDevice> &device, bool multipart) {
+void LocalConferenceEventHandler::notifyParticipantDevice (const Content &notify, const shared_ptr<ParticipantDevice> &device) {
 
-	if (!device->isSubscribedToConferenceEventPackage() || notify.empty())
+	if (!device->isSubscribedToConferenceEventPackage() || notify.isEmpty())
 		return;
 
 	LinphoneEvent *ev = device->getConferenceSubscribeEvent();
@@ -939,19 +936,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 	linphone_event_cbs_set_user_data(cbs, this);
 	linphone_event_cbs_set_notify_response(cbs, notifyResponseCb);
 
-	Content content;
-	content.setBodyFromUtf8(notify);
-	ContentType contentType;
-	if (multipart) {
-		contentType = ContentType(ContentType::Multipart);
-		contentType.addParameter("boundary", MultipartBoundary);
-	} else
-		contentType = ContentType(ContentType::ConferenceInfo);
-
-	content.setContentType(contentType);
-	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
-		content.setContentEncoding("deflate");
-	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
+	LinphoneContent *cContent = L_GET_C_BACK_PTR(&notify);
 	linphone_event_notify(ev, cContent);
 	linphone_core_notify_notify_sent(conf->getCore()->getCCore(),ev, cContent);
 }
@@ -994,12 +979,11 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress();
 			notifyFullState(createNotifyFullState(lev), device);
 			// Notify everybody that a participant device has been added and its capabilities after receiving the SUBSCRIBE
-			const auto notify = createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress());
-			notifyAllExceptDevice(notify, device);
+			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
-			notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device, true);
+			notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
 		} else if (evLastNotify > lastNotify) {
 			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference [" <<
 				conf->getConferenceAddress() <<
@@ -1033,14 +1017,23 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 	}
 }
 
-string LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent *lev) {
+Content LocalConferenceEventHandler::getNotifyForId (int notifyId, LinphoneEvent *lev) {
 	unsigned int lastNotify = conf->getLastNotify();
 	if ((notifyId == 0) || (notifyId > static_cast<int>(lastNotify)))
 		return createNotifyFullState(lev);
 	else if (notifyId < static_cast<int>(lastNotify))
 		return createNotifyMultipart(notifyId);
 
-	return Utils::getEmptyConstRefObject<string>();
+	return Content();
+}
+
+Content LocalConferenceEventHandler::makeContent(const std::string & xml){
+	Content content;
+	content.setContentType(ContentType::ConferenceInfo);
+	if (linphone_core_content_encoding_supported(conf->getCore()->getCCore(), "deflate"))
+		content.setContentEncoding("deflate");
+	content.setBodyFromUtf8(xml);
+	return content;
 }
 
 void LocalConferenceEventHandler::onFullStateReceived () {
@@ -1049,7 +1042,7 @@ void LocalConferenceEventHandler::onFullStateReceived () {
 void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAllExcept(createNotifyParticipantAdded(participant->getAddress().asAddress()), participant);
+		notifyAllExcept(makeContent(createNotifyParticipantAdded(participant->getAddress().asAddress())), participant);
 		conf->updateParticipantsInConferenceInfo(participant->getAddress());
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " being added because pointer to conference is null";
@@ -1059,7 +1052,7 @@ void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<Conf
 void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAllExcept(createNotifyParticipantRemoved(participant->getAddress().asAddress()), participant);
+		notifyAllExcept(makeContent(createNotifyParticipantRemoved(participant->getAddress().asAddress())), participant);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " being removed because pointer to conference is null";
 	}
@@ -1069,7 +1062,7 @@ void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<C
 	const bool isAdmin = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyParticipantAdminStatusChanged(participant->getAddress().asAddress(), isAdmin));
+		notifyAll(makeContent(createNotifyParticipantAdminStatusChanged(participant->getAddress().asAddress(), isAdmin)));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " admin status changed because pointer to conference is null";
 	}
@@ -1078,7 +1071,7 @@ void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<C
 void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifySubjectChanged(event->getSubject()));
+		notifyAll(makeContent(createNotifySubjectChanged(event->getSubject())));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}
@@ -1095,7 +1088,7 @@ void LocalConferenceEventHandler::onParticipantDeviceIsMuted (const std::shared_
 void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyAvailableMediaChanged(event->getAvailableMediaType()));
+		notifyAll(makeContent(createNotifyAvailableMediaChanged(event->getAvailableMediaType())));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}
@@ -1107,9 +1100,9 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 		auto participant = device->getParticipant();
 		// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
 		if (device->getSsrc() == 0) {
-			notifyAllExceptDevice(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
+			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
 		} else {
-			notifyAll(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+			notifyAll(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())));
 		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
@@ -1120,7 +1113,7 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
-		notifyAllExceptDevice(createNotifyParticipantDeviceRemoved(participant->getAddress().asAddress(), device->getAddress().asAddress()), device);
+		notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceRemoved(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being removed because pointer to conference is null";
 	}
@@ -1130,7 +1123,7 @@ void LocalConferenceEventHandler::onParticipantDeviceStateChanged (const std::sh
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
-		notifyAll(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+		notifyAll(makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress())));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
@@ -1140,7 +1133,7 @@ void LocalConferenceEventHandler::onParticipantDeviceMediaCapabilityChanged (con
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		auto participant = device->getParticipant();
-		notifyAll(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress()));
+		notifyAll(makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress())));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
@@ -1149,7 +1142,7 @@ void LocalConferenceEventHandler::onParticipantDeviceMediaCapabilityChanged (con
 void LocalConferenceEventHandler::onEphemeralModeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyEphemeralMode(event->getType()));
+		notifyAll(makeContent(createNotifyEphemeralMode(event->getType())));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of ephemeral mode changed to " << event->getType();
 	}
@@ -1158,7 +1151,7 @@ void LocalConferenceEventHandler::onEphemeralModeChanged (const std::shared_ptr<
 void LocalConferenceEventHandler::onEphemeralLifetimeChanged (const std::shared_ptr<ConferenceEphemeralMessageEvent> &event) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyEphemeralLifetime(event->getEphemeralMessageLifetime()));
+		notifyAll(makeContent(createNotifyEphemeralLifetime(event->getEphemeralMessageLifetime())));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of ephemeral lifetime changed to " << event->getEphemeralMessageLifetime();
 	}

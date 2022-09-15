@@ -110,6 +110,11 @@ const ContentType &Content::getContentType () const {
 	return d->contentType;
 }
 
+ContentType &Content::getContentType () {
+	L_D();
+	return d->contentType;
+}
+
 void Content::setContentType (const ContentType &contentType) {
 	L_D();
 	d->contentType = contentType;

@@ -478,7 +478,7 @@ void list_to_multipart () {
 	content4.setContentType(contentType);
 	list<Content *> contents = {&content1, &content2, &content3, &content4};
 
-	Content multipartContent = ContentManager::contentListToMultipart(contents);
+	Content multipartContent = ContentManager::contentListToMultipart(contents, "---------------------------14737809831466499882746641449", false);
 
 	string originalStr(generated_multipart);
 	originalStr.erase(std::remove(originalStr.begin(), originalStr.end(), ' '), originalStr.end());

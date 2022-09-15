@@ -56,9 +56,10 @@ list<Content> ContentManager::multipartToContentList (const Content &content) {
 	return contents;
 }
 
+
 Content ContentManager::contentListToMultipart (const list<Content *> &contents, const string &boundary, bool encrypted) {
 	belle_sip_multipart_body_handler_t *mpbh = belle_sip_multipart_body_handler_new(
-		nullptr, nullptr, nullptr, boundary.c_str()
+		nullptr, nullptr, nullptr, boundary.empty() ? nullptr : boundary.c_str()
 	);
 	mpbh = (belle_sip_multipart_body_handler_t *)belle_sip_object_ref(mpbh);
 
@@ -76,7 +77,7 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 	SalBodyHandler *sbh = (SalBodyHandler *)mpbh;
 	sal_body_handler_set_type(sbh, ContentType::Multipart.getType().c_str());
 	sal_body_handler_set_subtype(sbh, encrypted ? ContentType::Encrypted.getSubType().c_str() : ContentType::Multipart.getSubType().c_str());
-	sal_body_handler_set_content_type_parameter(sbh, "boundary", boundary.c_str());
+	sal_body_handler_set_content_type_parameter(sbh, "boundary", belle_sip_multipart_body_handler_get_boundary(mpbh));
 
 	LinphoneContent *cContent = linphone_content_from_sal_body_handler(sbh);
 	belle_sip_object_unref(mpbh);
@@ -86,6 +87,14 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 		content.setContentDisposition(disposition);
 	linphone_content_unref(cContent);
 	return content;
+}
+
+Content ContentManager::contentListToMultipart (const std::list<Content *> &contents, bool encrypted){
+	return contentListToMultipart(contents, "", encrypted);
+}
+
+Content ContentManager::contentListToMultipart (const std::list<Content *> &contents){
+	return contentListToMultipart(contents, "", false);
 }
 
 LINPHONE_END_NAMESPACE

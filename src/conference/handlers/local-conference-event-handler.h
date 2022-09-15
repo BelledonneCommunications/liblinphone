@@ -32,6 +32,8 @@
 #include "conference/conference-id.h"
 #include "xml/conference-info-linphone-extension.h"
 #include "xml/conference-info.h"
+
+#include "content/content.h"
 #include <memory>
 
 // =============================================================================
@@ -57,15 +59,15 @@ public:
 	LinphoneStatus subscribeReceived (LinphoneEvent *lev);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
-	std::string getNotifyForId (int notifyId, LinphoneEvent *lev);
+	Content getNotifyForId (int notifyId, LinphoneEvent *lev);
 
 //protected:
-	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
-	void notifyAllExcept (const std::string &notify, const std::shared_ptr<Participant> &exceptParticipant);
-	void notifyAllExceptDevice(const std::string &notify, const std::shared_ptr<ParticipantDevice> &exceptDevice);
-	void notifyAll (const std::string &notify);
-	std::string createNotifyFullState (LinphoneEvent * lev);
-	std::string createNotifyMultipart (int notifyId);
+	void notifyFullState (const Content &notify, const std::shared_ptr<ParticipantDevice> &device);
+	void notifyAllExcept (const Content &notify, const std::shared_ptr<Participant> &exceptParticipant);
+	void notifyAllExceptDevice(const Content &notify, const std::shared_ptr<ParticipantDevice> &exceptDevice);
+	void notifyAll (const Content &notify);
+	Content createNotifyFullState (LinphoneEvent * lev);
+	Content createNotifyMultipart (int notifyId);
 
 	// Conference
 	std::string createNotifyAvailableMediaChanged (const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
@@ -192,8 +194,9 @@ private:
 	std::string createNotifySubjectChanged (const std::string &subject);
 	std::string createNotifyEphemeralLifetime (const long & lifetime);
 	std::string createNotifyEphemeralMode (const EventLog::Type & type);
-	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
-	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
+	Content makeContent(const std::string & xml);
+	void notifyParticipant (const Content &notify, const std::shared_ptr<Participant> &participant);
+	void notifyParticipantDevice (const Content &notify, const std::shared_ptr<ParticipantDevice> &device);
 
 	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
 

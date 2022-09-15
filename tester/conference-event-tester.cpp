@@ -1431,13 +1431,10 @@ void send_first_notify() {
 
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
 	localConf->setConferenceAddress(ConferenceAddress(addr));
-	string notify = localHandler->createNotifyFullState(NULL);
+	Content content = localHandler->createNotifyFullState(NULL);
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 
-	Content content;
-	content.setBodyFromUtf8(notify);
-	content.setContentType(ContentType::ConferenceInfo);
 	tester->handler->notifyReceived(content);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
@@ -2278,13 +2275,10 @@ void one_to_one_keyword () {
 	localConf->addParticipant(bobAddr);
 	LocalConferenceEventHandler *localHandler = (L_ATTR_GET(localConf.get(), eventHandler)).get();
 	localConf->setConferenceAddress(ConferenceAddress(addr));
-	string notify = localHandler->createNotifyFullState(NULL);
+	Content content = localHandler->createNotifyFullState(NULL);
 
 	const_cast<ConferenceAddress &>(tester->handler->getConferenceId().getPeerAddress()) = ConferenceAddress(addr);
 
-	Content content;
-	content.setBodyFromUtf8(notify);
-	content.setContentType(ContentType::ConferenceInfo);
 	tester->handler->notifyReceived(content);
 
 	BC_ASSERT_EQUAL((int)tester->participantDevices.size(), 1, int, "%d");

@@ -49,9 +49,6 @@ class LocalConference;
 
 LINPHONE_BEGIN_NAMESPACE
 
-namespace {
-	constexpr const char MultipartBoundaryListEventHandler[] = "---------------------------14737809831412343453453";
-}
 
 // -----------------------------------------------------------------------------
 
@@ -152,24 +149,15 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 			device->setConferenceSubscribeEvent((subscriptionState == LinphoneSubscriptionIncomingReceived) ? lev : nullptr);
 
 			int notifyId = (notifyIdStr.empty() || device->getState() == ParticipantDevice::State::Joining) ? 0 : Utils::stoi(notifyIdStr);
-			string notifyBody = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
-			if (notifyBody.empty())
+			Content content = handler->getNotifyForId(notifyId, device->getConferenceSubscribeEvent());
+			if (content.isEmpty())
 				continue;
 
 			noContent = false;
-			Content content;
-			if (notifyId > 0) {
-				ContentType contentType(ContentType::Multipart);
-				contentType.addParameter("boundary", string(MultipartBoundary));
-				content.setContentType(contentType);
-			} else
-				content.setContentType(ContentType::ConferenceInfo);
-
-			content.setBodyFromUtf8(notifyBody);
 			char token[17];
 			belle_sip_random_token(token, sizeof(token));
 			content.addHeader("Content-Id", token);
-			content.addHeader("Content-Length", Utils::toString(notifyBody.size()));
+			content.addHeader("Content-Length", Utils::toString(content.getSize()));
 			contents.push_back(move(content));
 
 			// Add entry into the Rlmi content of the notify body
@@ -201,7 +189,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 		contentsAsPtr.push_back(&content);
 	}
 
-	Content multipart = ContentManager::contentListToMultipart(contentsAsPtr, MultipartBoundaryListEventHandler);
+	Content multipart = ContentManager::contentListToMultipart(contentsAsPtr);
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate"))
 		multipart.setContentEncoding("deflate");
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&multipart);
