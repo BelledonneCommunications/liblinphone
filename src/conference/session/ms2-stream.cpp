@@ -898,16 +898,16 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, resultStreamDesc.getChosenConfiguration().crypto_local_tag);
 		if (cryptoIdx >= 0) {
 			MSCryptoSuite algo = resultStreamDesc.getChosenConfiguration().crypto[0].algo;
-			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
-			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key));
+			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key), MSSrtpKeySourceSDES);
+			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key), MSSrtpKeySourceSDES);
 		} else {
 			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
 		}
 	} else if (mSessions.srtp_context && (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionNone)) {
 		// If the stream has SRTP disabled, set the key to a NULL value
 		MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
-		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL);
-		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL);
+		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL, MSSrtpKeySourceSDES);
+		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL, MSSrtpKeySourceSDES);
 	}
 }
 
