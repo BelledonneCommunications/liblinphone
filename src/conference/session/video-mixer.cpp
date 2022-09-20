@@ -72,11 +72,15 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	}
 	if (ep){
 		ms_video_conference_set_focus(mConferenceMix, ep);
-	}else{
+	}else if (ms_video_conference_get_size(mConferenceMix) >= 2){
+		/* else this participant has no video, so set focus on a "no webcam" placeholder.
+		 * However, if there is one or two participants, don't do this and let the ms2 mixer cross the streams.
+		 */
 		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceMix);
 		if (video_placeholder_ep) {
 			ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
 		}
+
 	}
 }
 

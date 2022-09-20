@@ -93,7 +93,10 @@ ChatMessageModifier::Result LimeX3dhEncryptionServerEngine::processOutgoingMessa
 		return ChatMessageModifier::Result::Error;
 	}
 
-	Content finalContent = ContentManager::contentListToMultipart(contents, true);
+	/* FIXME: to preserve backward compatibility with liblinphone <= 5.1, we must keep using an fixed multipart boundary.
+	 * Remove this awful stuff after March 2023. */
+	const char *harcodedBoundary = "---------------------------14737809831466499882746641449";
+	Content finalContent = ContentManager::contentListToMultipart(contents, harcodedBoundary, true);
 	/* Set the original ContentType, but we need to set the new boundary parameter for the new forged multipart. */
 	string boundary = finalContent.getContentType().getParameter("boundary").getValue();
 	finalContent.setContentType(internalContent->getContentType());
