@@ -906,8 +906,8 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 	} else if (mSessions.srtp_context && (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionNone)) {
 		// If the stream has SRTP disabled, set the key to a NULL value
 		MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
-		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL, MSSrtpKeySourceSDES);
-		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL, MSSrtpKeySourceSDES);
+		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL, MSSrtpKeySourceUnavailable);
+		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL, MSSrtpKeySourceUnavailable);
 	}
 }
 

@@ -54,10 +54,6 @@ struct _ZrtpAlgoRes {
 	std::vector<int> sas_algo; /**< SAS algorithm */
 };
 
-static void srtp_call(void) {
-	call_base(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
-}
-
 static void srtp_call_non_zero_tag(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
@@ -85,14 +81,7 @@ static void srtp_call_non_zero_tag(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-/*
- *Purpose of this test is to check that even if caller and callee does not have exactly the same crypto suite configured, the matching crypto suite is used.
- */
-static void srtp_call_with_different_crypto_suite(void) {
-	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "laure_tcp_rc", "marie_rc");
-}
-
-static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreManager * pauline) {
+static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreManager * pauline, const std::function<void(LinphoneCall *marieCall, LinphoneCall*paulineCall)> &callback) {
 
 	// Reset stats
 	reset_counters(&marie->stat);
@@ -113,6 +102,8 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
 		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats)>70);
 		linphone_call_stats_unref(pauline_stats);
 		pauline_stats = NULL;
+
+		if (callback != nullptr) callback(marie_call, pauline_call);
 
 		end_call(marie, pauline);
 	}
@@ -138,8 +129,115 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
 		linphone_call_stats_unref(marie_stats);
 		marie_stats = NULL;
 
+		if (callback != nullptr) callback(marie_call, pauline_call);
+
 		end_call(pauline, marie);
 	}
+}
+
+/**
+ * Check the given calls have stats matching the expected suite and source, send and receive channel are expected to be the same, pauline and marie too
+ * optionnal stream type default to audio
+ */
+static bool_t srtp_check_call_stats(LinphoneCall *marieCall, LinphoneCall*paulineCall, int suite, int source, LinphoneStreamType streamType = LinphoneStreamTypeAudio) {
+	LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
+	LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
+	auto *marieSrtpInfo = linphone_call_stats_get_srtp_info(marieStats);
+	auto *paulineSrtpInfo = linphone_call_stats_get_srtp_info(paulineStats);
+	bool_t ret = TRUE;
+
+	// use BC_ASSERT_TRUE so we can collect the return value: true if all test pass false otherwise
+	ret = ret && BC_ASSERT_TRUE(marieSrtpInfo->send_suite == suite);
+	ret = ret && BC_ASSERT_TRUE(marieSrtpInfo->recv_suite == suite);
+	ret = ret && BC_ASSERT_TRUE(paulineSrtpInfo->send_suite == suite);
+	ret = ret && BC_ASSERT_TRUE(paulineSrtpInfo->recv_suite == suite);
+
+	ret = ret && BC_ASSERT_TRUE(marieSrtpInfo->send_source == source);
+	ret = ret && BC_ASSERT_TRUE(marieSrtpInfo->recv_source == source);
+	ret = ret && BC_ASSERT_TRUE(paulineSrtpInfo->send_source == source);
+	ret = ret && BC_ASSERT_TRUE(paulineSrtpInfo->recv_source == source);
+
+	linphone_call_stats_unref(marieStats);
+	linphone_call_stats_unref(paulineStats);
+
+	return ret;
+}
+static void srtp_call(void) {
+	// using call base
+	call_base(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
+
+	// same test using mgr_calling_each_other so we can check during the call that the correct suite are used
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		// Default is MS_AES_128_SHA1_80, we use SDES
+		srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES);
+	}));
+	
+	// Test differents crypto suites : AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32, AEAD_AES_128_GCM, AEAD_AES_256_GCM 
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80");
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES));
+	}));
+	
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_32");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_32");
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_32, MSSrtpKeySourceSDES));
+	}));
+	
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_256_CM_HMAC_SHA1_80");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_256_CM_HMAC_SHA1_80");
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_256_SHA1_80, MSSrtpKeySourceSDES));
+	}));
+	
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_256_CM_HMAC_SHA1_32");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_256_CM_HMAC_SHA1_32");
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_256_SHA1_32, MSSrtpKeySourceSDES));
+	}));
+	
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AEAD_AES_128_GCM");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AEAD_AES_128_GCM");
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AEAD_AES_128_GCM, MSSrtpKeySourceSDES));
+	}));
+
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AEAD_AES_256_GCM");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AEAD_AES_256_GCM");
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AEAD_AES_256_GCM, MSSrtpKeySourceSDES));
+	}));
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+/*
+ *Purpose of this test is to check that even if caller and callee does not have exactly the same crypto suite configured, the matching crypto suite is used.
+ */
+static void srtp_call_with_different_crypto_suite(void) {
+	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "laure_tcp_rc", "marie_rc");
+
+	// same test using mgr_calling_each_other so we can check during the call that the correct suite are used
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc"); // marie_rc does not specify any srtp crypto suite, propose all availables, default is AES128_SHA1-80
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_256_CM_HMAC_SHA1_80"); // Force pauline to support only AES256_CM_SHA1_80
+
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		// We shall use AES_256 as pauline supports only this one
+		srtp_check_call_stats(marieCall, paulineCall, MS_AES_256_SHA1_80, MSSrtpKeySourceSDES);
+	}));
+	
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 static void srtp_call_with_crypto_suite_parameters(void) {
@@ -153,27 +251,31 @@ static void srtp_call_with_crypto_suite_parameters(void) {
 
 	// Marie prefers encrypted but allows unencrypted STRP streams
 	// Pauline prefers unencrypted but allows encrypted STRP streams
-	mgr_calling_each_other(marie, pauline);
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		LinphoneCallLog *clog = linphone_call_get_call_log(marieCall);
+		// When Marie is placing the call, we shall use AES_CM_128_HMAC_SHA1_80
+		if (linphone_call_log_get_dir(clog)==LinphoneCallOutgoing) {
+			BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES));
+		} else { // When Pauline is placing the call, we shall use AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP
+			BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80_SRTCP_NO_CIPHER, MSSrtpKeySourceSDES));
+		}
+	}));
 
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP");
 	// Marie prefers encrypted but allows unencrypted SRTP streams
 	// Pauline supports unencrypted only
-	mgr_calling_each_other(marie, pauline);
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80_SRTCP_NO_CIPHER, MSSrtpKeySourceSDES));
+	}));
+
 
 	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80");
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80");
 	// Marie supports encrypted only
 	// Pauline prefers unencrypted but allows encrypted STRP streams
-	mgr_calling_each_other(marie, pauline);
-
-
-	linphone_core_set_srtp_crypto_suites(marie->lc, "AEAD_AES_128_GCM");
-	linphone_core_set_srtp_crypto_suites(pauline->lc, "AEAD_AES_128_GCM");
-	mgr_calling_each_other(marie, pauline);
-
-	linphone_core_set_srtp_crypto_suites(marie->lc, "AEAD_AES_256_GCM");
-	linphone_core_set_srtp_crypto_suites(pauline->lc, "AEAD_AES_256_GCM");
-	mgr_calling_each_other(marie, pauline);
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES));
+	}));
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
@@ -357,7 +459,9 @@ static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_4(vo
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP, AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80");
 	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
 
-	mgr_calling_each_other(marie, pauline);
+	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES));
+	}));
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);

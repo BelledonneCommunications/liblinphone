@@ -58,7 +58,8 @@ struct _LinphoneCallStats {
 	int clockrate;  /*RTP clockrate of the stream, provided here for easily converting timestamp units expressed in RTCP packets in milliseconds*/
 	float estimated_download_bandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in kbit/s, including IP/UDP/RTP headers*/
 	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
-	ZrtpAlgo zrtp_algo;
+	ZrtpAlgo zrtp_algo; /**< informations on the ZRTP exchange updated once it is performed(when the SAS is available), this is valid only on the audio stream */
+	SrtpInfo srtp_info; /**< informations on the SRTP crypto suite and and source of key material used on this stream */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneCallStats);
@@ -117,6 +118,10 @@ static void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCa
 	dst->zrtp_algo.hash_algo = src->zrtp_algo.hash_algo;
 	dst->zrtp_algo.auth_tag_algo = src->zrtp_algo.auth_tag_algo;
 	dst->zrtp_algo.sas_algo = src->zrtp_algo.sas_algo;
+	dst->srtp_info.send_suite = src->srtp_info.send_suite;
+	dst->srtp_info.send_source = src->srtp_info.send_source;
+	dst->srtp_info.recv_suite = src->srtp_info.recv_suite;
+	dst->srtp_info.recv_source = src->srtp_info.recv_source;
 }
 
 void _linphone_call_stats_set_ice_state (LinphoneCallStats *stats, LinphoneIceState state) {
@@ -249,6 +254,14 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			stats->zrtp_algo.hash_algo = evd->info.zrtp_info.hashAlgo;
 			stats->zrtp_algo.auth_tag_algo = evd->info.zrtp_info.authTagAlgo;
 			stats->zrtp_algo.sas_algo = evd->info.zrtp_info.sasAlgo;
+		} else if (evt == ORTP_EVENT_SRTP_ENCRYPTION_CHANGED) {
+			if (evd->info.srtp_info.is_send) {
+				stats->srtp_info.send_suite = evd->info.srtp_info.suite;
+				stats->srtp_info.send_source = evd->info.srtp_info.source;
+			} else {
+				stats->srtp_info.recv_suite = evd->info.srtp_info.suite;
+				stats->srtp_info.recv_source = evd->info.srtp_info.source;
+			}
 		}
 	}
 }
@@ -407,6 +420,10 @@ void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *sta
 	stats->estimated_download_bandwidth = estimated_value;
 }
 
+const SrtpInfo *linphone_call_stats_get_srtp_info (const LinphoneCallStats *stats){
+	return &stats->srtp_info;
+}
+
 const ZrtpAlgo *linphone_call_stats_get_zrtp_algo (const LinphoneCallStats *stats){
 	return &stats->zrtp_algo;
 }
@@ -454,8 +471,6 @@ const char * linphone_call_stats_get_zrtp_key_agreement_algo (const LinphoneCall
 
 bool_t linphone_call_stats_is_zrtp_key_agreement_algo_post_quantum (const LinphoneCallStats *stats) {
 	switch( stats->zrtp_algo.key_agreement_algo) {
-		case(MS_ZRTP_KEY_AGREEMENT_K255):
-		case(MS_ZRTP_KEY_AGREEMENT_K448):
 		case(MS_ZRTP_KEY_AGREEMENT_KYB1):
 		case(MS_ZRTP_KEY_AGREEMENT_KYB2):
 		case(MS_ZRTP_KEY_AGREEMENT_KYB3):

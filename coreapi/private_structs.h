@@ -807,4 +807,12 @@ struct _ZrtpAlgo {
 	int sas_algo; /**< Id of the SAS algorithm */
 };
 
+typedef struct _SrtpInfo SrtpInfo;
+struct _SrtpInfo {
+	int send_suite; /**< srtp crypto suite used by sender channel, cast from MSCryptoSuite defined in ms_srtp.h */
+	int send_source; /**< source of srtp key material used by sender channel, cast from MSSrtpKeySource defined in ms_srtp.h*/
+	int recv_suite; /**< srtp crypto suite used by receiver channel, cast from MSCryptoSuite defined in ms_srtp.h */
+	int recv_source; /**< source of srtp key material used by receiver channel, cast from MSSrtpKeySource defined in ms_srtp.h*/
+};
+
 #endif /* _PRIVATE_STRUCTS_H_ */
