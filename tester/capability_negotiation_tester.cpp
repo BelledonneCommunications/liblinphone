@@ -510,6 +510,10 @@ void call_with_update_and_incompatible_encs_in_call_params_base (const bool_t en
 
 	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, TRUE, enable_ice, TRUE);
 
+	if (enable_ice) {
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+	}
+
 	bctbx_list_t * marie_call_enc = NULL;
 	marie_call_enc = bctbx_list_append(marie_call_enc, LINPHONE_INT_TO_PTR(encryption));
 
