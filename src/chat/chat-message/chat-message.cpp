@@ -225,7 +225,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	}
 
 	if (direction == ChatMessage::Direction::Outgoing) {
-		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered) {
+		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered || state == ChatMessage::State::DeliveredToUser || state == ChatMessage::State::Displayed) {
 			q->getChatRoom()->getPrivate()->removeTransientChatMessage(sharedMessage);
 		}
 	}

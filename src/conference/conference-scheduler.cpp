@@ -221,17 +221,18 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 	}
 	mSession->setListener(this);
 
-	// Update conference info in database with updated conference information
-#ifdef HAVE_DB_STORAGE
-	auto &mainDb = getCore()->getPrivate()->mainDb;
-	mainDb->insertConferenceInfo(mConferenceInfo);
-#endif // HAVE_DB_STORAGE
+	if (getState() != State::Error) {
+		// Update conference info in database with updated conference information
+	#ifdef HAVE_DB_STORAGE
+		auto &mainDb = getCore()->getPrivate()->mainDb;
+		mainDb->insertConferenceInfo(mConferenceInfo);
+	#endif // HAVE_DB_STORAGE
+	}
 }
 
 void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessage> &message, ChatMessage::State state) {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
 	IdentityAddress participantAddress = message->getRecipientAddress();
-
 	if (state == ChatMessage::State::NotDelivered) { // Message wasn't delivered
 		if (chatRoom->getState() == Conference::State::Created) { // Chat room was created successfully
 			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::OneToOne) { // Message was sent using a 1-1 chat room
@@ -298,7 +299,7 @@ void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSessi
 		auto conferenceAddress = mConferenceInfo->getUri();
 		lError() << "[Conference Scheduler] [" << this << "] The session to update the conference information of conference " << (conferenceAddress.isValid() ? conferenceAddress.asString() : std::string("<unknown-address>")) << " did not succesfully establish hence it is likely that the request wasn't taken into account by the server";
 		setState(State::Error);
-	} else {
+	} else if (getState() != State::Error) {
 		// Do not try to call inpromptu conference if a participant updates its informations
 		if ((getState() == State::AllocationPending) && (session->getParams()->getPrivate()->getStartTime() < 0)) {
 			lInfo() << "Automatically rejoining conference " << *remoteAddress;
@@ -338,6 +339,9 @@ void ConferenceScheduler::onCallSessionSetTerminated (const shared_ptr<CallSessi
 
 void ConferenceScheduler::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	switch(state) {
+		case CallSession::State::Error:
+			setState(State::Error);
+			break;
 		case CallSession::State::StreamsRunning:
 			session->terminate();
 			break;
