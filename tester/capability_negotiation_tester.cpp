@@ -650,6 +650,10 @@ void call_with_encryption_test_base(const encryption_params marie_enc_params, co
 		expectedEncryption = marie_enc_params.encryption;
 	}
 
+	if (enable_marie_ice && enable_pauline_ice) {
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+	}
+
 	encrypted_call_base(marie, pauline, expectedEncryption, enable_marie_capability_negotiations, enable_pauline_capability_negotiations, enable_video);
 	if (linphone_core_get_current_call(marie->lc) && linphone_core_get_current_call(pauline->lc)) {
 		end_call(marie, pauline);
