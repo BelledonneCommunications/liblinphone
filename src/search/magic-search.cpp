@@ -703,8 +703,15 @@ list<std::shared_ptr<SearchResult>> MagicSearch::searchInFriend (const LinphoneF
 				}
 			}
 		} else {
-			if ((weightNumber + weight) > getMinWeight() && withDomain.empty()) {
-				friendResult.push_back(SearchResult::create(weight + weightNumber, nullptr, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
+			LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), phoneNumber.c_str());
+			if ((weightNumber + weight) > getMinWeight()
+					&& (withDomain.empty() 
+						|| (tmpAdd != nullptr && compareStringItems(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) // To allow for SIP URIs stored in phone number fields...
+			)) {
+				friendResult.push_back(SearchResult::create(weight + weightNumber, tmpAdd, phoneNumber, lFriend, LinphoneMagicSearchSourceFriends));
+			}
+			if (tmpAdd) {
+				linphone_address_unref(tmpAdd);
 			}
 		}
 		phoneNumbers = phoneNumbers->next;

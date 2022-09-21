@@ -911,13 +911,20 @@ static void search_friend_without_filter(void) {
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
+	// Specific case of a friend with a SIP URI in the phone number field...
+	LinphoneFriend *elisa_fr = linphone_core_create_friend(manager->lc);
+	linphone_friend_set_name(elisa_fr, "Elisa");
+	linphone_friend_add_phone_number(elisa_fr, "sip:elisa@sip.test.org");
+	linphone_friend_enable_subscribes(elisa_fr, FALSE);
+	linphone_friend_list_add_friend(lfl, elisa_fr);
+	linphone_friend_unref(elisa_fr);
 
 	magicSearch = linphone_magic_search_new(manager->lc);
 
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND + 1, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 
@@ -951,18 +958,27 @@ static void search_friend_with_domain_without_filter(void) {
 	linphone_friend_list_add_friend(lfl, chloeFriend);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
+	// Specific case of a friend with a SIP URI in the phone number field...
+	LinphoneFriend *elisa_fr = linphone_core_create_friend(manager->lc);
+	linphone_friend_set_name(elisa_fr, "Elisa");
+	linphone_friend_add_phone_number(elisa_fr, "sip:elisa@sip.test.org");
+	linphone_friend_enable_subscribes(elisa_fr, FALSE);
+	linphone_friend_list_add_friend(lfl, elisa_fr);
+	linphone_friend_unref(elisa_fr);
 
 	magicSearch = linphone_magic_search_new(manager->lc);
 
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "sip.test.org");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 6, int, "%d");
+		// Results are returned alphabetically
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[0], NULL);//"sip:charu@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.test.org"
-		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
-		_check_friend_result_list(manager->lc, resultList, 3, sFriends[8], NULL);//"sip:laure@sip.test.org"
-		_check_friend_result_list(manager->lc, resultList, 4, sFriends[9], NULL);//"sip:loic@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 2, "sip:elisa@sip.test.org", "sip:elisa@sip.test.org");
+		_check_friend_result_list(manager->lc, resultList, 3, sFriends[4], NULL);//"sip:hello@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 4, sFriends[8], NULL);//"sip:laure@sip.test.org"
+		_check_friend_result_list(manager->lc, resultList, 5, sFriends[9], NULL);//"sip:loic@sip.test.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_search_result_unref);
 	}
 
