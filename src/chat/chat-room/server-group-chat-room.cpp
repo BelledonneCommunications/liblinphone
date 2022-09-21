@@ -113,7 +113,7 @@ void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Partici
 	}
 }
 
-void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state) {
+void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state, bool notify) {
 	L_Q();
 
 	// Do not change state of participants if the core is shutting down.
@@ -121,7 +121,7 @@ void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<Par
 	if (linphone_core_get_global_state(q->getCore()->getCCore()) ==  LinphoneGlobalOn) {
 		string address(device->getAddress().asString());
 		lInfo() << q << ": Set participant device '" << address << "' state to " << state;
-		device->setState(state);
+		device->setState(state, notify);
 		q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
 		switch (state){
 			case ParticipantDevice::State::ScheduledForLeaving:
@@ -1190,7 +1190,8 @@ void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &part
 		q->removeParticipant(participantLeaving->getParticipant()->getSharedFromThis());
 		// But since we received its BYE, it is actually already left.
 	}
-	setParticipantDeviceState(participantLeaving, ParticipantDevice::State::Left);
+	// Notify the lient only if the participant should be removed. Doing so, the client may not be able to send any further message to this device in particular if using an old version of a secured chat room
+	setParticipantDeviceState(participantLeaving, ParticipantDevice::State::Left, shouldRemoveParticipant);
 }
 
 // -----------------------------------------------------------------------------

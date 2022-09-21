@@ -687,7 +687,6 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 
 shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
-
 	auto it = d->chatRoomsById.find(conferenceId);
 	if (it != d->chatRoomsById.cend()) {
 		lDebug() << "Found chat room in RAM for conference ID " << conferenceId << ".";

@@ -4060,6 +4060,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	wait_for_list(coresList, 0, 1, 2000);
 	BC_ASSERT_EQUAL(pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_participant_devices_removed, initialPaulineStats.number_of_participant_devices_removed, int, "%d");
 
 	// Pauline sends a new message
 	initialMarieStats = marie->stat;
