@@ -49,6 +49,7 @@ import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.receiver.ShutdownReceiver;
 import org.linphone.mediastream.Version;
 
+import java.lang.Error;
 import java.lang.reflect.Constructor;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -505,14 +506,21 @@ public class CoreManager {
             ServiceInfo[] services = packageInfo.services;
             for (ServiceInfo service : services) {
                 String serviceName = service.name;
-                Class serviceClass = Class.forName(serviceName);
-                if (CoreService.class.isAssignableFrom(serviceClass)) {
-                    Log.i("[Core Manager] Found a service that herits from org.linphone.core.tools.service.CoreService: ", serviceName);
-                    return serviceClass;
+                try {
+                    Class serviceClass = Class.forName(serviceName);
+                    if (CoreService.class.isAssignableFrom(serviceClass)) {
+                        Log.i("[Core Manager] Found a service that herits from org.linphone.core.tools.service.CoreService: ", serviceName);
+                        return serviceClass;
+                    }
+                } catch (Exception exception) {
+                    Log.e("[Core Manager] Exception trying to get Class from name [", serviceName, "]: ", exception);
+                } catch (Error error) {
+                    Log.e("[Core Manager] Error trying to get Class from name [", serviceName, "]: ", error);
                 }
             }
         } catch (Exception e) {
-            Log.e("[Core Manager] Couldn't find Service class: ", e);
+            Log.e("[Core Manager] Exception thrown while trying to find available Services: ", e);
+            return null;
         }
 
         Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
