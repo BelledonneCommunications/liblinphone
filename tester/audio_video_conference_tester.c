@@ -4532,7 +4532,6 @@ end:
 
 static void add_all_calls_to_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE, NULL);
-	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE, NULL);
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE, NULL);
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc", TRUE, NULL);
@@ -4541,8 +4540,6 @@ static void add_all_calls_to_conference(void) {
 	LinphoneCall* pauline_called_by_marie = NULL;
 	LinphoneCall* marie_call_michelle = NULL;
 	LinphoneCall* michelle_called_by_marie = NULL;
-	LinphoneCall* marie_call_laure = NULL;
-	LinphoneCall* laure_called_by_marie = NULL;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,michelle->lc);
@@ -4561,9 +4558,6 @@ static void add_all_calls_to_conference(void) {
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_michelle,michelle,michelle_called_by_marie));
 
 	BC_ASSERT_TRUE(call(marie,laure));
-	marie_call_laure=linphone_core_get_current_call(marie->lc);
-	laure_called_by_marie=linphone_core_get_current_call(laure->lc);
-	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);

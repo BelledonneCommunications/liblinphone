@@ -2516,8 +2516,11 @@ int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePriv
 }
 
 int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
-	device->setState(ParticipantDevice::State::Present);
-	return 0;
+	if (device) {
+		device->setState(ParticipantDevice::State::Present);
+		return 0;
+	}
+	return -1;
 }
 
 int RemoteConference::participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) {

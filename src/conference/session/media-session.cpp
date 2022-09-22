@@ -278,7 +278,7 @@ void MediaSessionPrivate::accepted () {
 				break;
 		}
 
-		// A negative value of the counter may lead to unexpected behaviour, hence terminate here the execution in order to analyze what lead to this scenario
+		// A negative value of the counter may lead to unexpected behaviour, hence terminate here the execution in order to analyze what leads to this scenario
 		if (nbProcessingUpdates < 0) {
 			lFatal() << "The number of updates under processing for media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") should be greater than or equal to 0. Currently it is " << nbProcessingUpdates;
 		}

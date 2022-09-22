@@ -3075,7 +3075,7 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 
 			bool video_check = false;
 			bool device_present = false;
-			bool call_ok = false;
+			bool call_ok = true;
 			bool_t * call_video_enabled = NULL;
 			LinphoneMediaDirection * call_video_dir = NULL;
 
@@ -3083,7 +3083,7 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 				int counter = 0;
 				for (auto m : members) {
 					LinphoneCall * pcall = linphone_core_get_call_by_remote_address2(m->lc, confAddr);
-					BC_ASSERT_PTR_NOT_NULL(pcall);
+					call_ok &= (pcall != nullptr);
 					// Allocate memory
 					call_video_enabled = (bool_t*)realloc(call_video_enabled, (counter+1)*sizeof(bool_t));
 					call_video_dir = (LinphoneMediaDirection*)realloc(call_video_dir, (counter+1)*sizeof(LinphoneMediaDirection));
@@ -3097,7 +3097,7 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 					}
 
 					LinphoneCall * call = linphone_core_get_call_by_remote_address2(mgr->lc, m->identity);
-					BC_ASSERT_PTR_NOT_NULL(call);
+					call_ok &= (call != nullptr);
 					if (call) {
 						calls.push_back(call);
 					} else {
@@ -3108,7 +3108,7 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 				}
 			} else {
 				LinphoneCall * call = linphone_core_get_call_by_remote_address2(mgr->lc, confAddr);
-				BC_ASSERT_PTR_NOT_NULL(call);
+				call_ok &= (call != nullptr);
 				// Allocate memory
 				call_video_enabled = (bool_t*)realloc(call_video_enabled, sizeof(bool_t));
 				call_video_dir = (LinphoneMediaDirection*)realloc(call_video_dir, sizeof(LinphoneMediaDirection));
@@ -3126,7 +3126,7 @@ static void wait_for_conference_streams(std::initializer_list<std::reference_wra
 			}
 
 			int counter = 0;
-			call_ok = (calls.size() > 0);
+			call_ok &= (calls.size() > 0);
 			for (auto call : calls) {
 				if (call) {
 					size_t nb_video_streams = (enable_video && call_video_enabled[counter] && ((call_video_dir[counter] == LinphoneMediaDirectionRecvOnly) || (call_video_dir[counter] == LinphoneMediaDirectionSendRecv))) ? (static_cast<int>(members.size()) + ((call_video_dir[counter] == LinphoneMediaDirectionSendRecv) ? 1 : -1)) : 0;
