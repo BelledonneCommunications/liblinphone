@@ -487,7 +487,6 @@ void liblinphone_tester_add_suites(void) {
 	bc_tester_add_suite(&log_collection_test_suite);
 	bc_tester_add_suite(&player_test_suite);
 	bc_tester_add_suite(&recorder_test_suite);
-	bc_tester_add_suite(&dtmf_test_suite);
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&ics_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);

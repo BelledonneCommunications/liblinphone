@@ -238,6 +238,10 @@ float MS2AudioMixer::getSpeakerGain(){
 void MS2AudioMixer::setSpeakerGain(BCTBX_UNUSED(float value)){
 }
 
+bool MS2AudioMixer::supportsTelephoneEvents(){
+	return false;
+}
+
 void MS2AudioMixer::sendDtmf(BCTBX_UNUSED(int dtmf)){
 }
 
