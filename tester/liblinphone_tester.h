@@ -62,7 +62,6 @@ extern test_suite_t conference_info_tester;
 extern test_suite_t contents_test_suite;
 extern test_suite_t cpim_test_suite;
 extern test_suite_t ics_test_suite;
-extern test_suite_t dtmf_test_suite;
 extern test_suite_t event_test_suite;
 extern test_suite_t main_db_test_suite;
 extern test_suite_t flexisip_test_suite;
@@ -138,6 +137,8 @@ extern test_suite_t audio_quality_test_suite;
 #if HAVE_SIPP
 	extern test_suite_t complex_sip_call_test_suite;
 #endif
+
+extern test_t dtmf_tests[9];
 
 extern int manager_count;
 
@@ -565,9 +566,9 @@ void audio_devices_list_updated(LinphoneCore *lc);
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
-bool_t wait_for_list(MSList* lcs,int* counter,int value,int timeout_ms);
+bool_t wait_for_list(MSList *lcs, const int *counter, int value, int timeout_ms);
 bool_t wait_for_list_interval(MSList* lcs,int* counter,int min,int max,int timeout_ms);
-bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timeout_ms);
+bool_t wait_for_until(LinphoneCore *lc_1, LinphoneCore *lc_2, const int *counter, int value, int timeout_ms);
 bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timeout_ms);
 
 bool_t call_with_params(LinphoneCoreManager* caller_mgr

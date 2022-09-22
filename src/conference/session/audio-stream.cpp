@@ -18,15 +18,16 @@
  */
 #include "bctoolbox/defs.h"
 
-#include "ms2-streams.h"
-#include "mixers.h"
-#include "media-session.h"
-#include "media-session-p.h"
-#include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "conference/participant.h"
 #include "conference/params/media-session-params-p.h"
+#include "conference/participant.h"
+#include "core/core.h"
+#include "media-session-p.h"
+#include "media-session.h"
+#include "mediastreamer2/mediastream.h"
+#include "mixers.h"
+#include "ms2-streams.h"
 #include "nat/ice-service.h"
 
 #include "mediastreamer2/msfileplayer.h"
@@ -809,6 +810,10 @@ void MS2AudioStream::enableSpeaker(bool value){
 
 bool MS2AudioStream::speakerEnabled()const{
 	return !mSpeakerMuted;
+}
+
+bool MS2AudioStream::supportsTelephoneEvents() {
+	return audio_stream_supports_telephone_events(mStream);
 }
 
 void MS2AudioStream::sendDtmf(int dtmf){

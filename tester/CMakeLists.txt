@@ -301,6 +301,7 @@ set(SOURCE_FILES_CXX
 	call_ice_tester.cpp
 	call_secure_tester.cpp
 	capability_negotiation_tester.cpp
+	dtmf_tester.cpp
 	ice_capability_negotiation_tester.cpp
 	srtp_capability_negotiation_tester.cpp
 	zrtp_capability_negotiation_tester.cpp

@@ -278,7 +278,7 @@ bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* count
 	return result;
 }
 
-bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timeout) {
+bool_t wait_for_until(LinphoneCore *lc_1, LinphoneCore *lc_2, const int *counter, int value, int timeout) {
 	bctbx_list_t* lcs=NULL;
 	bool_t result;
 	if (lc_1)
@@ -319,7 +319,7 @@ bool_t wait_for_list_interval(bctbx_list_t* lcs,int* counter,int min, int max,in
 	else return TRUE;
 }
 
-bool_t wait_for_list(bctbx_list_t* lcs,int* counter,int value,int timeout_ms) {
+bool_t wait_for_list(bctbx_list_t *lcs, const int *counter, int value, int timeout_ms) {
 	bctbx_list_t* iterator;
 	MSTimeSpec start;
 

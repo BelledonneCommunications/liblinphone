@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bctoolbox/tester.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
@@ -108,6 +109,12 @@ static void send_dtmf_sip_info(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
+void linphone_call_send_dtmf__char__rfc2833_and_sip_info_enabled(void) {
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, TRUE, TRUE, '5', NULL, FALSE);
+	send_dtmf_cleanup(marie, pauline);
+}
+
 static void send_dtmfs_sequence_rfc2833(void) {
 	LinphoneCoreManager *marie, *pauline;
 	send_dtmf_base(&marie, &pauline, TRUE,FALSE,'\0',"1230#",FALSE);
@@ -117,6 +124,12 @@ static void send_dtmfs_sequence_rfc2833(void) {
 static void send_dtmfs_sequence_sip_info(void) {
 	LinphoneCoreManager *marie, *pauline;
 	send_dtmf_base(&marie, &pauline, FALSE,TRUE,'\0',"1230#",FALSE);
+	send_dtmf_cleanup(marie, pauline);
+}
+
+void linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled(void) {
+	LinphoneCoreManager *marie, *pauline;
+	send_dtmf_base(&marie, &pauline, TRUE, TRUE, '\0', "3125A", FALSE);
 	send_dtmf_cleanup(marie, pauline);
 }
 
@@ -156,15 +169,13 @@ static void send_dtmf_rfc2833_opus(void) {
 	send_dtmf_cleanup(marie, pauline);
 }
 
-test_t dtmf_tests[] = {
-	TEST_NO_TAG("Send DTMF using RFC2833",send_dtmf_rfc2833),
-	TEST_NO_TAG("Send DTMF using SIP INFO",send_dtmf_sip_info),
-	TEST_NO_TAG("Send DTMF sequence using RFC2833",send_dtmfs_sequence_rfc2833),
-	TEST_NO_TAG("Send DTMF sequence using SIP INFO",send_dtmfs_sequence_sip_info),
-	TEST_NO_TAG("DTMF sequence not sent if invalid call",send_dtmfs_sequence_not_ready),
-	TEST_NO_TAG("DTMF sequence canceled if call state changed",send_dtmfs_sequence_call_state_changed),
-	TEST_NO_TAG("Send DTMF using RFC2833 using Opus",send_dtmf_rfc2833_opus)
-};
-
-test_suite_t dtmf_test_suite = {"DTMF", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(dtmf_tests) / sizeof(dtmf_tests[0]), dtmf_tests};
+test_t dtmf_tests[9] = {
+	TEST_NO_TAG("Send DTMF using RFC2833", send_dtmf_rfc2833),
+	TEST_NO_TAG("Send DTMF using SIP INFO", send_dtmf_sip_info),
+	TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__char__rfc2833_and_sip_info_enabled),
+	TEST_NO_TAG("Send DTMF sequence using RFC2833", send_dtmfs_sequence_rfc2833),
+	TEST_NO_TAG("Send DTMF sequence using SIP INFO", send_dtmfs_sequence_sip_info),
+	TEST_NO_TAG_AUTO_NAMED(linphone_call_send_dtmf__sequence__rfc2833_and_sip_info_enabled),
+	TEST_NO_TAG("DTMF sequence not sent if invalid call", send_dtmfs_sequence_not_ready),
+	TEST_NO_TAG("DTMF sequence canceled if call state changed", send_dtmfs_sequence_call_state_changed),
+	TEST_NO_TAG("Send DTMF using RFC2833 using Opus", send_dtmf_rfc2833_opus)};

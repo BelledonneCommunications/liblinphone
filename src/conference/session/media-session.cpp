@@ -22,19 +22,20 @@
 #include <algorithm>
 
 #include "account/account.h"
-#include "call/call.h"
 #include "address/address.h"
+#include "c-wrapper/c-wrapper.h"
+#include "call/call.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
+#include "conference/session/streams.h"
 #include "core/core-p.h"
-#include "c-wrapper/c-wrapper.h"
-#include "sal/sal_stream_bundle.h"
-#include "sal/sal_media_description.h"
 #include "sal/call-op.h"
 #include "sal/sal.h"
+#include "sal/sal_media_description.h"
+#include "sal/sal_stream_bundle.h"
 #include "utils/payload-type-handler.h"
 
 #include "logger/logger.h"
@@ -3272,21 +3273,31 @@ void MediaSessionPrivate::repairByInviteWithReplaces () {
 }
 
 int MediaSessionPrivate::sendDtmf () {
+	// There are two relevant Core settings here: "use_rfc2833" and "use_info"; Resulting in 4 cases.
+	// (0)   If neither are enabled, don't send anything.
+	// (1|2) If one is enabled but not the other, then send the DTMF using the one the that is enabled.
+	// (3)   If both are enabled, use RFC 2833, then SIP INFO as fallback only if the media does not support telephone
+	// events. (In that last sub-case, note that the DTMF will also be sent in-band through audio encoding)
+
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
-	// By default we send DTMF RFC2833 if we do not have enabled SIP_INFO but we can also send RFC2833 and SIP_INFO
-	if (linphone_core_get_use_rfc2833_for_dtmf(lc) || !linphone_core_get_use_info_for_dtmf(lc)) {
-		AudioControlInterface *i = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-		// In Band DTMF
-		if (i)
-			i->sendDtmf(dtmfSequence.front());
+	AudioControlInterface *audioInterface = nullptr;
+	if (linphone_core_get_use_rfc2833_for_dtmf(lc)) { // (1|3)
+		audioInterface = getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+		if (audioInterface)
+			audioInterface->sendDtmf(dtmfSequence.front());
 		else {
 			lError() << "Cannot send RFC2833 DTMF when we are not in communication";
 			return FALSE;
 		}
 	}
-	if (linphone_core_get_use_info_for_dtmf(lc)) {
-		// Out of Band DTMF (use INFO method)
+
+	bool useSipInfo = linphone_core_get_use_info_for_dtmf(lc);
+	if (audioInterface && useSipInfo) { // (3)
+		useSipInfo = !audioInterface->supportsTelephoneEvents();
+	}
+
+	if (useSipInfo) { // (2|3)
 		op->sendDtmf(dtmfSequence.front());
 	}
 

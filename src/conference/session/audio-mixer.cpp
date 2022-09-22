@@ -235,6 +235,10 @@ float MS2AudioMixer::getSpeakerGain(){
 void MS2AudioMixer::setSpeakerGain(float value){
 }
 
+bool MS2AudioMixer::supportsTelephoneEvents(){
+	return false;
+}
+
 void MS2AudioMixer::sendDtmf(int dtmf){
 }
 
