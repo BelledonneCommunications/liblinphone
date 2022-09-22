@@ -1800,7 +1800,7 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
 	conferenceInfo->setSubject(row.get<string>(5));
 	conferenceInfo->setDescription(row.get<string>(6));
-	conferenceInfo->setState(ConferenceInfo::State(dbSession.getUnsignedInt(row,7,0)));
+	conferenceInfo->setState(ConferenceInfo::State(row.get<int>(7))); // state is a TinyInt in database, don't cast it to unsigned, otherwise you'll get a std::bad_cast from soci.
 	conferenceInfo->setIcsSequence(dbSession.getUnsignedInt(row,8,0));
 	conferenceInfo->setIcsUid(row.get<string>(9));
 
