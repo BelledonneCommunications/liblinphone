@@ -173,6 +173,7 @@ private:
 	std::string x3dhServerUrl;
 	std::string _dbAccess;
 	lime::CurveId curve;
+	bool forceFailure = false;
 };
 
 LINPHONE_END_NAMESPACE

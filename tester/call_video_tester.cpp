@@ -1620,8 +1620,6 @@ static void multiple_early_media(void) {
 	linphone_core_enable_video_capture(marie2->lc, TRUE);
 	linphone_core_enable_video_display(marie2->lc, TRUE);
 	linphone_core_set_video_policy(marie2->lc,&pol);
-	linphone_core_set_audio_port_range(marie2->lc,44200,44900);
-	linphone_core_set_video_port_range(marie2->lc,40400,40500);
 
 	lcs=bctbx_list_append(lcs,marie1->lc);
 	lcs=bctbx_list_append(lcs,marie2->lc);

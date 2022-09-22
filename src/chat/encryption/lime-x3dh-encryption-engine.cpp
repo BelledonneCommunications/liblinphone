@@ -152,6 +152,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	x3dhServerUrl = serverUrl;
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccessWithParam, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
+	forceFailure = !!linphone_config_get_int(cCore->config, "test", "force_lime_decryption_failure", 0);
 }
 
 LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine () {
@@ -269,6 +270,8 @@ lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_ide
 				for (const lime::RecipientData &recipient : *recipients) {
 					if (recipient.peerStatus != lime::PeerDeviceStatus::fail) {
 						filteredRecipients.push_back(recipient);
+					}else{
+						lError() << "[LIME] No cipher key generated for " << recipient.deviceId;
 					}
 				}
 
@@ -326,7 +329,7 @@ lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_ide
 				contentType.addParameter("boundary", boundary);
 				
 				if (linphone_core_content_encoding_supported(message->getChatRoom()->getCore()->getCCore(), "deflate")) {
-					//finalContent.setContentEncoding("deflate");
+					finalContent.setContentEncoding("deflate");
 				}
 
 				message->setInternalContent(finalContent);
@@ -449,9 +452,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		}
 	}
 	
-	
-	LinphoneConfig *config = linphone_core_get_config(chatRoom->getCore()->getCCore());
-	if (linphone_config_get_int(config, "test", "force_lime_decryption_failure", 0) == 1) {
+	if (forceFailure) {
 		lError() << "No key found (on purpose for tests) for [" << localDeviceId << "] for message [" << message << "]";
 		errorCode = 488; // Not Acceptable
 		return ChatMessageModifier::Result::Done;
