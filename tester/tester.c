@@ -3079,6 +3079,24 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 		ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 	else
 		ms_message("New state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
+
+	if (linphone_chat_message_is_outgoing(msg) && state == LinphoneChatMessageStateDelivered) {
+		LinphoneChatRoom *room = linphone_chat_message_get_chat_room(msg);
+		BC_ASSERT_PTR_NOT_NULL(room);
+		if (room && linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesConference) {
+			bctbx_list_t *participants = linphone_chat_room_get_participants(room);
+			if (participants) {
+				bctbx_list_t *participants_in_delivered_state = linphone_chat_message_get_participants_by_imdn_state(msg, state);
+				BC_ASSERT_PTR_NOT_NULL(participants_in_delivered_state);
+				if (participants_in_delivered_state) {
+					BC_ASSERT_EQUAL(bctbx_list_size(participants_in_delivered_state), bctbx_list_size(participants), size_t, "%0zu");
+					bctbx_list_free_with_data(participants_in_delivered_state, (bctbx_list_free_func)linphone_participant_imdn_state_unref);
+				}
+
+				bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
+			}
+		}
+	}
 }
 
 bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats) {	// Return all LinphoneChatMessage and count states

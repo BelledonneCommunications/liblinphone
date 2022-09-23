@@ -225,6 +225,13 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	}
 
 	if (direction == ChatMessage::Direction::Outgoing) {
+		// Delivered state isn't triggered by IMDN, so participants state won't be set unless we manually do so here
+		if (state == ChatMessage::State::Delivered) {
+			for (auto participant : q->getChatRoom()->getParticipants()) {
+				setParticipantState(participant->getAddress(), state, q->getTime());
+			}
+		}
+
 		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered || state == ChatMessage::State::DeliveredToUser || state == ChatMessage::State::Displayed) {
 			q->getChatRoom()->getPrivate()->removeTransientChatMessage(sharedMessage);
 		}
