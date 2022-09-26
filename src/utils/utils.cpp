@@ -242,6 +242,8 @@ time_t Utils::getTmAsTimeT (const tm &t) {
 	#endif
 
 	if (result == time_t(-1)) {
+		if( tCopy.tm_hour == 0 && tCopy.tm_min == 0 && tCopy.tm_sec == 0 && tCopy.tm_year == 70 && tCopy.tm_mon == 0 && tCopy.tm_mday == 1)
+			return time_t(0);// Not really an error as we try to getTmAsTimeT from initial day (Error comes from timezones)
 		lError() << "timegm/mktime failed: " << strerror(errno);
 		return time_t(-1);
 	}
