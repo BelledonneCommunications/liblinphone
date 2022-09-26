@@ -80,7 +80,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	const auto & core = conf->getCore();
 	auto chatRoom = core->findChatRoom(getConferenceId());
 
-	IdentityAddress entityAddress(confInfo->getEntity().c_str());
+	ConferenceAddress entityAddress(confInfo->getEntity());
 
 	if (entityAddress != getConferenceId().getPeerAddress()) {
 		lError() << "Unable to process received NOTIFY because the entity address " << entityAddress << " doesn't match the peer address " << getConferenceId().getPeerAddress();

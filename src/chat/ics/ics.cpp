@@ -31,12 +31,21 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-const std::string &Ics::Event::getOrganizer () const {
+const Ics::Event::organizer_t &Ics::Event::getOrganizer () const {
 	return mOrganizer;
 }
 
+const std::string &Ics::Event::getOrganizerAddress () const {
+	return getOrganizer().first;
+}
+
 void Ics::Event::setOrganizer (const std::string &organizer) {
-	mOrganizer = organizer;
+	Ics::Event::attendee_params_t params;
+	setOrganizer(organizer, params);
+}
+
+void Ics::Event::setOrganizer (const std::string &organizer, const attendee_params_t & params) {
+	mOrganizer = std::make_pair(organizer, params);
 }
 
 const Ics::Event::attendee_list_t &Ics::Event::getAttendees () const {
@@ -147,7 +156,16 @@ std::string Ics::Event::asString () const {
 		output << "\r\n";
 	}
 
-	if (!mOrganizer.empty()) output << "ORGANIZER:" << mOrganizer << "\r\n";
+	const auto & organizerAddress = getOrganizerAddress();
+	if (!organizerAddress.empty()) {
+		output << "ORGANIZER";
+		const auto & params = mOrganizer.second;
+		for (const auto &param : params) {
+			output << ";" << param.first << "=" << param.second;
+		}
+		output << ":" << organizerAddress;
+		output << "\r\n";
+	}
 	if (!mAttendees.empty()) {
 		for (const auto &attendee : mAttendees) {
 			output << "ATTENDEE";
@@ -193,8 +211,8 @@ std::string Ics::Event::asString () const {
 			<< "Z";
 
 		size_t p;
-		if (!mOrganizer.empty() && (p = mOrganizer.find("@")) != string::npos) {
-			string domain = mOrganizer.substr(p + 1, mOrganizer.size());
+		if (!organizerAddress.empty() && (p = organizerAddress.find("@")) != string::npos) {
+			string domain = organizerAddress.substr(p + 1, organizerAddress.size());
 			uid << "@" << domain;
 		} else {
 			uid << "@domain.invalid";
@@ -253,12 +271,14 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	auto confInfo = ConferenceInfo::create();
 	const auto &event = mEvents.front(); // It should always be one event
 
-	if (!event->getOrganizer().empty()) {
-		const auto & org = IdentityAddress(event->getOrganizer());
-		if (org.isValid()) {
-			confInfo->setOrganizer(org);
+	if (!event->getOrganizerAddress().empty()) {
+		const auto & org = event->getOrganizer();
+		const auto & orgAddress = IdentityAddress(org.first);
+		const auto & orgParams = org.second;
+		if (orgAddress.isValid()) {
+			confInfo->setOrganizer(orgAddress, orgParams);
 		} else {
-			lWarning() << "Could not parse organizer's address:" << event->getOrganizer() << " because it is not a valid address";
+			lWarning() << "Could not parse organizer's address:" << event->getOrganizerAddress() << " because it is not a valid address";
 		}
 	}
 

@@ -71,6 +71,7 @@ private:
 	void insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime);
 	long long insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo, const std::shared_ptr<ConferenceInfo> &oldConferenceInfo);
 	long long insertOrUpdateConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId, bool deleted, const ConferenceInfo::participant_params_t params);
+	long long insertOrUpdateConferenceInfoOrganizer (long long conferenceInfoId, long long organizerSipAddressId, const ConferenceInfo::participant_params_t params);
 	long long insertOrUpdateConferenceCall (const std::shared_ptr<CallLog> &callLog, const std::shared_ptr<ConferenceInfo> &conferenceInfo = nullptr);
 
 	long long selectSipAddressId (const std::string &sipAddress) const;
@@ -81,6 +82,7 @@ private:
 	long long selectOneToOneChatRoomId (long long sipAddressIdA, long long sipAddressIdB, bool encrypted) const;
 	long long selectConferenceInfoId (long long uriSipAddressId);
 	long long selectConferenceInfoParticipantId (long long conferenceInfoId, long long participantSipAddressId) const;
+	long long selectConferenceInfoOrganizerId (long long conferenceInfoId) const;
 	long long selectConferenceCallId (const std::string &callId);
 
 	void deleteContents (long long chatMessageId);

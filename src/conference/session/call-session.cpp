@@ -1916,7 +1916,7 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 		if (mainDb && (guessedConferenceAddress != ConferenceAddress()))  {
 			const auto & confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
 			if (confInfo) {
-				organizer = confInfo->getOrganizer();
+				organizer = confInfo->getOrganizerAddress();
 			}
 		}
 		#endif

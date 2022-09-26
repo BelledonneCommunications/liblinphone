@@ -1637,7 +1637,10 @@ LinphoneAddress* Core::getAudioVideoConferenceFactoryAddress(const std::shared_p
 		if (conferenceFactoryUri.empty()) return nullptr;
 		return linphone_address_new(conferenceFactoryUri.c_str());
 	}
-	return linphone_address_new(linphone_address_as_string_uri_only(address));
+	char * address_uri = linphone_address_as_string_uri_only(address);
+	LinphoneAddress * factory_address = linphone_address_new(address_uri);
+	ms_free(address_uri);
+	return factory_address;
 }
 
 LINPHONE_END_NAMESPACE

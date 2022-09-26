@@ -40,6 +40,7 @@ public:
 	static const std::string sequenceParam;
 	using participant_params_t = std::map<std::string, std::string>;
 	using participant_list_t = std::map<IdentityAddress, participant_params_t>;
+	using organizer_t = std::pair<IdentityAddress, participant_params_t>;
 
 	enum class State {
 		New = LinphoneConferenceInfoStateNew,
@@ -53,16 +54,25 @@ public:
 		return new ConferenceInfo(*this);
 	}
 
-	static const std::string paramsToString(const participant_params_t & params);
+	static const std::string memberParametersToString(const participant_params_t & params);
+	static const participant_params_t stringToMemberParameters(const std::string & params);
 
-	const IdentityAddress &getOrganizer () const;
-	void setOrganizer (IdentityAddress organizer);
+	const organizer_t &getOrganizer () const;
+	const IdentityAddress &getOrganizerAddress () const;
+	void setOrganizer (const IdentityAddress & organizer, const participant_params_t & params);
+	void setOrganizer (const IdentityAddress & organizer);
+
+	void addOrganizerParam (const std::string & param, const std::string & value);
+	const std::string getOrganizerParam (const std::string & param) const;
 
 	const participant_list_t &getParticipants () const;
 	void setParticipants (const participant_list_t & participants);
 	void addParticipant (const IdentityAddress & participant);
 	void addParticipant (const IdentityAddress & participant, const participant_params_t & params);
 	void removeParticipant (const IdentityAddress & participant);
+
+	void addParticipantParam (const IdentityAddress & participant, const std::string & param, const std::string & value);
+	const std::string getParticipantParam (const IdentityAddress & participant, const std::string & param) const;
 
 	const ConferenceAddress &getUri () const;
 	void setUri (const ConferenceAddress uri);
@@ -88,14 +98,14 @@ public:
 	const ConferenceInfo::State &getState () const;
 	void setState (const ConferenceInfo::State &state);
 
-	const std::string toIcsString (bool cancel = false) const;
+	const std::string toIcsString (bool cancel = false, int sequence = -1) const;
 
 	void updateFrom (const std::shared_ptr<ConferenceInfo> & info);
 
 	// Used only by the tester
 	void setCreationTime(time_t time);
 private:
-	IdentityAddress mOrganizer;
+	organizer_t mOrganizer;
 	participant_list_t mParticipants;
 	ConferenceAddress mUri;
 	time_t mDateTime = (time_t) -1;

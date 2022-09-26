@@ -201,7 +201,29 @@ namespace Ics {
 		}
 
 		void setOrganizer (const string &organizer) {
-			mOrganizer = organizer;
+			if (!organizer.empty()) {
+				Ics::Event::attendee_params_t params;
+				size_t paramStart = organizer.find("ORGANIZER");
+				// Chop off ATTENDEE
+				const auto & paramAddress = organizer.substr(paramStart+strlen("ORGANIZER"));
+				size_t addressStart = paramAddress.find(":");
+				// Split parameters and address.
+				// Parameters end at the first : sign
+				const auto & paramsStr = paramAddress.substr(0, addressStart);
+				const auto & address = paramAddress.substr(addressStart + 1, organizer.size());
+				if (!paramsStr.empty()) {
+					const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsStr), ";");
+					for (const auto & param : splittedValue) {
+						if (!param.empty()) {
+							auto equal = param.find("=");
+							string name = param.substr(0, equal);
+							string value = param.substr(equal + 1, param.size());
+							params.insert(std::make_pair(name, value));
+						}
+					}
+				}
+				mOrganizer = std::make_pair(address, params);
+			}
 		}
 
 		void addAttendee (const string &attendee) {
@@ -281,7 +303,7 @@ namespace Ics {
 			event->setDescription(mDescription);
 			if (mDateStart) event->setDateTimeStart(mDateStart->getDateStart());
 			if (mDuration) event->setDuration(mDuration->getDuration());
-			event->setOrganizer(mOrganizer);
+			event->setOrganizer(mOrganizer.first, mOrganizer.second);
 			event->setXConfUri(mXConfUri);
 
 			for (const auto &attendee : mAttendees) {
@@ -298,7 +320,7 @@ namespace Ics {
 		string mSummary;
 		string mDescription;
 		string mXConfUri;
-		string mOrganizer;
+		Ics::Event::organizer_t mOrganizer;
 		string mUid;
 		unsigned int mSequence = 0;
 		Ics::Event::attendee_list_t mAttendees;
@@ -375,7 +397,7 @@ Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 		->setCollector("descvalue", belr::make_sfn(&EventNode::setDescription))
 		->setCollector("dtstval", belr::make_sfn(&EventNode::setDateStart))
 		->setCollector("dur-value", belr::make_sfn(&EventNode::setDuration))
-		->setCollector("orgvalue", belr::make_sfn(&EventNode::setOrganizer))
+		->setCollector("organizer", belr::make_sfn(&EventNode::setOrganizer))
 		->setCollector("attendee", belr::make_sfn(&EventNode::addAttendee))
 		->setCollector("uid", belr::make_sfn(&EventNode::setUid))
 		->setCollector("seq", belr::make_sfn(&EventNode::setSequence))

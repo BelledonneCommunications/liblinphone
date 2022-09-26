@@ -183,6 +183,7 @@ set(RC_FILES
 	rcfiles/marie_well_known_port_rc
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
+	rcfiles/michelle_lime_x3dh_rc
 	rcfiles/multi_account_rc
 	rcfiles/multi_account_lime_x3dh_rc
 	rcfiles/pauline_alt_rc

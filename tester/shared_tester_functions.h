@@ -57,6 +57,9 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 
 int liblinphone_tester_send_data(const void *buffer, size_t length, const char *dest_ip, int dest_port, int sock_type);
 
+void linphone_conference_info_check_participant(const LinphoneConferenceInfo * conference_info, LinphoneAddress * address, int sequence_number);
+void linphone_conference_info_check_organizer(const LinphoneConferenceInfo * conference_info, int sequence_number);
+
 #ifdef __cplusplus
 }
 #endif

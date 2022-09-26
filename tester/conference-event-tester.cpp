@@ -1710,11 +1710,11 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 		}
 	}
 
-	// Number of subscription errors should not change as they the participant should received a notification
+	// Number of subscription errors should not change as the participants should received a notification
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionError,initial_conf_stats.number_of_LinphoneSubscriptionError, int, "%0d");
 	BC_ASSERT_EQUAL(participant_mgr->stat.number_of_LinphoneSubscriptionError,initial_participant_stats.number_of_LinphoneSubscriptionError, int, "%0d");
 
-	// Number of subscription terminated should not change as they the participant should received a notification
+	// Number of subscription terminated should not change as the participants should received a notification
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, initial_conf_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 	BC_ASSERT_EQUAL(participant_mgr->stat.number_of_LinphoneSubscriptionTerminated, initial_participant_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 

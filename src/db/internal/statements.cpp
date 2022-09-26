@@ -123,6 +123,12 @@ namespace Statements {
 			WHERE conference_info_id = :1 AND participant_sip_address_id = :2
 		)",
 
+		/* SelectConferenceInfoOrganizerId */ R"(
+			SELECT id
+			FROM conference_info_organizer
+			WHERE conference_info_id = :1
+		)",
+
 		/* SelectConferenceCall */ R"(
 			SELECT id
 			FROM conference_call

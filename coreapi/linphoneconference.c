@@ -104,11 +104,11 @@ const LinphoneConferenceParams * linphone_conference_get_current_params(const Li
 }
 
 LinphoneStatus linphone_conference_add_participant (LinphoneConference *conference, LinphoneCall *call) {
-	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis());
+	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis()) ? 0 : -1;
 }
 
 LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(conference)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+	return MediaConference::Conference::toCpp(conference)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)) ? 0 : -1;
 }
 
 LinphoneStatus linphone_conference_remove_participant (LinphoneConference *conference, const LinphoneAddress * uri) {

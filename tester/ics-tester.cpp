@@ -229,7 +229,7 @@ static void build_ics () {
 
 	auto confInfo = calendar.toConferenceInfo();
 
-	BC_ASSERT_TRUE(confInfo->getOrganizer().isValid());
+	BC_ASSERT_TRUE(confInfo->getOrganizerAddress().isValid());
 	BC_ASSERT_TRUE(confInfo->getUri().isValid());
 	BC_ASSERT_EQUAL(confInfo->getParticipants().size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(confInfo->getDuration(), 165, int, "%d");

@@ -21,6 +21,7 @@
 
 #include "tester_utils.h"
 #include "call/call.h"
+#include "conference/conference-info.h"
 #include "conference/participant-device.h"
 #include "conference/session/media-session.h"
 #include "conference/params/media-session-params.h"
@@ -614,4 +615,22 @@ end:
 bool_t linphone_conference_type_is_full_state(const char * text) {
 	std::string data(text);
 	return ((data.find("state=\"full\"") != std::string::npos) && (data.find("state=\"partial\"") == std::string::npos) && (data.find("state=\"deleted\"") == std::string::npos)) ? TRUE : FALSE;
+}
+
+void linphone_conference_info_check_participant(const LinphoneConferenceInfo * conference_info, LinphoneAddress * address, int sequence_number) {
+	const auto & sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getParticipantParam(*L_GET_CPP_PTR_FROM_C_OBJECT(address), "X-SEQ");
+	BC_ASSERT_TRUE(!sequence.empty());
+	if (!sequence.empty()) {
+		const int sequenceNumber = std::atoi(sequence.c_str());
+		BC_ASSERT_EQUAL(sequenceNumber, sequence_number, int, "%d");
+	}
+}
+
+void linphone_conference_info_check_organizer(const LinphoneConferenceInfo * conference_info, int sequence_number) {
+	const auto & sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getOrganizerParam("X-SEQ");
+	BC_ASSERT_TRUE(!sequence.empty());
+	if (!sequence.empty()) {
+		const int sequenceNumber = std::atoi(sequence.c_str());
+		BC_ASSERT_EQUAL(sequenceNumber, sequence_number, int, "%d");
+	}
 }

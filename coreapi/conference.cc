@@ -236,7 +236,7 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 		lError() << "Unable to add participant with address " << participantAddress << " to conference " << getConferenceAddress();
 	}
 
-	return 0;
+	return success;
 }
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -668,7 +668,7 @@ LocalConference::LocalConference (const std::shared_ptr<Core> &core, const std::
 	confParams->enableOneParticipantConference(true);
 	confParams->setStatic(true);
 
-	organizer = info->getOrganizer();
+	organizer = info->getOrganizerAddress();
 
 	time_t startTime = info->getDateTime();
 	confParams->setStartTime(startTime);
@@ -1795,7 +1795,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				}
 
 				checkIfTerminated();
-				return success;
+				return success ? 0 : -1;
 
 			}
 		}
@@ -1806,7 +1806,31 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		checkIfTerminated();
 	}
 	
-	return err;
+	return err ? 0 : -1;
+}
+
+int LocalConference::removeParticipant (const IdentityAddress &addr) {
+	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(addr);
+	if (!participant)
+		return -1;
+	return removeParticipant(participant) ? 0 : -1;
+}
+
+bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+	const auto devices = participant->getDevices();
+	bool success = true;
+	if (devices.size() > 0) {
+		for (const auto & d : devices) {
+			success &= (removeParticipant(d->getSession(), false) == 0);
+		}
+	} else {
+		lInfo() << "Remove participant with address " << participant->getAddress() << " from conference " << getConferenceAddress();
+		participants.remove(participant);
+		time_t creationTime = time(nullptr);
+		notifyParticipantRemoved(creationTime, false, participant);
+		success = true;
+	}
+	return success;
 }
 
 void LocalConference::checkIfTerminated() {
@@ -1828,7 +1852,6 @@ void LocalConference::checkIfTerminated() {
 	}
 }
 
-
 void LocalConference::chooseAnotherAdminIfNoneInConference() {
 	if (participants.empty() == false) {
 		const auto adminParticipant = std::find_if(participants.cbegin(), participants.cend(), [&] (const auto & p) {
@@ -1840,30 +1863,6 @@ void LocalConference::chooseAnotherAdminIfNoneInConference() {
 			lInfo() << this << ": New admin designated is " << *(participants.front());
 		}
 	}
-}
-
-int LocalConference::removeParticipant (const IdentityAddress &addr) {
-	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(addr);
-	if (!participant)
-		return -1;
-	return removeParticipant(participant);
-}
-
-bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
-	const auto devices = participant->getDevices();
-	bool success = true;
-	if (devices.size() > 0) {
-		for (const auto & d : devices) {
-			success &= (removeParticipant(d->getSession(), false) == 0);
-		}
-	} else {
-		lInfo() << "Remove participant with address " << participant->getAddress() << " from conference " << getConferenceAddress();
-		participants.remove(participant);
-		time_t creationTime = time(nullptr);
-		notifyParticipantRemoved(creationTime, false, participant);
-		success = true;
-	}
-	return success;
 }
 
 /* ConferenceInterface */
@@ -2303,7 +2302,7 @@ RemoteConference::RemoteConference (
 		const auto & confInfo = mainDb->getConferenceInfoFromURI(confAddr);
 		// me is admin if the organizer is the same as me
 		if (confInfo) {
-			organizer = confInfo->getOrganizer();
+			organizer = confInfo->getOrganizerAddress();
 		}
 	}
 #endif
@@ -2362,7 +2361,7 @@ RemoteConference::RemoteConference (
 	if (mainDb)  {
 		const auto & confInfo = mainDb->getConferenceInfoFromURI(ConferenceAddress(*conferenceAddress));
 		// me is admin if the organizer is the same as me
-		getMe()->setAdmin((confInfo && (confInfo->getOrganizer() == getMe()->getAddress())));
+		getMe()->setAdmin((confInfo && (confInfo->getOrganizerAddress() == getMe()->getAddress())));
 	}
 #endif
 
@@ -2803,7 +2802,7 @@ int RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::C
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(remoteAddress);
 	if (getMe()->isAdmin()) {
 		if (p) {
-			return removeParticipant(p);
+			return removeParticipant(p) ? 0 : -1;
 		}
 	} else {
 		lError() << "Unable to remove participant " << p->getAddress().asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
@@ -2813,7 +2812,7 @@ int RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::C
 
 bool RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	if (getMe()->isAdmin()) {
-		return (bool)removeParticipant(participant->getAddress());
+		return (removeParticipant(participant->getAddress()) == 0) ? true : false;
 	} else {
 		lError() << "Unable to remove participant " << participant->getAddress().asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
 	}
@@ -2853,6 +2852,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 					lError() << "Could not remove participant " << addr << " from conference " << getConferenceAddress() << ". Bad conference state (" << Utils::toString(state) << ")";
 					return -1;
 			}
+			return 0;
 		} else {
 			lWarning() << "Unable to remove participant " << addr.asString() << " because it is not part of the conference " << getConferenceAddress();
 		}

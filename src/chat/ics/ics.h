@@ -37,12 +37,15 @@ namespace Ics {
 	public:
 		using attendee_params_t = std::map<std::string, std::string>;
 		using attendee_list_t = std::map<std::string, attendee_params_t>;
+		using organizer_t = std::pair<std::string, attendee_params_t>;
 
 		Event () = default;
 		~Event () = default;
 
-		const std::string &getOrganizer () const;
+		const organizer_t &getOrganizer () const;
+		const std::string &getOrganizerAddress () const;
 		void setOrganizer (const std::string &organizer);
+		void setOrganizer (const std::string &organizer, const attendee_params_t & params);
 
 		const attendee_list_t &getAttendees () const;
 		void addAttendee (const std::string &attendee);
@@ -72,7 +75,7 @@ namespace Ics {
 		std::string asString () const;
 
 	private:
-		std::string mOrganizer;
+		organizer_t mOrganizer;
 		attendee_list_t mAttendees;
 		tm mDateTimeStart;
 		tm mDuration;

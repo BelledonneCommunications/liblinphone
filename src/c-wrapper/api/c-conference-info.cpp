@@ -45,7 +45,7 @@ void linphone_conference_info_unref(LinphoneConferenceInfo *conference_info) {
 }
 
 const LinphoneAddress *linphone_conference_info_get_organizer(const LinphoneConferenceInfo *conference_info) {
-	const LinphonePrivate::Address & address = ConferenceInfo::toCpp(conference_info)->getOrganizer().asAddress();
+	const LinphonePrivate::Address & address = ConferenceInfo::toCpp(conference_info)->getOrganizerAddress().asAddress();
 	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
 }
 

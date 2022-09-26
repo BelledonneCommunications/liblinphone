@@ -533,7 +533,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 				time_t endTime = startTime + static_cast<time_t>(duration) * 60;
 				confParams->setEndTime(endTime);
 			}
-			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};
+			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizerAddress()};
 			for (const auto & participant : conferenceInfo->getParticipants()) {
 				invitees.push_back(participant.first);
 			}

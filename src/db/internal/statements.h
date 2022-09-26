@@ -36,6 +36,7 @@ namespace Statements {
 		SelectConferenceEvents,
 		SelectConferenceInfoId,
 		SelectConferenceInfoParticipantId,
+		SelectConferenceInfoOrganizerId,
 		SelectConferenceCall,
 		SelectCount
 	};

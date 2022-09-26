@@ -554,11 +554,11 @@ void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long 
 
 long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo, const std::shared_ptr<ConferenceInfo> &oldConferenceInfo) {
 #ifdef HAVE_DB_STORAGE
-	if (!conferenceInfo->getOrganizer().isValid() || !conferenceInfo->getUri().isValid()) {
+	if (!conferenceInfo->getOrganizerAddress().isValid() || !conferenceInfo->getUri().isValid()) {
 		lError() << "Trying to insert a Conference Info without organizer or URI!";
 		return -1;
 	}
-	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizer().asString());
+	const long long &organizerSipAddressId = insertSipAddress(conferenceInfo->getOrganizerAddress().asString());
 	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
 	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
 	const unsigned int duration = conferenceInfo->getDuration();
@@ -573,7 +573,6 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 	if (conferenceInfoId >= 0) {
 		// The conference info is already stored in DB, but still update it some information might have changed
 		lInfo() << "Update conferenceInfo in database: " << conferenceInfoId << ".";
-
 		dbParticipantList = oldConferenceInfo->getParticipants();
 
 		*dbSession.getBackendSession() << "UPDATE conference_info SET"
@@ -603,6 +602,8 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 
 		conferenceInfoId = dbSession.getLastInsertId();
 	}
+
+	insertOrUpdateConferenceInfoOrganizer(conferenceInfoId, organizerSipAddressId, conferenceInfo->getOrganizer().second);
 
 	const auto & participantList = conferenceInfo->getParticipants();
 	for (const auto & participantAddress : participantList) {
@@ -636,10 +637,33 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 #endif
 }
 
+long long MainDbPrivate::insertOrUpdateConferenceInfoOrganizer (long long conferenceInfoId, long long organizerSipAddressId, const ConferenceInfo::participant_params_t params) {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceInfoOrganizerId = selectConferenceInfoOrganizerId(conferenceInfoId);
+	auto paramsStr = ConferenceInfo::memberParametersToString(params);
+	if (conferenceInfoOrganizerId >= 0) {
+		*dbSession.getBackendSession() << "UPDATE conference_info_organizer SET"
+		" organizer_sip_address_id = :organizerSipAddressId, params = :paramsStr"
+		" WHERE conference_info_id  = :conferenceInfoId",
+		soci::use(organizerSipAddressId), soci::use(paramsStr), soci::use(conferenceInfoId);
+
+		return conferenceInfoOrganizerId;
+	}
+
+	*dbSession.getBackendSession() << "INSERT INTO conference_info_organizer (conference_info_id, organizer_sip_address_id, params)"
+		" VALUES (:conferenceInfoId, :organizerSipAddressId, :paramsStr)",
+		soci::use(conferenceInfoId), soci::use(organizerSipAddressId), soci::use(paramsStr);
+
+	return dbSession.getLastInsertId();
+#else
+	return -1;
+#endif
+}
+
 long long MainDbPrivate::insertOrUpdateConferenceInfoParticipant (long long conferenceInfoId, long long participantSipAddressId, bool deleted, const ConferenceInfo::participant_params_t params) {
 #ifdef HAVE_DB_STORAGE
 	long long conferenceInfoParticipantId = selectConferenceInfoParticipantId(conferenceInfoId, participantSipAddressId);
-	auto paramsStr = ConferenceInfo::paramsToString(params);
+	auto paramsStr = ConferenceInfo::memberParametersToString(params);
 	int participantDeleted = deleted ? 1 : 0;
 	if (conferenceInfoParticipantId >= 0) {
 		*dbSession.getBackendSession() << "UPDATE conference_info_participant SET"
@@ -841,6 +865,20 @@ long long MainDbPrivate::selectConferenceInfoId (long long uriSipAddressId) {
 		soci::use(uriSipAddressId), soci::into(conferenceInfoId);
 
 	return session->got_data() ? conferenceInfoId : -1;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::selectConferenceInfoOrganizerId (long long conferenceInfoId) const {
+#ifdef HAVE_DB_STORAGE
+	long long conferenceInfoOrganizerId;
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << Statements::get(Statements::SelectConferenceInfoOrganizerId),
+		soci::use(conferenceInfoId), soci::into(conferenceInfoOrganizerId);
+
+	return session->got_data() ? conferenceInfoOrganizerId : -1;
 #else
 	return -1;
 #endif
@@ -1790,9 +1828,6 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 
 	conferenceInfo = ConferenceInfo::create();
 
-	IdentityAddress organizer(row.get<string>(1));
-	conferenceInfo->setOrganizer(organizer);
-
 	ConferenceAddress uri(row.get<string>(2));
 	conferenceInfo->setUri(uri);
 
@@ -1801,34 +1836,47 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	conferenceInfo->setSubject(row.get<string>(5));
 	conferenceInfo->setDescription(row.get<string>(6));
 	conferenceInfo->setState(ConferenceInfo::State(row.get<int>(7))); // state is a TinyInt in database, don't cast it to unsigned, otherwise you'll get a std::bad_cast from soci.
-	conferenceInfo->setIcsSequence(dbSession.getUnsignedInt(row,8,0));
+	unsigned int icsSequence = dbSession.getUnsignedInt(row,8,0);
+	conferenceInfo->setIcsSequence(icsSequence);
+
+	// For backward compability purposes, get the organizer from conference_info table and set the sequence number to that of the conference info stored in the db
+	// It may be overridden if the conference organizer has been stored in table conference_info_organizer.
+	IdentityAddress organizer(row.get<string>(1));
+	ConferenceInfo::participant_params_t defaultOrganizerParams;
+	defaultOrganizerParams.insert(std::make_pair(ConferenceInfo::sequenceParam, std::to_string(icsSequence)));
+	conferenceInfo->setOrganizer(organizer, defaultOrganizerParams);
 	conferenceInfo->setIcsUid(row.get<string>(9));
 
-	static const string query = "SELECT sip_address.value, conference_info_participant.deleted, conference_info_participant.params"
+	static const string participantQuery = "SELECT sip_address.value, conference_info_participant.deleted, conference_info_participant.params"
 		" FROM sip_address, conference_info, conference_info_participant"
 		" WHERE conference_info.id = :conferenceInfoId"
 		" AND sip_address.id = conference_info_participant.participant_sip_address_id"
 		" AND conference_info_participant.conference_info_id = conference_info.id";
 
 	soci::session *session = dbSession.getBackendSession();
-	soci::rowset<soci::row> participantRows = (session->prepare << query, soci::use(dbConferenceInfoId));
+	soci::rowset<soci::row> participantRows = (session->prepare << participantQuery, soci::use(dbConferenceInfoId));
 	for (const auto &participantRow : participantRows) {
 		int deleted = participantRow.get<int>(1);
 		if (deleted == 0) {
-			IdentityAddress participant(participantRow.get<string>(0));
-			ConferenceInfo::participant_params_t participantParams;
-			const string params = participantRow.get<string>(2);
-			if (!params.empty()) {
-				const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(params), ";");
-				for (const auto & param : splittedValue) {
-					auto equal = param.find("=");
-					string name = param.substr(0, equal);
-					string value = param.substr(equal + 1, param.size());
-					participantParams.insert(std::make_pair(name, value));
-				}
-			}
-			conferenceInfo->addParticipant(participant, participantParams);
+			IdentityAddress participantAddress(participantRow.get<string>(0));
+			const string participantParamsStr = participantRow.get<string>(2);
+			ConferenceInfo::participant_params_t participantParams = ConferenceInfo::stringToMemberParameters(participantParamsStr);
+			conferenceInfo->addParticipant(participantAddress, participantParams);
 		}
+	}
+
+	static const string organizerQuery = "SELECT sip_address.value, conference_info_organizer.params"
+		" FROM sip_address, conference_info, conference_info_organizer"
+		" WHERE conference_info.id = :conferenceInfoId"
+		" AND sip_address.id = conference_info_organizer.organizer_sip_address_id"
+		" AND conference_info_organizer.conference_info_id = conference_info.id";
+
+	soci::rowset<soci::row> organizerRows = (session->prepare << organizerQuery, soci::use(dbConferenceInfoId));
+	for (const auto &organizerRow : organizerRows) {
+		IdentityAddress organizerAddress(organizerRow.get<string>(0));
+		const string organizerParamsStr = organizerRow.get<string>(1);
+		ConferenceInfo::participant_params_t organizerParams = ConferenceInfo::stringToMemberParameters(organizerParamsStr);
+		conferenceInfo->setOrganizer(organizerAddress, organizerParams);
 	}
 
 	cache(conferenceInfo, dbConferenceInfoId);
@@ -2003,6 +2051,11 @@ void MainDbPrivate::updateSchema () {
 #ifdef HAVE_DB_STORAGE
 	L_Q();
 
+	//MySQL : Modified display_name in order to set explicitely this column to utf8mb4, while the default character set of the table is set to ascii (this allows special characters in display name without breaking compatibility with mysql 5.5)
+	//191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
+	MainDb::Backend backend = q->getBackend();
+	const string charset = backend == MainDb::Backend::Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
+
 	soci::session *session = dbSession.getBackendSession();
 	unsigned int version = getModuleVersion("events");
 
@@ -2169,10 +2222,6 @@ void MainDbPrivate::updateSchema () {
 	if (version < makeVersion(1, 0, 17)) {
 		*session << "ALTER TABLE sip_address ADD COLUMN display_name VARCHAR(255)";
 	}
-
-	//MySQL : Modified display_name in order to set explicitely this column to utf8mb4, while the default character set of the table is set to ascii (this allows special characters in display name without breaking compatibility with mysql 5.5)
-	//191 = max indexable (KEY or UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4
-	MainDb::Backend backend = q->getBackend();
 
 	if (version < makeVersion(1, 0, 18)) {
 		//We assume that the following statement is supported on all non-sqlite backends
@@ -2534,7 +2583,6 @@ void MainDb::init () {
 	L_D();
 
 	Backend backend = getBackend();
-
 	const string charset = backend == Mysql ? "DEFAULT CHARSET=utf8mb4" : "";
 	soci::session *session = d->dbSession.getBackendSession();
 
@@ -2976,6 +3024,24 @@ void MainDb::init () {
 			"    REFERENCES conference_info(id)"
 			"    ON DELETE CASCADE,"
 			"  FOREIGN KEY (participant_sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
+
+		*session <<
+			"CREATE TABLE IF NOT EXISTS conference_info_organizer ("
+			"  id" + primaryKeyStr("BIGINT UNSIGNED") + ","
+
+			"  conference_info_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  organizer_sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  params VARCHAR(2048) DEFAULT '',"
+
+			"  UNIQUE (conference_info_id, organizer_sip_address_id),"
+
+			"  FOREIGN KEY (conference_info_id)"
+			"    REFERENCES conference_info(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (organizer_sip_address_id)"
 			"    REFERENCES sip_address(id)"
 			"    ON DELETE CASCADE"
 			") " + charset;
