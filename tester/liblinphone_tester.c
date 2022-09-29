@@ -18,8 +18,11 @@
  */
 
 #include "linphone/core.h"
-#include "liblinphone_tester.h"
+#include "linphone/logging.h"
+
 #include "tester_utils.h"
+
+#include "liblinphone_tester.h"
 
 static FILE * log_file = NULL;
 
@@ -396,7 +399,7 @@ int silent_arg_func(const char *arg) {
 }
 
 int verbose_arg_func(const char *arg) {
-	linphone_core_set_log_level(ORTP_MESSAGE);
+	linphone_logging_service_set_log_level(linphone_logging_service_get(), LinphoneLogLevelDebug);
 	return 0;
 }
 
