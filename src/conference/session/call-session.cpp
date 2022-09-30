@@ -84,7 +84,6 @@ void CallSessionPrivate::restorePreviousState(){
 
 void CallSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
-
 	// Keep a ref on the CallSession, otherwise it might get destroyed before the end of the method
 	shared_ptr<CallSession> ref = q->getSharedFromThis();
 	if (state != newState){
@@ -1412,7 +1411,7 @@ bool CallSession::initiateOutgoing (const string &subject, const Content *conten
 void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	L_D();
 	int elapsed = (int)(currentRealTime - d->log->getStartTime());
-	if ((d->state == CallSession::State::OutgoingInit) && (elapsed > getCore()->getCCore()->sip_conf.delayed_timeout)) {
+	if ((d->state == CallSession::State::OutgoingInit) && (elapsed > getCore()->getCCore()->sip_conf.delayed_timeout) && (d->pingOp != nullptr)) {
 		/* Start the call even if the OPTIONS reply did not arrive */
 		startInvite(nullptr, "");
 	}

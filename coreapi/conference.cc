@@ -2591,7 +2591,6 @@ bool RemoteConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Cal
 		if (device) {
 			// In a remote conference, the participant has no session attached ot it.
 			device->setSession(nullptr);
-			device->setState(ParticipantDevice::State::Present);
 			const auto & p = device->getParticipant();
 			if (p) {
 				time_t creationTime = time(nullptr);

@@ -400,12 +400,11 @@ void MediaSessionPrivate::dtmfReceived (char dtmf) {
 bool MediaSessionPrivate::failure () {
 	L_Q();
 
-	const SalErrorInfo *ei = op->getErrorInfo();
-	
 	if (CallSession::isEarlyState(state) && getStreamsGroup().isStarted()){
 		stopStreams();
 	}
-	
+
+	const SalErrorInfo *ei = op->getErrorInfo();
 	switch (ei->reason) {
 		case SalReasonUnsupportedContent: /* This is for compatibility: linphone sent 415 because of SDP offer answer failure */
 		case SalReasonNotAcceptable:
@@ -2810,7 +2809,11 @@ int MediaSessionPrivate::restartInvite () {
 	// Clear streams resets the ICE service therefore the pointer to its listener is now NULL and it must be set asap in order to receive events.
 	getStreamsGroup().getIceService().setListener(this);
 	makeLocalMediaDescription(true, q->isCapabilityNegotiationEnabled(), false);
-	return CallSessionPrivate::restartInvite();
+	const auto defer = CallSessionPrivate::restartInvite();
+	if (!defer) {
+		q->startInvite(nullptr, op->getSubject(), nullptr);
+	}
+	return defer;
 }
 
 void MediaSessionPrivate::setTerminated () {

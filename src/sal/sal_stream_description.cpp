@@ -133,23 +133,6 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 		typeother = mtype;
 	}
 
-	/* Get media specific RTCP attribute */
-	rtcp_addr = rtp_addr;
-	rtcp_port = rtp_port + 1;
-
-	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
-	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
-		char *tmp = (char *)ms_malloc0(strlen(value));
-		int nb = sscanf(value, "%d IN IP4 %s", &rtcp_port, tmp);
-		if (nb == 1) {
-			/* SDP rtcp attribute only contains the port */
-		} else if (nb == 2) {
-			rtcp_addr = L_C_TO_STRING(tmp);
-		} else {
-			ms_warning("sdp has a strange a=rtcp line (%s) nb=%i", value, nb);
-		}
-		ms_free(tmp);
-	}
 
 	if ( belle_sdp_media_description_get_bandwidth ( media_desc,"AS" ) >0 ) {
 		bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
@@ -166,6 +149,28 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	createActualCfg(salMediaDesc, sdp, media_desc);
+
+	/* Get media specific RTCP attribute */
+	rtcp_addr = rtp_addr;
+	// Set here the RTCP port because we must know if rtcp_mux is enabled or not
+	if (getActualConfiguration().rtcp_mux) {
+		rtcp_port = rtp_port;
+	} else {
+		rtcp_port = rtp_port + 1;
+	}
+	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
+	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
+		char *tmp = (char *)ms_malloc0(strlen(value));
+		int nb = sscanf(value, "%d IN IP4 %s", &rtcp_port, tmp);
+		if (nb == 1) {
+			/* SDP rtcp attribute only contains the port */
+		} else if (nb == 2) {
+			rtcp_addr = L_C_TO_STRING(tmp);
+		} else {
+			ms_warning("sdp has a strange a=rtcp line (%s) nb=%i", value, nb);
+		}
+		ms_free(tmp);
+	}
 }
 
 void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
@@ -817,7 +822,6 @@ int SalStreamDescription::globalEqual(const SalStreamDescription & other) const 
 		if ((rtcp_port == 0) || (other.rtcp_port == 0)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 		else result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 	}
-
 
 	if (multicast_role != other.multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 
