@@ -765,6 +765,9 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 	if (method != CallSession::UpdateMethod::Default) {
 		noUserConsent = method == CallSession::UpdateMethod::Update;
 	}
+	
+	// Update custom headers
+	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
 
 	return op->update(newSubject.c_str(), noUserConsent);
 }
