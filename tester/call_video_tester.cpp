@@ -297,6 +297,8 @@ static LinphoneCall* _request_video(LinphoneCoreManager* caller,LinphoneCoreMana
 		callee_params = linphone_core_create_call_params(callee->lc, call_obj);
 		/*add video*/
 		linphone_call_params_enable_video(callee_params,TRUE);
+		/* try to add a new custom header */
+		linphone_call_params_add_custom_header(callee_params, "VIDEO-REINVITE", "1");
 		linphone_call_update(call_obj,callee_params);
 		linphone_call_params_unref(callee_params);
 	}
@@ -333,6 +335,11 @@ bool_t request_video(LinphoneCoreManager* caller,LinphoneCoreManager* callee, bo
 			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(linphone_core_get_current_call(caller->lc))));
 		}
 		linphone_video_activation_policy_unref(video_policy);
+
+		/* Check custom header added in re-INVITE is available on both sides */
+		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_custom_header(linphone_call_get_remote_params(linphone_core_get_current_call(caller->lc)), "VIDEO-REINVITE"), "1");
+		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_custom_header(linphone_call_get_params(linphone_core_get_current_call(callee->lc)), "VIDEO-REINVITE"), "1");
+
 		if (linphone_core_get_media_encryption(caller->lc) != LinphoneMediaEncryptionNone
 				&& linphone_core_get_media_encryption(callee->lc) != LinphoneMediaEncryptionNone) {
 			const LinphoneCallParams* call_param;

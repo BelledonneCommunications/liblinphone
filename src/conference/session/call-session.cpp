@@ -874,6 +874,9 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 	} else {
 		op->setContactAddress(nullptr);
 	}
+	
+	// Update custom headers
+	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
 
 	if (contactAddressStr) {
 		Address contactAddress(contactAddressStr);
