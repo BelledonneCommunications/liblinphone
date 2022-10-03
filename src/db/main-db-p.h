@@ -99,7 +99,7 @@ private:
 	}
 
 	time_t getConferenceEventCreationTimeFromRow (const soci::row &row) const {
-		return Utils::getTmAsTimeT(row.get<tm>(2));
+		return dbSession.getTime(row, 2);
 	}
 
 	unsigned int getConferenceEventNotifyIdFromRow (const soci::row &row) const {

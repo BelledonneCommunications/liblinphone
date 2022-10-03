@@ -6696,7 +6696,14 @@ static void participant_removed_then_added (void) {
 
 	size_t paulineCrNo = bctbx_list_size(linphone_core_get_chat_rooms(pauline1->lc));
 	BC_ASSERT_EQUAL(paulineCrNo, 0, size_t, "%0zu");
-
+	
+// Send a message when Pauline is left to test ordering between events and messages.
+	wait_for_list(coresList, NULL, 0, 1500);	// Wait enough time to make a difference on time_t
+	const char *textMessage = "Hello";
+	LinphoneChatMessage *message = _send_message(marie1Cr, textMessage);
+	wait_for_list(coresList, NULL, 0, 1500);	// Wait enough time to make a difference on time_t
+	linphone_chat_message_unref(message);
+	
 	// Marie1 adds Pauline back to the chat room
 	initialMarie1Stats = marie1->stat;
 	initialLaureStats = laure->stat;
@@ -6713,6 +6720,39 @@ static void participant_removed_then_added (void) {
 	if (!BC_ASSERT_PTR_NOT_NULL(newPauline1Cr)) goto end;
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(newPauline1Cr), 2, int, "%d");
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newPauline1Cr), initialSubject);
+	
+// Check timestamps ordering in history
+	bctbx_list_t* history = linphone_chat_room_get_history_events(marie1Cr, 3);// Leave + Message + Join
+	bctbx_list_t *itHistory = history;
+	int step = 0;
+	time_t lastTime = 0;
+	while(itHistory){
+		LinphoneEventLog *event = (LinphoneEventLog *)bctbx_list_get_data(itHistory);
+		switch(step){
+			case 0 :
+				BC_ASSERT_EQUAL((int)linphone_event_log_get_type(event),LinphoneEventLogTypeConferenceParticipantRemoved, int, "%d");
+				lastTime = linphone_event_log_get_creation_time(event); // Main ordering (Leave + Message + Join)
+				break;
+			case 1 : {
+				BC_ASSERT_EQUAL((int)linphone_event_log_get_type(event),LinphoneEventLogTypeConferenceChatMessage, int, "%d");
+				LinphoneChatMessage *message = linphone_event_log_get_chat_message(event);
+				time_t messageTime = linphone_chat_message_get_time(message);
+				BC_ASSERT_TRUE(lastTime < messageTime);// Main ordering (Leave + Message + Join)
+				BC_ASSERT_TRUE(messageTime >= linphone_event_log_get_creation_time(event));// A send message timestamp should be after its creation.
+				lastTime = messageTime;
+				}break;
+			case 2 :
+				BC_ASSERT_EQUAL((int)linphone_event_log_get_type(event),LinphoneEventLogTypeConferenceParticipantAdded, int, "%d");
+				BC_ASSERT_TRUE(lastTime < linphone_event_log_get_creation_time(event)); // Main ordering (Leave + Message + Join)
+				lastTime = linphone_event_log_get_creation_time(event);
+				break;
+				default:{}
+		}
+		++step;
+		itHistory = bctbx_list_next(itHistory);
+	}
+	bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_event_log_unref);
+	
 
 	size_t marieCrNo = bctbx_list_size(linphone_core_get_chat_rooms(marie1->lc));
 	BC_ASSERT_EQUAL(marieCrNo, 1, size_t, "%0zu");
