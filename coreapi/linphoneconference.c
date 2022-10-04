@@ -100,6 +100,14 @@ LinphoneConferenceState linphone_conference_get_state (const LinphoneConference 
 	return (LinphoneConferenceState)MediaConference::Conference::toCpp(conference)->getState();
 }
 
+LinphoneParticipantDevice* linphone_conference_get_active_speaker_participant_device(const LinphoneConference *conference) {
+	shared_ptr<LinphonePrivate::ParticipantDevice> p = MediaConference::Conference::toCpp(conference)->getActiveSpeakerParticipantDevice();
+	if (p) {
+		return p->toC();
+	}
+	return NULL;
+}
+
 const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conference){
 	return MediaConference::Conference::toCpp(conference)->getCurrentParams().toC();
 }

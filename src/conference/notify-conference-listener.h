@@ -125,6 +125,12 @@ public:
 	 ** @param[in] newState the new state of this conference.
 	 */
 	virtual void onStateChanged (ConferenceInterface::State newState) override;
+
+	/*
+	 * Notify which participant device is being currently displayed as active speaker.
+	 * @param[in] device participant device currently being displayed as active speaker. @notnil
+	 */
+	virtual void onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) override;
 	
 private:
 

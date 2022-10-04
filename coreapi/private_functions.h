@@ -350,6 +350,7 @@ void _linphone_conference_notify_available_media_changed(LinphoneConference *con
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
 void _linphone_conference_notify_participant_device_is_speaking_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 void _linphone_conference_notify_participant_device_is_muted(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_muted);
+void _linphone_conference_notify_active_speaker_participant_device(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *participant_device, bool_t is_muted);

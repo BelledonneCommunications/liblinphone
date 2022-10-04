@@ -159,3 +159,11 @@ LinphoneConferenceCbsAudioDeviceChangedCb linphone_conference_cbs_get_audio_devi
 void linphone_conference_cbs_set_audio_device_changed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsAudioDeviceChangedCb cb) {
 	ConferenceCbs::toCpp(cbs)->audioDeviceChangedCb = cb;
 }
+
+LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb linphone_conference_cbs_get_active_speaker_participant_device (const LinphoneConferenceCbs *cbs) {
+	return ConferenceCbs::toCpp(cbs)->activeSpeakerParticipantDeviceCb;
+}
+
+void linphone_conference_cbs_set_active_speaker_participant_device (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb cb) {
+	ConferenceCbs::toCpp(cbs)->activeSpeakerParticipantDeviceCb = cb;
+}

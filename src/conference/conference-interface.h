@@ -351,12 +351,19 @@ public:
 	* @param[in] device participant device added to the conference or chat room. @notnil
 	*/
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
+	
 	/*
 	* This fonction is called each time a new participant device is removed by the focus after full state notification.
 	* @param[in] event informations related to the removed device's participant. @notnil
 	* @param[in] device participant device removed from the conference or chat room. @notnil
 	*/
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
+
+	/*
+	 * This fonction is called each time a participant device is being currently displayed as active speaker.
+	 * @param[in] device participant device currently being displayed as active speaker. @notnil
+	 */
+	virtual void onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {}
 };
 
 class LINPHONE_PUBLIC ConferenceParamsInterface {

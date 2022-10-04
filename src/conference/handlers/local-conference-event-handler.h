@@ -184,6 +184,12 @@ public:
 	 */
 	void onStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
+	/*
+	 * Notify which participant device is being currently displayed as active speaker.
+	 * @param[in] device participant device currently being displayed as active speaker. @notnil
+	 */
+	virtual void onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) override;
+
 protected:
 
 	Conference *conf = nullptr;

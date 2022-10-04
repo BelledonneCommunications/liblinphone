@@ -106,6 +106,10 @@ void _linphone_conference_notify_state_changed(LinphoneConference *conference, L
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_state_changed, newState);
 }
 
+void _linphone_conference_notify_active_speaker_participant_device(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Conference, MediaConference::Conference::toCpp(conference), linphone_conference_cbs_get_active_speaker_participant_device, participant_device);
+}
+
 LinphoneCore *linphone_conference_get_core (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getCore()->getCCore();
 }

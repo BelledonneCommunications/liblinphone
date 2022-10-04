@@ -641,6 +641,14 @@ std::shared_ptr<list<std::shared_ptr<SearchResult>>> MagicSearch::continueSearch
 	return resultList;
 }
 
+static bool isSipUri(const std::string& phoneNumber) {
+	const char *c_phone_number = phoneNumber.c_str();
+	if ((strstr(c_phone_number, "sip:") == NULL) && (strstr(c_phone_number, "sips:") == NULL)) {
+		return false;
+	}
+	return (strchr(c_phone_number, '@') != NULL);
+}
+
 list<std::shared_ptr<SearchResult>> MagicSearch::searchInFriend (const LinphoneFriend *lFriend, const string &filter, const string &withDomain) const{
 	list<std::shared_ptr<SearchResult>> friendResult;
 	string phoneNumber = "";
@@ -718,7 +726,10 @@ list<std::shared_ptr<SearchResult>> MagicSearch::searchInFriend (const LinphoneF
 				}
 			}
 		} else {
-			LinphoneAddress *tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), phoneNumber.c_str());
+			LinphoneAddress *tmpAdd = nullptr;
+			if (isSipUri(phoneNumber)) { // Will prevent warning & error logs due to parsing failure
+				tmpAdd = linphone_core_create_address(this->getCore()->getCCore(), phoneNumber.c_str());
+			}
 			if ((weightNumber + weight) > getMinWeight()
 					&& (withDomain.empty() 
 						|| (tmpAdd != nullptr && compareStringItems(linphone_address_get_domain(tmpAdd), withDomain.c_str()) == 0) // To allow for SIP URIs stored in phone number fields...

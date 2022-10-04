@@ -415,6 +415,11 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 	return nullptr;
 }
 
+shared_ptr<ParticipantDevice> Conference::getActiveSpeakerParticipantDevice() const {
+	// TODO: return currently displayed participant device as active speaker
+	return nullptr;
+}
+
 std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() const {
 	std::map<ConferenceMediaCapabilities, bool> mediaCapabilities;
 	mediaCapabilities[ConferenceMediaCapabilities::Audio] = confParams->audioEnabled();
@@ -673,6 +678,12 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
 	for (const auto &l : confListeners) {
 		l->onStateChanged(state);
+	}
+}
+
+void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	for (const auto &l : confListeners) {
+		l->onActiveSpeakerParticipantDevice(participantDevice);
 	}
 }
 

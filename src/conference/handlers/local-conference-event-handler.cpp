@@ -1181,6 +1181,10 @@ void LocalConferenceEventHandler::onEphemeralLifetimeChanged (const std::shared_
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
 }
 
+void LocalConferenceEventHandler::onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {
+	
+}
+
 shared_ptr<Participant> LocalConferenceEventHandler::getConferenceParticipant (const Address & address) const {
 	shared_ptr<Core> core = conf->getCore();
 	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
