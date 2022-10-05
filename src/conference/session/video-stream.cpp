@@ -71,7 +71,20 @@ void MS2VideoStream::configure(const OfferAnswerContext &params) {
 	const auto & content = localDesc.getContent();
 	const auto & label = localDesc.getLabel();
 	if (mStream) {
-		video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
+		MSVideoContent mscontent = MSVideoContentDefault;
+		if (content == "thumbnail") {
+			mscontent = MSVideoContentThumbnail;
+		}else if (content == "speaker"){
+			mscontent = MSVideoContentSpeaker;
+		}
+		if (getVideoMixer() != nullptr && mscontent == MSVideoContentDefault
+			&& media_stream_get_direction(&mStream->ms) == MediaStreamSendRecv){
+			/* When handling a conference call, in absence of content attribute and if stream is sendrecv,
+			 * assume the target content is speaker (active speaker stream)*/
+			lInfo() << "No content given, assuming active speaker mode.";
+			mscontent = MSVideoContentSpeaker;
+		}
+		video_stream_set_content(mStream, mscontent);
 		if (!label.empty()) {
 			video_stream_set_label(mStream, label.c_str());
 		}
@@ -244,7 +257,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
-	bool isThumbnail = (content.compare("thumbnail") == 0);
+	bool isThumbnail = (content == "thumbnail");
 
 	if (basicChangesHandled) {
 		bool muted = mMuted;
@@ -402,10 +415,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	else
 		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "main_display_mode", "Hybrid")));
 
-	video_stream_enable_thumbnail(mStream, isThumbnail);
-	if (!label.empty()) {
-		video_stream_set_label(mStream, label.c_str());
-	}
+	configure(ctx);
 
 	if (getCCore()->video_conf.reuse_preview_source && source) {
 		lInfo() << "video_stream_start_with_source kept: " << source;
@@ -454,10 +464,15 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				io.input.type = MSResourceItc;
 				io.input.itc = itcFilter;
 				media_stream_set_max_network_bitrate(&mStream->ms, 80000);
-				if (vdef) {
-					MSVideoSize vsize = {160,120};
-					video_stream_set_sent_video_size(mStream, vsize);
-				}
+				
+				MSVideoSize vsize = {160,120};
+				video_stream_set_content(mStream, MSVideoContentThumbnail);
+				/* TODO The fps should be taken automatically from the main stream, however this is not implemented.
+				 * Meanwhile, force a medium 20 fps so that video encoder gets configured with realistic values.
+				 */
+				video_stream_set_fps(mStream, 20);
+				video_stream_set_sent_video_size(mStream, vsize);
+				
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
@@ -507,9 +522,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	if (videoMixer && (targetState == CallSession::State::StreamsRunning)){
-		const bool_t isRemote = ((!mStream->label && content.empty()) || !videoMixer->getVideoStream()) ? TRUE : (dir == MediaStreamSendOnly || videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
-		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_thumbnail_enabled(mStream));
+		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, true);
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_get_content(mStream) == MSVideoContentThumbnail);
 	}
 }
 

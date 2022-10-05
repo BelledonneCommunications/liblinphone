@@ -38,11 +38,12 @@ MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2
 
 void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail){
 	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
+	
 	if (thumbnail) {
-		lInfo() << "mix to all add endpoint to thumbnail";
+		lInfo() << *this << "Adding endpoint to thumbnail mixer.";
 		ms_video_conference_add_member(mConferenceThumbnail, endpoint);
 	} else {
-		lInfo() << "mix to all add endpoint to mConferenceMix";
+		lInfo() << *this << "Adding endpoint to main mixer.";
 		ms_video_conference_add_member(mConferenceMix, endpoint);
 	}
 }
@@ -58,6 +59,7 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	// used by mConferenceMix
 	MSVideoEndpoint *ep = nullptr;
 	
+	lInfo() << *this << ": video focus requested for " << *sg; 
 	if (sg == nullptr){
 		ep = mMainLocalEndpoint;
 	}else{
@@ -72,15 +74,19 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	}
 	if (ep){
 		ms_video_conference_set_focus(mConferenceMix, ep);
-	}else if (ms_video_conference_get_size(mConferenceMix) >= 2){
-		/* else this participant has no video, so set focus on a "no webcam" placeholder.
-		 * However, if there is one or two participants, don't do this and let the ms2 mixer cross the streams.
-		 */
-		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceMix);
-		if (video_placeholder_ep) {
-			ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
+	}else {
+		if (ms_video_conference_get_size(mConferenceMix) >= 2){
+			/* else this participant has no video, so set focus on a "no webcam" placeholder.
+			* However, if there is one or two participants, don't do this and let the ms2 mixer cross the streams.
+			*/
+			lInfo() << *this <<  "Showing video placeholder, participant has no video.";
+			MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceMix);
+			if (video_placeholder_ep) {
+				ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
+			}
+		}else{
+			lInfo() << *this <<  "Not using video placeholder, participant count <= 2.";
 		}
-
 	}
 }
 
@@ -114,7 +120,7 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 	
 	memset(&io, 0, sizeof(io));
 	
-	video_stream_enable_thumbnail(vs, isThumbnail);
+	video_stream_set_content(vs, isThumbnail ? MSVideoContentThumbnail : MSVideoContentDefault);
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(mSession.getCCore());
 	pt = rtp_profile_get_payload(mLocalDummyProfile, sVP8PayloadTypeNumber);
 	pt->normal_bitrate =  outputBandwidth; /* Is it really needed ?*/

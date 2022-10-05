@@ -114,9 +114,16 @@ bool LimeX3dhUtils::isMessageEncrypted(const Content *internalContent) {
 	const ContentType & incomingContentType = internalContent->getContentType();
 	ContentType expectedContentType = ContentType::Encrypted;
 	
-	if (incomingContentType == expectedContentType && incomingContentType.getParameter("protocol").getValue() == "\"application/lime\""){
-		return true;
+	if (incomingContentType == expectedContentType){
+		string protocol = incomingContentType.getParameter("protocol").getValue();
+		if (protocol == "\"application/lime\""){
+			return true;
+		}else if (protocol.empty()){
+			lWarning() << "Accepting possible legacy lime message.";
+			return true;
+		}
 	}
+	
 	return false;
 }
 

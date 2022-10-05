@@ -509,7 +509,7 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 	linphone_core_enable_mic(mgr2->lc, FALSE);
 	linphone_core_enable_mic(mgr1->lc, TRUE);
 	wait_for_list(lcs, NULL, 0, 5000);
-	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
 }
 
