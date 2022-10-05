@@ -344,12 +344,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 
-#if TARGET_OS_MAC || defined(__ANDROID__) || defined(_WIN32)
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	} else
-#endif
-	if (!label.empty()) {
+	} else if (!label.empty()) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);

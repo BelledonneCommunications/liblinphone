@@ -318,10 +318,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 				}
 			}
 
-			if (playcard) {
+			if (!mRestartStreamRequired && playcard) {
 				auto streamType = ms_snd_card_get_stream_type(playcard);
-				lInfo() << "Restarting stream because the stream type of current play card " << std::string(ms_snd_card_get_name(playcard)) << " doesn't match the expected one...";
-				mRestartStreamRequired |= (streamType != expectedStreamType);
+				mRestartStreamRequired = (streamType != expectedStreamType);
+				if(mRestartStreamRequired)
+					lInfo() << "Restarting stream because the stream type " << streamType << " of current play card " << std::string(ms_snd_card_get_name(playcard)) << " doesn't match the expected one " << expectedStreamType << "...";
 			}
 
 			if (mRestartStreamRequired) {
