@@ -424,11 +424,18 @@ LINPHONE_PUBLIC void linphone_call_params_set_account(LinphoneCallParams *params
 LINPHONE_PUBLIC LinphoneAccount *linphone_call_params_get_account(const LinphoneCallParams *params);
 
 /**
- * Set the video stream direction.
+ * Toggle feedback for AVP
  * @param[in] params #LinphoneCallParams object
  * @param[in] enable wether or not AVPF should be enabled for this call
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_avpf(LinphoneCallParams *params, bool_t enable);
+
+/**
+ * Whether or not the feedback extension will be used for AVP
+ *
+ * @return true if AVPF is enabled
+ **/
+LINPHONE_PUBLIC bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
 
 /**
  * Indicates whether the call is being recorded.
@@ -453,7 +460,6 @@ LINPHONE_PUBLIC const char *linphone_call_params_get_from_header(const LinphoneC
 
 int linphone_call_params_get_audio_bandwidth_limit(const LinphoneCallParams *params);
 bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *params);
-bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_has_avpf_enabled_been_set(const LinphoneCallParams *params);
 LINPHONE_PUBLIC bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
 LINPHONE_PUBLIC void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);
