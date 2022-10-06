@@ -441,9 +441,11 @@ add_subdirectory(include)
 if(ENABLE_JAVA_WRAPPER)
 	add_subdirectory(wrappers/java)
 endif()
+
+add_subdirectory(share)
 add_subdirectory(coreapi)
 add_subdirectory(src)
-add_subdirectory(share)
+
 if(ENABLE_CONSOLE_UI)
 	add_subdirectory(console)
 endif()

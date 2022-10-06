@@ -21,17 +21,13 @@
 ############################################################################
 
 set(RING_FILES
-	oldphone-mono.wav
-	four_hands_together.mkv
-	house_keeping.mkv
-	its_a_game.mkv
-	leaving_dreams.mkv
-	notes_of_the_optimistic.mkv
-	soft_as_snow.mkv
+	"${CMAKE_CURRENT_SOURCE_DIR}/oldphone-mono.wav"
+	"${CMAKE_CURRENT_SOURCE_DIR}/four_hands_together.mkv"
+	"${CMAKE_CURRENT_SOURCE_DIR}/house_keeping.mkv"
+	"${CMAKE_CURRENT_SOURCE_DIR}/its_a_game.mkv"
+	"${CMAKE_CURRENT_SOURCE_DIR}/leaving_dreams.mkv"
+	"${CMAKE_CURRENT_SOURCE_DIR}/notes_of_the_optimistic.mkv"
+	"${CMAKE_CURRENT_SOURCE_DIR}/soft_as_snow.mkv"
+	PARENT_SCOPE
 )
 
-
-install(FILES ${RING_FILES}
-	DESTINATION "${CMAKE_INSTALL_DATADIR}/sounds/linphone/rings"
-	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-)

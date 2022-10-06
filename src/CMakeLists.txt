@@ -670,21 +670,15 @@ if(ENABLE_STATIC)
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
 endif()
+
 if(ENABLE_SHARED)
 	set(SWIFT_MODULE_FILES
 		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/module.modulemap"
 		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/swift-umbrella.h"
 	)
-	set(LINPHONE_RESOURCES
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ics_grammar"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
-	) # Keep it relative to current dir to allow CMakeList inclusion
-
+	set(LINPHONE_RESOURCES ${GRAMMAR_FILES} ${SOUND_FILES} ${RING_FILES})
+	
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
-
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
@@ -795,5 +789,28 @@ if(ICONV_FOUND)
 		if(ENABLE_SHARED)
 			target_include_directories(linphone PRIVATE ${ICONV_INCLUDE_DIRS})
 		endif()
+	endif()
+endif()
+
+if(NOT APPLE OR IOS)
+	if(GRAMMAR_FILES)
+		install(FILES ${GRAMMAR_FILES}
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/belr/grammars"
+			PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+		)
+	endif()
+
+	if(SOUND_FILES)
+		install(FILES ${SOUND_FILES}
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/sounds/linphone"
+			PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+		)
+	endif()
+
+	if(RING_FILES)
+		install(FILES ${RING_FILES}
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/sounds/linphone/rings"
+			PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+		)
 	endif()
 endif()

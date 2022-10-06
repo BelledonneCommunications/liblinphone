@@ -26,30 +26,22 @@ install(FILES rootca.pem
 )
 
 set(GRAMMAR_FILES
-	cpim_grammar
-	ics_grammar
-	identity_grammar
-)
-
-install(FILES ${GRAMMAR_FILES}
-	DESTINATION "${CMAKE_INSTALL_DATADIR}/belr/grammars"
-	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-)
-
-set(SOUND_FILES
-	hello16000.wav
-	hello8000.wav
-	incoming_chat.wav
-	ringback.wav
-	dont_wait_too_long.mkv
-	toy-mono.wav
-	silence.mkv
+	"${CMAKE_CURRENT_SOURCE_DIR}/cpim_grammar"
+	"${CMAKE_CURRENT_SOURCE_DIR}/ics_grammar"
+	"${CMAKE_CURRENT_SOURCE_DIR}/identity_grammar"
+	PARENT_SCOPE
 )
 
 if(ENABLE_ASSETS)
-	install(FILES ${SOUND_FILES}
-	  DESTINATION "${CMAKE_INSTALL_DATADIR}/sounds/linphone"
-	  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+	set(SOUND_FILES
+		"${CMAKE_CURRENT_SOURCE_DIR}/hello16000.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/hello8000.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/incoming_chat.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/ringback.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/dont_wait_too_long.mkv"
+		"${CMAKE_CURRENT_SOURCE_DIR}/toy-mono.wav"
+		"${CMAKE_CURRENT_SOURCE_DIR}/silence.mkv"
+		PARENT_SCOPE
 	)
 endif()
 
@@ -71,4 +63,5 @@ endif()
 
 if(ENABLE_ASSETS)
 	add_subdirectory(rings)
+	set(RING_FILES ${RING_FILES} PARENT_SCOPE)
 endif()
