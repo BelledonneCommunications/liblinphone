@@ -219,7 +219,9 @@ long long DbSession::getLastInsertId () const {
 			break;
 	}
 
-	*d->backendSession << sql, soci::into(id);
+	if (!sql.empty()) {
+		*d->backendSession << sql, soci::into(id);
+	}
 
 	return id;
 }

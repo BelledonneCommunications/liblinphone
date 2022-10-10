@@ -1049,7 +1049,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 				do {
 					counter++;
 					wait_for_list(lcs ,NULL, 0, 100);
-				} while ((counter < 10) && (linphone_conference_get_participant_count(remote_conference) == no_participants));
+				} while ((counter < 10) && (linphone_conference_get_participant_count(remote_conference) < no_participants));
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(remote_conference), no_participants, int, "%d");
 				BC_ASSERT_PTR_NOT_NULL(remote_conference);
 				if (remote_conference) {
@@ -1202,12 +1202,33 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		LinphoneCall * conf_to_focus_call = linphone_conference_get_call(focus_conference);
 		BC_ASSERT_PTR_NOT_NULL(conf_to_focus_call);
 		if (conf_to_focus_call) {
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+2*counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participants_added,(conf_initial_stats.number_of_participants_added + counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participant_devices_added,(conf_initial_stats.number_of_participant_devices_added + counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participants_added,(focus_initial_stats.number_of_participants_added + counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participant_devices_added,(focus_initial_stats.number_of_participant_devices_added + counter),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+2*((int)(bctbx_list_size(new_participants)))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participants_added,(conf_initial_stats.number_of_participants_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participant_devices_added,(conf_initial_stats.number_of_participant_devices_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participants_added,(focus_initial_stats.number_of_participants_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participant_devices_added,(focus_initial_stats.number_of_participant_devices_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
 		}
+
+		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(focus_conference);
+
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+			LinphoneConference * remote_conference = linphone_core_search_conference(m->lc, NULL, m_uri, local_conference_address, NULL);
+			linphone_address_unref(m_uri);
+
+			int part_counter = 0;
+			do {
+				part_counter++;
+				wait_for_list(lcs ,NULL, 0, 100);
+			} while ((part_counter < 100) && (linphone_conference_get_participant_count(remote_conference) < (int)(bctbx_list_size(participants))));
+		}
+
+		int wait_counter = 0;
+		do {
+			wait_counter++;
+			wait_for_list(lcs ,NULL, 0, 100);
+		} while ((wait_counter < 100) && (linphone_conference_get_participant_count(focus_conference) < (int)(bctbx_list_size(participants))));
 
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
 		if (!!linphone_conference_params_video_enabled(conf_params) == TRUE) {

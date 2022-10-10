@@ -399,6 +399,7 @@ public:
 	virtual std::shared_ptr<Call> getCall() const override;
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
+	virtual void onParticipantsCleared () override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;

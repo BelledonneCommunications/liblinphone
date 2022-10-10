@@ -3573,6 +3573,10 @@ void RemoteConference::onAvailableMediaChanged (const std::shared_ptr<Conference
 	}
 }
 
+void RemoteConference::onParticipantsCleared () {
+	clearParticipants();
+}
+
 }//end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE

@@ -990,7 +990,15 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
-			notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
+
+			// FIXME: Temporary workaround until chatrooms and conference will be one single class with different capabilities.
+			// Every subscribe sent for a conference will be answered by a notify full state as events are not stored in the database
+			const auto & audioVideoConference = conf->getCore()->findAudioVideoConference(conf->getConferenceId());
+			if (audioVideoConference) {
+				notifyFullState(createNotifyFullState(lev), device);
+			} else {
+				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
+			}
 		} else if (evLastNotify > lastNotify) {
 			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference [" <<
 				conf->getConferenceAddress() <<

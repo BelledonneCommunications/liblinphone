@@ -575,7 +575,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	if (isFullState) {
 		auto currentParticipants = conf->getParticipants();
-		// Send participant and participant device removed notifys if the full state has less participants than the current chat room
+		// Send participant and participant device removed notifys if the full state has less participants than the current chat room or conference
 		for (const auto & p : oldParticipants) {
 			const auto & pIt = std::find_if(currentParticipants.cbegin(), currentParticipants.cend(), [&p] (const auto & currentParticipant) {
 				return (p->getAddress() == currentParticipant->getAddress());
@@ -688,8 +688,11 @@ void RemoteConferenceEventHandler::unsubscribePrivate () {
 }
 
 void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	if (!sipNetworkReachable)
+	if (sipNetworkReachable) {
+		subscribe();
+	} else {
 		unsubscribePrivate();
+	}
 }
 
 void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {

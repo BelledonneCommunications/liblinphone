@@ -313,8 +313,11 @@ map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi (const 
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	if (!sipNetworkReachable)
+	if (sipNetworkReachable) {
+		subscribe();
+	} else {
 		unsubscribe();
+	}
 }
 
 void RemoteConferenceListEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
