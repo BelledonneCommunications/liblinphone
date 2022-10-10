@@ -441,6 +441,16 @@ static void call_with_declined_video_base(bool_t using_policy) {
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	bool_t call_ok;
 
+	LinphoneCallParams *pauline_params = NULL;
+
+	const LinphoneCallParams* pauline_call_lparams = NULL;
+	const LinphoneCallParams* pauline_call_rparams = NULL;
+	const LinphoneCallParams* pauline_call_cparams = NULL;
+
+	const LinphoneCallParams* marie_call_lparams = NULL;
+	const LinphoneCallParams* marie_call_rparams = NULL;
+	const LinphoneCallParams* marie_call_cparams = NULL;
+
 	if(g_display_filter != ""){
 		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
 		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
@@ -480,6 +490,35 @@ static void call_with_declined_video_base(bool_t using_policy) {
 
 	BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
 	BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+
+	/*try again to add video */
+	pauline_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_video(pauline_params, TRUE);
+	linphone_call_params_set_video_direction (pauline_params, LinphoneMediaDirectionSendOnly);
+	linphone_call_update(pauline_call, pauline_params);
+	linphone_call_params_unref(pauline_params);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+
+	pauline_call_lparams = linphone_call_get_params(pauline_call);
+	BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(pauline_call_lparams), (int)LinphoneMediaDirectionSendOnly, int, "%0d");
+	pauline_call_rparams = linphone_call_get_remote_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(pauline_call_rparams));
+	BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(pauline_call_rparams), (int)LinphoneMediaDirectionInactive, int, "%0d");
+	pauline_call_cparams = linphone_call_get_current_params(pauline_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(pauline_call_cparams));
+	BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(pauline_call_cparams), (int)LinphoneMediaDirectionInactive, int, "%0d");
+
+	marie_call_lparams = linphone_call_get_params(marie_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_call_lparams));
+	marie_call_rparams = linphone_call_get_remote_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_rparams));
+	BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_rparams), (int)LinphoneMediaDirectionSendOnly, int, "%0d");
+	marie_call_cparams = linphone_call_get_current_params(marie_call);
+	BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_call_cparams));
+	BC_ASSERT_EQUAL(linphone_call_params_get_video_direction(marie_call_cparams), (int)LinphoneMediaDirectionInactive, int, "%0d");
 
 	end_call(pauline, marie);
 
