@@ -76,7 +76,7 @@ typedef struct _LinphoneStreamInternalStats{
 extern "C" {
 #endif
 
-// Required to check SRTP cryptio suite match during call
+// Required to check SRTP crypto suite match during call
 LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc);
 
 LINPHONE_PUBLIC LinphoneVcardContext *linphone_core_get_vcard_context(const LinphoneCore *lc);
@@ -225,11 +225,11 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_confirmation_key(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
- * Deletes local LIME X3DH database
+ * Set the force LIME X3DH decryption failure flag
  * @param[in] lc LinphoneCore object
  * @donotwrap Exists for tests purposes only
 **/
-LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_core_lime_x3dh_set_test_decryption_failure_flag(const LinphoneCore *lc, bool_t flag);
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_is_user_active(LinphoneCore *lc, const char *userId);
 LINPHONE_PUBLIC void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
 

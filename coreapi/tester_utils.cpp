@@ -26,6 +26,7 @@
 
 #include "call/call.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "chat/encryption/encryption-engine.h"
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
@@ -43,6 +44,10 @@ LinphoneVcardContext *linphone_core_get_vcard_context(const LinphoneCore *lc) {
 
 void linphone_core_set_zrtp_not_available_simulation(LinphoneCore *lc, bool_t enabled) {
 	lc->zrtp_not_available_simulation = enabled;
+}
+
+void linphone_core_lime_x3dh_set_test_decryption_failure_flag(const LinphoneCore *lc, bool_t flag) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getEncryptionEngine()->setTestForceDecryptionFailureFlag((flag==TRUE));
 }
 
 belle_http_provider_t *linphone_core_get_http_provider(const LinphoneCore *lc) {
