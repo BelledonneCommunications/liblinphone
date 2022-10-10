@@ -259,7 +259,7 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 							// stale the encryption sessions with this device: something went wrong, we will create a new one at next encryption
 							lWarning()<<"Peer "<<chatMessage->getFromAddress().asString()<<" could not decrypt message from "
 								<< cm->getFromAddress().asString()<<" -> Stale the lime X3DH session";
-							imee->stale_session(cm->getFromAddress().asString(), chatMessage->getFromAddress().asString());
+							imee->staleSession(cm->getFromAddress().asString(), chatMessage->getFromAddress().asString());
 						}
 					}
 				}

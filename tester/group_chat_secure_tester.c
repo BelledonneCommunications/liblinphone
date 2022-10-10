@@ -3399,8 +3399,8 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lim
 
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr))
 		goto end;
-	// Pauline discards marie LIME X3DH key
-	linphone_config_set_int(linphone_core_get_config(pauline->lc), "test", "force_lime_decryption_failure", 1);
+	// Pauline is not able to decrypt
+	linphone_core_lime_x3dh_set_test_decryption_failure_flag(pauline->lc, TRUE);
 
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);

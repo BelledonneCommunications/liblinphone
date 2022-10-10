@@ -152,7 +152,6 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	x3dhServerUrl = serverUrl;
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccessWithParam, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
-	forceFailure = !!linphone_config_get_int(cCore->config, "test", "force_lime_decryption_failure", 0);
 }
 
 LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine () {
@@ -902,7 +901,7 @@ std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager () {
 	return limeManager;
 }
 
-void LimeX3dhEncryptionEngine::stale_session (const std::string localDeviceId, const std::string peerDeviceId) {
+void LimeX3dhEncryptionEngine::staleSession (const std::string localDeviceId, const std::string peerDeviceId) {
 	try {
 		limeManager->stale_sessions(localDeviceId, peerDeviceId);
 	} catch (const BctbxException &e) {
@@ -979,6 +978,10 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	} catch (const exception &e) {
 		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
 	}
+}
+
+void LimeX3dhEncryptionEngine::setTestForceDecryptionFailureFlag(bool flag) {
+	forceFailure = flag;
 }
 
 
