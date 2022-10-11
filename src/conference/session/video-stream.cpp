@@ -326,17 +326,20 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		mStream->staticimage_webcam_fps_optimization = false;
 
 	LinphoneVideoDefinition *max_vdef = nullptr;
-	if (this->getMediaSessionPrivate().getParams()->getConferenceVideoLayout() == ConferenceLayout::Grid) {
-		const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_mosaic_size", nullptr);
-		if (str != NULL && str[0] != 0) {
-			max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
-			if (max_vdef == NULL) {
-				lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
-			} else {
-				MSVideoSize max;
-				max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
-				max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
-				video_stream_set_sent_video_size_max(mStream, max);
+	if (listener) {
+		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+		if (conference) {
+			const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_conference_size", nullptr);
+			if (str != NULL && str[0] != 0) {
+				max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
+				if (max_vdef == NULL) {
+					lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
+				} else {
+					MSVideoSize max;
+					max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
+					max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
+					video_stream_set_sent_video_size_max(mStream, max);
+				}
 			}
 		}
 	}

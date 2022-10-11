@@ -3381,7 +3381,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 				if (layout == LinphoneConferenceLayoutGrid) {
 					linphone_core_set_preferred_video_definition_by_name(mgr->lc, "720p");
-					linphone_config_set_string(linphone_core_get_config(mgr->lc), "video", "max_mosaic_size", "vga");
+					linphone_config_set_string(linphone_core_get_config(mgr->lc), "video", "max_conference_size", "vga");
 				}
 			}
 
