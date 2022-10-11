@@ -427,7 +427,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							if (media.getSrcId()) {
 								const std::string srcId = media.getSrcId().get();
 								unsigned long ssrc = std::stoul(srcId);
-								device->setSsrc((uint32_t) ssrc);
+								device->setAudioSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("video") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
@@ -436,6 +436,11 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								if (!label.empty()) {
 									device->setLabel(label);
 								}
+							}
+							if (media.getSrcId()) {
+								const std::string srcId = media.getSrcId().get();
+								unsigned long ssrc = std::stoul(srcId);
+								device->setVideoSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("text") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);

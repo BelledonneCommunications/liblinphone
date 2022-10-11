@@ -2585,9 +2585,18 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	}
 
 	if (isInConference() && conference) {
-		const auto & stream = op->getRemoteMediaDescription()->getActiveStreamOfType(SalAudio, 0);
-		const auto & streamCfg = stream.getActualConfiguration();
-		MediaConference::Conference::toCpp(conference)->participantDeviceSsrcChanged(q->getSharedFromThis(), streamCfg.conference_ssrc);
+		const auto & audioStream = op->getRemoteMediaDescription()->getActiveStreamOfType(SalAudio, 0);
+		const auto & audioStreamCfg = audioStream.getActualConfiguration();
+		const auto & audioSsrc = audioStreamCfg.conference_ssrc;
+
+		const auto & videoStreamIdx = getMainVideoStreamIdx(ctx.remoteMediaDescription);
+		uint32_t videoSsrc = 0;
+		if (videoStreamIdx >= 0) {
+			const SalStreamDescription & videoStream = ctx.remoteMediaDescription->getStreamIdx(static_cast<unsigned int>(videoStreamIdx));
+			const auto & videoStreamCfg = videoStream.getActualConfiguration();
+			videoSsrc = videoStreamCfg.conference_ssrc;
+		}
+		MediaConference::Conference::toCpp(conference)->participantDeviceSsrcChanged(q->getSharedFromThis(), audioSsrc, videoSsrc);
 	}
 }
 
@@ -2918,31 +2927,49 @@ LinphoneMediaDirection MediaSessionPrivate::getVideoDirFromMd (const std::shared
 	return MediaSessionParamsPrivate::salStreamDirToMediaDirection(videoStream.getDirection());
 }
 
+int MediaSessionPrivate::getMainVideoStreamIdx(const std::shared_ptr<SalMediaDescription> & md) const {
+	L_Q();
+	// In order to set properly the negotiated parameters, we must know if the client is sending video to the conference, i.e. look at the thumbnail stream direction. In order to do so, we must know the label of the searched thumbnail stream.
+	// The local case is quite straightforward because all labels are known, but for the client is more difficult as the NOTIFY message may have not come or been processed.
+	// The algorithm below searches for the label in the main stream and then reuses the label to look for the desired thumbnail stream
+	auto streamIdx = -1;
+	if (md) {
+		LinphoneConference * conference = listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis())) : nullptr;
+		if (conference && op) {
+			const bool isInLocalConference = getParams()->getPrivate()->getInConference();
+			const auto & confLayout = MediaSession::computeConferenceLayout(isInLocalConference ? op->getRemoteMediaDescription() : op->getLocalMediaDescription());
+			const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
+			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
+			streamIdx = md->findIdxStreamWithContent(mainStreamAttrValue);
+		} else  {
+			streamIdx = md->findIdxBestStream(SalVideo);
+		}
+	}
+	return streamIdx;
+}
+
 int MediaSessionPrivate::getThumbnailStreamIdx(const std::shared_ptr<SalMediaDescription> & md) const {
 	L_Q();
 	// In order to set properly the negotiated parameters, we must know if the client is sending video to the conference, i.e. look at the thumbnail stream direction. In order to do so, we must know the label of the searched thumbnail stream.
 	// The local case is quite straightforward because all labels are known, but for the client is more difficult as the NOTIFY message may have not come or been processed.
 	// The algorithm below searches for the label in the main stream and then reuses the label to look for the desired thumbnail stream
 	auto streamIdx = -1;
-	LinphoneConference * conference = listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis())) : nullptr;
-	if (conference && op) {
-		bool isInLocalConference = getParams()->getPrivate()->getInConference();
-		const auto & confLayout = MediaSession::computeConferenceLayout(isInLocalConference ? op->getRemoteMediaDescription() : op->getLocalMediaDescription());
-		const auto isConferenceLayoutActiveSpeaker = (confLayout == ConferenceLayout::ActiveSpeaker);
-		SalStreamDescription mainVideoStream;
-		if (md) {
-			const auto mainStreamAttrValue = isConferenceLayoutActiveSpeaker ? "speaker" : "main";
-			mainVideoStream = md->findStreamWithContent(mainStreamAttrValue);
-		}
-		const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-		const auto meDevices = cppConference->getMe()->getDevices();
-		const bool conferenceEventPackageEnabled = linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE);
-		// Devices don't have labels if conference event package is not enabled
-		const auto label = (!conferenceEventPackageEnabled || isInLocalConference || (meDevices.size() == 0)) ? mainVideoStream.getLabel() : meDevices.front()->getLabel();
-		if (!label.empty()) {
-			if (md) {
-				const auto content = "thumbnail";
-				streamIdx = md->findIdxStreamWithContent(content, label);
+	if (md) {
+		auto mainStreamIdx = getMainVideoStreamIdx(md);
+		LinphoneConference * conference = listener ? listener->getCallSessionConference(const_pointer_cast<CallSession>(q->getSharedFromThis())) : nullptr;
+		if (conference && op && (mainStreamIdx >= 0)) {
+			const SalStreamDescription & mainVideoStream = md->getStreamIdx(static_cast<unsigned int>(mainStreamIdx));
+			const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+			const auto meDevices = cppConference->getMe()->getDevices();
+			const bool conferenceEventPackageEnabled = linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE);
+			const bool isInLocalConference = getParams()->getPrivate()->getInConference();
+			// Devices don't have labels if conference event package is not enabled
+			const auto label = (!conferenceEventPackageEnabled || isInLocalConference || (meDevices.size() == 0)) ? mainVideoStream.getLabel() : meDevices.front()->getLabel();
+			if (!label.empty()) {
+				if (md) {
+					const auto content = "thumbnail";
+					streamIdx = md->findIdxStreamWithContent(content, label);
+				}
 			}
 		}
 	}

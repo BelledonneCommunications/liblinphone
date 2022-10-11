@@ -381,9 +381,18 @@ static void check_conference_volumes(LinphoneCall * call) {
 
 			for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
 				LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
-				BC_ASSERT_NOT_EQUAL(linphone_participant_device_get_ssrc(d), 0, int, "%d");
-				BC_ASSERT_NOT_EQUAL(linphone_conference_get_participant_device_volume(conference, d), AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
-				BC_ASSERT_GREATER(linphone_conference_get_participant_device_volume(conference, d), MS_VOLUME_DB_LOWEST, int, "%d");
+				if (linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeAudio)) {
+					BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+					BC_ASSERT_NOT_EQUAL(linphone_conference_get_participant_device_volume(conference, d), AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
+					BC_ASSERT_GREATER(linphone_conference_get_participant_device_volume(conference, d), MS_VOLUME_DB_LOWEST, int, "%d");
+				} else {
+					BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+				}
+				if (linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo)) {
+					BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+				} else {
+					BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+				}
 			}
 			bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
 		}

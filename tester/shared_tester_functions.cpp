@@ -488,13 +488,35 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 		}
 	}
 
-	LinphoneCall *call1=linphone_core_get_current_call(mgr1->lc);
+	LinphoneCall *call1 = linphone_core_get_current_call(mgr1->lc);
+	LinphoneConference *confMgr1 = linphone_call_get_conference(call1);
+	LinphoneConference *confMgr3 = linphone_call_get_conference(linphone_core_get_current_call(mgr3->lc));
+
 	// mgr3 speaks and mgr1's video change
 	linphone_core_enable_mic(mgr1->lc, FALSE);
 	linphone_core_enable_mic(mgr2->lc, FALSE);
 	lInfo() << __func__ << ": mgr3 speaks";
 	wait_for_list(lcs, NULL, 0, 5000);
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+
+	// mgr1 should see mgr3 as active speaker
+	LinphoneParticipantDevice *device = linphone_conference_get_active_speaker_participant_device(confMgr1);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr1 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr3);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr3 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr1, addrMgr3));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
+
+	// mgr2 does not see any active speaker as it has no video
+	LinphoneConference *confMgr2 = linphone_call_get_conference(linphone_core_get_current_call(mgr2->lc));
+	device = linphone_conference_get_active_speaker_participant_device(confMgr2);
+	BC_ASSERT_PTR_NULL(device);
 	
 	// mgr2 speaks until mgr1's video change
 	linphone_core_enable_mic(mgr2->lc, TRUE);
@@ -512,6 +534,20 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 	wait_for_list(lcs, NULL, 0, 5000);
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
+
+	// mgr3 should see mgr1 as active speaker
+	device = linphone_conference_get_active_speaker_participant_device(confMgr3);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr3 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr1);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr1 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr3, addrMgr1));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
 }
 
 

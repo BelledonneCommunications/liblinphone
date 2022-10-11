@@ -136,7 +136,8 @@ public:
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
 	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) = 0;
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
-	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) = 0;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) = 0;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t audioSsrc, uint32_t videoSsrc) = 0;
 
 	virtual int participantDeviceAlerting (const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
 	virtual int participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
@@ -261,7 +262,8 @@ public:
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
-	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t audioSsrc, uint32_t videoSsrc) override;
 
 	virtual int participantDeviceAlerting (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
@@ -369,7 +371,8 @@ public:
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
-	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t audioSsrc, uint32_t videoSsrc) override;
 
 	virtual int participantDeviceAlerting (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;

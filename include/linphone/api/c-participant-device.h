@@ -154,11 +154,18 @@ LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_stream_ca
 LINPHONE_PUBLIC bool_t linphone_participant_device_get_stream_availability(const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 
 /**
- * Get the SSRC of the device.
+ * Get the audio stream SSRC of the device.
  * @param participant A #LinphoneParticipantDevice object @notnil
- * @return the SSRC of the device
+ * @return the audio stream SSRC of the device
  */
-LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC uint32_t linphone_participant_device_get_audio_ssrc(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the video stream SSRC of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the video stream SSRC of the device
+ */
+LINPHONE_PUBLIC uint32_t linphone_participant_device_get_video_ssrc(const LinphoneParticipantDevice *participant_device);
 	
 /**
  * Add a listener in order to be notified of #LinphoneParticipantDevice events. Once an event is received, registred #LinphoneParticipantDeviceCbs are

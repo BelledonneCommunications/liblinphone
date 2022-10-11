@@ -182,6 +182,7 @@ protected:
 
 	std::shared_ptr<Participant> activeParticipant;
 	std::shared_ptr<Participant> me;
+	std::shared_ptr<ParticipantDevice> activeSpeakerDevice = nullptr;
 
 	std::list<std::shared_ptr<ConferenceListenerInterface>> confListeners;
 

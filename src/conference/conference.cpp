@@ -291,7 +291,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getSsrc() == ssrc) {
+			if (device->getAudioSsrc() == ssrc) {
 				_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
@@ -301,7 +301,7 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 		}
 	}
 	for (const auto &device : getMe()->getDevices()) {
-		if (device->getSsrc() == ssrc) {
+		if (device->getAudioSsrc() == ssrc) {
 			_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
@@ -315,7 +315,7 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getSsrc() == ssrc) {
+			if (device->getAudioSsrc() == ssrc) {
 				_linphone_participant_device_notify_is_muted(device->toC(), muted);
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsMuted(device, muted);
@@ -326,7 +326,7 @@ void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 		}
 	}
 	for (const auto &device : getMe()->getDevices()) {
-		if (device->getSsrc() == ssrc) {
+		if (device->getAudioSsrc() == ssrc) {
 			_linphone_participant_device_notify_is_muted(device->toC(), muted);
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsMuted(device, muted);
@@ -416,8 +416,7 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 }
 
 shared_ptr<ParticipantDevice> Conference::getActiveSpeakerParticipantDevice() const {
-	// TODO: return currently displayed participant device as active speaker
-	return nullptr;
+	return activeSpeakerDevice;
 }
 
 std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() const {
@@ -685,6 +684,7 @@ void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<Part
 	for (const auto &l : confListeners) {
 		l->onActiveSpeakerParticipantDevice(participantDevice);
 	}
+	activeSpeakerDevice = participantDevice;
 }
 
 std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {

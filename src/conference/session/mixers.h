@@ -204,10 +204,10 @@ public:
 	void setFocus(StreamsGroup *sg);
 	void setLocalParticipantLabel(const std::string & label);
 	std::string getLocalParticipantLabel() const;
+	virtual VideoStream *getVideoStream()const override;
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
-	virtual VideoStream *getVideoStream()const override;
 	virtual MSWebCam *getVideoDevice()const override;
 private:
 	void addLocalParticipant();

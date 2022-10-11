@@ -148,8 +148,8 @@ bool ParticipantDevice::isInConference() const {
 	return false;
 }
 
-void ParticipantDevice::setSsrc (uint32_t ssrc) {
-	mSsrc = ssrc;
+void ParticipantDevice::setAudioSsrc (uint32_t ssrc) {
+	mAudioSsrc = ssrc;
 	auto conference = getConference();
 	if (conference) {
 		const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
@@ -160,8 +160,16 @@ void ParticipantDevice::setSsrc (uint32_t ssrc) {
 	}
 }
 
-uint32_t ParticipantDevice::getSsrc () const {
-	return mSsrc;
+uint32_t ParticipantDevice::getAudioSsrc () const {
+	return mAudioSsrc;
+}
+
+void ParticipantDevice::setVideoSsrc (uint32_t ssrc) {
+	mVideoSsrc = ssrc;
+}
+
+uint32_t ParticipantDevice::getVideoSsrc () const {
+	return mVideoSsrc;
 }
 
 void *ParticipantDevice::getUserData () const{
