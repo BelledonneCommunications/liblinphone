@@ -145,8 +145,13 @@ public class DeviceUtils {
 				int favorite = cursor.getInt(cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.STARRED));
 				if (favorite == 1) {
 					Log.i("[Device Utils] Found phone number or SIP address in favorite contact");
+					cursor.close();
 					return true;
 				}
+			}
+
+			if (cursor != null) {
+				cursor.close();
 			}
 		} catch (IllegalArgumentException e) {
 			Log.e("[Device Utils] Failed to check if username / SIP address is part of a favorite contact: ", e);
