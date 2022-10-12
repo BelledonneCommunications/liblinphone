@@ -300,6 +300,10 @@ void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const c
 	bctbx_log(log_service->domain, _linphone_log_level_to_bctbx_log_level(LinphoneLogLevelFatal), "%s", msg);
 }
 
+void linphone_logging_service_enable_stack_trace_dumps(LinphoneLoggingService *log_service, bool_t enable){
+	bctbx_set_stack_trace_hooks(enable);
+}
+
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneLoggingService, belle_sip_object_t,
 	_linphone_logging_service_uninit, // uninit
 	NULL,                         // clone

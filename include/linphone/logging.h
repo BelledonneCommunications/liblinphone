@@ -210,6 +210,14 @@ LINPHONE_PUBLIC void linphone_logging_service_error(LinphoneLoggingService *log_
 LINPHONE_PUBLIC void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *message);
 
 /**
+ * Allow Linphone to set handlers for catching exceptions and write the stack trace into log. Available for Windows.
+ * It keeps old handlers.
+ * @param log_service the #LinphoneLoggingService object @notnil
+ * @param enable if TRUE global handlers will be prepend by the logger handlers. By default, it is FALSE.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_enable_stack_trace_dumps(LinphoneLoggingService *log_service, bool_t enable);
+
+/**
  * @brief Increases the reference counter.
  * @param cbs the #LinphoneLoggingServiceCbs object. @notnil
  * @return the same #LinphoneLoggingServiceCbs object @notnil
