@@ -49,8 +49,8 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_joinMode = params.m_joinMode;
 	m_conferenceAddress = params.m_conferenceAddress;
 	m_factoryAddress = params.m_factoryAddress;
-	m_subject = params.m_subject;
-	m_description = params.m_description;
+	m_subject = Utils::localeToUtf8(params.m_subject);
+	m_description = Utils::localeToUtf8(params.m_description);
 	m_me = params.m_me;
 	m_startTime = params.m_startTime;
 	m_endTime = params.m_endTime;
@@ -87,4 +87,13 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 	}else
 		ms_message("Update conference parameters from account: no account");
 }
+
+void ConferenceParams::setDescription (const std::string &description) {
+	m_description = Utils::localeToUtf8(description);
+};
+
+void ConferenceParams::setSubject (const std::string &subject) {
+	m_subject = Utils::localeToUtf8(subject);
+};
+
 LINPHONE_END_NAMESPACE

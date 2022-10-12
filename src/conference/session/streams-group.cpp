@@ -310,7 +310,8 @@ bool StreamsGroup::allStreamsEncrypted () const {
 		if (!stream) continue;
 		if (stream->getState() == Stream::Running){
 			++activeStreamsCount;
-			if (!stream->isEncrypted()){
+			bool streamEncrypted = stream->isEncrypted();
+			if (!streamEncrypted) {
 				return false;
 			}
 		}
@@ -352,16 +353,12 @@ void StreamsGroup::setAuthTokenVerified(bool value){
 	mAuthTokenVerified = value;
 }
 
-
-
 Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 	auto lambda = [] (Stream *s, SalStreamType type) {
 		return s->isMain() && s->getType() == type;
 	};
 	return lookupStream(lambda,type);
 }
-
-
 
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {

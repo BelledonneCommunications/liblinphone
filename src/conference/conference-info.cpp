@@ -142,7 +142,7 @@ const std::string &ConferenceInfo::getSubject () const {
 }
 
 void ConferenceInfo::setSubject (const std::string &subject) {
-	mSubject = Utils::trim(subject);
+	mSubject = Utils::localeToUtf8(Utils::trim(subject));
 }
 
 unsigned int ConferenceInfo::getIcsSequence () const {
@@ -166,7 +166,7 @@ const string &ConferenceInfo::getDescription () const {
 }
 
 void ConferenceInfo::setDescription (const string &description) {
-	mDescription = Utils::trim(description);
+	mDescription = Utils::localeToUtf8(Utils::trim(description));
 }
 
 const ConferenceInfo::State &ConferenceInfo::getState () const {

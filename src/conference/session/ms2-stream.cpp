@@ -1348,7 +1348,7 @@ void MS2Stream::handleEvents () {
 }
 
 bool MS2Stream::isEncrypted() const{
-	if (!isTransportOwner()){
+	if (bundleEnabled() && !isTransportOwner()){
 		if (mBundleOwner){
 			return mBundleOwner->isEncrypted(); /* We must refer to the stream that owns the Rtp bundle.*/
 		}else{

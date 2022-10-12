@@ -2608,12 +2608,23 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 	L_Q();
 
 	string authToken = getStreamsGroup().getAuthenticationToken();
+	LinphoneConference * conference = nullptr;
+	if (listener) {
+		conference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+	// If the media session is part of a conference, the client has no way to check the token, hence do not pass it on to the application
+	string callbackAuthToken = (conference) ? std::string() : authToken;
+
+	if (callbackAuthToken.empty() && !authToken.empty()) {
+		getStreamsGroup().setAuthTokenVerified(true);
+	}
 	bool authTokenVerified = getStreamsGroup().getAuthenticationTokenVerified();
 	if (!getStreamsGroup().allStreamsEncrypted()) {
 		lInfo() << "Some streams are not encrypted";
 		getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-		if (listener)
-			listener->onEncryptionChanged(q->getSharedFromThis(), false, authToken);
+		if (listener) {
+			listener->onEncryptionChanged(q->getSharedFromThis(), false, callbackAuthToken);
+		}
 	} else {
 		if (!authToken.empty()) {
 			/* ZRTP only is using auth_token */
@@ -2647,8 +2658,9 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 		lInfo() << "All streams are encrypted, key exchanged using "
 			<< ((q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) ? "ZRTP"
 				: (q->getCurrentParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) ? "DTLS" : "Unknown mechanism");
-		if (listener)
-			listener->onEncryptionChanged(q->getSharedFromThis(), true, authToken);
+		if (listener) {
+			listener->onEncryptionChanged(q->getSharedFromThis(), true, callbackAuthToken);
+		}
 
 		Stream *videoStream = getStreamsGroup().lookupMainStream(SalVideo);
 		if (isEncryptionMandatory() && videoStream && videoStream->getState() == Stream::Running) {
