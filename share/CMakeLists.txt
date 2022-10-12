@@ -20,10 +20,7 @@
 #
 ############################################################################
 
-install(FILES rootca.pem
-	DESTINATION "${CMAKE_INSTALL_DATADIR}/linphone"
-	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-)
+set(ROOTCA_FILE "${CMAKE_CURRENT_SOURCE_DIR}/rootca.pem" PARENT_SCOPE)
 
 set(GRAMMAR_FILES
 	"${CMAKE_CURRENT_SOURCE_DIR}/cpim_grammar"
@@ -43,6 +40,8 @@ if(ENABLE_ASSETS)
 		"${CMAKE_CURRENT_SOURCE_DIR}/silence.mkv"
 		PARENT_SCOPE
 	)
+else()
+	set(SOUND_FILES "${CMAKE_CURRENT_SOURCE_DIR}/ringback.wav" PARENT_SCOPE)
 endif()
 
 if(ENABLE_GTK_UI)
