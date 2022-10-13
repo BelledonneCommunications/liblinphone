@@ -1572,6 +1572,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	linphone_call_params_enable_video(params, confParams->videoEnabled());
 	linphone_call_params_set_media_encryption (params, LinphoneMediaEncryptionNone);
 	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
+	linphone_call_params_set_conference_creation(params, TRUE);
 
 	auto participant = Participant::create(nullptr, localAddr);
 	auto session = dynamic_pointer_cast<MediaSession>(participant->createSession(getSharedFromThis(), L_GET_CPP_PTR_FROM_C_OBJECT(params), (confParams->audioEnabled() || confParams->videoEnabled()), nullptr));

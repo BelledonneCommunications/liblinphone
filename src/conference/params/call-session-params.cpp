@@ -87,6 +87,14 @@ const std::string & CallSessionParamsPrivate::getDescription() const {
 	return description;
 }
 
+bool CallSessionParamsPrivate::isConferenceCreation () const {
+	return conferenceCreation;
+}
+
+void CallSessionParamsPrivate::setConferenceCreation (const bool enable) {
+	conferenceCreation = enable;
+}
+
 bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled () const {
 	return capabilityNegotiationReInvite;
 }
@@ -94,7 +102,6 @@ bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled () const {
 void CallSessionParamsPrivate::enableCapabilityNegotiationReInvite (const bool enable) {
 	capabilityNegotiationReInvite = enable;
 }
-
 
 bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
 	return capabilityNegotiation;

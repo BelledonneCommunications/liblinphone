@@ -640,6 +640,10 @@ void linphone_call_params_set_description (LinphoneCallParams *params, const cha
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setDescription(L_C_TO_STRING(desc));
 }
 
+void linphone_call_params_set_conference_creation (LinphoneCallParams *params, bool_t conference_creation) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setConferenceCreation(conference_creation);
+}
+
 bctbx_list_t* linphone_call_params_get_custom_contents (const LinphoneCallParams *params) {
 	const list<LinphonePrivate::Content>& contents = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getCustomContents();
 	bctbx_list_t* c_contents = nullptr;

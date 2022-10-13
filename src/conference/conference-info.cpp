@@ -113,6 +113,10 @@ const std::string ConferenceInfo::getParticipantParam (const IdentityAddress & p
 	}
 }
 
+bool ConferenceInfo::isValidUri () const {
+	return (mUri != ConferenceAddress());
+}
+
 const ConferenceAddress &ConferenceInfo::getUri () const {
 	return mUri;
 }

@@ -219,7 +219,6 @@ class LINPHONE_PUBLIC LocalConference: public Conference {
 public:
 	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	LocalConference (const std::shared_ptr<Core> &core, SalCallOp *op);
-	LocalConference (const std::shared_ptr<Core> &core, const std::shared_ptr<ConferenceInfo> & info);
 
 	virtual ~LocalConference();
 
@@ -309,6 +308,7 @@ private:
 	void checkIfTerminated();
 	std::list<IdentityAddress> getAllowedAddresses() const;
 	bool dialOutAddresses(std::list<const LinphoneAddress *> addressList);
+	void configure(SalCallOp *op);
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();

@@ -2007,12 +2007,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		stunClient->updateMediaDescription(md);
 	localDesc = md;
 
-	OfferAnswerContext ctx;
-	ctx.localMediaDescription = localDesc;
-	ctx.remoteMediaDescription = localIsOfferer ? nullptr : ( op ? op->getRemoteMediaDescription() : nullptr);
-	ctx.localIsOfferer = localIsOfferer;
-	/* Now instanciate the streams according to the media description. */
-	getStreamsGroup().createStreams(ctx);
+	if (!getParams()->getPrivate()->isConferenceCreation()) {
+		OfferAnswerContext ctx;
+		ctx.localMediaDescription = localDesc;
+		ctx.remoteMediaDescription = localIsOfferer ? nullptr : ( op ? op->getRemoteMediaDescription() : nullptr);
+		ctx.localIsOfferer = localIsOfferer;
+		/* Now instanciate the streams according to the media description. */
+		getStreamsGroup().createStreams(ctx);
+	}
 
 	const auto & mdForMainStream = localIsOfferer ? md : refMd;
 	const auto audioStreamIndex = mdForMainStream->findIdxBestStream(SalAudio);
@@ -2567,7 +2569,7 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	}
 
 	if (isInConference() && conference) {
-		const auto & stream = ctx.remoteMediaDescription->getActiveStreamOfType(SalAudio, 0);
+		const auto & stream = op->getRemoteMediaDescription()->getActiveStreamOfType(SalAudio, 0);
 		const auto & streamCfg = stream.getActualConfiguration();
 		MediaConference::Conference::toCpp(conference)->participantDeviceSsrcChanged(q->getSharedFromThis(), streamCfg.conference_ssrc);
 	}

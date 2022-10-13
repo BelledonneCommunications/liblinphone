@@ -74,6 +74,7 @@ public:
 	void addParticipantParam (const IdentityAddress & participant, const std::string & param, const std::string & value);
 	const std::string getParticipantParam (const IdentityAddress & participant, const std::string & param) const;
 
+	bool isValidUri () const;
 	const ConferenceAddress &getUri () const;
 	void setUri (const ConferenceAddress uri);
 

@@ -71,6 +71,9 @@ public:
 	void setDescription(std::string description);
 	const std::string & getDescription() const;
 
+	void setConferenceCreation (const bool enable);
+	bool isConferenceCreation () const;
+
 public:
 	std::string sessionName;
 
@@ -100,6 +103,8 @@ private:
 
 	time_t startTime = (time_t)-1;
 	time_t endTime = (time_t)-1;
+
+	bool conferenceCreation = false;
 
 	L_DECLARE_PUBLIC(CallSessionParams);
 };

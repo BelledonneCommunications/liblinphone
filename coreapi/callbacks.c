@@ -221,9 +221,8 @@ static void call_received(SalCallOp *h) {
 
 			if (!conference) {
 				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
-
 				if (confInfo) {
-					std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), confInfo), [](MediaConference::LocalConference * c) {c->unref();});
+					std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
 				} else {
 					if (sal_address_has_uri_param(h->getToAddress(), "conf-id")) {
 						SalErrorInfo sei;
@@ -246,6 +245,7 @@ static void call_received(SalCallOp *h) {
 					}
 				}
 			} else if ((startTime != -1) || (endTime != -1)) {
+				// If start time or end time is not -1, then the client wants to update the conference
 				auto localConference = static_pointer_cast<MediaConference::LocalConference>(conference);
 				localConference->updateConferenceInformation(h);
 			}
