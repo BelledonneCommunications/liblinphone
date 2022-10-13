@@ -1373,6 +1373,7 @@ typedef enum _LinphoneMagicSearchSource {
 	LinphoneMagicSearchSourceLdapServers = 1 << 2, /**< Search in LDAP servers */
 	LinphoneMagicSearchSourceChatRooms = 1 << 3, /**< Search in Chat rooms participants */
 	LinphoneMagicSearchSourceRequest = 1 << 4, /**< Search from request : it is usually an address built from the request */
+	LinphoneMagicSearchSourceFavoriteFriends = 1 << 5, /**< Search in "starred" friends only */
 	LinphoneMagicSearchSourceAll = -1 /**< Search in all sources */
 } LinphoneMagicSearchSource;
 

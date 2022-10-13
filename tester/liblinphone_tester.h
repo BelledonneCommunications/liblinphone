@@ -696,6 +696,7 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice );
 void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_stun, const bool_t enable_ice);
 void linphone_conf_event_notify(LinphoneEvent *lev);
 void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone);
+void _check_friend_result_list_2(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone, int expected_flags);
 
 /*Convenience function providing the path to the "empty_rc" config file*/
 const char *liblinphone_tester_get_empty_rc(void);

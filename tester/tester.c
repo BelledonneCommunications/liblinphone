@@ -2751,11 +2751,20 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *l
 }
 
 void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
+	_check_friend_result_list_2(lc, resultList, index, uri, phone, LinphoneMagicSearchSourceAll);
+}
+
+void _check_friend_result_list_2(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone, int expected_flags) {
 	if (index >= (unsigned int)bctbx_list_size(resultList)) {
 		ms_error("Attempt to access result to an outbound index");
 		return;
 	}
 	const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, index);
+	if (expected_flags != LinphoneMagicSearchSourceAll) {
+		int source_flags = linphone_search_result_get_source_flags(sr);
+		BC_ASSERT_EQUAL(source_flags, expected_flags, int, "%d");
+	}
+
 	const LinphoneFriend *lf = linphone_search_result_get_friend(sr);
 	if (lf || linphone_search_result_get_address(sr)) {
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
