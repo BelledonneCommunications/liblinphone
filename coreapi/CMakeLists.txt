@@ -69,7 +69,6 @@ set(LINPHONE_SOURCE_FILES_C
 	lpconfig.c
 	lsd.c
 	misc.c
-	nat_policy.c
 	payload_type.c
 	player.c
 	presence.c

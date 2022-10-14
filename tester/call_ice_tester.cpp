@@ -248,6 +248,69 @@ static bool_t is_matching_a_local_address(const std::string &ip, const bctbx_lis
 }
 
 
+static bool assert_ice_candidate_presence(const LinphonePrivate::SalMediaDescription *md, const std::string &type, const std::string &addr){
+	const LinphonePrivate::SalStreamDescription &st = md->getStreamIdx(0);
+	for (const auto & candidate : st.getIceCandidates()){
+		if (candidate.addr == addr && candidate.type == type) return true;
+	}
+	return false;
+}
+
+/*
+ * this test setups hardcoded non working server-reflexive address, to simulate what would happen in a server that is behind a nat.
+ */
+static void call_with_configured_sflrx_addresses(void){
+	LinphoneCoreManager * marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *pauline_call, *marie_call;
+	const char *mariev4 = "5.135.31.160";
+	const char *mariev6 = "2001:41d0:303:3aee::1";
+	const char *paulinev4 = "5.135.31.161";
+	const char *paulinev6 = "2001:41d0:303:3aee::2";
+
+	LinphoneNatPolicy *pol = linphone_core_create_nat_policy(marie->lc);
+	linphone_nat_policy_enable_ice(pol, TRUE);
+	linphone_nat_policy_set_nat_v4_address(pol, mariev4);
+	linphone_nat_policy_set_nat_v6_address(pol, mariev6);
+	linphone_core_set_nat_policy(marie->lc, pol);
+	linphone_nat_policy_unref(pol);
+	
+	pol = linphone_core_create_nat_policy(pauline->lc);
+	linphone_nat_policy_enable_ice(pol, TRUE);
+	linphone_nat_policy_set_nat_v4_address(pol, paulinev4);
+	linphone_nat_policy_set_nat_v6_address(pol, paulinev6);
+	linphone_core_set_nat_policy(pauline->lc, pol);
+	linphone_nat_policy_unref(pol);
+
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	if (marie_call && pauline_call){
+		linphone_call_accept(pauline_call);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+		/*check immmediately that the offer and answer have expected sflrx candidates.*/
+		BC_ASSERT_TRUE(assert_ice_candidate_presence(_linphone_call_get_remote_desc(pauline_call),
+							     "srflx", mariev4));
+		BC_ASSERT_TRUE(assert_ice_candidate_presence(_linphone_call_get_remote_desc(marie_call),
+							     "srflx", paulinev4));
+		if (liblinphone_tester_ipv6_available()){
+			BC_ASSERT_TRUE(assert_ice_candidate_presence(_linphone_call_get_remote_desc(pauline_call),
+							     "srflx", mariev6));
+			BC_ASSERT_TRUE(assert_ice_candidate_presence(_linphone_call_get_remote_desc(marie_call),
+							     "srflx", paulinev6));
+		}
+		
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		check_ice(marie, pauline, LinphoneIceStateHostConnection);
+	}
+	end_call(marie, pauline);
+	
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
 
 /*
  * this test checks that default candidates are correct (c= line shall be set to the ICE default candidate).
@@ -858,6 +921,7 @@ static test_t call_with_ice_tests[] = {
 	TEST_ONE_TAG("Call with ICE with default default candidate", call_with_ice_with_default_candidate_relay_or_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE without stun server", call_with_ice_without_stun, "ICE"),
 	TEST_ONE_TAG("Call with ICE without stun server one side", call_with_ice_without_stun2, "ICE"),
+	TEST_ONE_TAG("Call with ICE and configured server-reflexive addresses", call_with_configured_sflrx_addresses, "ICE"),
 	TEST_ONE_TAG("Call with ICE and stun server not responding", call_with_ice_stun_not_responding, "ICE"),
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line", call_with_ice_ufrag_and_password_set_in_sdp_m_line, "ICE"),
 	TEST_ONE_TAG("Call with ICE ufrag and password set in SDP m line 2", call_with_ice_ufrag_and_password_set_in_sdp_m_line_2, "ICE"),

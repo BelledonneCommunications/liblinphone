@@ -169,7 +169,6 @@ bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const Linpho
 #include "enum.h"
 #include "contact_providers_priv.h"
 
-const char *linphone_core_get_nat_address_resolved(LinphoneCore *lc);
 static void toggle_video_preview(LinphoneCore *lc, bool_t val);
 
 
@@ -5813,7 +5812,7 @@ void linphone_core_send_dtmf(LinphoneCore *lc, char dtmf) {
 void linphone_core_set_stun_server(LinphoneCore *lc, const char *server) {
 	if (lc->nat_policy != NULL) {
 		linphone_nat_policy_set_stun_server(lc->nat_policy, server);
-		linphone_nat_policy_save_to_config(lc->nat_policy);
+		NatPolicy::toCpp(lc->nat_policy)->saveToConfig();
 	} else {
 		linphone_config_set_string(lc->config, "net", "stun_server", server);
 	}
@@ -5850,31 +5849,6 @@ void linphone_core_set_nat_address(LinphoneCore *lc, const char *addr) {
 
 const char *linphone_core_get_nat_address(const LinphoneCore *lc) {
 	return lc->net_conf.nat_address;
-}
-
-const char *linphone_core_get_nat_address_resolved(LinphoneCore *lc) {
-	struct sockaddr_storage ss;
-	socklen_t ss_len;
-	int error;
-	char ipstring [INET6_ADDRSTRLEN];
-
-	if (lc->net_conf.nat_address==NULL) return NULL;
-
-	if (parse_hostname_to_addr (lc->net_conf.nat_address, &ss, &ss_len, 5060)<0) {
-		return lc->net_conf.nat_address;
-	}
-
-	error = bctbx_getnameinfo((struct sockaddr *)&ss, ss_len,
-		ipstring, sizeof(ipstring), NULL, 0, NI_NUMERICHOST);
-	if (error) {
-		return lc->net_conf.nat_address;
-	}
-
-	if (lc->net_conf.nat_address_ip!=NULL){
-		ms_free(lc->net_conf.nat_address_ip);
-	}
-	lc->net_conf.nat_address_ip = ms_strdup (ipstring);
-	return lc->net_conf.nat_address_ip;
 }
 
 void linphone_core_set_firewall_policy(LinphoneCore *lc, LinphoneFirewallPolicy pol) {
@@ -5968,8 +5942,8 @@ void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatPolicy *policy) {
 		lc->nat_policy = policy;
 		/*start an immediate (but asynchronous) resolution.*/
 		linphone_nat_policy_resolve_stun_server(policy);
-		linphone_config_set_string(lc->config, "net", "nat_policy_ref", lc->nat_policy->ref);
-		linphone_nat_policy_save_to_config(lc->nat_policy);
+		linphone_config_set_string(lc->config, "net", "nat_policy_ref", NatPolicy::toCpp(policy)->getRef().c_str());
+		NatPolicy::toCpp(policy)->saveToConfig();
 	}
 
 	lc->sal->enableNatHelper(!!linphone_config_get_int(lc->config, "net", "enable_nat_helper", 1));
@@ -7095,7 +7069,7 @@ void sip_config_uninit(LinphoneCore *lc)
 			LinphoneAccount *acc = (LinphoneAccount *)(elem->data);
 			Account::toCpp(acc)->unpublish(); /* to unpublish without changing the stored flag enable_publish */
 			LinphoneNatPolicy *policy = linphone_account_params_get_nat_policy(linphone_account_get_params(acc));
-			if (policy) linphone_nat_policy_release(policy);
+			if (policy) NatPolicy::toCpp(policy)->release();
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
 			if (!linphone_account_params_get_push_notification_allowed(linphone_account_get_params(acc)) && !linphone_account_params_get_remote_push_notification_allowed(linphone_account_get_params(acc))) {
@@ -7165,7 +7139,7 @@ void sip_config_uninit(LinphoneCore *lc)
 	}
 #endif
 
-	if (lc->nat_policy) linphone_nat_policy_release(lc->nat_policy);
+	if (lc->nat_policy) NatPolicy::toCpp(lc->nat_policy)->release();
 
 	for (i = 0; i < 5 ; ++i) lc->sal->iterate(); /*make sure event are purged*/
 	lc->sal=NULL;

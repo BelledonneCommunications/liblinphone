@@ -23,7 +23,7 @@
 #include "push-notification/push-notification-config.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
-#include "linphone/nat_policy.h"
+#include "nat/nat-policy.h"
 #include "linphone/types.h"
 #include "private.h"
 
@@ -74,12 +74,24 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	mPushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault) : pushAllowedDefault;
 	mRemotePushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remotePushAllowedDefault) : remotePushAllowedDefault;
 	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
+
+	/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
+	 * This is not consistent and error-prone.
+	 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
+	 */
 	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
-		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config, natPolicyRef.c_str());
-		setNatPolicy(policy);
-		if (policy) {
-			linphone_nat_policy_unref(policy);
+		NatPolicy * policy = nullptr;
+		if (linphone_config_has_section(lc->config, natPolicyRef.c_str())){
+			/* Odd method - to be deprecated, inconsistent */
+			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName, natPolicyRef);
+		}else{
+			/* Usual method */
+			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromRefName, natPolicyRef);
+		}
+		if (policy){
+			setNatPolicy(policy->toC());
+			policy->unref();
 		} else {
 			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this << "]";
 		}
@@ -853,8 +865,8 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "publish_expires", mPublishExpires);
 
 	if (mNatPolicy != NULL) {
-		linphone_config_set_string(config, key, "nat_policy_ref", mNatPolicy->ref);
-		linphone_nat_policy_save_to_config(mNatPolicy);
+		linphone_config_set_string(config, key, "nat_policy_ref", NatPolicy::toCpp(mNatPolicy)->getRef().c_str());
+		NatPolicy::toCpp(mNatPolicy)->saveToConfig();
 	}
 
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());

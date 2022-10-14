@@ -24,6 +24,7 @@
 
 #include "conference/session/call-session.h"
 #include "conference/session/media-description-renderer.h"
+#include "nat/nat-policy.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -132,6 +133,7 @@ private:
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
 	int gatherIceCandidates ();
 	int gatherLocalCandidates();
+	void addPredefinedSflrxCandidates(const NatPolicy *natPolicy);
 	bool hasRelayCandidates(const SalMediaDescription &md)const;
 	void chooseDefaultCandidates(const OfferAnswerContext & ctx);
 	StreamsGroup & mStreamsGroup;

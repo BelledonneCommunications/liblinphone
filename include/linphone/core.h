@@ -54,7 +54,6 @@
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
 #include "linphone/misc.h"
-#include "linphone/nat_policy.h"
 #include "linphone/payload_type.h"
 #include "linphone/player.h"
 #include "linphone/presence.h"
@@ -2748,20 +2747,23 @@ LINPHONE_PUBLIC LinphoneUpnpState linphone_core_get_upnp_state(const LinphoneCor
 LINPHONE_PUBLIC const char * linphone_core_get_upnp_external_ipaddress(const LinphoneCore *core);
 
 /**
- * Set the public IP address of NAT when using the firewall policy is set to use NAT.
+ * Deprecated. This function was used to force a given IP address to appear in SDP.
+ * Unfortunately, this cannot work as explained by https://www.rfc-editor.org/rfc/rfc5389#section-2 .
  * @param core #LinphoneCore object. @notnil
  * @param addr The public IP address of NAT to use. @maybenil
+ * @deprecated 12/10/2022
  * @ingroup network_parameters
  */
-LINPHONE_PUBLIC void linphone_core_set_nat_address(LinphoneCore *core, const char *addr);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_nat_address(LinphoneCore *core, const char *addr);
 
 /**
- * Get the public IP address of NAT being used.
+ * Deprecated. Get the public IP address of NAT being used.
  * @param core #LinphoneCore object. @notnil
  * @return The public IP address of NAT being used. @maybenil
+ * @deprecated 12/10/2022
  * @ingroup network_parameters
  */
-LINPHONE_PUBLIC const char *linphone_core_get_nat_address(const LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_nat_address(const LinphoneCore *core);
 
 /**
  * Set the policy to use to pass through NATs/firewalls.

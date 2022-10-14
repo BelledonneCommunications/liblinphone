@@ -1186,7 +1186,6 @@ void Account::onAudioVideoConferenceFactoryAddressChanged (const LinphoneAddress
 }
 
 void Account::onNatPolicyChanged (LinphoneNatPolicy *policy) {
-	policy->lc = mCore;
 }
 
 LinphoneProxyConfig *Account::getConfig () const {

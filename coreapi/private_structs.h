@@ -396,25 +396,7 @@ struct _LinphoneBuffer {
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneBuffer);
 
-struct _LinphoneNatPolicy {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneCore *lc;
-	belle_sip_resolver_context_t *stun_resolver_context;
-	belle_sip_resolver_results_t *resolver_results;
-	char *stun_server;
-	char *stun_server_username;
-	char *ref;
-	bool_t stun_enabled;
-	bool_t turn_enabled;
-	bool_t ice_enabled;
-	bool_t upnp_enabled;
-	bool_t turn_udp_enabled;
-	bool_t turn_tcp_enabled;
-	bool_t turn_tls_enabled;
-};
 
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneNatPolicy);
 
 struct _LinphoneImNotifPolicy {
 	belle_sip_object_t base;

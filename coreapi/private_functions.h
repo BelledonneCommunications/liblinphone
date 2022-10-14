@@ -523,10 +523,6 @@ LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *re
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);
 
-bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy);
-void linphone_nat_policy_release(LinphoneNatPolicy *policy);
-void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
-
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);
 
 LINPHONE_PUBLIC LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int index);
@@ -708,7 +704,6 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const
 LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory, const char *name);
 
 const char* _linphone_config_load_from_xml_string(LpConfig *lpc, const char *buffer);
-LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const LinphoneConfig *config, const char* section);
 void _linphone_config_apply_factory_config (LpConfig *config);
 
 SalCustomHeader *linphone_info_message_get_headers (const LinphoneInfoMessage *im);

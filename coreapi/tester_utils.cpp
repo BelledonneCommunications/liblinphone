@@ -153,6 +153,11 @@ SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call) {
 		Call::toCpp(call)->getActiveSession()))->getLocalDesc().get();
 }
 
+SalMediaDescription *_linphone_call_get_remote_desc (const LinphoneCall *call) {
+	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
+		Call::toCpp(call)->getActiveSession()))->getRemoteDesc().get();
+}
+
 SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
 		Call::toCpp(call)->getActiveSession()))->getResultDesc().get();

@@ -286,6 +286,38 @@ int IceService::gatherLocalCandidates(){
 	return 0;
 }
 
+void IceService::addPredefinedSflrxCandidates(const NatPolicy *natPolicy){
+	if (!natPolicy) return;
+	bool ipv6Allowed = linphone_core_ipv6_enabled(getCCore());
+	const string &ipv4 = natPolicy->getNatV4Address();
+	const string &ipv6 = natPolicy->getNatV6Address();
+	if (ipv4.empty() && ipv6.empty()) return;
+	const auto & streams = mStreamsGroup.getStreams();
+	for (auto & stream : streams){
+		if (!stream) continue;
+		size_t index = stream->getIndex();
+		IceCheckList *cl = ice_session_check_list(mIceSession, (int)index);
+		if (cl && ice_check_list_state(cl) != ICL_Completed && !ice_check_list_candidates_gathered(cl)) {
+			if (!ipv4.empty()){
+				ice_add_local_candidate(cl, "srflx", AF_INET, L_STRING_TO_C(ipv4), stream->getPortConfig().rtpPort, ICE_RTP_COMPONENT_ID, nullptr);
+			}
+			if (!ipv6.empty() && ipv6Allowed){
+				ice_add_local_candidate(cl, "srflx", AF_INET6, L_STRING_TO_C(ipv6), stream->getPortConfig().rtpPort, ICE_RTP_COMPONENT_ID, nullptr);
+			}
+			if (!rtp_session_rtcp_mux_enabled(cl->rtp_session)) {
+				if (!ipv4.empty()){
+					ice_add_local_candidate(cl, "srflx", AF_INET, L_STRING_TO_C(ipv4), stream->getPortConfig().rtcpPort, ICE_RTCP_COMPONENT_ID, nullptr);
+				}
+				if (!ipv6.empty() && ipv6Allowed){
+					ice_add_local_candidate(cl, "srflx", AF_INET6, L_STRING_TO_C(ipv6), stream->getPortConfig().rtcpPort, ICE_RTCP_COMPONENT_ID, nullptr);
+				}
+			}
+		}
+	}
+	ice_session_set_base_for_srflx_candidates(mIceSession);
+	lInfo() << "Configuration-defined server reflexive candidates added to check lists.";
+}
+
 /** Return values:
  *  1: STUN gathering is started
  *  0: no STUN gathering is started, but it's ok to proceed with ICE anyway (with local candidates only or because STUN gathering was already done before)
@@ -295,9 +327,10 @@ int IceService::gatherIceCandidates () {
 	const struct addrinfo *ai = nullptr;
 	int err = 0;
 	
-	LinphoneNatPolicy *natPolicy = getMediaSessionPrivate().getNatPolicy();
-	if (natPolicy && linphone_nat_policy_stun_server_activated(natPolicy)) {
-		ai = linphone_nat_policy_get_stun_server_addrinfo(natPolicy);
+	LinphoneNatPolicy *cNatPolicy = getMediaSessionPrivate().getNatPolicy();
+	NatPolicy *natPolicy =  cNatPolicy ? NatPolicy::toCpp(cNatPolicy) : nullptr;
+	if (natPolicy && natPolicy->stunServerActivated()) {
+		ai = natPolicy->getStunServerAddrinfo();
 		if (ai)
 			ai = getIcePreferredStunServerAddrinfo(ai);
 		else
@@ -314,16 +347,16 @@ int IceService::gatherIceCandidates () {
 		return -1;
 	}
 	
-	if (ai && natPolicy && linphone_nat_policy_stun_server_activated(natPolicy)) {
-		string server = linphone_nat_policy_get_stun_server(natPolicy);
-		lInfo() << "ICE: gathering candidates from [" << server << "] using " << (linphone_nat_policy_turn_enabled(natPolicy) ? "TURN" : "STUN");
+	if (ai && natPolicy && natPolicy->stunServerActivated()) {
+		const string &server = natPolicy->getStunServer();
+		lInfo() << "ICE: gathering candidates from [" << server << "] using " << (natPolicy->turnEnabled() ? "TURN" : "STUN");
 		// Gather local srflx candidates.
-		if (linphone_nat_policy_turn_enabled(natPolicy)) {
+		if (natPolicy->turnEnabled()) {
 			ice_session_enable_turn(mIceSession, TRUE);
 
-			if (linphone_nat_policy_tls_turn_transport_enabled(natPolicy)) {
+			if (natPolicy->turnTlsEnabled()) {
 				ice_session_set_turn_transport(mIceSession, "tls");
-			} else if (linphone_nat_policy_tcp_turn_transport_enabled(natPolicy)) {
+			} else if (natPolicy->turnTcpEnabled()) {
 				ice_session_set_turn_transport(mIceSession, "tcp");
 			} else {
 				ice_session_set_turn_transport(mIceSession, "udp");
@@ -333,13 +366,14 @@ int IceService::gatherIceCandidates () {
 
 			char host[NI_MAXHOST];
 			int port = 0;
-			linphone_parse_host_port(linphone_nat_policy_get_stun_server(natPolicy), host, sizeof(host), &port);
+			linphone_parse_host_port(server.c_str(), host, sizeof(host), &port);
 			ice_session_set_turn_cn(mIceSession, host);
 		}
 		ice_session_set_stun_auth_requested_cb(mIceSession, MediaSessionPrivate::stunAuthRequestedCb, &getMediaSessionPrivate());
 		err = ice_session_gather_candidates(mIceSession, ai->ai_addr, (socklen_t)ai->ai_addrlen) ? 1 : 0;
 	} else {
-		lInfo() << "ICE: bypass candidates gathering";
+		lInfo() << "ICE: bypass server-reflexive candidates gathering";
+		addPredefinedSflrxCandidates(natPolicy);
 	}
 	if (err == 0) gatheringFinished();
 	return err;

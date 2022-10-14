@@ -254,6 +254,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	logger/logger.h
 	nat/ice-service.h
 	nat/stun-client.h
+	nat/nat-policy.h
 	object/app-data-container.h
 	object/base-object-p.h
 	object/base-object.h
@@ -388,6 +389,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-recorder-params.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/api/c-video-source-descriptor.cpp
+	c-wrapper/api/c-nat-policy.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	call/call-log.cpp
@@ -483,6 +485,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	logger/logger.cpp
 	nat/ice-service.cpp
 	nat/stun-client.cpp
+	nat/nat-policy.cpp
 	object/app-data-container.cpp
 	object/base-object.cpp
 	object/clonable-object.cpp

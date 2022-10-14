@@ -137,7 +137,7 @@ public:
 	}
 };
 
-void getAddress(IP_ADAPTER_UNICAST_ADDRESS * unicastAddress, std::list<AddressData> * pList){
+static void getAddress(IP_ADAPTER_UNICAST_ADDRESS * unicastAddress, std::list<AddressData> * pList){
 	SOCKET_ADDRESS * pAddr = &unicastAddress->Address;
 	char szAddr[INET6_ADDRSTRLEN];
 	DWORD dwSize = INET6_ADDRSTRLEN;

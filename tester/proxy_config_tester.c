@@ -240,6 +240,7 @@ static void load_dynamic_proxy_config(void) {
 	nat_policy = linphone_proxy_config_get_nat_policy(proxy);
 
 	if (BC_ASSERT_PTR_NOT_NULL(nat_policy)) {
+		BC_ASSERT_STRING_EQUAL(linphone_nat_policy_get_stun_server(nat_policy), "stun.linphone.org");
 		BC_ASSERT_TRUE(linphone_nat_policy_ice_enabled(nat_policy));
 		BC_ASSERT_TRUE(linphone_nat_policy_stun_enabled(nat_policy));
 		BC_ASSERT_FALSE(linphone_nat_policy_turn_enabled(nat_policy));

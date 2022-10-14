@@ -144,6 +144,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const std::string & getIceUfrag() const;
 		const std::string & getIcePwd() const;
 		bool getIceMismatch() const;
+		const std::vector<SalIceCandidate> & getIceCandidates()const{return ice_candidates; }
 		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
 		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
 

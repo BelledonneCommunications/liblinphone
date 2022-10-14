@@ -48,7 +48,6 @@ set(ROOT_HEADER_FILES
 	logging.h
 	lpconfig.h
 	misc.h
-	nat_policy.h
 	payload_type.h
 	player.h
 	presence.h
@@ -115,6 +114,7 @@ set(C_API_HEADER_FILES
 	c-digest-authentication-policy.h
 	c-types.h
 	c-video-source-descriptor.h
+	c-nat-policy.h
 )
 
 set(ENUMS_HEADER_FILES

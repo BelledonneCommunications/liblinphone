@@ -84,6 +84,7 @@ public:
 
 	IceService &getIceService() const { return streamsGroup->getIceService(); }
 	std::shared_ptr<SalMediaDescription> getLocalDesc () const { return localDesc; }
+	std::shared_ptr<SalMediaDescription> getRemoteDesc() const { return streamsGroup->getCurrentOfferAnswerContext().remoteMediaDescription; }
 
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) const;
 	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys() const;
