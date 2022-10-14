@@ -67,6 +67,7 @@ typedef enum _LinphoneAudioDeviceType {
 	LinphoneAudioDeviceTypeGenericUsb = 8, /** GenericUsb */
 	LinphoneAudioDeviceTypeHeadset = 9, /** Headset */
 	LinphoneAudioDeviceTypeHeadphones = 10, /** Headphones */
+	LinphoneAudioDeviceTypeHearingAid = 11, /** Hearing Aid */
 } LinphoneAudioDeviceType;
 
 /**

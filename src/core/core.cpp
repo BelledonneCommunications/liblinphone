@@ -916,6 +916,10 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 				// Not setting flags inside if statement in order to handle the case of a headset/headphones device that can record and play sound
 				if (!headsetMicFound) headsetMicFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record));
 				if (!headsetSpeakerFound) headsetSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
+				break;
+			case AudioDevice::Type::HearingAid:
+				audioDevices.push_back(audioDevice);
+				break;
 			default:
 				break;
 		}
