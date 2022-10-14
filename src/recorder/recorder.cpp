@@ -77,10 +77,9 @@ LinphoneStatus Recorder::open (const std::string &file) {
 }
 
 void Recorder::close () {
-	if (getState() == LinphoneRecorderRunning) {
-		pause();
-	}
-	ms_media_recorder_close(mRecorder);
+	pause();
+	if(getState() != LinphoneRecorderClosed)
+		ms_media_recorder_close(mRecorder);
 }
 
 const std::string& Recorder::getFile () const {
@@ -94,10 +93,13 @@ LinphoneStatus Recorder::start () {
 }
 
 LinphoneStatus Recorder::pause () {
-	ms_media_recorder_pause(mRecorder);
-	ortp_gettimeofday(&mEndTime, nullptr);
-	getPlatformHelpers(getCore()->getCCore())->onRecordingPaused();
-	return 0;
+	if(getState() == LinphoneRecorderRunning) {
+		ms_media_recorder_pause(mRecorder);
+		ortp_gettimeofday(&mEndTime, nullptr);
+		getPlatformHelpers(getCore()->getCCore())->onRecordingPaused();
+		return 0;
+	}else
+		return -1;
 }
 
 LinphoneRecorderState Recorder::getState () const {
