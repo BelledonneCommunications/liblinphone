@@ -418,7 +418,7 @@ void ServerGroupChatRoomPrivate::handleSubjectChange(SalCallOp *op){
 	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
 		// Handle subject change
 		lInfo() << q << ": New subject \"" << op->getSubject() << "\"";
-		q->setSubject(op->getSubject());
+		q->setUtf8Subject(op->getSubject());
 	}
 }
 
@@ -959,7 +959,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	content.setContentDisposition(ContentDisposition::RecipientListHistory);
 	if (linphone_core_content_encoding_supported(q->getCore()->getCCore(), "deflate"))
 		content.setContentEncoding("deflate");
-	session->startInvite(nullptr, q->getSubject(), &content);
+	session->startInvite(nullptr, q->getUtf8Subject(), &content);
 }
 
 void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDevice> &device) {
@@ -970,7 +970,7 @@ void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDev
 	shared_ptr<CallSession> session = makeSession(device);
 	switch(session->getState()){
 		case CallSession::State::OutgoingInit:
-			session->startInvite(nullptr, q->getSubject(), nullptr);
+			session->startInvite(nullptr, q->getUtf8Subject(), nullptr);
 		break;
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning:
@@ -1264,7 +1264,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 
-	getConference()->setSubject(op->getSubject());
+	getConference()->setUtf8Subject(op->getSubject());
 
 	getConference()->setConferenceId(ConferenceId());
 
@@ -1313,7 +1313,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));
 	getConference()->confParams->setConferenceAddress(peerAddress);
-	getConference()->confParams->setSubject(subject);
+	getConference()->confParams->setUtf8Subject(subject);
 	getConference()->confParams->enableChat(true);
 	getCore()->getPrivate()->localListEventHandler->addHandler(static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
 	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
@@ -1469,7 +1469,7 @@ const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () con
 	return getConference()->getParticipants();
 }
 
-const string &ServerGroupChatRoom::getSubject () const {
+const string & ServerGroupChatRoom::getSubject () const {
 	return getConference()->getSubject();
 }
 
@@ -1511,7 +1511,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 void ServerGroupChatRoom::setSubject (const string &subject) {
 	if (subject != getSubject()) {
 		getConference()->setSubject(subject);
-		shared_ptr<ConferenceSubjectEvent> event = getConference()->notifySubjectChanged(time(nullptr), false, getSubject());
+		shared_ptr<ConferenceSubjectEvent> event = getConference()->notifySubjectChanged(time(nullptr), false, getUtf8Subject());
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }

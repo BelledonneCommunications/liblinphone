@@ -86,7 +86,7 @@ public:
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 
-	const std::string &getSubject () const override;
+	const std::string & getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
 	void join () override;

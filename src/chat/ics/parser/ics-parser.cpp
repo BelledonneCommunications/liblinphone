@@ -159,6 +159,10 @@ namespace Ics {
 	public:
 		EventNode () = default;
 
+		void setUtf8Summary (const string &summary) {
+			setSummary(Utils::utf8ToLocale(summary));
+		}
+		
 		void setSummary (const string &summary) {
 			mSummary = summary;
 
@@ -167,6 +171,10 @@ namespace Ics {
 			replace_all(mSummary, "\\;", ";");
 			replace_all(mSummary, "\\,", ",");
 			replace_all(mSummary, "\\\\", "\\");
+		}
+
+		void setUtf8Description (const string &description) {
+			setDescription(Utils::utf8ToLocale(description));
 		}
 
 		void setDescription (const string &description) {
@@ -393,8 +401,8 @@ Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 		->setCollector("method", belr::make_sfn(&IcalendarNode::setMethod));
 
 	d->parser->setHandler("eventc", belr::make_fn(make_shared<EventNode>))
-		->setCollector("summvalue", belr::make_sfn(&EventNode::setSummary))
-		->setCollector("descvalue", belr::make_sfn(&EventNode::setDescription))
+		->setCollector("summvalue", belr::make_sfn(&EventNode::setUtf8Summary))
+		->setCollector("descvalue", belr::make_sfn(&EventNode::setUtf8Description))
 		->setCollector("dtstval", belr::make_sfn(&EventNode::setDateStart))
 		->setCollector("dur-value", belr::make_sfn(&EventNode::setDuration))
 		->setCollector("organizer", belr::make_sfn(&EventNode::setOrganizer))

@@ -119,6 +119,7 @@ LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() cons
 		case CallSession::State::OutgoingProgress:
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
+		case CallSession::State::PushIncomingReceived:
 			return getParams()->getMediaEncryption();
 			break;
 		case CallSession::State::Connected:
@@ -604,7 +605,21 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 
 bool MediaSessionPrivate::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
 	L_Q();
-	return (!!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_any_encryption", 0)) ? (getNegotiatedMediaEncryption()==LinphoneMediaEncryptionNone) : (isEncryptionMandatory() && (getNegotiatedMediaEncryption()==LinphoneMediaEncryptionSRTP) && !md->hasSrtp());
+	if (isEncryptionMandatory()) {
+		const auto negotiatedEncryption = getNegotiatedMediaEncryption();
+		if (!!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_any_encryption", 0)) {
+			if (negotiatedEncryption==LinphoneMediaEncryptionNone) {
+				lError() << "Encryption is mandatory however the negotiated encryption is " << linphone_media_encryption_to_string(negotiatedEncryption);
+				return true;
+			}
+		} else {
+			if ((negotiatedEncryption==LinphoneMediaEncryptionSRTP) && !md->hasSrtp()) {
+				lError() << "Negotiated encryption is " << linphone_media_encryption_to_string(negotiatedEncryption) << " however media description has no stream has been negotiated with it";
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 void MediaSessionPrivate::updating(bool isUpdate) {
@@ -966,13 +981,13 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 	bool_t acceptAllEncryptions = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_any_encryption", 0);
 
 	if (md->hasZrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
-		if (!mandatory || acceptAllEncryptions || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP))
+		if (!mandatory || (mandatory && (acceptAllEncryptions || linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP)))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
 	} else if (md->hasDtls() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionDTLS)) {
-		if (!mandatory || acceptAllEncryptions || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionDTLS))
+		if (!mandatory || (mandatory && (acceptAllEncryptions || linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionDTLS)))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
 	} else if (md->hasSrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionSRTP)) {
-		if (!mandatory || acceptAllEncryptions || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP))
+		if (!mandatory || (mandatory && (acceptAllEncryptions || linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP)))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
 	} else if (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionNone))

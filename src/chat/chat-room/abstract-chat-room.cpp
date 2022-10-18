@@ -18,6 +18,7 @@
  */
 
 #include "abstract-chat-room-p.h"
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -32,6 +33,13 @@ AbstractChatRoom::AbstractChatRoom (
 	const shared_ptr<Core> &core
 ) : Object(p), CoreAccessor(core) {}
 
+void AbstractChatRoom::setUtf8Subject (const string &subject) {
+	setSubject(Utils::utf8ToLocale(subject));
+}
+
+const string AbstractChatRoom::getUtf8Subject () const {
+	return Utils::localeToUtf8(getSubject());
+}
 
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 	switch(e) {

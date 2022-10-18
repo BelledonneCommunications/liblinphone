@@ -205,8 +205,12 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices () c
 	return devices;
 }
 
-const string &Conference::getSubject () const {
+const string & Conference::getSubject () const {
 	return confParams->getSubject();
+}
+
+const string Conference::getUtf8Subject () const {
+	return confParams->getUtf8Subject();
 }
 
 const string &Conference::getUsername () const {
@@ -252,6 +256,10 @@ bool Conference::removeParticipants (const list<shared_ptr<Participant>> &partic
 
 void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
 	lError() << "Conference class does not handle setParticipantAdminStatus() generically";
+}
+
+void Conference::setUtf8Subject (const string &subject) {
+	setSubject(Utils::utf8ToLocale(subject));
 }
 
 void Conference::setSubject (const string &subject) {

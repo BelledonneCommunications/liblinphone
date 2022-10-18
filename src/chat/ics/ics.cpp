@@ -77,8 +77,17 @@ void Ics::Event::setDuration (tm duration) {
 	mDuration = duration;
 }
 
+const std::string Ics::Event::getUtf8Summary () const {
+	return Utils::localeToUtf8(mSummary);
+}
+
+
 const std::string &Ics::Event::getSummary () const {
 	return mSummary;
+}
+
+void Ics::Event::setUtf8Summary (const std::string &summary) {
+	mSummary = Utils::trim(Utils::utf8ToLocale(summary));
 }
 
 void Ics::Event::setSummary (const std::string &summary) {
@@ -93,16 +102,32 @@ void Ics::Event::setSequence (unsigned int sequence) {
 	mSequence = sequence;
 }
 
+const std::string Ics::Event::getUtf8Uid () const {
+	return Utils::localeToUtf8(mUid);
+}
+
 const std::string &Ics::Event::getUid () const {
 	return mUid;
+}
+
+void Ics::Event::setUtf8Uid (const std::string &uid) {
+	mUid = Utils::trim(Utils::utf8ToLocale(uid));
 }
 
 void Ics::Event::setUid (const std::string &uid) {
 	mUid = Utils::trim(uid);
 }
 
+const std::string Ics::Event::getUtf8Description () const {
+	return Utils::localeToUtf8(mDescription);
+}
+
 const std::string &Ics::Event::getDescription () const {
 	return mDescription;
+}
+
+void Ics::Event::setUtf8Description (const std::string &description) {
+	mDescription = Utils::trim(Utils::utf8ToLocale(description));
 }
 
 void Ics::Event::setDescription (const std::string &description) {
@@ -179,8 +204,8 @@ std::string Ics::Event::asString () const {
 		}
 	}
 	if (!mXConfUri.empty()) output << "X-CONFURI:" << mXConfUri << "\r\n";
-	if (!mSummary.empty()) output << "SUMMARY:" << escape(mSummary) << "\r\n";
-	if (!mDescription.empty()) output << "DESCRIPTION:" << escape(mDescription) << "\r\n";
+	if (!mSummary.empty()) output << "SUMMARY:" << Utils::localeToUtf8(escape(mSummary)) << "\r\n";
+	if (!mDescription.empty()) output << "DESCRIPTION:" << Utils::localeToUtf8(escape(mDescription)) << "\r\n";
 	if (mSequence != 0) output << "SEQUENCE:" << mSequence << "\r\n";
 
 	// An EVENT needs two mandatory attributes DTSTAMP AND UID

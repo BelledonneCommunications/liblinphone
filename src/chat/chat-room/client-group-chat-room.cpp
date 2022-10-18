@@ -687,7 +687,7 @@ void ClientGroupChatRoom::sendInvite (std::shared_ptr<CallSession> &session, con
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
 		content.setContentEncoding("deflate");
 	}
-	session->startInvite(nullptr, getSubject(), &content);
+	session->startInvite(nullptr, getUtf8Subject(), &content);
 }
 
 bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
@@ -747,7 +747,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	referOp->unref();
 }
 
-const string &ClientGroupChatRoom::getSubject () const {
+const string & ClientGroupChatRoom::getSubject () const {
 	return getConference()->getSubject();
 }
 
@@ -766,10 +766,10 @@ void ClientGroupChatRoom::setSubject (const string &subject) {
 
 	shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 	if (session)
-		session->update(nullptr, CallSession::UpdateMethod::Default, subject);
+		session->update(nullptr, CallSession::UpdateMethod::Default, Utils::localeToUtf8(subject));
 	else {
 		session = d->createSession();
-		session->startInvite(nullptr, subject, nullptr);
+		session->startInvite(nullptr, Utils::localeToUtf8(subject), nullptr);
 	}
 }
 
@@ -837,7 +837,7 @@ void ClientGroupChatRoom::exhume () {
 	string conferenceFactoryUri = Core::getConferenceFactoryUri(getCore(), getConferenceId().getLocalAddress());
 	Address conferenceFactoryAddress = Address(conferenceFactoryUri);
 	auto session = d->createSessionTo(conferenceFactoryAddress);
-	session->startInvite(nullptr, getSubject(), &content);
+	session->startInvite(nullptr, getUtf8Subject(), &content);
 	setState(ConferenceInterface::State::CreationPending);
 }
 
@@ -1267,7 +1267,7 @@ void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode,
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 		}
 		lInfo() << "Changing ephemeral mode to " << Utils::toString(mode);
-		session->update(csp, CallSession::UpdateMethod::Default, getSubject());
+		session->update(csp, CallSession::UpdateMethod::Default, getUtf8Subject());
 		delete csp;
 	} else {
 		lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
@@ -1422,7 +1422,7 @@ void ClientGroupChatRoom::sendEphemeralUpdate () {
 		auto csp = session->getParams()->clone();
 		csp->removeCustomHeader("Ephemeral-Life-Time");
 		csp->addCustomHeader("Ephemeral-Life-Time", (ephemeralEnabled() ? to_string(getEphemeralLifetime()) : "0"));
-		session->update(csp, CallSession::UpdateMethod::Default, getSubject());
+		session->update(csp, CallSession::UpdateMethod::Default, getUtf8Subject());
 		delete csp;
 	} else {
 		session = d->createSession();
@@ -1430,7 +1430,7 @@ void ClientGroupChatRoom::sendEphemeralUpdate () {
 		const IdentityAddress& remoteParticipant = getParticipants().front()->getAddress();
 		lInfo() << "Re-INVITing " << remoteParticipant << " because ephemeral settings of chat room [" << conference->getConferenceId() << "] have changed";
 
-		session->startInvite(nullptr, getSubject(), nullptr);
+		session->startInvite(nullptr, getUtf8Subject(), nullptr);
 	}
 }
 

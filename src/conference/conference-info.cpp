@@ -141,12 +141,20 @@ void ConferenceInfo::setDuration (unsigned int duration) {
 	mDuration = duration;
 }
 
-const std::string &ConferenceInfo::getSubject () const {
+const std::string & ConferenceInfo::getSubject () const {
 	return mSubject;
 }
 
+const std::string ConferenceInfo::getUtf8Subject () const {
+	return Utils::localeToUtf8(mSubject);
+}
+
 void ConferenceInfo::setSubject (const std::string &subject) {
-	mSubject = Utils::localeToUtf8(Utils::trim(subject));
+	mSubject = Utils::trim(subject);
+}
+
+void ConferenceInfo::setUtf8Subject (const std::string &subject) {
+	mSubject = Utils::trim(Utils::utf8ToLocale(subject));
 }
 
 unsigned int ConferenceInfo::getIcsSequence () const {
@@ -157,20 +165,36 @@ void ConferenceInfo::setIcsSequence (unsigned int icsSequence) {
 	mIcsSequence = icsSequence;
 }
 
-const std::string &ConferenceInfo::getIcsUid () const {
+const std::string ConferenceInfo::getUtf8IcsUid () const {
+	return Utils::localeToUtf8(mIcsUid);
+}
+
+const std::string & ConferenceInfo::getIcsUid () const {
 	return mIcsUid;
+}
+
+void ConferenceInfo::setUtf8IcsUid (const std::string &uid) {
+	mIcsUid = Utils::trim(Utils::utf8ToLocale(uid));
 }
 
 void ConferenceInfo::setIcsUid (const std::string &uid) {
 	mIcsUid = Utils::trim(uid);
 }
 
-const string &ConferenceInfo::getDescription () const {
+const string ConferenceInfo::getUtf8Description () const {
+	return Utils::localeToUtf8(mDescription);
+}
+
+const string & ConferenceInfo::getDescription () const {
 	return mDescription;
 }
 
 void ConferenceInfo::setDescription (const string &description) {
-	mDescription = Utils::localeToUtf8(Utils::trim(description));
+	mDescription = Utils::trim(description);
+}
+
+void ConferenceInfo::setUtf8Description (const string &description) {
+	mDescription = Utils::trim(Utils::utf8ToLocale(description));
 }
 
 const ConferenceInfo::State &ConferenceInfo::getState () const {
@@ -178,7 +202,10 @@ const ConferenceInfo::State &ConferenceInfo::getState () const {
 }
 
 void ConferenceInfo::setState (const ConferenceInfo::State &state) {
-	mState = state;
+	if (mState != state) {
+		lInfo() << "[Conference Info] [" << this << "] moving from state " << mState << " to state " << state;
+		mState = state;
+	}
 }
 
 void ConferenceInfo::updateFrom (const std::shared_ptr<ConferenceInfo> & info) {
@@ -299,6 +326,18 @@ const ConferenceInfo::participant_params_t ConferenceInfo::stringToMemberParamet
 	}
 
 	return params;
+}
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceInfo::State s) {
+	switch (s) {
+		case ConferenceInfo::State::New:
+			return lhs << "New";
+		case ConferenceInfo::State::Updated:
+			return lhs << "Updated";
+		case ConferenceInfo::State::Cancelled:
+			return lhs << "Cancelled";
+	}
+	return lhs;
 }
 
 LINPHONE_END_NAMESPACE

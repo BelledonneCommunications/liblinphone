@@ -61,12 +61,18 @@ namespace Ics {
 		void setSequence (unsigned int duration);
 
 		const std::string &getUid () const;
+		const std::string getUtf8Uid () const;
+		void setUtf8Uid (const std::string &uid);
 		void setUid (const std::string &uid);
 
 		const std::string &getSummary () const;
+		const std::string getUtf8Summary () const;
+		void setUtf8Summary (const std::string &summary);
 		void setSummary (const std::string &summary);
 
 		const std::string &getDescription () const;
+		const std::string getUtf8Description () const;
+		void setUtf8Description (const std::string &description);
 		void setDescription (const std::string &description);
 
 		const std::string &getXConfUri () const;

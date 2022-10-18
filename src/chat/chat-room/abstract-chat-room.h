@@ -159,6 +159,9 @@ public:
 	virtual uint32_t getChar () = 0;
 	virtual std::shared_ptr<Call> getCall () const = 0;
 
+	virtual void setUtf8Subject (const std::string &subject) override;
+	virtual const std::string getUtf8Subject () const override;
+
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
 

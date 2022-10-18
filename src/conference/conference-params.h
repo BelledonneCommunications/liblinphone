@@ -80,10 +80,14 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
 		const ConferenceAddress & getConferenceAddress() const { return m_conferenceAddress; };
 
-		void setDescription (const std::string &description);
+		void setUtf8Description (const std::string &description);
+		void setDescription (const std::string &description) { m_description = description; };
 		const std::string &getDescription() const { return m_description; };
+		const std::string getUtf8Description() const;
 
-		virtual void setSubject (const std::string &subject) override;
+		virtual void setUtf8Subject (const std::string &subject) override;
+		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
+		const std::string getUtf8Subject() const;
 		const std::string &getSubject() const { return m_subject; };
 
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};

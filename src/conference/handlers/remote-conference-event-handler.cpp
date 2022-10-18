@@ -137,9 +137,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	if (confDescription.present()) {
 		auto &subject = confDescription.get().getSubject();
 		if (subject.present() && !subject.get().empty()) {
-			if (conf->getSubject() != subject.get()) {
-				conf->Conference::setSubject(subject.get());
+			if (conf->getUtf8Subject() != subject.get()) {
+				conf->Conference::setSubject(Utils::utf8ToLocale(subject.get()));
 				if (!isFullState) {
+					// Subject must be stored in the system locale
 					conf->notifySubjectChanged(
 						creationTime,
 						isFullState,

@@ -461,8 +461,16 @@ void linphone_conference_params_set_subject(LinphoneConferenceParams *params, co
 	ConferenceParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
 }
 
+void linphone_conference_params_set_utf8_subject(LinphoneConferenceParams *params, const char * subject){
+	ConferenceParams::toCpp(params)->setUtf8Subject(L_C_TO_STRING(subject));
+}
+
 const char * linphone_conference_params_get_subject(const LinphoneConferenceParams *params){
 	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getSubject());
+}
+
+const char * linphone_conference_params_get_utf8_subject(const LinphoneConferenceParams *params){
+	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getUtf8Subject());
 }
 
 const char *linphone_conference_params_get_description (const LinphoneConferenceParams *params) {

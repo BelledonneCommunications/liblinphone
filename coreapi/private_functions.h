@@ -734,6 +734,7 @@ LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneCha
 LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState state);
 
 LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC const char *linphone_conference_info_get_utf8_ics_uid(const LinphoneConferenceInfo *conference_info);
 LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
 
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new(void);

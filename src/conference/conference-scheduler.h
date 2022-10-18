@@ -64,8 +64,8 @@ public:
 	State getState () const;
 
 	const std::shared_ptr<ConferenceInfo> getInfo () const;
-	void cancelConference (std::shared_ptr<ConferenceInfo> info);
-	void setInfo(const std::shared_ptr<ConferenceInfo> info);
+	void cancelConference (const std::shared_ptr<ConferenceInfo> & info);
+	void setInfo(const std::shared_ptr<ConferenceInfo> & info);
 
 	void setConferenceAddress(const ConferenceAddress& conferenceAddress);
 

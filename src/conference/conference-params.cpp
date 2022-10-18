@@ -49,8 +49,8 @@ ConferenceParams::ConferenceParams(const ConferenceParams& params) : HybridObjec
 	m_joinMode = params.m_joinMode;
 	m_conferenceAddress = params.m_conferenceAddress;
 	m_factoryAddress = params.m_factoryAddress;
-	m_subject = Utils::localeToUtf8(params.m_subject);
-	m_description = Utils::localeToUtf8(params.m_description);
+	m_subject = params.m_subject;
+	m_description = params.m_description;
 	m_me = params.m_me;
 	m_startTime = params.m_startTime;
 	m_endTime = params.m_endTime;
@@ -88,12 +88,20 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 		ms_message("Update conference parameters from account: no account");
 }
 
-void ConferenceParams::setDescription (const std::string &description) {
-	m_description = Utils::localeToUtf8(description);
+void ConferenceParams::setUtf8Description (const std::string &description) {
+	m_description = Utils::utf8ToLocale(description);
 };
 
-void ConferenceParams::setSubject (const std::string &subject) {
-	m_subject = Utils::localeToUtf8(subject);
+const std::string ConferenceParams::getUtf8Description() const {
+	return Utils::localeToUtf8(m_description);
+};
+
+void ConferenceParams::setUtf8Subject (const std::string &subject) {
+	m_subject = Utils::utf8ToLocale(subject);
+};
+
+const std::string ConferenceParams::getUtf8Subject() const {
+	return Utils::localeToUtf8(m_subject);
 };
 
 LINPHONE_END_NAMESPACE

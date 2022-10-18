@@ -378,7 +378,7 @@ void ProxyChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &pa
 
 // -----------------------------------------------------------------------------
 
-const string &ProxyChatRoom::getSubject () const {
+const string & ProxyChatRoom::getSubject () const {
 	L_D();
 	return d->chatRoom->getSubject();
 }

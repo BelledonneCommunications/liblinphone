@@ -102,21 +102,27 @@ void ConferenceScheduler::fillCancelList(const ConferenceInfo::participant_list_
 	}
 }
 
-void ConferenceScheduler::cancelConference (std::shared_ptr<ConferenceInfo> info) {
-	while (!info->getParticipants().empty()) {
-		const auto & participants = info->getParticipants();
-		const auto & participant = *(participants.begin());
-		info->removeParticipant(participant.first);
+void ConferenceScheduler::cancelConference (const std::shared_ptr<ConferenceInfo> & info) {
+	if (info) {
+		auto clone = info->clone()->toSharedPtr();
+		while (!clone->getParticipants().empty()) {
+			const auto & participants = clone->getParticipants();
+			const auto & participant = *(participants.begin());
+			clone->removeParticipant(participant.first);
+		}
+		setInfo(clone);
 	}
-	setInfo(info);
 }
 
-void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
+void ConferenceScheduler::setInfo (const std::shared_ptr<ConferenceInfo> & info) {
 	if (!info) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Trying to set null conference info to the conference scheduler. Aborting conference creation!";
 		setState(State::Error);
 		return;
 	}
+
+	// Clone the conference info in order to be able to modify it freely
+	auto clone = info->clone()->toSharedPtr();
 
 	if (!mAccount) {
 		auto default_account = linphone_core_get_default_account(getCore()->getCCore());
@@ -131,29 +137,29 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 		return;
 	}
 
-	const auto & organizer = info->getOrganizerAddress();
-	const auto & participants = info->getParticipants();
+	const auto & organizer = clone->getOrganizerAddress();
+	const auto & participants = clone->getParticipants();
 	const auto participantListEmpty = participants.empty();
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator] (const auto &p) {
 			return (p.first == creator);
 		}) != participants.cend());
 	if ((creator != organizer) && !participantFound) {
-		lWarning() << "[Conference Scheduler] [" << this << "] Address " << creator << " is trying to modify the conference information but he/she is neither an invited participant nor the organizer (" << organizer << ") of conference " << info->getUri();
+		lWarning() << "[Conference Scheduler] [" << this << "] Address " << creator << " is trying to modify the conference information but he/she is neither an invited participant nor the organizer (" << organizer << ") of conference " << clone->getUri();
 		setState(State::Error);
 		return;
 	}
 
 	bool isUpdate = false;
 #ifdef HAVE_DB_STORAGE
-	if (info->getUri().isValid()) {
+	if (clone->getUri().isValid()) {
 		auto &mainDb = getCore()->getPrivate()->mainDb;
-		auto confInfo = mainDb->getConferenceInfoFromURI(info->getUri());
+		auto confInfo = mainDb->getConferenceInfoFromURI(clone->getUri());
 		if (confInfo) {
-			lInfo() << "[Conference Scheduler] [" << this << "] Found matching conference info in database for address [" << info->getUri() << "]";
+			lInfo() << "[Conference Scheduler] [" << this << "] Found matching conference info in database for address [" << clone->getUri() << "]";
 			isUpdate = true;
 			setState(State::Updating);
-			info->updateFrom(confInfo);
-			fillCancelList(confInfo->getParticipants(), info->getParticipants());
+			clone->updateFrom(confInfo);
+			fillCancelList(confInfo->getParticipants(), clone->getParticipants());
 		}
 	}
 #endif // HAVE_DB_STORAGE
@@ -166,29 +172,29 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 
 	if (mConferenceInfo == nullptr && !isUpdate) {
 		setState(State::AllocationPending);
-		if (info->getUri().isValid()) {
+		if (clone->getUri().isValid()) {
 			// This is a hack for the tester
 			lError() << "[Conference Scheduler] [" << this << "] This is a hack for liblinphone-tester, you shouldn't see this in production!";
-			mConferenceInfo = info;
+			mConferenceInfo = clone;
 			setState(State::Ready);
 			return;
 		}
 	} else if (mConferenceInfo != nullptr) {
 		setState(State::Updating);
-		info->updateFrom(mConferenceInfo);
-		fillCancelList(mConferenceInfo->getParticipants(), info->getParticipants());
+		clone->updateFrom(mConferenceInfo);
+		fillCancelList(mConferenceInfo->getParticipants(), clone->getParticipants());
 	}
 
 	auto infoState = ConferenceInfo::State::New;
 	if (getState() == State::Updating) {
-		if (info->getParticipants().size() == 0) {
+		if (clone->getParticipants().size() == 0) {
 			infoState = ConferenceInfo::State::Cancelled;
 		} else {
 			infoState = ConferenceInfo::State::Updated;
 		}
 	}
-	info->setState(infoState);
-	mConferenceInfo = info;
+	clone->setState(infoState);
+	mConferenceInfo = clone;
 
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
 	const auto identityAddress = mConferenceInfo->getOrganizerAddress();
@@ -202,9 +208,9 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 			mConferenceInfo->setDateTime(ms_time(NULL));
 		}
 	} else {
-		const auto & startTime = info->getDateTime();
+		const auto & startTime = clone->getDateTime();
 		conferenceParams->setStartTime(startTime);
-		const auto & duration = info->getDuration();
+		const auto & duration = clone->getDuration();
 		if (duration > 0) {
 			const auto endTime = startTime + static_cast<time_t>(duration) * 60; // duration is in minutes
 			conferenceParams->setEndTime(endTime);
@@ -218,7 +224,7 @@ void ConferenceScheduler::setInfo (std::shared_ptr<ConferenceInfo> info) {
 
 	if (isUpdate) {
 		// Updating an existing conference
-		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, info->getUri());
+		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, clone->getUri());
 	} else {
 		// Creating conference
 		mSession = getCore()->createConferenceOnServer(conferenceParams, identityAddress, invitees);
@@ -477,7 +483,6 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 	for (auto participant : invitees) {
 		list<IdentityAddress> participantList;
 		participantList.push_back(participant);
-
 		shared_ptr<AbstractChatRoom> chatRoom = getCore()->getPrivate()->searchChatRoom(
 			chatRoomParams,
 			sender,

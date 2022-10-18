@@ -423,7 +423,7 @@ static void group_chat_room_creation_server (void) {
 		stats initialLaureStats = laure.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues @work";
 		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -432,7 +432,7 @@ static void group_chat_room_creation_server (void) {
 		LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure.getCMgr(), &initialLaureStats, confAddr, initialSubject, 2, FALSE);
 
 		// Marie now changes the subject
-		const char *newSubject = "Let's go drink a beer";
+		const char *newSubject = "Let's go drink a beer #party";
 		linphone_chat_room_set_subject(marieCr, newSubject);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_subject_changed, initialMarieStats.number_of_subject_changed + 1, liblinphone_tester_sip_timeout));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed, initialPaulineStats.number_of_subject_changed + 1, liblinphone_tester_sip_timeout));
@@ -505,7 +505,7 @@ static void group_chat_room_server_deletion (void) {
 		stats initialPaulineStats = pauline.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues #together";
 		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -584,7 +584,7 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 		stats initialPaulineStats = pauline.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -695,7 +695,7 @@ static void group_chat_room_server_admin_managed_messages_base (bool_t encrypted
 		stats pauline_stat=pauline.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		const LinphoneChatRoomEphemeralMode adminMode = LinphoneChatRoomEphemeralModeAdminManaged;
 		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie.getLc());
 
@@ -799,7 +799,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_enabled_afte
 		stats pauline_stat=pauline.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		const LinphoneChatRoomEphemeralMode adminMode = LinphoneChatRoomEphemeralModeAdminManaged;
 		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(marie.getLc());
 
@@ -955,7 +955,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_disabled_aft
 		stats pauline_stat=pauline.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		const LinphoneChatRoomEphemeralMode adminMode = LinphoneChatRoomEphemeralModeAdminManaged;
 		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, FALSE, adminMode);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
@@ -1154,7 +1154,7 @@ static void group_chat_room_server_admin_managed_messages_ephemeral_lifetime_upd
 		stats pauline_stat=pauline.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		const LinphoneChatRoomEphemeralMode adminMode = LinphoneChatRoomEphemeralModeAdminManaged;
 		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &marie_stat, participantsAddresses, initialSubject, FALSE, adminMode);
 		BC_ASSERT_PTR_NOT_NULL(marieCr);
@@ -1462,7 +1462,7 @@ static void group_chat_room_bulk_notify_to_participant (void) {
 		stats initialMichelleStats = michelle.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE, LinphoneChatRoomEphemeralModeDeviceManaged);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -1667,7 +1667,7 @@ static void group_chat_room_with_client_restart (void) {
 		stats initialMichelleStats = michelle.getStats();
 
 		// Marie creates a new group chat room
-		const char *initialSubject = "Colleagues";
+		const char *initialSubject = "Colleagues (characters: $ £ çà)";
 		LinphoneChatRoom *marieCr = create_chat_room_client_side_with_expected_number_of_participants(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, 1, FALSE,LinphoneChatRoomEphemeralModeDeviceManaged);
 		const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
@@ -7012,7 +7012,7 @@ static void abort_call_to_ice_conference (void) {
 	}
 }
 
-static void edit_simple_conference_base (bool_t from_organizer, bool_t use_default_account, bool_t enable_bundle_mode, bool_t join, bool_t server_restart) {
+static void edit_simple_conference_base (bool_t from_organizer, bool_t use_default_account, bool_t enable_bundle_mode, bool_t join, bool_t enable_encryption, bool_t server_restart) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
 		ClientConference marie("marie_rc", focus.getIdentity().asAddress());
@@ -7049,6 +7049,12 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 			linphone_core_set_video_device(mgr->lc, liblinphone_tester_mire_id);
 			linphone_core_enable_video_capture(mgr->lc, TRUE);
 			linphone_core_enable_video_display(mgr->lc, TRUE);
+
+			if ((mgr != focus.getCMgr()) && enable_encryption) {
+				linphone_config_set_int(linphone_core_get_config(mgr->lc), "rtp", "accept_any_encryption", 1);
+				linphone_core_set_media_encryption_mandatory(mgr->lc, TRUE);
+				linphone_core_set_media_encryption(mgr->lc, LinphoneMediaEncryptionZRTP);
+			}
 		}
 
 		bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
@@ -7505,27 +7511,26 @@ static void edit_simple_conference_base (bool_t from_organizer, bool_t use_defau
 }
 
 static void organizer_edits_simple_conference (void) {
-	edit_simple_conference_base(TRUE, TRUE, FALSE, FALSE, FALSE);
+	edit_simple_conference_base(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE);
 }
-
 static void organizer_edits_simple_conference_using_different_account (void) {
-	edit_simple_conference_base(TRUE, FALSE, TRUE, FALSE, FALSE);
+	edit_simple_conference_base(TRUE, FALSE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static void organizer_edits_simple_conference_while_active (void) {
-	edit_simple_conference_base(TRUE, TRUE, FALSE, TRUE, FALSE);
+	edit_simple_conference_base(TRUE, TRUE, FALSE, TRUE, TRUE, FALSE);
 }
 
 static void participant_edits_simple_conference (void) {
-	edit_simple_conference_base(FALSE, TRUE, TRUE, FALSE, FALSE);
+	edit_simple_conference_base(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static void participant_edits_simple_conference_using_different_account (void) {
-	edit_simple_conference_base(FALSE, FALSE, FALSE, FALSE, FALSE);
+	edit_simple_conference_base(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE);
 }
 
 static void organizer_edits_simple_conference_with_server_restart (void) {
-	edit_simple_conference_base(TRUE, TRUE, FALSE, FALSE, TRUE);
+	edit_simple_conference_base(TRUE, TRUE, FALSE, FALSE, TRUE, TRUE);
 }
 
 static void conference_edition_with_simultaneous_participant_add_remove (void) {

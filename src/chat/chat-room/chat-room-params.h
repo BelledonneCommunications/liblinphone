@@ -78,6 +78,7 @@ public:
 	bool isGroup() const;
 	bool isRealTimeText() const;
 	const std::string& getSubject() const;
+	const std::string getUtf8Subject() const;
 	long getEphemeralLifetime() const;
 	AbstractChatRoom::EphemeralMode getEphemeralMode() const;
 
@@ -87,6 +88,7 @@ public:
 	void setGroup(bool group);
 	void setRealTimeText(bool rtt);
 	void setSubject(std::string subject);
+	void setUtf8Subject(std::string subject);
 	void setEphemeralMode(AbstractChatRoom::EphemeralMode mode);
 	void setEphemeralLifetime(long lifetime);
 

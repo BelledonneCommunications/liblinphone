@@ -450,7 +450,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		// Remove capabilities like `Proxy`.
 		const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
 
-		const string &subject = chatRoom->getSubject();
+		const string &subject = chatRoom->getUtf8Subject();
 		const int &flags = chatRoom->hasBeenLeft();
 		int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
 		long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
@@ -562,8 +562,8 @@ long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceI
 	const long long &uriSipAddressid = insertSipAddress(conferenceInfo->getUri().asString());
 	const tm &startTime = Utils::getTimeTAsTm(conferenceInfo->getDateTime());
 	const unsigned int duration = conferenceInfo->getDuration();
-	const string &subject = conferenceInfo->getSubject();
-	const string &description = conferenceInfo->getDescription();
+	const string &subject = conferenceInfo->getUtf8Subject();
+	const string &description = conferenceInfo->getUtf8Description();
 	const unsigned int state = static_cast<unsigned int>(conferenceInfo->getState());
 	const unsigned int& sequence = conferenceInfo->getIcsSequence();
 	const string& uid = conferenceInfo->getIcsUid();
@@ -1091,8 +1091,8 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceCallEvent (
 
 			conferenceInfo->setDateTime(dbSession.getTime(row, 18));
 			conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 19, 0));
-			conferenceInfo->setSubject(row.get<string>(20));
-			conferenceInfo->setDescription(row.get<string>(21));
+			conferenceInfo->setUtf8Subject(row.get<string>(20));
+			conferenceInfo->setUtf8Description(row.get<string>(21));
 
 			static const string query = "SELECT sip_address.value"
 				" FROM sip_address, conference_info, conference_info_participant"
@@ -1827,14 +1827,13 @@ shared_ptr<ConferenceInfo> MainDbPrivate::selectConferenceInfo (const soci::row 
 	if (conferenceInfo) return conferenceInfo;
 
 	conferenceInfo = ConferenceInfo::create();
-
 	ConferenceAddress uri(row.get<string>(2));
 	conferenceInfo->setUri(uri);
 
 	conferenceInfo->setDateTime(dbSession.getTime(row, 3));
 	conferenceInfo->setDuration(dbSession.getUnsignedInt(row, 4, 0));
-	conferenceInfo->setSubject(row.get<string>(5));
-	conferenceInfo->setDescription(row.get<string>(6));
+	conferenceInfo->setUtf8Subject(row.get<string>(5));
+	conferenceInfo->setUtf8Description(row.get<string>(6));
 	conferenceInfo->setState(ConferenceInfo::State(row.get<int>(7))); // state is a TinyInt in database, don't cast it to unsigned, otherwise you'll get a std::bad_cast from soci.
 	unsigned int icsSequence = dbSession.getUnsignedInt(row,8,0);
 	conferenceInfo->setIcsSequence(icsSequence);
@@ -4299,7 +4298,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 			shared_ptr<ChatRoomParams> params = ChatRoomParams::fromCapabilities(capabilities);
 			if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Basic)) {
 				chatRoom = core->getPrivate()->createBasicChatRoom(conferenceId, capabilities, params);
-				chatRoom->setSubject(subject);
+				chatRoom->setUtf8Subject(subject);
 			} else if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Conference)) {
 #ifdef HAVE_ADVANCED_IM
 				list<shared_ptr<Participant>> participants;
@@ -4352,7 +4351,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						me,
 						capabilities,
 						params,
-						subject,
+						Utils::utf8ToLocale(subject),
 						move(participants),
 						lastNotifyId,
 						hasBeenLeft

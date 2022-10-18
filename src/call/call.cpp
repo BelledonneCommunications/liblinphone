@@ -524,7 +524,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 		const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
 		const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 		if (conferenceInfo) {
-			confParams->setSubject(conferenceInfo->getSubject());
+			confParams->setUtf8Subject(conferenceInfo->getUtf8Subject());
 			auto startTime = conferenceInfo->getDateTime();
 			confParams->setStartTime(startTime);
 			auto duration = conferenceInfo->getDuration();

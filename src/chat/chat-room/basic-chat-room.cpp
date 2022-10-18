@@ -167,7 +167,7 @@ void BasicChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &, 
 	lError() << "setParticipantAdminStatus() is not allowed on a BasicChatRoom";
 }
 
-const string &BasicChatRoom::getSubject () const {
+const string & BasicChatRoom::getSubject () const {
 	L_D();
 	return d->subject;
 }

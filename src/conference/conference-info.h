@@ -85,16 +85,22 @@ public:
 	void setDuration (unsigned int duration);
 
 	const std::string &getSubject () const;
+	const std::string getUtf8Subject () const;
 	void setSubject (const std::string &subject);
+	void setUtf8Subject (const std::string &subject);
 
 	unsigned int getIcsSequence () const;
 	void setIcsSequence (unsigned int icsSequence);
 
 	const std::string &getIcsUid () const;
+	const std::string getUtf8IcsUid () const;
 	void setIcsUid (const std::string &uid);
+	void setUtf8IcsUid (const std::string &uid);
 
 	const std::string &getDescription () const;
+	const std::string getUtf8Description () const;
 	void setDescription (const std::string &description);
+	void setUtf8Description (const std::string &description);
 
 	const ConferenceInfo::State &getState () const;
 	void setState (const ConferenceInfo::State &state);
@@ -119,6 +125,8 @@ private:
 
 	time_t mCreationTime = (time_t) -1;
 };
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceInfo::State s);
 
 LINPHONE_END_NAMESPACE
 

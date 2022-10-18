@@ -102,7 +102,7 @@ Content LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev)
 	const bool oneToOne = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne) : false;
 	const bool ephemerable = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Ephemeral) : false;
 	string entity = conferenceAddress.asString();
-	string subject = conf->getSubject();
+	string subject = conf->getUtf8Subject();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	if (!subject.empty()) {
@@ -728,7 +728,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceDataChanged (co
 }
 
 string LocalConferenceEventHandler::createNotifySubjectChanged () {
-	return createNotifySubjectChanged(conf->getSubject());
+	return createNotifySubjectChanged(conf->getUtf8Subject());
 }
 
 // -----------------------------------------------------------------------------

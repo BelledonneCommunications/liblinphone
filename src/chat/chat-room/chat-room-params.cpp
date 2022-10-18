@@ -22,6 +22,7 @@
 #include "core/core.h"
 #include "linphone/core.h"
 #include "logger/logger.h"
+#include "linphone/utils/utils.h"
 
 using namespace std;
 
@@ -77,6 +78,7 @@ bool ChatRoomParams::isGroup() const { return mGroup; }
 bool ChatRoomParams::isRealTimeText() const { return mRtt; }
 
 const string& ChatRoomParams::getSubject() const { return mSubject; }
+const string ChatRoomParams::getUtf8Subject() const { return Utils::utf8ToLocale(getSubject()); }
 
 AbstractChatRoom::EphemeralMode ChatRoomParams::getEphemeralMode() const { return mEphemeralMode; }
 
@@ -104,6 +106,7 @@ void ChatRoomParams::setGroup(bool group) {
 void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
 
 void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
+void ChatRoomParams::setUtf8Subject(string subject) { setSubject(Utils::utf8ToLocale(subject)); }
 
 void ChatRoomParams::setEphemeralMode(AbstractChatRoom::EphemeralMode mode) { mEphemeralMode = mode; }
 

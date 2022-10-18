@@ -274,6 +274,7 @@ time_t Utils::getStringToTime (const std::string &format, const std::string &s) 
 
 // TODO: Improve perf!!! Avoid c <--> cpp string conversions.
 string Utils::localeToUtf8 (const string &str) {
+	if (str.empty()) return std::string();
 	char *cStr = bctbx_locale_to_utf8(str.c_str());
 	string utf8Str = cStringToCppString(cStr);
 	bctbx_free(cStr);
@@ -281,6 +282,7 @@ string Utils::localeToUtf8 (const string &str) {
 }
 
 string Utils::utf8ToLocale (const string &str) {
+	if (str.empty()) return std::string();
 	char *cStr = bctbx_utf8_to_locale(str.c_str());
 	string localeStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
@@ -419,7 +421,7 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op
 		}
 	}
 
-	info->setSubject(op->getSubject());
+	info->setUtf8Subject(op->getSubject());
 
 	return info;
 }

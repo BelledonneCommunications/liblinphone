@@ -106,10 +106,22 @@ public:
 	virtual const std::string &getSubject () const = 0;
 
 	/*
+	* Get the subject of this conference
+	* @return The subject of the chat room in UTF8
+	*/
+	virtual const std::string getUtf8Subject () const = 0;
+
+	/*
 	* Set the subject of this conference. If not focus,  this operation is only available if the local participant  #getMe() is admin.
 	* @param[in] subject The new subject to set for the chat room
 	*/
 	virtual void setSubject (const std::string &subject) = 0;
+
+	/*
+	* Set the subject of this conference in UTF8. If not focus,  this operation is only available if the local participant  #getMe() is admin.
+	* @param[in] subject The new subject to set for the chat room
+	*/
+	virtual void setUtf8Subject (const std::string &subject) = 0;
 
 	/*
 	 * Change the admin status of a participant of this conference (If not focus,  This operation is only available if the local participant  #getMe() is admin). All participants are notified of change of the admin.
@@ -379,7 +391,13 @@ public:
 	* @param[in] subject The new subject to set for the chat room
 	*/
 	virtual void setSubject (const std::string &subject) = 0;
-	
+
+	/*
+	* Set the subject of this conference in UTF8. If not focus,  this operation is only available if the local participant  #getMe() is admin.
+	* @param[in] subject The new subject to set for the chat room
+	*/
+	virtual void setUtf8Subject (const std::string &subject) = 0;
+
 	/*
 	*Set participant representing myself in this Conference.
 	*If set this participant is added to the conference

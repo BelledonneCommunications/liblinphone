@@ -94,6 +94,7 @@ public:
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
 	virtual const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
 	const std::string &getSubject () const override;
+	const std::string getUtf8Subject () const override;
 	void join (const IdentityAddress &participantAddress) override;
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
@@ -109,6 +110,7 @@ public:
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
+	void setUtf8Subject (const std::string &subject) override;
 
 	const std::string &getUsername () const;
 	void setUsername (const std::string &username);
