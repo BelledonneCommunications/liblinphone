@@ -181,7 +181,8 @@ public:
 	const std::string &getReferTo () const;
 	const Address &getReferToAddress () const;
 	const Address *getRemoteAddress () const;
-	const std::string &getRemoteContact ();
+	const Address *getRemoteContactAddress () const;
+	const std::string &getRemoteContact () const;
 	const MediaSessionParams *getRemoteParams () const;
 	const std::string &getRemoteUserAgent ();
 	std::shared_ptr<Call> getReplacedCall () const;

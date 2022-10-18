@@ -3258,6 +3258,7 @@ static void set_video_settings_in_conference(LinphoneCoreManager * focus, Linpho
 		linphone_address_unref(uri);
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
 		if (focus_call) {
+			ms_message("%s %s video with direction %s", linphone_core_get_identity(focus->lc), ((answer_enable_video) ? "accepts" : "refuses"), linphone_media_direction_to_string(answer_video_direction));
 			LinphoneCallParams * focus_params = linphone_core_create_call_params(focus->lc, focus_call);
 			linphone_call_params_enable_video(focus_params, answer_enable_video);
 			linphone_call_params_set_video_direction (focus_params, answer_video_direction);

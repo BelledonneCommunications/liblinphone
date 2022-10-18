@@ -2209,7 +2209,7 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 								}
 							}
 						}
-						auto remoteContactAddress = Address(*session->getRemoteContactAddress());
+						auto remoteContactAddress = (*session->getRemoteContactAddress());
 						bool admin = remoteContactAddress.hasParam("admin") && Utils::stob(remoteContactAddress.getParamValue("admin"));
 						setParticipantAdminStatus(participant, admin);
 					} else {
@@ -2233,7 +2233,7 @@ void LocalConference::callStateChangedCb (LinphoneCore *lc, LinphoneCall *call, 
 							participantDeviceJoined(session);
 						}
 					} else {
-						auto remoteContactAddress = Address(*session->getRemoteContactAddress());
+						auto remoteContactAddress = (*session->getRemoteContactAddress());
 						lError() << "Unable to update device with address " << remoteContactAddress << " because it was found in conference " << getConferenceAddress();
 					}
 				}
@@ -2423,7 +2423,7 @@ RemoteConference::RemoteConference (
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, conferenceId.getLocalAddress(), listener, params){
 
-	focus = Participant::create(this, Address(focusCall->getRemoteContact()), focusCall->getActiveSession());
+	focus = Participant::create(this, *focusCall->getRemoteContactAddress(), focusCall->getActiveSession());
 	lInfo() << "Create focus '" << focus->getAddress() << "' from address : " << focusCall->getRemoteContact();
 	pendingSubject = confParams->getSubject();
 	setConferenceId(conferenceId);
@@ -3042,16 +3042,16 @@ void RemoteConference::leave () {
 bool RemoteConference::isIn () const {
 	if (state != ConferenceInterface::State::Created)
 		return false;
-	auto session = getMainSession();
+	const auto & session = getMainSession();
 	if (!session) return false;
 	LinphoneCallState callState = static_cast<LinphoneCallState>(session->getState());
-	auto focusContactAddress = Address(session->getRemoteContact());
-	return ((callState == LinphoneCallUpdatedByRemote) || (callState == LinphoneCallUpdating) || (callState == LinphoneCallStreamsRunning)) && focusContactAddress.hasUriParam("conf-id");
+	const auto & focusContactAddress = session->getRemoteContactAddress();
+	return ((callState == LinphoneCallUpdatedByRemote) || (callState == LinphoneCallUpdating) || (callState == LinphoneCallStreamsRunning)) && focusContactAddress->hasUriParam("conf-id");
 }
 
 bool RemoteConference::focusIsReady () const {
 	LinphoneCallState focusState;
-	auto session = getMainSession();
+	const auto & session = getMainSession();
 	if (!session || !session->getRemoteContactAddress())
 		return false;
 	focusState = static_cast<LinphoneCallState>(session->getState());
@@ -3106,7 +3106,7 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 	SalCallOp * op = nullptr;
 
 	if (session) {
-		focusContactAddress = Address(session->getRemoteContact());
+		focusContactAddress = *session->getRemoteContactAddress();
 		op = session->getPrivate()->getOp();
 		call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
 	}

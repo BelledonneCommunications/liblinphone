@@ -186,7 +186,7 @@ LINPHONE_PUBLIC LinphoneConferenceState linphone_conference_get_state(const Linp
 /**
  * Get the currently active speaker participant device
  * @param conference the #LinphoneConference object. @notnil
- * @return the #LinphoneParticipantDevice currently displayed as active speaker. @notnil
+ * @return the #LinphoneParticipantDevice currently displayed as active speaker. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipantDevice* linphone_conference_get_active_speaker_participant_device(const LinphoneConference *conference);
 

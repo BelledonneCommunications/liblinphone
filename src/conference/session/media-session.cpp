@@ -1916,10 +1916,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const SalStreamDescription &oldGridLayoutMainVideoStream = refMd ? refMd->findStreamWithContent("main") : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	const SalStreamDescription &oldActiveSpeakerLayoutMainVideoStream = refMd ? refMd->findStreamWithContent("speaker") : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	const SalStreamDescription &oldMainVideoStream = refMd ? refMd->findBestStream(SalVideo) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-	if (conference) {
-		if (isInLocalConference) {
-			addVideoStream &= isVideoConferenceEnabled;
-		}
+	if (conference && isInLocalConference) {
+		addVideoStream &= isVideoConferenceEnabled;
 	}
 
 	const SalStreamDescription &oldVideoStream = (conference) ? ((oldGridLayoutMainVideoStream == Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldActiveSpeakerLayoutMainVideoStream : oldGridLayoutMainVideoStream) : oldMainVideoStream;
@@ -2591,7 +2589,7 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 
 		const auto & videoStreamIdx = getMainVideoStreamIdx(ctx.remoteMediaDescription);
 		uint32_t videoSsrc = 0;
-		if (videoStreamIdx >= 0) {
+		if ((videoStreamIdx >= 0) && (newMd->nbActiveStreamsOfType(SalVideo) > 0)) {
 			const SalStreamDescription & videoStream = ctx.remoteMediaDescription->getStreamIdx(static_cast<unsigned int>(videoStreamIdx));
 			const auto & videoStreamCfg = videoStream.getActualConfiguration();
 			videoSsrc = videoStreamCfg.conference_ssrc;

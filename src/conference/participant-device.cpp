@@ -517,6 +517,14 @@ void * ParticipantDevice::getWindowId() const {
 	return mWindowId;
 }
 
+void ParticipantDevice::setIsSpeaking(bool isSpeaking) {
+	mIsSpeaking = isSpeaking;
+}
+
+bool ParticipantDevice::getIsSpeaking() const {
+	return mIsSpeaking;
+}
+
 void ParticipantDevice::setIsMuted(bool isMuted) {
 	mIsMuted = isMuted;
 }

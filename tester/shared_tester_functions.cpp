@@ -526,7 +526,21 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 	wait_for_list(lcs, NULL, 0, 5000);
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
-	
+
+	// mgr1 should see mgr2 as active speaker even though it has no video as it's speaking
+	device = linphone_conference_get_active_speaker_participant_device(confMgr1);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr1 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr2);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr2 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr1, addrMgr2));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
+
 	// mgr1 speaks and mgr1's video not change
 	lInfo() << __func__ << ": mgr1 speaks";
 	linphone_core_enable_mic(mgr2->lc, FALSE);

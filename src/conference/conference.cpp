@@ -131,27 +131,28 @@ bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls)
 }
 
 LinphoneStatus Conference::updateMainSession() {
-	LinphoneStatus ret = -1;
-	auto session = static_pointer_cast<MediaSession>(getMainSession());
-	if (session) {
-		const MediaSessionParams * params = session->getMediaParams();
-		MediaSessionParams *currentParams = params->clone();
-		currentParams->getPrivate()->setInternalCallUpdate(false);
-		if (!currentParams->rtpBundleEnabled()) {
-			currentParams->enableRtpBundle(true);
-		}
+	getCore()->doLater([this] {
+		auto session = static_pointer_cast<MediaSession>(getMainSession());
+		if (session) {
+			const MediaSessionParams * params = session->getMediaParams();
+			MediaSessionParams *currentParams = params->clone();
+			currentParams->getPrivate()->setInternalCallUpdate(false);
+			if (!currentParams->rtpBundleEnabled()) {
+				currentParams->enableRtpBundle(true);
+			}
 
-		// Update parameters based on conference capabilities
-		if (!confParams->audioEnabled()) {
-			currentParams->enableAudio(confParams->audioEnabled());
+			// Update parameters based on conference capabilities
+			if (!confParams->audioEnabled()) {
+				currentParams->enableAudio(confParams->audioEnabled());
+			}
+			if (!confParams->videoEnabled()) {
+				currentParams->enableVideo(confParams->videoEnabled());
+			}
+			session->update(currentParams);
+			delete currentParams;
 		}
-		if (!confParams->videoEnabled()) {
-			currentParams->enableVideo(confParams->videoEnabled());
-		}
-		ret = session->update(currentParams);
-		delete currentParams;
-	}
-	return ret;
+	});
+	return 0;
 }
 
 ConferenceLayout Conference::getLayout() const {

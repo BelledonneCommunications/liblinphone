@@ -158,20 +158,16 @@ void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
 	LinphoneConference *conference = (LinphoneConference *) userData;
 	const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
 
-	if (new_csrc == 0) {
-		cppConference->notifyActiveSpeakerParticipantDevice(nullptr);
-	} else {
-		bool found = false;
-		for(const auto &device : cppConference->getParticipantDevices()) {
-			if (device->getVideoSsrc() == new_csrc) {
-				lInfo() << "TEST: Notifying active speaker in liblinphone for ssrc: " << new_csrc;
-				cppConference->notifyActiveSpeakerParticipantDevice(device);
-				found = true;
-			}
+	bool found = false;
+	for(const auto &device : cppConference->getParticipantDevices()) {
+		if ((new_csrc == 0 && device->getIsSpeaking()) || (new_csrc != 0 && new_csrc == device->getVideoSsrc())) {
+			lInfo() << "TEST: Notifying active speaker in liblinphone for ssrc: " << new_csrc;
+			cppConference->notifyActiveSpeakerParticipantDevice(device);
+			found = true;
 		}
-
-		if (!found) lError() << "Conference [" << conference << "]: Active speaker changed with csrc: " << new_csrc << " but it does not correspond to any participant device";
 	}
+
+	if (!found) lError() << "Conference [" << conference << "]: Active speaker changed with csrc: " << new_csrc << " but it does not correspond to any participant device";
 }
 
 MediaStream *MS2VideoStream::getMediaStream()const{

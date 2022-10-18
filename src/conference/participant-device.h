@@ -155,6 +155,9 @@ public:
 	bool setStreamAvailability(const bool available, const LinphoneStreamType type);
 	bool getStreamAvailability(const LinphoneStreamType type) const;
 
+	void setIsSpeaking(bool isSpeaking);
+	bool getIsSpeaking() const;
+
 	void setIsMuted(bool isMuted);
 	bool getIsMuted() const;
 
@@ -183,6 +186,7 @@ private:
 	bool mSupportAdminMode = false;
 	mutable void * mWindowId = NULL;
 	bool mIsMuted = false;
+	bool mIsSpeaking = false;
 
 	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
 	std::map<LinphoneStreamType, bool> streamAvailabilities;

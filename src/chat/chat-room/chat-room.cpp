@@ -413,14 +413,12 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 		notifyIsComposingReceived(fromAddress.asAddress(), false);
 	}
 	
-	bool_t chatMessagesAggregation = linphone_core_get_chat_messages_aggregation_enabled(cCore);
-	if (chatMessagesAggregation || core->isCurrentlyAggregatingChatMessages()) {
+	if (core->isCurrentlyAggregatingChatMessages()) {
+		lDebug() << "[Chat Room] Core is currently aggregating chat messages, push message to list";
 		aggregatedMessages.push_back(chatMessage);
-		if (!core->isCurrentlyAggregatingChatMessages()) {
-			notifyAggregatedChatMessages();
-		}
 	} else {
 		// No aggregation, notify right away
+		lDebug() << "[Chat Room] No aggregation, notify right away";
 		notifyMessageReceived(chatMessage);
 	}
 }
@@ -438,6 +436,7 @@ void ChatRoomPrivate::notifyAggregatedChatMessages () {
 	L_Q();
 
 	if (aggregatedMessages.empty()) {
+		lDebug() << "[Chat Room] No aggregated message to notify";
 		return;
 	}
 	

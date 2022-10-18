@@ -1119,7 +1119,11 @@ const Address *Call::getRemoteAddress () const {
 	return getActiveSession()->getRemoteAddress();
 }
 
-const string &Call::getRemoteContact () {
+const Address *Call::getRemoteContactAddress () const {
+	return getActiveSession()->getRemoteContactAddress();
+}
+
+const string &Call::getRemoteContact () const {
 	return getActiveSession()->getRemoteContact();
 }
 

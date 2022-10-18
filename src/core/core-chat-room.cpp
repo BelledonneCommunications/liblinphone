@@ -864,7 +864,7 @@ void CorePrivate::stopChatMessagesAggregationTimer () {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		chatRoom->getPrivate()->notifyAggregatedChatMessages();
-	} 
+	}
 
 	chatMessagesAggregationBackgroundTask.stop();
 }
