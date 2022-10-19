@@ -499,7 +499,7 @@ class GenWrapper:
 		content = ''
 		with open(tmppath, mode='w') as f:
 			f.write(self.renderer.render(item))
-		with open(tmppath, mode='rU') as f:
+		with open(tmppath, mode='r') as f:
 			content = f.read()
 		with open(path, mode='w') as f:
 			f.write(content)

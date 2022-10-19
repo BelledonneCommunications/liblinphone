@@ -143,7 +143,8 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
-	auto participant = q->getChatRoom()->findParticipant(participantAddress);
+	auto me = q->getChatRoom()->getMe();
+	auto participant = participantAddress == me->getAddress() ? me : q->getChatRoom()->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 	const LinphoneParticipantImdnState *c_state = _linphone_participant_imdn_state_from_cpp_obj(imdnState);
 
