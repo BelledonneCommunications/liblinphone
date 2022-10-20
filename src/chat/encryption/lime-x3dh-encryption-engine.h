@@ -117,6 +117,10 @@ public:
 		FileTransferContent *fileTransferContent
 	) override;
 
+	int cancelFileTransfer (
+			FileTransferContent *fileTransferContent
+	) override;
+
 	void mutualAuthentication (
 		MSZrtpContext *zrtpContext,
 		const std::shared_ptr<SalMediaDescription> & localMediaDescription,

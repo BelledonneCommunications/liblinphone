@@ -609,6 +609,14 @@ int LimeX3dhEncryptionEngine::uploadingFile (
 	return 0;
 }
 
+int LimeX3dhEncryptionEngine::cancelFileTransfer (
+	FileTransferContent *fileTransferContent
+	) {
+	Content *content = static_cast<Content *>(fileTransferContent);
+	// calling decrypt with no data and no buffer to write the tag will simply release the encryption context and delete it
+	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+}
+
 EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType () {
 	return engineType;
 }

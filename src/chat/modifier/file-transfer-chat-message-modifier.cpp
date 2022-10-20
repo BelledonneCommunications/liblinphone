@@ -975,10 +975,10 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 	if (!belle_http_request_is_cancelled(httpRequest)) {
 		if (currentFileContentToTransfer) {
 			string filePath = currentFileContentToTransfer->getFilePath();
+			shared_ptr<ChatMessage> message = chatMessage.lock();
 			if (!filePath.empty()) {
 				lInfo() << "Canceling file transfer using file: " << filePath;
 
-				shared_ptr<ChatMessage> message = chatMessage.lock();
 				if (message && message->getDirection() == ChatMessage::Direction::Incoming) {
 					lWarning() << "Deleting incomplete file " << filePath;
 					int result = unlink(filePath.c_str());
@@ -990,6 +990,10 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 				}
 			} else {
 				lInfo() << "Cancelling file transfer.";
+			}
+			EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
+			if (imee) {
+				imee->cancelFileTransfer(currentFileTransferContent);
 			}
 		} else {
 			lWarning() << "Found a http request for file transfer but no Content";

@@ -88,6 +88,10 @@ public:
 		FileTransferContent *fileTransferContent
 	) { return 0; }
 
+	virtual int cancelFileTransfer (
+		FileTransferContent *fileTransferContent
+	) { return 0; }
+
 	virtual void mutualAuthentication (
 		MSZrtpContext *zrtpContext,
 		const std::shared_ptr<SalMediaDescription> & localMediaDescription,

@@ -132,4 +132,8 @@ int LegacyEncryptionEngine::uploadingFile (const shared_ptr<ChatMessage> &messag
 	return -1;
 }
 
+int LegacyEncryptionEngine::cancelFileTransfer ( FileTransferContent *fileTransferContent) {
+       return 0;
+}
+
 LINPHONE_END_NAMESPACE
