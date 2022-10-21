@@ -1032,7 +1032,7 @@ void LocalConference::addLocalEndpoint () {
 #ifdef VIDEO_ENABLED
 				auto videoMixer = dynamic_cast<MS2VideoMixer*>(mixer);
 				auto videoStream = videoMixer->getVideoStream();
-				auto meSsrc = video_stream_get_send_ssrc(videoStream);
+				auto meSsrc = media_stream_get_send_ssrc(&videoStream->ms);
 				for (auto & device : me->getDevices()) {
 					device->setVideoSsrc(meSsrc);
 					videoMixer->setLocalParticipantLabel(device->getLabel());

@@ -157,17 +157,35 @@ void MS2VideoStream::cameraNotWorkingCb (const char *cameraName) {
 void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
 	LinphoneConference *conference = (LinphoneConference *) userData;
 	const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
-
 	bool found = false;
-	for(const auto &device : cppConference->getParticipantDevices()) {
-		if ((new_csrc == 0 && device->getIsSpeaking()) || (new_csrc != 0 && new_csrc == device->getVideoSsrc())) {
-			lInfo() << "TEST: Notifying active speaker in liblinphone for ssrc: " << new_csrc;
-			cppConference->notifyActiveSpeakerParticipantDevice(device);
-			found = true;
-		}
-	}
 
-	if (!found) lError() << "Conference [" << conference << "]: Active speaker changed with csrc: " << new_csrc << " but it does not correspond to any participant device";
+	if (new_csrc != 0) {
+		for(const auto &device : cppConference->getParticipantDevices()) {
+			if (new_csrc == device->getVideoSsrc()) {
+				cppConference->notifyActiveSpeakerParticipantDevice(device);
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) lError() << "Conference [" << conference << "]: Active speaker changed with csrc: " << new_csrc << " but it does not correspond to any participant device";
+	} else {
+		const auto &meDevices = cppConference->getMe()->getDevices();
+		shared_ptr<ParticipantDevice> firstNotMe = nullptr;
+
+		for(const auto &device : cppConference->getParticipantDevices()) {
+			if (std::find(meDevices.begin(), meDevices.end(), device) == meDevices.end()) {
+				if (firstNotMe == nullptr) firstNotMe = device;
+				if (device->getIsSpeaking()) {
+					cppConference->notifyActiveSpeakerParticipantDevice(device);
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if (!found && firstNotMe != nullptr) cppConference->notifyActiveSpeakerParticipantDevice(firstNotMe);
+	}
 }
 
 MediaStream *MS2VideoStream::getMediaStream()const{
