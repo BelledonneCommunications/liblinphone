@@ -31,10 +31,6 @@ set(PUBLIC_LINK_LIBS
 	mediastreamer
 )
 
-if (ENABLE_FLEXIAPI)
-	list(APPEND LINK_LIBS jsoncpp_static)
-endif()
-
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
 	list(APPEND APPLE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
@@ -649,14 +645,6 @@ if(ENABLE_STATIC)
 		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
 
-	if (ENABLE_FLEXIAPI)
-		if (XCODE)
-			target_link_libraries(linphone PRIVATE jsoncpp_static)
-		else()
-			target_link_libraries(linphone PRIVATE jsoncpp_object)
-		endif()
-	endif()
-
 	if (APPLE)
 		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
 	else()
@@ -675,6 +663,10 @@ if(ENABLE_STATIC)
 		PUBLIC ${PUBLIC_LINK_LIBS}
 		PRIVATE ${LINK_LIBS}
 	)
+	if (ENABLE_FLEXIAPI)
+		target_link_libraries(linphone-static PUBLIC jsoncpp_static)
+	endif()
+
 
 	if(APPLE)
 		target_link_libraries(linphone-static PUBLIC ${APPLE_LIBS})
@@ -697,14 +689,6 @@ if(ENABLE_SHARED)
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
-
-	if (ENABLE_FLEXIAPI)
-		if (XCODE)
-			target_link_libraries(linphone PRIVATE jsoncpp_static)
-		else()
-			target_link_libraries(linphone PRIVATE jsoncpp_object)
-		endif()
-	endif()
 
 	if(APPLE)
 		set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
@@ -753,6 +737,10 @@ if(ENABLE_SHARED)
 		PUBLIC ${PUBLIC_LINK_LIBS}
 		PRIVATE ${LINK_LIBS}
 	)
+	if (ENABLE_FLEXIAPI)
+		target_link_libraries(linphone PUBLIC jsoncpp_lib)
+	endif()
+
 
 	if(APPLE)
 		target_link_libraries(linphone PUBLIC ${APPLE_LIBS})
