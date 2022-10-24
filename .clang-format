@@ -1,6 +1,6 @@
 ---
 # BasedOnStyle:  LLVM
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 AlignAfterOpenBracket: true
 AlignEscapedNewlinesLeft: false
 AlignOperands:   true
@@ -19,7 +19,9 @@ BinPackParameters: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
 BreakBeforeTernaryOperators: true
-BreakConstructorInitializersBeforeComma: false
+# When breaking before the colon, clang then adds 2 spaces for alignment on all lines of the Initializer
+# This is especially a problem when passing lambdas to initializers
+BreakConstructorInitializers: AfterColon
 ColumnLimit:     120
 CommentPragmas:  '^ IWYU pragma:'
 ConstructorInitializerAllOnOneLineOrOnePerLine: false

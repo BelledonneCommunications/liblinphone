@@ -19,15 +19,15 @@ class SimpleAsserter {
 	// Forcing Rep to int to make MSVC happy (with Rep = int64_t the result of .count() could be truncated)
 	using Timeout = std::chrono::duration<int, std::milli>;
 
-  public:
-	SimpleAsserter(CoreManager &core1, CoreManager &core2) : mCore1(core1.c_core()), mCore2(core2.c_core()) {
+public:
+	SimpleAsserter(CoreManager &core1, CoreManager &core2) : mCore1(core1.getCCore()), mCore2(core2.getCCore()) {
 	}
 
 	bool waitFor(const int &counter, int expected, Timeout timeout) {
 		return wait_for_until(&mCore1, &mCore2, &counter, expected, timeout.count());
 	}
 
-  private:
+private:
 	LinphoneCore &mCore1;
 	LinphoneCore &mCore2;
 };
@@ -71,8 +71,8 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('B'), 0, int, "%i");
 
 		// DTMF received
-		BC_ASSERT_TRUE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
-		pauline.stat().dtmf_count = 0;
+		BC_ASSERT_TRUE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
+		pauline.getStats().dtmf_count = 0;
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -87,7 +87,7 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('D'), 0, int, "%i");
 
 		// DTMF NOT received
-		BC_ASSERT_FALSE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_FALSE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -101,7 +101,7 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('3'), 0, int, "%i");
 
 		// DTMF NOT received
-		BC_ASSERT_FALSE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_FALSE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -116,7 +116,7 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('2'), 0, int, "%i");
 
 		// DTMF NOT received
-		BC_ASSERT_FALSE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_FALSE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -130,7 +130,7 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('9'), 0, int, "%i");
 
 		// DTMF NOT received
-		BC_ASSERT_FALSE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_FALSE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -144,7 +144,7 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('1'), 0, int, "%i");
 
 		// DTMF NOT received
-		BC_ASSERT_FALSE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_FALSE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -158,7 +158,7 @@ void linphone_call_send_dtmf__char__not_received() {
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('4'), 0, int, "%i");
 
 		// DTMF NOT received
-		BC_ASSERT_FALSE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_FALSE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 }
 
@@ -182,8 +182,8 @@ void linphone_call_send_dtmf__char__SIP_INFO_does_not_depend_on_callee_config() 
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('6'), 0, int, "%i");
 
 		// DTMF received
-		BC_ASSERT_TRUE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
-		pauline.stat().dtmf_count = 0;
+		BC_ASSERT_TRUE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
+		pauline.getStats().dtmf_count = 0;
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -197,8 +197,8 @@ void linphone_call_send_dtmf__char__SIP_INFO_does_not_depend_on_callee_config() 
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('8'), 0, int, "%i");
 
 		// DTMF received
-		BC_ASSERT_TRUE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
-		pauline.stat().dtmf_count = 0;
+		BC_ASSERT_TRUE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
+		pauline.getStats().dtmf_count = 0;
 	}
 
 	/*         | RFC 2833 | SIP INFO
@@ -212,7 +212,7 @@ void linphone_call_send_dtmf__char__SIP_INFO_does_not_depend_on_callee_config() 
 		BC_ASSERT_EQUAL(call.marie->sendDtmf('4'), 0, int, "%i");
 
 		// DTMF received
-		BC_ASSERT_TRUE(asserter.waitFor(pauline.stat().dtmf_count, 1, timeout));
+		BC_ASSERT_TRUE(asserter.waitFor(pauline.getStats().dtmf_count, 1, timeout));
 	}
 }
 

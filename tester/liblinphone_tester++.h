@@ -17,8 +17,6 @@
 
 #include "liblinphone_tester.h"
 
-using namespace ownership;
-
 namespace {
 
 constexpr const auto _call = call;
@@ -29,8 +27,8 @@ namespace Linphone {
 namespace Tester {
 
 class CoreManager {
-  public:
-    CoreManager(Owned<LinphoneCoreManager> c_coreman) : mMgr(c_coreman.take()) {
+public:
+	CoreManager(ownership::Owned<LinphoneCoreManager> c_coreman) : mMgr(c_coreman.take()) {
 	}
 	CoreManager(const char *rc_file) : mMgr(linphone_core_manager_new(rc_file)) {
 	}
@@ -40,13 +38,13 @@ class CoreManager {
 
 	// Accessors
 
-	LinphoneCore &c_core() {
+	LinphoneCore &getCCore() {
 		return *mMgr->lc;
 	}
-	LinphonePrivate::Core &core() const {
+	LinphonePrivate::Core &getCore() {
 		return *L_GET_CPP_PTR_FROM_C_OBJECT(mMgr->lc);
 	}
-	stats &stat() {
+	stats &getStats() {
 		return mMgr->stat;
 	}
 
@@ -74,10 +72,10 @@ class CoreManager {
 		linphone_core_set_use_info_for_dtmf(mMgr->lc, value);
 	}
 	std::shared_ptr<LinphonePrivate::Call> getCurrentCall() {
-		return core().getCurrentCall();
+		return getCore().getCurrentCall();
 	}
 
-  protected:
+protected:
 	struct CoreManDeleter {
 		void operator()(LinphoneCoreManager *coreMan) {
 			linphone_core_manager_destroy(coreMan);
