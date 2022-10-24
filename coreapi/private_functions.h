@@ -749,6 +749,24 @@ typedef struct _ZrtpAlgo ZrtpAlgo;
  */
 LINPHONE_PUBLIC const ZrtpAlgo *linphone_call_stats_get_zrtp_algo (const LinphoneCallStats *stats);
 
+/**
+ * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
+ * @param core #LinphoneCore object @notnil
+ * @param ref The reference of a NAT policy in the config of the #LinphoneCore @notnil
+ * @return A new #LinphoneNatPolicy object. @maybenil
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_ref(LinphoneCore *core, const char *ref);
+
+/**
+ * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed section.
+ * @param core #LinphoneCore object @notnil
+ * @param section The section name of a NAT policy in the config of the #LinphoneCore @notnil
+ * @return A new #LinphoneNatPolicy object. @maybenil
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *section);
+
 #ifdef __cplusplus
 }
 #endif

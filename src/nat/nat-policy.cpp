@@ -278,9 +278,4 @@ void NatPolicy::initFromSection(const LinphoneConfig *config, const char* sectio
 	}
 }
 
-
-
-
-
 LINPHONE_END_NAMESPACE
-

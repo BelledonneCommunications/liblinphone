@@ -6009,16 +6009,6 @@ LINPHONE_PUBLIC bool_t linphone_core_auto_send_ringing_enabled(LinphoneCore *cor
 LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore *core);
 
 /**
- * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
- * @param core #LinphoneCore object @notnil
- * @param ref The reference of a NAT policy in the config of the #LinphoneCore @notnil
- * @return A new #LinphoneNatPolicy object. @maybenil
- * @ingroup network_parameters
- */
-LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *ref);
-
-
-/**
  * Create a #LinphoneAccountCreator and set Linphone Request callbacks.
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
  * @param xmlrpc_url The URL to the XML-RPC server. @maybenil

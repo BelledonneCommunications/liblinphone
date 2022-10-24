@@ -1288,7 +1288,19 @@ static void net_config_read(LinphoneCore *lc) {
 
 	nat_policy_ref = linphone_config_get_string(lc->config, "net", "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {
-		LinphoneNatPolicy *nat_policy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+		LinphoneNatPolicy *nat_policy = NULL;
+
+		/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
+		 * This is not consistent and error-prone.
+		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
+		 */
+		if (linphone_config_has_section(lc->config, nat_policy_ref)){
+			/* Odd method - to be deprecated, inconsistent */
+			nat_policy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+		} else {
+			/* Usual method */
+			nat_policy = linphone_core_create_nat_policy_from_ref(lc, nat_policy_ref);
+		}
 		if (nat_policy) {
 			linphone_core_set_nat_policy(lc, nat_policy);
 			linphone_nat_policy_unref(nat_policy);

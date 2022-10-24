@@ -28,8 +28,12 @@ LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore *lc) {
 	return (new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc)))->toC();
 }
 
-LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *ref){
-	return (new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(core), NatPolicy::ConstructionMethod::FromSectionName, ref))->toC();
+LinphoneNatPolicy * linphone_core_create_nat_policy_from_ref(LinphoneCore *core, const char *ref){
+	return (new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(core), NatPolicy::ConstructionMethod::FromRefName, ref))->toC();
+}
+
+LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *section){
+	return (new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(core), NatPolicy::ConstructionMethod::FromSectionName, section))->toC();
 }
 
 
