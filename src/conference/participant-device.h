@@ -179,7 +179,7 @@ private:
 	JoiningMethod mJoiningMethod = JoiningMethod::DialedIn;
 	DisconnectionMethod mDisconnectionMethod = DisconnectionMethod::Departed;
 	std::string mDisconnectionReason = std::string();
-	time_t mTimeOfJoining;
+	time_t mTimeOfJoining = -1;
 	time_t mTimeOfDisconnection = -1;
 	uint32_t mAudioSsrc = 0;
 	uint32_t mVideoSsrc = 0;

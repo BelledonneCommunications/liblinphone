@@ -3534,7 +3534,7 @@ void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<Confere
 	auto session = static_pointer_cast<MediaSession>(getMainSession());
 	const MediaSessionParams * params = session->getMediaParams();
 
-	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress())) {
+	if (confParams->videoEnabled() && params->videoEnabled() && (getState() == ConferenceInterface::State::Created) && !isMe(device->getAddress()) && (device->getTimeOfJoining() >= 0)) {
 		auto updateSession = [this, device]() -> LinphoneStatus{
 			lInfo() << "Sending re-INVITE in order to update streams because participant device " << device->getAddress() << " has been removed from conference " << getConferenceAddress();
 			auto ret = updateMainSession();

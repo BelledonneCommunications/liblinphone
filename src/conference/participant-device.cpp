@@ -41,7 +41,6 @@ class Core;
 // =============================================================================
 
 ParticipantDevice::ParticipantDevice () {
-	mTimeOfJoining = time(nullptr);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
@@ -49,7 +48,6 @@ ParticipantDevice::ParticipantDevice () {
 
 ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name)
 	: mParticipant(participant), mGruu(participant->getAddress()), mName(name), mSession(session) {
-	mTimeOfJoining = time(nullptr);
 	if (mSession && mSession->getRemoteContactAddress()) {
 		setAddress(*mSession->getRemoteContactAddress());
 	}
@@ -59,7 +57,6 @@ ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, 
 
 ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
-	mTimeOfJoining = time(nullptr);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
@@ -132,7 +129,7 @@ time_t ParticipantDevice::getTimeOfJoining () const {
 }
 
 time_t ParticipantDevice::getTimeOfDisconnection () const {
-	return mTimeOfJoining;
+	return mTimeOfDisconnection;
 }
 
 bool ParticipantDevice::isInConference() const {
@@ -240,6 +237,10 @@ void ParticipantDevice::setState (State newState, bool notify) {
 		const auto newStateLeavingState = ParticipantDevice::isLeavingState(newState);
 		// Send NOTIFY only if not transitionig from a leaving state to another one
 		const bool sendNotify = !(newStateLeavingState && currentStateLeavingState) && notify;
+
+		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
+			setTimeOfJoining(time(nullptr));
+		}
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);

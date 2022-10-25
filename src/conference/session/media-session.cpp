@@ -1492,11 +1492,14 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 		cfg.replacePayloads(codecs);
 		cfg.rtcp_cname = getMe()->getAddress().asString();
 
+
+		LinphoneConference * conference = listener ? listener->getCallSessionConference(q->getSharedFromThis()) : nullptr;
 		if ((type == SalAudio) && isInConference()) {
 			cfg.mixer_to_client_extension_id = RTP_EXTENSION_MIXER_TO_CLIENT_AUDIO_LEVEL;
 			cfg.client_to_mixer_extension_id = RTP_EXTENSION_CLIENT_TO_MIXER_AUDIO_LEVEL;
+		} else if ((type == SalVideo) && conference) {
+			validateVideoStreamDirection(cfg);
 		}
-		if ((type == SalVideo) && isInConference()) validateVideoStreamDirection(cfg);
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, stream, cfg, mid);
 
 		stream.addActualConfiguration(cfg);
@@ -1691,9 +1694,10 @@ void MediaSessionPrivate::validateVideoStreamDirection(SalStreamConfiguration & 
 	const auto & cCore = q->getCore()->getCCore();
 	const auto captureEnabled = !!linphone_core_video_capture_enabled(cCore);
 	const auto displayEnabled = !!linphone_core_video_display_enabled(cCore);
-	if (((cfg.dir == SalStreamSendOnly) && !captureEnabled) || ((cfg.dir == SalStreamRecvOnly) && !displayEnabled)) {
+	const auto oldVideoDir = cfg.dir;
+	if (((oldVideoDir == SalStreamSendOnly) && !captureEnabled) || ((oldVideoDir == SalStreamRecvOnly) && !displayEnabled)) {
 		cfg.dir = SalStreamInactive;
-	} else if (cfg.dir == SalStreamSendRecv) {
+	} else if (oldVideoDir == SalStreamSendRecv) {
 		if (!captureEnabled && !displayEnabled) {
 			cfg.dir = SalStreamInactive;
 		} else if (captureEnabled && !displayEnabled) {
@@ -1701,6 +1705,10 @@ void MediaSessionPrivate::validateVideoStreamDirection(SalStreamConfiguration & 
 		} else if (!captureEnabled && displayEnabled) {
 			cfg.dir = SalStreamRecvOnly;
 		}
+	}
+
+	if (oldVideoDir != cfg.dir) {
+		lWarning() << "Video direction of a video stream has been changed from " << std::string(sal_stream_dir_to_string(oldVideoDir)) << " to " << std::string(sal_stream_dir_to_string(cfg.dir)) << " as video capture is " << std::string(captureEnabled ? "enabled" : "disabled") << " and video display is " << std::string(displayEnabled ? "enabled" : "disabled") << " in the core settings";
 	}
 }
 
