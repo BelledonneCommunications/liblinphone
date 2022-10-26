@@ -4640,7 +4640,7 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 				linphone_address_unref(uri);
 
 				if (network_restart) {
-					ms_message("%s is back online after %s is added to conference %s", linphone_core_get_identity(marie.getLc()), linphone_core_get_identity(michelle.getLc()), conference_address_str);
+					ms_message("%s is back online after %s leaves conference %s", linphone_core_get_identity(marie.getLc()), linphone_core_get_identity(mgr->lc), conference_address_str);
 					linphone_core_set_network_reachable(marie.getLc(), TRUE);
 					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneSubscriptionOutgoingProgress, marie_stat2.number_of_LinphoneSubscriptionOutgoingProgress + 1, 10000));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionIncomingReceived, focus_stat2.number_of_LinphoneSubscriptionIncomingReceived + 1, 10000));
@@ -4649,6 +4649,9 @@ static void create_conference_base (time_t start_time, int duration, bool_t unin
 
 					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participants_removed, marie_stat2.number_of_participants_removed + 1, 10000));
 					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participant_devices_removed, marie_stat2.number_of_participant_devices_removed + 1, 10000));
+
+					BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_LinphoneCallStreamsRunning, marie_stat2.number_of_LinphoneCallStreamsRunning + 2, 10000));
+					BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneCallStreamsRunning, focus_stat2.number_of_LinphoneCallStreamsRunning + 2, 10000));
 				}
 
 			}

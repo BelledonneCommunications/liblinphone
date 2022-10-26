@@ -3106,7 +3106,10 @@ void RemoteConference::onFocusCallStateChanged (LinphoneCallState state) {
 	SalCallOp * op = nullptr;
 
 	if (session) {
-		focusContactAddress = *session->getRemoteContactAddress();
+		auto focusContactAddressPtr = session->getRemoteContactAddress();
+		if (focusContactAddressPtr) {
+			focusContactAddress = *focusContactAddressPtr;
+		}
 		op = session->getPrivate()->getOp();
 		call = op ? getCore()->getCallByCallId(op->getCallId()) : nullptr;
 	}
