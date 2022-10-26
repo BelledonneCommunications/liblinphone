@@ -370,7 +370,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 
 	// Check if the message is encrypted and unwrap the multipart
 	ContentType incomingContentType = internalContent->getContentType();
-	if ((incomingContentType.getType().compare("multipart") != 0) || (incomingContentType.getSubType().compare("encrypted") != 0) || (incomingContentType.getParameter("protocol") != HeaderParam("protocol", "\"application/lime\""))) {
+	string protocol = incomingContentType.getParameter("protocol").getValue();
+	if ((incomingContentType.getType().compare("multipart") != 0) || (incomingContentType.getSubType().compare("encrypted") != 0) ||
+		(!protocol.empty() && protocol != "\"application/lime\"" )) {
 		lError() << "[LIME] unexpected content-type: " << incomingContentType;
 		// Set unencrypted content warning flag because incoming message type is unexpected
 		message->getPrivate()->setUnencryptedContentWarning(true);
