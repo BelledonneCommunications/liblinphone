@@ -195,6 +195,7 @@ public:
 	static const std::string conferenceVersionAsString();
 
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *sal_msg);
+	LinphoneReason handleChatMessagesAggregation(std::shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg);
 
 	// ---------------------------------------------------------------------------
 	// Audio Video Conference.

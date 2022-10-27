@@ -875,6 +875,28 @@ bool Core::isCurrentlyAggregatingChatMessages () {
 	return d->chatMessagesAggregationTimer != nullptr;
 }
 
+LinphoneReason Core::handleChatMessagesAggregation(shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg) {
+	L_D();
+	LinphoneCore *cCore = getCCore();
+
+	bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
+	int chatMessagesAggregationDelay = linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
+	lDebug() << "Chat messages aggregation enabled? " << chatMessagesAggregationEnabled << " with delay " << chatMessagesAggregationDelay;
+	if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
+		if (!d->chatMessagesAggregationTimer) {
+			d->chatMessagesAggregationTimer = cCore->sal->createTimer([d]() -> bool {
+				d->stopChatMessagesAggregationTimer();
+				return false; // BELLE_SIP_STOP
+			}, (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
+		} else {
+			belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer, (unsigned int)chatMessagesAggregationDelay);
+		}
+		d->chatMessagesAggregationBackgroundTask.start(getSharedFromThis());
+	}
+
+	return L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+}
+
 LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) {
 	L_D();
 
@@ -896,21 +918,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	};
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	if (chatRoom) {
-		bool_t chatMessagesAggregationEnabled = linphone_core_get_chat_messages_aggregation_enabled(cCore);
-		int chatMessagesAggregationDelay = linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
-		if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
-			if (!d->chatMessagesAggregationTimer) {
-				d->chatMessagesAggregationTimer = cCore->sal->createTimer([d]() -> bool {
-					d->stopChatMessagesAggregationTimer();
-					return false; // BELLE_SIP_STOP
-				}, (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
-			} else {
-				belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer, (unsigned int)chatMessagesAggregationDelay);
-			}
-			d->chatMessagesAggregationBackgroundTask.start(getSharedFromThis());
-		}
-
-		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+		reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
 	} else if (!linphone_core_conference_server_enabled(cCore)) {
 		const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
 		/* Client mode but check that it is really for basic chatroom before creating it.*/
@@ -919,8 +927,9 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 			reason = LinphoneReasonNotAcceptable;
 		} else {
 			chatRoom = getOrCreateBasicChatRoom(conferenceId);
-			if (chatRoom)
-				reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+			if (chatRoom) {
+				reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
+			}				
 		}
 	} else {
 		/* Server mode but chatroom not found. */

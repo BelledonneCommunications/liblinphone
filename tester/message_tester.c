@@ -4132,7 +4132,19 @@ static void received_messages_with_aggregation_enabled(void) {
 	linphone_chat_message_send(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 
-	// check message is received using only new callback
+	// check message is received using only new callback when chat room is being created
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
+	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	
+	linphone_chat_message_unref(chat_msg);
+	reset_counters(&pauline->stat);
+	reset_counters(&marie->stat);
+
+	chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, "Blu blu blu blu");
+	linphone_chat_message_send(chat_msg);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
+
+	// check message is received using only new callback for existing chat room
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
 	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 	
@@ -4147,7 +4159,7 @@ static void received_messages_with_aggregation_enabled(void) {
 		linphone_chat_message_unref(chat_msg);
 	}
 
-	// check messages are received using only new callback
+	// check messages are received using only new callback when more than one message is being received in less than aggregation delay seconds
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 10, 5000));
 	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 10));
 
