@@ -250,7 +250,18 @@ LinphoneStatus ToneManager::playFile(const char *audiofile) {
 	int loopms = -1;
 	if (!f) return -1;
 	ms_filter_call_method(f, MS_PLAYER_SET_LOOP, &loopms);
-	if (ms_filter_call_method(f, MS_PLAYER_OPEN, (void*) audiofile) != 0) {
+	const char * audiofileToUse = audiofile;
+	std::string fileString;// Declare here for the scope of audiofileToUse
+	
+	if(bctbx_file_exist(audiofile) != 0){// This file doesn't exist. Check it from Platform resource.
+		char * basename = bctbx_basename(audiofile);
+		fileString = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(basename);
+		bctbx_free(basename);
+		if(fileString != "")
+			audiofileToUse = fileString.c_str();
+	}
+	
+	if (ms_filter_call_method(f, MS_PLAYER_OPEN, (void*)audiofileToUse ) != 0) {
 		return -1;
 	}
 	ms_filter_call_method_noarg(f, MS_PLAYER_START);
