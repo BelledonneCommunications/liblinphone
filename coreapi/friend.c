@@ -1513,7 +1513,6 @@ int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
 			if (list_name && url && strcmp(url, list_name) == 0) {
 				linphone_friend_list_set_type(list, LinphoneFriendListTypeVCard4);
 			}
-
 			linphone_core_add_friend_list(lc, list);
 			synced_friends_lists++;
 		}
@@ -1650,6 +1649,9 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 			return;
 		}
 
+		if(linphone_friend_list_is_subscription_bodyless(lf->friend_list)) // Add friend in DB only if its list bodyless subscription is not enabled.
+			return;
+
 		/**
 		 * The friends_list store logic is hidden into the friend store logic
 		 */
@@ -1699,7 +1701,7 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 }
 
 void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list) {
-	if (lc && lc->friends_db) {
+	if (lc && lc->friends_db && !linphone_friend_list_is_subscription_bodyless(list)) {// Do not store list if bodyless subscription is enabled
 		char *buf;
 		int store_friends = linphone_config_get_int(lc->config, "misc", "store_friends", 1);
 
