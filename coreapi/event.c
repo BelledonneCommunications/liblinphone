@@ -500,7 +500,12 @@ LinphoneEvent *linphone_event_ref(LinphoneEvent *lev){
 
 static void linphone_event_destroy(LinphoneEvent *lev){
 	if (lev->ei) linphone_error_info_unref(lev->ei);
-	if (lev->op) lev->op->release();
+
+	LinphoneCore *lc = lev->lc;
+	if (lc != NULL && linphone_core_get_global_state(lc) != LinphoneGlobalOff) {
+		if (lev->op) lev->op->release();
+	}
+	
 	if (lev->send_custom_headers) sal_custom_header_free(lev->send_custom_headers);
 	if (lev->to_address) linphone_address_unref(lev->to_address);
 	if (lev->from_address) linphone_address_unref(lev->from_address);
