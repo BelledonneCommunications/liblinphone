@@ -82,6 +82,9 @@ public:
 	int sendMessage (const Content &content) override;
 	int reply (SalReason reason) override { return SalOp::replyMessage(reason); }
 
+	// This is for testing only!
+	void simulateLostAckOnDialog(bool enable);
+
 private:
 	void fillCallbacks () override;
 	void setReleased ();

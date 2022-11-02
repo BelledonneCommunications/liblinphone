@@ -258,24 +258,30 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			});
 		}
 	} else if (newState == CallSession::State::End) {
-		const auto &remoteAddress = session->getRemoteAddress();
-		ConferenceAddress remoteConferenceAddress = ConferenceAddress(*remoteAddress);
-		bool found = false;
-		for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
-			ConferenceId confId = static_cast<ConferenceId>(*it);
-			if (confId.getPeerAddress() == remoteConferenceAddress) {
-				lInfo() << "Found previous chat room conference ID [" << confId << "] for chat room with current ID [" << q->getConferenceId() << "]";
-				removeConferenceIdFromPreviousList(confId);
-				found = true;
-				break;
-			}
-		}
+		const auto errorInfo = session->getErrorInfo();
 
-		if (found) {
-			/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's state */
-			lInfo() << "Chat room [" << remoteConferenceAddress << "] from before the exhume has been terminated";
+		if (errorInfo != nullptr && linphone_error_info_get_protocol_code(errorInfo) > 299) {
+			lWarning() << "Chat room [" << q->getConferenceId() << "] received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo) << ", not leaving it.";
 		} else {
-			q->setState(ConferenceInterface::State::TerminationPending);
+			const auto &remoteAddress = session->getRemoteAddress();
+			ConferenceAddress remoteConferenceAddress = ConferenceAddress(*remoteAddress);
+			bool found = false;
+			for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
+				ConferenceId confId = static_cast<ConferenceId>(*it);
+				if (confId.getPeerAddress() == remoteConferenceAddress) {
+					lInfo() << "Found previous chat room conference ID [" << confId << "] for chat room with current ID [" << q->getConferenceId() << "]";
+					removeConferenceIdFromPreviousList(confId);
+					found = true;
+					break;
+				}
+			}
+
+			if (found) {
+				/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's state */
+				lInfo() << "Chat room [" << remoteConferenceAddress << "] from before the exhume has been terminated";
+			} else {
+				q->setState(ConferenceInterface::State::TerminationPending);
+			}
 		}
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ConferenceInterface::State::TerminationPending) {

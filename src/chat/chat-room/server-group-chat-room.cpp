@@ -1210,10 +1210,22 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 				byeDevice(device);
 		break;
 		case CallSession::State::End:
-			if (device->getState() == ParticipantDevice::State::Present){
-				lInfo() << q << ": "<< device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
-				onBye(device);
+		{
+			const auto errorInfo = session->getErrorInfo();
+
+			if (errorInfo != nullptr && linphone_error_info_get_protocol_code(errorInfo) > 299) {
+				if (device->getState() == ParticipantDevice::State::Joining || device->getState() == ParticipantDevice::State::Present) {
+					lWarning() << q << ": Received a BYE from " << device->getParticipant()->getAddress().asString() << " with reason "
+						<< linphone_error_info_get_protocol_code(errorInfo) << ", setting it back to ScheduledForJoining.";
+					setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+				}
+			} else {
+				if (device->getState() == ParticipantDevice::State::Present){
+					lInfo() << q << ": "<< device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
+					onBye(device);
+				}
 			}
+		}
 		break;
 		case CallSession::State::Released:
 			/* Handle the case of participant we've send a BYE. */

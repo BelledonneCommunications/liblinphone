@@ -721,6 +721,10 @@ void SalCallOp::processTransactionTerminatedCb (void *userCtx, const belle_sip_t
 			))
 		&& !op->mDialog
 	) {
+		if (response && belle_sip_response_get_status_code(response) == 408) {
+			sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "no ACK received", nullptr);
+		}
+
 		releaseCall = true;
 	} else if ((op->mState == State::Early) && (code < 200)) {
 		// Call terminated early
@@ -1125,6 +1129,10 @@ void SalCallOp::processDialogTerminatedCb (void *userCtx, const belle_sip_dialog
 	if (op->mDialog && (op->mDialog == belle_sip_dialog_terminated_event_get_dialog(event))) {
 		lInfo() << "Dialog [" << belle_sip_dialog_terminated_event_get_dialog(event) << "] terminated for op [" << op << "]";
 		op->haltSessionTimersTimer();
+
+		if (belle_sip_dialog_get_termination_cause(op->mDialog) == BELLE_SIP_DIALOG_TERMINATION_CAUSE_ABORT_NO_ACK) {
+			sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "no ACK received", nullptr);
+		}
 
 		switch(belle_sip_dialog_get_previous_state(op->mDialog)) {
 			case BELLE_SIP_DIALOG_EARLY:
@@ -2022,6 +2030,12 @@ void SalCallOp::handleOfferAnswerResponse (belle_sip_response_t *response) {
 			belle_sip_object_unref(mSdpAnswer);
 			mSdpAnswer = nullptr;
 		}
+	}
+}
+
+void SalCallOp::simulateLostAckOnDialog(bool enable) {
+	if (mDialog) {
+		belle_sip_dialog_set_simulate_lost_ack_enabled(mDialog, enable ? 1 : 0);
 	}
 }
 
