@@ -1393,12 +1393,18 @@ bool LocalConference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call
 	bool success = Conference::addParticipantDevice(call);
 	if (success) {
 		call->setConference(toC());
-		auto device = findParticipantDevice (call->getActiveSession());
+		auto session = call->getActiveSession();
+		auto device = findParticipantDevice (session);
 		if (device) {
 			device->setJoiningMethod((call->getDirection() == LinphoneCallIncoming) ? ParticipantDevice::JoiningMethod::DialedIn : ParticipantDevice::JoiningMethod::DialedOut);
 			char label[LinphonePrivate::Conference::labelLength];
 			belle_sip_random_token(label,sizeof(label));
 			device->setLabel(label);
+			auto op = session->getPrivate()->getOp();
+			auto displayName = L_C_TO_STRING(sal_address_get_display_name((call->getDirection() == LinphoneCallIncoming) ? op->getFromAddress() : op->getToAddress()));
+			if (!displayName.empty()) {
+				device->setName(displayName);
+			}
 			const auto & p = device->getParticipant();
 			if (p) {
 				time_t creationTime = time(nullptr);
@@ -2569,8 +2575,8 @@ int RemoteConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivat
 }
 
 int RemoteConference::participantDeviceLeft(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
-	device->setState(ParticipantDevice::State::OnHold);
-	return 0;
+	lError() << "RemoteConference::participantDeviceLeft() not implemented";
+	return -1;
 }
 
 int RemoteConference::participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
@@ -2589,10 +2595,7 @@ int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePriv
 }
 
 int RemoteConference::participantDeviceJoined(const std::shared_ptr<LinphonePrivate::Participant> &participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) {
-	if (device) {
-		device->setState(ParticipantDevice::State::Present);
-		return 0;
-	}
+	lError() << "RemoteConference::participantDeviceJoined() not implemented";
 	return -1;
 }
 
@@ -2853,7 +2856,7 @@ bool RemoteConference::addParticipants (const list<IdentityAddress> &addresses) 
 #endif
 	if (getMe()->isAdmin()) {
 		if ((state == ConferenceInterface::State::Instantiated) || (state == ConferenceInterface::State::CreationPending)) {
-			getCore()->createConferenceOnServer(confParams, getMe()->getAddress(), addresses);
+			getCore()->createConferenceOnServer(confParams, getMe()->getAddress().asAddress(), addresses);
 		} else {
 			SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal.get());
 			LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));

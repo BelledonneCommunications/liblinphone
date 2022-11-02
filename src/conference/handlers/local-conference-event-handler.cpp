@@ -974,7 +974,12 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 	linphone_event_accept_subscription(lev);
 	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
 		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
+
+		auto oldLev = device->getConferenceSubscribeEvent();
 		device->setConferenceSubscribeEvent(lev);
+		if (oldLev) {
+			linphone_event_terminate(oldLev);
+		}
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress() << " with last notif set to " << conf->getLastNotify();
 			if (deviceState == ParticipantDevice::State::Present) {
@@ -1028,9 +1033,11 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device)
 			return;
-		lInfo() << "End of subscription for device [" << device->getAddress()
-			<< "] of conference [" << conf->getConferenceAddress() << "]";
-		device->setConferenceSubscribeEvent(nullptr);
+		if (lev == device->getConferenceSubscribeEvent()) {
+			lInfo() << "End of subscription for device [" << device->getAddress()
+				<< "] of conference [" << conf->getConferenceAddress() << "]";
+			device->setConferenceSubscribeEvent(nullptr);
+		}
 	}
 }
 

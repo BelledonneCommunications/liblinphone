@@ -1509,11 +1509,11 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const C
 	return conference;
 }
 
-shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams, const Address &localAddr, const std::list<IdentityAddress> &participants) {
 	return createOrUpdateConferenceOnServer(confParams, localAddr, participants, ConferenceAddress());
 }
 
-shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants, const ConferenceAddress &confAddr) {
+shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const Address &localAddr, const std::list<IdentityAddress> &participants, const ConferenceAddress &confAddr) {
 	L_D()
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
@@ -1539,7 +1539,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	}
 
 	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
-	if (!localAddr.hasGruu()) {
+	if (!localAddr.hasUriParam("gr")) {
 		lWarning() << "Local identity address [" << localAddr << "] doesn't have a gruu, let's try to find it";
 		IdentityAddress localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
 		if (localAddrWithGruu.isValid()) {
@@ -1584,7 +1584,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 
 	linphone_call_params_unref(params);
 
-	Address meCleanedAddress(localAddr.asAddress());
+	Address meCleanedAddress(localAddr);
 	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
 	session->enableToneIndications(false);

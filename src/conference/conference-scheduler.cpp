@@ -130,7 +130,7 @@ void ConferenceScheduler::setInfo (const std::shared_ptr<ConferenceInfo> & info)
 		}
 	}
 
-	const auto creator =  mAccount ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(mAccount->getAccountParams()->getIdentityAddress())) : IdentityAddress(linphone_core_get_identity(getCore()->getCCore()));
+	const auto creator =  mAccount ? Address(*L_GET_CPP_PTR_FROM_C_OBJECT(mAccount->getAccountParams()->getIdentityAddress())) : Address(linphone_core_get_identity(getCore()->getCCore()));
 	if (!creator.isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Core address attempting to set conference information!";
 		return;
@@ -140,9 +140,9 @@ void ConferenceScheduler::setInfo (const std::shared_ptr<ConferenceInfo> & info)
 	const auto & participants = clone->getParticipants();
 	const auto participantListEmpty = participants.empty();
 	const bool participantFound = (std::find_if(participants.cbegin(), participants.cend(), [&creator] (const auto &p) {
-			return (p.first == creator);
+			return (creator.weakEqual(p.first.asAddress()));
 		}) != participants.cend());
-	if ((creator != organizer) && !participantFound) {
+	if (!creator.weakEqual(organizer.asAddress()) && !participantFound) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Address " << creator << " is trying to modify the conference information but he/she is neither an invited participant nor the organizer (" << organizer << ") of conference " << clone->getUri();
 		setState(State::Error);
 		return;
@@ -196,7 +196,6 @@ void ConferenceScheduler::setInfo (const std::shared_ptr<ConferenceInfo> & info)
 	mConferenceInfo = clone;
 
 	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = ConferenceParams::create(getCore()->getCCore());
-	const auto identityAddress = mConferenceInfo->getOrganizerAddress();
 	conferenceParams->enableAudio(true);
 	conferenceParams->enableVideo(true);
 	conferenceParams->setSubject(mConferenceInfo->getSubject());
@@ -226,7 +225,7 @@ void ConferenceScheduler::setInfo (const std::shared_ptr<ConferenceInfo> & info)
 		mSession = getCore()->createOrUpdateConferenceOnServer(conferenceParams, creator, invitees, clone->getUri());
 	} else {
 		// Creating conference
-		mSession = getCore()->createConferenceOnServer(conferenceParams, identityAddress, invitees);
+		mSession = getCore()->createConferenceOnServer(conferenceParams, creator, invitees);
 	}
 	if (mSession == nullptr) {
 		lError() << "[Conference Scheduler] [" << this << "] createConferenceOnServer returned a null session!";
@@ -413,7 +412,7 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		}
 	}
 
-	const auto sender =  mAccount ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(mAccount->getAccountParams()->getIdentityAddress())) : IdentityAddress(linphone_core_get_identity(getCore()->getCCore()));
+	const auto sender =  mAccount ? Address(*L_GET_CPP_PTR_FROM_C_OBJECT(mAccount->getAccountParams()->getIdentityAddress())) : Address(linphone_core_get_identity(getCore()->getCCore()));
 	if (!sender.isValid()) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Core address attempting to send invitation isn't valid!";
 		return;
@@ -424,7 +423,7 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 		return (p.first == sender);
 	}) != participants.cend());
 	const auto & organizer = mConferenceInfo->getOrganizerAddress();
-	if ((sender != organizer) && !participantFound) {
+	if (!sender.weakEqual(organizer.asAddress()) && !participantFound) {
 		lWarning() << "[Conference Scheduler] [" << this << "] Unable to find the address " << sender << " sending invitations among the list of participants or the organizer (" << organizer << ") of conference " << mConferenceInfo->getUri();
 		return;
 	}
@@ -448,7 +447,7 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 
 	mInvitationsToSend.clear();
 	for (auto participant : invitees) {
-		if (participant != sender) {
+		if (!sender.weakEqual(participant.asAddress())) {
 			mInvitationsToSend.push_back(Address(participant.asAddress()));
 		} else {
 			lInfo() << "[Conference Scheduler] [" << this << "] Removed conference participant [" << participant << "] from chat room participants as it is ourselves";
@@ -463,7 +462,7 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 	const int newOrganizerSequence = (organizerSequence.empty()) ? 0 : std::atoi(organizerSequence.c_str()) + 1;
 	mConferenceInfo->addOrganizerParam(ConferenceInfo::sequenceParam, std::to_string(newOrganizerSequence));
 
-	if (sender != organizer) {
+	if (!sender.weakEqual(organizer.asAddress())) {
 		const bool organizerFound = (std::find(mInvitationsToSend.cbegin(), mInvitationsToSend.cend(), organizer) != mInvitationsToSend.cend());
 		if (!organizerFound) {
 			lInfo() << "[Conference Scheduler] [" << this << "] Organizer [" << organizer << "] not found in conference participants, adding it to chat room participants";
