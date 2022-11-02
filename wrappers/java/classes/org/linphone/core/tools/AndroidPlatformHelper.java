@@ -51,6 +51,7 @@ import org.linphone.core.tools.network.NetworkManagerAbove26;
 import org.linphone.core.tools.network.NetworkManagerInterface;
 import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
+import org.linphone.core.tools.service.CoreManager;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
 
@@ -618,6 +619,13 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized boolean isInBackground() {
+        if (CoreManager.isReady()) {
+            if (CoreManager.instance().isServiceRunningAsForeground()) {
+                Log.i("[Platform Helper] CoreService seems to be running as foreground, consider app is in foreground");
+                return false;
+            }
+        }
+
         return isInBackground(mNativePtr);
     }
 

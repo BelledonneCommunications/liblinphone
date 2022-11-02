@@ -101,10 +101,13 @@ public class CoreManager {
     private native void enterForeground(long ptr);
     private native void processPushNotification(long ptr, String callId, String payload);
 
+    private boolean mServiceRunningInForeground;
+
     public CoreManager(Object context, Core core) {
         mContext = ((Context) context).getApplicationContext();
         mCore = core;
         sInstance = this;
+        mServiceRunningInForeground = false;
 
         // DO NOT ADD A LISTENER ON THE CORE HERE!
         // Wait for onLinphoneCoreStart()
@@ -541,6 +544,20 @@ public class CoreManager {
             }
         }
         return false;
+    }
+
+    public void setServiceRunningAsForeground(boolean foreground) {
+        mServiceRunningInForeground = foreground;
+        
+        if (mServiceRunningInForeground) {
+            Log.i("[Core Manager] CoreService is now running in foreground");
+        } else {
+            Log.i("[Core Manager] CoreService is no longer running in foreground");
+        }
+    }
+
+    public boolean isServiceRunningAsForeground() {
+        return mServiceRunningInForeground;
     }
 
     private boolean isAndroidXMediaAvailable() {

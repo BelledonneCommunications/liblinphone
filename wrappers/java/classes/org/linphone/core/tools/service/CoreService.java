@@ -170,6 +170,7 @@ public class CoreService extends Service {
                 Log.i("[Core Service] Core Manager found, removing our listener");
                 core.removeListener(mListener);
             }
+            CoreManager.instance().setServiceRunningAsForeground(false);
         }
         
         super.onDestroy();
@@ -239,6 +240,10 @@ public class CoreService extends Service {
         Log.i("[Core Service] Starting service as foreground");
         showForegroundServiceNotification();
         mIsInForegroundMode = true;
+
+        if (CoreManager.isReady()) {
+            CoreManager.instance().setServiceRunningAsForeground(mIsInForegroundMode);
+        }
     }
 
     void stopForeground() {
@@ -250,6 +255,10 @@ public class CoreService extends Service {
         Log.i("[Core Service] Stopping service as foreground");
         hideForegroundServiceNotification();
         mIsInForegroundMode = false;
+
+        if (CoreManager.isReady()) {
+            CoreManager.instance().setServiceRunningAsForeground(mIsInForegroundMode);
+        }
     }
 
     private void vibrate(Address caller) {
