@@ -492,7 +492,7 @@ LINPHONE_PUBLIC int linphone_chat_room_get_nb_participants (const LinphoneChatRo
 /**
  * Get the list of participants of a chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
- * @return A \bctbx_list{LinphoneParticipant} of the participants
+ * @return A \bctbx_list{LinphoneParticipant} of the participants @maybenil @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t * linphone_chat_room_get_participants (const LinphoneChatRoom *chat_room);
 
