@@ -10,17 +10,27 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 
 
-## [5.2.0] Unreleased
+## [5.2.0] 2022-11-14
 
 ### Added
+- Video conferencing feature with "mosaic" and "active speaker + thumbnails" layouts. This feature requires a
+  compatible SIP video conferencing server such as the Flexisip conference server. Only VP8 codec is supported for now.
+- Added conferencing scheduling API (LinphoneConferenceScheduler), generating ICS invitations sent throug IM.
+- Support for post-quantum robust encryption for ZRTP calls by combining Cristals-Kyber algorithm with classic (EC)DH.
 - Rtp bundle can be enabled per LinphoneAccount, superseeding the setting at LinphoneCore level.
 - New APIs on Friend object to be able to set more info such as a Picture, Organization, Native ID & Starred
 - QRCode image generation.
 
 ### Changed
+- Licence becomes AGPLv3.
 - Auto schedule of core.iterate() method now uses a higher delay for timer if app is in background
 - Foreground & background delays for core.iterate() scheduling can be configured in linphonerc & using API
+- Optimisations for group chat with LIME (end to end encryption).
 
+### Fixed
+- Chatrooms erroneously left in case of aborted INVITE transaction (bad network conditions)
+- RTP bundle mode performance.
+- Improve overall robustness of notification of chatroom events.
 
 ## [5.1.0] 2022-02-14
 
