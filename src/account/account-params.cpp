@@ -78,6 +78,7 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	 * This is not consistent and error-prone.
 	 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
 	 */
+
 	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
 		NatPolicy * policy = nullptr;
@@ -199,7 +200,18 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {
 		if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
-		mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+		/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
+		 * This is not consistent and error-prone.
+		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
+		 */
+		if (linphone_config_has_section(config, nat_policy_ref)){
+			/* Odd method - to be deprecated, inconsistent */
+			mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+		} else {
+			/* Usual method */
+			mNatPolicy = linphone_core_create_nat_policy_from_ref(lc, nat_policy_ref);
+		}
+
 	}
 
 	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());

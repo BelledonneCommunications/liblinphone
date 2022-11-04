@@ -40,7 +40,6 @@ NatPolicy::NatPolicy(const std::shared_ptr<Core> &core, NatPolicy::ConstructionM
 		initFromSection(config, value.c_str());
 	} else if (method == ConstructionMethod::FromRefName){
 		int index;
-
 		for (index = 0; ; index++) {
 			std::ostringstream section;
 			section << "nat_policy_" << index;
