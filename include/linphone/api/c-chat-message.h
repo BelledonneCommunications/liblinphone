@@ -330,7 +330,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_reply(LinphoneChatMessage *messa
 LINPHONE_PUBLIC const char *linphone_chat_message_get_reply_message_id(LinphoneChatMessage *message);
 
 /**
- * Returns the ID of the message this is a reply to.
+ * Returns the address of the sender of the message this is a reply to.
  * @param message #LinphoneChatMessage object. @notnil
  * @return the original message sender #LinphoneAddress. @maybenil
  */
@@ -463,11 +463,29 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_sta
 LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *message);
 
 /**
+ * Gets the list of reactions received for this chat message.
+ * Warning: list is ordered by content of reaction message, not by received timestamp!
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return The sorted list of reaction if any. \bctbx_list{LinphoneChatMessageReaction} @maybenil @tobefreed
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_reactions(const LinphoneChatMessage *msg);
+
+/**
  * Returns wether the chat message has a conference invitation content or not.
  * @param message #LinphoneChatMessage object. @notnil
  * @return TRUE if it has one, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_has_conference_invitation_content(const LinphoneChatMessage *message);
+
+/**
+ * Creates a emoji reaction for the given chat mesage.
+ * To send it, use linphone_chat_message_reaction_send().
+ * @param message the message you want to react on @notnil
+ * @param utf8_reaction the emoji character(s) as UTF-8. @notnil
+ * @return a #LinphoneChatMessageReaction object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneChatMessageReaction *linphone_chat_message_create_reaction(LinphoneChatMessage *message,
+                                                                                   const char *utf8_reaction);
 
 /************ */
 /* DEPRECATED */

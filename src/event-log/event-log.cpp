@@ -85,6 +85,9 @@ std::ostream &operator<<(std::ostream &lhs, EventLog::Type e) {
 		case EventLog::Type::ConferenceChatMessage:
 			lhs << "ConferenceChatMessage";
 			break;
+		case EventLog::Type::ConferenceChatMessageReaction:
+			lhs << "ConferenceChatMessageReaction";
+			break;
 		case EventLog::Type::ConferenceParticipantAdded:
 			lhs << "ConferenceParticipantAdded";
 			break;

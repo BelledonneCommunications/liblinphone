@@ -272,11 +272,13 @@ LinphoneCoreCbsPushNotificationReceivedCb linphone_core_cbs_get_push_notificatio
 	return cbs->vtable->push_notification_received;
 }
 
-LinphoneCoreCbsPreviewDisplayErrorOccurredCb linphone_core_cbs_get_preview_display_error_occurred(const LinphoneCoreCbs *cbs) {
+LinphoneCoreCbsPreviewDisplayErrorOccurredCb
+linphone_core_cbs_get_preview_display_error_occurred(const LinphoneCoreCbs *cbs) {
 	return cbs->vtable->preview_display_error_occurred;
 }
 
-void linphone_core_cbs_set_preview_display_error_occurred(LinphoneCoreCbs *cbs, LinphoneCoreCbsPreviewDisplayErrorOccurredCb cb) {
+void linphone_core_cbs_set_preview_display_error_occurred(LinphoneCoreCbs *cbs,
+                                                          LinphoneCoreCbsPreviewDisplayErrorOccurredCb cb) {
 	cbs->vtable->preview_display_error_occurred = cb;
 }
 
@@ -371,6 +373,14 @@ LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_received(Linphone
 
 void linphone_core_cbs_set_message_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageReceivedCb cb) {
 	cbs->vtable->message_received = cb;
+}
+
+LinphoneCoreCbsNewMessageReactionCb linphone_core_cbs_get_new_message_reaction(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->new_message_reaction;
+}
+
+void linphone_core_cbs_set_new_message_reaction(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewMessageReactionCb cb) {
+	cbs->vtable->new_message_reaction = cb;
 }
 
 LinphoneCoreCbsMessagesReceivedCb linphone_core_cbs_get_messages_received(LinphoneCoreCbs *cbs) {

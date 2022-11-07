@@ -29,6 +29,7 @@
 
 #include "abstract/abstract-db.h"
 #include "call/call-log.h"
+#include "chat/chat-message/chat-message-reaction.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
 #include "conference/conference-info.h"
@@ -156,6 +157,8 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void loadChatMessageContents(const std::shared_ptr<ChatMessage> &chatMessage);
+	std::list<std::shared_ptr<ChatMessageReaction>>
+	getChatMessageReactions(const std::shared_ptr<ChatMessage> &chatMessage);
 
 	void disableDeliveryNotificationRequired(const std::shared_ptr<const EventLog> &eventLog);
 	void disableDisplayNotificationRequired(const std::shared_ptr<const EventLog> &eventLog);

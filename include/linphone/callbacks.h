@@ -241,6 +241,19 @@ typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *core,
                                                  LinphoneChatMessage *message);
 
 /**
+ * Chat message new reaction callback prototype.
+ * @param core #LinphoneCore object @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be created by the framework in case the
+ * From-URI is not present in any chat room. @notnil
+ * @param message the #LinphoneChatMessage to which the reaction applies to @notnil
+ * @param reaction the #LinphoneChatMessageReaction that has been sent or received @notnil
+ */
+typedef void (*LinphoneCoreCbsNewMessageReactionCb)(LinphoneCore *core,
+                                                    LinphoneChatRoom *chat_room,
+                                                    LinphoneChatMessage *message,
+                                                    const LinphoneChatMessageReaction *reaction);
+
+/**
  * Chat messages callback prototype.
  * Only called when aggregation is enabled (aka [sip] chat_messages_aggregation == 1 or using
  * linphone_core_set_chat_messages_aggregation_enabled()), it replaces the single message received callback.

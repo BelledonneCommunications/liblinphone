@@ -147,6 +147,11 @@ void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage *msg, L
 	NOTIFY_IF_EXIST(MsgStateChanged, msg_state_changed, msg, state);
 }
 
+void _linphone_chat_message_notify_new_message_reaction(LinphoneChatMessage *msg,
+                                                        const LinphoneChatMessageReaction *reaction) {
+	NOTIFY_IF_EXIST(NewMessageReaction, new_message_reaction, msg, reaction);
+}
+
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage *msg,
                                                                   const LinphoneParticipantImdnState *state) {
 	NOTIFY_IF_EXIST(ParticipantImdnStateChanged, participant_imdn_state_changed, msg, state);
@@ -589,4 +594,22 @@ void linphone_chat_message_start_file_download(LinphoneChatMessage *msg,
 
 const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *msg) {
 	return L_STRING_TO_C(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getCallId());
+}
+
+bctbx_list_t *linphone_chat_message_get_reactions(const LinphoneChatMessage *msg) {
+	return LinphonePrivate::ChatMessageReaction::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReactions());
+}
+
+LinphoneChatMessageReaction *linphone_chat_message_create_reaction(LinphoneChatMessage *message,
+                                                                   const char *utf8_reaction) {
+	const std::string &messageId = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getImdnMessageId();
+	const LinphoneAddress *fromAddr = linphone_chat_message_get_from_address(message);
+	auto fromAddress = LinphonePrivate::Address::toCpp(fromAddr);
+	LinphoneChatMessageReaction *reaction = LinphonePrivate::ChatMessageReaction::createCObject(
+	    messageId, L_C_TO_STRING(utf8_reaction), fromAddress->getSharedFromThis());
+
+	auto chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_chat_message_get_chat_room(message));
+	LinphonePrivate::ChatMessageReaction::toCpp(reaction)->setChatRoom(chatRoom);
+
+	return reaction;
 }

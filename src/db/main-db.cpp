@@ -1014,6 +1014,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent(const ConferenceId
 	switch (type) {
 		case EventLog::Type::None:
 		case EventLog::Type::ConferenceChatMessage:
+		case EventLog::Type::ConferenceChatMessageReaction:
 		case EventLog::Type::ConferenceCallStarted:
 		case EventLog::Type::ConferenceCallConnected:
 		case EventLog::Type::ConferenceCallEnded:
@@ -1436,6 +1437,38 @@ long long MainDbPrivate::insertConferenceChatMessageEvent(const shared_ptr<Event
 		int *count = unreadChatMessageCountCache[chatRoom->getConferenceId()];
 		if (count) ++*count;
 	}
+
+	return eventId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertConferenceChatMessageReactionEvent(const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
+	const long long &eventId = insertConferenceEvent(eventLog);
+	if (eventId < 0) return -1;
+
+	shared_ptr<ChatMessage> chatMessage = static_pointer_cast<ConferenceChatMessageEvent>(eventLog)->getChatMessage();
+	const long long &fromSipAddressId = insertSipAddress(chatMessage->getFromAddress());
+	const long long &toSipAddressId = insertSipAddress(chatMessage->getToAddress());
+	const tm &time = Utils::getTimeTAsTm(chatMessage->getTime());
+	const string &imdnMessageId = chatMessage->getImdnMessageId();
+	const string &callId = chatMessage->getPrivate()->getCallId();
+	const string &reactionToMessageId = chatMessage->getReactionToMessageId();
+	const string &reaction = chatMessage->getPrivate()->getUtf8Text();
+
+	// Use REPLACE instead of INSERT so if (fromSipAddressId, reaction_to_message_id) constraint is triggered, reaction
+	// will be updated
+	*dbSession.getBackendSession() << "REPLACE INTO conference_chat_message_reaction_event ("
+	                                  "  event_id, from_sip_address_id, to_sip_address_id,"
+	                                  "  time, body, imdn_message_id, call_id, reaction_to_message_id"
+	                                  ") VALUES ("
+	                                  "  :eventId, :fromSipAddressId, :toSipAddressId,"
+	                                  "  :time, :reaction, :imdnMessageId, :callId, :reactionToMessageId"
+	                                  ")",
+	    soci::use(eventId), soci::use(fromSipAddressId), soci::use(toSipAddressId), soci::use(time),
+	    soci::use(reaction), soci::use(imdnMessageId), soci::use(callId), soci::use(reactionToMessageId);
 
 	return eventId;
 #else
@@ -3293,6 +3326,43 @@ void MainDb::init() {
 		            "  LEFT JOIN conference_call ON conference_call.id = conference_call_event.conference_call_id"
 		            "  LEFT JOIN conference_info ON conference_info.id = conference_call.conference_info_id";
 
+		*session
+		    << "CREATE TABLE IF NOT EXISTS conference_chat_message_reaction_event ("
+		       "  event_id" +
+		           primaryKeyStr("BIGINT UNSIGNED") +
+		           ","
+
+		           "  from_sip_address_id" +
+		           primaryKeyRefStr("BIGINT UNSIGNED") +
+		           " NOT NULL,"
+		           "  to_sip_address_id" +
+		           primaryKeyRefStr("BIGINT UNSIGNED") +
+		           " NOT NULL,"
+
+		           "  time" +
+		           timestampType() +
+		           " ,"
+		           "  body TEXT NOT NULL,"
+
+		           // See: https://tools.ietf.org/html/rfc5438#section-6.3
+		           // /!\ Warning : if this column is indexed, its size must be set back to 191 = max indexable (KEY or
+		           // UNIQUE) varchar size for mysql < 5.7 with charset utf8mb4 (both here and in migrations)
+		           "  imdn_message_id VARCHAR(255) NOT NULL,"
+		           "  call_id VARCHAR(255) NOT NULL,"
+		           "  reaction_to_message_id VARCHAR(255) NOT NULL,"
+
+		           // One reaction maximum per user for a given message
+		           "  UNIQUE (from_sip_address_id, reaction_to_message_id),"
+
+		           "  FOREIGN KEY (from_sip_address_id)"
+		           "    REFERENCES sip_address(id)"
+		           "    ON DELETE CASCADE,"
+		           "  FOREIGN KEY (to_sip_address_id)"
+		           "    REFERENCES sip_address(id)"
+		           "    ON DELETE CASCADE"
+		           ") " +
+		           charset;
+
 		d->updateSchema();
 
 		d->updateModuleVersion("events", ModuleVersionEvents);
@@ -3343,6 +3413,10 @@ bool MainDb::addEvent(const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceChatMessage:
 				eventId = d->insertConferenceChatMessageEvent(eventLog);
+				break;
+
+			case EventLog::Type::ConferenceChatMessageReaction:
+				eventId = d->insertConferenceChatMessageReactionEvent(eventLog);
 				break;
 
 			case EventLog::Type::ConferenceParticipantAdded:
@@ -3416,6 +3490,7 @@ bool MainDb::updateEvent(const shared_ptr<EventLog> &eventLog) {
 				d->updateConferenceChatMessageEvent(eventLog);
 				break;
 
+			case EventLog::Type::ConferenceChatMessageReaction:
 			case EventLog::Type::ConferenceCreated:
 			case EventLog::Type::ConferenceTerminated:
 			case EventLog::Type::ConferenceCallStarted:
@@ -4408,6 +4483,33 @@ void MainDb::loadChatMessageContents(const shared_ptr<ChatMessage> &chatMessage)
 		if (hasFileTransferContent) dChatMessage->loadFileTransferUrlFromBodyToContent();
 	};
 #endif
+}
+
+list<shared_ptr<ChatMessageReaction>> MainDb::getChatMessageReactions(const shared_ptr<ChatMessage> &chatMessage) {
+	list<shared_ptr<ChatMessageReaction>> reactions;
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		soci::session *session = d->dbSession.getBackendSession();
+		const string &messageId = chatMessage->getImdnMessageId();
+
+		static const string query =
+		    "SELECT body, from_sip_address.value"
+		    " FROM conference_chat_message_reaction_event"
+		    " LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
+		    " WHERE reaction_to_message_id = :messageId"
+		    " ORDER BY body ASC";
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(messageId));
+		for (const auto &row : rows) {
+			string body = row.get<string>(0);
+			shared_ptr<Address> fromAddress = make_shared<Address>(row.get<string>(1));
+			shared_ptr<ChatMessageReaction> reaction = ChatMessageReaction::create(messageId, body, fromAddress);
+			reactions.push_back(reaction);
+		}
+	};
+#endif
+	return reactions;
 }
 
 // -----------------------------------------------------------------------------

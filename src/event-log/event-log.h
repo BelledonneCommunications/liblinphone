@@ -67,6 +67,7 @@ public:
 		ConferenceEphemeralMessageManagedByAdmin = LinphoneEventLogTypeConferenceEphemeralMessageManagedByAdmin,
 		ConferenceEphemeralMessageManagedByParticipants =
 		    LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants,
+		ConferenceChatMessageReaction = LinphoneEventLogTypeConferenceChatMessageReaction,
 	};
 
 	// casting to int to get rid of the enum compare warning.

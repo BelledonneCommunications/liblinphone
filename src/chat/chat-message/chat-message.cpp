@@ -607,7 +607,11 @@ void ChatMessagePrivate::setUtf8Text(const string &text) {
 	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setContentType(contents.front()->getContentType());
 	}
+
 	internalContent.setBodyFromUtf8(text);
+	if (internalContent.getContentType().isEmpty()) {
+		internalContent.setContentType(ContentType::PlainText);
+	}
 
 	if ((currentSendStep & ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
@@ -865,6 +869,30 @@ LinphoneReason ChatMessagePrivate::receive() {
 		return reason;
 	}
 
+	if (q->isReaction()) {
+		markAsRead();
+		storeInDb();
+
+		auto messageId = q->getReactionToMessageId();
+		auto originalMessage = q->getReactionToMessage();
+		if (!originalMessage) {
+			lError() << "Failed to find original message with ID [" << messageId
+			         << "] for which the reaction was received";
+			return reason;
+		}
+
+		LinphoneChatMessage *msg = L_GET_C_BACK_PTR(originalMessage);
+		LinphoneChatMessageReaction *reaction =
+		    ChatMessageReaction::createCObject(messageId, getUtf8Text(), q->getFromAddress());
+		_linphone_chat_message_notify_new_message_reaction(msg, reaction);
+
+		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
+		linphone_core_notify_new_message_reaction(q->getCore()->getCCore(), cr, msg, reaction);
+
+		linphone_chat_message_reaction_unref(reaction);
+		return reason;
+	}
+
 	// If message was outgoing, mark it as read
 	if (direction == ChatMessage::Direction::Outgoing) {
 		markAsRead();
@@ -1025,7 +1053,8 @@ void ChatMessagePrivate::send() {
 	if (toBeStored && (currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))) {
 		storeInDb();
 
-		if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
+		if (!isResend && !q->isReaction() && getContentType() != ContentType::Imdn &&
+		    getContentType() != ContentType::ImIsComposing) {
 			if ((currentSendStep & ChatMessagePrivate::Step::Sending) != ChatMessagePrivate::Step::Sending) {
 				LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
 				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
@@ -1239,6 +1268,10 @@ void ChatMessagePrivate::send() {
 		setState(ChatMessage::State::InProgress);
 	}
 
+	if (q->isReaction()) {
+		return; // Do not notify chat message as sent
+	}
+
 	// Do not notify message sent callback when it's a resend or an IMDN/Composing
 	if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
 		q->getChatRoom()->getPrivate()->onChatMessageSent(q->getSharedFromThis());
@@ -1440,6 +1473,36 @@ const std::shared_ptr<Address> &ChatMessage::getReplyToSenderAddress() const {
 shared_ptr<ChatMessage> ChatMessage::getReplyToMessage() const {
 	if (!isReply()) return nullptr;
 	return getChatRoom()->findChatMessage(getReplyToMessageId());
+}
+
+void ChatMessagePrivate::setReactionToMessageId(const string &id) {
+	reactionToMessageId = id;
+	// Disable delivery / display notifications for reactions
+	positiveDeliveryNotificationRequired = false;
+	negativeDeliveryNotificationRequired = false;
+	displayNotificationRequired = false;
+}
+
+bool ChatMessage::isReaction() const {
+	L_D();
+	return !d->reactionToMessageId.empty();
+}
+
+const string &ChatMessage::getReactionToMessageId() const {
+	L_D();
+	return d->reactionToMessageId;
+}
+
+shared_ptr<ChatMessage> ChatMessage::getReactionToMessage() const {
+	if (!isReaction()) return nullptr;
+	return getChatRoom()->findChatMessage(getReactionToMessageId());
+}
+
+const list<shared_ptr<ChatMessageReaction>> ChatMessage::getReactions() const {
+	L_D();
+	d->reactions = getChatRoom()->getCore()->getPrivate()->mainDb->getChatMessageReactions(
+	    const_pointer_cast<ChatMessage>(getSharedFromThis()));
+	return d->reactions;
 }
 
 void ChatMessagePrivate::enableEphemeralWithTime(long time) {

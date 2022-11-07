@@ -243,6 +243,14 @@ void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *r
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_new_message_reaction(LinphoneCore *lc,
+                                               LinphoneChatRoom *room,
+                                               LinphoneChatMessage *message,
+                                               const LinphoneChatMessageReaction *reaction) {
+	NOTIFY_IF_EXIST(new_message_reaction, lc, room, message, reaction);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages) {
 	NOTIFY_IF_EXIST(messages_received, lc, room, messages);
 	cleanup_dead_vtable_refs(lc);

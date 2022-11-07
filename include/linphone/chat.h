@@ -22,6 +22,7 @@
 #define LINPHONE_CHAT_H_
 
 #include "linphone/api/c-chat-message-cbs.h"
+#include "linphone/api/c-chat-message-reaction.h"
 #include "linphone/api/c-chat-message.h"
 #include "linphone/api/c-chat-room-cbs.h"
 #include "linphone/api/c-chat-room-params.h"

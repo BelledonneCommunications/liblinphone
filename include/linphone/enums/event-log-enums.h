@@ -64,6 +64,7 @@ typedef enum _EventLogType {
 	    19, /**< Conference ephemeral message (ephemeral message settings managed by admin) event */
 	LinphoneEventLogTypeConferenceEphemeralMessageManagedByParticipants =
 	    20, /**< Conference ephemeral message (ephemeral message settings managed by participants) event */
+	LinphoneEventLogTypeConferenceChatMessageReaction = 24, /**< Reaction event to a chat message */
 } LinphoneEventLogType;
 
 #endif // ifndef _L_EVENT_LOG_ENUMS_H_

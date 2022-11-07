@@ -522,6 +522,8 @@ void _linphone_chat_room_notify_chat_message_participant_imdn_state_changed(Linp
 void _linphone_chat_room_clear_callbacks(LinphoneChatRoom *cr);
 
 void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);
+void _linphone_chat_message_notify_new_message_reaction(LinphoneChatMessage *msg,
+                                                        const LinphoneChatMessageReaction *reaction);
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage *msg,
                                                                   const LinphoneParticipantImdnState *state);
 void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg,
@@ -837,6 +839,10 @@ void linphone_core_notify_text_message_received(LinphoneCore *lc,
                                                 const LinphoneAddress *from,
                                                 const char *message);
 void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+void linphone_core_notify_new_message_reaction(LinphoneCore *lc,
+                                               LinphoneChatRoom *room,
+                                               LinphoneChatMessage *message,
+                                               const LinphoneChatMessageReaction *reaction);
 void linphone_core_notify_messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages);
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_message_received_unable_decrypt(LinphoneCore *lc,

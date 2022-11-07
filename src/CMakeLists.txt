@@ -145,6 +145,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	call/audio-device/audio-device.h
 	call/audio-device/audio-device.cpp
 	chat/chat-message/chat-message-p.h
+	chat/chat-message/chat-message-reaction.h
 	chat/chat-message/chat-message.h
 	chat/chat-message/chat-message-listener.h
 	chat/chat-message/imdn-message-p.h
@@ -375,6 +376,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-call-stats.cpp
 	c-wrapper/api/c-call.cpp
 	c-wrapper/api/c-chat-message-cbs.cpp
+	c-wrapper/api/c-chat-message-reaction.cpp
 	c-wrapper/api/c-chat-message.cpp
 	c-wrapper/api/c-chat-room-params.cpp
 	c-wrapper/api/c-chat-room-cbs.cpp
@@ -416,6 +418,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	call/call-log.cpp
 	call/call.cpp
 	call/video-source/video-source-descriptor.cpp
+	chat/chat-message/chat-message-reaction.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
 	chat/chat-message/is-composing-message.cpp

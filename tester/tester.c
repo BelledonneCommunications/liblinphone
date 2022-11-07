@@ -2476,6 +2476,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_call_created(mgr->cbs, call_created);
 	linphone_core_cbs_set_call_state_changed(mgr->cbs, call_state_changed);
 	linphone_core_cbs_set_message_received(mgr->cbs, message_received);
+	linphone_core_cbs_set_new_message_reaction(mgr->cbs, reaction_received);
 	linphone_core_cbs_set_messages_received(mgr->cbs, messages_received);
 	linphone_core_cbs_set_is_composing_received(mgr->cbs, is_composing_received);
 	linphone_core_cbs_set_new_subscription_requested(mgr->cbs, new_subscription_requested);
@@ -3190,6 +3191,23 @@ void message_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneChatRoom *room), Li
 	if (linphone_config_get_bool(linphone_core_get_config(lc), "net", "bad_net", 0)) {
 		sal_set_send_error(linphone_core_get_sal(lc), 1500);
 	}
+}
+
+void reaction_received(LinphoneCore *lc,
+                       BCTBX_UNUSED(LinphoneChatRoom *room),
+                       LinphoneChatMessage *msg,
+                       const LinphoneChatMessageReaction *reaction) {
+	const LinphoneAddress *address = linphone_chat_message_reaction_get_from_address(reaction);
+	const char *body = linphone_chat_message_reaction_get_body(reaction);
+	char *from = linphone_address_as_string(address);
+	char *from2 = linphone_address_as_string(linphone_chat_message_get_from_address(msg));
+	const char *text = linphone_chat_message_get_text(msg);
+	ms_message("Reaction [%s] from [%s] for message [%s] sent by [%s]", body, from, text, from2);
+	ms_free(from);
+	ms_free(from2);
+
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneReactionSentOrReceived++;
 }
 
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room) {

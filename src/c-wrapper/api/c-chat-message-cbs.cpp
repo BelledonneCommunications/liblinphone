@@ -35,6 +35,7 @@ struct _LinphoneChatMessageCbs {
 	LinphoneChatMessageCbsEphemeralMessageTimerStartedCb ephemeral_message_timer_started;
 	LinphoneChatMessageCbsEphemeralMessageDeletedCb ephemeral_message_deleted;
 	LinphoneChatMessageCbsFileTransferSendChunkCb file_transfer_send_chunk;
+	LinphoneChatMessageCbsNewMessageReactionCb new_message_reaction;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatMessageCbs);
@@ -149,4 +150,14 @@ linphone_chat_message_cbs_get_ephemeral_message_deleted(const LinphoneChatMessag
 void linphone_chat_message_cbs_set_ephemeral_message_deleted(LinphoneChatMessageCbs *cbs,
                                                              LinphoneChatMessageCbsEphemeralMessageDeletedCb cb) {
 	cbs->ephemeral_message_deleted = cb;
+}
+
+LinphoneChatMessageCbsNewMessageReactionCb
+linphone_chat_message_cbs_get_new_message_reaction(const LinphoneChatMessageCbs *cbs) {
+	return cbs->new_message_reaction;
+}
+
+void linphone_chat_message_cbs_set_new_message_reaction(LinphoneChatMessageCbs *cbs,
+                                                        LinphoneChatMessageCbsNewMessageReactionCb cb) {
+	cbs->new_message_reaction = cb;
 }

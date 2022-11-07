@@ -89,6 +89,7 @@ public:
 
 	void setForwardInfo(const std::string &fInfo);
 	void setReplyToMessageIdAndSenderAddress(const std::string &id, const std::shared_ptr<Address> &sender);
+	void setReactionToMessageId(const std::string &id);
 
 	void enableEphemeralWithTime(long time);
 
@@ -301,6 +302,7 @@ private:
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;
 	std::string forwardInfo;
 	std::string replyingToMessageId;
+	std::string reactionToMessageId;
 	std::shared_ptr<Address> replyingToMessageSender;
 	std::shared_ptr<Address> recipientAddress;
 
@@ -309,6 +311,7 @@ private:
 	time_t ephemeralExpireTime = 0;
 
 	std::list<Content *> contents;
+	mutable std::list<std::shared_ptr<ChatMessageReaction>> reactions;
 
 	bool encryptionPrevented = false;
 	mutable bool contentsNotLoadedFromDatabase = false;

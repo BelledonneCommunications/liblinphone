@@ -322,6 +322,7 @@ typedef struct _stats {
 	int number_of_LinphoneIsComposingIdleReceived;
 	int progress_of_LinphoneFileTransfer;
 	int number_of_LinphoneFileTransfer;
+	int number_of_LinphoneReactionSentOrReceived;
 
 	int number_of_LinphoneChatRoomConferenceJoined;
 	int number_of_LinphoneChatRoomEphemeralLifetimeChanged;
@@ -612,6 +613,10 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc,
                                              const LinphonePresenceModel *presence);
 void messages_received(LinphoneCore *lc, LinphoneChatRoom *room, const bctbx_list_t *messages);
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+void reaction_received(LinphoneCore *lc,
+                       LinphoneChatRoom *room,
+                       LinphoneChatMessage *msg,
+                       const LinphoneChatMessageReaction *reaction);
 void file_transfer_received(LinphoneChatMessage *message, LinphoneContent *content, const LinphoneBuffer *buffer);
 LinphoneBuffer *
 tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent *content, size_t offset, size_t size);
@@ -720,6 +725,8 @@ const char *liblinphone_tester_get_notify_content(void);
 void liblinphone_tester_chat_message_state_change(LinphoneChatMessage *msg, LinphoneChatMessageState state, void *ud);
 bool_t liblinphone_tester_chat_message_msg_update_stats(stats *counters, LinphoneChatMessageState state);
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);
+void liblinphone_tester_chat_message_reaction_received(LinphoneChatMessage *msg,
+                                                       const LinphoneChatMessageReaction *reaction);
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
@@ -862,6 +869,11 @@ void _configure_core_for_conference(LinphoneCoreManager *lcm, const LinphoneAddr
 void _configure_core_for_audio_video_conference(LinphoneCoreManager *lcm, const LinphoneAddress *factoryAddr);
 void _start_core(LinphoneCoreManager *lcm);
 extern const char *sFactoryUri;
+
+void check_reactions(LinphoneChatMessage *message,
+                     size_t expected_reactions_count,
+                     const bctbx_list_t *expected_reactions,
+                     const bctbx_list_t *expected_reactions_from);
 
 /*
  * this function return max value in the last 3 seconds*/

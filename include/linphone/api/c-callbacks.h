@@ -181,8 +181,9 @@ typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char
 
 /**
  * Callback to notify that there are errors from the video rendering. The error code depends of the implementation.
- * - If using OpenGL then the errors comes from eglGetError() : https://registry.khronos.org/EGL/sdk/docs/man/html/eglGetError.xhtml
- *   On `EGL_CONTEXT_LOST`, it is recommanded to restart the Window ID with **_create_native_**_video_window_id() and **_set_native_**_video_window_id() functions.
+ * - If using OpenGL then the errors comes from eglGetError() :
+ * https://registry.khronos.org/EGL/sdk/docs/man/html/eglGetError.xhtml On `EGL_CONTEXT_LOST`, it is recommanded to
+ * restart the Window ID with **_create_native_**_video_window_id() and **_set_native_**_video_window_id() functions.
  *
  * @param call LinphoneCall @notnil
  * @param error_code error code from render. It depends of the renderer.
@@ -220,6 +221,14 @@ typedef void (*LinphoneCallCbsRemoteRecordingCb)(LinphoneCall *call, bool_t reco
  * @param state #LinphoneChatMessageState
  */
 typedef void (*LinphoneChatMessageCbsMsgStateChangedCb)(LinphoneChatMessage *message, LinphoneChatMessageState state);
+
+/**
+ * Callback used to notify a reaction has been received or sent for a given message
+ * @param message #LinphoneChatMessage object @notnil
+ * @param reaction the #LinphoneChatMessageReaction reaction that was sent or received @notnil
+ */
+typedef void (*LinphoneChatMessageCbsNewMessageReactionCb)(LinphoneChatMessage *message,
+                                                           const LinphoneChatMessageReaction *reaction);
 
 /**
  * Call back used to notify participant IMDN state
@@ -769,7 +778,6 @@ typedef void (*LinphoneParticipantDeviceCbsStreamAvailabilityChangedCb)(Linphone
  */
 typedef void (*LinphoneParticipantDeviceCbsVideoDisplayErrorOccurredCb)(LinphoneParticipantDevice *participant_device,
                                                                         int error_code);
-
 
 /**
  * Callback for notifying when a registration state has changed for the conference scheduler.

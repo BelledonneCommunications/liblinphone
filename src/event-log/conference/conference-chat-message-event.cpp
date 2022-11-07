@@ -44,7 +44,8 @@ public:
 
 ConferenceChatMessageEvent::ConferenceChatMessageEvent(time_t creationTime, const shared_ptr<ChatMessage> &chatMessage)
     : ConferenceEvent(*new ConferenceChatMessageEventPrivate,
-                      EventLog::Type::ConferenceChatMessage,
+                      chatMessage->isReaction() ? EventLog::Type::ConferenceChatMessageReaction
+                                                : EventLog::Type::ConferenceChatMessage,
                       creationTime,
                       getSafeConferenceId(chatMessage->getChatRoom())) {
 	L_D();

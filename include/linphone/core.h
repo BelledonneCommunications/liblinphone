@@ -301,7 +301,7 @@ typedef struct _LinphoneCoreVTable {
 	LinphoneCoreCbsPushNotificationReceivedCb push_notification_received;
 	LinphoneCoreCbsOnAlertCb on_alert;
 	LinphoneCoreCbsPreviewDisplayErrorOccurredCb preview_display_error_occurred;
-
+	LinphoneCoreCbsNewMessageReactionCb new_message_reaction;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -584,6 +584,21 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_message_received(LinphoneCoreCbs *cbs
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsNewMessageReactionCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_new_message_reaction(LinphoneCoreCbs *cbs,
+                                                                LinphoneCoreCbsNewMessageReactionCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsNewMessageReactionCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsNewMessageReactionCb linphone_core_cbs_get_new_message_reaction(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessagesReceivedCb callback.

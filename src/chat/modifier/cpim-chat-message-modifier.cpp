@@ -46,6 +46,7 @@ const string linphoneNamespace = "linphone";
 const string linphoneEphemeralHeader = "Ephemeral-Time";
 const string linphoneReplyingToMessageIdHeader = "Replying-To-Message-ID";
 const string linphoneReplyingToMessageSenderHeader = "Replying-To-Sender";
+const string linphoneReactionToMessageIdHeader = "In-Reply-To";
 
 const string imdnNamespaceUrn = "urn:ietf:params:imdn";
 const string imdnNamespace = "imdn";
@@ -63,6 +64,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 	    Cpim::ToHeader(cpimAddressUri(message->getToAddress()), cpimAddressDisplayName(message->getToAddress())));
 	cpimMessage.addMessageHeader(Cpim::DateTimeHeader(message->getTime()));
 
+	bool linphoneNamespaceHeaderSet = false;
 	if (message->getPrivate()->getPositiveDeliveryNotificationRequired() ||
 	    message->getPrivate()->getNegativeDeliveryNotificationRequired() ||
 	    message->getPrivate()->getDisplayNotificationRequired()) {
@@ -71,6 +73,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 			const string &buf = Utils::toString(time);
 			cpimMessage.addMessageHeader(Cpim::NsHeader(linphoneNamespaceTag, linphoneNamespace));
 			cpimMessage.addMessageHeader(Cpim::GenericHeader(linphoneNamespace + "." + linphoneEphemeralHeader, buf));
+			linphoneNamespaceHeaderSet = true;
 		}
 
 		cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
@@ -92,8 +95,9 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 
 		const string &replyToMessageId = message->getReplyToMessageId();
 		if (!replyToMessageId.empty()) {
-			if (!message->isEphemeral()) { // If message is ephemeral linphone namespace has already been set
+			if (!linphoneNamespaceHeaderSet) {
 				cpimMessage.addMessageHeader(Cpim::NsHeader(linphoneNamespaceTag, linphoneNamespace));
+				linphoneNamespaceHeaderSet = true;
 			}
 			cpimMessage.addMessageHeader(
 			    Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageIdHeader, replyToMessageId));
@@ -114,6 +118,17 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 		                                                 Utils::join(dispositionNotificationValues, ", ")));
 	}
 
+	const string &reactionToMessageId = message->getReactionToMessageId();
+	if (!reactionToMessageId.empty()) {
+		if (!linphoneNamespaceHeaderSet) { // If message is ephemeral linphone namespace has already been set
+			cpimMessage.addMessageHeader(Cpim::NsHeader(linphoneNamespaceTag, linphoneNamespace));
+			linphoneNamespaceHeaderSet = true;
+		}
+		cpimMessage.addMessageHeader(
+		    Cpim::GenericHeader(linphoneNamespace + "." + linphoneReactionToMessageIdHeader, reactionToMessageId));
+		cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Disposition", "Reaction"));
+	}
+
 	const Content *content;
 	if (!message->getInternalContent().isEmpty()) {
 		// Another ChatMessageModifier was called before this one, we apply our changes on the private content
@@ -126,9 +141,11 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode(const shared_ptr<Cha
 	}
 
 	const string contentBody = content->getBodyAsUtf8String();
-	if (content->getContentDisposition().isValid()) {
-		cpimMessage.addContentHeader(
-		    Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().asString()));
+	if (reactionToMessageId.empty()) {
+		if (content->getContentDisposition().isValid()) {
+			cpimMessage.addContentHeader(
+			    Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().asString()));
+		}
 	}
 	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Type", content->getContentType().getMediaType()));
 	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Length", Utils::toString(contentBody.size())));
@@ -240,6 +257,16 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode(const shared_ptr<Cha
 		if (replyToMessageIdHeader && replyToSenderHeader) {
 			message->getPrivate()->setReplyToMessageIdAndSenderAddress(
 			    replyToMessageIdHeader->getValue(), Address::create(replyToSenderHeader->getValue()));
+		}
+
+		auto reactionToMessageIdHeader =
+		    cpimMessage->getMessageHeader(linphoneReactionToMessageIdHeader, linphoneNsName);
+		const char *expected_disposition_header = "Reaction";
+		if (reactionToMessageIdHeader && contentDispositionHeader) {
+			string dispositionHeader = contentDispositionHeader->getValue();
+			if (!dispositionHeader.empty() && strcasecmp(expected_disposition_header, dispositionHeader.c_str()) == 0) {
+				message->getPrivate()->setReactionToMessageId(reactionToMessageIdHeader->getValue());
+			}
 		}
 	}
 

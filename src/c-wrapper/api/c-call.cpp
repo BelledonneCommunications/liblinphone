@@ -150,7 +150,8 @@ void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *cam
 }
 
 void linphone_call_notify_video_display_error_occurred(LinphoneCall *call, int error_code) {
-	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_video_display_error_occurred, error_code);
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_video_display_error_occurred,
+	                                  error_code);
 }
 
 void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice) {

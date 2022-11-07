@@ -81,6 +81,22 @@ LINPHONE_PUBLIC void linphone_chat_message_cbs_set_msg_state_changed(LinphoneCha
                                                                      LinphoneChatMessageCbsMsgStateChangedCb cb);
 
 /**
+ * Get the new reaction callback.
+ * @param cbs #LinphoneChatMessageCbs object. @notnil
+ * @return The current new reaction callback.
+ */
+LINPHONE_PUBLIC LinphoneChatMessageCbsNewMessageReactionCb
+linphone_chat_message_cbs_get_new_message_reaction(const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the new reaction callback.
+ * @param cbs LinphoneChatMessageCbs object. @notnil
+ * @param cb The new reaction callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_new_message_reaction(LinphoneChatMessageCbs *cbs,
+                                                                        LinphoneChatMessageCbsNewMessageReactionCb cb);
+
+/**
  * Get the file transfer receive callback.
  * @param cbs LinphoneChatMessageCbs object. @notnil
  * @return The current file transfer receive callback.

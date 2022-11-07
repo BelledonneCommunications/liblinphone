@@ -86,6 +86,7 @@ set(C_API_HEADER_FILES
 	c-conference-cbs.h
 	c-callbacks.h
 	c-chat-message-cbs.h
+	c-chat-message-reaction.h
 	c-chat-message.h
 	c-chat-room-cbs.h
 	c-chat-room.h

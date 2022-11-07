@@ -43,6 +43,7 @@ class Participant;
 class ParticipantImdnState;
 class ChatMessageListener;
 class ConferenceScheduler;
+class ChatMessageReaction;
 
 class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class BasicToClientGroupChatRoom;
@@ -61,6 +62,7 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class LimeX3dhEncryptionEngine;
 	friend class CorePrivate;
 	friend class ConferenceScheduler;
+	friend class ChatMessageReaction;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ChatMessage);
@@ -132,6 +134,11 @@ public:
 	bool isEphemeral() const;
 	long getEphemeralLifetime() const;
 	time_t getEphemeralExpireTime() const;
+
+	bool isReaction() const;
+	const std::string &getReactionToMessageId() const;
+	std::shared_ptr<ChatMessage> getReactionToMessage() const;
+	const std::list<std::shared_ptr<ChatMessageReaction>> getReactions() const;
 
 	// TODO: Return a cpp reference.
 	const LinphoneErrorInfo *getErrorInfo() const;

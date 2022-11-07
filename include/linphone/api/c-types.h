@@ -376,6 +376,19 @@ typedef struct _LinphoneAudioDevice LinphoneAudioDevice;
 typedef struct _LinphoneChatMessage LinphoneChatMessage;
 
 /**
+ * @brief A chat message reaction is an emoji sent by someone in the same chat room to react to a specific
+ * #LinphoneChatMessage.
+ *
+ * To create a #LinphoneChatMessageReaction, use linphone_chat_message_create_reaction().
+ * Once you are ready, send the reaction using linphone_chat_message_reaction_send().
+ *
+ * Reactions are available using linphone_chat_message_get_reactions() and will be notified using dedicated callbacks
+ * either in #LinphoneCoreListener or #LinphoneChatMessageListener.
+ * @ingroup chatroom
+ */
+typedef struct _LinphoneChatMessageReaction LinphoneChatMessageReaction;
+
+/**
  * @brief An object to handle the callbacks for the handling a #LinphoneChatMessage objects.
  * @ingroup chatroom
  */
