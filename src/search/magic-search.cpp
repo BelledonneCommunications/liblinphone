@@ -386,17 +386,19 @@ list<std::shared_ptr<SearchResult>> MagicSearch::getAddressFromCallLog (
 	// For all call log or when we reach the search limit
 	for (const bctbx_list_t *f = callLog ; f != nullptr ; f = bctbx_list_next(f)) {
 		LinphoneCallLog *log = static_cast<LinphoneCallLog*>(f->data);
-		const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallDir::LinphoneCallIncoming) ?
-		linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
-		if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
-			if (filter.empty() && withDomain.empty()) {
-				if (findAddress(currentList, addr)) continue;
-				resultList.push_back(SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
-			} else {
-				unsigned int weight = searchInAddress(addr, filter, withDomain);
-				if (weight > getMinWeight()) {
+		if (!linphone_call_log_was_conference(log)) {
+			const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallDir::LinphoneCallIncoming) ?
+			linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
+			if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
+				if (filter.empty() && withDomain.empty()) {
 					if (findAddress(currentList, addr)) continue;
-					resultList.push_back(SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+					resultList.push_back(SearchResult::create((unsigned int)0, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+				} else {
+					unsigned int weight = searchInAddress(addr, filter, withDomain);
+					if (weight > getMinWeight()) {
+						if (findAddress(currentList, addr)) continue;
+						resultList.push_back(SearchResult::create(weight, addr, "", nullptr, LinphoneMagicSearchSourceCallLogs));
+					}
 				}
 			}
 		}
