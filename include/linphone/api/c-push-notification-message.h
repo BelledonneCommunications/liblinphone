@@ -109,6 +109,29 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_pe
  */
 LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *message);
 
+
+/**
+ * Tells whether or not this message contains a new conference invitation.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this message carries a new conference invitation, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_conference_invitation_new(const LinphonePushNotificationMessage *message);
+
+
+/**
+ * Tells whether or not this message contains a conference invitation update.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this message carries a conference invitation update, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_conference_invitation_update(const LinphonePushNotificationMessage *message);
+
+/**
+ * Tells whether or not this message contains a conference invitation cancellation.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this message carries a conference invitation cancellation, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_conference_invitation_cancellation(const LinphonePushNotificationMessage *message);
+
 /**
  * @}
  */

@@ -27,15 +27,17 @@ LINPHONE_BEGIN_NAMESPACE
 PushNotificationMessage::PushNotificationMessage(const std::string &callId, bool isText,
 												 const std::string &textContent, const std::string &subject,
 												 const std::string &fromAddr, const std::string &localAddr,
-												 const std::string &peerAddr, bool isIcalendar) {
+												 const std::string &peerAddr, bool isIcalendar,
+												 bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation) {
 	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr,
-								  peerAddr, isIcalendar);
+								  peerAddr, isIcalendar, isConferenceInvitationNew, isConferenceInvitationUpdate, isConferenceInvitationCancellation);
 }
 
 void PushNotificationMessage::init(const std::string &callId, bool isText,
 								   const std::string &textContent, const std::string &subject,
 								   const std::string &fromAddr, const std::string &localAddr,
-								   const std::string &peerAddr, bool isIcalendar) {
+								   const std::string &peerAddr, bool isIcalendar,
+								   bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation) {
 	mCallId = callId;
 	mIsText = isText;
 	mTextContent = textContent;
@@ -44,6 +46,9 @@ void PushNotificationMessage::init(const std::string &callId, bool isText,
 	mLocalAddr = localAddr;
 	mPeerAddr = peerAddr;
 	mIsIcalendar = isIcalendar;
+	mIsConferenceInvitationNew = isConferenceInvitationNew;
+	mIsConferenceInvitationUpdate = isConferenceInvitationUpdate;
+	mIsConferenceInvitationCancellation = isConferenceInvitationCancellation;
 }
 
 const std::string &PushNotificationMessage::getCallId() const {
@@ -77,6 +82,18 @@ bool PushNotificationMessage::isIcalendar() const {
 	return mIsIcalendar;
 }
 
+bool PushNotificationMessage::isConferenceInvitationNew() const {
+	return mIsConferenceInvitationNew;
+}
+
+bool PushNotificationMessage::isConferenceInvitationUpdate() const {
+	return mIsConferenceInvitationUpdate;
+}
+
+bool PushNotificationMessage::isConferenceInvitationCancellation() const {
+	return mIsConferenceInvitationCancellation;
+}
+
 std::string PushNotificationMessage::toString() const {
 	std::ostringstream ss;
 
@@ -88,6 +105,8 @@ std::string PushNotificationMessage::toString() const {
 	ss << "localAddr[" << mLocalAddr << "] ";
 	ss << "peerAddr[" << mPeerAddr << "] ";
 	ss << "isIcalendar[" << mIsIcalendar << "] ";
+	ss << "isConferenceInvitationUpdate[" << mIsConferenceInvitationUpdate << "] ";
+	ss << "isConferenceInvitationCancellation[" << mIsConferenceInvitationCancellation << "] ";
 
 	return ss.str();
 }

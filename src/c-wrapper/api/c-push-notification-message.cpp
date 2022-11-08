@@ -27,10 +27,12 @@ using namespace LinphonePrivate;
 LinphonePushNotificationMessage *linphone_push_notification_message_new(const char *call_id, bool_t is_text,
 																		const char *text_content, const char *subject,
 																		const char *from_addr, const char *local_addr,
-																		const char *peer_addr, bool_t is_icalendar) {
+																		const char *peer_addr, bool_t is_icalendar,
+																		bool_t is_conference_invitation_new, bool_t is_conference_invitation_update, bool_t is_conference_invitation_cancellation) {
 	return PushNotificationMessage::createCObject(
 		call_id ? call_id : "", is_text, text_content ? text_content : "",
-		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "", is_icalendar);
+		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "", is_icalendar,
+		is_conference_invitation_new, is_conference_invitation_update, is_conference_invitation_cancellation);
 }
 
 LinphonePushNotificationMessage *linphone_push_notification_message_ref(LinphonePushNotificationMessage *msg) {
@@ -81,4 +83,16 @@ const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const Li
 
 bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *msg) {
 	return PushNotificationMessage::toCpp(msg)->isIcalendar();
+}
+
+bool_t linphone_push_notification_message_is_conference_invitation_new(const LinphonePushNotificationMessage *msg) {
+	return PushNotificationMessage::toCpp(msg)->isConferenceInvitationNew();
+}
+
+bool_t linphone_push_notification_message_is_conference_invitation_update(const LinphonePushNotificationMessage *msg) {
+	return PushNotificationMessage::toCpp(msg)->isConferenceInvitationUpdate();
+}
+
+bool_t linphone_push_notification_message_is_conference_invitation_cancellation(const LinphonePushNotificationMessage *msg) {
+	return PushNotificationMessage::toCpp(msg)->isConferenceInvitationCancellation();
 }

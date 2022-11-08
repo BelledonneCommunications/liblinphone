@@ -30,11 +30,13 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
   public:
 	PushNotificationMessage(const std::string &callId, bool isText,
 							const std::string &textContent, const std::string &subject, const std::string &fromAddr,
-							const std::string &localAddr, const std::string &peerAddr, bool isIcalendar);
+							const std::string &localAddr, const std::string &peerAddr, bool isIcalendar,
+							bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation);
 
 	void init(const std::string &callId, bool isText, const std::string &textContent,
 			  const std::string &subject, const std::string &fromAddr, const std::string &localAddr,
-			  const std::string &peerAddr, bool isIcalendar);
+			  const std::string &peerAddr, bool isIcalendar,
+			  bool isConferenceInvitationNew,	bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation);
 
 	const std::string &getCallId() const;
 	bool isText() const;
@@ -44,6 +46,9 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::shared_ptr<Address> getLocalAddr() const;
 	std::shared_ptr<Address> getPeerAddr() const;
 	bool isIcalendar() const;
+	bool isConferenceInvitationNew() const;
+	bool isConferenceInvitationUpdate() const;
+	bool isConferenceInvitationCancellation() const;
 
 	std::string toString() const override;
 
@@ -56,6 +61,9 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::string mLocalAddr;
 	std::string mPeerAddr;
 	bool mIsIcalendar;
+	bool mIsConferenceInvitationNew;
+	bool mIsConferenceInvitationUpdate;
+	bool mIsConferenceInvitationCancellation;
 };
 
 LINPHONE_END_NAMESPACE
