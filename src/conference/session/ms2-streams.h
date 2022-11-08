@@ -301,6 +301,8 @@ public:
 	void setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor);
 	std::shared_ptr<const VideoSourceDescriptor> getVideoSource () const;
 
+	static void sCsrcChangedCb (void *userData, uint32_t new_csrc);
+
 	virtual ~MS2VideoStream();
 protected:
 	AudioStream *getPeerAudioStream();
@@ -314,7 +316,6 @@ private:
 	static void sVideoStreamEventCb (void *userData, const MSFilter *f, const unsigned int eventId, const void *args);
 	void cameraNotWorkingCb (const char *cameraName);
 	static void sCameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam);
-	static void sCsrcChangedCb (void *userData, uint32_t new_csrc);
 	MS2VideoMixer *getVideoMixer();
 	VideoStream *mStream = nullptr;
 	struct _MSVideoEndpoint *mConferenceEndpoint = nullptr;
