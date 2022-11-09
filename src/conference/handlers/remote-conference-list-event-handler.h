@@ -55,6 +55,8 @@ public:
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();
 	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
+	bool getInitialSubscriptionUnderWayFlag(const ConferenceId & conferenceId) const;
+
 private:
 	bool isHandlerInSameDomainAsCore(const ConferenceId & conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;

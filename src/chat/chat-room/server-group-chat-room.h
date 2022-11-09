@@ -86,9 +86,7 @@ public:
 
 	void join () override;
 	void leave () override;
-
-	/* ConferenceListener */
-	virtual void onFirstNotifyReceived (const IdentityAddress &addr) override;
+	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 
 	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
 
@@ -97,7 +95,7 @@ public:
 
 private:
 
-	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that habe been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
+	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that have been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
 
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);

@@ -133,6 +133,9 @@ void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<Par
 				queuedMessages.erase(address);
 				onParticipantDeviceLeft(device);
 			break;
+			case ParticipantDevice::State::Present:
+				dispatchQueuedMessages();
+			break;
 			default:
 			break;
 		}
@@ -355,7 +358,6 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 		 */
 
 		for (const auto &device : participant->getDevices()) {
-
 			string uri(device->getAddress().asString());
 			auto & msgQueue = queuedMessages[uri];
 
@@ -1054,7 +1056,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 	q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 
 	// First set it as left, so that it may eventually trigger the destruction of the chatroom if no device are present for any participant.
-	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left);
+	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left, false);
 	participantCopy->removeDevice(deviceAddress);
 }
 
@@ -1077,6 +1079,9 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 
 	unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
 	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
+
+	auto session = device->getSession();
+	if (session) session->setListener(nullptr);
 
 	if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) || protocolVersion >= Utils::Version(1, 1)){
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
@@ -1197,17 +1202,42 @@ void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &part
 
 // -----------------------------------------------------------------------------
 
+bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr<CallSession> &session) const {
+	L_Q();
+	auto device = q->findCachedParticipantDevice(session);
+	return dispatchMessagesAfterFullState(device);
+}
+
+bool ServerGroupChatRoomPrivate::dispatchMessagesAfterFullState(const shared_ptr<ParticipantDevice> &device) const {
+	auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
+	auto groupchat = protocols.find("groupchat");
+	return ((groupchat == protocols.end()) || (groupchat->second < Utils::Version(1, 2)));
+}
+
+
 void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, const string &message) {
 	L_Q();
 	auto device = q->findCachedParticipantDevice(session);
 	if (!device) {
-		lInfo() << q << "onCallSessionStateChanged on unknown device (maybe not yet).";
+		lInfo() << q << " onCallSessionStateChanged on unknown device (maybe not yet).";
 		return;
 	}
 	switch(newState){
 		case CallSession::State::Connected:
-			if (device->getState() == ParticipantDevice::State::Leaving)
+			if (device->getState() == ParticipantDevice::State::Leaving) {
 				byeDevice(device);
+			} else {
+				if ((session->getDirection() == LinphoneCallOutgoing) && !dispatchMessagesAfterFullState(session)){
+					// According to RFC3261, a request is successful once the 200Ok is received
+					moveDeviceToPresent(session);
+				}
+
+				if (joiningPendingAfterCreation && mInitiatorDevice && mInitiatorDevice == device){
+					lInfo() << "Session of the initiation of the chatroom is in state " << Utils::toString(newState) << " things can start now.";
+					joiningPendingAfterCreation = false;
+					updateParticipantsSessions();
+				}
+			}
 		break;
 		case CallSession::State::End:
 		{
@@ -1215,9 +1245,13 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 
 			if (errorInfo != nullptr && linphone_error_info_get_protocol_code(errorInfo) > 299) {
 				if (device->getState() == ParticipantDevice::State::Joining || device->getState() == ParticipantDevice::State::Present) {
-					lWarning() << q << ": Received a BYE from " << device->getParticipant()->getAddress().asString() << " with reason "
+					lWarning() << q << ": Received a BYE from " << device->getAddress() << " with reason "
 						<< linphone_error_info_get_protocol_code(errorInfo) << ", setting it back to ScheduledForJoining.";
 					setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+					if (linphone_error_info_get_protocol_code(errorInfo) == 408 && mInitiatorDevice && mInitiatorDevice == device) {
+						// Recovering if the initiator of the chatroom did not receive the 200Ok or the ACK has been lost
+						inviteDevice(device);
+					}
 				}
 			} else {
 				if (device->getState() == ParticipantDevice::State::Present){
@@ -1261,12 +1295,21 @@ void ServerGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<Call
 		device->setSession(nullptr);
 }
 
-void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers){
+void ServerGroupChatRoomPrivate::moveDeviceToPresent(const std::shared_ptr<CallSession> &session) {
 	L_Q();
-	if (joiningPendingAfterCreation && mInitiatorDevice && mInitiatorDevice->getSession() == session){
-		lInfo() << q << " got ACK from initiator of the chatroom, things can start now.";
-		joiningPendingAfterCreation = false;
-		updateParticipantsSessions();
+	shared_ptr<ParticipantDevice> device = q->findCachedParticipantDevice(session);
+	moveDeviceToPresent(device);
+}
+
+void ServerGroupChatRoomPrivate::moveDeviceToPresent(const std::shared_ptr<ParticipantDevice> &device) {
+	if (device && !ParticipantDevice::isLeavingState(device->getState())) {
+		setParticipantDeviceState(device, ParticipantDevice::State::Present);
+	}
+}
+
+void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers){
+	if (!dispatchMessagesAfterFullState(session)){
+		moveDeviceToPresent(session);
 	}
 }
 
@@ -1494,9 +1537,8 @@ void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
 	for (const auto &participant : getParticipants()) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getAddress() == addr) {
-				d->setParticipantDeviceState(device, ParticipantDevice::State::Present);
-				d->dispatchQueuedMessages();
+			if ((device->getAddress() == addr) && (d->dispatchMessagesAfterFullState(device))){
+				d->moveDeviceToPresent(device);
 				return;
 			}
 		}
@@ -1587,6 +1629,29 @@ void ServerGroupChatRoom::setState (ConferenceInterface::State state) {
 }
 
 void ServerGroupChatRoom::subscribeReceived (LinphoneEvent *event) {
+	L_D();
+
+	const LinphoneAddress *lAddr = linphone_event_get_from(event);
+	char *addrStr = linphone_address_as_string(lAddr);
+	Address participantAddress(addrStr);
+	bctbx_free(addrStr);
+
+	shared_ptr<Participant> participant = findCachedParticipant(participantAddress);
+
+	if (participant) {
+		const LinphoneAddress *lContactAddr = linphone_event_get_remote_contact(event);
+		char *contactAddrStr = linphone_address_as_string(lContactAddr);
+		IdentityAddress contactAddr(contactAddrStr);
+		bctbx_free(contactAddrStr);
+		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
+		const auto deviceState = device ? device->getState() : ParticipantDevice::State::ScheduledForJoining;
+		if (device && (deviceState == ParticipantDevice::State::ScheduledForJoining)) {
+			lInfo() << "Inviting device " << device->getAddress() << " because it was scheduled to join the chat room";
+			// Invite device as last time round it was attempted, the INVITE session errored out
+			d->inviteDevice(device);
+		}
+	}
+
 	static_pointer_cast<LocalConference>(getConference())->subscribeReceived(event);
 	// Store last notify ID in the database
 	getCore()->getPrivate()->mainDb->insertChatRoom(getSharedFromThis(), getConference()->getLastNotify());

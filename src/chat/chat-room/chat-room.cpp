@@ -338,10 +338,9 @@ void ChatRoomPrivate::notifyUndecryptableChatMessageReceived (const shared_ptr<C
 
 // -----------------------------------------------------------------------------
 
-LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *message) {
+std::shared_ptr<ChatMessage> ChatRoomPrivate::getMessageFromSal(SalOp *op, const SalMessage *message) {
 	L_Q();
 
-	LinphoneReason reason = LinphoneReasonNone;
 	shared_ptr<ChatMessage> msg;
 
 	msg = createChatMessage(
@@ -385,7 +384,13 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 		msg->getPrivate()->setSalCustomHeaders(sal_custom_header_clone(ch));
 
 	addTransientChatMessage(msg);
-	reason = msg->getPrivate()->receive();
+
+	return msg;
+}
+
+LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *message) {
+	auto msg = getMessageFromSal(op, message);
+	LinphoneReason reason = msg->getPrivate()->receive();
 	return reason;
 }
 
@@ -414,11 +419,11 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 	}
 	
 	if (core->isCurrentlyAggregatingChatMessages()) {
-		lDebug() << "[Chat Room] Core is currently aggregating chat messages, push message to list";
+		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] Core is currently aggregating chat messages, push message to list";
 		aggregatedMessages.push_back(chatMessage);
 	} else {
 		// No aggregation, notify right away
-		lDebug() << "[Chat Room] No aggregation, notify right away";
+		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] No aggregation, notify right away";
 		notifyMessageReceived(chatMessage);
 	}
 }
@@ -436,15 +441,15 @@ void ChatRoomPrivate::notifyAggregatedChatMessages () {
 	L_Q();
 
 	if (aggregatedMessages.empty()) {
-		lDebug() << "[Chat Room] No aggregated message to notify";
+		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] No aggregated message to notify";
 		return;
 	}
 	
 	size_t aggregatedMessagesSize = aggregatedMessages.size();
 	if (aggregatedMessagesSize == 1) {
-		lDebug() << "[Chat Room] There is 1 aggregated message to notify";
+		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] There is 1 aggregated message to notify";
 	} else {
-		lDebug() << "[Chat Room] There are " << aggregatedMessagesSize << " aggregated messages to notify";
+		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] There are " << aggregatedMessagesSize << " aggregated messages to notify";
 	}
 	LinphoneChatRoom *cChatRoom = getCChatRoom();
 	auto core = q->getCore()->getCCore();
@@ -493,6 +498,14 @@ void ChatRoomPrivate::onIsComposingStateChanged (bool isComposing) {
 
 void ChatRoomPrivate::onIsRemoteComposingStateChanged (const Address &remoteAddress, bool isComposing) {
 	notifyIsComposingReceived(remoteAddress, isComposing);
+}
+
+bool ChatRoomPrivate::isSubscriptionUnderWay() const {
+	return false;
+}
+
+void ChatRoomPrivate::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
+	lInfo() << __func__ << ": not implemented";
 }
 
 // -----------------------------------------------------------------------------
@@ -749,11 +762,13 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId, Chat
 
 void ChatRoom::markAsRead () {
 	L_D();
-	
+
+lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " aggregated messages " << d->aggregatedMessages.size();
 	// Mark any message currently waiting aggregation as read
 	for (auto &chatMessage : d->aggregatedMessages) {
 		chatMessage->getPrivate()->markAsRead();
-		
+
+lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " aggregated chat messages " << chatMessage << " has File Transfer Content " << chatMessage->getPrivate()->hasFileTransferContent();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
 			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
@@ -763,7 +778,8 @@ void ChatRoom::markAsRead () {
 	CorePrivate *dCore = getCore()->getPrivate();
 	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
 		chatMessage->getPrivate()->markAsRead();
-		
+
+lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " unread chat messages " << chatMessage << " has File Transfer Content " << chatMessage->getPrivate()->hasFileTransferContent();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
 			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
@@ -865,5 +881,4 @@ std::shared_ptr<Call> ChatRoom::getCall () const {
 	L_D();
 	return getCore()->getCallByCallId(d->callId);
 }
-
 LINPHONE_END_NAMESPACE

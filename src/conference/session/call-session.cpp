@@ -1172,7 +1172,7 @@ CallSession::CallSession (const shared_ptr<Core> &core, const CallSessionParams 
 	: Object(*new CallSessionPrivate), CoreAccessor(core) {
 	L_D();
 	getCore()->getPrivate()->registerListener(d);
-	d->listener = listener;
+	setListener(listener);
 	if (params)
 		d->setParams(new CallSessionParams(*params));
 	d->init();

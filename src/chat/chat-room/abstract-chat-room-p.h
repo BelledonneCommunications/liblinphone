@@ -65,6 +65,10 @@ public:
 	virtual void setCallId (const std::string &value) = 0;
 
 	virtual void notifyAggregatedChatMessages() = 0;
+
+	virtual bool isSubscriptionUnderWay() const = 0;
+
+	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 };
 
 LINPHONE_END_NAMESPACE

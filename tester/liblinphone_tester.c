@@ -428,6 +428,8 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&local_conference_test_suite_scheduled_ice_conference);
 	bc_tester_add_suite(&local_conference_test_suite_inpromptu_conference);
 	bc_tester_add_suite(&local_conference_test_suite_chat);
+	bc_tester_add_suite(&local_conference_test_suite_ephemeral_chat);
+	bc_tester_add_suite(&local_conference_test_suite_secure_chat);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);

@@ -61,6 +61,9 @@ public:
 	unsigned int getLastNotify () const;
 	void requestFullState();
 
+	void setInitialSubscriptionUnderWayFlag(bool on);
+	bool getInitialSubscriptionUnderWayFlag() const;
+
 protected:
 	void conferenceInfoNotifyReceived (const std::string &xmlBody);
 	void conferenceInfoLinphoneExtensionNotifyReceived (const std::string &xmlBody);
@@ -79,6 +82,7 @@ protected:
 	bool subscriptionWanted = false;
 	bool waitingFullState = false;
 	bool fullStateRequested = false;
+	bool initialSubscriptionUnderWay = false;
 
 private:
 	void unsubscribePrivate ();

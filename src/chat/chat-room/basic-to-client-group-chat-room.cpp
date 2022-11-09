@@ -112,6 +112,14 @@ public:
 		clientGroupChatRoom->getPrivate()->onCallSessionStateChanged(session, newState, message);
 	}
 
+	virtual bool isSubscriptionUnderWay() const override {
+		return clientGroupChatRoom->getPrivate()->isSubscriptionUnderWay();
+	}
+
+	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override {
+		clientGroupChatRoom->getPrivate()->addPendingMessage(chatMessage);
+	}
+
 private:
 	shared_ptr<ClientGroupChatRoom> clientGroupChatRoom;
 	time_t migrationRealTime = 0;

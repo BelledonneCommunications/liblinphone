@@ -121,6 +121,8 @@ extern test_suite_t shared_core_test_suite;
 extern test_suite_t lime_server_auth_test_suite;
 extern test_suite_t vfs_encryption_test_suite;
 extern test_suite_t local_conference_test_suite_chat;
+extern test_suite_t local_conference_test_suite_ephemeral_chat;
+extern test_suite_t local_conference_test_suite_secure_chat;
 extern test_suite_t local_conference_test_suite_conference_edition;
 extern test_suite_t local_conference_test_suite_scheduled_conference_basic;
 extern test_suite_t local_conference_test_suite_scheduled_conference_advanced;
@@ -235,6 +237,7 @@ typedef struct _stats {
 	int number_of_auth_info_requested ;
 	int number_of_LinphoneChatRoomExhumed;
 
+	int number_of_LinphoneCallCreated;
 	int number_of_LinphoneCallIncomingReceived;
 	int number_of_LinphoneCallPushIncomingReceived;
 	int number_of_LinphoneCallOutgoingInit;
@@ -611,6 +614,7 @@ void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *r
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+void setup_chat_room_callbacks(LinphoneChatRoomCbs *cbs);
 void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
 void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
 bctbx_list_t * liblinphone_tester_get_messages_and_states(LinphoneChatRoom * cr, int * messageCount, stats * stats);	// Return all LinphoneChatMessage and count states
@@ -658,6 +662,7 @@ LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreM
 LinphoneChatRoom * create_chat_room_client_side_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params);
 LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted, LinphoneChatRoomEphemeralMode mode);
 LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin);
+void check_create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, LinphoneChatRoom *chatRoom, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize);
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server);
 void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
 void _configure_core_for_audio_video_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);

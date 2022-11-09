@@ -66,6 +66,9 @@ public:
 
 	void setIsEmpty (const bool empty) override;
 
+	virtual bool isSubscriptionUnderWay() const override;
+	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
+
 	std::shared_ptr<ChatMessage> createChatMessage (ChatMessage::Direction direction);
 	std::shared_ptr<ImdnMessage> createImdnMessage (
 		const std::list<std::shared_ptr<ChatMessage>> &deliveredMessages,
@@ -114,6 +117,7 @@ public:
 protected:
 	AbstractChatRoom *proxyChatRoom = nullptr;
 	AbstractChatRoom::CapabilitiesMask capabilities;
+	std::shared_ptr<ChatMessage> getMessageFromSal(SalOp *op, const SalMessage *message);
 
 private:
 

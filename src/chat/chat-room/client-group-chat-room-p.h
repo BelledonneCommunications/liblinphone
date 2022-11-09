@@ -29,6 +29,8 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class AbstractChatRoom;
+
 class ClientGroupChatRoomPrivate : public ChatRoomPrivate {
 public:
 	ClientGroupChatRoomPrivate(void) : ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask({ChatRoom::Capabilities::Conference})) {};
@@ -46,6 +48,8 @@ public:
 	void setCallSessionListener (CallSessionListener *listener);
 	void setChatRoomListener (ChatRoomListener *listener) { chatRoomListener = listener; }
 
+	std::pair<bool, std::shared_ptr<AbstractChatRoom>> needToMigrate() const;
+
 	void addOneToOneCapability ();
 	unsigned int getLastNotifyId () const;
 
@@ -55,7 +59,6 @@ public:
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
 	void onChatRoomInsertInDatabaseRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
 	void onChatRoomDeleteRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
-	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 
 	// CallSessionListener
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
@@ -75,6 +78,9 @@ public:
 		previousConferenceIds.push_back(confId);
 	}
 	void removeConferenceIdFromPreviousList(const ConferenceId& confId);
+
+	virtual bool isSubscriptionUnderWay() const override;
+	virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 private:
 	void acceptSession (const std::shared_ptr<CallSession> &session);

@@ -157,6 +157,8 @@ private:
 	void onBye(const std::shared_ptr<ParticipantDevice> &participantLeaving);
 	void determineProtocolVersion();
 	void updateProtocolVersionFromDevice(const std::shared_ptr<ParticipantDevice> &device);
+	bool dispatchMessagesAfterFullState(const std::shared_ptr<ParticipantDevice> &device) const;
+	bool dispatchMessagesAfterFullState(const std::shared_ptr<CallSession> &session) const;
 
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
@@ -171,6 +173,10 @@ private:
 	) override;
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
 	void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
+
+	void moveDeviceToPresent(const std::shared_ptr<CallSession> &session);
+	void moveDeviceToPresent(const std::shared_ptr<ParticipantDevice> &device);
+
 	struct RegistrationSubscriptionContext{
 		void *context = nullptr; // TODO: unused currently, but can store a context pointer from the implementation of reginfo subscription.
 					 // This will remove the need for a map in conference server for holding subscriptions.

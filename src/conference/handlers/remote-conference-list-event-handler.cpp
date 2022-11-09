@@ -102,7 +102,9 @@ void RemoteConferenceListEventHandler::subscribe (LinphoneAccount * c_account) {
 				continue;
 
 			Address addr = conferenceId.getPeerAddress().asAddress();
-			addr.setUriParam("Last-Notify", Utils::toString(handler->getLastNotify()));
+			const auto lastNotify = handler->getLastNotify();
+			addr.setUriParam("Last-Notify", Utils::toString(lastNotify));
+			handler->setInitialSubscriptionUnderWayFlag((lastNotify == 0));
 			Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
 			l.getEntry().push_back(entry);
 		}
@@ -173,6 +175,12 @@ void RemoteConferenceListEventHandler::unsubscribe (LinphoneAccount * c_account)
 
 void RemoteConferenceListEventHandler::invalidateSubscription () {
 	levs.clear();
+}
+
+bool RemoteConferenceListEventHandler::getInitialSubscriptionUnderWayFlag(const ConferenceId & conferenceId) const {
+	auto handler = findHandler(conferenceId);
+	return (handler) ? handler->getInitialSubscriptionUnderWayFlag() : false;
+
 }
 
 void RemoteConferenceListEventHandler::notifyReceived (std::string from, const Content *notifyContent) {

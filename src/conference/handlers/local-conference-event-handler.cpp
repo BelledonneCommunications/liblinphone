@@ -1080,6 +1080,18 @@ void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<Conf
 	if (conf) {
 		notifyAllExcept(makeContent(createNotifyParticipantAdded(participant->getAddress().asAddress())), participant);
 		conf->updateParticipantsInConferenceInfo(participant->getAddress());
+
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_participant_added(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event));
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " being added because pointer to conference is null";
 	}
@@ -1089,6 +1101,17 @@ void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<Co
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAllExcept(makeContent(createNotifyParticipantRemoved(participant->getAddress().asAddress())), participant);
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_participant_removed(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event));
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " being removed because pointer to conference is null";
 	}
@@ -1099,6 +1122,17 @@ void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<C
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAll(makeContent(createNotifyParticipantAdminStatusChanged(participant->getAddress().asAddress(), isAdmin)));
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_participant_admin_status_changed(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event));
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " admin status changed because pointer to conference is null";
 	}
@@ -1108,6 +1142,17 @@ void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<Confer
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAll(makeContent(createNotifySubjectChanged(event->getSubject())));
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_subject_changed(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event));
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
 	}
@@ -1140,6 +1185,17 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 		} else {
 			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
 		}
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_participant_device_added(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event));
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
@@ -1150,6 +1206,17 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 	if (conf) {
 		auto participant = device->getParticipant();
 		notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceRemoved(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_participant_device_removed(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event));
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being removed because pointer to conference is null";
 	}
@@ -1160,6 +1227,17 @@ void LocalConferenceEventHandler::onParticipantDeviceStateChanged (const std::sh
 	if (conf) {
 		auto participant = device->getParticipant();
 		notifyAll(makeContent(createNotifyParticipantDeviceDataChanged(participant->getAddress().asAddress(), device->getAddress().asAddress())));
+		if (conf) {
+			shared_ptr<Core> core = conf->getCore();
+			ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+			ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+			// Enquire whether this conference belongs to a server group chat room
+			std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+			if (chatRoom) {
+				_linphone_chat_room_notify_participant_device_state_changed(L_GET_C_BACK_PTR(chatRoom.get()), L_GET_C_BACK_PTR(event), (LinphoneParticipantDeviceState)device->getState());
+			}
+		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}

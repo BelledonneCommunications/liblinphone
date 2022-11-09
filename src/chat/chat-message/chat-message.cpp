@@ -212,7 +212,6 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	const shared_ptr<ChatMessage>& sharedMessage = q->getSharedFromThis();
 
-
 	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << sharedMessage << " of chat room " << (q->getChatRoom() ? q->getChatRoom()->getConferenceId() : ConferenceId()) << " : moving from " << Utils::toString(state) << " to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
@@ -998,6 +997,14 @@ void ChatMessagePrivate::send () {
 
 	shared_ptr<AbstractChatRoom> chatRoom(q->getChatRoom());
 	if (!chatRoom) return;
+
+	const auto & chatRoomState = chatRoom->getState();
+	const auto & chatRoomParams = chatRoom->getCurrentParams();
+	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
+	if ((getContentType() == ContentType::Imdn) && chatRoomParams->isEncrypted() && (dChatRoom->isSubscriptionUnderWay() || (chatRoomState == ConferenceInterface::State::Instantiated) || (chatRoomState == ConferenceInterface::State::CreationPending))) {
+		lInfo() << "IMDN message is being sent while the subscription is underway or the conference is not yet full created";
+		dChatRoom->addPendingMessage(q->getSharedFromThis());
+	}
 
 	markAsRead();
 	SalOp *op = salOp;

@@ -75,6 +75,7 @@ shared_ptr<Participant> Conference::getActiveParticipant () const {
 }
 
 void Conference::clearParticipants () {
+	me->clearDevices();
 	participants.clear();
 }
 

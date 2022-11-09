@@ -83,7 +83,7 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 const Utils::Version CorePrivate::conferenceProtocolVersion(1, 0);
-const Utils::Version CorePrivate::groupChatProtocolVersion(1, 1);
+const Utils::Version CorePrivate::groupChatProtocolVersion(1, 2);
 const Utils::Version CorePrivate::ephemeralProtocolVersion(1, 1);
 
 void CorePrivate::init () {
