@@ -431,69 +431,71 @@ long long MainDbPrivate::insertOrUpdateImportedBasicChatRoom (
 
 long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 #ifdef HAVE_DB_STORAGE
-	const ConferenceId &conferenceId = chatRoom->getConferenceId();
-	const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress().asString());
-	const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress().asString());
+	L_Q();
+	if (q->isInitialized()) {
+		const ConferenceId &conferenceId = chatRoom->getConferenceId();
+		const long long &peerSipAddressId = insertSipAddress(conferenceId.getPeerAddress().asString());
+		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress().asString());
 
-	long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
-	if (chatRoomId >= 0) {
-		// The chat room is already stored in DB, but still update the notify id that might have changed
-		lInfo() << "Update chat room in database: " << conferenceId << ".";
-		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
-			soci::use(notifyId), soci::use(chatRoomId);
-	} else {
+		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
+		if (chatRoomId >= 0) {
+			// The chat room is already stored in DB, but still update the notify id that might have changed
+			lInfo() << "Update chat room in database: " << conferenceId << ".";
+			*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
+				soci::use(notifyId), soci::use(chatRoomId);
+		} else {
 
-		lInfo() << "Insert new chat room in database: " << conferenceId << ".";
+			lInfo() << "Insert new chat room in database: " << conferenceId << ".";
 
-		const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
-		const tm &lastUpdateTime = Utils::getTimeTAsTm(chatRoom->getLastUpdateTime());
+			const tm &creationTime = Utils::getTimeTAsTm(chatRoom->getCreationTime());
+			const tm &lastUpdateTime = Utils::getTimeTAsTm(chatRoom->getLastUpdateTime());
 
-		// Remove capabilities like `Proxy`.
-		const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
+			// Remove capabilities like `Proxy`.
+			const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
 
-		const string &subject = chatRoom->getUtf8Subject();
-		const int &flags = chatRoom->hasBeenLeft();
-		int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
-		long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
-		*dbSession.getBackendSession() << "INSERT INTO chat_room ("
-		"  peer_sip_address_id, local_sip_address_id, creation_time,"
-		"  last_update_time, capabilities, subject, flags, last_notify_id, ephemeral_enabled, ephemeral_messages_lifetime"
-		") VALUES ("
-		"  :peerSipAddressId, :localSipAddressId, :creationTime,"
-		"  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, :ephemeralEnabled, :ephemeralLifeTime"
-		")",
-		soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
-		soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags),
-		soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
+			const string &subject = chatRoom->getUtf8Subject();
+			const int &flags = chatRoom->hasBeenLeft();
+			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
+			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
+			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
+			"  peer_sip_address_id, local_sip_address_id, creation_time,"
+			"  last_update_time, capabilities, subject, flags, last_notify_id, ephemeral_enabled, ephemeral_messages_lifetime"
+			") VALUES ("
+			"  :peerSipAddressId, :localSipAddressId, :creationTime,"
+			"  :lastUpdateTime, :capabilities, :subject, :flags, :lastNotifyId, :ephemeralEnabled, :ephemeralLifeTime"
+			")",
+			soci::use(peerSipAddressId), soci::use(localSipAddressId), soci::use(creationTime),
+			soci::use(lastUpdateTime), soci::use(capabilities), soci::use(subject), soci::use(flags),
+			soci::use(notifyId), soci::use(ephemeralEnabled), soci::use(ephemeralLifeTime);
 
-		chatRoomId = dbSession.getLastInsertId();
+			chatRoomId = dbSession.getLastInsertId();
+		}
+		// Do not add 'me' when creating a server-group-chat-room.
+		if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
+			shared_ptr<Participant> me = chatRoom->getMe();
+			long long meId = insertChatRoomParticipant(
+				chatRoomId,
+				insertSipAddress(me->getAddress().asString()),
+				me->isAdmin()
+			);
+			for (const auto &device : me->getDevices())
+				insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()), device->getName());
+		}
+
+		for (const auto &participant : chatRoom->getParticipants()) {
+			long long participantId = insertChatRoomParticipant(
+				chatRoomId,
+				insertSipAddress(participant->getAddress().asString()),
+				participant->isAdmin()
+			);
+			for (const auto &device : participant->getDevices())
+				insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()), device->getName());
+		}
+
+		return chatRoomId;
 	}
-	// Do not add 'me' when creating a server-group-chat-room.
-	if (conferenceId.getLocalAddress() != conferenceId.getPeerAddress()) {
-		shared_ptr<Participant> me = chatRoom->getMe();
-		long long meId = insertChatRoomParticipant(
-			chatRoomId,
-			insertSipAddress(me->getAddress().asString()),
-			me->isAdmin()
-		);
-		for (const auto &device : me->getDevices())
-			insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()), device->getName());
-	}
-
-	for (const auto &participant : chatRoom->getParticipants()) {
-		long long participantId = insertChatRoomParticipant(
-			chatRoomId,
-			insertSipAddress(participant->getAddress().asString()),
-			participant->isAdmin()
-		);
-		for (const auto &device : participant->getDevices())
-			insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()), device->getName());
-	}
-
-	return chatRoomId;
-#else
-	return -1;
 #endif
+	return -1;
 }
 
 long long MainDbPrivate::insertChatRoomParticipant (
@@ -502,24 +504,26 @@ long long MainDbPrivate::insertChatRoomParticipant (
 	bool isAdmin
 ) {
 #ifdef HAVE_DB_STORAGE
-	soci::session *session = dbSession.getBackendSession();
-	long long chatRoomParticipantId = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
-	auto isAdminInt = static_cast<int>(isAdmin);
-	if (chatRoomParticipantId >= 0) {
-		// See: https://stackoverflow.com/a/15299655 (cast to reference)
-		*session << "UPDATE chat_room_participant SET is_admin = :isAdmin WHERE id = :chatRoomParticipantId",
-			soci::use(isAdminInt), soci::use(chatRoomParticipantId);
-		return chatRoomParticipantId;
+	L_Q();
+	if (q->isInitialized()) {
+		soci::session *session = dbSession.getBackendSession();
+		long long chatRoomParticipantId = selectChatRoomParticipantId(chatRoomId, participantSipAddressId);
+		auto isAdminInt = static_cast<int>(isAdmin);
+		if (chatRoomParticipantId >= 0) {
+			// See: https://stackoverflow.com/a/15299655 (cast to reference)
+			*session << "UPDATE chat_room_participant SET is_admin = :isAdmin WHERE id = :chatRoomParticipantId",
+				soci::use(isAdminInt), soci::use(chatRoomParticipantId);
+			return chatRoomParticipantId;
+		}
+
+		*session << "INSERT INTO chat_room_participant (chat_room_id, participant_sip_address_id, is_admin)"
+			" VALUES (:chatRoomId, :participantSipAddressId, :isAdmin)",
+			soci::use(chatRoomId), soci::use(participantSipAddressId), soci::use(isAdminInt);
+
+		return dbSession.getLastInsertId();
 	}
-
-	*session << "INSERT INTO chat_room_participant (chat_room_id, participant_sip_address_id, is_admin)"
-		" VALUES (:chatRoomId, :participantSipAddressId, :isAdmin)",
-		soci::use(chatRoomId), soci::use(participantSipAddressId), soci::use(isAdminInt);
-
-	return dbSession.getLastInsertId();
-#else
-	return -1;
 #endif
+	return -1;
 }
 
 void MainDbPrivate::insertChatRoomParticipantDevice (
@@ -528,33 +532,45 @@ void MainDbPrivate::insertChatRoomParticipantDevice (
 	const string &deviceName
 ) {
 #ifdef HAVE_DB_STORAGE
-	soci::session *session = dbSession.getBackendSession();
-	long long count;
-	*session << "SELECT COUNT(*) FROM chat_room_participant_device"
-		" WHERE chat_room_participant_id = :participantId"
-		" AND participant_device_sip_address_id = :participantDeviceSipAddressId",
-		soci::into(count), soci::use(participantId), soci::use(participantDeviceSipAddressId);
-	if (count)
-		return;
+	L_Q();
+	if (q->isInitialized()) {
+		soci::session *session = dbSession.getBackendSession();
+		long long count;
+		*session << "SELECT COUNT(*) FROM chat_room_participant_device"
+			" WHERE chat_room_participant_id = :participantId"
+			" AND participant_device_sip_address_id = :participantDeviceSipAddressId",
+			soci::into(count), soci::use(participantId), soci::use(participantDeviceSipAddressId);
+		if (count)
+			return;
 
-	*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name)"
-		" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName)",
-		soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName);
+		*session << "INSERT INTO chat_room_participant_device (chat_room_participant_id, participant_device_sip_address_id, name)"
+			" VALUES (:participantId, :participantDeviceSipAddressId, :participantDeviceName)",
+			soci::use(participantId), soci::use(participantDeviceSipAddressId), soci::use(deviceName);
+	}
 #endif
 }
 
 void MainDbPrivate::insertChatMessageParticipant (long long chatMessageId, long long sipAddressId, int state, time_t stateChangeTime) {
 #ifdef HAVE_DB_STORAGE
-	const tm &stateChangeTm = Utils::getTimeTAsTm(stateChangeTime);
-	*dbSession.getBackendSession() <<
-		"INSERT INTO chat_message_participant (event_id, participant_sip_address_id, state, state_change_time)"
-		" VALUES (:chatMessageId, :sipAddressId, :state, :stateChangeTm)",
-		soci::use(chatMessageId), soci::use(sipAddressId), soci::use(state), soci::use(stateChangeTm);
+	L_Q();
+	if (q->isInitialized()) {
+		const tm &stateChangeTm = Utils::getTimeTAsTm(stateChangeTime);
+		*dbSession.getBackendSession() <<
+			"INSERT INTO chat_message_participant (event_id, participant_sip_address_id, state, state_change_time)"
+			" VALUES (:chatMessageId, :sipAddressId, :state, :stateChangeTm)",
+			soci::use(chatMessageId), soci::use(sipAddressId), soci::use(state), soci::use(stateChangeTm);
+	}
 #endif
 }
 
 long long MainDbPrivate::insertConferenceInfo (const std::shared_ptr<ConferenceInfo> &conferenceInfo, const std::shared_ptr<ConferenceInfo> &oldConferenceInfo) {
 #ifdef HAVE_DB_STORAGE
+	L_Q();
+	if (!q->isInitialized()) {
+		lError() << "Database hasn't been initialized";
+		return -1;
+	}
+
 	if (!conferenceInfo->getOrganizerAddress().isValid() || !conferenceInfo->getUri().isValid()) {
 		lError() << "Trying to insert a Conference Info without organizer or URI!";
 		return -1;
@@ -3703,8 +3719,9 @@ list<ChatMessage::State> MainDb::getChatMessageParticipantStates (const shared_p
 		statement.execute();
 
 		list<ChatMessage::State> states;
-		while (statement.fetch())
+		while (statement.fetch()) {
 			states.push_back(ChatMessage::State(state));
+		}
 
 		return states;
 	};
@@ -4755,20 +4772,22 @@ void MainDb::updateChatRoomParticipantDevice (
 	const shared_ptr<ParticipantDevice> &device
 ) {
 #ifdef HAVE_DB_STORAGE
-	L_DB_TRANSACTION {
-		L_D();
+	if (isInitialized()) {
+		L_DB_TRANSACTION {
+			L_D();
 
-		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
-		const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
-		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
-		const long long &participantSipDeviceAddressId = d->selectSipAddressId(device->getAddress().asString());
-		unsigned int state = static_cast<unsigned int>(device->getState());
-		*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name"
-			" WHERE chat_room_participant_id = :participantId AND participant_device_sip_address_id = :participantSipDeviceAddressId",
-			soci::use(state), soci::use(device->getName()), soci::use(participantId), soci::use(participantSipDeviceAddressId);
+			const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+			const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
+			const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
+			const long long &participantSipDeviceAddressId = d->selectSipAddressId(device->getAddress().asString());
+			unsigned int state = static_cast<unsigned int>(device->getState());
+			*d->dbSession.getBackendSession() << "UPDATE chat_room_participant_device SET state = :state, name = :name"
+				" WHERE chat_room_participant_id = :participantId AND participant_device_sip_address_id = :participantSipDeviceAddressId",
+				soci::use(state), soci::use(device->getName()), soci::use(participantId), soci::use(participantSipDeviceAddressId);
 
-		tr.commit();
-	};
+			tr.commit();
+		};
+	}
 #endif
 }
 
@@ -4778,9 +4797,11 @@ void MainDb::deleteChatRoomParticipant (
 ){
 #ifdef HAVE_DB_STORAGE
 	L_D();
-	const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
-	const long long &participantSipAddressId = d->selectSipAddressId(participant.asString());
-	d->deleteChatRoomParticipant(dbChatRoomId, participantSipAddressId);
+	if (isInitialized()) {
+		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+		const long long &participantSipAddressId = d->selectSipAddressId(participant.asString());
+		d->deleteChatRoomParticipant(dbChatRoomId, participantSipAddressId);
+	}
 #endif
 }
 
@@ -4790,10 +4811,12 @@ void MainDb::deleteChatRoomParticipantDevice (
 ) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
-	const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
-	const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
-	const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
-	d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
+	if (isInitialized()) {
+		const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
+		const long long &participantSipAddressId = d->selectSipAddressId(device->getParticipant()->getAddress().asString());
+		const long long &participantId = d->selectChatRoomParticipantId(dbChatRoomId, participantSipAddressId);
+		d->deleteChatRoomParticipantDevice(participantId, participantSipAddressId);
+	}
 #endif
 }
 

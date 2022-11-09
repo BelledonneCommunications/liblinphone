@@ -158,6 +158,8 @@ public:
 	void setIsMuted(bool isMuted);
 	bool getIsMuted() const;
 
+	static bool isLeavingState(const ParticipantDevice::State & state);
+
 protected:
 	Conference *getConference () const;
 
@@ -192,7 +194,6 @@ private:
 	LinphoneMediaDirection computeDeviceMediaDirection(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 	bool computeStreamAvailable(const bool conferenceEnable, const bool callEnable, const LinphoneMediaDirection dir) const;
 	LinphoneMediaDirection getStreamDirectionFromSession(const LinphoneStreamType type) const;
-	static bool isLeavingState(const ParticipantDevice::State & state);
 
 	L_DISABLE_COPY(ParticipantDevice);
 };

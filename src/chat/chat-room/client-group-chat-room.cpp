@@ -204,26 +204,39 @@ void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 	q->setState(ConferenceInterface::State::Deleted);
 }
 
-LinphoneReason ClientGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessage *message) {
+bool ClientGroupChatRoomPrivate::isSubscriptionUnderWay() const {
 	L_Q();
 
-	auto reason = ChatRoomPrivate::onSipMessageReceived (op, message);
-	auto capabilities = q->getCapabilities();
+	bool underWay = false;
+	if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
+		underWay = q->getCore()->getPrivate()->remoteListEventHandler->getInitialSubscriptionUnderWayFlag(q->getConferenceId());
+	} else {
+		underWay = static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->getInitialSubscriptionUnderWayFlag();
+	}
 
-	if ((!(capabilities & ChatRoom::Capabilities::Basic)) && (q->getParticipants().empty())) {
-		lWarning() << "Chatroom " << q->getConferenceAddress() << " received a message but it looks like it has no participants. Request a full state to enquire the server if we missed anything";
-		q->getConference()->setLastNotify(0);
-		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
-			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
-		} else {
-			static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->requestFullState();
+	return underWay;
+}
+
+
+std::pair<bool, shared_ptr<AbstractChatRoom>> ClientGroupChatRoomPrivate::needToMigrate() const {
+	L_Q();
+
+	bool performMigration = false;
+	shared_ptr<AbstractChatRoom> chatRoom = nullptr;
+	if (q->getCore()->getPrivate()->basicToFlexisipChatroomMigrationEnabled() && (q->getParticipantCount() == 1) && (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)) {
+		chatRoom = q->getCore()->findOneToOneChatRoom(q->getMe()->getAddress(), q->getParticipants().front()->getAddress(), true, false, capabilities & ClientGroupChatRoom::Capabilities::Encrypted);
+
+		if (chatRoom) {
+			auto oneToOneCapabilities = chatRoom->getCapabilities();
+
+			if ((oneToOneCapabilities & ChatRoom::Capabilities::Basic) && (oneToOneCapabilities & ChatRoom::Capabilities::Migratable)) {
+				performMigration = true;
+			}
 		}
 	}
 
-	return reason;
-
+	return std::make_pair(performMigration, chatRoom);
 }
-
 
 // -----------------------------------------------------------------------------
 
@@ -244,11 +257,17 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
+			auto migration = needToMigrate();
 			if (localExhumePending) {
 				onLocallyExhumedConference(*session->getRemoteContactAddress());
 			} else {
 				onChatRoomCreated(*session->getRemoteContactAddress());
 			}
+
+			if (!migration.first) {
+				chatRoomListener->onChatRoomInsertInDatabaseRequested(q->getSharedFromThis());
+			}
+
 		} else if (q->getState() == ConferenceInterface::State::TerminationPending){
 			/* This is the case where we have re-created the session in order to quit the chatroom.
 			 * In this case, defer the sending of the bye so that it is sent after the ACK.
@@ -318,6 +337,10 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 	}
 }
 
+void ClientGroupChatRoomPrivate::addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) {
+	pendingCreationMessages.push_back(chatMessage);
+}
+
 void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact) {
 	L_Q();
 
@@ -377,7 +400,6 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(focus);
 
 	static_pointer_cast<RemoteConference>(getConference())->confParams->enableChat(true);
-
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -451,7 +473,6 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 
 ClientGroupChatRoom::~ClientGroupChatRoom () {
 	L_D();
-
 	try {
 		if (getCore()->getPrivate()->remoteListEventHandler && d->listHandlerUsed){
 			getCore()->getPrivate()->remoteListEventHandler->removeHandler(static_pointer_cast<RemoteConference>(getConference())->eventHandler.get());
@@ -1020,23 +1041,10 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 void ClientGroupChatRoom::onFullStateReceived () {
 	L_D();
-	bool performMigration = false;
-	shared_ptr<AbstractChatRoom> chatRoom;
-	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
-		//ConferenceId id(getParticipants().front()->getAddress(), getMe()->getAddress());
-		chatRoom = getCore()->findOneToOneChatRoom(getMe()->getAddress(), getParticipants().front()->getAddress(), true, false, d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted);
 
-		if (chatRoom) {
-			auto capabilities = chatRoom->getCapabilities();
-
-			if (getCore()->getPrivate()->basicToFlexisipChatroomMigrationEnabled() && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
-				performMigration = true;
-			}
-		}
-	}
-
-	if (performMigration) {
-		BasicToClientGroupChatRoom::migrate(getSharedFromThis(), chatRoom);
+	auto migration = d->needToMigrate();
+	if (migration.first) {
+		BasicToClientGroupChatRoom::migrate(getSharedFromThis(), migration.second);
 	}
 	else {
 		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
@@ -1189,10 +1197,15 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 	const list<shared_ptr<Participant>> participants = getConference()->getParticipants();
 	for (const auto &participant : participants) {
 		getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(getSharedFromThis(), participant->getAddress());
-		for (const auto &device : participant->getDevices())
+		for (const auto &device : participant->getDevices()) {
 			getCore()->getPrivate()->mainDb->deleteChatRoomParticipantDevice(getSharedFromThis(), device);
+		}
 	}
-	getConference()->clearParticipants ();
+	getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(getSharedFromThis(), getMe()->getAddress());
+	for (const auto &device : getMe()->getDevices()) {
+		getCore()->getPrivate()->mainDb->deleteChatRoomParticipantDevice(getSharedFromThis(), device);
+	}
+	getConference()->clearParticipants();
 }
 
 void ClientGroupChatRoom::onEphemeralModeChanged (const shared_ptr<ConferenceEphemeralMessageEvent> &event) {

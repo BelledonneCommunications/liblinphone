@@ -106,6 +106,14 @@ public:
 		chatRoom->getPrivate()->setCallId(value);
 	};
 
+	inline virtual bool isSubscriptionUnderWay() const override {
+		return chatRoom->getPrivate()->isSubscriptionUnderWay();
+	}
+
+	inline virtual void addPendingMessage(const std::shared_ptr<ChatMessage> &chatMessage) override {
+		chatRoom->getPrivate()->addPendingMessage(chatMessage);
+	}
+
 	void setupProxy ();
 	void teardownProxy ();
 

@@ -214,24 +214,27 @@ static void chat_room_message_ephemeral_deleted (LinphoneChatRoom *cr, const Lin
 	manager->stat.number_of_LinphoneChatRoomEphemeralDeleted++;
 }
 
+void setup_chat_room_callbacks(LinphoneChatRoomCbs *cbs) {
+	linphone_chat_room_cbs_set_is_composing_received(cbs, chat_room_is_composing_received);
+	linphone_chat_room_cbs_set_participant_added(cbs, chat_room_participant_added);
+	linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);
+	linphone_chat_room_cbs_set_participant_removed(cbs, chat_room_participant_removed);
+	linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
+	linphone_chat_room_cbs_set_security_event(cbs, chat_room_security_event);
+	linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
+	linphone_chat_room_cbs_set_participant_device_added(cbs, chat_room_participant_device_added);
+	linphone_chat_room_cbs_set_participant_device_removed(cbs, chat_room_participant_device_removed);
+	linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
+	linphone_chat_room_cbs_set_conference_joined(cbs, chat_room_conference_joined);
+	linphone_chat_room_cbs_set_ephemeral_event(cbs, chat_room_message_ephemeral);
+	linphone_chat_room_cbs_set_ephemeral_message_timer_started(cbs, chat_room_message_ephemeral_started);
+	linphone_chat_room_cbs_set_ephemeral_message_deleted(cbs, chat_room_message_ephemeral_deleted);
+}
+
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 	if (state == LinphoneChatRoomStateInstantiated) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
-		linphone_chat_room_cbs_set_is_composing_received(cbs, chat_room_is_composing_received);
-		linphone_chat_room_cbs_set_participant_added(cbs, chat_room_participant_added);
-		linphone_chat_room_cbs_set_participant_admin_status_changed(cbs, chat_room_participant_admin_status_changed);
-		linphone_chat_room_cbs_set_participant_removed(cbs, chat_room_participant_removed);
-		linphone_chat_room_cbs_set_state_changed(cbs, chat_room_state_changed);
-		linphone_chat_room_cbs_set_security_event(cbs, chat_room_security_event);
-		linphone_chat_room_cbs_set_subject_changed(cbs, chat_room_subject_changed);
-		linphone_chat_room_cbs_set_participant_device_added(cbs, chat_room_participant_device_added);
-		linphone_chat_room_cbs_set_participant_device_removed(cbs, chat_room_participant_device_removed);
-		linphone_chat_room_cbs_set_undecryptable_message_received(cbs, undecryptable_message_received);
-		linphone_chat_room_cbs_set_conference_joined(cbs, chat_room_conference_joined);
-		linphone_chat_room_cbs_set_ephemeral_event(cbs, chat_room_message_ephemeral);
-		linphone_chat_room_cbs_set_ephemeral_message_timer_started(cbs, chat_room_message_ephemeral_started);
-		linphone_chat_room_cbs_set_ephemeral_message_deleted(cbs, chat_room_message_ephemeral_deleted);
-
+		setup_chat_room_callbacks(cbs);
 		linphone_chat_room_add_callbacks(cr, cbs);
 		linphone_chat_room_cbs_unref(cbs);
 	}
@@ -518,7 +521,9 @@ static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, Lin
 LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreationPending, initialStats->number_of_LinphoneConferenceStateCreationPending + 1, liblinphone_tester_sip_timeout));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreated, initialStats->number_of_LinphoneConferenceStateCreated + 1, liblinphone_tester_sip_timeout));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, liblinphone_tester_sip_timeout));
+	if (linphone_core_is_network_reachable(lcm->lc)) {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, liblinphone_tester_sip_timeout));
+	}
 	return check_has_chat_room_client_side(lcs, lcm, initialStats, confAddr, subject, participantNumber, isAdmin);
 }
 
@@ -542,17 +547,19 @@ void check_create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *
 		if (participant)
 			BC_ASSERT_FALSE(linphone_participant_is_admin(participant));
 	} else {
-		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreated, initialStats->number_of_LinphoneConferenceStateCreated + 1, liblinphone_tester_sip_timeout));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, liblinphone_tester_sip_timeout));
+		if (linphone_core_is_network_reachable(lcm->lc)) {
+			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreated, initialStats->number_of_LinphoneConferenceStateCreated + 1, liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, liblinphone_tester_sip_timeout));
 
-		// FIXME: Small hack to handle situation where the core resubscribes to the chat room
-		wait_for_list(lcs ,NULL, 0, 1000);
+			// FIXME: Small hack to handle situation where the core resubscribes to the chat room
+			wait_for_list(lcs ,NULL, 0, 1000);
 
-		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom),
-			(expectedParticipantSize >= 0) ? expectedParticipantSize : ((int)bctbx_list_size(participantsAddresses)), int, "%d");
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(chatRoom),
+				(expectedParticipantSize >= 0) ? expectedParticipantSize : ((int)bctbx_list_size(participantsAddresses)), int, "%d");
 
-		if (participant)
-			BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
+			if (participant)
+				BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
+		}
 	}
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), initialSubject);
 
@@ -2330,7 +2337,7 @@ static void group_chat_room_reinvited_after_removed_base (bool_t offline_when_re
 			nbLaureConferenceCreatedEventsBeforeRestart++;
 	}
 	bctbx_list_free_with_data(laureHistory, (bctbx_list_free_func)linphone_event_log_unref);
-	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 1, unsigned int, "%u");
+	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 2, unsigned int, "%u");
 
 	if (restart_after_reinvited) {
 		coresList = bctbx_list_remove(coresList, laure->lc);

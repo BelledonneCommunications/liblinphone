@@ -2024,6 +2024,11 @@ LinphoneStatus terminate_conference(bctbx_list_t *participants, LinphoneCoreMana
 	return 0;
 }
 
+static void call_created(LinphoneCore *lc, LinphoneCall *call){
+	stats* counters = get_stats(lc);
+	counters->number_of_LinphoneCallCreated++;
+}
+
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif
@@ -2037,6 +2042,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	mgr->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_registration_state_changed(mgr->cbs, registration_state_changed);
 	linphone_core_cbs_set_auth_info_requested(mgr->cbs, auth_info_requested);
+	linphone_core_cbs_set_call_created(mgr->cbs, call_created);
 	linphone_core_cbs_set_call_state_changed(mgr->cbs, call_state_changed);
 	linphone_core_cbs_set_message_received(mgr->cbs, message_received);
 	linphone_core_cbs_set_messages_received(mgr->cbs, messages_received);
@@ -3148,6 +3154,7 @@ bool_t liblinphone_tester_chat_message_msg_update_stats(stats * counters, Linpho
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
 	LinphoneCore *lc = linphone_chat_message_get_core(msg);
 	stats *counters = get_stats(lc);
+ms_message(" %s - DEBUG DEBUG core %s chat message state [%s] for msg [%p]",__func__, linphone_core_get_identity(lc),linphone_chat_message_state_to_string(state), msg);
 	if(liblinphone_tester_chat_message_msg_update_stats(counters, state))
 		ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 	else

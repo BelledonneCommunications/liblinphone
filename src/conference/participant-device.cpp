@@ -255,7 +255,7 @@ void ParticipantDevice::setState (State newState, bool notify) {
 	if (mState != newState) {
 		const auto currentStateLeavingState = ParticipantDevice::isLeavingState(mState);
 		const auto newStateLeavingState = ParticipantDevice::isLeavingState(newState);
-		// Send NOTIFY only if not transitionig from a leaving state to another one
+		// Send NOTIFY only if not transitioning from a leaving state to another one
 		const bool sendNotify = !(newStateLeavingState && currentStateLeavingState) && notify;
 
 		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
