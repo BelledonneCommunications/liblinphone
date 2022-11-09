@@ -833,7 +833,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Check if this is a duplicate message.
-	if (chatRoom->findChatMessage(imdnId, direction)) {
+	if (!imdnId.empty() && chatRoom->findChatMessage(imdnId, direction)) {
 		lInfo() << "Duplicated SIP MESSAGE, ignored.";
 		return core->getCCore()->chat_deny_code;
 	}
