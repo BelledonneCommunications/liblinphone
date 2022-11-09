@@ -622,13 +622,10 @@ EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType () {
 	return engineType;
 }
 
-AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const string &deviceId) const {
-	lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(deviceId);
+namespace {
+AbstractChatRoom::SecurityLevel limeStatus2ChatRoomSecLevel(const lime::PeerDeviceStatus status) {
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
-			if (limeManager->is_localUser(deviceId)) {
-				return AbstractChatRoom::SecurityLevel::Safe;
-			}
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::untrusted:
 			return AbstractChatRoom::SecurityLevel::Encrypted;
@@ -638,6 +635,14 @@ AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (cons
 		default:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
+}
+}
+
+AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const string &deviceId) const {
+	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
+}
+AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const std::list<string> &deviceId) const {
+	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
 }
 
 list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {

@@ -126,6 +126,7 @@ public:
 	virtual void update () {}
 	virtual EngineType getEngineType () { return EngineType::Undefined; }
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
+	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::list<std::string> &deviceIds) const { return AbstractChatRoom::SecurityLevel::ClearText; }
 	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
 
 	virtual void staleSession (const std::string localDeviceId, const std::string peerDeviceId) {};

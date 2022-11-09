@@ -153,6 +153,7 @@ public:
 
 	bool isEncryptionEnabledForFileTransfer (const std::shared_ptr<AbstractChatRoom> &ChatRoom) override;
 	AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const override;
+	AbstractChatRoom::SecurityLevel getSecurityLevel (const std::list<std::string> &deviceIds) const override;
 	EncryptionEngine::EngineType getEngineType () override;
 	std::list<EncryptionParameter> getEncryptionParameters () override;
 	void update () override;

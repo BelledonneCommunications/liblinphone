@@ -520,7 +520,14 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
 	L_D();
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (!encryptionEngine) {
+		lWarning() << "Asking participant security level but there is no encryption engine enabled";
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
 	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
+		lDebug() << "Chatroom SecurityLevel = ClearText";
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
 	
@@ -530,56 +537,28 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::s
 		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
 
-	bool isSafe = true;
-	// check other participants
-	for (const auto &participant : getParticipants()) {
-		auto level = participant->getSecurityLevelExcept(ignoredDevice);
-		// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe participant
-		// while we also have a ClearText one
-		// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
-		// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
-		switch (level) {
-			case AbstractChatRoom::SecurityLevel::Unsafe:
-				lDebug() << "Chatroom SecurityLevel = Unsafe";
-				return level; // if one participant is Unsafe the whole chatroom is Unsafe
-			case AbstractChatRoom::SecurityLevel::ClearText:
-				lDebug() << "Chatroom securityLevel = ClearText";
-				return level; // if one participant is ClearText the whole chatroom is ClearText
-			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one participant is Encrypted the whole chatroom is Encrypted
-				break;
-			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all participants are Safe the whole chatroom is Safe
+	// populate a list of all devices in the chatroom
+	// first step, all participants, including me
+	auto participants = getParticipants();
+	participants.push_back(getMe());
+
+	std::list<std::string> allDevices{};
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			allDevices.push_back(device->getAddress().asString());
 		}
 	}
-
-	// check self other devices
-	for (const auto &selfDevice : getMe()->getDevices()) {
-		if (selfDevice->getAddress() != getLocalAddress()) { // ignore local device
-			if (ignoredDevice != selfDevice) {
-				auto level = selfDevice->getSecurityLevel();
-				switch (level) {
-					case AbstractChatRoom::SecurityLevel::Unsafe:
-						return level; // if one device is Unsafe the whole participant is Unsafe
-					case AbstractChatRoom::SecurityLevel::ClearText:
-						return level; // if one device is ClearText the whole participant is ClearText
-					case AbstractChatRoom::SecurityLevel::Encrypted:
-						isSafe = false; // if one device is Encrypted the whole participant is Encrypted
-						break;
-					case AbstractChatRoom::SecurityLevel::Safe:
-						break; // if all devices are Safe the whole participant is Safe
-				}
-			}
-		}
+	if (ignoredDevice != nullptr) {
+		allDevices.remove(ignoredDevice->getAddress().asString());
 	}
+	allDevices.remove(getLocalAddress().asString()); // remove local device from the list
 
-	if (isSafe) {
-		lDebug() << "Chatroom SecurityLevel = Safe";
+	if (allDevices.empty()) {
 		return AbstractChatRoom::SecurityLevel::Safe;
-	} else {
-		lDebug() << "Chatroom SecurityLevel = Encrypted";
-		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
+	auto level = encryptionEngine->getSecurityLevel(allDevices);
+	lDebug() << "Chatroom SecurityLevel = "<<level;
+	return level;
 }
 
 bool ClientGroupChatRoom::hasBeenLeft () const {

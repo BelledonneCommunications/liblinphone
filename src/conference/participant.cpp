@@ -183,31 +183,24 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel() const {
 }
 
 AbstractChatRoom::SecurityLevel Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
-	bool isSafe = true;
-	for (const auto &device : getDevices()) {
-		if (ignoredDevice != device) {
-			auto level = device->getSecurityLevel();
-			// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe device
-			// while we also have a ClearText one
-			// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
-			// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
-			switch (level) {
-				case AbstractChatRoom::SecurityLevel::Unsafe:
-					return level; // if one device is Unsafe the whole participant is Unsafe
-				case AbstractChatRoom::SecurityLevel::ClearText:
-					return level; // if one device is ClearText the whole participant is ClearText
-				case AbstractChatRoom::SecurityLevel::Encrypted:
-					isSafe = false; // if one device is Encrypted the whole participant is Encrypted
-					break;
-				case AbstractChatRoom::SecurityLevel::Safe:
-					break; // if all devices are Safe the whole participant is Safe
-			}
-		}
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (!encryptionEngine) {
+		lWarning() << "Asking participant security level but there is no encryption engine enabled";
+		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
-	if (isSafe)
-		return AbstractChatRoom::SecurityLevel::Safe;
-	else
-		return AbstractChatRoom::SecurityLevel::Encrypted;
+
+	std::list<std::string> participantDevices{};
+	// build a list of participants devices address
+	for (const auto &device : getDevices()) {
+		participantDevices.push_back(device->getAddress().asString());
+	}
+	if (ignoredDevice != nullptr) {
+		participantDevices.remove(ignoredDevice->getAddress().asString());
+	}
+	if (participantDevices.empty()) {
+		return AbstractChatRoom::SecurityLevel::Safe; // There is no device to query status on, return safe
+	}
+	return  encryptionEngine->getSecurityLevel(participantDevices);
 }
 
 // -----------------------------------------------------------------------------
