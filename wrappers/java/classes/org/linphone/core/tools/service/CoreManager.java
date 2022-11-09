@@ -26,6 +26,8 @@ import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
@@ -62,6 +64,8 @@ import java.util.TimerTask;
  */
 public class CoreManager {
     private static CoreManager sInstance;
+    private static final int AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED = 20; // 20ms
+    private static final int AUTO_ITERATE_TIMER_RESET_AFTER = 20000; // 20s
 
     public static boolean isReady() {
         return sInstance != null;
@@ -78,6 +82,7 @@ public class CoreManager {
     private Class mServiceClass;
 
     private Timer mTimer;
+    private Timer mForcedIterateTimer;
     private Runnable mIterateRunnable;
     private int mIterateSchedule;
     private Application.ActivityLifecycleCallbacks mActivityCallbacks;
@@ -212,6 +217,14 @@ public class CoreManager {
     }
 
     public void processPushNotification(String callId, String payload) {
+        if (mCore.isAutoIterateEnabled() && mCore.isInBackground()) {
+            // Force the core.iterate() scheduling to a low value to ensure the Core will process what triggered the push notification as quickly as possible
+            Log.i("[Core Manager] Push notification received, scheduling core.iterate() every " + AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED + "ms");
+            startAutoIterate(AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED);
+            createTimerToResetAutoIterateSchedule();
+        }
+
+        Log.i("[Core Manager] Notifying Core a push with Call-ID [" + callId + "] has been received");
         processPushNotification(mCore.getNativePointer(), callId, payload);
     }
 
@@ -219,7 +232,10 @@ public class CoreManager {
         Log.i("[Core Manager] Starting");
 
         if (mCore.isAutoIterateEnabled()) {
-            startAutoIterate();
+            // Force the core.iterate() scheduling to a low value to ensure the Core will be ready as quickly as possible
+            Log.i("[Core Manager] Core is starting, scheduling core.iterate() every " + AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED + "ms");
+            startAutoIterate(AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED);
+            createTimerToResetAutoIterateSchedule();
         } else {
             Log.w("[Core Manager] Auto core.iterate() isn't enabled, ensure you do it in your application!");
         }
@@ -307,8 +323,21 @@ public class CoreManager {
         };
         
         mCore.addListener(mListener);
-
         Log.i("[Core Manager] Started");
+
+        SharedPreferences sharedPref = mContext.getSharedPreferences("push_notification_storage", Context.MODE_PRIVATE);
+        String callId = sharedPref.getString("call-id", "");
+        String payload = sharedPref.getString("payload", "");
+        if (!callId.isEmpty()) {
+            Log.i("[Core Manager] Push notification information retrieved from storage, Call-ID is [" + callId + "]");
+            processPushNotification(callId, payload);
+
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("call-id", "");
+            editor.putString("payload", "");
+            editor.apply();
+            Log.i("[Core Manager] Push information cleared from storage");
+        }
     }
 
     public void stop() {
@@ -326,27 +355,62 @@ public class CoreManager {
 
         mCore.removeListener(mListener);
 
-        if (mTimer != null) {
-            mTimer.cancel();
-            mTimer.purge();
-            mTimer = null;
-        }
+        stopAutoIterate();
+        stopTimerToResetAutoIterateSchedule();
 
         mCore = null; // To allow the garbage colletor to free the Core
         sInstance = null;
     }
 
     public void startAutoIterate() {
-        if (mCore.isInBackground()) {
-            Log.i("[Core Manager] Start core.iterate() scheduling with background timer");
-            startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
-        } else {
-            Log.i("[Core Manager] Start core.iterate() scheduling with foreground timer");
-            startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+        if (mCore.isAutoIterateEnabled()) {
+            if (mCore.isInBackground()) {
+                Log.i("[Core Manager] Start core.iterate() scheduling with background timer");
+                startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
+            } else {
+                Log.i("[Core Manager] Start core.iterate() scheduling with foreground timer");
+                startAutoIterate(mCore.getAutoIterateForegroundSchedule());
+            }
         }
     }
 
+    private void stopTimerToResetAutoIterateSchedule() {
+        if (mForcedIterateTimer != null) {
+            mForcedIterateTimer.cancel();
+            mForcedIterateTimer.purge();
+            mForcedIterateTimer = null;
+        }
+    }
+
+    private void createTimerToResetAutoIterateSchedule() {
+        // When we force the scheduling of the core.iterate(), reset it to the proper value (depending on background state) after a few seconds
+        stopTimerToResetAutoIterateSchedule();
+
+        TimerTask lTask =
+            new TimerTask() {
+                @Override
+                public void run() {
+                    AndroidDispatcher.dispatchOnUIThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.i("[Core Manager] Resetting core.iterate() schedule depending on background/foreground state");
+                            startAutoIterate();
+                        }
+                    });
+                }
+            };
+
+        mForcedIterateTimer = new Timer("Linphone core.iterate() reset scheduler");
+        mForcedIterateTimer.schedule(lTask, AUTO_ITERATE_TIMER_RESET_AFTER);
+        Log.i("[Core Manager] Iterate scheduler will be reset in " + (AUTO_ITERATE_TIMER_RESET_AFTER / 1000) + " seconds");
+    }
+
     private void startAutoIterate(int schedule) {
+        if (schedule == mIterateSchedule) {
+            Log.i("[Core Manager] core.iterate() is already scheduled every " + schedule + " ms");
+            return;
+        }
+
         stopAutoIterate();
 
         mIterateSchedule = schedule;
@@ -376,8 +440,9 @@ public class CoreManager {
 
     public void stopAutoIterate() {
         if (mTimer != null) {
-            Log.w("[Core Manager] Stopping scheduling of core.iterate() every " + mIterateSchedule + " ms");
+            Log.i("[Core Manager] Stopping scheduling of core.iterate() every " + mIterateSchedule + " ms");
             mTimer.cancel();
+            mTimer.purge();
             mTimer = null;
         }
     }
@@ -465,6 +530,7 @@ public class CoreManager {
         if (mCore != null) {
             enterBackground(mCore.getNativePointer());
             if (mCore.isAutoIterateEnabled()) {
+                stopTimerToResetAutoIterateSchedule();
                 Log.i("[Core Manager] Restarting core.iterate() schedule with background timer");
                 startAutoIterate(mCore.getAutoIterateBackgroundSchedule());
             }
@@ -476,6 +542,7 @@ public class CoreManager {
         if (mCore != null) {
             enterForeground(mCore.getNativePointer());
             if (mCore.isAutoIterateEnabled()) {
+                stopTimerToResetAutoIterateSchedule();
                 Log.i("[Core Manager] Restarting core.iterate() schedule with foreground timer");
                 startAutoIterate(mCore.getAutoIterateForegroundSchedule());
             }

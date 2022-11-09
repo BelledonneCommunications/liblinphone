@@ -20,7 +20,10 @@
 package org.linphone.core.tools.firebase;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
@@ -65,6 +68,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
 
     private void onPushReceived(RemoteMessage remoteMessage) {
         if (!CoreManager.isReady()) {
+            storePushRemoteMessage(remoteMessage);
             notifyAppPushReceivedWithoutCoreAvailable();
         } else {
             Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
@@ -72,16 +76,29 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
                     String callId = remoteMessage.getData().getOrDefault("call-id", "");
-
                     String payload = remoteMessage.getData().toString();
                     Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
                     CoreManager.instance().processPushNotification(callId, payload);
                 } else {
                     Log.w("[Push Notification] No Core found, notifying application directly");
+                    storePushRemoteMessage(remoteMessage);
                     notifyAppPushReceivedWithoutCoreAvailable();
                 }
             }
         }
+    }
+
+    private void storePushRemoteMessage(RemoteMessage remoteMessage) {
+        Context context = getApplicationContext();
+        SharedPreferences sharedPref = context.getSharedPreferences("push_notification_storage", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        String callId = remoteMessage.getData().getOrDefault("call-id", "");
+        editor.putString("call-id", callId);
+        String payload = remoteMessage.getData().toString();
+        editor.putString("payload", payload);
+        editor.apply();
+        android.util.Log.i("FirebaseMessaging", "[Push Notification] Push information stored for Call-ID [" + callId + "]");
     }
 
     private void notifyAppPushReceivedWithoutCoreAvailable() {
