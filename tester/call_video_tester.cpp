@@ -2720,6 +2720,94 @@ static void video_call_set_image_as_video_source(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static const char *_linphone_media_direction_to_string(LinphoneMediaDirection dir){
+	switch(dir){
+		case LinphoneMediaDirectionInactive:
+			return "inactive";
+		break;
+		case LinphoneMediaDirectionRecvOnly:
+			return "recv-only";
+		break;
+		case LinphoneMediaDirectionSendOnly:
+			return "send-only";
+		break;
+		case LinphoneMediaDirectionSendRecv:
+			return "send-recv";
+		break;
+		case LinphoneMediaDirectionInvalid:
+			return "invalid";
+		break;
+	}
+	return "bug";
+}
+
+static void on_call_state_change(LinphoneCore *core, LinphoneCall *call, LinphoneCallState state, const char* msg){
+	switch(state){
+		case LinphoneCallIncomingReceived:
+			BC_ASSERT_TRUE(linphone_call_params_get_video_direction(linphone_call_get_remote_params(call)) == LinphoneMediaDirectionRecvOnly);
+			ms_message("Call received with video direction: %s", _linphone_media_direction_to_string(linphone_call_params_get_video_direction(linphone_call_get_remote_params(call))));
+		break;
+		default:
+		break;
+	}
+}
+
+static void call_with_video_recvonly(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	const LinphoneCallParams *remote_params;
+	LinphoneCallParams *callee_params;
+	LinphoneCoreCbs *pauline_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	linphone_core_cbs_set_call_state_changed(pauline_cbs, on_call_state_change);
+	linphone_core_add_callbacks(pauline->lc, pauline_cbs);
+
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	LinphoneCallParams *caller_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_video(caller_params, TRUE);
+	linphone_call_params_set_video_direction(caller_params, LinphoneMediaDirectionRecvOnly);
+	LinphoneCall *marie_call = linphone_core_invite_address_with_params(marie->lc, pauline->identity, caller_params);
+	linphone_call_params_unref(caller_params);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallIncomingReceived,1));
+	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
+
+	remote_params = linphone_call_get_remote_params(pauline_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(remote_params));
+	BC_ASSERT_TRUE(linphone_call_params_get_video_direction(remote_params) == LinphoneMediaDirectionRecvOnly);
+	callee_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_video(callee_params, TRUE);
+	linphone_call_accept_with_params(pauline_call, callee_params);
+	linphone_call_params_unref(callee_params);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
+	BC_ASSERT_TRUE(linphone_call_params_get_video_direction(linphone_call_get_current_params(marie_call)) == LinphoneMediaDirectionRecvOnly);
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
+	BC_ASSERT_TRUE(linphone_call_params_get_video_direction(linphone_call_get_current_params(pauline_call)) == LinphoneMediaDirectionSendOnly);
+
+	linphone_call_terminate(pauline_call);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
+
+	end:
+		linphone_core_cbs_unref(pauline_cbs);
+		linphone_core_manager_destroy(marie);
+		linphone_core_manager_destroy(pauline);
+}
+
+
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
@@ -2794,7 +2882,8 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call with file streaming", call_with_video_mkv_file_player),
 	TEST_NO_TAG("Video call with video forwarding", video_call_with_video_forwarding),
 	TEST_NO_TAG("Video call with video forwarding forwardee ends first", video_call_with_video_forwarding_forwardee_ends_first),
-	TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source)
+	TEST_NO_TAG("Video call set image as video source", video_call_set_image_as_video_source),
+ 	TEST_NO_TAG("Video call recv-only", call_with_video_recvonly)
 };
 
 int init_msogl_call_suite(){
