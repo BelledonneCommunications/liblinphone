@@ -5000,6 +5000,7 @@ std::shared_ptr<CallLog> MainDb::getCallLog (const std::string &callId, int limi
 
 std::list<std::shared_ptr<CallLog>> MainDb::getCallHistory (int limit) {
 #ifdef HAVE_DB_STORAGE
+	if( limit == 0) return list<shared_ptr<CallLog>>();
 	string query = "SELECT conference_call.id, from_sip_address.value, from_sip_address.display_name, to_sip_address.value, to_sip_address.display_name,"
 		"  direction, duration, start_time, connected_time, status, video_enabled, quality, call_id, refkey, conference_info_id"
 		" FROM conference_call, sip_address AS from_sip_address, sip_address AS to_sip_address"
