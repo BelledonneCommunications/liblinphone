@@ -6067,6 +6067,18 @@ LINPHONE_PUBLIC void linphone_core_process_push_notification(LinphoneCore *lc, c
 LINPHONE_PUBLIC void linphone_core_push_notification_received(LinphoneCore *lc, const char* payload, const char *call_id);
 
 /**
+ * This method is called by Android & iOS platform helpers to notify the Core of a received push notification.
+ * It will simply call Core->pushNotificationReceived() like linphone_core_process_push_notification().
+ * @param core The #LinphoneCore @notnil
+ * @param payload the payload of the push notification if any. @maybenil
+ * @param call_id the Call-ID of the MESSAGE or INVITE for which the push was received and to wait for. @maybenil
+ * @param is_core_starting if TRUE the Core will skill network tasks we usually do when a push is received to ensure the sockets are alive.
+ * @ingroup misc
+ * @donotwrap
+**/
+LINPHONE_PUBLIC void linphone_core_push_notification_received_2(LinphoneCore *lc, const char* payload, const char *call_id, bool_t is_core_starting);
+
+/**
  * Get the chat message with the call_id included in the push notification body
  * This will start the core given in parameter, iterate until the message is received and return it.
  * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.

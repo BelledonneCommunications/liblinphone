@@ -78,7 +78,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                     String callId = remoteMessage.getData().getOrDefault("call-id", "");
                     String payload = remoteMessage.getData().toString();
                     Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
-                    CoreManager.instance().processPushNotification(callId, payload);
+                    CoreManager.instance().processPushNotification(callId, payload, false);
                 } else {
                     Log.w("[Push Notification] No Core found, notifying application directly");
                     storePushRemoteMessage(remoteMessage);

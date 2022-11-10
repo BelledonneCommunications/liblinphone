@@ -1119,16 +1119,15 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
  * If not, we must start or restart them.
  */
-void Core::pushNotificationReceived (const string& callId, const string& payload) {
+void Core::pushNotificationReceived (const string& callId, const string& payload, bool isCoreStarting) {
 	L_D();
 
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
 	// Stop any previous background task we might already have
 	d->pushReceivedBackgroundTask.stop();
 
+	bool found = false;
 	if (!callId.empty()) {
-		bool found = false;
-
 		for (const auto &call : d->calls) {
 			auto callLog = call->getLog();
 			if (callLog) {
@@ -1155,6 +1154,16 @@ void Core::pushNotificationReceived (const string& callId, const string& payload
 	}
 
 	LinphoneCore *lc = getCCore();
+	linphone_core_notify_push_notification_received(lc, payload.c_str());
+
+	if (isCoreStarting) {
+		lInfo() << "Core is starting, skipping network tasks that ensures sockets are alive";
+		return;
+	}
+	if (found) {
+		lInfo() << "Call-ID was found, skipping network tasks that ensures sockets are alive";
+		return;
+	}
 
 #ifdef __ANDROID__
 	if (linphone_core_wifi_only_enabled(lc)) {
@@ -1225,10 +1234,6 @@ void Core::pushNotificationReceived (const string& callId, const string& payload
 		lc->sal->cleanUnreliableConnections();
 	}
 	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers.
-
-	char *c_payload = ms_strdup(payload.c_str());
-	linphone_core_notify_push_notification_received(lc, c_payload);
-	if (c_payload != nullptr) ms_free(c_payload);
 }
 
 int Core::getUnreadChatMessageCount () const {

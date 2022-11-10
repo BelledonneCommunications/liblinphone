@@ -104,7 +104,7 @@ public class CoreManager {
     private native void reloadSoundDevices(long ptr);
     private native void enterBackground(long ptr);
     private native void enterForeground(long ptr);
-    private native void processPushNotification(long ptr, String callId, String payload);
+    private native void processPushNotification(long ptr, String callId, String payload, boolean isCoreStarting);
 
     private boolean mServiceRunningInForeground;
 
@@ -216,7 +216,7 @@ public class CoreManager {
         return mCore;
     }
 
-    public void processPushNotification(String callId, String payload) {
+    public void processPushNotification(String callId, String payload, boolean isCoreStarting) {
         if (mCore.isAutoIterateEnabled() && mCore.isInBackground()) {
             // Force the core.iterate() scheduling to a low value to ensure the Core will process what triggered the push notification as quickly as possible
             Log.i("[Core Manager] Push notification received, scheduling core.iterate() every " + AUTO_ITERATE_TIMER_CORE_START_OR_PUSH_RECEIVED + "ms");
@@ -225,7 +225,7 @@ public class CoreManager {
         }
 
         Log.i("[Core Manager] Notifying Core a push with Call-ID [" + callId + "] has been received");
-        processPushNotification(mCore.getNativePointer(), callId, payload);
+        processPushNotification(mCore.getNativePointer(), callId, payload, isCoreStarting);
     }
 
     public void onLinphoneCoreStart() {
@@ -330,7 +330,7 @@ public class CoreManager {
         String payload = sharedPref.getString("payload", "");
         if (!callId.isEmpty()) {
             Log.i("[Core Manager] Push notification information retrieved from storage, Call-ID is [" + callId + "]");
-            processPushNotification(callId, payload);
+            processPushNotification(callId, payload, true);
 
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putString("call-id", "");

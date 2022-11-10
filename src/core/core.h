@@ -270,7 +270,7 @@ public:
 	// Misc.
 	// ---------------------------------------------------------------------------
 
-	void pushNotificationReceived (const std::string& callId, const std::string& payload);
+	void pushNotificationReceived (const std::string& callId, const std::string& payload, bool isCoreStarting);
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
