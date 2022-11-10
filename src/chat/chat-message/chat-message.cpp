@@ -905,19 +905,19 @@ void ChatMessagePrivate::handleAutoDownload() {
 		int maxSize = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
 		bool_t autoDownloadVoiceRecordings = linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
 		bool_t autoDownloadIcalendars = linphone_core_is_auto_download_icalendars_enabled(q->getCore()->getCCore());
-		string downloadPath = q->getCore()->getDownloadPath();
-
-		if (downloadPath.empty()) {
-			lWarning() << "Downloading path is empty, won't be able to do auto download";
-		} else {
-			for (Content *c : contents) {
-				if (c->isFileTransfer()) {
-					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-					ContentType fileContentType = ftc->getFileContentType();
-					
-					if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
-					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
-					|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
+		for (Content *c : contents) {
+			if (c->isFileTransfer()) {
+				FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
+				ContentType fileContentType = ftc->getFileContentType();
+				
+				if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
+				|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
+				|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
+					string downloadPath = q->getCore()->getDownloadPath();
+					if (downloadPath.empty()) {
+						lWarning() << "Download path is empty, won't be able to do auto download";
+						break;
+					} else {
 						ostringstream sstream;
 						size_t randomSize = 12;
 						for (size_t i = 0; i < randomSize; i++) {

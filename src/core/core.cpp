@@ -630,7 +630,11 @@ string Core::getConfigPath () const {
 }
 
 string Core::getDownloadPath() const {
+#ifdef __ANDROID__
+	return getPlatformHelpers(getCCore())->getDownloadPath();
+#else
 	return Paths::getPath(Paths::Download, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
+#endif
 }
 
 void Core::setEncryptionEngine (EncryptionEngine *imee) {

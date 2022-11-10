@@ -138,6 +138,7 @@ private:
 	jmethodID mStopRingingId = nullptr;
 
 	bool mNetworkReachable = false;
+	string mDownloadPath = "";
 };
 
 static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
@@ -304,7 +305,10 @@ string AndroidPlatformHelpers::getConfigPath () const {
 }
 
 string AndroidPlatformHelpers::getDownloadPath () {
-	return Paths::getPath(Paths::Download, mSystemContext);
+	if (mDownloadPath.empty()) {
+		mDownloadPath = Paths::getPath(Paths::Download, mSystemContext);
+	}
+	return mDownloadPath;
 }
 
 string AndroidPlatformHelpers::getDataPath () const {
