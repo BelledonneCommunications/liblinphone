@@ -329,6 +329,7 @@ LinphoneChatRoom *shared_core_create_chat_room(LinphoneCoreManager *sender, Linp
 
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	BC_ASSERT_PTR_NOT_NULL(senderCr);
+	linphone_chat_room_unref(senderCr);
 	return senderCr;
 }
 

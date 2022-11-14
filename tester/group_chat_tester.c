@@ -568,9 +568,11 @@ void check_create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *
 
 LinphoneChatRoom * create_chat_room_client_side_with_params(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, LinphoneChatRoomParams *params) {
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
-
+	
 	check_create_chat_room_client_side(lcs, lcm, chatRoom, initialStats, participantsAddresses, initialSubject, (int) bctbx_list_size(participantsAddresses));
 
+	linphone_chat_room_unref(chatRoom);
+	
 	return chatRoom;
 }
 
@@ -588,6 +590,8 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 	if (!chatRoom) return NULL;
 
 	check_create_chat_room_client_side(lcs, lcm, chatRoom, initialStats, participantsAddresses, initialSubject, expectedParticipantSize);
+	
+	linphone_chat_room_unref(chatRoom);
 
 	return chatRoom;
 }
@@ -600,6 +604,8 @@ LinphoneChatRoom *create_chat_room_with_params(bctbx_list_t *lcs, LinphoneCoreMa
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(lcm->lc, params, initialSubject, participantsAddresses);
 
 	check_create_chat_room_client_side(lcs, lcm, chatRoom, initialStats, participantsAddresses, initialSubject, participantsAddressesSize);
+	
+	linphone_chat_room_unref(chatRoom);
 
 	return chatRoom;
 }
@@ -636,8 +642,8 @@ static void group_chat_room_params (void) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesBasic);
 
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+		linphone_chat_room_unref(marieCr);
 	}
-
 	//Should create	a one-to-one flexisip chat
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, FALSE);
@@ -648,8 +654,9 @@ static void group_chat_room_params (void) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+		linphone_chat_room_unref(marieCr);
 	}
-
+	
 	//Should create	a group flexisip chat
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	linphone_chat_room_params_enable_group(params, TRUE);
@@ -661,6 +668,7 @@ static void group_chat_room_params (void) {
 		BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+		linphone_chat_room_unref(marieCr);
 	}
 
 	//Should create	an encrypted group flexisip chat
@@ -677,6 +685,7 @@ static void group_chat_room_params (void) {
 		BC_ASSERT_FALSE(linphone_chat_room_get_capabilities(marieCr) & LinphoneChatRoomCapabilitiesOneToOne);
 
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+		linphone_chat_room_unref(marieCr);
 	}
 
 	//Should return NULL because params are invalid
@@ -685,6 +694,7 @@ static void group_chat_room_params (void) {
 	BC_ASSERT_FALSE(linphone_chat_room_params_is_valid(params));
 	marieCr = linphone_core_create_chat_room_2(marie->lc, params, "Invalid chat room subject", NULL);
 	BC_ASSERT_PTR_NULL(marieCr);
+	if(marieCr) linphone_chat_room_unref(marieCr);
 
 	//Should set FlexisipChat as backend if encryption is enabled.
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
@@ -741,6 +751,8 @@ static void group_chat_room_creation_with_given_identity(void) {
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(marie, secondMarieCr, coresList);
+	if(marieCr) linphone_chat_room_unref(marieCr);
+	if(secondMarieCr) linphone_chat_room_unref(secondMarieCr);
 
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	linphone_address_unref(marieAddr);
@@ -966,6 +978,7 @@ static void group_chat_room_creation_server_network_down (void) {
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	if(marieCr) linphone_chat_room_unref(marieCr);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -1017,6 +1030,7 @@ static void group_chat_room_creation_server_network_down_up (void) {
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	if(marieCr) linphone_chat_room_unref(marieCr);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -3301,7 +3315,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 
 	// Enable chat room migration and restart core for Marie
 	_linphone_chat_room_enable_migration(marieCr, TRUE);
-	linphone_chat_room_unref(marieCr);
+	if(marieCr) linphone_chat_room_unref(marieCr);
 	coresList = bctbx_list_remove(coresList, marie->lc);
 	linphone_core_manager_reinit(marie);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
@@ -4865,6 +4879,7 @@ static void find_one_to_one_chat_room (void) {
 	oneToOneChatRoom = linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr);
 	BC_ASSERT_PTR_NOT_NULL(oneToOneChatRoom);
 	BC_ASSERT_PTR_EQUAL(oneToOneChatRoom, basicCR);
+	if(basicCR) linphone_chat_room_unref(basicCR);
 
 end:
 	// Clean db from chat room
@@ -7002,7 +7017,7 @@ static void subscribe_test_after_set_chat_database_path(void) {
 	const char *path = "";
 	// set_chat_database_path() will cause a reload of the database, with re-creation of chatrooms.
 	linphone_core_set_chat_database_path(pauline->lc, path);
-	linphone_chat_room_unref(paulineCr);
+	if(paulineCr) linphone_chat_room_unref(paulineCr);
 	paulineCr = linphone_core_find_chat_room(pauline->lc, confAddr, paulineAddress);
 	linphone_address_unref(paulineAddress);
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
@@ -7096,6 +7111,7 @@ static void core_stop_start_with_chat_room_ref (void) {
 	linphone_chat_room_params_unref(params);
 
 	BC_ASSERT_PTR_NULL(chatRoom);
+	if(chatRoom) linphone_chat_room_unref(chatRoom);
 
 	coresList = bctbx_list_remove(coresList, pauline1->lc);
 	linphone_core_manager_reinit(pauline1);

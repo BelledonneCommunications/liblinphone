@@ -130,7 +130,11 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const Linph
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat : false;
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(chatRoomParams, identityAddress, participantsList);
-	if (room) return L_GET_C_BACK_PTR(room);
+	if (room){
+		auto cRoom = L_GET_C_BACK_PTR(room);
+		linphone_chat_room_ref(cRoom);
+		return cRoom;
+	}
 	return NULL;
 }
 
@@ -185,6 +189,7 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 		linphone_chat_room_params_enable_group(params, FALSE);
 		result = linphone_core_create_chat_room_6(lc, params, local_addr, paricipants);
+		if(result) linphone_chat_room_unref(result);
 		linphone_chat_room_params_unref(params);
 		bctbx_list_free(paricipants);
 	}

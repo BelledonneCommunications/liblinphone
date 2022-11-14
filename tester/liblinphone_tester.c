@@ -509,6 +509,10 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&external_domain_test_suite);
 	bc_tester_add_suite(&potential_configuration_graph_test_suite);
 	bc_tester_add_suite(&call_race_conditions_suite);
+#ifdef CXX_WRAPPER_ENABLED
+	bc_tester_add_suite(&wrapper_cpp_test_suite);
+#endif
+	
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {

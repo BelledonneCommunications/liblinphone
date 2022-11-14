@@ -81,6 +81,8 @@ int main(int argc, char *argv[]){
 	chat_room = linphone_core_create_chat_room(lc, dest_friend);
 
 	linphone_chat_room_send_message(chat_room,"Hello world"); /*sending message*/
+	
+	linphone_chat_room_unref(chat_room);
 
 	/* main loop for receiving incoming messages and doing background linphone core work: */
 	while(running){

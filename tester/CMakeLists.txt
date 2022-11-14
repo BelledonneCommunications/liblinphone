@@ -61,6 +61,10 @@ if(TURBOJPEG_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${TURBOJPEG_LIBRARIES})
 endif()
 
+if(ENABLE_CXX_WRAPPER)
+	list(APPEND OTHER_LIBS_FOR_TESTER linphone++)
+endif()
+
 set(SOUND_FILES
 	sounds/ahbahouaismaisbon.wav
 	sounds/continuous_48000_stereo.wav
@@ -333,6 +337,10 @@ endif()
 
 if(ENABLE_DB_STORAGE)
 	list(APPEND SOURCE_FILES_CXX main-db-tester.cpp)
+endif()
+
+if(ENABLE_CXX_WRAPPER)
+	list(APPEND SOURCE_FILES_CXX wrapper_cpp_tester.cpp)
 endif()
 
 set(HEADER_FILES

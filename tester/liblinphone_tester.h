@@ -135,6 +135,10 @@ extern test_suite_t call_race_conditions_suite;
 	extern test_suite_t vcard_test_suite;
 #endif
 
+#ifdef CXX_WRAPPER_ENABLED
+	extern test_suite_t wrapper_cpp_test_suite;
+#endif
+
 extern test_suite_t audio_bypass_suite;
 extern test_suite_t audio_routes_test_suite;
 extern test_suite_t audio_quality_test_suite;

@@ -393,6 +393,7 @@ static void create_two_basic_chat_room_with_same_remote(void) {
 	bctbx_list_free(participants);
 	linphone_chat_room_params_unref(chat_room_params);
 	linphone_chat_room_unref(chat_room);
+	linphone_chat_room_unref(chat_room2);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }

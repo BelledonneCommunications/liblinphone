@@ -94,7 +94,7 @@ namespace linphone {
 			{{/enums}}
 
 			{{#isNotListener}}
-			{{{className}}}(void *ptr, bool takeRef=true);
+			LINPHONECXX_PUBLIC {{{className}}}(void *ptr, bool takeRef=true);
 			LINPHONECXX_PUBLIC {{{privCClassName}}} *cPtr() {return ({{{privCClassName}}} *)mPrivPtr;}
 			{{/isNotListener}}
 
