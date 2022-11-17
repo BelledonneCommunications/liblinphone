@@ -104,7 +104,7 @@ def generate(apixmlfile, outputfile):
 	tmpfilename = outputfile.name + '.tmp'
 	with open(tmpfilename, mode='w') as f:
 		f.write(renderer.render(m))
-	with open(tmpfilename, mode='rU') as f:
+	with open(tmpfilename, mode='r') as f:
 		for line in f:
 			if not line.isspace():
 				outputfile.write(line)
