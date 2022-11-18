@@ -145,28 +145,48 @@ bool ParticipantDevice::isInConference() const {
 	return false;
 }
 
-void ParticipantDevice::setAudioSsrc (uint32_t ssrc) {
-	mAudioSsrc = ssrc;
+bool ParticipantDevice::setSsrc (const LinphoneStreamType type, uint32_t newSsrc) {
+	bool changed = false;
+	const bool idxFound = (ssrc.find(type) != ssrc.cend());
+	if (!idxFound || (ssrc[type] != newSsrc)) {
+		ssrc[type] = newSsrc;
+		changed = true;
+	}
+
 	auto conference = getConference();
-	if (conference) {
-		const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
-		auto it = pendingParticipantsMutes.find(ssrc);
-		if (it != pendingParticipantsMutes.end()) {
-			conference->notifyMutedDevice(it->first, it->second);
+	switch (type) {
+		case LinphoneStreamTypeAudio:
+			if (conference) {
+				const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
+				auto it = pendingParticipantsMutes.find(newSsrc);
+				if (it != pendingParticipantsMutes.end()) {
+					conference->notifyMutedDevice(it->first, it->second);
+				}
+			}
+			break;
+		case LinphoneStreamTypeVideo:
+		case LinphoneStreamTypeText:
+		case LinphoneStreamTypeUnknown:
+			break;
+	}
+
+	if (changed) {
+		if (conference) {
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " in conference " << conference->getConferenceAddress() << " to " << newSsrc;
+		} else {
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " to " << newSsrc;
 		}
 	}
+
+	return changed;
 }
 
-uint32_t ParticipantDevice::getAudioSsrc () const {
-	return mAudioSsrc;
-}
-
-void ParticipantDevice::setVideoSsrc (uint32_t ssrc) {
-	mVideoSsrc = ssrc;
-}
-
-uint32_t ParticipantDevice::getVideoSsrc () const {
-	return mVideoSsrc;
+uint32_t ParticipantDevice::getSsrc (const LinphoneStreamType type) const {
+	try {
+		return ssrc.at(type);
+	} catch (std::out_of_range&) {
+		return 0;
+	}
 }
 
 void *ParticipantDevice::getUserData () const{
@@ -302,7 +322,29 @@ bool ParticipantDevice::setStreamCapability(const LinphoneMediaDirection & direc
 }
 
 LinphoneMediaDirection ParticipantDevice::getStreamDirectionFromSession(const LinphoneStreamType type) const {
-	const MediaSessionParams* participantParams = mSession ? static_pointer_cast<MediaSession>(mSession)->getCurrentParams() : nullptr;
+	const auto & state = mSession->getState();
+	const auto & sessionNotEstablished =
+		(state == CallSession::State::Idle) ||
+		(state == CallSession::State::IncomingReceived) ||
+		(state == CallSession::State::OutgoingProgress) ||
+		(state == CallSession::State::OutgoingRinging) ||
+		(state == CallSession::State::OutgoingEarlyMedia) ||
+		(state == CallSession::State::PushIncomingReceived);
+
+	const MediaSessionParams* participantParams = nullptr;
+	if (mSession) {
+		if (sessionNotEstablished) {
+			if (mSession->getPrivate()->isInConference()) {
+				participantParams = static_pointer_cast<MediaSession>(mSession)->getRemoteParams();
+			} else {
+				participantParams = static_pointer_cast<MediaSession>(mSession)->getMediaParams();
+			}
+		} else {
+			participantParams = static_pointer_cast<MediaSession>(mSession)->getCurrentParams();
+		}
+	} else {
+		participantParams = nullptr;
+	}
 	LinphoneMediaDirection dir = LinphoneMediaDirectionInvalid;
 
 	if (participantParams) {
@@ -394,7 +436,10 @@ bool ParticipantDevice::updateMediaCapabilities() {
 
 			textDir = LinphoneMediaDirectionSendRecv;
 		} else if (mSession) {
-			const MediaSessionParams* participantParams = static_pointer_cast<MediaSession>(mSession)->getCurrentParams();
+			// A conference server is a passive element, therefore it may happen that the negotiated capabilities are different than those the client requested.
+			// For example if the video will be inactive if all clients are RecvOnly and their layout is Grid but as soon as one toggles the video direction to SendRecv, then everybody should be able to get stream in
+			auto mMediaSession = static_pointer_cast<MediaSession>(mSession);
+			const MediaSessionParams* participantParams = (mSession->getPrivate()->isInConference()) ? mMediaSession->getRemoteParams() : mMediaSession->getMediaParams();
 			if (participantParams) {
 				audioEnabled = participantParams->audioEnabled();
 				videoEnabled = participantParams->videoEnabled();
@@ -402,6 +447,14 @@ bool ParticipantDevice::updateMediaCapabilities() {
 				audioDir = getStreamDirectionFromSession(LinphoneStreamTypeAudio);
 				videoDir = getStreamDirectionFromSession(LinphoneStreamTypeVideo);
 				textDir = getStreamDirectionFromSession(LinphoneStreamTypeText);
+			}
+
+			if (mSession->getPrivate()->isInConference()) {
+				const auto audioSsrc = mMediaSession->getSsrc(LinphoneStreamTypeAudio);
+				mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeAudio, audioSsrc);
+
+				const auto videoSsrc = mMediaSession->getSsrc(LinphoneStreamTypeVideo);
+				mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeVideo, videoSsrc);
 			}
 		}
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
@@ -411,6 +464,8 @@ bool ParticipantDevice::updateMediaCapabilities() {
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
+		mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeAudio, 0);
+		mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeVideo, 0);
 	}
 
 	return mediaCapabilityChanged;
@@ -455,7 +510,10 @@ bool ParticipantDevice::updateStreamAvailabilities() {
 					streamAvailabilityChanged |= setStreamAvailability(computeStreamAvailable(conferenceTextEnabled, textEnabled, getStreamCapability(LinphoneStreamTypeText)), LinphoneStreamTypeText);
 				}
 			} else  {
-				const MediaSessionParams* params = static_pointer_cast<MediaSession>(session)->getCurrentParams();
+				// A conference server is a passive element, therefore it may happen that the negotiated capabilities are different than those the client requested.
+				// For example if the video will be inactive if all clients are RecvOnly and their layout is Grid but as soon as one toggles the video direction to SendRecv, then everybody should be able to get stream in
+				const MediaSessionParams* params = (session->getPrivate()->isInConference()) ? static_pointer_cast<MediaSession>(session)->getRemoteParams() : static_pointer_cast<MediaSession>(session)->getMediaParams();
+
 				auto audioEnabled = false;
 				auto videoEnabled = false;
 				auto textEnabled = false;

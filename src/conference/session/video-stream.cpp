@@ -65,15 +65,14 @@ MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream = video_stream_new2(getCCore()->factory, L_STRING_TO_C(bindIp), mPortConfig.rtpPort, mPortConfig.rtcpPort);
 
 	initializeSessions(&mStream->ms);
-
-	configure(params);
 }
 
 void MS2VideoStream::configure(const OfferAnswerContext &params) {
-	const auto & localDesc = params.getLocalStreamDescription();
-	const auto & content = localDesc.getContent();
-	const auto & label = localDesc.getLabel();
 	if (mStream) {
+		const auto & resultDesc = params.getLocalStreamDescription();
+
+		// Content
+		const auto & content = resultDesc.getContent();
 		MSVideoContent mscontent = MSVideoContentDefault;
 		if (content == "thumbnail") {
 			mscontent = MSVideoContentThumbnail;
@@ -88,6 +87,9 @@ void MS2VideoStream::configure(const OfferAnswerContext &params) {
 			mscontent = MSVideoContentSpeaker;
 		}
 		video_stream_set_content(mStream, mscontent);
+
+		// Label
+		const auto & label = resultDesc.getLabel();
 		if (!label.empty()) {
 			video_stream_set_label(mStream, label.c_str());
 		}
@@ -161,7 +163,7 @@ void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
 
 	if (new_csrc != 0) {
 		for(const auto &device : cppConference->getParticipantDevices()) {
-			if (new_csrc == device->getVideoSsrc()) {
+			if (new_csrc == device->getSsrc(LinphoneStreamTypeVideo)) {
 				cppConference->notifyActiveSpeakerParticipantDevice(device);
 				found = true;
 				break;
@@ -296,6 +298,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
 	bool isThumbnail = (content == "thumbnail");
 
+	const auto conference = (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
+
+	if (conference) {
+		video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, conference);
+	} else {
+		video_stream_set_csrc_changed_callback(mStream, nullptr, nullptr);
+	}
+
 	if (basicChangesHandled) {
 		bool muted = mMuted;
 		if (getState() == Running) {
@@ -363,24 +373,19 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		mStream->staticimage_webcam_fps_optimization = false;
 
 	LinphoneVideoDefinition *max_vdef = nullptr;
-	if (listener) {
-		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
 
-		if (conference) {
-			const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_conference_size", nullptr);
-			if (str != NULL && str[0] != 0) {
-				max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
-				if (max_vdef == NULL) {
-					lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
-				} else {
-					MSVideoSize max;
-					max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
-					max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
-					video_stream_set_sent_video_size_max(mStream, max);
-				}
+	if (conference) {
+		const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_conference_size", nullptr);
+		if (str != NULL && str[0] != 0) {
+			max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
+			if (max_vdef == NULL) {
+				lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
+			} else {
+				MSVideoSize max;
+				max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
+				max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
+				video_stream_set_sent_video_size_max(mStream, max);
 			}
-
-			video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, conference);
 		}
 	}
 
@@ -459,11 +464,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "main_display_mode", "Hybrid")));
 
 	configure(ctx);
-
-	if (listener) {
-		auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
-		if (conference) video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, conference);
-	}
 
 	if (getCCore()->video_conf.reuse_preview_source && source) {
 		lInfo() << "video_stream_start_with_source kept: " << source;

@@ -327,29 +327,29 @@ void check_local_desc_stream (LinphoneCall *call) {
 }
 
 void _linphone_call_check_nb_streams(const LinphoneCall *call, const int nb_audio_streams, const int nb_video_streams, const int nb_text_streams) {
-	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
-	BC_ASSERT_PTR_NOT_NULL(call_local_desc);
-	if (call_local_desc) {
-		BC_ASSERT_EQUAL((int)call_local_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
-		BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
-		BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
-		BC_ASSERT_EQUAL((int)call_local_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
+	const SalMediaDescription * call_result_desc = _linphone_call_get_result_desc(call);
+	BC_ASSERT_PTR_NOT_NULL(call_result_desc);
+	if (call_result_desc) {
+		BC_ASSERT_EQUAL((int)call_result_desc->getNbStreams(), nb_audio_streams + nb_video_streams + nb_text_streams, int, "%i");
+		BC_ASSERT_EQUAL((int)call_result_desc->nbStreamsOfType(SalAudio), nb_audio_streams, int, "%i");
+		BC_ASSERT_EQUAL((int)call_result_desc->nbStreamsOfType(SalVideo), nb_video_streams, int, "%i");
+		BC_ASSERT_EQUAL((int)call_result_desc->nbStreamsOfType(SalText), nb_text_streams, int, "%i");
 	}
 }
 
 int _linphone_call_get_nb_audio_steams(const LinphoneCall * call) {
-	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
-	return (int)call_local_desc->nbStreamsOfType(SalAudio);
+	const SalMediaDescription * call_result_desc = _linphone_call_get_result_desc(call);
+	return (int)call_result_desc->nbStreamsOfType(SalAudio);
 }
 
 int _linphone_call_get_nb_video_steams(const LinphoneCall * call) {
-	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
-	return (int)call_local_desc->nbStreamsOfType(SalVideo);
+	const SalMediaDescription * call_result_desc = _linphone_call_get_result_desc(call);
+	return (int)call_result_desc->nbStreamsOfType(SalVideo);
 }
 
 int _linphone_call_get_nb_text_steams(const LinphoneCall * call) {
-	const SalMediaDescription * call_local_desc = _linphone_call_get_result_desc(call);
-	return (int)call_local_desc->nbStreamsOfType(SalText);
+	const SalMediaDescription * call_result_desc = _linphone_call_get_result_desc(call);
+	return (int)call_result_desc->nbStreamsOfType(SalText);
 }
 
 LinphoneConferenceLayout _linphone_participant_device_get_layout(const LinphoneParticipantDevice * participant_device) {

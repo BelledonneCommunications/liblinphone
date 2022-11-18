@@ -131,28 +131,27 @@ bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls)
 }
 
 LinphoneStatus Conference::updateMainSession() {
-	getCore()->doLater([this] {
-		auto session = static_pointer_cast<MediaSession>(getMainSession());
-		if (session) {
-			const MediaSessionParams * params = session->getMediaParams();
-			MediaSessionParams *currentParams = params->clone();
-			currentParams->getPrivate()->setInternalCallUpdate(false);
-			if (!currentParams->rtpBundleEnabled()) {
-				currentParams->enableRtpBundle(true);
-			}
-
-			// Update parameters based on conference capabilities
-			if (!confParams->audioEnabled()) {
-				currentParams->enableAudio(confParams->audioEnabled());
-			}
-			if (!confParams->videoEnabled()) {
-				currentParams->enableVideo(confParams->videoEnabled());
-			}
-			session->update(currentParams);
-			delete currentParams;
+	LinphoneStatus ret = -1;
+	auto session = static_pointer_cast<MediaSession>(getMainSession());
+	if (session) {
+		const MediaSessionParams * params = session->getMediaParams();
+		MediaSessionParams *currentParams = params->clone();
+		currentParams->getPrivate()->setInternalCallUpdate(false);
+		if (!currentParams->rtpBundleEnabled()) {
+			currentParams->enableRtpBundle(true);
 		}
-	});
-	return 0;
+
+		// Update parameters based on conference capabilities
+		if (!confParams->audioEnabled()) {
+			currentParams->enableAudio(confParams->audioEnabled());
+		}
+		if (!confParams->videoEnabled()) {
+			currentParams->enableVideo(confParams->videoEnabled());
+		}
+		ret = session->update(currentParams);
+		delete currentParams;
+	}
+	return ret;
 }
 
 ConferenceLayout Conference::getLayout() const {
@@ -292,7 +291,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getAudioSsrc() == ssrc) {
+			if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 				_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
@@ -302,7 +301,7 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 		}
 	}
 	for (const auto &device : getMe()->getDevices()) {
-		if (device->getAudioSsrc() == ssrc) {
+		if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 			_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
@@ -316,7 +315,7 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getAudioSsrc() == ssrc) {
+			if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 				_linphone_participant_device_notify_is_muted(device->toC(), muted);
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsMuted(device, muted);
@@ -327,7 +326,7 @@ void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 		}
 	}
 	for (const auto &device : getMe()->getDevices()) {
-		if (device->getAudioSsrc() == ssrc) {
+		if (device->getSsrc(LinphoneStreamTypeAudio) == ssrc) {
 			_linphone_participant_device_notify_is_muted(device->toC(), muted);
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsMuted(device, muted);

@@ -154,6 +154,8 @@ public:
 
 	void confirmGoClear();
 
+	uint32_t getSsrc(LinphoneStreamType type) const;
+
 private:
 	L_DECLARE_PRIVATE(MediaSession);
 	L_DISABLE_COPY(MediaSession);

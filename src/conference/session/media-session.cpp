@@ -1450,15 +1450,26 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 			const auto cppConference = (conference) ? MediaConference::Conference::toCpp(conference)->getSharedFromThis() : nullptr;
 			const auto & participantDevice = cppConference ? (isInLocalConference ? cppConference->findParticipantDevice(q->getSharedFromThis()) : cppConference->getMe()->findDevice(q->getSharedFromThis())) : nullptr;
 
+			auto dir = SalStreamInactive;
 			if (cppConference && (participantDevice == dev)) {
-				cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : ((getParams()->getPrivate()->getSalVideoDirection() == SalStreamSendRecv) ? SalStreamSendOnly : SalStreamInactive);
+				dir = (isInLocalConference) ? SalStreamRecvOnly : ((getParams()->getPrivate()->getSalVideoDirection() == SalStreamSendRecv) ? SalStreamSendOnly : SalStreamInactive);
 			} else {
 				if (content.compare("main") == 0) {
-					cfg.dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
+					dir = (isInLocalConference) ? SalStreamRecvOnly : SalStreamSendOnly;
 				} else {
-					cfg.dir = (isInLocalConference) ? SalStreamSendOnly : SalStreamRecvOnly;
+					if (isInLocalConference) {
+						auto mediaDir = dev->getStreamCapability(LinphoneStreamTypeVideo);
+						if ((mediaDir == LinphoneMediaDirectionSendRecv) || (mediaDir == LinphoneMediaDirectionSendOnly)) {
+							dir = SalStreamSendOnly;
+						} else if ((mediaDir == LinphoneMediaDirectionInactive) || (mediaDir == LinphoneMediaDirectionRecvOnly)) {
+							dir = SalStreamInactive;
+						}
+					} else {
+						dir = SalStreamRecvOnly;
+					}
 				}
 			}
+			cfg.dir = dir;
 			validateVideoStreamDirection(cfg);
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, cfg, "vs" + label);
 			cfg.replacePayloads(l);
@@ -1751,9 +1762,9 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 					cfg.payloads = l;
 				} else {
 					lInfo() << "Don't put " << sal_stream_type_to_string(s.type) << " stream (index " << streamIdx << ") on local offer for CallSession [" << q << "] because no payload is found";
+					PayloadTypeHandler::clearPayloadList(l);
 					cfg.dir = SalStreamInactive;
 					newStream.disable();
-					PayloadTypeHandler::clearPayloadList(l);
 				}
 
 				newStream.disable();
@@ -2603,26 +2614,6 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 
 	updateFrozenPayloads(newMd);
 	upBandwidth = linphone_core_get_upload_bandwidth(q->getCore()->getCCore());
-
-	LinphoneConference * conference = nullptr;
-	if (listener) {
-		conference = listener->getCallSessionConference(q->getSharedFromThis());
-	}
-
-	if (isInConference() && conference) {
-		const auto & audioStream = op->getRemoteMediaDescription()->getActiveStreamOfType(SalAudio, 0);
-		const auto & audioStreamCfg = audioStream.getActualConfiguration();
-		const auto & audioSsrc = audioStreamCfg.conference_ssrc;
-
-		const auto & videoStreamIdx = getMainVideoStreamIdx(ctx.remoteMediaDescription);
-		uint32_t videoSsrc = 0;
-		if ((videoStreamIdx >= 0) && (newMd->nbActiveStreamsOfType(SalVideo) > 0)) {
-			const SalStreamDescription & videoStream = ctx.remoteMediaDescription->getStreamIdx(static_cast<unsigned int>(videoStreamIdx));
-			const auto & videoStreamCfg = videoStream.getActualConfiguration();
-			videoSsrc = videoStreamCfg.conference_ssrc;
-		}
-		MediaConference::Conference::toCpp(conference)->participantDeviceSsrcChanged(q->getSharedFromThis(), audioSsrc, videoSsrc);
-	}
 }
 
 // -----------------------------------------------------------------------------
@@ -4781,5 +4772,40 @@ std::shared_ptr<const VideoSourceDescriptor> MediaSession::getVideoSource () con
 void MediaSession::confirmGoClear() {
 	getStreamsGroup().confirmGoClear();
 }
+
+uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
+	L_D();
+
+	uint32_t ssrc = 0;
+	const auto remoteMediaDesc = d->getOp()->getRemoteMediaDescription();
+	if (remoteMediaDesc) {
+		switch (type) {
+			case LinphoneStreamTypeAudio:
+			{
+				const auto & audioStream = remoteMediaDesc->getActiveStreamOfType(SalAudio, 0);
+				const auto & audioStreamCfg = audioStream.getActualConfiguration();
+				ssrc = audioStreamCfg.conference_ssrc;
+			}
+				break;
+			case LinphoneStreamTypeVideo:
+			{
+				const auto & videoStreamIdx = d->getMainVideoStreamIdx(remoteMediaDesc);
+				if ((videoStreamIdx >= 0) && (d->getOp()->getFinalMediaDescription()->nbActiveStreamsOfType(SalVideo) > 0)) {
+					const SalStreamDescription & videoStream = remoteMediaDesc->getStreamIdx(static_cast<unsigned int>(videoStreamIdx));
+					const auto & videoStreamCfg = videoStream.getActualConfiguration();
+					ssrc = videoStreamCfg.conference_ssrc;
+				}
+			}
+				break;
+			case LinphoneStreamTypeText:
+			case LinphoneStreamTypeUnknown:
+				ssrc = 0;
+				break;
+		}
+	}
+
+	return ssrc;
+}
+
 
 LINPHONE_END_NAMESPACE

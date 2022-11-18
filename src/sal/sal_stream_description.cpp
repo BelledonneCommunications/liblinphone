@@ -1117,7 +1117,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	addDtlsAttributesToMediaDesc(actualCfg, media_desc);
 
 	/* insert zrtp-hash attribute if needed */
-	if (actualCfg.haveZrtpHash == 1) {
+	if ((actualCfg.haveZrtpHash == 1) && (actualCfg.zrtphash[0] != 0)) {
 		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("zrtp-hash", (const char *)(actualCfg.zrtphash)));
 	}
 

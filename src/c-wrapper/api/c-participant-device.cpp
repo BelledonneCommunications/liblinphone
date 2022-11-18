@@ -101,12 +101,8 @@ bool_t linphone_participant_device_get_stream_availability (const LinphonePartic
 	return ParticipantDevice::toCpp(participant_device)->getStreamAvailability(stream_type);
 }
 
-uint32_t linphone_participant_device_get_audio_ssrc(const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getAudioSsrc();
-}
-
-uint32_t linphone_participant_device_get_video_ssrc(const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getVideoSsrc();
+uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type) {
+	return ParticipantDevice::toCpp(participant_device)->getSsrc(stream_type);
 }
 
 bool_t linphone_participant_device_get_is_speaking (const LinphoneParticipantDevice *participant_device) {

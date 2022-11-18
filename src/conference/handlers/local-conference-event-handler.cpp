@@ -330,7 +330,11 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	MediaType audio = MediaType("1");
 	audio.setDisplayText("audio");
 	audio.setType("audio");
-	if (device->getAudioSsrc() > 0) audio.setSrcId(std::to_string(device->getAudioSsrc()));
+	if (audioDirection != LinphoneMediaDirectionInactive) {
+		if (device->getSsrc(LinphoneStreamTypeAudio) > 0) {
+			audio.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeAudio)));
+		}
+	}
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
@@ -338,10 +342,14 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	MediaType video = MediaType("2");
 	video.setDisplayText("video");
 	video.setType("video");
-	if (!device->getLabel().empty()) {
-		video.setLabel(device->getLabel());
+	if (videoDirection != LinphoneMediaDirectionInactive) {
+		if (!device->getLabel().empty()) {
+			video.setLabel(device->getLabel());
+		}
+		if (device->getSsrc(LinphoneStreamTypeVideo) > 0) {
+			video.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeVideo)));
+		}
 	}
-	if (device->getVideoSsrc() > 0) video.setSrcId(std::to_string(device->getVideoSsrc()));
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
 	endpoint.getMedia().push_back(video);
 
@@ -927,7 +935,6 @@ void LocalConferenceEventHandler::notifyParticipant (const Content &notify, cons
 }
 
 void LocalConferenceEventHandler::notifyParticipantDevice (const Content &notify, const shared_ptr<ParticipantDevice> &device) {
-
 	if (!device->isSubscribedToConferenceEventPackage() || notify.isEmpty())
 		return;
 
@@ -1128,7 +1135,7 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 	if (conf) {
 		auto participant = device->getParticipant();
 		// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
-		if ((device->getAudioSsrc() != 0) || (device->getVideoSsrc() != 0)) {
+		if ((device->getSsrc(LinphoneStreamTypeAudio) != 0) || (device->getSsrc(LinphoneStreamTypeVideo) != 0)) {
 			notifyAll(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())));
 		} else {
 			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);

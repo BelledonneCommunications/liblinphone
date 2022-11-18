@@ -831,24 +831,24 @@ void check_conference_ssrc(LinphoneConference * local_conference, LinphoneConfer
 					BC_ASSERT_PTR_NOT_NULL(remote_device);
 					if (remote_device) {
 						if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						}
 						if (linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeAudio) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						}
 						if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						}
 						if (linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						}
 					}
 				}
@@ -1251,34 +1251,58 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
 		if (!!linphone_conference_params_video_enabled(conf_params) == TRUE) {
-			int idx = 0;
-			int part_updates = (int)bctbx_list_size(new_participants);
-			for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-				counter = init_parts_count + (int)part_updates;
+			bool_t request_streams = FALSE;
+			for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 				LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-
 				LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
 				LinphoneParticipant * m_participant = linphone_conference_find_participant(focus_conference, m_uri);
 				BC_ASSERT_PTR_NOT_NULL(m_participant);
 				linphone_address_unref(m_uri);
 				if (m_participant) {
 					bctbx_list_t *devices = linphone_participant_get_devices(m_participant);
+					for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
+						LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
+						BC_ASSERT_PTR_NOT_NULL(d);
+						if (d) {
+							request_streams |= linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo);
+						}
+					}
+					if (devices) {
+						bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
+					}
+				}
+			}
 
+			int idx = 0;
+			int part_updates = (int)bctbx_list_size(new_participants);
+			for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+				counter = init_parts_count + (int)part_updates;
+				LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+				LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+				LinphoneParticipant * m_participant = linphone_conference_find_participant(focus_conference, m_uri);
+				BC_ASSERT_PTR_NOT_NULL(m_participant);
+				linphone_address_unref(m_uri);
+				if (m_participant) {
+					bctbx_list_t *devices = linphone_participant_get_devices(m_participant);
 					for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
 						LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
 						BC_ASSERT_PTR_NOT_NULL(d);
 						LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(focus_mgr->lc, linphone_participant_device_get_address(d));
 						BC_ASSERT_PTR_NOT_NULL(participant_call);
-						if (participant_call) {
-							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdating,(participants_initial_stats[idx].number_of_LinphoneCallUpdating+1),liblinphone_tester_sip_timeout));
-							BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+(bctbx_list_find(new_participants,m) ? 2 : 1)),liblinphone_tester_sip_timeout));
+						if (participant_call && request_streams) {
+							const LinphoneCallParams* participant_call_params = linphone_call_get_current_params(participant_call);
+							bool_t call_video_enabled = linphone_call_params_video_enabled(participant_call_params);
+							if (call_video_enabled) {
+								BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdating,(participants_initial_stats[idx].number_of_LinphoneCallUpdating+1),liblinphone_tester_sip_timeout));
+								BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+(bctbx_list_find(new_participants,m) ? 2 : 1)),liblinphone_tester_sip_timeout));
+							} else if (bctbx_list_find(new_participants,m)) {
+								BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning+1),liblinphone_tester_sip_timeout));
+							}
 						}
 					}
-
 					if (devices) {
 						bctbx_list_free_with_data(devices, (void (*)(void *))linphone_participant_device_unref);
 					}
-
 				}
 
 				part_updates--;

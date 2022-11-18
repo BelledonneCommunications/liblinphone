@@ -265,7 +265,7 @@ void ConferenceScheduler::onChatMessageStateChanged (const shared_ptr<ChatMessag
 				lError() << "[Conference Scheduler] [" << this << "] Invitation couldn't be sent to participant [" << participantAddress << "]";
 				mInvitationsInError.push_back(Address(participantAddress.asAddress()));
 			} else { // Message was sent using a group chat room
-				lError() << "[Conference Scheduler] [" << this << "] Chat room wasn't creatd, so no one received the invitation!";
+				lError() << "[Conference Scheduler] [" << this << "] Chat room wasn't created, so no one received the invitation!";
 				for (auto &participant : mInvitationsToSend) {
 					mInvitationsInError.push_back(Address(participant.asAddress()));
 				}
