@@ -221,10 +221,13 @@ static void call_received(SalCallOp *h) {
 			}
 
 			if (!conference) {
-				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo()));
+#ifdef HAVE_DB_STORAGE
+				std::shared_ptr<ConferenceInfo> confInfo = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->isInitialized() ? L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->getConferenceInfoFromURI(ConferenceAddress(h->getTo())) : nullptr;
 				if (confInfo) {
 					std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(lc), h), [](MediaConference::LocalConference * c) {c->unref();});
-				} else {
+				} else
+#endif // HAVE_DB_STORAGE
+				{
 					if (sal_address_has_uri_param(h->getToAddress(), "conf-id")) {
 						SalErrorInfo sei;
 						memset(&sei, 0, sizeof(sei));

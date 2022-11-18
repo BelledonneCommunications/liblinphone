@@ -274,7 +274,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 				conf->updateParticipantsInConferenceInfo(address);
 				lInfo() << "Participant " << *participant << " is successfully added - conference " << conf->getConferenceAddress().asString() << " has " << conf->getParticipantCount() << " participants";
 
-				if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()))) {
+				if (!isFullState || (!oldParticipants.empty() && (pIt == oldParticipants.cend()) && !conf->isMe(address))) {
 					conf->notifyParticipantAdded(
 						creationTime,
 						isFullState,
@@ -424,10 +424,14 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
 						if (mediaType.compare("audio") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeAudio);
-							if (media.getSrcId()) {
-								const std::string srcId = media.getSrcId().get();
-								unsigned long ssrc = std::stoul(srcId);
-								device->setAudioSsrc((uint32_t) ssrc);
+							if (mediaDirection == LinphoneMediaDirectionInactive) {
+								device->setSsrc(SalAudio, 0);
+							} else {
+								if (media.getSrcId()) {
+									const std::string srcId = media.getSrcId().get();
+									unsigned long ssrc = std::stoul(srcId);
+									device->setSsrc(SalAudio, (uint32_t) ssrc);
+								}
 							}
 						} else if (mediaType.compare("video") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
@@ -437,10 +441,14 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 									device->setLabel(label);
 								}
 							}
-							if (media.getSrcId()) {
-								const std::string srcId = media.getSrcId().get();
-								unsigned long ssrc = std::stoul(srcId);
-								device->setVideoSsrc((uint32_t) ssrc);
+							if (mediaDirection == LinphoneMediaDirectionInactive) {
+								device->setSsrc(SalVideo, 0);
+							} else {
+								if (media.getSrcId()) {
+									const std::string srcId = media.getSrcId().get();
+									unsigned long ssrc = std::stoul(srcId);
+									device->setSsrc(SalVideo, (uint32_t) ssrc);
+								}
 							}
 						} else if (mediaType.compare("text") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);
@@ -449,24 +457,24 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						}
 					}
 
-					// Do not notify media capability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
-					if(mediaCapabilityChanged && !isFullState && (state != StateType::full) && (previousDeviceState != ParticipantDevice::State::ScheduledForJoining) && (previousDeviceState != ParticipantDevice::State::Joining) && (previousDeviceState != ParticipantDevice::State::Alerting)) {
-						conf->notifyParticipantDeviceMediaCapabilityChanged(
-							creationTime,
-							isFullState,
-							participant,
-							device);
-					}
-
 					bool mediaAvailabilityChanged = device->updateStreamAvailabilities();
-
 					// Do not notify availability changed during full states and participant addition because it is already done by the listener method onFullStateReceived
-					if(mediaAvailabilityChanged && !isFullState && (state != StateType::full) && (previousDeviceState != ParticipantDevice::State::ScheduledForJoining) && (previousDeviceState != ParticipantDevice::State::Joining) && (previousDeviceState != ParticipantDevice::State::Alerting)) {
-						conf->notifyParticipantDeviceMediaAvailabilityChanged(
-							creationTime,
-							isFullState,
-							participant,
-							device);
+					if(!isFullState && (state != StateType::full) && (previousDeviceState != ParticipantDevice::State::ScheduledForJoining) && (previousDeviceState != ParticipantDevice::State::Joining) && (previousDeviceState != ParticipantDevice::State::Alerting)) {
+						if(mediaAvailabilityChanged) {
+							conf->notifyParticipantDeviceMediaAvailabilityChanged(
+								creationTime,
+								isFullState,
+								participant,
+								device);
+						}
+
+						if (mediaCapabilityChanged) {
+							conf->notifyParticipantDeviceMediaCapabilityChanged(
+								creationTime,
+								isFullState,
+								participant,
+								device);
+						}
 					}
 
 					if (endpoint.getJoiningMethod().present()) {
@@ -552,13 +560,13 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 					if (state == StateType::full) {
 						lInfo() << "Participant device " << gruu.asString() << " has been successfully added";
-						bool sendNotify = (!oldParticipants.empty() && (pIt == oldParticipants.cend()));
+						bool sendNotify = (!oldParticipants.empty() && (pIt == oldParticipants.cend())) && !conf->isMe(address);
 						if (pIt != oldParticipants.cend()) {
 							const auto & oldDevices = (*pIt)->getDevices();
 							const auto & dIt = std::find_if(oldDevices.cbegin(), oldDevices.cend(), [&gruu] (const auto & oldDevice) {
 								return (gruu == oldDevice->getAddress().asAddress());
 							});
-							sendNotify = (dIt == oldDevices.cend());
+							sendNotify = (dIt == oldDevices.cend()) && !conf->isMe(address);
 						}
 						if(!isFullState || sendNotify) {
 							conf->notifyParticipantDeviceAdded(

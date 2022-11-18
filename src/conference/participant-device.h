@@ -129,11 +129,8 @@ public:
 		return mCapabilityDescriptor;
 	}
 
-	void setAudioSsrc (uint32_t ssrc);
-	uint32_t getAudioSsrc () const;
-
-	void setVideoSsrc (uint32_t ssrc);
-	uint32_t getVideoSsrc () const;
+	bool setSsrc (const SalStreamType type, uint32_t ssrc);
+	uint32_t getSsrc (const SalStreamType type) const;
 
 	void *getUserData () const;
 	void setUserData (void *ud);

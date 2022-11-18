@@ -1047,7 +1047,7 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 		if (linphone_proxy_config_get_contact(destProxy)) {
 			addr = linphone_proxy_config_get_contact(destProxy);
 		} else {
-			lError() << "Unable to retrieve contact address from proxy confguration for call session " << this << " (local address " << q->getLocalAddress().asString() << " remote address " <<  (q->getRemoteAddress() ? q->getRemoteAddress()->asString() : "Unknown") << ").";
+			lError() << "Unable to retrieve contact address from proxy confguration for call session " << q << " (local address " << q->getLocalAddress().asString() << " remote address " <<  (q->getRemoteAddress() ? q->getRemoteAddress()->asString() : "Unknown") << ").";
 		}
 		if (addr && (linphone_proxy_config_get_op(destProxy) || (linphone_proxy_config_get_dependency(destProxy) != nullptr) || linphone_core_conference_server_enabled(q->getCore()->getCCore()))) {
 			/* If using a proxy, use the contact address as guessed with the REGISTERs */

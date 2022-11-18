@@ -69,6 +69,7 @@ class OfferAnswerEngine;
 class LINPHONE_PUBLIC SalStreamConfiguration {
 	friend class SalStreamDescription;
 	friend class SalStreamBundle;
+	friend class MediaSession;
 	friend class MediaSessionPrivate;
 	friend class MS2Stream;
 	friend class IceService;

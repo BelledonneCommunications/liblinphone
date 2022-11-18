@@ -94,7 +94,7 @@ public:
 	LinphoneNatPolicy *getNatPolicy () const { return natPolicy; }
 
 	LinphoneCallStats *getStats (LinphoneStreamType type) const;
-	
+
 	SalCallOp * getOp () const { return op; }
 
 	void stopStreams ();
