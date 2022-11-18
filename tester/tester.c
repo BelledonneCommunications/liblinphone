@@ -58,7 +58,7 @@
 #endif
 #endif
 
-#define SKIP_PULSEAUDIO 1
+//#define SKIP_PULSEAUDIO 1
 
 #if _WIN32
 #define unlink _unlink
