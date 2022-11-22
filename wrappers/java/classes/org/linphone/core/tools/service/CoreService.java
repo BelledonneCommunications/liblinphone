@@ -65,6 +65,8 @@ public class CoreService extends Service {
     private boolean mIsVibrating;
     private AudioManager mAudioManager;
 
+    private boolean mIsListenerAdded = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -119,29 +121,7 @@ public class CoreService extends Service {
                 }
             }
         };
-
-        if (CoreManager.isReady()) {
-            Core core = CoreManager.instance().getCore();
-            if (core != null) {
-                Log.i("[Core Service] Core Manager found, adding our listener");
-                core.addListener(mListener);
-
-                if (core.getCallsNb() > 0) {
-                    Log.w("[Core Service] Service started while at least one call active !");
-                    startForeground();
-
-                    Call call = core.getCurrentCall();
-                    if (call != null) {
-                        // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
-                        if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
-                            vibrate(call.getRemoteAddress());
-                        }
-                    } else {
-                        Log.w("[Core Service] Couldn't find current call...");
-                    }
-                }
-            }
-        }
+        addCoreListener();
 
         Log.i("[Core Service] Created");
     }
@@ -151,6 +131,10 @@ public class CoreService extends Service {
         super.onStartCommand(intent, flags, startId);
 
         Log.i("[Core Service] Started");
+        if (!mIsListenerAdded) {
+            addCoreListener();
+        }
+
         return START_STICKY;
     }
 
@@ -179,6 +163,38 @@ public class CoreService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private void addCoreListener() {
+        Log.i("[Core Service] Trying to add the Service's CoreListener to the Core...");
+        if (CoreManager.isReady()) {
+            Core core = CoreManager.instance().getCore();
+            if (core != null) {
+                Log.i("[Core Service] Core Manager found, adding our listener");
+                core.addListener(mListener);
+                mIsListenerAdded = true;
+                Log.i("[Core Service] CoreListener succesfully added to the Core");
+
+                if (core.getCallsNb() > 0) {
+                    Log.w("[Core Service] Core listener added while at least one call active !");
+                    startForeground();
+
+                    Call call = core.getCurrentCall();
+                    if (call != null) {
+                        // Starting Android 10 foreground service is a requirement to be able to vibrate if app is in background
+                        if (call.getDir() == Call.Dir.Incoming && call.getState() == Call.State.IncomingReceived && core.isVibrationOnIncomingCallEnabled()) {
+                            vibrate(call.getRemoteAddress());
+                        }
+                    } else {
+                        Log.w("[Core Service] Couldn't find current call...");
+                    }
+                }
+            } else {
+                Log.e("[Core Service] CoreManager instance found but Core is null!");
+            }
+        } else {
+            Log.w("[Core Service] CoreManager isn't ready yet...");
+        }
     }
 
     /* Foreground notification related */
