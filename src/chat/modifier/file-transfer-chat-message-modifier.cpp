@@ -22,6 +22,7 @@
 
 #include "address/address.h"
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/charconv.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/encryption/encryption-engine.h"
@@ -274,7 +275,7 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 
 		imee->generateFileTransferKey(message->getChatRoom(), message, currentFileTransferContent);
 	} else {
-		first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
+		first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileNameUtf8() + "\"";
 	}
 
 	// create a user body handler to take care of the file and add the content disposition and content-type headers
@@ -284,7 +285,7 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 	if (!currentFileContentToTransfer->getFilePath().empty()) {
 		belle_sip_user_body_handler_t *body_handler = (belle_sip_user_body_handler_t *)first_part_bh;
 		// No need to add again the callback for progression, otherwise it will be called twice
-		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), nullptr, this);
+		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePathSys().c_str(), nullptr, this);
 		belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)first_part_bh, body_handler);
 		// Ensure the file size has been set to the correct value
 		currentFileTransferContent->setFileSize(belle_sip_file_body_handler_get_file_size((belle_sip_file_body_handler_t *)first_part_bh));
@@ -378,7 +379,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				// Temporary workaround required because file transfer server removes content type parameter
 				parsedXmlFileTransferContent->setFileContentType(currentFileContentToTransfer->getContentType());
 
-				string xml_body = dumpFileTransferContentAsXmlString(parsedXmlFileTransferContent, contentKey, contentKeySize, contentAuthTag, contentAuthTagSize, currentFileContentToTransfer->getFileName());
+				string xml_body = dumpFileTransferContentAsXmlString(parsedXmlFileTransferContent, contentKey, contentKeySize, contentAuthTag, contentAuthTagSize, currentFileContentToTransfer->getFileNameUtf8());
 				delete parsedXmlFileTransferContent;
 				
 				currentFileTransferContent->setBodyFromUtf8(xml_body.c_str());
@@ -656,7 +657,7 @@ static void _chat_message_on_recv_end (belle_sip_user_body_handler_t *bh, void *
 }
 
 static void renameFileAfterAutoDownload(shared_ptr<Core> core, FileContent *fileContent) {
-	string file = fileContent->getFileName();
+	string file = fileContent->getFileNameSys();
 	size_t foundDot = file.find_last_of(".");
 	string fileName = file;
 	string fileExt = "";
@@ -678,12 +679,11 @@ static void renameFileAfterAutoDownload(shared_ptr<Core> core, FileContent *file
 		filepath = sstr.str();
 		prefix += 1;
 	}
-
-	lInfo() << "Renaming downloaded file from [" << fileContent->getFilePath() << "] to [" << filepath << "]";
-	if (std::rename(fileContent->getFilePath().c_str(), filepath.c_str())) {
+	lInfo() << "Renaming downloaded file from [" << fileContent->getFilePathSys() << "] to [" << filepath << "]";
+	if (std::rename(fileContent->getFilePathSys().c_str(), filepath.c_str())) {
 		lError() << "Error while renaming file! [" << strerror(errno)  << "]";
 	} else {
-		fileContent->setFilePath(filepath);
+		fileContent->setFilePathSys(filepath.c_str());
 	}
 }
 
@@ -817,7 +817,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 				nullptr, _chat_message_on_recv_body,
 				nullptr, _chat_message_on_recv_end, this);
 
-			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), 16, _chat_message_file_transfer_on_progress, this);
+			body_handler = (belle_sip_body_handler_t *)belle_sip_buffering_file_body_handler_new(currentFileContentToTransfer->getFilePathSys().c_str(), 16, _chat_message_file_transfer_on_progress, this);
 			if (belle_sip_body_handler_get_size((belle_sip_body_handler_t *)body_handler) == 0) {
 				// If the size of the body has not been initialized from the file stat, use the one from the
 				// file_transfer_information.
@@ -975,7 +975,7 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 
 	if (!belle_http_request_is_cancelled(httpRequest)) {
 		if (currentFileContentToTransfer) {
-			string filePath = currentFileContentToTransfer->getFilePath();
+			string filePath = currentFileContentToTransfer->getFilePathSys();
 			shared_ptr<ChatMessage> message = chatMessage.lock();
 			if (!filePath.empty()) {
 				lInfo() << "Canceling file transfer using file: " << filePath;
@@ -1078,7 +1078,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 		// Use real file-name
 		fakeXml << "<file-name>" << realFileName << "</file-name>\r\n";
 	} else {
-		fakeXml << "<file-name>" << parsedXmlFileTransferContent->getFileName() << "</file-name>\r\n";
+		fakeXml << "<file-name>" << parsedXmlFileTransferContent->getFileNameUtf8() << "</file-name>\r\n";
 	}
 	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getFileContentType() << "</content-type>\r\n";
 	
@@ -1136,7 +1136,7 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileTransferContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
+							fileTransferContent->setFileNameUtf8(cleanDownloadFileName(std::string((char *)filename)));
 							xmlFree(filename);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {

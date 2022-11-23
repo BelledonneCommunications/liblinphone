@@ -291,7 +291,21 @@ string Utils::utf8ToLocale (const string &str) {
 }
 
 string Utils::convertAnyToUtf8 (const string &str, const string &encoding) {
-	char *cStr = bctbx_convert_any_to_utf8(str.c_str(), encoding.c_str());
+	char *cStr = bctbx_convert_any_to_utf8(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
+	string convertedStr = cStringToCppString(cStr);
+	bctbx_free(cStr);
+	return convertedStr;
+}
+
+string Utils::convertUtf8ToAny (const string &str, const string &encoding) {
+	char *cStr = bctbx_convert_utf8_to_any(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
+	string convertedStr = cStringToCppString(cStr);
+	bctbx_free(cStr);
+	return convertedStr;
+}
+
+string Utils::convert(const string &str, const string &fromEncoding, const string &toEncoding) {
+	char *cStr = bctbx_convert_string(str.c_str(), fromEncoding.empty() ? NULL : fromEncoding.c_str(), toEncoding.empty() ? NULL : toEncoding.c_str());
 	string convertedStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
 	return convertedStr;

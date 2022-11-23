@@ -184,6 +184,8 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string localeToUtf8 (const std::string &str);
 	LINPHONE_PUBLIC std::string utf8ToLocale (const std::string &str);
 	LINPHONE_PUBLIC std::string convertAnyToUtf8 (const std::string &str, const std::string &encoding);
+	LINPHONE_PUBLIC std::string convertUtf8ToAny (const std::string &str, const std::string &encoding);
+	LINPHONE_PUBLIC std::string convert(const std::string &str, const std::string &fromEncoding, const std::string& toEncoding);
 	LINPHONE_PUBLIC std::string quoteStringIfNotAlready(const std::string &str);
 
 	class Version{

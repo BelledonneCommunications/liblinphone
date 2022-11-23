@@ -47,11 +47,23 @@ public:
 	void setFileSize (size_t size);
 	size_t getFileSize () const;
 
-	void setFileName (const std::string &name);
+	void setFileName (const std::string &name);// App Locale
 	const std::string &getFileName () const;
+	
+	void setFileNameSys (const std::string &name);// System Locale
+	std::string getFileNameSys () const;
+	
+	void setFileNameUtf8 (const std::string &name);// UTF8
+	std::string getFileNameUtf8 () const;
 
-	void setFilePath (const std::string &path);
+	void setFilePath (const std::string &path);// App Locale
 	const std::string &getFilePath () const;
+	
+	void setFilePathSys (const std::string &path);// System Locale
+	std::string getFilePathSys () const;
+	
+	void setFilePathUtf8 (const std::string &path);// UTF8
+	std::string getFilePathUtf8 () const;
 
 	void setFileDuration (int durationInSeconds);
 	int getFileDuration () const;
