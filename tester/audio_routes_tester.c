@@ -110,13 +110,21 @@ static void unregister_all_devices(LinphoneCoreManager *mgr) {
 static void check_io_devs(LinphoneCoreManager* mgr, const LinphoneAudioDevice *exp_dev, bool_t force_dev_check) {
 
 	LinphoneCall * mgr_call = linphone_core_get_current_call(mgr->lc);
+	const LinphoneCallParams * call_params = mgr_call != NULL ? linphone_call_get_current_params(mgr_call) : NULL;
+	LinphoneCallState call_state = mgr_call ? linphone_call_get_state(mgr_call) : LinphoneCallStateIdle;
 
 	// If no call, then there is no input or output device. Getter should return NULL
 	if (!linphone_core_get_use_files(mgr->lc) && ((mgr_call != NULL) || (force_dev_check == TRUE))) {
+	// Note : on these states : Paused, OutgoingRinging, Pausing, IncomingReceived
+	// => regular devices are null (capture/playback) BUT output device comes from tonemanager. It's why there is no specific case for it.
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(mgr->lc));
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), exp_dev);
-		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_input_audio_device(mgr->lc));
-		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
+		if( !mgr_call || (call_params && linphone_call_params_get_audio_direction(call_params) == LinphoneMediaDirectionRecvOnly) || call_state == LinphoneCallStatePaused)// On Recv only, capture device is disabled.
+			BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
+		else {
+			BC_ASSERT_PTR_NOT_NULL(linphone_core_get_input_audio_device(mgr->lc));
+			BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
+		}
 	} else {
 		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(mgr->lc));
 		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
@@ -174,7 +182,9 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_input_audio_device(mgr->lc), exp_dev);
 
 	exp_dev = unregister_device(TRUE, mgr, exp_dev, card_desc);
-
+	
+	wait_for_until(mgr->lc, NULL, NULL, 1, 100);
+	
 	check_io_devs(mgr, exp_dev, force_dev_check);
 
 	linphone_audio_device_unref(exp_dev);
@@ -897,6 +907,7 @@ static void simple_call_with_audio_device_change_base(bool_t during_incoming_ear
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
+	BC_ASSERT_EQUAL(_linphone_call_get_nb_audio_stops(marie_call), audioStreamStopped, unsigned int, "%d");
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_output_dev);
 
 	// Pauline is now online - ringback can start
@@ -942,6 +953,7 @@ static void simple_call_with_audio_device_change_base(bool_t during_incoming_ear
 		}
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 5000));
+		BC_ASSERT_EQUAL(_linphone_call_get_nb_audio_stops(marie_call), audioStreamStopped, unsigned int, "%d");
 		if (during_outgoing_early_media) {
 			linphone_audio_device_unref(current_output_dev);
 			current_output_dev = dev_mux(current_output_dev, dev0, dev1);
@@ -979,6 +991,7 @@ static void simple_call_with_audio_device_change_base(bool_t during_incoming_ear
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), current_input_dev);
 	// stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
+	BC_ASSERT_EQUAL(_linphone_call_get_nb_audio_stops(marie_call), audioStreamStopped, unsigned int, "%d");
 
 	if (during_ringback) {
 		linphone_audio_device_unref(current_output_dev);
@@ -1003,15 +1016,18 @@ static void simple_call_with_audio_device_change_base(bool_t during_incoming_ear
 		linphone_core_set_input_audio_device(marie->lc, current_input_dev);
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), current_input_dev);
 		devChanges += 2;
+		
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (initialNoDevChanges + devChanges), int, "%d");
 	}
-
+	BC_ASSERT_EQUAL(_linphone_call_get_nb_audio_stops(marie_call), audioStreamStopped, unsigned int, "%d");
+	if(during_incoming_early_media && during_outgoing_early_media)// In this case, there is one more stop() for marie.
+		++audioStreamStopped;
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
-
+	BC_ASSERT_EQUAL(_linphone_call_get_nb_audio_stops(marie_call), audioStreamStopped, unsigned int, "%d");
 	// Take call - ringing ends
 	linphone_call_accept(pauline_call);
-
+	
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 
@@ -1054,6 +1070,8 @@ static void simple_call_with_audio_device_change_base(bool_t during_incoming_ear
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(marie->lc), current_input_dev);
 		devChanges += 2;
 
+		++audioStreamStopped;// From doing render() after setting devices. TODO : only count if filters doesn't implement MS_AUDIO_*_SET_INTERNAL_ID
+		
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreAudioDeviceChanged, (initialNoDevChanges + devChanges), int, "%d");
 	}
 

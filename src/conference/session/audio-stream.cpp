@@ -940,16 +940,32 @@ void MS2AudioStream::setSoundCardType(MSSndCard *soundcard) {
 	}
 }
 
+int MS2AudioStream::restartStream(RestartReason reason) {
+// Schedule a restart in order to avoid multiple reinitialisation when changing at the same time both devices. Also, it allows to avoid to restart the stream if it has been already restart.
+	const char * const reasonToText = (reason == RestartReason::OutputChanged ? "output" : "input");
+	if(getState() == Running){
+		if(!mRestartStreamRequired) {
+			lInfo() << "[MS2AudioStream] restart stream required for updating " << reasonToText;
+			mRestartStreamRequired = true;
+			getCore().doLater([&](){
+				if(mRestartStreamRequired && getState() == Running)// Still need to be restarted. If false, then a restart has been already done on an update.
+					render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()), getGroup().getCurrentSessionState());
+			});
+			return 0;
+		}else
+			lInfo() << "[MS2AudioStream] an already restart stream required for updating " << reasonToText;
+	}
+	return -1;
+}
+
 void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 	if(!mStream) return;
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
 	if(audio_stream_set_input_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
-		if(getState() == Running){// New device couldn't update the stream, request to stop it
-			// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID 
-			mRestartStreamRequired = true;
-			lInfo() << "[MS2AudioStream] restart stream required for updating input";
-		}
+		// New device couldn't update the stream, request to stop it
+		// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID
+		restartStream(RestartReason::InputChanged);
 	}
 }
 
@@ -958,11 +974,9 @@ void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
 	if(audio_stream_set_output_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
-		if(getState() == Running){// New device couldn't update the stream, request to stop it
-			// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID 
-			mRestartStreamRequired = true;
-			lInfo() << "[MS2AudioStream] restart stream required for updating output";
-		}
+		// New device couldn't update the stream, request to stop it
+		// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID
+		restartStream(RestartReason::OutputChanged);
 	}
 }
 

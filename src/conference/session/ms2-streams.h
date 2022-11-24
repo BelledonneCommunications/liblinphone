@@ -157,6 +157,7 @@ private:
 class MS2AudioStream : public MS2Stream, public AudioControlInterface{
 	friend class MS2VideoStream;
 public:
+
 	MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params);
 	virtual bool prepare() override;
 	virtual void finishPrepare() override;
@@ -210,6 +211,10 @@ public:
 protected:
 	VideoStream *getPeerVideoStream();
 private:
+	enum RestartReason{
+		InputChanged = 0,
+		OutputChanged = 1,
+	};
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	void setupMediaLossCheck();
 	void setPlaybackGainDb (float gain);
@@ -223,6 +228,7 @@ private:
 	void telephoneEventReceived (int event);
 	void configureAudioStream();
 	void setSoundCardType(MSSndCard *soundcard);
+	int restartStream(RestartReason reason);	// reason is used for debug feedback. Return 0 if restart is scheduled, -1 if not or not needed.
 	MS2AudioMixer *getAudioMixer();
 	AudioStream *mStream = nullptr;
 	struct _MSAudioEndpoint *mConferenceEndpoint = nullptr;
