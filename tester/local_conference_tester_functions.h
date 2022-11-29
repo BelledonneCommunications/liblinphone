@@ -30,6 +30,7 @@
 #include "conference/participant.h"
 #include "liblinphone_tester++.h"
 #include "linphone/core.h"
+#include "shared_tester_functions.h"
 
 using namespace LinphonePrivate;
 using namespace std;
@@ -150,8 +151,8 @@ public:
 		                      LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		                      linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 		                      linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
-		  linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
-		  linphone_core_cbs_set_message_received(cbs, encrypted_message_received);
+		                      linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
+		                      linphone_core_cbs_set_message_received(cbs, encrypted_message_received);
 		                      linphone_core_add_callbacks(getLc(), cbs);
 		                      linphone_core_cbs_unref(cbs);
 		                      if (encrypted) {
@@ -200,7 +201,8 @@ public:
 		}
 	}
 
-	static void encrypted_message_sent(BCTBX_UNUSED(LinphoneCore *lc), LinphoneChatRoom *room, LinphoneChatMessage* msg) {
+	static void
+	encrypted_message_sent(BCTBX_UNUSED(LinphoneCore *lc), LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(room);
 		std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(msg);
 		Content internalContent = cppMsg->getInternalContent();
@@ -211,14 +213,17 @@ public:
 		}
 	}
 
-	static void encrypted_message_received(BCTBX_UNUSED(LinphoneCore *lc), LinphoneChatRoom *room, LinphoneChatMessage* msg) {
+	static void
+	encrypted_message_received(BCTBX_UNUSED(LinphoneCore *lc), LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(room);
 		std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(msg);
 		Content internalContent = cppMsg->getInternalContent();
 		ContentType contentType = internalContent.getContentType();
 		if ((capabilities & LinphoneChatRoomCapabilitiesEncrypted) && (contentType != ContentType::ImIsComposing)) {
-			// Header "Content-Encoding" is remove by belle-sip in function uncompress_body_if_required. Nonetheless, it adds a custom header "X-BelleSip-Removed-Content-Encoding" with the same value
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_custom_header(msg, "X-BelleSip-Removed-Content-Encoding"), "deflate");
+			// Header "Content-Encoding" is remove by belle-sip in function uncompress_body_if_required. Nonetheless, it
+			// adds a custom header "X-BelleSip-Removed-Content-Encoding" with the same value
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_custom_header(msg, "X-BelleSip-Removed-Content-Encoding"),
+			                       "deflate");
 		}
 	}
 
@@ -369,7 +374,19 @@ private:
 
 		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
+		linphone_core_cbs_set_message_sent(cbs, encrypted_message_sent);
 		//		linphone_core_cbs_set_refer_received(cbs, linphone_conference_server_refer_received);
+	}
+
+	static void
+	encrypted_message_sent(BCTBX_UNUSED(LinphoneCore *lc), LinphoneChatRoom *room, LinphoneChatMessage *msg) {
+		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(room);
+		std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(msg);
+		Content internalContent = cppMsg->getInternalContent();
+		ContentType contentType = internalContent.getContentType();
+		if ((capabilities & LinphoneChatRoomCapabilitiesEncrypted) && (contentType != ContentType::ImIsComposing)) {
+			check_chat_message_properties(msg);
+		}
 	}
 
 	std::multimap<Address, Address> mParticipantDevices;

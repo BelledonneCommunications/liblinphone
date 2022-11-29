@@ -137,6 +137,9 @@ private:
 	mutable size_t mSize = 0;
 };
 
+std::ostream &operator<<(std::ostream &stream, const Content &content);
+std::ostream &operator<<(std::ostream &stream, const std::list<Content> &contents);
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CONTENT_H_

@@ -30,6 +30,7 @@
 #include "server-group-chat-room.h"
 
 #include "conference/participant-device.h"
+#include "content/content-manager.h"
 #include "object/clonable-object-p.h"
 #include "object/clonable-object.h"
 
@@ -129,8 +130,21 @@ private:
 		        const SalCustomHeader *salCustomHeaders)
 		    : fromAddr(Address::create(from)) {
 			content.setContentType(contentType);
-			if (!text.empty()) content.setBodyFromUtf8(text);
-			if (salCustomHeaders) customHeaders = sal_custom_header_clone(salCustomHeaders);
+			if (!text.empty()) {
+				content.setBodyFromUtf8(text);
+
+				// If the message is encrypted, the server group chat room will send it to every participant in a
+				// message where only the LIME key of the recipee is present.  Instead of parsing the content of the
+				// received message for every outbound message to look for the section containing the LIME key that
+				// causes important performance issues, the content is parsed once and the LIME encryption engine can
+				// get the information it needs.
+				if (contentType.isValid() && (contentType == ContentType::Encrypted)) {
+					contentsList = ContentManager::multipartToContentList(content);
+				}
+			}
+			if (salCustomHeaders) {
+				customHeaders = sal_custom_header_clone(salCustomHeaders);
+			}
 		}
 
 		~Message() {
@@ -139,6 +153,7 @@ private:
 
 		std::shared_ptr<Address> fromAddr;
 		Content content;
+		std::list<Content> contentsList;
 		std::chrono::system_clock::time_point timestamp = std::chrono::system_clock::now();
 		SalCustomHeader *customHeaders = nullptr;
 	};

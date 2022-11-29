@@ -76,7 +76,9 @@ LimeX3dhEncryptionServerEngine::processOutgoingMessage(const std::shared_ptr<Cha
 		return ChatMessageModifier::Result::Skipped;
 	}
 
-	list<Content> contentsList = ContentManager::multipartToContentList(*internalContent);
+	auto contentList = message->getProperty("content-list");
+	list<Content> contentsList = contentList.isValid() ? contentList.getValue<list<Content>>()
+	                                                   : ContentManager::multipartToContentList(*internalContent);
 	list<Content *> contents;
 	bool hasKey = FALSE;
 	for (auto &content : contentsList) {
