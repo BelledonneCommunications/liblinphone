@@ -590,7 +590,7 @@ typedef unsigned int LinphoneContactSearchID;
  */
 LINPHONE_DEPRECATED typedef LinphoneContactSearchID ContactSearchID;
 
-typedef struct belle_sip_dict LinphoneDictionary;
+typedef struct _LinphoneDictionary LinphoneDictionary;
 
 /**
  * @brief Enum describing the result of the echo canceller calibration process.

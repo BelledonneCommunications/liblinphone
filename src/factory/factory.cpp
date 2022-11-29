@@ -47,6 +47,7 @@
 #include "conference/conference-info.h"
 #include "logger/logger.h"
 #include "sqlite3_bctbx_vfs.h"
+#include "dictionary/dictionary.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -277,7 +278,7 @@ LinphoneCallCbs* Factory::createCallCbs() const {
 	return _linphone_call_cbs_new();
 }
 
-LinphoneConferenceCbs * Factory::createConferenceCbs() const {
+LinphoneConferenceCbs* Factory::createConferenceCbs() const {
 	return _linphone_conference_cbs_new();
 }
 
@@ -295,16 +296,20 @@ LinphoneMagicSearchCbs* Factory::createMagicSearchCbs() const {
 }
 
 
+LinphoneDictionary* Factory::createDictionary() const {
+	return Dictionary::createCObject();
+}
+
 LinphoneVcard* Factory::createVcard() const {
 	return _linphone_vcard_new();
 }
 
-LinphoneVideoDefinition*  Factory::createVideoDefinition(unsigned int width, unsigned int height) const {
+LinphoneVideoDefinition* Factory::createVideoDefinition(unsigned int width, unsigned int height) const {
 	LinphoneVideoDefinition *supported = findSupportedVideoDefinition(width, height);
 	return supported ? linphone_video_definition_clone(supported) : linphone_video_definition_new(width, height, NULL);
 }
 
-LinphoneVideoDefinition*  Factory::createVideoDefinitionFromName(const std::string& name) const {
+LinphoneVideoDefinition* Factory::createVideoDefinitionFromName(const std::string& name) const {
 	unsigned int width = 0;
 	unsigned int height = 0;
 	LinphoneVideoDefinition *vdef = findSupportedVideoDefinitionByName(name);

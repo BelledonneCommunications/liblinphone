@@ -226,6 +226,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	db/main-db-p.h
 	db/main-db.h
 	dial-plan/dial-plan.h
+	dictionary/dictionary.h
 	enums.h
 	event-log/conference/conference-call-event.h
 	event-log/conference/conference-event-p.h
@@ -287,6 +288,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	utils/payload-type-handler.h
 	utils/if-addrs.h
 	variant/variant.h
+	variant/variant-impl.h
 )
 
 if(ENABLE_ADVANCED_IM)
@@ -368,6 +370,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-conference.cpp
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
+	c-wrapper/api/c-dictionary.cpp
 	c-wrapper/api/c-event-log.cpp
 	c-wrapper/api/c-factory.cpp
 	c-wrapper/api/c-friend-phone-number.cpp
@@ -463,6 +466,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	db/main-db-key.cpp
 	db/main-db.cpp
 	dial-plan/dial-plan.cpp
+	dictionary/dictionary.cpp
 	event-log/conference/conference-call-event.cpp
 	event-log/conference/conference-chat-message-event.cpp
 	event-log/conference/conference-event.cpp
@@ -520,7 +524,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/utils.cpp
 	utils/if-addrs.cpp
 	utils/version.cpp
-	variant/variant.cpp
 )
 
 if(ENABLE_LDAP)

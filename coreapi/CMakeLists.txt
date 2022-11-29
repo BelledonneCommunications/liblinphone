@@ -46,7 +46,6 @@ set(LINPHONE_SOURCE_FILES_C
 	carddav.c
 	chat.c
 	contactprovider.c
-	dict.c
 	ec-calibrator.c
 	echo-tester.c
 	enum.c

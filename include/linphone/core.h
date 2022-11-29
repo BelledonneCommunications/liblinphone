@@ -43,7 +43,6 @@
 #include "linphone/call_stats.h"
 #include "linphone/chat.h"
 #include "linphone/conference.h"
-#include "linphone/dictionary.h"
 #include "linphone/error_info.h"
 #include "linphone/event.h"
 #include "linphone/factory.h"

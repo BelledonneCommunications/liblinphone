@@ -29,7 +29,6 @@
 #include "linphone/utils/utils.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
-#include "linphone/dictionary.h"
 #include "logger/logger.h"
 #include "private.h"
 #include "../ldap/ldap.h"

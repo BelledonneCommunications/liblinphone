@@ -20,6 +20,7 @@
 
 #include <unordered_map>
 
+#include "bctoolbox/utils.hh"
 #include "property-container.h"
 
 // =============================================================================
@@ -54,12 +55,12 @@ PropertyContainer &PropertyContainer::operator= (const PropertyContainer &) {
 	return *this;
 }
 
-Variant PropertyContainer::getProperty (const string &name) const {
+const Variant &PropertyContainer::getProperty (const string &name) const {
 	if (!mPrivate)
-		return Variant();
+		return bctoolbox::Utils::getEmptyConstRefObject<Variant>();
 	auto &properties = mPrivate->properties;
 	auto it = properties.find(name);
-	return it == properties.cend() ? Variant() : it->second;
+	return it == properties.cend() ? bctoolbox::Utils::getEmptyConstRefObject<Variant>() : it->second;
 }
 
 void PropertyContainer::setProperty (const string &name, const Variant &value) {
@@ -72,6 +73,30 @@ void PropertyContainer::setProperty (const string &name, Variant &&value) {
 	if (!mPrivate)
 		mPrivate = new PropertyContainerPrivate();
 	mPrivate->properties[name] = move(value);
+}
+
+int PropertyContainer::remove (const std::string &name) const {
+	if (mPrivate){
+		auto it = mPrivate->properties.find(name);
+		if (it == mPrivate->properties.end())
+			return -1;
+		mPrivate->properties.erase(it);
+		return 0;
+	}
+	return -2;
+}
+
+void PropertyContainer::clear () {
+	if (mPrivate) {
+		mPrivate->properties.clear();
+	}
+}
+
+bool PropertyContainer::hasKey (const std::string &name) const {
+	if (mPrivate) {
+		return mPrivate->properties.find(name) != mPrivate->properties.end();
+	}
+	return false;
 }
 
 LINPHONE_END_NAMESPACE
