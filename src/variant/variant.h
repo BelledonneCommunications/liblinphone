@@ -78,7 +78,7 @@ public:
 		return bctoolbox::Utils::getEmptyConstRefObject<T>();
 	}
 
-	bool isValid() {
+	bool isValid() const {
 		return mImplBase != nullptr;
 	}
 

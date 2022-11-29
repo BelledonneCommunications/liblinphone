@@ -66,6 +66,8 @@ int liblinphone_tester_send_data(const void *buffer, size_t length, const char *
 void linphone_conference_info_check_participant(const LinphoneConferenceInfo * conference_info, LinphoneAddress * address, int sequence_number);
 void linphone_conference_info_check_organizer(const LinphoneConferenceInfo * conference_info, int sequence_number);
 
+void check_chat_message_properties(LinphoneChatMessage *msg);
+
 #ifdef __cplusplus
 }
 #endif
