@@ -485,4 +485,15 @@ const string Content::exportPlainFileFromEncryptedFile(const string &filePath) c
 	return plainPath;
 }
 
+std::ostream &operator<<(std::ostream &stream, const Content &content) {
+	return stream << "Content of type " << content.getContentType() << " with body " << content.getBodyAsUtf8String();
+}
+
+std::ostream &operator<<(std::ostream &stream, const std::list<Content> &contents) {
+	for (const auto &content : contents) {
+		stream << content << "\n";
+	}
+	return stream;
+}
+
 LINPHONE_END_NAMESPACE

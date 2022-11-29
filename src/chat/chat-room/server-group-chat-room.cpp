@@ -692,9 +692,10 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived(SalOp *op, const
 		return LinphoneReasonForbidden;
 	}
 
+	ContentType contentType(message->content_type);
+	std::string contentBody(message->text ? message->text : "");
 	// Do not check that we received a CPIM message because ciphered messages are not
-	shared_ptr<Message> msg = make_shared<Message>(op->getFrom(), ContentType(message->content_type),
-	                                               message->text ? message->text : "", op->getRecvCustomHeaders());
+	shared_ptr<Message> msg = make_shared<Message>(op->getFrom(), contentType, contentBody, op->getRecvCustomHeaders());
 
 	queueMessage(msg);
 	dispatchQueuedMessages();
@@ -1005,6 +1006,10 @@ void ServerGroupChatRoomPrivate::sendMessage(const shared_ptr<Message> &message,
 		// If FROM and TO are the same user (with a different device for example, gruu is not checked), set the
 		// X-fs-message-type header to "chat-service". This lead to disabling push notification for this message.
 		msg->getPrivate()->addSalCustomHeader(XFsMessageTypeHeader::HeaderName, XFsMessageTypeHeader::ChatService);
+	}
+
+	if (message->contentsList.size() > 0) {
+		msg->setProperty("content-list", message->contentsList);
 	}
 	msg->send();
 }

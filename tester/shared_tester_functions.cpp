@@ -889,3 +889,14 @@ bool check_conference_ssrc(LinphoneConference *local_conference, LinphoneConfere
 	}
 	return ret;
 }
+
+void check_chat_message_properties(LinphoneChatMessage *msg) {
+	BC_ASSERT_PTR_NOT_NULL(msg);
+	if (!msg) return;
+	std::shared_ptr<ChatMessage> cppMsg = L_GET_CPP_PTR_FROM_C_OBJECT(msg);
+	auto content = cppMsg->getInternalContent();
+	if (content.getContentType() == ContentType::Encrypted) {
+		auto contentList = cppMsg->getProperty("content-list");
+		BC_ASSERT_TRUE(contentList.isValid());
+	}
+}
