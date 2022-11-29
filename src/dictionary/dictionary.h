@@ -18,39 +18,33 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_PROPERTY_CONTAINER_H_
-#define _L_PROPERTY_CONTAINER_H_
-
-#include "variant/variant.h"
+#include <belle-sip/object++.hh>
+#include "linphone/api/c-types.h"
+#include "object/property-container.h"
 
 // =============================================================================
 
+using namespace std;
+
 LINPHONE_BEGIN_NAMESPACE
 
-class PropertyContainerPrivate;
+// -----------------------------------------------------------------------------
 
-class LINPHONE_PUBLIC PropertyContainer {
+class LINPHONE_PUBLIC Dictionary : public bellesip::HybridObject<LinphoneDictionary, Dictionary>, public PropertyContainer {
 public:
-	PropertyContainer ();
-	PropertyContainer (const PropertyContainer &other);
-	virtual ~PropertyContainer ();
+    Dictionary* clone() const override;
 
-	PropertyContainer &operator= (const PropertyContainer &other);
+    float getFloat (const string &name) const;
+    void setProperty (const string &name, const float value);
 
-	const Variant &getProperty (const std::string &name) const;
-	void setProperty (const std::string &name, const Variant &value);
-	void setProperty (const std::string &name, Variant &&value);
+    const string &getString (const string &name) const;
+    void setProperty (const string &name, const string &value);
 
-	int remove (const std::string &name) const;
-
-	void clear ();
-
-	bool hasKey (const std::string &name) const;
-
-private:
-	PropertyContainerPrivate *mPrivate;
+    int getInt (const string &name) const;
+    void setProperty (const string &name, const int value);
+    
+    long long getLongLong (const string &name) const;
+    void setProperty (const string &name, const long long value);
 };
 
 LINPHONE_END_NAMESPACE
-
-#endif // ifndef _L_PROPERTY_CONTAINER_H_

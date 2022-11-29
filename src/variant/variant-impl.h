@@ -18,39 +18,49 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_PROPERTY_CONTAINER_H_
-#define _L_PROPERTY_CONTAINER_H_
+#ifndef _L_VARIANT_IMPL_H_
+#define _L_VARIANT_IMPL_H_
 
-#include "variant/variant.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class PropertyContainerPrivate;
-
-class LINPHONE_PUBLIC PropertyContainer {
+class LINPHONE_PUBLIC VariantImplBase {
 public:
-	PropertyContainer ();
-	PropertyContainer (const PropertyContainer &other);
-	virtual ~PropertyContainer ();
+	virtual VariantImplBase *clone() = 0;
+	virtual ~VariantImplBase() {}
+};
 
-	PropertyContainer &operator= (const PropertyContainer &other);
+template <typename T> class LINPHONE_PUBLIC VariantImpl : public VariantImplBase {
+public:
+	VariantImpl() = default;
 
-	const Variant &getProperty (const std::string &name) const;
-	void setProperty (const std::string &name, const Variant &value);
-	void setProperty (const std::string &name, Variant &&value);
+	VariantImpl(const T &value) {
+		mValue = value;
+	}
 
-	int remove (const std::string &name) const;
+	VariantImpl(const VariantImpl<T> &other) = default;
 
-	void clear ();
+	~VariantImpl() = default;
 
-	bool hasKey (const std::string &name) const;
+	VariantImplBase *clone() override {
+		return new VariantImpl<T>(*this);
+	}
+
+	const T &getValue() const {
+		return mValue;
+	}
+
+	void setValue(const T &value) {
+		mValue = value;
+	}
 
 private:
-	PropertyContainerPrivate *mPrivate;
+	T mValue;
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_PROPERTY_CONTAINER_H_
+#endif // ifndef _L_VARIANT_IMPL_H_

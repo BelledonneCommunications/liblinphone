@@ -63,13 +63,13 @@ public:
 			bool_t main_core
 			) const;
 	
-	LinphoneCore *createCore (
+	LinphoneCore * createCore (
 			LinphoneCoreCbs *cbs,
 			const std::string& config_path,
 			const std::string& factory_config_path
 			) const;
 	
-	LinphoneCore *createCore (
+	LinphoneCore * createCore (
 			LinphoneCoreCbs *cbs,
 			const std::string& config_path,
 			const std::string& factory_config_path,
@@ -77,13 +77,13 @@ public:
 			void *system_context
 			) const;
 	
-	LinphoneCore *createCore (
+	LinphoneCore * createCore (
 			const std::string& config_path,
 			const std::string& factory_config_path,
 			void *system_context
 			) const;
 	
-	LinphoneCore *createSharedCore (
+	LinphoneCore * createSharedCore (
 			const std::string& config_filename,
 			const std::string& factory_config_path,
 			void *system_context,
@@ -91,32 +91,32 @@ public:
 			bool_t main_core
 			) const;
 	
-	LinphoneCore *createCoreWithConfig (
+	LinphoneCore * createCoreWithConfig (
 			LinphoneCoreCbs *cbs,
 			LinphoneConfig *config
 			) const;
 	
-	LinphoneCore *createCoreWithConfig (
+	LinphoneCore * createCoreWithConfig (
 			LinphoneCoreCbs *cbs,
 			LinphoneConfig *config,
 			void *user_data,
 			void *system_context
 			) const;
 	
-	LinphoneCore *createCoreWithConfig (
+	LinphoneCore * createCoreWithConfig (
 			LinphoneConfig *config,
 			void *system_context
 			) const;
 	
-	LinphoneCore *createSharedCoreWithConfig (
+	LinphoneCore * createSharedCoreWithConfig (
 			LinphoneConfig *config,
 			void *system_context,
 			const std::string& app_group_id,
 			bool_t main_core
 			) const;
 	
-	LinphoneCoreCbs *createCoreCbs() const ;
-	LinphoneAddress *createAddress(const std::string& addr) const;
+	LinphoneCoreCbs * createCoreCbs() const ;
+	LinphoneAddress * createAddress(const std::string& addr) const;
 	LinphoneParticipantDeviceIdentity *createParticipantDeviceIdentity(const LinphoneAddress *address,
 																	   const std::string& name
 																	   ) const;
@@ -129,17 +129,19 @@ public:
 	LinphoneChatRoomCbs * createChatRoomCbs() const;
 	LinphoneChatMessageCbs * createChatMessageCbs() const;
 	LinphoneMagicSearchCbs * createMagicSearchCbs() const;
+
+	LinphoneDictionary * createDictionary() const;
 	
-	LinphoneDigestAuthenticationPolicy *createDigestAuthenticationPolicy() const;
+	LinphoneDigestAuthenticationPolicy * createDigestAuthenticationPolicy() const;
 	
-	LinphoneVcard *createVcard() const;
+	LinphoneVcard * createVcard() const;
 	
 	LinphoneVideoDefinition * createVideoDefinition(unsigned int width, unsigned int height) const;
 	
 	LinphoneVideoDefinition * createVideoDefinitionFromName(const std::string& name) const;
 	
 	const bctbx_list_t * getSupportedVideoDefinitions() const;
-	const bctbx_list_t* getRecommendedVideoDefinitions()const;	// Return a list of ref on supported video definition as this list is not updatable.
+	const bctbx_list_t * getRecommendedVideoDefinitions()const;	// Return a list of ref on supported video definition as this list is not updatable.
 	
 	LinphoneVideoDefinition * findSupportedVideoDefinition(unsigned int width, unsigned int height) const;
 	

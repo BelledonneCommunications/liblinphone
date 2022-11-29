@@ -35,7 +35,6 @@ set(ROOT_HEADER_FILES
 	core_utils.h
 	core.h
 	defs.h
-	dictionary.h
 	error_info.h
 	event.h
 	factory.h
@@ -95,6 +94,7 @@ set(C_API_HEADER_FILES
 	c-conference-info.h
 	c-conference-scheduler.h
 	c-dial-plan.h
+	c-dictionary.h
 	c-event-log.h
 	c-factory.h
 	c-friend-phone-number.h

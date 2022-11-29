@@ -19,6 +19,7 @@
  */
 
 #include "object/property-container.h"
+#include "dictionary/dictionary.h"
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -52,10 +53,29 @@ static void set_generic_property () {
 	BC_ASSERT_EQUAL(properties.getProperty("generic").getValue<void *>(), reinterpret_cast<void *>(0x42), void *, "%p");
 }
 
+static void set_int_dictionary () {
+	auto dictionary = Dictionary::create();
+	dictionary->setProperty("integer", 42);
+	BC_ASSERT_EQUAL(dictionary->getInt("integer"), 42, int, "%d");
+}
+
+static void set_string_dictionary () {
+	auto dictionary = Dictionary::create();
+	const string text = "Hey listen!";
+	dictionary->setProperty("string", text);
+
+	{
+		string textToCheck = dictionary->getString("string");
+		BC_ASSERT_STRING_EQUAL(textToCheck.c_str(), text.c_str());
+	}
+}
+
 test_t property_container_tests[] = {
 	TEST_NO_TAG("Set int property", set_int_property),
 	TEST_NO_TAG("Set string property", set_string_property),
-	TEST_NO_TAG("Set generic property", set_generic_property)
+	TEST_NO_TAG("Set generic property", set_generic_property),
+	TEST_NO_TAG("Set int dictionary", set_int_dictionary),
+	TEST_NO_TAG("Set string dictionary", set_string_dictionary)
 };
 
 test_suite_t property_container_test_suite = {

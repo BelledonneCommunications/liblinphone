@@ -21,122 +21,70 @@
 #ifndef _L_VARIANT_H_
 #define _L_VARIANT_H_
 
-#include <string>
-
-#include "linphone/utils/general.h"
+#include "variant-impl.h"
+#include "bctoolbox/utils.hh"
+#include "logger/logger.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-#define L_DECLARE_VARIANT_TYPES(FUNC) \
-	FUNC(int, Int, 1) \
-	FUNC(unsigned int, UnsignedInt, 2) \
-	FUNC(short, Short, 3) \
-	FUNC(unsigned short, UnsignedShort, 4) \
-	FUNC(long, Long, 5) \
-	FUNC(unsigned long, UnsignedLong, 6) \
-	FUNC(long long, LongLong, 7) \
-	FUNC(unsigned long long, UnsignedLongLong, 8) \
-	FUNC(char, Char, 9) \
-	FUNC(bool, Bool, 10) \
-	FUNC(double, Double, 11) \
-	FUNC(float, Float, 12) \
-	FUNC(std::string, String, 13) \
-	FUNC(void *, Generic, 14)
-
-#define L_DECLARE_VARIANT_ENUM_TYPE(TYPE, NAME, ID) NAME = ID,
-#define L_DECLARE_VARIANT_TRAIT_TYPE(TYPE, NAME, ID) \
-	template<> \
-	struct Variant::IdOfType<TYPE> { \
-		static const int id = ID; \
-	};
-
-class VariantPrivate;
-
 class LINPHONE_PUBLIC Variant {
 public:
-	enum Type {
-		Invalid = 0,
-		L_DECLARE_VARIANT_TYPES(L_DECLARE_VARIANT_ENUM_TYPE)
-		MaxDefaultTypes
-	};
+	Variant() = default;
+	~Variant() = default;
 
-	Variant ();
-	Variant (Type type);
-
-	Variant (const Variant &other);
-	Variant (Variant &&other);
-
-	Variant (int value);
-	Variant (unsigned int value);
-	Variant (short value);
-	Variant (unsigned short value);
-	Variant (long value);
-	Variant (unsigned long value);
-	Variant (long long value);
-	Variant (unsigned long long value);
-	Variant (char value);
-	Variant (bool value);
-	Variant (double value);
-	Variant (float value);
-	Variant (const std::string &value);
-
-	// void* constructor. Must be explicitly called.
-	template<typename T, typename = typename std::enable_if<std::is_same<T, void *>::value>>
-	Variant (T value) : Variant (Variant::createGeneric(value)) {}
-
-	~Variant ();
-
-	Variant &operator= (const Variant &other);
-	Variant &operator= (Variant &&other);
-
-	template<typename T>
-	void setValue (const T &value) {
-		// Yeah, I'm crazy but it's useful to avoid code duplication.
-		new(this) Variant(value);
+	template <typename T> Variant(T value) {
+		mImplBase.reset(new VariantImpl<T>(value));
 	}
 
-	template<typename T>
-	T getValue (bool *soFarSoGood = nullptr) const {
-		constexpr int id = IdOfType<T>::id;
-		static_assert(id != Invalid, "Unable to get value of unsupported type.");
-
-		T value;
-
-		bool ok;
-		getValue(id, static_cast<void *>(&value), &ok);
-		if (soFarSoGood)
-			*soFarSoGood = ok;
-
-		return value;
+	Variant(const Variant &other) {
+		if (other.mImplBase)
+			mImplBase.reset(other.mImplBase->clone());
 	}
 
-	bool isValid () const;
+	Variant(Variant &&other) = default;
 
-	void clear ();
-	void swap (const Variant &variant);
+	Variant &operator= (const Variant &other) {
+		if (other.mImplBase)
+			mImplBase.reset(other.mImplBase->clone());
+		return *this;
+	}
+
+	Variant &operator= (Variant &&other) = default;
+
+	template <typename T> void setValue(const T &value) {
+		VariantImpl<T> *vi = dynamic_cast<VariantImpl<T>*>(mImplBase.get());
+		if (vi != nullptr) {
+			return vi->setValue(value);
+		}
+		if (mImplBase == nullptr) {
+			lError() << "Variant::setValue - Variant never init";
+		} else {
+			lError() << "Variant::setValue - Type error";
+		}
+	}
+
+	template <typename T> const T &getValue() const {
+		VariantImpl<T> *vi = dynamic_cast<VariantImpl<T>*>(mImplBase.get());
+		if (vi != nullptr) {
+			return vi->getValue();
+		}
+		if (mImplBase.get() == nullptr) {
+			lError() << "Variant::getValue - Variant never init";
+		} else {
+			lError() << "Variant::getValue - Type error";
+		}
+		return bctoolbox::Utils::getEmptyConstRefObject<T>();
+	}
+
+	bool isValid() {
+		return mImplBase != nullptr;
+	}
 
 private:
-	template<typename T>
-	struct IdOfType {
-		static const int id = Invalid;
-	};
-
-	void getValue (int type, void *value, bool *soFarSoGood) const;
-
-	static Variant createGeneric (void *value);
-
-	VariantPrivate *mPrivate = nullptr;
-
-	L_DECLARE_PRIVATE(Variant);
+	std::unique_ptr<VariantImplBase> mImplBase;
 };
-
-L_DECLARE_VARIANT_TYPES(L_DECLARE_VARIANT_TRAIT_TYPE);
-
-#undef L_DECLARE_VARIANT_TYPES
-#undef L_DECLARE_VARIANT_ENUM_TYPE
-#undef L_DECLARE_VARIANT_TRAIT_TYPE
 
 LINPHONE_END_NAMESPACE
 
