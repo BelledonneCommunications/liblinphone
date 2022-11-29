@@ -2596,7 +2596,9 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
 			if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
 				bctbx_free(resourceAddrStr);
-				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				char *from = linphone_address_as_string(linphone_event_get_from(lev));
+				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(from, L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				bctbx_free(from);
 				return;
 			}
 		}

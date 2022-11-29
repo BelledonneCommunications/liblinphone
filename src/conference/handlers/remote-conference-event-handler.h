@@ -72,9 +72,9 @@ protected:
 	void onEnteringBackground () override;
 	void onEnteringForeground () override;
 
+	LinphoneEvent *lev = nullptr;
 	Conference *conf = nullptr;
 	ConferenceListener *confListener = nullptr;
-	LinphoneEvent *lev = nullptr;
 
 	bool subscriptionWanted = false;
 	bool waitingFullState = false;

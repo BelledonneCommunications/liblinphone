@@ -46,9 +46,11 @@ public:
 	~RemoteConferenceListEventHandler ();
 
 	void subscribe () override;
+	void subscribe (LinphoneAccount * c_account);
 	void unsubscribe () override;
+	void unsubscribe (LinphoneAccount * c_account);
 	void invalidateSubscription () override;
-	void notifyReceived (const Content *notifyContent);
+	void notifyReceived (std::string from, const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();
@@ -56,7 +58,7 @@ public:
 private:
 	bool isHandlerInSameDomainAsCore(const ConferenceId & conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
-	LinphoneEvent *lev = nullptr;
+	std::list<LinphoneEvent *> levs;
 
 	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
 
