@@ -1934,7 +1934,10 @@ LINPHONE_PUBLIC void linphone_core_set_text_payload_types(LinphoneCore *core, co
 
 /**
  * Enable RFC3389 generic comfort noise algorithm (CN payload type).
+ * @ingroup media_parameters
  * It is disabled by default, because this algorithm is only relevant for legacy codecs (PCMU, PCMA, G722).
+ * Enablement requires a SDK built with full G729 support: -DENABLE_G729=ON -DENABLE_G729B_CNG=ON .
+ * @warning: the G729 support is not included in Liblinphone default licence - the purchase of a license extension is required.
  * @param core #LinphoneCore object @notnil
  * @param enabled TRUE if enabled, FALSE otherwise.
 **/
@@ -1942,6 +1945,7 @@ LINPHONE_PUBLIC void linphone_core_enable_generic_comfort_noise(LinphoneCore *co
 
 /**
  * Returns enablement of RFC3389 generic comfort noise algorithm.
+ * @ingroup media_parameters
  * @param core #LinphoneCore object @notnil
  * @return TRUE if generic comfort noise is enabled, FALSE otherwise.
 **/
