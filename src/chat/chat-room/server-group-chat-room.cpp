@@ -850,8 +850,8 @@ void ServerGroupChatRoomPrivate::sendMessage(const shared_ptr<Message> &message,
 	if (message->fromAddr.getUsername() == msg->getToAddress().getUsername() &&
 		message->fromAddr.getDomain() == msg->getToAddress().getDomain()) {
 		// If FROM and TO are the same user (with a different device for example, gruu is not checked), set the
-		// Non-Urgent header to disable push notification for this message.
-		msg->getPrivate()->addSalCustomHeader(PriorityHeader::HeaderName, PriorityHeader::NonUrgent);
+		// X-fs-message-type header to "chat-service". This lead to disabling push notification for this message.
+		msg->getPrivate()->addSalCustomHeader(XFsMessageTypeHeader::HeaderName, XFsMessageTypeHeader::ChatService);
 	}
 	msg->send();
 }

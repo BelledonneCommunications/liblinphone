@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -11,7 +11,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -25,19 +25,24 @@
 
 // =============================================================================
 
-using namespace std;
-
 LINPHONE_BEGIN_NAMESPACE
 
 namespace PriorityHeader {
-	constexpr char HeaderName[] = "Priority";
+constexpr char HeaderName[] = "Priority";
 
-	// Values
-	constexpr char NonUrgent[] = "non-urgent";
-	constexpr char Urgent[] = "urgent";
-	constexpr char Emergency[] = "emergency";
-	constexpr char Normal[] = "normal";
-}
+// Values
+constexpr char NonUrgent[] = "non-urgent";
+constexpr char Urgent[] = "urgent";
+constexpr char Emergency[] = "emergency";
+constexpr char Normal[] = "normal";
+} // namespace PriorityHeader
+
+namespace XFsMessageTypeHeader {
+constexpr char HeaderName[] = "X-fs-message-type";
+
+// Values
+constexpr char ChatService[] = "chat-service";
+} // namespace XFsMessageTypeHeader
 
 LINPHONE_END_NAMESPACE
 
