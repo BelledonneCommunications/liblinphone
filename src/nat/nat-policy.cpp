@@ -61,6 +61,11 @@ NatPolicy::NatPolicy(const NatPolicy &other): HybridObject<LinphoneNatPolicy, Na
 	mStunServer = other.mStunServer;
 	mStunServerUsername = other.mStunServerUsername;
 	mRef = other.mRef;
+	if (mRef.empty()){
+		char ref[17] = { 0 };
+		belle_sip_random_token(ref, 16);
+		mRef = ref;
+	}
 	mStunEnabled = other.mStunEnabled;
 	mTurnEnabled = other.mTurnEnabled;
 	mIceEnabled = other.mIceEnabled;
