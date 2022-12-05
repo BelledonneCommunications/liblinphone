@@ -6322,7 +6322,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device
 /**
  * Sets the given #LinphoneAudioDevice as default input for next calls.
  * @param core The #LinphoneCore @notnil
- * @param audio_device The #LinphoneAudioDevice @notnil
+ * @param audio_device The #LinphoneAudioDevice @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
@@ -6330,7 +6330,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *
 /**
  * Sets the given #LinphoneAudioDevice as default output for next calls.
  * @param core The #LinphoneCore @notnil
- * @param audio_device The #LinphoneAudioDevice @notnil
+ * @param audio_device The #LinphoneAudioDevice @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
@@ -6338,7 +6338,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore 
 /**
  * Gets the default input audio device
  * @param core The #LinphoneCore @notnil
- * @returns The default input audio device @notnil
+ * @returns The default input audio device @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
@@ -6346,7 +6346,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
 /**
  * Gets the default output audio device
  * @param core The #LinphoneCore @notnil
- * @returns The default output audio device @notnil
+ * @returns The default output audio device @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
