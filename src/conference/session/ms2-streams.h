@@ -140,6 +140,7 @@ private:
 	RtpBundle *mRtpBundle = nullptr;
 	MS2Stream *mBundleOwner = nullptr;
 	bool mOwnsBundle = false;
+	bool mStunAllowed = true;
 	ZrtpState mZrtpState = ZrtpState::Off;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;

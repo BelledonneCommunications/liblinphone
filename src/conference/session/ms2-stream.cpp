@@ -75,6 +75,7 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 	 */
 	sg.installSharedService<BandwithControllerService>();
 	mZrtpState = ZrtpState::Off;
+	mStunAllowed = !!linphone_config_get_int(linphone_core_get_config(sg.getCCore()), "rtp", "stun_keepalives", 1);
 }
 
 void MS2Stream::removeFromBundle(){
@@ -646,6 +647,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 			/* Give the peer certificate fingerprint to dtls context */
 			ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, L_STRING_TO_C(params.getRemoteStreamDescription().getChosenConfiguration().dtls_fingerprint));
 		}
+		media_stream_set_stun_allowed(getMediaStream(), mStunAllowed);
 	}
 	
 	switch(targetState){
