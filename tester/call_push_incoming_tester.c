@@ -44,7 +44,7 @@ extern void libmsopenh264_init(MSFactory *factory);
 #endif
 
 
-void simple_push_call_base(bool_t push, bool_t canceled, bool_t decline, bool_t push_early) {
+void simple_push_call_base(bool_t push, bool_t canceled, bool_t decline, bool_t push_early, bool_t network_change) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	//const LinphoneAddress *from;
@@ -73,6 +73,12 @@ void simple_push_call_base(bool_t push, bool_t canceled, bool_t decline, bool_t 
 	if (push) {
 		// simulate pushkit
 		linphone_core_start_process_remote_notification(pauline, callid);
+
+		if (network_change) {
+			linphone_core_set_network_reachable(pauline->lc, FALSE);
+			linphone_core_set_network_reachable(pauline->lc, TRUE);
+		}
+
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallPushIncomingReceived, 1, int, "%d");
 		pauline_call = linphone_core_get_current_call(pauline->lc);
 		BC_ASSERT_PTR_NOT_NULL(pauline_call);
@@ -154,39 +160,43 @@ end:
 }
 
 static void simple_accept_call(void) {
-	simple_push_call_base(FALSE, FALSE, FALSE, FALSE);
+	simple_push_call_base(FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void push_accept_call(void) {
-	simple_push_call_base(TRUE, FALSE, FALSE, FALSE);
+	simple_push_call_base(TRUE, FALSE, FALSE, FALSE, FALSE);
+}
+
+static void push_accept_call_with_network_change(void) {
+	simple_push_call_base(TRUE, FALSE, FALSE, FALSE, TRUE);
 }
 
 static void push_early_accept_call(void) {
-	simple_push_call_base(TRUE, FALSE, FALSE, TRUE);
+	simple_push_call_base(TRUE, FALSE, FALSE, TRUE, FALSE);
 }
 
 static void simple_canceled_call(void) {
-	simple_push_call_base(FALSE, TRUE, FALSE, FALSE);
+	simple_push_call_base(FALSE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static void push_canceled_call(void) {
-	simple_push_call_base(TRUE, TRUE, FALSE, FALSE);
+	simple_push_call_base(TRUE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static void push_early_canceled_call(void) {
-	simple_push_call_base(TRUE, TRUE, FALSE, TRUE);
+	simple_push_call_base(TRUE, TRUE, FALSE, TRUE, FALSE);
 }
 
 static void simple_decline_call(void) {
-	simple_push_call_base(FALSE, FALSE, TRUE, FALSE);
+	simple_push_call_base(FALSE, FALSE, TRUE, FALSE, FALSE);
 }
 
 static void push_decline_call(void) {
-	simple_push_call_base(TRUE, FALSE, TRUE, FALSE);
+	simple_push_call_base(TRUE, FALSE, TRUE, FALSE, FALSE);
 }
 
 static void push_early_decline_call(void) {
-	simple_push_call_base(TRUE, FALSE, TRUE, TRUE);
+	simple_push_call_base(TRUE, FALSE, TRUE, TRUE, FALSE);
 }
 
 #define TEST_GROUP_ID "test group id"
@@ -234,6 +244,7 @@ end:
 test_t push_incoming_call_tests[] = {
 	TEST_NO_TAG("Simple accept call", simple_accept_call),
 	TEST_NO_TAG("Push accept call", push_accept_call),
+	TEST_NO_TAG("Push accept call with network change", push_accept_call_with_network_change),
 	TEST_NO_TAG("Push early accept call", push_early_accept_call),
 	TEST_NO_TAG("Simple canceled call", simple_canceled_call),
 	TEST_NO_TAG("Push canceled call", push_canceled_call),

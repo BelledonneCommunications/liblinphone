@@ -929,7 +929,6 @@ void CallSessionPrivate::setBroken () {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::IncomingReceived:
-		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			// During the early states, the SAL layer reports the failure from the dialog or transaction layer,
 			// hence, there is nothing special to do
