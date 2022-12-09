@@ -1,26 +1,29 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of linphone-android
- * (see https://www.linphone.org).
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 package org.linphone.core.tools.firebase;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 
@@ -65,6 +68,7 @@ public class FirebaseMessaging extends FirebaseMessagingService {
 
     private void onPushReceived(RemoteMessage remoteMessage) {
         if (!CoreManager.isReady()) {
+            storePushRemoteMessage(remoteMessage);
             notifyAppPushReceivedWithoutCoreAvailable();
         } else {
             Log.i("[Push Notification] Received: " + remoteMessageToString(remoteMessage));
@@ -72,16 +76,29 @@ public class FirebaseMessaging extends FirebaseMessagingService {
                 Core core = CoreManager.instance().getCore();
                 if (core != null) {
                     String callId = remoteMessage.getData().getOrDefault("call-id", "");
-
                     String payload = remoteMessage.getData().toString();
                     Log.i("[Push Notification] Notifying Core we have received a push for Call-ID [" + callId + "]");
-                    CoreManager.instance().processPushNotification(callId, payload);
+                    CoreManager.instance().processPushNotification(callId, payload, false);
                 } else {
                     Log.w("[Push Notification] No Core found, notifying application directly");
+                    storePushRemoteMessage(remoteMessage);
                     notifyAppPushReceivedWithoutCoreAvailable();
                 }
             }
         }
+    }
+
+    private void storePushRemoteMessage(RemoteMessage remoteMessage) {
+        Context context = getApplicationContext();
+        SharedPreferences sharedPref = context.getSharedPreferences("push_notification_storage", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        String callId = remoteMessage.getData().getOrDefault("call-id", "");
+        editor.putString("call-id", callId);
+        String payload = remoteMessage.getData().toString();
+        editor.putString("payload", payload);
+        editor.apply();
+        android.util.Log.i("FirebaseMessaging", "[Push Notification] Push information stored for Call-ID [" + callId + "]");
     }
 
     private void notifyAppPushReceivedWithoutCoreAvailable() {

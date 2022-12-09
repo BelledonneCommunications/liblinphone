@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -40,6 +41,7 @@ public:
 	static const std::string sequenceParam;
 	using participant_params_t = std::map<std::string, std::string>;
 	using participant_list_t = std::map<IdentityAddress, participant_params_t>;
+	using organizer_t = std::pair<IdentityAddress, participant_params_t>;
 
 	enum class State {
 		New = LinphoneConferenceInfoStateNew,
@@ -53,10 +55,16 @@ public:
 		return new ConferenceInfo(*this);
 	}
 
-	static const std::string paramsToString(const participant_params_t & params);
+	static const std::string memberParametersToString(const participant_params_t & params);
+	static const participant_params_t stringToMemberParameters(const std::string & params);
 
-	const IdentityAddress &getOrganizer () const;
-	void setOrganizer (IdentityAddress organizer);
+	const organizer_t &getOrganizer () const;
+	const IdentityAddress &getOrganizerAddress () const;
+	void setOrganizer (const IdentityAddress & organizer, const participant_params_t & params);
+	void setOrganizer (const IdentityAddress & organizer);
+
+	void addOrganizerParam (const std::string & param, const std::string & value);
+	const std::string getOrganizerParam (const std::string & param) const;
 
 	const participant_list_t &getParticipants () const;
 	void setParticipants (const participant_list_t & participants);
@@ -64,6 +72,10 @@ public:
 	void addParticipant (const IdentityAddress & participant, const participant_params_t & params);
 	void removeParticipant (const IdentityAddress & participant);
 
+	void addParticipantParam (const IdentityAddress & participant, const std::string & param, const std::string & value);
+	const std::string getParticipantParam (const IdentityAddress & participant, const std::string & param) const;
+
+	bool isValidUri () const;
 	const ConferenceAddress &getUri () const;
 	void setUri (const ConferenceAddress uri);
 
@@ -74,28 +86,34 @@ public:
 	void setDuration (unsigned int duration);
 
 	const std::string &getSubject () const;
+	const std::string getUtf8Subject () const;
 	void setSubject (const std::string &subject);
+	void setUtf8Subject (const std::string &subject);
 
 	unsigned int getIcsSequence () const;
 	void setIcsSequence (unsigned int icsSequence);
 
 	const std::string &getIcsUid () const;
+	const std::string getUtf8IcsUid () const;
 	void setIcsUid (const std::string &uid);
+	void setUtf8IcsUid (const std::string &uid);
 
 	const std::string &getDescription () const;
+	const std::string getUtf8Description () const;
 	void setDescription (const std::string &description);
+	void setUtf8Description (const std::string &description);
 
 	const ConferenceInfo::State &getState () const;
 	void setState (const ConferenceInfo::State &state);
 
-	const std::string toIcsString (bool cancel = false) const;
+	const std::string toIcsString (bool cancel = false, int sequence = -1) const;
 
 	void updateFrom (const std::shared_ptr<ConferenceInfo> & info);
 
 	// Used only by the tester
 	void setCreationTime(time_t time);
 private:
-	IdentityAddress mOrganizer;
+	organizer_t mOrganizer;
 	participant_list_t mParticipants;
 	ConferenceAddress mUri;
 	time_t mDateTime = (time_t) -1;
@@ -108,6 +126,8 @@ private:
 
 	time_t mCreationTime = (time_t) -1;
 };
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceInfo::State s);
 
 LINPHONE_END_NAMESPACE
 

@@ -1,19 +1,20 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -380,9 +381,18 @@ static void check_conference_volumes(LinphoneCall * call) {
 
 			for(bctbx_list_t *it_d = devices; it_d != NULL; it_d = it_d->next) {
 				LinphoneParticipantDevice *d = (LinphoneParticipantDevice *) it_d->data;
-				BC_ASSERT_NOT_EQUAL(linphone_participant_device_get_ssrc(d), 0, int, "%d");
-				BC_ASSERT_NOT_EQUAL(linphone_conference_get_participant_device_volume(conference, d), AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
-				BC_ASSERT_GREATER(linphone_conference_get_participant_device_volume(conference, d), MS_VOLUME_DB_LOWEST, int, "%d");
+				if (linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeAudio)) {
+					BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+					BC_ASSERT_NOT_EQUAL(linphone_conference_get_participant_device_volume(conference, d), AUDIOSTREAMVOLUMES_NOT_FOUND, int, "%d");
+					BC_ASSERT_GREATER(linphone_conference_get_participant_device_volume(conference, d), MS_VOLUME_DB_LOWEST, int, "%d");
+				} else {
+					BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+				}
+				if (linphone_participant_device_get_stream_availability(d, LinphoneStreamTypeVideo)) {
+					BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+				} else {
+					BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+				}
 			}
 			bctbx_list_free_with_data(devices, (void(*)(void *))linphone_participant_device_unref);
 		}

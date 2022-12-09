@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -22,6 +23,7 @@
 #include "linphone/proxy_config.h"
 #include "linphone/utils/utils.h"
 
+#include "account/account.h"
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "content/content-manager.h"
@@ -62,7 +64,16 @@ RemoteConferenceListEventHandler::~RemoteConferenceListEventHandler () {
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceListEventHandler::subscribe () {
-	unsubscribe();
+	LinphoneCore *lc = getCore()->getCCore();
+	const bctbx_list_t* list=linphone_core_get_account_list(lc);
+
+	for(;list!=NULL;list=list->next){
+		subscribe((LinphoneAccount *)list->data);
+	}
+}
+
+void RemoteConferenceListEventHandler::subscribe (LinphoneAccount * c_account) {
+	unsubscribe(c_account);
 
 	if (handlers.empty())
 		return;
@@ -72,22 +83,29 @@ void RemoteConferenceListEventHandler::subscribe () {
 
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
+
+	auto account = Account::toCpp(c_account);
+	const auto & accountParams = account->getAccountParams();
+	Address identityAddress = *L_GET_CPP_PTR_FROM_C_OBJECT(accountParams->getIdentityAddress());
+
 	for (const auto &p : handlers) {
 		RemoteConferenceEventHandler *handler = p.second;
 		const ConferenceId &conferenceId = handler->getConferenceId();
-		shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
-		if (!cr) {
-			lError() << "Couldn't add chat room " << conferenceId << "in the chat room list subscription because chat room couldn't be found";
-			continue;
+		if (identityAddress.weakEqual(conferenceId.getLocalAddress().asAddress())) {
+			shared_ptr<AbstractChatRoom> cr = getCore()->findChatRoom(conferenceId);
+			if (!cr) {
+				lError() << "Couldn't add chat room " << conferenceId << "in the chat room list subscription because chat room couldn't be found";
+				continue;
+			}
+
+			if (cr->hasBeenLeft())
+				continue;
+
+			Address addr = conferenceId.getPeerAddress().asAddress();
+			addr.setUriParam("Last-Notify", Utils::toString(handler->getLastNotify()));
+			Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
+			l.getEntry().push_back(entry);
 		}
-
-		if (cr->hasBeenLeft())
-			continue;
-
-		Address addr = conferenceId.getPeerAddress().asAddress();
-		addr.setUriParam("Last-Notify", Utils::toString(handler->getLastNotify()));
-		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
-		l.getEntry().push_back(entry);
 	}
 	rl.getList().push_back(l);
 
@@ -96,21 +114,20 @@ void RemoteConferenceListEventHandler::subscribe () {
 	serializeResourceLists(xmlBody, rl, map);
 	content.setBodyFromUtf8(xmlBody.str());
 
-	LinphoneCore *lc = getCore()->getCCore();
-	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-	if (!cfg || (linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk))
+	if (account->getState() != LinphoneRegistrationOk)
 		return;
 
-	const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(cfg);
-	if (!factoryUri) {
-		lError() << "Couldn't send chat room list subscription because there's no conference factory uri";
+	const auto & factoryUri = accountParams->getConferenceFactoryUri();
+	if (factoryUri.empty()) {
+		lError() << "Couldn't send chat room list subscription for account " << account << " (" << identityAddress << ") because there's no conference factory uri";
 		return;
 	}
 
-	LinphoneAddress *rlsAddr = linphone_address_new(factoryUri);
+	LinphoneAddress *rlsAddr = linphone_address_new(L_STRING_TO_C(factoryUri));
 
-	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
-	char *from = linphone_address_as_string(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(getCore()->getCCore())));
+	LinphoneCore *lc = getCore()->getCCore();
+	LinphoneEvent *lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
+	char *from = linphone_address_as_string(account->getContactAddress());
 	lev->op->setFrom(from);
 	bctbx_free(from);
 	linphone_address_unref(rlsAddr);
@@ -125,22 +142,40 @@ void RemoteConferenceListEventHandler::subscribe () {
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "list-event-handler", this, NULL);
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	linphone_event_send_subscribe(lev, cContent);
+
+	levs.push_back(lev);
 }
 
 void RemoteConferenceListEventHandler::unsubscribe () {
-	if (lev) {
+	for (auto & lev : levs) {
 		linphone_event_terminate(lev);
 		linphone_event_unref(lev);
-		lev = nullptr;
+	}
+	levs.clear();
+}
+
+void RemoteConferenceListEventHandler::unsubscribe (LinphoneAccount * c_account) {
+	auto account = Account::toCpp(c_account);
+	auto it = std::find_if(levs.begin(), levs.end(), [&account] (const auto & lev) {
+		char *from = linphone_address_as_string(account->getContactAddress());
+		bool found = (lev->op->getFrom() == from);
+		bctbx_free(from);
+		return found;
+	});
+
+	if (it != levs.end()) {
+		LinphoneEvent * lev = *it;
+		levs.erase(it);
+		linphone_event_terminate(lev);
+		linphone_event_unref(lev);
 	}
 }
 
 void RemoteConferenceListEventHandler::invalidateSubscription () {
-	lev = nullptr;
+	levs.clear();
 }
 
-void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyContent) {
-	char *from = linphone_address_as_string(linphone_event_get_from(lev));
+void RemoteConferenceListEventHandler::notifyReceived (std::string from, const Content *notifyContent) {
 	const ConferenceAddress local(from);
 
 	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
@@ -169,7 +204,6 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 	}
 
 	list<Content> contents = ContentManager::multipartToContentList(*notifyContent);
-	bctbx_free(from);
 	map<string, IdentityAddress> addresses;
 	for (const auto &content : contents) {
 		const string &body = content.getBodyAsUtf8String();
@@ -313,18 +347,25 @@ map<string, IdentityAddress> RemoteConferenceListEventHandler::parseRlmi (const 
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceListEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	if (!sipNetworkReachable)
+	if (sipNetworkReachable) {
+		subscribe();
+	} else {
 		unsubscribe();
+	}
 }
 
 void RemoteConferenceListEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
 	if (state == LinphoneRegistrationOk )
-		subscribe();
-	else if(state == LinphoneRegistrationCleared && lev && lev->op){// On cleared, restart subscription if the cleared proxy config is the current subscription
+		subscribe(cfg->account);
+	else if(state == LinphoneRegistrationCleared){// On cleared, restart subscription if the cleared proxy config is the current subscription
 		const LinphoneAddress * cfgAddress = linphone_proxy_config_get_contact(cfg);
-		LinphoneAddress * currentAddress = linphone_address_new(lev->op->getFrom().c_str());
-		if( linphone_address_weak_equal(currentAddress, cfgAddress))
-			unsubscribe();
+		auto it = std::find_if(levs.begin(), levs.end(), [&cfgAddress] (const auto & lev) {
+			LinphoneAddress * currentAddress = linphone_address_new(lev->op->getFrom().c_str());
+			return linphone_address_weak_equal(currentAddress, cfgAddress);
+		});
+
+		if(it != levs.end())
+			unsubscribe(cfg->account);
 	}
 }
 

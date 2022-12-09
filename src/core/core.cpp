@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -629,7 +630,11 @@ string Core::getConfigPath () const {
 }
 
 string Core::getDownloadPath() const {
+#ifdef __ANDROID__
+	return getPlatformHelpers(getCCore())->getDownloadPath();
+#else
 	return Paths::getPath(Paths::Download, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
+#endif
 }
 
 void Core::setEncryptionEngine (EncryptionEngine *imee) {
@@ -916,6 +921,10 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 				// Not setting flags inside if statement in order to handle the case of a headset/headphones device that can record and play sound
 				if (!headsetMicFound) headsetMicFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record));
 				if (!headsetSpeakerFound) headsetSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
+				break;
+			case AudioDevice::Type::HearingAid:
+				audioDevices.push_back(audioDevice);
+				break;
 			default:
 				break;
 		}
@@ -1110,16 +1119,15 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
  * If not, we must start or restart them.
  */
-void Core::pushNotificationReceived (const string& callId, const string& payload) {
+void Core::pushNotificationReceived (const string& callId, const string& payload, bool isCoreStarting) {
 	L_D();
 
 	lInfo() << "Push notification received for Call-ID [" << callId << "]";
 	// Stop any previous background task we might already have
 	d->pushReceivedBackgroundTask.stop();
 
+	bool found = false;
 	if (!callId.empty()) {
-		bool found = false;
-
 		for (const auto &call : d->calls) {
 			auto callLog = call->getLog();
 			if (callLog) {
@@ -1146,6 +1154,16 @@ void Core::pushNotificationReceived (const string& callId, const string& payload
 	}
 
 	LinphoneCore *lc = getCCore();
+	linphone_core_notify_push_notification_received(lc, payload.c_str());
+
+	if (isCoreStarting) {
+		lInfo() << "Core is starting, skipping network tasks that ensures sockets are alive";
+		return;
+	}
+	if (found) {
+		lInfo() << "Call-ID was found, skipping network tasks that ensures sockets are alive";
+		return;
+	}
 
 #ifdef __ANDROID__
 	if (linphone_core_wifi_only_enabled(lc)) {
@@ -1216,10 +1234,6 @@ void Core::pushNotificationReceived (const string& callId, const string& payload
 		lc->sal->cleanUnreliableConnections();
 	}
 	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers.
-
-	char *c_payload = ms_strdup(payload.c_str());
-	linphone_core_notify_push_notification_received(lc, c_payload);
-	if (c_payload != nullptr) ms_free(c_payload);
 }
 
 int Core::getUnreadChatMessageCount () const {
@@ -1504,11 +1518,11 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const C
 	return conference;
 }
 
-shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants) {
+shared_ptr<CallSession> Core::createConferenceOnServer(const shared_ptr<ConferenceParams> &confParams, const Address &localAddr, const std::list<IdentityAddress> &participants) {
 	return createOrUpdateConferenceOnServer(confParams, localAddr, participants, ConferenceAddress());
 }
 
-shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const IdentityAddress &localAddr, const std::list<IdentityAddress> &participants, const ConferenceAddress &confAddr) {
+shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared_ptr<ConferenceParams> &confParams, const Address &localAddr, const std::list<IdentityAddress> &participants, const ConferenceAddress &confAddr) {
 	L_D()
 	if (!confParams) {
 		lWarning() << "Trying to create conference with null parameters";
@@ -1534,7 +1548,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	}
 
 	ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
-	if (!localAddr.hasGruu()) {
+	if (!localAddr.hasUriParam("gr")) {
 		lWarning() << "Local identity address [" << localAddr << "] doesn't have a gruu, let's try to find it";
 		IdentityAddress localAddrWithGruu = d->getIdentityAddressWithGruu(localAddr);
 		if (localAddrWithGruu.isValid()) {
@@ -1566,8 +1580,8 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	linphone_call_params_set_start_time(params, confParams->getStartTime());
 	linphone_call_params_set_end_time(params, confParams->getEndTime());
 	linphone_call_params_enable_video(params, confParams->videoEnabled());
-	linphone_call_params_set_media_encryption (params, LinphoneMediaEncryptionNone);
 	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
+	linphone_call_params_set_conference_creation(params, TRUE);
 
 	auto participant = Participant::create(nullptr, localAddr);
 	auto session = dynamic_pointer_cast<MediaSession>(participant->createSession(getSharedFromThis(), L_GET_CPP_PTR_FROM_C_OBJECT(params), (confParams->audioEnabled() || confParams->videoEnabled()), nullptr));
@@ -1579,7 +1593,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 
 	linphone_call_params_unref(params);
 
-	Address meCleanedAddress(localAddr.asAddress());
+	Address meCleanedAddress(localAddr);
 	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
 	session->enableToneIndications(false);
@@ -1637,7 +1651,10 @@ LinphoneAddress* Core::getAudioVideoConferenceFactoryAddress(const std::shared_p
 		if (conferenceFactoryUri.empty()) return nullptr;
 		return linphone_address_new(conferenceFactoryUri.c_str());
 	}
-	return linphone_address_new(linphone_address_as_string_uri_only(address));
+	char * address_uri = linphone_address_as_string_uri_only(address);
+	LinphoneAddress * factory_address = linphone_address_new(address_uri);
+	ms_free(address_uri);
+	return factory_address;
 }
 
 LINPHONE_END_NAMESPACE

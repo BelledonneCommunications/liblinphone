@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -128,8 +129,11 @@ public:
 		return mCapabilityDescriptor;
 	}
 
-	void setSsrc (uint32_t ssrc);
-	uint32_t getSsrc () const;
+	void setAudioSsrc (uint32_t ssrc);
+	uint32_t getAudioSsrc () const;
+
+	void setVideoSsrc (uint32_t ssrc);
+	uint32_t getVideoSsrc () const;
 
 	void *getUserData () const;
 	void setUserData (void *ud);
@@ -150,6 +154,9 @@ public:
 
 	bool setStreamAvailability(const bool available, const LinphoneStreamType type);
 	bool getStreamAvailability(const LinphoneStreamType type) const;
+
+	void setIsSpeaking(bool isSpeaking);
+	bool getIsSpeaking() const;
 
 	void setIsMuted(bool isMuted);
 	bool getIsMuted() const;
@@ -172,12 +179,14 @@ private:
 	JoiningMethod mJoiningMethod = JoiningMethod::DialedIn;
 	DisconnectionMethod mDisconnectionMethod = DisconnectionMethod::Departed;
 	std::string mDisconnectionReason = std::string();
-	time_t mTimeOfJoining;
+	time_t mTimeOfJoining = -1;
 	time_t mTimeOfDisconnection = -1;
-	uint32_t mSsrc = 0;
+	uint32_t mAudioSsrc = 0;
+	uint32_t mVideoSsrc = 0;
 	bool mSupportAdminMode = false;
 	mutable void * mWindowId = NULL;
 	bool mIsMuted = false;
+	bool mIsSpeaking = false;
 
 	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
 	std::map<LinphoneStreamType, bool> streamAvailabilities;

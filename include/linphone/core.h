@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -54,7 +55,6 @@
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
 #include "linphone/misc.h"
-#include "linphone/nat_policy.h"
 #include "linphone/payload_type.h"
 #include "linphone/player.h"
 #include "linphone/presence.h"
@@ -1934,7 +1934,10 @@ LINPHONE_PUBLIC void linphone_core_set_text_payload_types(LinphoneCore *core, co
 
 /**
  * Enable RFC3389 generic comfort noise algorithm (CN payload type).
+ * @ingroup media_parameters
  * It is disabled by default, because this algorithm is only relevant for legacy codecs (PCMU, PCMA, G722).
+ * Enablement requires a SDK built with full G729 support: -DENABLE_G729=ON -DENABLE_G729B_CNG=ON .
+ * @warning: the G729 support is not included in Liblinphone default licence - the purchase of a license extension is required.
  * @param core #LinphoneCore object @notnil
  * @param enabled TRUE if enabled, FALSE otherwise.
 **/
@@ -1942,6 +1945,7 @@ LINPHONE_PUBLIC void linphone_core_enable_generic_comfort_noise(LinphoneCore *co
 
 /**
  * Returns enablement of RFC3389 generic comfort noise algorithm.
+ * @ingroup media_parameters
  * @param core #LinphoneCore object @notnil
  * @return TRUE if generic comfort noise is enabled, FALSE otherwise.
 **/
@@ -2748,20 +2752,23 @@ LINPHONE_PUBLIC LinphoneUpnpState linphone_core_get_upnp_state(const LinphoneCor
 LINPHONE_PUBLIC const char * linphone_core_get_upnp_external_ipaddress(const LinphoneCore *core);
 
 /**
- * Set the public IP address of NAT when using the firewall policy is set to use NAT.
+ * Deprecated. This function was used to force a given IP address to appear in SDP.
+ * Unfortunately, this cannot work as explained by https://www.rfc-editor.org/rfc/rfc5389#section-2 .
  * @param core #LinphoneCore object. @notnil
  * @param addr The public IP address of NAT to use. @maybenil
+ * @deprecated 12/10/2022
  * @ingroup network_parameters
  */
-LINPHONE_PUBLIC void linphone_core_set_nat_address(LinphoneCore *core, const char *addr);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_nat_address(LinphoneCore *core, const char *addr);
 
 /**
- * Get the public IP address of NAT being used.
+ * Deprecated. Get the public IP address of NAT being used.
  * @param core #LinphoneCore object. @notnil
  * @return The public IP address of NAT being used. @maybenil
+ * @deprecated 12/10/2022
  * @ingroup network_parameters
  */
-LINPHONE_PUBLIC const char *linphone_core_get_nat_address(const LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_nat_address(const LinphoneCore *core);
 
 /**
  * Set the policy to use to pass through NATs/firewalls.
@@ -6023,16 +6030,6 @@ LINPHONE_PUBLIC bool_t linphone_core_auto_send_ringing_enabled(LinphoneCore *cor
 LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore *core);
 
 /**
- * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
- * @param core #LinphoneCore object @notnil
- * @param ref The reference of a NAT policy in the config of the #LinphoneCore @notnil
- * @return A new #LinphoneNatPolicy object. @maybenil
- * @ingroup network_parameters
- */
-LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *ref);
-
-
-/**
  * Create a #LinphoneAccountCreator and set Linphone Request callbacks.
  * @param core The #LinphoneCore used for the XML-RPC communication @notnil
  * @param xmlrpc_url The URL to the XML-RPC server. @maybenil
@@ -6088,6 +6085,18 @@ LINPHONE_PUBLIC void linphone_core_process_push_notification(LinphoneCore *lc, c
  * @donotwrap
 **/
 LINPHONE_PUBLIC void linphone_core_push_notification_received(LinphoneCore *lc, const char* payload, const char *call_id);
+
+/**
+ * This method is called by Android & iOS platform helpers to notify the Core of a received push notification.
+ * It will simply call Core->pushNotificationReceived() like linphone_core_process_push_notification().
+ * @param core The #LinphoneCore @notnil
+ * @param payload the payload of the push notification if any. @maybenil
+ * @param call_id the Call-ID of the MESSAGE or INVITE for which the push was received and to wait for. @maybenil
+ * @param is_core_starting if TRUE the Core will skill network tasks we usually do when a push is received to ensure the sockets are alive.
+ * @ingroup misc
+ * @donotwrap
+**/
+LINPHONE_PUBLIC void linphone_core_push_notification_received_2(LinphoneCore *lc, const char* payload, const char *call_id, bool_t is_core_starting);
 
 /**
  * Get the chat message with the call_id included in the push notification body
@@ -6329,7 +6338,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device
 /**
  * Sets the given #LinphoneAudioDevice as default input for next calls.
  * @param core The #LinphoneCore @notnil
- * @param audio_device The #LinphoneAudioDevice @notnil
+ * @param audio_device The #LinphoneAudioDevice @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
@@ -6337,7 +6346,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *
 /**
  * Sets the given #LinphoneAudioDevice as default output for next calls.
  * @param core The #LinphoneCore @notnil
- * @param audio_device The #LinphoneAudioDevice @notnil
+ * @param audio_device The #LinphoneAudioDevice @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
@@ -6345,7 +6354,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore 
 /**
  * Gets the default input audio device
  * @param core The #LinphoneCore @notnil
- * @returns The default input audio device @notnil
+ * @returns The default input audio device @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
@@ -6353,7 +6362,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
 /**
  * Gets the default output audio device
  * @param core The #LinphoneCore @notnil
- * @returns The default output audio device @notnil
+ * @returns The default output audio device @maybenil
  * @ingroup audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);

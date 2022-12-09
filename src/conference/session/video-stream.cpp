@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -35,6 +36,8 @@
 
 #include "linphone/core.h"
 #include "mediastreamer2/msitc.h"
+
+#include "conference_private.h"
 
 #ifdef HAVE_LIME_X3DH
 #include "bzrtp/bzrtp.h"
@@ -71,7 +74,20 @@ void MS2VideoStream::configure(const OfferAnswerContext &params) {
 	const auto & content = localDesc.getContent();
 	const auto & label = localDesc.getLabel();
 	if (mStream) {
-		video_stream_enable_thumbnail(mStream, (content.compare("thumbnail") == 0));
+		MSVideoContent mscontent = MSVideoContentDefault;
+		if (content == "thumbnail") {
+			mscontent = MSVideoContentThumbnail;
+		}else if (content == "speaker"){
+			mscontent = MSVideoContentSpeaker;
+		}
+		if (getVideoMixer() != nullptr && mscontent == MSVideoContentDefault
+			&& media_stream_get_direction(&mStream->ms) == MediaStreamSendRecv){
+			/* When handling a conference call, in absence of content attribute and if stream is sendrecv,
+			 * assume the target content is speaker (active speaker stream)*/
+			lInfo() << "No content given, assuming active speaker mode.";
+			mscontent = MSVideoContentSpeaker;
+		}
+		video_stream_set_content(mStream, mscontent);
 		if (!label.empty()) {
 			video_stream_set_label(mStream, label.c_str());
 		}
@@ -135,6 +151,40 @@ void MS2VideoStream::cameraNotWorkingCb (const char *cameraName) {
 
 	if (listener) {
 		listener->onCameraNotWorking(getMediaSession().getSharedFromThis(), cameraName);
+	}
+}
+
+void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
+	LinphoneConference *conference = (LinphoneConference *) userData;
+	const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+	bool found = false;
+
+	if (new_csrc != 0) {
+		for(const auto &device : cppConference->getParticipantDevices()) {
+			if (new_csrc == device->getVideoSsrc()) {
+				cppConference->notifyActiveSpeakerParticipantDevice(device);
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) lError() << "Conference [" << conference << "]: Active speaker changed with csrc: " << new_csrc << " but it does not correspond to any participant device";
+	} else {
+		const auto &meDevices = cppConference->getMe()->getDevices();
+		shared_ptr<ParticipantDevice> firstNotMe = nullptr;
+
+		for(const auto &device : cppConference->getParticipantDevices()) {
+			if (std::find(meDevices.begin(), meDevices.end(), device) == meDevices.end()) {
+				if (firstNotMe == nullptr) firstNotMe = device;
+				if (device->getIsSpeaking()) {
+					cppConference->notifyActiveSpeakerParticipantDevice(device);
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if (!found && firstNotMe != nullptr) cppConference->notifyActiveSpeakerParticipantDevice(firstNotMe);
 	}
 }
 
@@ -244,7 +294,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
-	bool isThumbnail = (content.compare("thumbnail") == 0);
+	bool isThumbnail = (content == "thumbnail");
 
 	if (basicChangesHandled) {
 		bool muted = mMuted;
@@ -313,18 +363,24 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		mStream->staticimage_webcam_fps_optimization = false;
 
 	LinphoneVideoDefinition *max_vdef = nullptr;
-	if (this->getMediaSessionPrivate().getParams()->getConferenceVideoLayout() == ConferenceLayout::Grid) {
-		const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_mosaic_size", nullptr);
-		if (str != NULL && str[0] != 0) {
-			max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
-			if (max_vdef == NULL) {
-				lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
-			} else {
-				MSVideoSize max;
-				max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
-				max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
-				video_stream_set_sent_video_size_max(mStream, max);
+	if (listener) {
+		const auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+
+		if (conference) {
+			const char *str = linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "max_conference_size", nullptr);
+			if (str != NULL && str[0] != 0) {
+				max_vdef = linphone_factory_find_supported_video_definition_by_name(linphone_factory_get(), str);
+				if (max_vdef == NULL) {
+					lError() << "Cannot set max video size in mosaic (video definition '" << str << "' not supported)";
+				} else {
+					MSVideoSize max;
+					max.width = static_cast<int>(linphone_video_definition_get_width(max_vdef));
+					max.height = static_cast<int>(linphone_video_definition_get_height(max_vdef));
+					video_stream_set_sent_video_size_max(mStream, max);
+				}
 			}
+
+			video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, conference);
 		}
 	}
 
@@ -344,12 +400,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 
 	video_stream_enable_self_view(mStream, getCCore()->video_conf.selfview);
 
-#if TARGET_OS_MAC || defined(__ANDROID__) || defined(_WIN32)
 	if (mNativeWindowId) {
 		video_stream_set_native_window_id(mStream, mNativeWindowId);
-	} else
-#endif
-	if (!label.empty()) {
+	} else if (!label.empty()) {
 		setNativeWindowId(getMediaSession().getParticipantWindowId(label));
 	} else if (getCCore()->video_window_id) {
 		video_stream_set_native_window_id(mStream, getCCore()->video_window_id);
@@ -405,9 +458,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	else
 		video_stream_set_display_mode(mStream, stringToVideoDisplayMode(linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "main_display_mode", "Hybrid")));
 
-	video_stream_enable_thumbnail(mStream, isThumbnail);
-	if (!label.empty()) {
-		video_stream_set_label(mStream, label.c_str());
+	configure(ctx);
+
+	if (listener) {
+		auto conference = listener->getCallSessionConference(getMediaSession().getSharedFromThis());
+		if (conference) video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, conference);
 	}
 
 	if (getCCore()->video_conf.reuse_preview_source && source) {
@@ -457,10 +512,15 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 				io.input.type = MSResourceItc;
 				io.input.itc = itcFilter;
 				media_stream_set_max_network_bitrate(&mStream->ms, 80000);
-				if (vdef) {
-					MSVideoSize vsize = {160,120};
-					video_stream_set_sent_video_size(mStream, vsize);
-				}
+				
+				MSVideoSize vsize = {160,120};
+				video_stream_set_content(mStream, MSVideoContentThumbnail);
+				/* TODO The fps should be taken automatically from the main stream, however this is not implemented.
+				 * Meanwhile, force a medium 20 fps so that video encoder gets configured with realistic values.
+				 */
+				video_stream_set_fps(mStream, 20);
+				video_stream_set_sent_video_size(mStream, vsize);
+				
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 			} else {
 				video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
@@ -510,9 +570,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	if (videoMixer && (targetState == CallSession::State::StreamsRunning)){
-		const bool_t isRemote = ((!mStream->label && content.empty()) || !videoMixer->getVideoStream()) ? TRUE : (dir == MediaStreamSendOnly || videoMixer->getLocalParticipantLabel().compare(L_C_TO_STRING(mStream->label)) != 0);
-		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, isRemote);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_thumbnail_enabled(mStream));
+		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, true);
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, video_stream_get_content(mStream) == MSVideoContentThumbnail);
 	}
 }
 

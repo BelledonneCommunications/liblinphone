@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -151,6 +152,11 @@ bool_t _linphone_call_has_dtmf_sequence (const LinphoneCall *call) {
 SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
 		Call::toCpp(call)->getActiveSession()))->getLocalDesc().get();
+}
+
+SalMediaDescription *_linphone_call_get_remote_desc (const LinphoneCall *call) {
+	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
+		Call::toCpp(call)->getActiveSession()))->getRemoteDesc().get();
 }
 
 SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call) {

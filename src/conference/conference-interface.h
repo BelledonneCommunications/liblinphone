@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -106,10 +107,22 @@ public:
 	virtual const std::string &getSubject () const = 0;
 
 	/*
+	* Get the subject of this conference
+	* @return The subject of the chat room in UTF8
+	*/
+	virtual const std::string getUtf8Subject () const = 0;
+
+	/*
 	* Set the subject of this conference. If not focus,  this operation is only available if the local participant  #getMe() is admin.
 	* @param[in] subject The new subject to set for the chat room
 	*/
 	virtual void setSubject (const std::string &subject) = 0;
+
+	/*
+	* Set the subject of this conference in UTF8. If not focus,  this operation is only available if the local participant  #getMe() is admin.
+	* @param[in] subject The new subject to set for the chat room
+	*/
+	virtual void setUtf8Subject (const std::string &subject) = 0;
 
 	/*
 	 * Change the admin status of a participant of this conference (If not focus,  This operation is only available if the local participant  #getMe() is admin). All participants are notified of change of the admin.
@@ -338,12 +351,19 @@ public:
 	* @param[in] device participant device added to the conference or chat room. @notnil
 	*/
 	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
+	
 	/*
 	* This fonction is called each time a new participant device is removed by the focus after full state notification.
 	* @param[in] event informations related to the removed device's participant. @notnil
 	* @param[in] device participant device removed from the conference or chat room. @notnil
 	*/
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
+
+	/*
+	 * This fonction is called each time a participant device is being currently displayed as active speaker.
+	 * @param[in] device participant device currently being displayed as active speaker. @notnil
+	 */
+	virtual void onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {}
 };
 
 class LINPHONE_PUBLIC ConferenceParamsInterface {
@@ -379,7 +399,13 @@ public:
 	* @param[in] subject The new subject to set for the chat room
 	*/
 	virtual void setSubject (const std::string &subject) = 0;
-	
+
+	/*
+	* Set the subject of this conference in UTF8. If not focus,  this operation is only available if the local participant  #getMe() is admin.
+	* @param[in] subject The new subject to set for the chat room
+	*/
+	virtual void setUtf8Subject (const std::string &subject) = 0;
+
 	/*
 	*Set participant representing myself in this Conference.
 	*If set this participant is added to the conference

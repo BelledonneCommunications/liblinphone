@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -137,6 +138,7 @@ const char * linphone_call_params_get_description (const LinphoneCallParams *par
 void linphone_call_params_set_end_time (LinphoneCallParams *params, time_t time);
 void linphone_call_params_set_start_time (LinphoneCallParams *params, time_t time);
 void linphone_call_params_set_description (LinphoneCallParams *params, const char * desc);
+void linphone_call_params_set_conference_creation (LinphoneCallParams *params, bool_t conference_creation);
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams *params, bool_t value);
 LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
@@ -348,6 +350,7 @@ void _linphone_conference_notify_available_media_changed(LinphoneConference *con
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
 void _linphone_conference_notify_participant_device_is_speaking_changed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 void _linphone_conference_notify_participant_device_is_muted(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device, bool_t is_muted);
+void _linphone_conference_notify_active_speaker_participant_device(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking);
 void _linphone_participant_device_notify_is_muted(LinphoneParticipantDevice *participant_device, bool_t is_muted);
@@ -522,10 +525,6 @@ LinphoneSubscriptionState linphone_subscription_state_from_sal(SalSubscribeStatu
 LinphoneContent *linphone_content_from_sal_body_handler(const SalBodyHandler *ref, bool parseMultipart = true);
 void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);
-
-bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy);
-void linphone_nat_policy_release(LinphoneNatPolicy *policy);
-void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);
 
@@ -708,7 +707,6 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const
 LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory, const char *name);
 
 const char* _linphone_config_load_from_xml_string(LpConfig *lpc, const char *buffer);
-LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const LinphoneConfig *config, const char* section);
 void _linphone_config_apply_factory_config (LpConfig *config);
 
 SalCustomHeader *linphone_info_message_get_headers (const LinphoneInfoMessage *im);
@@ -738,6 +736,7 @@ LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneCha
 LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState state);
 
 LINPHONE_PUBLIC unsigned int linphone_conference_info_get_ics_sequence(const LinphoneConferenceInfo *conference_info);
+LINPHONE_PUBLIC const char *linphone_conference_info_get_utf8_ics_uid(const LinphoneConferenceInfo *conference_info);
 LINPHONE_PUBLIC const char *linphone_conference_info_get_ics_uid(const LinphoneConferenceInfo *conference_info);
 
 LinphoneDigestAuthenticationPolicy *linphone_digest_authentication_policy_new(void);
@@ -759,6 +758,22 @@ typedef struct _SrtpInfo SrtpInfo;
  * @return The srtp info
  */
 LINPHONE_PUBLIC const SrtpInfo *linphone_call_stats_get_srtp_info (const LinphoneCallStats *stats);
+/**
+ * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
+ * @param core #LinphoneCore object @notnil
+ * @param ref The reference of a NAT policy in the config of the #LinphoneCore @notnil
+ * @return A new #LinphoneNatPolicy object. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_ref(LinphoneCore *core, const char *ref);
+
+/**
+ * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed section.
+ * @param core #LinphoneCore object @notnil
+ * @param section The section name of a NAT policy in the config of the #LinphoneCore @notnil
+ * @return A new #LinphoneNatPolicy object. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *core, const char *section);
+
 
 #ifdef __cplusplus
 }

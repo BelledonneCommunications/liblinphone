@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -40,7 +41,6 @@ class Core;
 // =============================================================================
 
 ParticipantDevice::ParticipantDevice () {
-	mTimeOfJoining = time(nullptr);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
@@ -48,7 +48,6 @@ ParticipantDevice::ParticipantDevice () {
 
 ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const std::shared_ptr<LinphonePrivate::CallSession> &session, const std::string &name)
 	: mParticipant(participant), mGruu(participant->getAddress()), mName(name), mSession(session) {
-	mTimeOfJoining = time(nullptr);
 	if (mSession && mSession->getRemoteContactAddress()) {
 		setAddress(*mSession->getRemoteContactAddress());
 	}
@@ -58,7 +57,6 @@ ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, 
 
 ParticipantDevice::ParticipantDevice (std::shared_ptr<Participant> participant, const IdentityAddress &gruu, const std::string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
-	mTimeOfJoining = time(nullptr);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 	setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
@@ -131,7 +129,7 @@ time_t ParticipantDevice::getTimeOfJoining () const {
 }
 
 time_t ParticipantDevice::getTimeOfDisconnection () const {
-	return mTimeOfJoining;
+	return mTimeOfDisconnection;
 }
 
 bool ParticipantDevice::isInConference() const {
@@ -147,8 +145,8 @@ bool ParticipantDevice::isInConference() const {
 	return false;
 }
 
-void ParticipantDevice::setSsrc (uint32_t ssrc) {
-	mSsrc = ssrc;
+void ParticipantDevice::setAudioSsrc (uint32_t ssrc) {
+	mAudioSsrc = ssrc;
 	auto conference = getConference();
 	if (conference) {
 		const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
@@ -159,8 +157,16 @@ void ParticipantDevice::setSsrc (uint32_t ssrc) {
 	}
 }
 
-uint32_t ParticipantDevice::getSsrc () const {
-	return mSsrc;
+uint32_t ParticipantDevice::getAudioSsrc () const {
+	return mAudioSsrc;
+}
+
+void ParticipantDevice::setVideoSsrc (uint32_t ssrc) {
+	mVideoSsrc = ssrc;
+}
+
+uint32_t ParticipantDevice::getVideoSsrc () const {
+	return mVideoSsrc;
 }
 
 void *ParticipantDevice::getUserData () const{
@@ -231,6 +237,10 @@ void ParticipantDevice::setState (State newState, bool notify) {
 		const auto newStateLeavingState = ParticipantDevice::isLeavingState(newState);
 		// Send NOTIFY only if not transitionig from a leaving state to another one
 		const bool sendNotify = !(newStateLeavingState && currentStateLeavingState) && notify;
+
+		if ((newState == ParticipantDevice::State::Present) && (mState != ParticipantDevice::State::OnHold)) {
+			setTimeOfJoining(time(nullptr));
+		}
 		lInfo() << "Moving participant device " << getAddress() << " from state " << mState << " to " << newState;
 		mState = newState;
 		_linphone_participant_device_notify_state_changed(toC(), (LinphoneParticipantDeviceState)newState);
@@ -506,6 +516,14 @@ void ParticipantDevice::setWindowId(void * newWindowId) const {
 
 void * ParticipantDevice::getWindowId() const {
 	return mWindowId;
+}
+
+void ParticipantDevice::setIsSpeaking(bool isSpeaking) {
+	mIsSpeaking = isSpeaking;
+}
+
+bool ParticipantDevice::getIsSpeaking() const {
+	return mIsSpeaking;
 }
 
 void ParticipantDevice::setIsMuted(bool isMuted) {

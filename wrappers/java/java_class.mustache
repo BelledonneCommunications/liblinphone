@@ -190,6 +190,8 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     protected boolean _isConst = false;
 
 {{#isLinphoneFactory}}
+    protected LoggingService loggingService = null;
+
     protected FactoryImpl() {
         nativePtr = init();
     }
@@ -237,8 +239,10 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 
     @Override
     public LoggingService getLoggingService() {
-        LoggingService l = new LoggingServiceImpl(0, false);
-        return l.get();
+        if (loggingService == null) {
+            loggingService = new LoggingServiceImpl(0, false).get();
+        }
+        return loggingService;
     }
 
     @Override

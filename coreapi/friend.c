@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -1512,7 +1513,6 @@ int linphone_core_friends_storage_resync_friends_lists(LinphoneCore *lc) {
 			if (list_name && url && strcmp(url, list_name) == 0) {
 				linphone_friend_list_set_type(list, LinphoneFriendListTypeVCard4);
 			}
-
 			linphone_core_add_friend_list(lc, list);
 			synced_friends_lists++;
 		}
@@ -1649,6 +1649,9 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 			return;
 		}
 
+		if(linphone_friend_list_is_subscription_bodyless(lf->friend_list)) // Add friend in DB only if its list bodyless subscription is not enabled.
+			return;
+
 		/**
 		 * The friends_list store logic is hidden into the friend store logic
 		 */
@@ -1698,7 +1701,7 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 }
 
 void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list) {
-	if (lc && lc->friends_db) {
+	if (lc && lc->friends_db && !linphone_friend_list_is_subscription_bodyless(list)) {// Do not store list if bodyless subscription is enabled
 		char *buf;
 		int store_friends = linphone_config_get_int(lc->config, "misc", "store_friends", 1);
 

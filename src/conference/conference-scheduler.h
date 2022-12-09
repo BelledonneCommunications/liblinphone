@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -64,8 +65,8 @@ public:
 	State getState () const;
 
 	const std::shared_ptr<ConferenceInfo> getInfo () const;
-	void cancelConference (std::shared_ptr<ConferenceInfo> info);
-	void setInfo(const std::shared_ptr<ConferenceInfo> info);
+	void cancelConference (const std::shared_ptr<ConferenceInfo> & info);
+	void setInfo(const std::shared_ptr<ConferenceInfo> & info);
 
 	void setConferenceAddress(const ConferenceAddress& conferenceAddress);
 
@@ -78,7 +79,7 @@ private:
 	void setState (State newState);
 	std::string stateToString (State state);
 
-	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom, bool cancel);
+	std::shared_ptr<ChatMessage> createInvitationChatMessage(std::shared_ptr<AbstractChatRoom> chatRoom, const IdentityAddress participant, bool cancel);
 	void fillCancelList(const ConferenceInfo::participant_list_t &oldList, const ConferenceInfo::participant_list_t &newList);
 	
 	ConferenceScheduler::State mState;
@@ -88,7 +89,7 @@ private:
 
 	unsigned long mInvitationsSent = 0;
 	std::list<IdentityAddress> mInvitationsToSend;
-	std::list<IdentityAddress> mCancelToSend;
+	std::map<IdentityAddress, int> mCancelToSend;
 	std::list<Address> mInvitationsInError;
 };
 

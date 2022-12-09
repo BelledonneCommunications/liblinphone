@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -93,6 +94,7 @@ public:
 	LinphoneConferenceCbsAudioDeviceChangedCb audioDeviceChangedCb;
 	LinphoneConferenceCbsParticipantDeviceIsSpeakingChangedCb participantDeviceIsSpeakingChangedCb;
 	LinphoneConferenceCbsParticipantDeviceIsMutedCb participantDeviceIsMutedCb;
+	LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb activeSpeakerParticipantDeviceCb;
 };
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
@@ -134,7 +136,8 @@ public:
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
 	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) = 0;
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
-	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) = 0;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) = 0;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t audioSsrc, uint32_t videoSsrc) = 0;
 
 	virtual int participantDeviceAlerting (const std::shared_ptr<LinphonePrivate::CallSession> & session) = 0;
 	virtual int participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) = 0;
@@ -219,7 +222,6 @@ class LINPHONE_PUBLIC LocalConference: public Conference {
 public:
 	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	LocalConference (const std::shared_ptr<Core> &core, SalCallOp *op);
-	LocalConference (const std::shared_ptr<Core> &core, const std::shared_ptr<ConferenceInfo> & info);
 
 	virtual ~LocalConference();
 
@@ -260,7 +262,8 @@ public:
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
-	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t audioSsrc, uint32_t videoSsrc) override;
 
 	virtual int participantDeviceAlerting (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
@@ -309,6 +312,7 @@ private:
 	void checkIfTerminated();
 	std::list<IdentityAddress> getAllowedAddresses() const;
 	bool dialOutAddresses(std::list<const LinphoneAddress *> addressList);
+	void configure(SalCallOp *op);
 
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
@@ -367,7 +371,8 @@ public:
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceMediaCapabilityChanged(const IdentityAddress &addr) override;
 	virtual int participantDeviceMediaCapabilityChanged(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
-	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) override;
+	virtual int participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, uint32_t audioSsrc, uint32_t videoSsrc) override;
 
 	virtual int participantDeviceAlerting (const std::shared_ptr<LinphonePrivate::CallSession> & session) override;
 	virtual int participantDeviceAlerting(const std::shared_ptr<LinphonePrivate::Participant> & participant, const std::shared_ptr<LinphonePrivate::ParticipantDevice> &device) override;
@@ -399,6 +404,7 @@ public:
 	virtual std::shared_ptr<Call> getCall() const override;
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
+	virtual void onParticipantsCleared () override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;

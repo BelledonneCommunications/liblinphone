@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -185,8 +186,8 @@ std::string Utils::unicodeToUtf8 (const std::vector<uint32_t>& chars) {
 }
 
 string Utils::trim (const string &str) {
-	auto itFront = find_if_not(str.begin(), str.end(), [] (int c) { return isspace(c); });
-	auto itBack = find_if_not(str.rbegin(), str.rend(), [] (int c) { return isspace(c); }).base();
+	auto itFront = find_if_not(str.begin(), str.end(), [] (unsigned char c) { return isspace(c); });
+	auto itBack = find_if_not(str.rbegin(), str.rend(), [] (unsigned char c) { return isspace(c); }).base();
 	return (itBack <= itFront ? string() : string(itFront, itBack));
 }
 
@@ -242,6 +243,8 @@ time_t Utils::getTmAsTimeT (const tm &t) {
 	#endif
 
 	if (result == time_t(-1)) {
+		if( tCopy.tm_hour == 0 && tCopy.tm_min == 0 && tCopy.tm_sec == 0 && tCopy.tm_year == 70 && tCopy.tm_mon == 0 && tCopy.tm_mday == 1)
+			return time_t(0);// Not really an error as we try to getTmAsTimeT from initial day (Error comes from timezones)
 		lError() << "timegm/mktime failed: " << strerror(errno);
 		return time_t(-1);
 	}
@@ -272,6 +275,7 @@ time_t Utils::getStringToTime (const std::string &format, const std::string &s) 
 
 // TODO: Improve perf!!! Avoid c <--> cpp string conversions.
 string Utils::localeToUtf8 (const string &str) {
+	if (str.empty()) return std::string();
 	char *cStr = bctbx_locale_to_utf8(str.c_str());
 	string utf8Str = cStringToCppString(cStr);
 	bctbx_free(cStr);
@@ -279,6 +283,7 @@ string Utils::localeToUtf8 (const string &str) {
 }
 
 string Utils::utf8ToLocale (const string &str) {
+	if (str.empty()) return std::string();
 	char *cStr = bctbx_utf8_to_locale(str.c_str());
 	string localeStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
@@ -286,7 +291,21 @@ string Utils::utf8ToLocale (const string &str) {
 }
 
 string Utils::convertAnyToUtf8 (const string &str, const string &encoding) {
-	char *cStr = bctbx_convert_any_to_utf8(str.c_str(), encoding.c_str());
+	char *cStr = bctbx_convert_any_to_utf8(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
+	string convertedStr = cStringToCppString(cStr);
+	bctbx_free(cStr);
+	return convertedStr;
+}
+
+string Utils::convertUtf8ToAny (const string &str, const string &encoding) {
+	char *cStr = bctbx_convert_utf8_to_any(str.c_str(), encoding.empty() ? NULL : encoding.c_str());
+	string convertedStr = cStringToCppString(cStr);
+	bctbx_free(cStr);
+	return convertedStr;
+}
+
+string Utils::convert(const string &str, const string &fromEncoding, const string &toEncoding) {
+	char *cStr = bctbx_convert_string(str.c_str(), fromEncoding.empty() ? NULL : fromEncoding.c_str(), toEncoding.empty() ? NULL : toEncoding.c_str());
 	string convertedStr = cStringToCppString(cStr);
 	bctbx_free(cStr);
 	return convertedStr;
@@ -417,7 +436,7 @@ std::shared_ptr<ConferenceInfo> Utils::createConferenceInfoFromOp (SalCallOp *op
 		}
 	}
 
-	info->setSubject(op->getSubject());
+	info->setUtf8Subject(op->getSubject());
 
 	return info;
 }

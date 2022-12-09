@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -439,16 +440,16 @@ LINPHONE_PUBLIC void linphone_call_params_set_account(LinphoneCallParams *params
 LINPHONE_PUBLIC LinphoneAccount *linphone_call_params_get_account(const LinphoneCallParams *params);
 
 /**
- * Toggle feedback for AVP
+ * Toggle feedback extension for AVP
  * @param[in] params #LinphoneCallParams object
- * @param[in] enable wether or not AVPF should be enabled for this call
+ * @param[in] enable wether or not AVPF should be enabled
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_avpf(LinphoneCallParams *params, bool_t enable);
 
 /**
  * Whether or not the feedback extension will be used for AVP
- *
- * @return true if AVPF is enabled
+ * @param[in] params #LinphoneCallParams object
+ * @return true if AVPF is enabled, false otherwise
  **/
 LINPHONE_PUBLIC bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
 

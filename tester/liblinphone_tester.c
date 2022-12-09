@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -421,7 +422,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_basic_test_suite);
 #endif
-	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference);
+	bc_tester_add_suite(&local_conference_test_suite_conference_edition);
+	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference_basic);
+	bc_tester_add_suite(&local_conference_test_suite_scheduled_conference_advanced);
 	bc_tester_add_suite(&local_conference_test_suite_scheduled_ice_conference);
 	bc_tester_add_suite(&local_conference_test_suite_inpromptu_conference);
 	bc_tester_add_suite(&local_conference_test_suite_chat);
@@ -508,6 +511,10 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&external_domain_test_suite);
 	bc_tester_add_suite(&potential_configuration_graph_test_suite);
 	bc_tester_add_suite(&call_race_conditions_suite);
+#ifdef CXX_WRAPPER_ENABLED
+	bc_tester_add_suite(&wrapper_cpp_test_suite);
+#endif
+	
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {

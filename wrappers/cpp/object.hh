@@ -91,13 +91,13 @@ namespace linphone {
 		static std::shared_ptr<const T> cPtrToSharedPtr(const void *ptr, bool takeRef=true) {
 			return cPtrToSharedPtr<T>(const_cast<void *>(ptr), takeRef);
 		}
-		static void *sharedPtrToCPtr(const std::shared_ptr<const Object> &sharedPtr);
+		LINPHONECXX_PUBLIC static void *sharedPtrToCPtr(const std::shared_ptr<const Object> &sharedPtr);
 
-		static void unrefCPtr(void *ptr);
+		LINPHONECXX_PUBLIC static void unrefCPtr(void *ptr);
 
 	private:
 		LINPHONECXX_PUBLIC std::map<std::string,void *> &getUserData() const;
-		static Object *getBackPtrFromCPtr(const void *ptr);
+		LINPHONECXX_PUBLIC static Object *getBackPtrFromCPtr(const void *ptr);
 		template <class T> static void deleteSharedPtr(std::shared_ptr<T> *ptr) {if (ptr != NULL) delete ptr;}
 		static void deleteString(std::string *str) {if (str != NULL) delete str;}
 

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -392,6 +393,7 @@ static void create_two_basic_chat_room_with_same_remote(void) {
 	bctbx_list_free(participants);
 	linphone_chat_room_params_unref(chat_room_params);
 	linphone_chat_room_unref(chat_room);
+	linphone_chat_room_unref(chat_room2);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }
@@ -4131,7 +4133,19 @@ static void received_messages_with_aggregation_enabled(void) {
 	linphone_chat_message_send(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 
-	// check message is received using only new callback
+	// check message is received using only new callback when chat room is being created
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
+	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	
+	linphone_chat_message_unref(chat_msg);
+	reset_counters(&pauline->stat);
+	reset_counters(&marie->stat);
+
+	chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, "Blu blu blu blu");
+	linphone_chat_message_send(chat_msg);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
+
+	// check message is received using only new callback for existing chat room
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 1, 5000));
 	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 	
@@ -4146,7 +4160,7 @@ static void received_messages_with_aggregation_enabled(void) {
 		linphone_chat_message_unref(chat_msg);
 	}
 
-	// check messages are received using only new callback
+	// check messages are received using only new callback when more than one message is being received in less than aggregation delay seconds
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneAggregatedMessagesReceived, 10, 5000));
 	BC_ASSERT_FALSE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 10));
 

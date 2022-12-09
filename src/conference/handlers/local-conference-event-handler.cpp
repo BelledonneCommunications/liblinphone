@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -102,7 +103,7 @@ Content LocalConferenceEventHandler::createNotifyFullState (LinphoneEvent * lev)
 	const bool oneToOne = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne) : false;
 	const bool ephemerable = chatRoom ? !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::Ephemeral) : false;
 	string entity = conferenceAddress.asString();
-	string subject = conf->getSubject();
+	string subject = conf->getUtf8Subject();
 	ConferenceType confInfo = ConferenceType(entity);
 	ConferenceDescriptionType confDescr = ConferenceDescriptionType();
 	if (!subject.empty()) {
@@ -329,7 +330,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	MediaType audio = MediaType("1");
 	audio.setDisplayText("audio");
 	audio.setType("audio");
-	if (device->getSsrc() > 0) audio.setSrcId(std::to_string(device->getSsrc()));
+	if (device->getAudioSsrc() > 0) audio.setSrcId(std::to_string(device->getAudioSsrc()));
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
 	endpoint.getMedia().push_back(audio);
 
@@ -340,6 +341,7 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	if (!device->getLabel().empty()) {
 		video.setLabel(device->getLabel());
 	}
+	if (device->getVideoSsrc() > 0) video.setSrcId(std::to_string(device->getVideoSsrc()));
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
 	endpoint.getMedia().push_back(video);
 
@@ -728,7 +730,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceDataChanged (co
 }
 
 string LocalConferenceEventHandler::createNotifySubjectChanged () {
-	return createNotifySubjectChanged(conf->getSubject());
+	return createNotifySubjectChanged(conf->getUtf8Subject());
 }
 
 // -----------------------------------------------------------------------------
@@ -972,7 +974,12 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 	linphone_event_accept_subscription(lev);
 	if (linphone_event_get_subscription_state(lev) == LinphoneSubscriptionActive) {
 		unsigned int evLastNotify = static_cast<unsigned int>(Utils::stoi(linphone_event_get_custom_header(lev, "Last-Notify-Version")));
+
+		auto oldLev = device->getConferenceSubscribeEvent();
 		device->setConferenceSubscribeEvent(lev);
+		if (oldLev) {
+			linphone_event_terminate(oldLev);
+		}
 		if ((evLastNotify == 0) || (deviceState == ParticipantDevice::State::Joining)) {
 			lInfo() << "Sending initial notify of conference [" << conf->getConferenceAddress() << "] to: " << device->getAddress() << " with last notif set to " << conf->getLastNotify();
 			if (deviceState == ParticipantDevice::State::Present) {
@@ -990,7 +997,15 @@ LinphoneStatus LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *le
 		} else if (evLastNotify < lastNotify) {
 			lInfo() << "Sending all missed notify [" << evLastNotify << "-" << lastNotify <<
 				"] for conference [" << conf->getConferenceAddress() << "] to: " << participant->getAddress();
-			notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
+
+			// FIXME: Temporary workaround until chatrooms and conference will be one single class with different capabilities.
+			// Every subscribe sent for a conference will be answered by a notify full state as events are not stored in the database
+			const auto & audioVideoConference = conf->getCore()->findAudioVideoConference(conf->getConferenceId());
+			if (audioVideoConference) {
+				notifyFullState(createNotifyFullState(lev), device);
+			} else {
+				notifyParticipantDevice(createNotifyMultipart(static_cast<int>(evLastNotify)), device);
+			}
 		} else if (evLastNotify > lastNotify) {
 			lWarning() << "Last notify received by client [" << evLastNotify << "] for conference [" <<
 				conf->getConferenceAddress() <<
@@ -1018,9 +1033,11 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device)
 			return;
-		lInfo() << "End of subscription for device [" << device->getAddress()
-			<< "] of conference [" << conf->getConferenceAddress() << "]";
-		device->setConferenceSubscribeEvent(nullptr);
+		if (lev == device->getConferenceSubscribeEvent()) {
+			lInfo() << "End of subscription for device [" << device->getAddress()
+				<< "] of conference [" << conf->getConferenceAddress() << "]";
+			device->setConferenceSubscribeEvent(nullptr);
+		}
 	}
 }
 
@@ -1111,10 +1128,10 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 	if (conf) {
 		auto participant = device->getParticipant();
 		// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
-		if (device->getSsrc() == 0) {
-			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
-		} else {
+		if ((device->getAudioSsrc() != 0) || (device->getVideoSsrc() != 0)) {
 			notifyAll(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())));
+		} else {
+			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);
 		}
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
@@ -1170,6 +1187,10 @@ void LocalConferenceEventHandler::onEphemeralLifetimeChanged (const std::shared_
 }
 
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+}
+
+void LocalConferenceEventHandler::onActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &device) {
+	
 }
 
 shared_ptr<Participant> LocalConferenceEventHandler::getConferenceParticipant (const Address & address) const {

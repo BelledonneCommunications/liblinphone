@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -50,6 +51,7 @@ import org.linphone.core.tools.network.NetworkManagerAbove26;
 import org.linphone.core.tools.network.NetworkManagerInterface;
 import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
+import org.linphone.core.tools.service.CoreManager;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
 
@@ -617,6 +619,13 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized boolean isInBackground() {
+        if (CoreManager.isReady()) {
+            if (CoreManager.instance().isServiceRunningAsForeground()) {
+                Log.i("[Platform Helper] CoreService seems to be running as foreground, consider app is in foreground");
+                return false;
+            }
+        }
+
         return isInBackground(mNativePtr);
     }
 

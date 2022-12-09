@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -413,7 +414,6 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const IdentityAddress &
 
 void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) {
 	L_ASSERT(chatRoom);
-
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto it = chatRoomsById.find(conferenceId);
 	// Chat room not exist or yes but with the same pointer!
@@ -863,7 +863,7 @@ void CorePrivate::stopChatMessagesAggregationTimer () {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		chatRoom->getPrivate()->notifyAggregatedChatMessages();
-	} 
+	}
 
 	chatMessagesAggregationBackgroundTask.stop();
 }
@@ -872,6 +872,28 @@ bool Core::isCurrentlyAggregatingChatMessages () {
 	L_D();
 
 	return d->chatMessagesAggregationTimer != nullptr;
+}
+
+LinphoneReason Core::handleChatMessagesAggregation(shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg) {
+	L_D();
+	LinphoneCore *cCore = getCCore();
+
+	bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
+	int chatMessagesAggregationDelay = linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
+	lDebug() << "Chat messages aggregation enabled? " << chatMessagesAggregationEnabled << " with delay " << chatMessagesAggregationDelay;
+	if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
+		if (!d->chatMessagesAggregationTimer) {
+			d->chatMessagesAggregationTimer = cCore->sal->createTimer([d]() -> bool {
+				d->stopChatMessagesAggregationTimer();
+				return false; // BELLE_SIP_STOP
+			}, (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
+		} else {
+			belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer, (unsigned int)chatMessagesAggregationDelay);
+		}
+		d->chatMessagesAggregationBackgroundTask.start(getSharedFromThis());
+	}
+
+	return L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
 }
 
 LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) {
@@ -895,21 +917,7 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	};
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	if (chatRoom) {
-		bool_t chatMessagesAggregationEnabled = linphone_core_get_chat_messages_aggregation_enabled(cCore);
-		int chatMessagesAggregationDelay = linphone_config_get_int(linphone_core_get_config(cCore), "sip", "chat_messages_aggregation_delay", 0);
-		if (chatMessagesAggregationEnabled && chatMessagesAggregationDelay > 0) {
-			if (!d->chatMessagesAggregationTimer) {
-				d->chatMessagesAggregationTimer = cCore->sal->createTimer([d]() -> bool {
-					d->stopChatMessagesAggregationTimer();
-					return false; // BELLE_SIP_STOP
-				}, (unsigned int)chatMessagesAggregationDelay, "chat messages aggregation timeout");
-			} else {
-				belle_sip_source_set_timeout_int64(d->chatMessagesAggregationTimer, (unsigned int)chatMessagesAggregationDelay);
-			}
-			d->chatMessagesAggregationBackgroundTask.start(getSharedFromThis());
-		}
-
-		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+		reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
 	} else if (!linphone_core_conference_server_enabled(cCore)) {
 		const char *session_mode = sal_custom_header_find(op->getRecvCustomHeaders(), "Session-mode");
 		/* Client mode but check that it is really for basic chatroom before creating it.*/
@@ -918,8 +926,9 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 			reason = LinphoneReasonNotAcceptable;
 		} else {
 			chatRoom = getOrCreateBasicChatRoom(conferenceId);
-			if (chatRoom)
-				reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
+			if (chatRoom) {
+				reason = handleChatMessagesAggregation(chatRoom, op, sal_msg);
+			}				
 		}
 	} else {
 		/* Server mode but chatroom not found. */

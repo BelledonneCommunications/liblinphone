@@ -1,28 +1,25 @@
-/****************************************************************************
+/*
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (C) 2006  Sandro Santilli <strk@keybit.net>
+ * Copyright (C) 2002  Florian Winterstein <flox@gmx.net>
+ * Copyright (C) 2000  Simon MORLAT <simon.morlat@free.fr>
  *
- *  $Id: linphonec.c,v 1.57 2007/11/14 13:40:27 smorlat Exp $
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
- *  Copyright (C) 2006  Sandro Santilli <strk@keybit.net>
- *  Copyright (C) 2002  Florian Winterstein <flox@gmx.net>
- *  Copyright (C) 2000  Simon MORLAT <simon.morlat@free.fr>
- *
-****************************************************************************
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- *
- ****************************************************************************/
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <string.h>
 #ifndef _WIN32_WCE
 #include <sys/types.h>

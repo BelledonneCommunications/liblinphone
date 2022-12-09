@@ -1,21 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY{
-}
- without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -77,10 +76,9 @@ LinphoneStatus Recorder::open (const std::string &file) {
 }
 
 void Recorder::close () {
-	if (getState() == LinphoneRecorderRunning) {
-		pause();
-	}
-	ms_media_recorder_close(mRecorder);
+	pause();
+	if(getState() != LinphoneRecorderClosed)
+		ms_media_recorder_close(mRecorder);
 }
 
 const std::string& Recorder::getFile () const {
@@ -94,10 +92,13 @@ LinphoneStatus Recorder::start () {
 }
 
 LinphoneStatus Recorder::pause () {
-	ms_media_recorder_pause(mRecorder);
-	ortp_gettimeofday(&mEndTime, nullptr);
-	getPlatformHelpers(getCore()->getCCore())->onRecordingPaused();
-	return 0;
+	if(getState() == LinphoneRecorderRunning) {
+		ms_media_recorder_pause(mRecorder);
+		ortp_gettimeofday(&mEndTime, nullptr);
+		getPlatformHelpers(getCore()->getCCore())->onRecordingPaused();
+		return 0;
+	}else
+		return -1;
 }
 
 LinphoneRecorderState Recorder::getState () const {

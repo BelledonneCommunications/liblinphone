@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -100,8 +101,16 @@ bool_t linphone_participant_device_get_stream_availability (const LinphonePartic
 	return ParticipantDevice::toCpp(participant_device)->getStreamAvailability(stream_type);
 }
 
-uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device) {
-	return ParticipantDevice::toCpp(participant_device)->getSsrc();
+uint32_t linphone_participant_device_get_audio_ssrc(const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getAudioSsrc();
+}
+
+uint32_t linphone_participant_device_get_video_ssrc(const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getVideoSsrc();
+}
+
+bool_t linphone_participant_device_get_is_speaking (const LinphoneParticipantDevice *participant_device) {
+	return ParticipantDevice::toCpp(participant_device)->getIsSpeaking();
 }
 
 bool_t linphone_participant_device_get_is_muted (const LinphoneParticipantDevice *participant_device) {
@@ -129,6 +138,7 @@ const bctbx_list_t *linphone_participant_device_get_callbacks_list(const Linphon
 }
 
 void _linphone_participant_device_notify_is_speaking_changed(LinphoneParticipantDevice *participant_device, bool_t is_speaking) {
+	ParticipantDevice::toCpp(participant_device)->setIsSpeaking(is_speaking);
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(ParticipantDevice, ParticipantDevice::toCpp(participant_device), linphone_participant_device_cbs_get_is_speaking_changed, is_speaking);
 }
 

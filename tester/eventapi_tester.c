@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -139,6 +140,56 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void subscribe_test_destroy_core_before_event_terminate(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneContent* content;
+	LinphoneEvent *lev;
+	int expires = 600;
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+
+	lcs=bctbx_list_append(lcs,pauline->lc);
+
+	content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content,"application");
+	linphone_content_set_subtype(content,"somexml");
+	linphone_content_set_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
+
+	lev=linphone_core_subscribe(marie->lc,pauline->identity,"dodo",expires,content);
+	linphone_event_ref(lev);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,1,3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,1,1000));
+	
+	/* make sure transport used for the subscribe is the same as the one used for REGISTER*/
+	belle_sip_header_via_t *via = BELLE_SIP_HEADER_VIA(belle_sip_header_create("Via",linphone_event_get_custom_header(lev, "Via")));
+	BC_ASSERT_STRING_EQUAL(belle_sip_header_via_get_transport_lowercase(via), linphone_proxy_config_get_transport(linphone_core_get_default_proxy_config(marie->lc)));
+
+	/*make sure marie receives first notification before terminating*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
+
+	wait_for_list(lcs,NULL,0,6000);
+	BC_ASSERT_PTR_NOT_NULL(pauline->lev);
+	if (pauline->lev){
+		BC_ASSERT_EQUAL(linphone_event_get_subscription_state(pauline->lev), LinphoneSubscriptionActive, int, "%d");
+	}
+
+	/*linphone_event_terminate(lev);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));*/
+
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	
+	int dummy = 0;
+	wait_for_until(NULL,NULL,&dummy,1,5000);
+	linphone_event_terminate(lev);
+	linphone_event_unref(lev);
+	linphone_content_unref(content);
 }
 
 static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTestType refresh_type) {
@@ -581,6 +632,7 @@ test_t event_tests[] = {
 	TEST_ONE_TAG("Subscribe manually refreshed", subscribe_test_manually_refreshed, "presence"),
 	TEST_ONE_TAG("Subscribe terminated by notifier", subscribe_test_terminated_by_notifier, "presence"),
 	TEST_ONE_TAG("Subscribe not timely responded", subscribe_not_timely_responded, "presence"),
+	TEST_TWO_TAGS("Subscribe terminated after Core stopped", subscribe_test_destroy_core_before_event_terminate, "presence", "LeaksMemory"),
 	TEST_ONE_TAG("Publish", publish_test, "presence"),
 	TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
 	TEST_ONE_TAG("Publish without automatic refresh",publish_no_auto_test, "presence"),

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -38,11 +39,12 @@ MS2VideoMixer::MS2VideoMixer(MixerSession & session) : StreamMixer(session), MS2
 
 void MS2VideoMixer::connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool thumbnail){
 	ms_video_endpoint_set_user_data(endpoint, &vs->getGroup());
+	
 	if (thumbnail) {
-		lInfo() << "mix to all add endpoint to thumbnail";
+		lInfo() << *this << "Adding endpoint to thumbnail mixer.";
 		ms_video_conference_add_member(mConferenceThumbnail, endpoint);
 	} else {
-		lInfo() << "mix to all add endpoint to mConferenceMix";
+		lInfo() << *this << "Adding endpoint to main mixer.";
 		ms_video_conference_add_member(mConferenceMix, endpoint);
 	}
 }
@@ -58,6 +60,7 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	// used by mConferenceMix
 	MSVideoEndpoint *ep = nullptr;
 	
+	lInfo() << *this << ": video focus requested for " << *sg; 
 	if (sg == nullptr){
 		ep = mMainLocalEndpoint;
 	}else{
@@ -72,15 +75,19 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	}
 	if (ep){
 		ms_video_conference_set_focus(mConferenceMix, ep);
-	}else if (ms_video_conference_get_size(mConferenceMix) >= 2){
-		/* else this participant has no video, so set focus on a "no webcam" placeholder.
-		 * However, if there is one or two participants, don't do this and let the ms2 mixer cross the streams.
-		 */
-		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceMix);
-		if (video_placeholder_ep) {
-			ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
+	}else {
+		if (ms_video_conference_get_size(mConferenceMix) >= 2){
+			/* else this participant has no video, so set focus on a "no webcam" placeholder.
+			* However, if there is one or two participants, don't do this and let the ms2 mixer cross the streams.
+			*/
+			lInfo() << *this <<  "Showing video placeholder, participant has no video.";
+			MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConferenceMix);
+			if (video_placeholder_ep) {
+				ms_video_conference_set_focus(mConferenceMix, video_placeholder_ep);
+			}
+		}else{
+			lInfo() << *this <<  "Not using video placeholder, participant count <= 2.";
 		}
-
 	}
 }
 
@@ -114,7 +121,7 @@ void MS2VideoMixer::createLocalMember(bool isThumbnail) {
 	
 	memset(&io, 0, sizeof(io));
 	
-	video_stream_enable_thumbnail(vs, isThumbnail);
+	video_stream_set_content(vs, isThumbnail ? MSVideoContentThumbnail : MSVideoContentDefault);
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(mSession.getCCore());
 	pt = rtp_profile_get_payload(mLocalDummyProfile, sVP8PayloadTypeNumber);
 	pt->normal_bitrate =  outputBandwidth; /* Is it really needed ?*/

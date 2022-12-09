@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -208,6 +209,14 @@ LINPHONE_PUBLIC void linphone_logging_service_error(LinphoneLoggingService *log_
  * @param message The log message. @notnil
  */
 LINPHONE_PUBLIC void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *message);
+
+/**
+ * Allow Linphone to set handlers for catching exceptions and write the stack trace into log. Available for Windows.
+ * It keeps old handlers.
+ * @param log_service the #LinphoneLoggingService object @notnil
+ * @param enable if TRUE global handlers will be prepend by the logger handlers. By default, it is FALSE.
+ */
+LINPHONE_PUBLIC void linphone_logging_service_enable_stack_trace_dumps(LinphoneLoggingService *log_service, bool_t enable);
 
 /**
  * @brief Increases the reference counter.

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -257,24 +258,30 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			});
 		}
 	} else if (newState == CallSession::State::End) {
-		const auto &remoteAddress = session->getRemoteAddress();
-		ConferenceAddress remoteConferenceAddress = ConferenceAddress(*remoteAddress);
-		bool found = false;
-		for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
-			ConferenceId confId = static_cast<ConferenceId>(*it);
-			if (confId.getPeerAddress() == remoteConferenceAddress) {
-				lInfo() << "Found previous chat room conference ID [" << confId << "] for chat room with current ID [" << q->getConferenceId() << "]";
-				removeConferenceIdFromPreviousList(confId);
-				found = true;
-				break;
-			}
-		}
+		const auto errorInfo = session->getErrorInfo();
 
-		if (found) {
-			/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's state */
-			lInfo() << "Chat room [" << remoteConferenceAddress << "] from before the exhume has been terminated";
+		if (errorInfo != nullptr && linphone_error_info_get_protocol_code(errorInfo) > 299) {
+			lWarning() << "Chat room [" << q->getConferenceId() << "] received a BYE with reason: " << linphone_error_info_get_protocol_code(errorInfo) << ", not leaving it.";
 		} else {
-			q->setState(ConferenceInterface::State::TerminationPending);
+			const auto &remoteAddress = session->getRemoteAddress();
+			ConferenceAddress remoteConferenceAddress = ConferenceAddress(*remoteAddress);
+			bool found = false;
+			for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
+				ConferenceId confId = static_cast<ConferenceId>(*it);
+				if (confId.getPeerAddress() == remoteConferenceAddress) {
+					lInfo() << "Found previous chat room conference ID [" << confId << "] for chat room with current ID [" << q->getConferenceId() << "]";
+					removeConferenceIdFromPreviousList(confId);
+					found = true;
+					break;
+				}
+			}
+
+			if (found) {
+				/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's state */
+				lInfo() << "Chat room [" << remoteConferenceAddress << "] from before the exhume has been terminated";
+			} else {
+				q->setState(ConferenceInterface::State::TerminationPending);
+			}
 		}
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ConferenceInterface::State::TerminationPending) {
@@ -513,7 +520,14 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
 	L_D();
+	auto encryptionEngine = getCore()->getEncryptionEngine();
+	if (!encryptionEngine) {
+		lWarning() << "Asking participant security level but there is no encryption engine enabled";
+		return AbstractChatRoom::SecurityLevel::ClearText;
+	}
+
 	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
+		lDebug() << "Chatroom SecurityLevel = ClearText";
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
 	
@@ -523,56 +537,28 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::s
 		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
 
-	bool isSafe = true;
-	// check other participants
-	for (const auto &participant : getParticipants()) {
-		auto level = participant->getSecurityLevelExcept(ignoredDevice);
-		// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe participant
-		// while we also have a ClearText one
-		// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
-		// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
-		switch (level) {
-			case AbstractChatRoom::SecurityLevel::Unsafe:
-				lDebug() << "Chatroom SecurityLevel = Unsafe";
-				return level; // if one participant is Unsafe the whole chatroom is Unsafe
-			case AbstractChatRoom::SecurityLevel::ClearText:
-				lDebug() << "Chatroom securityLevel = ClearText";
-				return level; // if one participant is ClearText the whole chatroom is ClearText
-			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one participant is Encrypted the whole chatroom is Encrypted
-				break;
-			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all participants are Safe the whole chatroom is Safe
+	// populate a list of all devices in the chatroom
+	// first step, all participants, including me
+	auto participants = getParticipants();
+	participants.push_back(getMe());
+
+	std::list<std::string> allDevices{};
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
+			allDevices.push_back(device->getAddress().asString());
 		}
 	}
-
-	// check self other devices
-	for (const auto &selfDevice : getMe()->getDevices()) {
-		if (selfDevice->getAddress() != getLocalAddress()) { // ignore local device
-			if (ignoredDevice != selfDevice) {
-				auto level = selfDevice->getSecurityLevel();
-				switch (level) {
-					case AbstractChatRoom::SecurityLevel::Unsafe:
-						return level; // if one device is Unsafe the whole participant is Unsafe
-					case AbstractChatRoom::SecurityLevel::ClearText:
-						return level; // if one device is ClearText the whole participant is ClearText
-					case AbstractChatRoom::SecurityLevel::Encrypted:
-						isSafe = false; // if one device is Encrypted the whole participant is Encrypted
-						break;
-					case AbstractChatRoom::SecurityLevel::Safe:
-						break; // if all devices are Safe the whole participant is Safe
-				}
-			}
-		}
+	if (ignoredDevice != nullptr) {
+		allDevices.remove(ignoredDevice->getAddress().asString());
 	}
+	allDevices.remove(getLocalAddress().asString()); // remove local device from the list
 
-	if (isSafe) {
-		lDebug() << "Chatroom SecurityLevel = Safe";
+	if (allDevices.empty()) {
 		return AbstractChatRoom::SecurityLevel::Safe;
-	} else {
-		lDebug() << "Chatroom SecurityLevel = Encrypted";
-		return AbstractChatRoom::SecurityLevel::Encrypted;
 	}
+	auto level = encryptionEngine->getSecurityLevel(allDevices);
+	lDebug() << "Chatroom SecurityLevel = "<<level;
+	return level;
 }
 
 bool ClientGroupChatRoom::hasBeenLeft () const {
@@ -687,7 +673,7 @@ void ClientGroupChatRoom::sendInvite (std::shared_ptr<CallSession> &session, con
 	if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
 		content.setContentEncoding("deflate");
 	}
-	session->startInvite(nullptr, getSubject(), &content);
+	session->startInvite(nullptr, getUtf8Subject(), &content);
 }
 
 bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
@@ -747,7 +733,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	referOp->unref();
 }
 
-const string &ClientGroupChatRoom::getSubject () const {
+const string & ClientGroupChatRoom::getSubject () const {
 	return getConference()->getSubject();
 }
 
@@ -766,10 +752,10 @@ void ClientGroupChatRoom::setSubject (const string &subject) {
 
 	shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
 	if (session)
-		session->update(nullptr, CallSession::UpdateMethod::Default, subject);
+		session->update(nullptr, CallSession::UpdateMethod::Default, Utils::localeToUtf8(subject));
 	else {
 		session = d->createSession();
-		session->startInvite(nullptr, subject, nullptr);
+		session->startInvite(nullptr, Utils::localeToUtf8(subject), nullptr);
 	}
 }
 
@@ -837,7 +823,7 @@ void ClientGroupChatRoom::exhume () {
 	string conferenceFactoryUri = Core::getConferenceFactoryUri(getCore(), getConferenceId().getLocalAddress());
 	Address conferenceFactoryAddress = Address(conferenceFactoryUri);
 	auto session = d->createSessionTo(conferenceFactoryAddress);
-	session->startInvite(nullptr, getSubject(), &content);
+	session->startInvite(nullptr, getUtf8Subject(), &content);
 	setState(ConferenceInterface::State::CreationPending);
 }
 
@@ -1267,7 +1253,7 @@ void ClientGroupChatRoom::setEphemeralMode(AbstractChatRoom::EphemeralMode mode,
 			csp->addCustomHeader("Ephemeral-Life-Time", to_string(lifetime));
 		}
 		lInfo() << "Changing ephemeral mode to " << Utils::toString(mode);
-		session->update(csp, CallSession::UpdateMethod::Default, getSubject());
+		session->update(csp, CallSession::UpdateMethod::Default, getUtf8Subject());
 		delete csp;
 	} else {
 		lError() << "Cannot change the ClientGroupChatRoom ephemeral lifetime in a state other than Created";
@@ -1422,7 +1408,7 @@ void ClientGroupChatRoom::sendEphemeralUpdate () {
 		auto csp = session->getParams()->clone();
 		csp->removeCustomHeader("Ephemeral-Life-Time");
 		csp->addCustomHeader("Ephemeral-Life-Time", (ephemeralEnabled() ? to_string(getEphemeralLifetime()) : "0"));
-		session->update(csp, CallSession::UpdateMethod::Default, getSubject());
+		session->update(csp, CallSession::UpdateMethod::Default, getUtf8Subject());
 		delete csp;
 	} else {
 		session = d->createSession();
@@ -1430,7 +1416,7 @@ void ClientGroupChatRoom::sendEphemeralUpdate () {
 		const IdentityAddress& remoteParticipant = getParticipants().front()->getAddress();
 		lInfo() << "Re-INVITing " << remoteParticipant << " because ephemeral settings of chat room [" << conference->getConferenceId() << "] have changed";
 
-		session->startInvite(nullptr, getSubject(), nullptr);
+		session->startInvite(nullptr, getUtf8Subject(), nullptr);
 	}
 }
 

@@ -1,25 +1,25 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2010-2021 Belledonne Communications, Grenoble France
+# Copyright (c) 2010-2022 Belledonne Communications SARL.
 #
 ############################################################################
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This file is part of Liblinphone 
+# (see https://gitlab.linphone.org/BC/public/liblinphone).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
-
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -431,6 +431,10 @@ if(ENABLE_LDAP)
 	add_definitions(-DLDAP_ENABLED -DLDAP_LIBS_DYNAMIC)
 endif()
 
+if(ENABLE_CXX_WRAPPER)
+	add_definitions(-DCXX_WRAPPER_ENABLED)
+endif()
+
 if(LINPHONE_BUILDER_GROUP_EXTERNAL_SOURCE_PATH_BUILDERS)
 	set(EXPORT_TARGETS_NAME "LinphoneBuilder")
 else()
@@ -441,9 +445,11 @@ add_subdirectory(include)
 if(ENABLE_JAVA_WRAPPER)
 	add_subdirectory(wrappers/java)
 endif()
+
+add_subdirectory(share)
 add_subdirectory(coreapi)
 add_subdirectory(src)
-add_subdirectory(share)
+
 if(ENABLE_CONSOLE_UI)
 	add_subdirectory(console)
 endif()
@@ -453,9 +459,7 @@ endif()
 if(ENABLE_TOOLS)
 	add_subdirectory(tools)
 endif()
-if(ENABLE_UNIT_TESTS)
-	add_subdirectory(tester)
-endif()
+
 if(ENABLE_CXX_WRAPPER)
 	add_subdirectory(wrappers/cpp)
 endif()
@@ -464,6 +468,10 @@ if(ENABLE_CSHARP_WRAPPER)
 endif()
 if(ENABLE_SWIFT_WRAPPER)
 	add_subdirectory(wrappers/swift)
+endif()
+
+if(ENABLE_UNIT_TESTS)
+	add_subdirectory(tester)
 endif()
 
 include(CMakePackageConfigHelpers)

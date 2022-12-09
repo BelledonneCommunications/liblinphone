@@ -1,19 +1,20 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -57,7 +58,7 @@
 #endif
 #endif
 
-#define SKIP_PULSEAUDIO 1
+//#define SKIP_PULSEAUDIO 1
 
 #if _WIN32
 #define unlink _unlink
@@ -829,8 +830,26 @@ void check_conference_ssrc(LinphoneConference * local_conference, LinphoneConfer
 					LinphoneParticipantDevice * remote_device = linphone_participant_find_device (remote_participant, linphone_participant_device_get_address(d));
 					BC_ASSERT_PTR_NOT_NULL(remote_device);
 					if (remote_device) {
-						BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d), 0, unsigned long, "%0lu");
-						BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device), 0, unsigned long, "%0lu");
+						if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio) != LinphoneMediaDirectionInactive) {
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+						} else {
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+						}
+						if (linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeAudio) != LinphoneMediaDirectionInactive) {
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(remote_device), 0, unsigned long, "%0lu");
+						} else {
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(remote_device), 0, unsigned long, "%0lu");
+						}
+						if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive) {
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+						} else {
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+						}
+						if (linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive) {
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(remote_device), 0, unsigned long, "%0lu");
+						} else {
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(remote_device), 0, unsigned long, "%0lu");
+						}
 					}
 				}
 			}
@@ -1049,7 +1068,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 				do {
 					counter++;
 					wait_for_list(lcs ,NULL, 0, 100);
-				} while ((counter < 10) && (linphone_conference_get_participant_count(remote_conference) == no_participants));
+				} while ((counter < 10) && (linphone_conference_get_participant_count(remote_conference) < no_participants));
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(remote_conference), no_participants, int, "%d");
 				BC_ASSERT_PTR_NOT_NULL(remote_conference);
 				if (remote_conference) {
@@ -1202,12 +1221,33 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		LinphoneCall * conf_to_focus_call = linphone_conference_get_call(focus_conference);
 		BC_ASSERT_PTR_NOT_NULL(conf_to_focus_call);
 		if (conf_to_focus_call) {
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+2*counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participants_added,(conf_initial_stats.number_of_participants_added + counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participant_devices_added,(conf_initial_stats.number_of_participant_devices_added + counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participants_added,(focus_initial_stats.number_of_participants_added + counter),liblinphone_tester_sip_timeout));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participant_devices_added,(focus_initial_stats.number_of_participant_devices_added + counter),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,(focus_initial_stats.number_of_LinphoneCallStreamsRunning+2*((int)(bctbx_list_size(new_participants)))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participants_added,(conf_initial_stats.number_of_participants_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_participant_devices_added,(conf_initial_stats.number_of_participant_devices_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participants_added,(focus_initial_stats.number_of_participants_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_participant_devices_added,(focus_initial_stats.number_of_participant_devices_added + (int)(bctbx_list_size(new_participants))),liblinphone_tester_sip_timeout));
 		}
+
+		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(focus_conference);
+
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			LinphoneAddress *m_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+			LinphoneConference * remote_conference = linphone_core_search_conference(m->lc, NULL, m_uri, local_conference_address, NULL);
+			linphone_address_unref(m_uri);
+
+			int part_counter = 0;
+			do {
+				part_counter++;
+				wait_for_list(lcs ,NULL, 0, 100);
+			} while ((part_counter < 100) && (linphone_conference_get_participant_count(remote_conference) < (int)(bctbx_list_size(participants))));
+		}
+
+		int wait_counter = 0;
+		do {
+			wait_counter++;
+			wait_for_list(lcs ,NULL, 0, 100);
+		} while ((wait_counter < 100) && (linphone_conference_get_participant_count(focus_conference) < (int)(bctbx_list_size(participants))));
 
 		const LinphoneConferenceParams * conf_params = linphone_conference_get_current_params(focus_conference);
 		if (!!linphone_conference_params_video_enabled(conf_params) == TRUE) {
@@ -2730,11 +2770,20 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *l
 }
 
 void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone) {
+	_check_friend_result_list_2(lc, resultList, index, uri, phone, LinphoneMagicSearchSourceAll);
+}
+
+void _check_friend_result_list_2(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone, int expected_flags) {
 	if (index >= (unsigned int)bctbx_list_size(resultList)) {
 		ms_error("Attempt to access result to an outbound index");
 		return;
 	}
 	const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, index);
+	if (expected_flags != LinphoneMagicSearchSourceAll) {
+		int source_flags = linphone_search_result_get_source_flags(sr);
+		BC_ASSERT_EQUAL(source_flags, expected_flags, int, "%d");
+	}
+
 	const LinphoneFriend *lf = linphone_search_result_get_friend(sr);
 	if (lf || linphone_search_result_get_address(sr)) {
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?

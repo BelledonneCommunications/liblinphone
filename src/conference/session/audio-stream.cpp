@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "bctoolbox/defs.h"
@@ -63,6 +64,21 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 void MS2AudioStream::audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
 	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
 	zis->getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
+
+#ifdef VIDEO_ENABLED
+	// If we are in a conference and have a video stream without ssrc then use this callback for active speaker
+	CallSessionListener *listener = zis->getMediaSessionPrivate().getCallSessionListener();
+	if (listener) {
+		const auto conference = listener->getCallSessionConference(zis->getMediaSession().getSharedFromThis());
+		if (conference) {
+			MS2VideoStream *vs = zis->getGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
+			VideoStream *videostream = vs ? vs->getVideoStream() : nullptr;
+			if (videostream && media_stream_get_recv_ssrc(&videostream->ms) == 0) {
+				vs->sCsrcChangedCb(conference, 0);
+			}
+		}
+	}
+#endif
 }
 
 void MS2AudioStream::audioStreamIsMutedCb (void *userData, uint32_t ssrc, bool_t muted) {
@@ -319,10 +335,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 				}
 			}
 
-			if (playcard) {
+			if (!mRestartStreamRequired && playcard) {
 				auto streamType = ms_snd_card_get_stream_type(playcard);
-				lInfo() << "Restarting stream because the stream type of current play card " << std::string(ms_snd_card_get_name(playcard)) << " doesn't match the expected one...";
-				mRestartStreamRequired |= (streamType != expectedStreamType);
+				mRestartStreamRequired = (streamType != expectedStreamType);
+				if(mRestartStreamRequired)
+					lInfo() << "Restarting stream because the stream type " << streamType << " of current play card " << std::string(ms_snd_card_get_name(playcard)) << " doesn't match the expected one " << expectedStreamType << "...";
 			}
 
 			if (mRestartStreamRequired) {
@@ -928,16 +945,32 @@ void MS2AudioStream::setSoundCardType(MSSndCard *soundcard) {
 	}
 }
 
+int MS2AudioStream::restartStream(RestartReason reason) {
+// Schedule a restart in order to avoid multiple reinitialisation when changing at the same time both devices. Also, it allows to avoid to restart the stream if it has been already restart.
+	const char * const reasonToText = (reason == RestartReason::OutputChanged ? "output" : "input");
+	if(getState() == Running){
+		if(!mRestartStreamRequired) {
+			lInfo() << "[MS2AudioStream] restart stream required for updating " << reasonToText;
+			mRestartStreamRequired = true;
+			getCore().doLater([&](){
+				if(mRestartStreamRequired && getState() == Running)// Still need to be restarted. If false, then a restart has been already done on an update.
+					render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()), getGroup().getCurrentSessionState());
+			});
+			return 0;
+		}else
+			lInfo() << "[MS2AudioStream] an already restart stream required for updating " << reasonToText;
+	}
+	return -1;
+}
+
 void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 	if(!mStream) return;
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
 	if(audio_stream_set_input_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
-		if(getState() == Running){// New device couldn't update the stream, request to stop it
-			// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID 
-			mRestartStreamRequired = true;
-			lInfo() << "[MS2AudioStream] restart stream required for updating input";
-		}
+		// New device couldn't update the stream, request to stop it
+		// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID
+		restartStream(RestartReason::InputChanged);
 	}
 }
 
@@ -946,11 +979,9 @@ void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
 	if(audio_stream_set_output_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
-		if(getState() == Running){// New device couldn't update the stream, request to stop it
-			// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID 
-			mRestartStreamRequired = true;
-			lInfo() << "[MS2AudioStream] restart stream required for updating output";
-		}
+		// New device couldn't update the stream, request to stop it
+		// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID
+		restartStream(RestartReason::OutputChanged);
 	}
 }
 

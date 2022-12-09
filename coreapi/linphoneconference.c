@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -99,16 +100,24 @@ LinphoneConferenceState linphone_conference_get_state (const LinphoneConference 
 	return (LinphoneConferenceState)MediaConference::Conference::toCpp(conference)->getState();
 }
 
+LinphoneParticipantDevice* linphone_conference_get_active_speaker_participant_device(const LinphoneConference *conference) {
+	shared_ptr<LinphonePrivate::ParticipantDevice> p = MediaConference::Conference::toCpp(conference)->getActiveSpeakerParticipantDevice();
+	if (p) {
+		return p->toC();
+	}
+	return NULL;
+}
+
 const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conference){
 	return MediaConference::Conference::toCpp(conference)->getCurrentParams().toC();
 }
 
 LinphoneStatus linphone_conference_add_participant (LinphoneConference *conference, LinphoneCall *call) {
-	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis());
+	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis()) ? 0 : -1;
 }
 
 LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(conference)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+	return MediaConference::Conference::toCpp(conference)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri)) ? 0 : -1;
 }
 
 LinphoneStatus linphone_conference_remove_participant (LinphoneConference *conference, const LinphoneAddress * uri) {
@@ -461,8 +470,16 @@ void linphone_conference_params_set_subject(LinphoneConferenceParams *params, co
 	ConferenceParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
 }
 
+void linphone_conference_params_set_utf8_subject(LinphoneConferenceParams *params, const char * subject){
+	ConferenceParams::toCpp(params)->setUtf8Subject(L_C_TO_STRING(subject));
+}
+
 const char * linphone_conference_params_get_subject(const LinphoneConferenceParams *params){
 	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getSubject());
+}
+
+const char * linphone_conference_params_get_utf8_subject(const LinphoneConferenceParams *params){
+	return L_STRING_TO_C(ConferenceParams::toCpp(params)->getUtf8Subject());
 }
 
 const char *linphone_conference_params_get_description (const LinphoneConferenceParams *params) {

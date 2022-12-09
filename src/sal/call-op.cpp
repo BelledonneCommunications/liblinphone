@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -720,6 +721,10 @@ void SalCallOp::processTransactionTerminatedCb (void *userCtx, const belle_sip_t
 			))
 		&& !op->mDialog
 	) {
+		if (response && belle_sip_response_get_status_code(response) == 408) {
+			sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "no ACK received", nullptr);
+		}
+
 		releaseCall = true;
 	} else if ((op->mState == State::Early) && (code < 200)) {
 		// Call terminated early
@@ -1124,6 +1129,10 @@ void SalCallOp::processDialogTerminatedCb (void *userCtx, const belle_sip_dialog
 	if (op->mDialog && (op->mDialog == belle_sip_dialog_terminated_event_get_dialog(event))) {
 		lInfo() << "Dialog [" << belle_sip_dialog_terminated_event_get_dialog(event) << "] terminated for op [" << op << "]";
 		op->haltSessionTimersTimer();
+
+		if (belle_sip_dialog_get_termination_cause(op->mDialog) == BELLE_SIP_DIALOG_TERMINATION_CAUSE_ABORT_NO_ACK) {
+			sal_error_info_set(&op->mErrorInfo, SalReasonRequestTimeout, "SIP", 408, "no ACK received", nullptr);
+		}
 
 		switch(belle_sip_dialog_get_previous_state(op->mDialog)) {
 			case BELLE_SIP_DIALOG_EARLY:
@@ -2021,6 +2030,12 @@ void SalCallOp::handleOfferAnswerResponse (belle_sip_response_t *response) {
 			belle_sip_object_unref(mSdpAnswer);
 			mSdpAnswer = nullptr;
 		}
+	}
+}
+
+void SalCallOp::simulateLostAckOnDialog(bool enable) {
+	if (mDialog) {
+		belle_sip_dialog_set_simulate_lost_ack_enabled(mDialog, enable ? 1 : 0);
 	}
 }
 

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #ifdef HAVE_CONFIG_H
@@ -22,6 +23,7 @@
 
 #include "core/core.h"
 #include "conference/conference-params.h"
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 
@@ -70,15 +72,12 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 			setMe(identity ? IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(identity)) : IdentityAddress());
 			if(m_useDefaultFactoryAddress) {
 				auto core = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_account_get_core(account));
-				auto factory_addr = Core::getAudioVideoConferenceFactoryAddress(core->getSharedFromThis(), account);
+				const LinphoneAddress* factory_addr = Account::toCpp(account)->getAccountParams()->getAudioVideoConferenceFactoryAddress();
 				char * conferenceFactoryAddressString = factory_addr ? linphone_address_as_string(factory_addr) : NULL;
 				const Address conferenceFactoryAddress(L_C_TO_STRING(conferenceFactoryAddressString));
 				m_factoryAddress = Address(conferenceFactoryAddress);
 				if (linphone_core_get_global_state(linphone_account_get_core(account)) != LinphoneGlobalStartup) {
 					ms_message("Update conference parameters from account, factory:%s", conferenceFactoryAddressString);
-				}
-				if (factory_addr) {
-					linphone_address_unref(factory_addr);
 				}
 				if (conferenceFactoryAddressString) {
 					ms_free(conferenceFactoryAddressString);
@@ -89,4 +88,21 @@ void ConferenceParams::updateFromAccount(LinphoneAccount * account) {// Update M
 	}else
 		ms_message("Update conference parameters from account: no account");
 }
+
+void ConferenceParams::setUtf8Description (const std::string &description) {
+	m_description = Utils::utf8ToLocale(description);
+};
+
+const std::string ConferenceParams::getUtf8Description() const {
+	return Utils::localeToUtf8(m_description);
+};
+
+void ConferenceParams::setUtf8Subject (const std::string &subject) {
+	m_subject = Utils::utf8ToLocale(subject);
+};
+
+const std::string ConferenceParams::getUtf8Subject() const {
+	return Utils::localeToUtf8(m_subject);
+};
+
 LINPHONE_END_NAMESPACE

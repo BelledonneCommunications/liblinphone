@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -37,12 +38,15 @@ namespace Ics {
 	public:
 		using attendee_params_t = std::map<std::string, std::string>;
 		using attendee_list_t = std::map<std::string, attendee_params_t>;
+		using organizer_t = std::pair<std::string, attendee_params_t>;
 
 		Event () = default;
 		~Event () = default;
 
-		const std::string &getOrganizer () const;
+		const organizer_t &getOrganizer () const;
+		const std::string &getOrganizerAddress () const;
 		void setOrganizer (const std::string &organizer);
+		void setOrganizer (const std::string &organizer, const attendee_params_t & params);
 
 		const attendee_list_t &getAttendees () const;
 		void addAttendee (const std::string &attendee);
@@ -58,12 +62,18 @@ namespace Ics {
 		void setSequence (unsigned int duration);
 
 		const std::string &getUid () const;
+		const std::string getUtf8Uid () const;
+		void setUtf8Uid (const std::string &uid);
 		void setUid (const std::string &uid);
 
 		const std::string &getSummary () const;
+		const std::string getUtf8Summary () const;
+		void setUtf8Summary (const std::string &summary);
 		void setSummary (const std::string &summary);
 
 		const std::string &getDescription () const;
+		const std::string getUtf8Description () const;
+		void setUtf8Description (const std::string &description);
 		void setDescription (const std::string &description);
 
 		const std::string &getXConfUri () const;
@@ -72,7 +82,7 @@ namespace Ics {
 		std::string asString () const;
 
 	private:
-		std::string mOrganizer;
+		organizer_t mOrganizer;
 		attendee_list_t mAttendees;
 		tm mDateTimeStart;
 		tm mDuration;

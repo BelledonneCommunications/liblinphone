@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -198,7 +199,6 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	for (const shared_ptr<Participant> &participant : participants) {
 		int nbDevice = 0;
 		const list<shared_ptr<ParticipantDevice>> devices = participant->getDevices();
-lInfo() << __func__ << " DEBUG DEBUG core " << std::string(linphone_core_get_identity(message->getCore()->getCCore())) << " participant " << participant->getAddress() << " devices empty " << devices.empty();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
 			recipients->emplace_back(device->getAddress().asString());
 			nbDevice++;
@@ -610,17 +610,22 @@ int LimeX3dhEncryptionEngine::uploadingFile (
 	return 0;
 }
 
+int LimeX3dhEncryptionEngine::cancelFileTransfer (
+	FileTransferContent *fileTransferContent
+	) {
+	Content *content = static_cast<Content *>(fileTransferContent);
+	// calling decrypt with no data and no buffer to write the tag will simply release the encryption context and delete it
+	return bctbx_aes_gcm_decryptFile(linphone_content_get_cryptoContext_address(L_GET_C_BACK_PTR(content)), NULL, 0, NULL, NULL);
+}
+
 EncryptionEngine::EngineType LimeX3dhEncryptionEngine::getEngineType () {
 	return engineType;
 }
 
-AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const string &deviceId) const {
-	lime::PeerDeviceStatus status = limeManager->get_peerDeviceStatus(deviceId);
+namespace {
+AbstractChatRoom::SecurityLevel limeStatus2ChatRoomSecLevel(const lime::PeerDeviceStatus status) {
 	switch (status) {
 		case lime::PeerDeviceStatus::unknown:
-			if (limeManager->is_localUser(deviceId)) {
-				return AbstractChatRoom::SecurityLevel::Safe;
-			}
 			return AbstractChatRoom::SecurityLevel::Encrypted;
 		case lime::PeerDeviceStatus::untrusted:
 			return AbstractChatRoom::SecurityLevel::Encrypted;
@@ -630,6 +635,14 @@ AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (cons
 		default:
 			return AbstractChatRoom::SecurityLevel::Unsafe;
 	}
+}
+}
+
+AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const string &deviceId) const {
+	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
+}
+AbstractChatRoom::SecurityLevel LimeX3dhEncryptionEngine::getSecurityLevel (const std::list<string> &deviceId) const {
+	return limeStatus2ChatRoomSecLevel(limeManager->get_peerDeviceStatus(deviceId));
 }
 
 list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {

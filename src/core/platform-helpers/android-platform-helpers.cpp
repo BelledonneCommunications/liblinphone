@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -137,6 +138,7 @@ private:
 	jmethodID mStopRingingId = nullptr;
 
 	bool mNetworkReachable = false;
+	string mDownloadPath = "";
 };
 
 static const char *GetStringUTFChars (JNIEnv *env, jstring string) {
@@ -303,7 +305,10 @@ string AndroidPlatformHelpers::getConfigPath () const {
 }
 
 string AndroidPlatformHelpers::getDownloadPath () {
-	return Paths::getPath(Paths::Download, mSystemContext);
+	if (mDownloadPath.empty()) {
+		mDownloadPath = Paths::getPath(Paths::Download, mSystemContext);
+	}
+	return mDownloadPath;
 }
 
 string AndroidPlatformHelpers::getDataPath () const {
@@ -776,17 +781,18 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManag
 	L_GET_CPP_PTR_FROM_C_OBJECT(core)->performOnIterateThread(fun);
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_processPushNotification(JNIEnv *env, jobject thiz, jlong ptr, jstring callId, jstring payload) {
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_processPushNotification(JNIEnv *env, jobject thiz, jlong ptr, jstring callId, jstring payload, jboolean isCoreStarting) {
 	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
 	const char* c_callId = GetStringUTFChars(env, callId);
 	const char* c_payload = GetStringUTFChars(env, payload);
 	char *call_id = ms_strdup(c_callId);
 	char *push_payload = ms_strdup(c_payload);
+	bool_t is_core_starting = isCoreStarting ? TRUE : FALSE;
 	ReleaseStringUTFChars(env, callId, c_callId);
 	ReleaseStringUTFChars(env, payload, c_payload);
 	
-	const std::function<void ()> fun = [core, push_payload, call_id]() {
-		linphone_core_push_notification_received(core, push_payload, call_id);
+	const std::function<void ()> fun = [core, push_payload, call_id, is_core_starting]() {
+		linphone_core_push_notification_received_2(core, push_payload, call_id, is_core_starting);
 		ms_free(call_id);
 		ms_free(push_payload);
 	};

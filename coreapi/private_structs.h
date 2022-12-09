@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -396,25 +397,7 @@ struct _LinphoneBuffer {
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneBuffer);
 
-struct _LinphoneNatPolicy {
-	belle_sip_object_t base;
-	void *user_data;
-	LinphoneCore *lc;
-	belle_sip_resolver_context_t *stun_resolver_context;
-	belle_sip_resolver_results_t *resolver_results;
-	char *stun_server;
-	char *stun_server_username;
-	char *ref;
-	bool_t stun_enabled;
-	bool_t turn_enabled;
-	bool_t ice_enabled;
-	bool_t upnp_enabled;
-	bool_t turn_udp_enabled;
-	bool_t turn_tcp_enabled;
-	bool_t turn_tls_enabled;
-};
 
-BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneNatPolicy);
 
 struct _LinphoneImNotifPolicy {
 	belle_sip_object_t base;

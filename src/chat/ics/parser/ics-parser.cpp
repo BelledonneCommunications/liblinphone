@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -159,6 +160,10 @@ namespace Ics {
 	public:
 		EventNode () = default;
 
+		void setUtf8Summary (const string &summary) {
+			setSummary(Utils::utf8ToLocale(summary));
+		}
+		
 		void setSummary (const string &summary) {
 			mSummary = summary;
 
@@ -167,6 +172,10 @@ namespace Ics {
 			replace_all(mSummary, "\\;", ";");
 			replace_all(mSummary, "\\,", ",");
 			replace_all(mSummary, "\\\\", "\\");
+		}
+
+		void setUtf8Description (const string &description) {
+			setDescription(Utils::utf8ToLocale(description));
 		}
 
 		void setDescription (const string &description) {
@@ -201,7 +210,29 @@ namespace Ics {
 		}
 
 		void setOrganizer (const string &organizer) {
-			mOrganizer = organizer;
+			if (!organizer.empty()) {
+				Ics::Event::attendee_params_t params;
+				size_t paramStart = organizer.find("ORGANIZER");
+				// Chop off ATTENDEE
+				const auto & paramAddress = organizer.substr(paramStart+strlen("ORGANIZER"));
+				size_t addressStart = paramAddress.find(":");
+				// Split parameters and address.
+				// Parameters end at the first : sign
+				const auto & paramsStr = paramAddress.substr(0, addressStart);
+				const auto & address = paramAddress.substr(addressStart + 1, organizer.size());
+				if (!paramsStr.empty()) {
+					const auto &splittedValue = bctoolbox::Utils::split(Utils::trim(paramsStr), ";");
+					for (const auto & param : splittedValue) {
+						if (!param.empty()) {
+							auto equal = param.find("=");
+							string name = param.substr(0, equal);
+							string value = param.substr(equal + 1, param.size());
+							params.insert(std::make_pair(name, value));
+						}
+					}
+				}
+				mOrganizer = std::make_pair(address, params);
+			}
 		}
 
 		void addAttendee (const string &attendee) {
@@ -281,7 +312,7 @@ namespace Ics {
 			event->setDescription(mDescription);
 			if (mDateStart) event->setDateTimeStart(mDateStart->getDateStart());
 			if (mDuration) event->setDuration(mDuration->getDuration());
-			event->setOrganizer(mOrganizer);
+			event->setOrganizer(mOrganizer.first, mOrganizer.second);
 			event->setXConfUri(mXConfUri);
 
 			for (const auto &attendee : mAttendees) {
@@ -298,7 +329,7 @@ namespace Ics {
 		string mSummary;
 		string mDescription;
 		string mXConfUri;
-		string mOrganizer;
+		Ics::Event::organizer_t mOrganizer;
 		string mUid;
 		unsigned int mSequence = 0;
 		Ics::Event::attendee_list_t mAttendees;
@@ -371,11 +402,11 @@ Ics::Parser::Parser () : Singleton(*new ParserPrivate) {
 		->setCollector("method", belr::make_sfn(&IcalendarNode::setMethod));
 
 	d->parser->setHandler("eventc", belr::make_fn(make_shared<EventNode>))
-		->setCollector("summvalue", belr::make_sfn(&EventNode::setSummary))
-		->setCollector("descvalue", belr::make_sfn(&EventNode::setDescription))
+		->setCollector("summvalue", belr::make_sfn(&EventNode::setUtf8Summary))
+		->setCollector("descvalue", belr::make_sfn(&EventNode::setUtf8Description))
 		->setCollector("dtstval", belr::make_sfn(&EventNode::setDateStart))
 		->setCollector("dur-value", belr::make_sfn(&EventNode::setDuration))
-		->setCollector("orgvalue", belr::make_sfn(&EventNode::setOrganizer))
+		->setCollector("organizer", belr::make_sfn(&EventNode::setOrganizer))
 		->setCollector("attendee", belr::make_sfn(&EventNode::addAttendee))
 		->setCollector("uid", belr::make_sfn(&EventNode::setUid))
 		->setCollector("seq", belr::make_sfn(&EventNode::setSequence))

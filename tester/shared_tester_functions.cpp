@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -21,6 +22,7 @@
 
 #include "tester_utils.h"
 #include "call/call.h"
+#include "conference/conference-info.h"
 #include "conference/participant-device.h"
 #include "conference/session/media-session.h"
 #include "conference/params/media-session-params.h"
@@ -486,13 +488,35 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 		}
 	}
 
-	LinphoneCall *call1=linphone_core_get_current_call(mgr1->lc);
+	LinphoneCall *call1 = linphone_core_get_current_call(mgr1->lc);
+	LinphoneConference *confMgr1 = linphone_call_get_conference(call1);
+	LinphoneConference *confMgr3 = linphone_call_get_conference(linphone_core_get_current_call(mgr3->lc));
+
 	// mgr3 speaks and mgr1's video change
 	linphone_core_enable_mic(mgr1->lc, FALSE);
 	linphone_core_enable_mic(mgr2->lc, FALSE);
 	lInfo() << __func__ << ": mgr3 speaks";
 	wait_for_list(lcs, NULL, 0, 5000);
 	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+
+	// mgr1 should see mgr3 as active speaker
+	LinphoneParticipantDevice *device = linphone_conference_get_active_speaker_participant_device(confMgr1);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr1 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr3);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr3 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr1, addrMgr3));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
+
+	// mgr2 does not see any active speaker as it has no video
+	LinphoneConference *confMgr2 = linphone_call_get_conference(linphone_core_get_current_call(mgr2->lc));
+	device = linphone_conference_get_active_speaker_participant_device(confMgr2);
+	BC_ASSERT_PTR_NULL(device);
 	
 	// mgr2 speaks until mgr1's video change
 	linphone_core_enable_mic(mgr2->lc, TRUE);
@@ -502,14 +526,42 @@ void _linphone_conference_video_change(bctbx_list_t *lcs, LinphoneCoreManager *m
 	wait_for_list(lcs, NULL, 0, 5000);
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
-	
+
+	// mgr1 should see mgr2 as active speaker even though it has no video as it's speaking
+	device = linphone_conference_get_active_speaker_participant_device(confMgr1);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr1 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr2);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr2 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr1, addrMgr2));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
+
 	// mgr1 speaks and mgr1's video not change
 	lInfo() << __func__ << ": mgr1 speaks";
 	linphone_core_enable_mic(mgr2->lc, FALSE);
 	linphone_core_enable_mic(mgr1->lc, TRUE);
 	wait_for_list(lcs, NULL, 0, 5000);
-	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
+	BC_ASSERT_TRUE(linphone_call_compare_video_color(call1, c3, MediaStreamSendRecv, ""));
 	BC_ASSERT_FALSE(linphone_call_compare_video_color(call1, c1, MediaStreamSendRecv, ""));
+
+	// mgr3 should see mgr1 as active speaker
+	device = linphone_conference_get_active_speaker_participant_device(confMgr3);
+	if (BC_ASSERT_PTR_NOT_NULL(device)) {
+		const LinphoneAddress *addrMgr3 = linphone_participant_device_get_address(device);
+
+		LinphoneParticipant *participant = linphone_conference_get_me(confMgr1);
+		bctbx_list_t *devices = linphone_participant_get_devices(participant);
+		const LinphoneAddress *addrMgr1 = linphone_participant_device_get_address((LinphoneParticipantDevice *) devices->data);
+
+		BC_ASSERT_TRUE(linphone_address_equal(addrMgr3, addrMgr1));
+
+		bctbx_list_free_with_data(devices, (bctbx_list_free_func) linphone_participant_device_unref);
+	}
 }
 
 
@@ -614,4 +666,22 @@ end:
 bool_t linphone_conference_type_is_full_state(const char * text) {
 	std::string data(text);
 	return ((data.find("state=\"full\"") != std::string::npos) && (data.find("state=\"partial\"") == std::string::npos) && (data.find("state=\"deleted\"") == std::string::npos)) ? TRUE : FALSE;
+}
+
+void linphone_conference_info_check_participant(const LinphoneConferenceInfo * conference_info, LinphoneAddress * address, int sequence_number) {
+	const auto & sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getParticipantParam(*L_GET_CPP_PTR_FROM_C_OBJECT(address), "X-SEQ");
+	BC_ASSERT_TRUE(!sequence.empty());
+	if (!sequence.empty()) {
+		const int sequenceNumber = std::atoi(sequence.c_str());
+		BC_ASSERT_EQUAL(sequenceNumber, sequence_number, int, "%d");
+	}
+}
+
+void linphone_conference_info_check_organizer(const LinphoneConferenceInfo * conference_info, int sequence_number) {
+	const auto & sequence = LinphonePrivate::ConferenceInfo::toCpp(conference_info)->getOrganizerParam("X-SEQ");
+	BC_ASSERT_TRUE(!sequence.empty());
+	if (!sequence.empty()) {
+		const int sequenceNumber = std::atoi(sequence.c_str());
+		BC_ASSERT_EQUAL(sequenceNumber, sequence_number, int, "%d");
+	}
 }

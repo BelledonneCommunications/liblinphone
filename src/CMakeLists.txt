@@ -1,23 +1,24 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2010-2021 Belledonne Communications, Grenoble France
+# Copyright (c) 2010-2022 Belledonne Communications SARL.
 #
 ############################################################################
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This file is part of Liblinphone 
+# (see https://gitlab.linphone.org/BC/public/liblinphone).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
 set(LINK_LIBS
@@ -250,6 +251,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	logger/logger.h
 	nat/ice-service.h
 	nat/stun-client.h
+	nat/nat-policy.h
 	object/app-data-container.h
 	object/base-object-p.h
 	object/base-object.h
@@ -385,6 +387,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-recorder-params.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/api/c-video-source-descriptor.cpp
+	c-wrapper/api/c-nat-policy.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
 	call/call-log.cpp
@@ -480,6 +483,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	logger/logger.cpp
 	nat/ice-service.cpp
 	nat/stun-client.cpp
+	nat/nat-policy.cpp
 	object/app-data-container.cpp
 	object/base-object.cpp
 	object/clonable-object.cpp
@@ -664,21 +668,15 @@ if(ENABLE_STATIC)
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
 endif()
+
 if(ENABLE_SHARED)
 	set(SWIFT_MODULE_FILES
 		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/module.modulemap"
 		"${PROJECT_SOURCE_DIR}/wrappers/swift/Modules/swift-umbrella.h"
 	)
-	set(LINPHONE_RESOURCES
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ics_grammar"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
-		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
-	) # Keep it relative to current dir to allow CMakeList inclusion
-
+	set(LINPHONE_RESOURCES ${GRAMMAR_FILES} ${SOUND_FILES} ${RING_FILES} ${ROOTCA_FILE})
+	
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
-
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
@@ -766,7 +764,6 @@ if(ENABLE_SHARED)
 		FRAMEWORK DESTINATION Frameworks
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
-
 endif()
 
 if(ICONV_FOUND)
@@ -785,5 +782,36 @@ if(ICONV_FOUND)
 		if(ENABLE_SHARED)
 			target_include_directories(linphone PRIVATE ${ICONV_INCLUDE_DIRS})
 		endif()
+	endif()
+endif()
+
+if(ROOTCA_FILE)
+	install(FILES ${ROOTCA_FILE}
+		DESTINATION "${CMAKE_INSTALL_DATADIR}/linphone"
+		PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+	)
+else()
+	message(FATAL_ERROR "Rootca is missing and cannot be installed")
+endif()
+
+if(NOT APPLE OR IOS)
+	if(GRAMMAR_FILES)
+		install(FILES ${GRAMMAR_FILES}
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/belr/grammars"
+			PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+		)
+	endif()
+	if(ENABLE_ASSETS AND SOUND_FILES)
+		install(FILES ${SOUND_FILES}
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/sounds/linphone"
+			PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+		)
+	endif()
+
+	if(RING_FILES)
+		install(FILES ${RING_FILES}
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/sounds/linphone/rings"
+			PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+		)
 	endif()
 endif()

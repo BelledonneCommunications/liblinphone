@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -789,28 +790,28 @@ typedef enum _LinphoneZrtpPeerStatus {
  * @ingroup media_parameters
  **/
 typedef enum _LinphoneZrtpKeyAgreement {
-LinphoneZrtpKeyAgreementInvalid = 0,
-LinphoneZrtpKeyAgreementDh2k = 1,
-LinphoneZrtpKeyAgreementDh3k = 2,
-LinphoneZrtpKeyAgreementEc25 = 3,
-LinphoneZrtpKeyAgreementEc38 = 4,
-LinphoneZrtpKeyAgreementEc52 = 5,
-LinphoneZrtpKeyAgreementX255 = 6,
-LinphoneZrtpKeyAgreementX448 = 7,
-LinphoneZrtpKeyAgreementK255 = 8,
-LinphoneZrtpKeyAgreementK448 = 9,
-LinphoneZrtpKeyAgreementKyb1 = 10,
-LinphoneZrtpKeyAgreementKyb2 = 11,
-LinphoneZrtpKeyAgreementKyb3 = 12,
-LinphoneZrtpKeyAgreementHqc1 = 13,
-LinphoneZrtpKeyAgreementHqc2 = 14,
-LinphoneZrtpKeyAgreementHqc3 = 15,
-LinphoneZrtpKeyAgreementK255Kyb512 = 16,
-LinphoneZrtpKeyAgreementK255Hqc128 = 17,
-LinphoneZrtpKeyAgreementK448Kyb1024 = 18,
-LinphoneZrtpKeyAgreementK448Hqc256 = 19,
-LinphoneZrtpKeyAgreementK255Kyb512Hqc128 = 20,
-LinphoneZrtpKeyAgreementK448Kyb1024Hqc256 = 21
+	LinphoneZrtpKeyAgreementInvalid = 0,
+	LinphoneZrtpKeyAgreementDh2k = 1,
+	LinphoneZrtpKeyAgreementDh3k = 2,
+	LinphoneZrtpKeyAgreementEc25 = 3,
+	LinphoneZrtpKeyAgreementEc38 = 4,
+	LinphoneZrtpKeyAgreementEc52 = 5,
+	LinphoneZrtpKeyAgreementX255 = 6,
+	LinphoneZrtpKeyAgreementX448 = 7,
+	LinphoneZrtpKeyAgreementK255 = 8,
+	LinphoneZrtpKeyAgreementK448 = 9,
+	LinphoneZrtpKeyAgreementKyb1 = 10,
+	LinphoneZrtpKeyAgreementKyb2 = 11,
+	LinphoneZrtpKeyAgreementKyb3 = 12,
+	LinphoneZrtpKeyAgreementHqc1 = 13,
+	LinphoneZrtpKeyAgreementHqc2 = 14,
+	LinphoneZrtpKeyAgreementHqc3 = 15,
+	LinphoneZrtpKeyAgreementK255Kyb512 = 16,
+	LinphoneZrtpKeyAgreementK255Hqc128 = 17,
+	LinphoneZrtpKeyAgreementK448Kyb1024 = 18,
+	LinphoneZrtpKeyAgreementK448Hqc256 = 19,
+	LinphoneZrtpKeyAgreementK255Kyb512Hqc128 = 20,
+	LinphoneZrtpKeyAgreementK448Kyb1024Hqc256 = 21
 } LinphoneZrtpKeyAgreement;
 
 /**
@@ -1373,6 +1374,7 @@ typedef enum _LinphoneMagicSearchSource {
 	LinphoneMagicSearchSourceLdapServers = 1 << 2, /**< Search in LDAP servers */
 	LinphoneMagicSearchSourceChatRooms = 1 << 3, /**< Search in Chat rooms participants */
 	LinphoneMagicSearchSourceRequest = 1 << 4, /**< Search from request : it is usually an address built from the request */
+	LinphoneMagicSearchSourceFavoriteFriends = 1 << 5, /**< Search in "starred" friends only */
 	LinphoneMagicSearchSourceAll = -1 /**< Search in all sources */
 } LinphoneMagicSearchSource;
 

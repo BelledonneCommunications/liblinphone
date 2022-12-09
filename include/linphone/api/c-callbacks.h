@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -593,7 +594,6 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceIsMutedCb) (LinphoneConfere
  */
 typedef void (*LinphoneConferenceCbsAudioDeviceChangedCb) (LinphoneConference *conference, const  LinphoneAudioDevice *audio_device);
 
-
 /**
  * Callback used to notify a conference that a participant has been added.
  * @param[in] conference #LinphoneConference object @notnil
@@ -607,6 +607,13 @@ typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConferenc
  * @param[in] participant_device #LinphoneParticipantDevice that has been removed to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Callback used to notify which participant device video is being displayed as "actively speaking".
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device the participant device currently displayed as active speaker @notnil
+ */
+typedef void (*LinphoneConferenceCbsActiveSpeakerParticipantDeviceCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
  * Callback used to notify that is this participant device speaking has changed.

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -84,7 +85,6 @@ void CallSessionPrivate::restorePreviousState(){
 
 void CallSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
-
 	// Keep a ref on the CallSession, otherwise it might get destroyed before the end of the method
 	shared_ptr<CallSession> ref = q->getSharedFromThis();
 	if (state != newState){
@@ -874,6 +874,9 @@ LinphoneStatus CallSessionPrivate::startUpdate (const CallSession::UpdateMethod 
 	} else {
 		op->setContactAddress(nullptr);
 	}
+	
+	// Update custom headers
+	op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
 
 	if (contactAddressStr) {
 		Address contactAddress(contactAddressStr);
@@ -926,7 +929,6 @@ void CallSessionPrivate::setBroken () {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::IncomingReceived:
-		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			// During the early states, the SAL layer reports the failure from the dialog or transaction layer,
 			// hence, there is nothing special to do
@@ -1043,8 +1045,6 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 	} else if (destProxy){
 		const LinphoneAddress *addr = NULL;
 		if (linphone_proxy_config_get_contact(destProxy)) {
-			addr = linphone_proxy_config_get_contact(destProxy);
-		} else if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
 			addr = linphone_proxy_config_get_contact(destProxy);
 		} else {
 			lError() << "Unable to retrieve contact address from proxy confguration for call session " << this << " (local address " << q->getLocalAddress().asString() << " remote address " <<  (q->getRemoteAddress() ? q->getRemoteAddress()->asString() : "Unknown") << ").";
@@ -1409,7 +1409,7 @@ bool CallSession::initiateOutgoing (const string &subject, const Content *conten
 void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	L_D();
 	int elapsed = (int)(currentRealTime - d->log->getStartTime());
-	if ((d->state == CallSession::State::OutgoingInit) && (elapsed > getCore()->getCCore()->sip_conf.delayed_timeout)) {
+	if ((d->state == CallSession::State::OutgoingInit) && (elapsed > getCore()->getCCore()->sip_conf.delayed_timeout) && (d->pingOp != nullptr)) {
 		/* Start the call even if the OPTIONS reply did not arrive */
 		startInvite(nullptr, "");
 	}
@@ -1669,11 +1669,12 @@ shared_ptr<CallLog> CallSession::getLog () const {
 Address CallSession::getContactAddress() const {
 	L_D();
 	const auto op = d->getOp();
+	const auto destProxy = d->getDestProxy();
 	char * contactAddressStr = NULL;
 	if (op->getContactAddress()) {
 		contactAddressStr = sal_address_as_string(op->getContactAddress());
-	} else if (d->getDestProxy() && linphone_core_conference_server_enabled(getCore()->getCCore()) && linphone_proxy_config_get_contact(d->getDestProxy())) {
-		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(d->getDestProxy()));
+	} else if (linphone_core_conference_server_enabled(getCore()->getCCore()) && destProxy && linphone_proxy_config_get_contact(destProxy)) {
+		contactAddressStr = linphone_address_as_string(linphone_proxy_config_get_contact(destProxy));
 	} else {
 		lError() << "Unable to retrieve contact address from proxy confguration for call session " << this << " (local address " << getLocalAddress().asString() << " remote address " <<  (getRemoteAddress() ? getRemoteAddress()->asString() : "Unknown") << ").";
 	}
@@ -1916,7 +1917,7 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 		if (mainDb && (guessedConferenceAddress != ConferenceAddress()))  {
 			const auto & confInfo = mainDb->getConferenceInfoFromURI(guessedConferenceAddress);
 			if (confInfo) {
-				organizer = confInfo->getOrganizer();
+				organizer = confInfo->getOrganizerAddress();
 			}
 		}
 		#endif

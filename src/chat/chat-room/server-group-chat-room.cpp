@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -418,7 +419,7 @@ void ServerGroupChatRoomPrivate::handleSubjectChange(SalCallOp *op){
 	if (sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
 		// Handle subject change
 		lInfo() << q << ": New subject \"" << op->getSubject() << "\"";
-		q->setSubject(op->getSubject());
+		q->setUtf8Subject(op->getSubject());
 	}
 }
 
@@ -959,7 +960,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	content.setContentDisposition(ContentDisposition::RecipientListHistory);
 	if (linphone_core_content_encoding_supported(q->getCore()->getCCore(), "deflate"))
 		content.setContentEncoding("deflate");
-	session->startInvite(nullptr, q->getSubject(), &content);
+	session->startInvite(nullptr, q->getUtf8Subject(), &content);
 }
 
 void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDevice> &device) {
@@ -970,7 +971,7 @@ void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDev
 	shared_ptr<CallSession> session = makeSession(device);
 	switch(session->getState()){
 		case CallSession::State::OutgoingInit:
-			session->startInvite(nullptr, q->getSubject(), nullptr);
+			session->startInvite(nullptr, q->getUtf8Subject(), nullptr);
 		break;
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning:
@@ -1209,10 +1210,22 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 				byeDevice(device);
 		break;
 		case CallSession::State::End:
-			if (device->getState() == ParticipantDevice::State::Present){
-				lInfo() << q << ": "<< device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
-				onBye(device);
+		{
+			const auto errorInfo = session->getErrorInfo();
+
+			if (errorInfo != nullptr && linphone_error_info_get_protocol_code(errorInfo) > 299) {
+				if (device->getState() == ParticipantDevice::State::Joining || device->getState() == ParticipantDevice::State::Present) {
+					lWarning() << q << ": Received a BYE from " << device->getParticipant()->getAddress().asString() << " with reason "
+						<< linphone_error_info_get_protocol_code(errorInfo) << ", setting it back to ScheduledForJoining.";
+					setParticipantDeviceState(device, ParticipantDevice::State::ScheduledForJoining);
+				}
+			} else {
+				if (device->getState() == ParticipantDevice::State::Present){
+					lInfo() << q << ": "<< device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
+					onBye(device);
+				}
 			}
+		}
 		break;
 		case CallSession::State::Released:
 			/* Handle the case of participant we've send a BYE. */
@@ -1264,7 +1277,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 
-	getConference()->setSubject(op->getSubject());
+	getConference()->setUtf8Subject(op->getSubject());
 
 	getConference()->setConferenceId(ConferenceId());
 
@@ -1313,7 +1326,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));
 	getConference()->confParams->setConferenceAddress(peerAddress);
-	getConference()->confParams->setSubject(subject);
+	getConference()->confParams->setUtf8Subject(subject);
 	getConference()->confParams->enableChat(true);
 	getCore()->getPrivate()->localListEventHandler->addHandler(static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
 	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
@@ -1469,7 +1482,7 @@ const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () con
 	return getConference()->getParticipants();
 }
 
-const string &ServerGroupChatRoom::getSubject () const {
+const string & ServerGroupChatRoom::getSubject () const {
 	return getConference()->getSubject();
 }
 
@@ -1511,7 +1524,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 void ServerGroupChatRoom::setSubject (const string &subject) {
 	if (subject != getSubject()) {
 		getConference()->setSubject(subject);
-		shared_ptr<ConferenceSubjectEvent> event = getConference()->notifySubjectChanged(time(nullptr), false, getSubject());
+		shared_ptr<ConferenceSubjectEvent> event = getConference()->notifySubjectChanged(time(nullptr), false, getUtf8Subject());
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }

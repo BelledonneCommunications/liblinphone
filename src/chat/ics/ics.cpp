@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2021 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -31,12 +32,21 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-const std::string &Ics::Event::getOrganizer () const {
+const Ics::Event::organizer_t &Ics::Event::getOrganizer () const {
 	return mOrganizer;
 }
 
+const std::string &Ics::Event::getOrganizerAddress () const {
+	return getOrganizer().first;
+}
+
 void Ics::Event::setOrganizer (const std::string &organizer) {
-	mOrganizer = organizer;
+	Ics::Event::attendee_params_t params;
+	setOrganizer(organizer, params);
+}
+
+void Ics::Event::setOrganizer (const std::string &organizer, const attendee_params_t & params) {
+	mOrganizer = std::make_pair(organizer, params);
 }
 
 const Ics::Event::attendee_list_t &Ics::Event::getAttendees () const {
@@ -68,8 +78,17 @@ void Ics::Event::setDuration (tm duration) {
 	mDuration = duration;
 }
 
+const std::string Ics::Event::getUtf8Summary () const {
+	return Utils::localeToUtf8(mSummary);
+}
+
+
 const std::string &Ics::Event::getSummary () const {
 	return mSummary;
+}
+
+void Ics::Event::setUtf8Summary (const std::string &summary) {
+	mSummary = Utils::trim(Utils::utf8ToLocale(summary));
 }
 
 void Ics::Event::setSummary (const std::string &summary) {
@@ -84,16 +103,32 @@ void Ics::Event::setSequence (unsigned int sequence) {
 	mSequence = sequence;
 }
 
+const std::string Ics::Event::getUtf8Uid () const {
+	return Utils::localeToUtf8(mUid);
+}
+
 const std::string &Ics::Event::getUid () const {
 	return mUid;
+}
+
+void Ics::Event::setUtf8Uid (const std::string &uid) {
+	mUid = Utils::trim(Utils::utf8ToLocale(uid));
 }
 
 void Ics::Event::setUid (const std::string &uid) {
 	mUid = Utils::trim(uid);
 }
 
+const std::string Ics::Event::getUtf8Description () const {
+	return Utils::localeToUtf8(mDescription);
+}
+
 const std::string &Ics::Event::getDescription () const {
 	return mDescription;
+}
+
+void Ics::Event::setUtf8Description (const std::string &description) {
+	mDescription = Utils::trim(Utils::utf8ToLocale(description));
 }
 
 void Ics::Event::setDescription (const std::string &description) {
@@ -147,7 +182,16 @@ std::string Ics::Event::asString () const {
 		output << "\r\n";
 	}
 
-	if (!mOrganizer.empty()) output << "ORGANIZER:" << mOrganizer << "\r\n";
+	const auto & organizerAddress = getOrganizerAddress();
+	if (!organizerAddress.empty()) {
+		output << "ORGANIZER";
+		const auto & params = mOrganizer.second;
+		for (const auto &param : params) {
+			output << ";" << param.first << "=" << param.second;
+		}
+		output << ":" << organizerAddress;
+		output << "\r\n";
+	}
 	if (!mAttendees.empty()) {
 		for (const auto &attendee : mAttendees) {
 			output << "ATTENDEE";
@@ -161,8 +205,8 @@ std::string Ics::Event::asString () const {
 		}
 	}
 	if (!mXConfUri.empty()) output << "X-CONFURI:" << mXConfUri << "\r\n";
-	if (!mSummary.empty()) output << "SUMMARY:" << escape(mSummary) << "\r\n";
-	if (!mDescription.empty()) output << "DESCRIPTION:" << escape(mDescription) << "\r\n";
+	if (!mSummary.empty()) output << "SUMMARY:" << Utils::localeToUtf8(escape(mSummary)) << "\r\n";
+	if (!mDescription.empty()) output << "DESCRIPTION:" << Utils::localeToUtf8(escape(mDescription)) << "\r\n";
 	if (mSequence != 0) output << "SEQUENCE:" << mSequence << "\r\n";
 
 	// An EVENT needs two mandatory attributes DTSTAMP AND UID
@@ -193,8 +237,8 @@ std::string Ics::Event::asString () const {
 			<< "Z";
 
 		size_t p;
-		if (!mOrganizer.empty() && (p = mOrganizer.find("@")) != string::npos) {
-			string domain = mOrganizer.substr(p + 1, mOrganizer.size());
+		if (!organizerAddress.empty() && (p = organizerAddress.find("@")) != string::npos) {
+			string domain = organizerAddress.substr(p + 1, organizerAddress.size());
 			uid << "@" << domain;
 		} else {
 			uid << "@domain.invalid";
@@ -253,12 +297,14 @@ std::shared_ptr<ConferenceInfo> Ics::Icalendar::toConferenceInfo () const {
 	auto confInfo = ConferenceInfo::create();
 	const auto &event = mEvents.front(); // It should always be one event
 
-	if (!event->getOrganizer().empty()) {
-		const auto & org = IdentityAddress(event->getOrganizer());
-		if (org.isValid()) {
-			confInfo->setOrganizer(org);
+	if (!event->getOrganizerAddress().empty()) {
+		const auto & org = event->getOrganizer();
+		const auto & orgAddress = IdentityAddress(org.first);
+		const auto & orgParams = org.second;
+		if (orgAddress.isValid()) {
+			confInfo->setOrganizer(orgAddress, orgParams);
 		} else {
-			lWarning() << "Could not parse organizer's address:" << event->getOrganizer() << " because it is not a valid address";
+			lWarning() << "Could not parse organizer's address:" << event->getOrganizerAddress() << " because it is not a valid address";
 		}
 	}
 

@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -524,7 +525,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 		const auto sipfrag = op->getContentInRemote(ContentType::SipFrag);
 		const auto resourceList = op->getContentInRemote(ContentType::ResourceLists);
 		if (conferenceInfo) {
-			confParams->setSubject(conferenceInfo->getSubject());
+			confParams->setUtf8Subject(conferenceInfo->getUtf8Subject());
 			auto startTime = conferenceInfo->getDateTime();
 			confParams->setStartTime(startTime);
 			auto duration = conferenceInfo->getDuration();
@@ -533,7 +534,7 @@ void Call::createRemoteConference(const shared_ptr<CallSession> &session) {
 				time_t endTime = startTime + static_cast<time_t>(duration) * 60;
 				confParams->setEndTime(endTime);
 			}
-			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizer()};
+			std::list<IdentityAddress> invitees {conferenceInfo->getOrganizerAddress()};
 			for (const auto & participant : conferenceInfo->getParticipants()) {
 				invitees.push_back(participant.first);
 			}
@@ -1118,7 +1119,11 @@ const Address *Call::getRemoteAddress () const {
 	return getActiveSession()->getRemoteAddress();
 }
 
-const string &Call::getRemoteContact () {
+const Address *Call::getRemoteContactAddress () const {
+	return getActiveSession()->getRemoteContactAddress();
+}
+
+const string &Call::getRemoteContact () const {
 	return getActiveSession()->getRemoteContact();
 }
 

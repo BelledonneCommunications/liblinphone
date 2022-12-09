@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -249,7 +250,18 @@ LinphoneStatus ToneManager::playFile(const char *audiofile) {
 	int loopms = -1;
 	if (!f) return -1;
 	ms_filter_call_method(f, MS_PLAYER_SET_LOOP, &loopms);
-	if (ms_filter_call_method(f, MS_PLAYER_OPEN, (void*) audiofile) != 0) {
+	const char * audiofileToUse = audiofile;
+	std::string fileString;// Declare here for the scope of audiofileToUse
+	
+	if(bctbx_file_exist(audiofile) != 0){// This file doesn't exist. Check it from Platform resource.
+		char * basename = bctbx_basename(audiofile);
+		fileString = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(basename);
+		bctbx_free(basename);
+		if(fileString != "")
+			audiofileToUse = fileString.c_str();
+	}
+	
+	if (ms_filter_call_method(f, MS_PLAYER_OPEN, (void*)audiofileToUse ) != 0) {
 		return -1;
 	}
 	ms_filter_call_method_noarg(f, MS_PLAYER_START);

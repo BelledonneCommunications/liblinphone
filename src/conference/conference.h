@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -74,6 +75,7 @@ public:
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const IdentityAddress &pAddr, const IdentityAddress &dAddr) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDeviceByLabel (const std::string &label) const;
+	std::shared_ptr<ParticipantDevice> getActiveSpeakerParticipantDevice() const;
 
 	virtual const std::shared_ptr<CallSession> getMainSession() const;
 
@@ -94,6 +96,7 @@ public:
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
 	virtual const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
 	const std::string &getSubject () const override;
+	const std::string getUtf8Subject () const override;
 	void join (const IdentityAddress &participantAddress) override;
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
@@ -109,6 +112,7 @@ public:
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
+	void setUtf8Subject (const std::string &subject) override;
 
 	const std::string &getUsername () const;
 	void setUsername (const std::string &username);
@@ -150,6 +154,7 @@ public:
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);
+	virtual void notifyActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &participantDevice);
 
 	LinphonePrivate::ConferenceInterface::State getState() const override {return state;}
 	virtual void setState(LinphonePrivate::ConferenceInterface::State state) override;
@@ -177,6 +182,7 @@ protected:
 
 	std::shared_ptr<Participant> activeParticipant;
 	std::shared_ptr<Participant> me;
+	std::shared_ptr<ParticipantDevice> activeSpeakerDevice = nullptr;
 
 	std::list<std::shared_ptr<ConferenceListenerInterface>> confListeners;
 

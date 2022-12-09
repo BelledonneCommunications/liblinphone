@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -153,11 +154,18 @@ LINPHONE_PUBLIC LinphoneMediaDirection linphone_participant_device_get_stream_ca
 LINPHONE_PUBLIC bool_t linphone_participant_device_get_stream_availability(const LinphoneParticipantDevice *participant_device, const LinphoneStreamType stream_type);
 
 /**
- * Get the SSRC of the device.
+ * Get the audio stream SSRC of the device.
  * @param participant A #LinphoneParticipantDevice object @notnil
- * @return the SSRC of the device
+ * @return the audio stream SSRC of the device
  */
-LINPHONE_PUBLIC uint32_t linphone_participant_device_get_ssrc(const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC uint32_t linphone_participant_device_get_audio_ssrc(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the video stream SSRC of the device.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return the video stream SSRC of the device
+ */
+LINPHONE_PUBLIC uint32_t linphone_participant_device_get_video_ssrc(const LinphoneParticipantDevice *participant_device);
 	
 /**
  * Add a listener in order to be notified of #LinphoneParticipantDevice events. Once an event is received, registred #LinphoneParticipantDeviceCbs are
@@ -201,6 +209,13 @@ LINPHONE_PUBLIC void * linphone_participant_device_get_native_video_window_id(co
  * @return the window ID of the device @maybenil
  */
 LINPHONE_PUBLIC void * linphone_participant_device_create_native_video_window_id(const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Return whether the participant device is speaking or not.
+ * @param participant_device The #LinphoneParticipantDeviceCbs object @notnil
+ * @return TRUE if the participant device is speaking, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_participant_device_get_is_speaking (const LinphoneParticipantDevice *participant_device);
 
 /**
  * Return whether the participant device is muted or not.

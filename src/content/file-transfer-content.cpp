@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -24,6 +25,7 @@
 #include "content-p.h"
 #include "file-transfer-content.h"
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/charconv.h"
 
 #include <algorithm>
 
@@ -62,9 +64,9 @@ FileTransferContent::FileTransferContent () : Content(*new FileTransferContentPr
 FileTransferContent::FileTransferContent (const FileTransferContent &other) : Content(*new FileTransferContentPrivate) {
 	L_D();
 	Content::copy(other);
-	d->fileName = other.getFileName();
+	setFileName(other.getFileName());
+	setFilePath(other.getFilePath());
 	d->fileUrl = other.getFileUrl();
-	d->filePath = other.getFilePath();
 	d->fileContent = other.getFileContent();
 	d->fileSize = other.getFileSize();
 	d->fileKey = other.getFileKey();
@@ -91,9 +93,9 @@ FileTransferContent &FileTransferContent::operator= (const FileTransferContent &
 	L_D();
 	if (this != &other) {
 		Content::operator=(other);
-		d->fileName = other.getFileName();
+		setFileName(other.getFileName());
+		setFilePath(other.getFilePath());
 		d->fileUrl = other.getFileUrl();
-		d->filePath = other.getFilePath();
 		d->fileContent = other.getFileContent();
 		d->fileSize = other.getFileSize();
 		d->fileKey = other.getFileKey();
@@ -124,9 +126,9 @@ FileTransferContent &FileTransferContent::operator= (FileTransferContent &&other
 bool FileTransferContent::operator== (const FileTransferContent &other) const {
 	L_D();
 	return Content::operator==(other) &&
-		d->fileName == other.getFileName() &&
+		getFileName() == other.getFileName() &&
 		d->fileUrl == other.getFileUrl() &&
-		d->filePath == other.getFilePath() &&
+		getFilePath() == other.getFilePath() &&
 		d->fileSize == other.getFileSize() &&
 		d->fileContentType == other.getFileContentType() &&
 		d->fileDuration == other.getFileDuration();
@@ -134,13 +136,28 @@ bool FileTransferContent::operator== (const FileTransferContent &other) const {
 
 void FileTransferContent::setFileName (const string &name) {
 	L_D();
-
 	d->fileName = Utils::normalizeFilename(name);
 }
 
 const string &FileTransferContent::getFileName () const {
 	L_D();
 	return d->fileName;
+}
+
+void FileTransferContent::setFileNameSys (const string &name) {
+	setFileName(Utils::convert(name, "", bctbx_get_default_encoding()));
+}
+
+string FileTransferContent::getFileNameSys () const {
+	return Utils::convert(getFileName(), bctbx_get_default_encoding(), "");
+}
+
+void FileTransferContent::setFileNameUtf8 (const string &name) {
+	setFileName(Utils::utf8ToLocale(name));
+}
+
+string FileTransferContent::getFileNameUtf8 () const {
+	return Utils::localeToUtf8(getFileName());
 }
 
 void FileTransferContent::setFileUrl (const string &url) {
@@ -161,6 +178,22 @@ void FileTransferContent::setFilePath (const string &path) {
 const string &FileTransferContent::getFilePath () const {
 	L_D();
 	return d->filePath;
+}
+
+void FileTransferContent::setFilePathSys (const string &path) {
+	setFilePath(Utils::convert(path, "", bctbx_get_default_encoding()));
+}
+
+string FileTransferContent::getFilePathSys () const {
+	return Utils::convert(getFilePath(), bctbx_get_default_encoding(), "");
+}
+
+void FileTransferContent::setFilePathUtf8 (const string &path) {
+	setFilePath(Utils::utf8ToLocale(path));
+}
+
+string FileTransferContent::getFilePathUtf8 () const {
+	return Utils::localeToUtf8(getFilePath());
 }
 
 void FileTransferContent::setFileContent (FileContent *content) {
@@ -242,13 +275,11 @@ bool FileTransferContent::isFileTransfer () const {
 }
 
 bool FileTransferContent::isEncrypted () const {
-	L_D();
-	return isFileEncrypted(d->filePath);
+	return isFileEncrypted(getFilePathSys());
 }
 
 const string FileTransferContent::exportPlainFile() const {
-	L_D();
-	return exportPlainFileFromEncryptedFile(d->filePath);
+	return Utils::convert( exportPlainFileFromEncryptedFile(getFilePathSys()), "", bctbx_get_default_encoding());
 }
 
 LINPHONE_END_NAMESPACE

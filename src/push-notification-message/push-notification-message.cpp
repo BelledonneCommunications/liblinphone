@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -26,15 +27,17 @@ LINPHONE_BEGIN_NAMESPACE
 PushNotificationMessage::PushNotificationMessage(const std::string &callId, bool isText,
 												 const std::string &textContent, const std::string &subject,
 												 const std::string &fromAddr, const std::string &localAddr,
-												 const std::string &peerAddr, bool isIcalendar) {
+												 const std::string &peerAddr, bool isIcalendar,
+												 bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation) {
 	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr,
-								  peerAddr, isIcalendar);
+								  peerAddr, isIcalendar, isConferenceInvitationNew, isConferenceInvitationUpdate, isConferenceInvitationCancellation);
 }
 
 void PushNotificationMessage::init(const std::string &callId, bool isText,
 								   const std::string &textContent, const std::string &subject,
 								   const std::string &fromAddr, const std::string &localAddr,
-								   const std::string &peerAddr, bool isIcalendar) {
+								   const std::string &peerAddr, bool isIcalendar,
+								   bool isConferenceInvitationNew, bool isConferenceInvitationUpdate, bool isConferenceInvitationCancellation) {
 	mCallId = callId;
 	mIsText = isText;
 	mTextContent = textContent;
@@ -43,6 +46,9 @@ void PushNotificationMessage::init(const std::string &callId, bool isText,
 	mLocalAddr = localAddr;
 	mPeerAddr = peerAddr;
 	mIsIcalendar = isIcalendar;
+	mIsConferenceInvitationNew = isConferenceInvitationNew;
+	mIsConferenceInvitationUpdate = isConferenceInvitationUpdate;
+	mIsConferenceInvitationCancellation = isConferenceInvitationCancellation;
 }
 
 const std::string &PushNotificationMessage::getCallId() const {
@@ -76,6 +82,18 @@ bool PushNotificationMessage::isIcalendar() const {
 	return mIsIcalendar;
 }
 
+bool PushNotificationMessage::isConferenceInvitationNew() const {
+	return mIsConferenceInvitationNew;
+}
+
+bool PushNotificationMessage::isConferenceInvitationUpdate() const {
+	return mIsConferenceInvitationUpdate;
+}
+
+bool PushNotificationMessage::isConferenceInvitationCancellation() const {
+	return mIsConferenceInvitationCancellation;
+}
+
 std::string PushNotificationMessage::toString() const {
 	std::ostringstream ss;
 
@@ -87,6 +105,8 @@ std::string PushNotificationMessage::toString() const {
 	ss << "localAddr[" << mLocalAddr << "] ";
 	ss << "peerAddr[" << mPeerAddr << "] ";
 	ss << "isIcalendar[" << mIsIcalendar << "] ";
+	ss << "isConferenceInvitationUpdate[" << mIsConferenceInvitationUpdate << "] ";
+	ss << "isConferenceInvitationCancellation[" << mIsConferenceInvitationCancellation << "] ";
 
 	return ss.str();
 }

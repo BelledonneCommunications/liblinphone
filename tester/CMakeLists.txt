@@ -1,23 +1,24 @@
 ############################################################################
 # CMakeLists.txt
-# Copyright (C) 2014  Belledonne Communications, Grenoble France
+# Copyright (c) 2010-2022 Belledonne Communications SARL.
 #
 ############################################################################
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# This file is part of Liblinphone 
+# (see https://gitlab.linphone.org/BC/public/liblinphone).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Affero General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
 ############################################################################
 
 set(OTHER_LIBS_FOR_TESTER
@@ -58,6 +59,10 @@ endif()
 
 if(TURBOJPEG_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${TURBOJPEG_LIBRARIES})
+endif()
+
+if(ENABLE_CXX_WRAPPER)
+	list(APPEND OTHER_LIBS_FOR_TESTER linphone++)
 endif()
 
 set(SOUND_FILES
@@ -183,6 +188,7 @@ set(RC_FILES
 	rcfiles/marie_well_known_port_rc
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
+	rcfiles/michelle_lime_x3dh_rc
 	rcfiles/multi_account_rc
 	rcfiles/multi_account_lime_x3dh_rc
 	rcfiles/pauline_alt_rc
@@ -332,6 +338,10 @@ endif()
 
 if(ENABLE_DB_STORAGE)
 	list(APPEND SOURCE_FILES_CXX main-db-tester.cpp)
+endif()
+
+if(ENABLE_CXX_WRAPPER)
+	list(APPEND SOURCE_FILES_CXX wrapper_cpp_tester.cpp)
 endif()
 
 set(HEADER_FILES

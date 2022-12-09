@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -80,7 +81,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	const auto & core = conf->getCore();
 	auto chatRoom = core->findChatRoom(getConferenceId());
 
-	IdentityAddress entityAddress(confInfo->getEntity().c_str());
+	ConferenceAddress entityAddress(confInfo->getEntity());
 
 	if (entityAddress != getConferenceId().getPeerAddress()) {
 		lError() << "Unable to process received NOTIFY because the entity address " << entityAddress << " doesn't match the peer address " << getConferenceId().getPeerAddress();
@@ -137,9 +138,10 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 	if (confDescription.present()) {
 		auto &subject = confDescription.get().getSubject();
 		if (subject.present() && !subject.get().empty()) {
-			if (conf->getSubject() != subject.get()) {
-				conf->Conference::setSubject(subject.get());
+			if (conf->getUtf8Subject() != subject.get()) {
+				conf->Conference::setSubject(Utils::utf8ToLocale(subject.get()));
 				if (!isFullState) {
+					// Subject must be stored in the system locale
 					conf->notifySubjectChanged(
 						creationTime,
 						isFullState,
@@ -425,7 +427,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 							if (media.getSrcId()) {
 								const std::string srcId = media.getSrcId().get();
 								unsigned long ssrc = std::stoul(srcId);
-								device->setSsrc((uint32_t) ssrc);
+								device->setAudioSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("video") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
@@ -434,6 +436,11 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 								if (!label.empty()) {
 									device->setLabel(label);
 								}
+							}
+							if (media.getSrcId()) {
+								const std::string srcId = media.getSrcId().get();
+								unsigned long ssrc = std::stoul(srcId);
+								device->setVideoSsrc((uint32_t) ssrc);
 							}
 						} else if (mediaType.compare("text") == 0) {
 							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);
@@ -575,7 +582,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 
 	if (isFullState) {
 		auto currentParticipants = conf->getParticipants();
-		// Send participant and participant device removed notifys if the full state has less participants than the current chat room
+		// Send participant and participant device removed notifys if the full state has less participants than the current chat room or conference
 		for (const auto & p : oldParticipants) {
 			const auto & pIt = std::find_if(currentParticipants.cbegin(), currentParticipants.cend(), [&p] (const auto & currentParticipant) {
 				return (p->getAddress() == currentParticipant->getAddress());
@@ -688,8 +695,11 @@ void RemoteConferenceEventHandler::unsubscribePrivate () {
 }
 
 void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
-	if (!sipNetworkReachable)
+	if (sipNetworkReachable) {
+		subscribe();
+	} else {
 		unsubscribePrivate();
+	}
 }
 
 void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {

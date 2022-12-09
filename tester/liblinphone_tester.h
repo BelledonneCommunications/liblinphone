@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -120,7 +121,9 @@ extern test_suite_t shared_core_test_suite;
 extern test_suite_t lime_server_auth_test_suite;
 extern test_suite_t vfs_encryption_test_suite;
 extern test_suite_t local_conference_test_suite_chat;
-extern test_suite_t local_conference_test_suite_scheduled_conference;
+extern test_suite_t local_conference_test_suite_conference_edition;
+extern test_suite_t local_conference_test_suite_scheduled_conference_basic;
+extern test_suite_t local_conference_test_suite_scheduled_conference_advanced;
 extern test_suite_t local_conference_test_suite_scheduled_ice_conference;
 extern test_suite_t local_conference_test_suite_inpromptu_conference;
 extern test_suite_t external_domain_test_suite;
@@ -129,6 +132,10 @@ extern test_suite_t call_race_conditions_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
+#endif
+
+#ifdef CXX_WRAPPER_ENABLED
+	extern test_suite_t wrapper_cpp_test_suite;
 #endif
 
 extern test_suite_t audio_bypass_suite;
@@ -653,6 +660,7 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin);
 void configure_core_for_conference (LinphoneCore *core, const char* username, const LinphoneAddress *factoryAddr, bool_t server);
 void _configure_core_for_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
+void _configure_core_for_audio_video_conference (LinphoneCoreManager *lcm, LinphoneAddress *factoryAddr);
 void _start_core(LinphoneCoreManager *lcm);
 extern const char *sFactoryUri;
 
@@ -696,6 +704,7 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice );
 void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_stun, const bool_t enable_ice);
 void linphone_conf_event_notify(LinphoneEvent *lev);
 void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone);
+void _check_friend_result_list_2(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone, int expected_flags);
 
 /*Convenience function providing the path to the "empty_rc" config file*/
 const char *liblinphone_tester_get_empty_rc(void);

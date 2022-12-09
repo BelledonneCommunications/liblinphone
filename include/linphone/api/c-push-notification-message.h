@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -107,6 +108,29 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_pe
  * @return TRUE if this content type is 'text/calendar;conference-event=yes', FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_icalendar(const LinphonePushNotificationMessage *message);
+
+
+/**
+ * Tells whether or not this message contains a new conference invitation.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this message carries a new conference invitation, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_conference_invitation_new(const LinphonePushNotificationMessage *message);
+
+
+/**
+ * Tells whether or not this message contains a conference invitation update.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this message carries a conference invitation update, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_conference_invitation_update(const LinphonePushNotificationMessage *message);
+
+/**
+ * Tells whether or not this message contains a conference invitation cancellation.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return TRUE if this message carries a conference invitation cancellation, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_conference_invitation_cancellation(const LinphonePushNotificationMessage *message);
 
 /**
  * @}

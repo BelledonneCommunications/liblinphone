@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -139,6 +140,7 @@ private:
 	RtpBundle *mRtpBundle = nullptr;
 	MS2Stream *mBundleOwner = nullptr;
 	bool mOwnsBundle = false;
+	bool mStunAllowed = true;
 	ZrtpState mZrtpState = ZrtpState::Off;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;
@@ -156,6 +158,7 @@ private:
 class MS2AudioStream : public MS2Stream, public AudioControlInterface{
 	friend class MS2VideoStream;
 public:
+
 	MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params);
 	virtual bool prepare() override;
 	virtual void finishPrepare() override;
@@ -210,6 +213,10 @@ public:
 protected:
 	VideoStream *getPeerVideoStream();
 private:
+	enum RestartReason{
+		InputChanged = 0,
+		OutputChanged = 1,
+	};
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	void setupMediaLossCheck();
 	void setPlaybackGainDb (float gain);
@@ -223,6 +230,7 @@ private:
 	void telephoneEventReceived (int event);
 	void configureAudioStream();
 	void setSoundCardType(MSSndCard *soundcard);
+	int restartStream(RestartReason reason);	// reason is used for debug feedback. Return 0 if restart is scheduled, -1 if not or not needed.
 	MS2AudioMixer *getAudioMixer();
 	AudioStream *mStream = nullptr;
 	struct _MSAudioEndpoint *mConferenceEndpoint = nullptr;
@@ -300,6 +308,8 @@ public:
 
 	void setVideoSource (const std::shared_ptr<const VideoSourceDescriptor> &descriptor);
 	std::shared_ptr<const VideoSourceDescriptor> getVideoSource () const;
+
+	static void sCsrcChangedCb (void *userData, uint32_t new_csrc);
 
 	virtual ~MS2VideoStream();
 protected:

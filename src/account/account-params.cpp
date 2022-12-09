@@ -1,21 +1,20 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY{
-}
- without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -23,7 +22,7 @@
 #include "push-notification/push-notification-config.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
-#include "linphone/nat_policy.h"
+#include "nat/nat-policy.h"
 #include "linphone/types.h"
 #include "private.h"
 
@@ -74,12 +73,25 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	mPushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault) : pushAllowedDefault;
 	mRemotePushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remotePushAllowedDefault) : remotePushAllowedDefault;
 	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
+
+	/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
+	 * This is not consistent and error-prone.
+	 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
+	 */
+
 	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
-		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config, natPolicyRef.c_str());
-		setNatPolicy(policy);
-		if (policy) {
-			linphone_nat_policy_unref(policy);
+		NatPolicy * policy = nullptr;
+		if (linphone_config_has_section(lc->config, natPolicyRef.c_str())){
+			/* Odd method - to be deprecated, inconsistent */
+			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromSectionName, natPolicyRef);
+		}else{
+			/* Usual method */
+			policy = new NatPolicy(L_GET_CPP_PTR_FROM_C_OBJECT(lc), NatPolicy::ConstructionMethod::FromRefName, natPolicyRef);
+		}
+		if (policy){
+			setNatPolicy(policy->toC());
+			policy->unref();
 		} else {
 			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this << "]";
 		}
@@ -188,7 +200,18 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	const char *nat_policy_ref = linphone_config_get_string(config, key, "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {
 		if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
-		mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+		/* CAUTION: the nat_policy_ref meaning in default values is different than in usual [nat_policy_%i] section.
+		 * This is not consistent and error-prone.
+		 * Normally, the nat_policy_ref refers to a "ref" entry within a [nat_policy_%i] section.
+		 */
+		if (linphone_config_has_section(config, nat_policy_ref)){
+			/* Odd method - to be deprecated, inconsistent */
+			mNatPolicy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
+		} else {
+			/* Usual method */
+			mNatPolicy = linphone_core_create_nat_policy_from_ref(lc, nat_policy_ref);
+		}
+
 	}
 
 	mConferenceFactoryUri = linphone_config_get_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
@@ -853,14 +876,16 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "publish_expires", mPublishExpires);
 
 	if (mNatPolicy != NULL) {
-		linphone_config_set_string(config, key, "nat_policy_ref", mNatPolicy->ref);
-		linphone_nat_policy_save_to_config(mNatPolicy);
+		linphone_config_set_string(config, key, "nat_policy_ref", NatPolicy::toCpp(mNatPolicy)->getRef().c_str());
+		NatPolicy::toCpp(mNatPolicy)->saveToConfig();
 	}
 
 	linphone_config_set_string(config, key, "conference_factory_uri", mConferenceFactoryUri.c_str());
 
 	if (mAudioVideoConferenceFactoryAddress != nullptr) {
-		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress));
+		char * factory_address = linphone_address_as_string_uri_only(mAudioVideoConferenceFactoryAddress);
+		linphone_config_set_string(config, key, "audio_video_conference_factory_uri", factory_address);
+		ms_free(factory_address);
 	}
 	linphone_config_set_int(config, key, "rtp_bundle", mRtpBundleEnabled);
 	linphone_config_set_int(config, key, "rtp_bundle_assumption", mRtpBundleAssumption);

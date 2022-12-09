@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -45,9 +46,11 @@ public:
 	~RemoteConferenceListEventHandler ();
 
 	void subscribe () override;
+	void subscribe (LinphoneAccount * c_account);
 	void unsubscribe () override;
+	void unsubscribe (LinphoneAccount * c_account);
 	void invalidateSubscription () override;
-	void notifyReceived (const Content *notifyContent);
+	void notifyReceived (std::string from, const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();
@@ -55,7 +58,7 @@ public:
 private:
 	bool isHandlerInSameDomainAsCore(const ConferenceId & conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
-	LinphoneEvent *lev = nullptr;
+	std::list<LinphoneEvent *> levs;
 
 	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
 

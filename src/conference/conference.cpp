@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -130,27 +131,28 @@ bool Conference::addParticipants (const std::list<std::shared_ptr<Call>> &calls)
 }
 
 LinphoneStatus Conference::updateMainSession() {
-	LinphoneStatus ret = -1;
-	auto session = static_pointer_cast<MediaSession>(getMainSession());
-	if (session) {
-		const MediaSessionParams * params = session->getMediaParams();
-		MediaSessionParams *currentParams = params->clone();
-		currentParams->getPrivate()->setInternalCallUpdate(false);
-		if (!currentParams->rtpBundleEnabled()) {
-			currentParams->enableRtpBundle(true);
-		}
+	getCore()->doLater([this] {
+		auto session = static_pointer_cast<MediaSession>(getMainSession());
+		if (session) {
+			const MediaSessionParams * params = session->getMediaParams();
+			MediaSessionParams *currentParams = params->clone();
+			currentParams->getPrivate()->setInternalCallUpdate(false);
+			if (!currentParams->rtpBundleEnabled()) {
+				currentParams->enableRtpBundle(true);
+			}
 
-		// Update parameters based on conference capabilities
-		if (!confParams->audioEnabled()) {
-			currentParams->enableAudio(confParams->audioEnabled());
+			// Update parameters based on conference capabilities
+			if (!confParams->audioEnabled()) {
+				currentParams->enableAudio(confParams->audioEnabled());
+			}
+			if (!confParams->videoEnabled()) {
+				currentParams->enableVideo(confParams->videoEnabled());
+			}
+			session->update(currentParams);
+			delete currentParams;
 		}
-		if (!confParams->videoEnabled()) {
-			currentParams->enableVideo(confParams->videoEnabled());
-		}
-		ret = session->update(currentParams);
-		delete currentParams;
-	}
-	return ret;
+	});
+	return 0;
 }
 
 ConferenceLayout Conference::getLayout() const {
@@ -205,8 +207,12 @@ const list<shared_ptr<ParticipantDevice>> Conference::getParticipantDevices () c
 	return devices;
 }
 
-const string &Conference::getSubject () const {
+const string & Conference::getSubject () const {
 	return confParams->getSubject();
+}
+
+const string Conference::getUtf8Subject () const {
+	return confParams->getUtf8Subject();
 }
 
 const string &Conference::getUsername () const {
@@ -254,6 +260,10 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 	lError() << "Conference class does not handle setParticipantAdminStatus() generically";
 }
 
+void Conference::setUtf8Subject (const string &subject) {
+	setSubject(Utils::utf8ToLocale(subject));
+}
+
 void Conference::setSubject (const string &subject) {
 	confParams->setSubject(subject);
 #ifdef HAVE_DB_STORAGE
@@ -282,7 +292,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getSsrc() == ssrc) {
+			if (device->getAudioSsrc() == ssrc) {
 				_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
@@ -292,7 +302,7 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 		}
 	}
 	for (const auto &device : getMe()->getDevices()) {
-		if (device->getSsrc() == ssrc) {
+		if (device->getAudioSsrc() == ssrc) {
 			_linphone_participant_device_notify_is_speaking_changed(device->toC(), isSpeaking);
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsSpeakingChanged(device, isSpeaking);
@@ -306,7 +316,7 @@ void Conference::notifySpeakingDevice (uint32_t ssrc, bool isSpeaking) {
 void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 	for (const auto &participant : participants) {
 		for (const auto &device : participant->getDevices()) {
-			if (device->getSsrc() == ssrc) {
+			if (device->getAudioSsrc() == ssrc) {
 				_linphone_participant_device_notify_is_muted(device->toC(), muted);
 				for (const auto &l : confListeners) {
 					l->onParticipantDeviceIsMuted(device, muted);
@@ -317,7 +327,7 @@ void Conference::notifyMutedDevice (uint32_t ssrc, bool muted) {
 		}
 	}
 	for (const auto &device : getMe()->getDevices()) {
-		if (device->getSsrc() == ssrc) {
+		if (device->getAudioSsrc() == ssrc) {
 			_linphone_participant_device_notify_is_muted(device->toC(), muted);
 			for (const auto &l : confListeners) {
 				l->onParticipantDeviceIsMuted(device, muted);
@@ -404,6 +414,10 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 	lDebug() << "Unable to find participant device in conference " << getConferenceAddress() << " with call session " << session;
 
 	return nullptr;
+}
+
+shared_ptr<ParticipantDevice> Conference::getActiveSpeakerParticipantDevice() const {
+	return activeSpeakerDevice;
 }
 
 std::map<ConferenceMediaCapabilities, bool> Conference::getMediaCapabilities() const {
@@ -665,6 +679,13 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	for (const auto &l : confListeners) {
 		l->onStateChanged(state);
 	}
+}
+
+void Conference::notifyActiveSpeakerParticipantDevice(const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	for (const auto &l : confListeners) {
+		l->onActiveSpeakerParticipantDevice(participantDevice);
+	}
+	activeSpeakerDevice = participantDevice;
 }
 
 std::shared_ptr<ConferenceInfo> Conference::createOrGetConferenceInfo() const {

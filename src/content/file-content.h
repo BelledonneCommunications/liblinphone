@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -46,11 +47,23 @@ public:
 	void setFileSize (size_t size);
 	size_t getFileSize () const;
 
-	void setFileName (const std::string &name);
+	void setFileName (const std::string &name);// App Locale
 	const std::string &getFileName () const;
+	
+	void setFileNameSys (const std::string &name);// System Locale
+	std::string getFileNameSys () const;
+	
+	void setFileNameUtf8 (const std::string &name);// UTF8
+	std::string getFileNameUtf8 () const;
 
-	void setFilePath (const std::string &path);
+	void setFilePath (const std::string &path);// App Locale
 	const std::string &getFilePath () const;
+	
+	void setFilePathSys (const std::string &path);// System Locale
+	std::string getFilePathSys () const;
+	
+	void setFilePathUtf8 (const std::string &path);// UTF8
+	std::string getFilePathUtf8 () const;
 
 	void setFileDuration (int durationInSeconds);
 	int getFileDuration () const;

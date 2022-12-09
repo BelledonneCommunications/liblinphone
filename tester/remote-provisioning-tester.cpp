@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -302,11 +303,11 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConfiguringSuccessful, 1, liblinphone_tester_sip_timeout));
 
 	// Check if the friend list has been parsed
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1, liblinphone_tester_sip_timeout));
-
-	const char *url =
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 1, liblinphone_tester_sip_timeout));// Added 'contacts-vcard-list'
+	
+	std::string url=
 		linphone_config_get_string(linphone_core_get_config(marie->lc), "misc", "contacts-vcard-list", NULL);
-	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url);
+	LinphoneFriendList *friendList = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 
 	BC_ASSERT_PTR_NOT_NULL(friendList);
 	unsigned int friends_list_size = (unsigned int)bctbx_list_size(linphone_friend_list_get_friends(friendList));
@@ -353,25 +354,36 @@ static void flexiapi_remote_provisioning_contacts_list_flow(void) {
 	linphone_friend_list_set_type(friendList2, LinphoneFriendListTypeVCard4);
 	linphone_friend_list_synchronize_friends_from_server(friendList2);
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, liblinphone_tester_sip_timeout));// + 'contacts-vcard-list' sync
 
 	linphone_friend_list_unref(friendList2);
 
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList2)), 1, int, "%i");
 	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 1, int, "%i");
-
-	LinphoneFriendList *friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url);
-
+	LinphoneFriendList *friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NOT_NULL(friendList3);
+	
 	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");
-
-	linphone_core_remove_friend_list(marie->lc, friendList3);
-
+	
+	linphone_core_stop(marie->lc);
+	stats->new_list_count = 0;
+	linphone_core_start(marie->lc);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &stats->new_list_count, 2, liblinphone_tester_sip_timeout));	// Init for 2 lists : Default and 'contacts-vcard-list'
+	
 	// Resync the friends lists from the DB
-	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int, "%i");
-	LinphoneFriendList *friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url);
-
+	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int, "%i");// No friend list in DB
+	friendList3 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
+	BC_ASSERT_PTR_NOT_NULL(friendList3);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friendList3)), 1, int, "%i");// No Friend in DB but have subscribed in RAM.
+	
+	linphone_core_remove_friend_list(marie->lc, friendList3);
+	
+	LinphoneFriendList *friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
 	BC_ASSERT_PTR_NULL(friendList4);
+	
+	BC_ASSERT_EQUAL(linphone_core_friends_storage_resync_friends_lists(marie->lc), 0, int, "%i");// Still no friend list in DB
+	friendList4 = linphone_core_get_friend_list_by_name(marie->lc, url.c_str());
+	BC_ASSERT_PTR_NULL(friendList4);// No change after resync
 
 	// Clean up
 	flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);

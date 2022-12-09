@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2020 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -129,7 +130,11 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const Linph
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat : false;
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(chatRoomParams, identityAddress, participantsList);
-	if (room) return L_GET_C_BACK_PTR(room);
+	if (room){
+		auto cRoom = L_GET_C_BACK_PTR(room);
+		linphone_chat_room_ref(cRoom);
+		return cRoom;
+	}
 	return NULL;
 }
 
@@ -184,6 +189,7 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 		linphone_chat_room_params_enable_group(params, FALSE);
 		result = linphone_core_create_chat_room_6(lc, params, local_addr, paricipants);
+		if(result) linphone_chat_room_unref(result);
 		linphone_chat_room_params_unref(params);
 		bctbx_list_free(paricipants);
 	}

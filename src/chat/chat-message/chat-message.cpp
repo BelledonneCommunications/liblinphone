@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -142,7 +143,8 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
-	auto participant = q->getChatRoom()->findParticipant(participantAddress);
+	auto me = q->getChatRoom()->getMe();
+	auto participant = participantAddress == me->getAddress() ? me : q->getChatRoom()->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
 	const LinphoneParticipantImdnState *c_state = _linphone_participant_imdn_state_from_cpp_obj(imdnState);
 
@@ -831,7 +833,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Check if this is a duplicate message.
-	if (chatRoom->findChatMessage(imdnId, direction)) {
+	if (!imdnId.empty() && chatRoom->findChatMessage(imdnId, direction)) {
 		lInfo() << "Duplicated SIP MESSAGE, ignored.";
 		return core->getCCore()->chat_deny_code;
 	}
@@ -903,19 +905,19 @@ void ChatMessagePrivate::handleAutoDownload() {
 		int maxSize = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
 		bool_t autoDownloadVoiceRecordings = linphone_core_is_auto_download_voice_recordings_enabled(q->getCore()->getCCore());
 		bool_t autoDownloadIcalendars = linphone_core_is_auto_download_icalendars_enabled(q->getCore()->getCCore());
-		string downloadPath = q->getCore()->getDownloadPath();
-
-		if (downloadPath.empty()) {
-			lWarning() << "Downloading path is empty, won't be able to do auto download";
-		} else {
-			for (Content *c : contents) {
-				if (c->isFileTransfer()) {
-					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-					ContentType fileContentType = ftc->getFileContentType();
-					
-					if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
-					|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
-					|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
+		for (Content *c : contents) {
+			if (c->isFileTransfer()) {
+				FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
+				ContentType fileContentType = ftc->getFileContentType();
+				
+				if ((maxSize == 0 || (maxSize > 0 && ftc->getFileSize() <= (size_t)maxSize))
+				|| (autoDownloadVoiceRecordings && fileContentType.strongEqual(ContentType::VoiceRecording))
+				|| (autoDownloadIcalendars && fileContentType.strongEqual(ContentType::Icalendar))) {
+					string downloadPath = q->getCore()->getDownloadPath();
+					if (downloadPath.empty()) {
+						lWarning() << "Download path is empty, won't be able to do auto download";
+						break;
+					} else {
 						ostringstream sstream;
 						size_t randomSize = 12;
 						for (size_t i = 0; i < randomSize; i++) {

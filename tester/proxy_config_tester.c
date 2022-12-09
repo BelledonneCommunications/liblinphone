@@ -1,19 +1,20 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone.
+ * This file is part of Liblinphone 
+ * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
+ * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
@@ -240,6 +241,7 @@ static void load_dynamic_proxy_config(void) {
 	nat_policy = linphone_proxy_config_get_nat_policy(proxy);
 
 	if (BC_ASSERT_PTR_NOT_NULL(nat_policy)) {
+		BC_ASSERT_STRING_EQUAL(linphone_nat_policy_get_stun_server(nat_policy), "stun.linphone.org");
 		BC_ASSERT_TRUE(linphone_nat_policy_ice_enabled(nat_policy));
 		BC_ASSERT_TRUE(linphone_nat_policy_stun_enabled(nat_policy));
 		BC_ASSERT_FALSE(linphone_nat_policy_turn_enabled(nat_policy));
