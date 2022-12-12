@@ -145,60 +145,48 @@ bool ParticipantDevice::isInConference() const {
 	return false;
 }
 
-bool ParticipantDevice::setSsrc (const SalStreamType type, uint32_t ssrc) {
+bool ParticipantDevice::setSsrc (const LinphoneStreamType type, uint32_t newSsrc) {
 	bool changed = false;
+	const bool idxFound = (ssrc.find(type) != ssrc.cend());
+	if (!idxFound || (ssrc[type] != newSsrc)) {
+		ssrc[type] = newSsrc;
+		changed = true;
+	}
+
 	auto conference = getConference();
 	switch (type) {
-		case SalAudio:
-			if (mAudioSsrc != ssrc) {
-				mAudioSsrc = ssrc;
-				changed = true;
-			}
-
+		case LinphoneStreamTypeAudio:
 			if (conference) {
 				const auto & pendingParticipantsMutes = conference->getPendingParticipantsMutes();
-				auto it = pendingParticipantsMutes.find(ssrc);
+				auto it = pendingParticipantsMutes.find(newSsrc);
 				if (it != pendingParticipantsMutes.end()) {
 					conference->notifyMutedDevice(it->first, it->second);
 				}
 			}
 			break;
-		case SalVideo:
-			if (mVideoSsrc != ssrc) {
-				mVideoSsrc = ssrc;
-				changed = true;
-			}
-			break;
-		case SalText:
-		case SalOther:
+		case LinphoneStreamTypeVideo:
+		case LinphoneStreamTypeText:
+		case LinphoneStreamTypeUnknown:
 			break;
 	}
 
 	if (changed) {
 		if (conference) {
-			lInfo() << "Setting " << std::string(sal_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " in conference " << conference->getConferenceAddress() << " to " << ssrc;
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " in conference " << conference->getConferenceAddress() << " to " << newSsrc;
 		} else {
-			lInfo() << "Setting " << std::string(sal_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " to " << ssrc;
+			lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << getAddress() << " to " << newSsrc;
 		}
 	}
 
 	return changed;
 }
 
-uint32_t ParticipantDevice::getSsrc (const SalStreamType type) const {
-	uint32_t ssrc = 0;
-	switch (type) {
-		case SalAudio:
-			ssrc = mAudioSsrc;
-			break;
-		case SalVideo:
-			ssrc = mVideoSsrc;
-			break;
-		case SalText:
-		case SalOther:
-			break;
+uint32_t ParticipantDevice::getSsrc (const LinphoneStreamType type) const {
+	try {
+		return ssrc.at(type);
+	} catch (std::out_of_range&) {
+		return 0;
 	}
-	return ssrc;
 }
 
 void *ParticipantDevice::getUserData () const{
@@ -462,11 +450,11 @@ bool ParticipantDevice::updateMediaCapabilities() {
 			}
 
 			if (mSession->getPrivate()->isInConference()) {
-				const auto audioSsrc = mMediaSession->getSsrc(SalAudio);
-				mediaCapabilityChanged |= setSsrc(SalAudio, audioSsrc);
+				const auto audioSsrc = mMediaSession->getSsrc(LinphoneStreamTypeAudio);
+				mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeAudio, audioSsrc);
 
-				const auto videoSsrc = mMediaSession->getSsrc(SalVideo);
-				mediaCapabilityChanged |= setSsrc(SalVideo, videoSsrc);
+				const auto videoSsrc = mMediaSession->getSsrc(LinphoneStreamTypeVideo);
+				mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeVideo, videoSsrc);
 			}
 		}
 		mediaCapabilityChanged |= setStreamCapability(computeDeviceMediaDirection(conferenceAudioEnabled, audioEnabled, audioDir), LinphoneStreamTypeAudio);
@@ -476,8 +464,8 @@ bool ParticipantDevice::updateMediaCapabilities() {
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeAudio);
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeVideo);
 		mediaCapabilityChanged |= setStreamCapability(LinphoneMediaDirectionInactive, LinphoneStreamTypeText);
-		mediaCapabilityChanged |= setSsrc(SalAudio, 0);
-		mediaCapabilityChanged |= setSsrc(SalVideo, 0);
+		mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeAudio, 0);
+		mediaCapabilityChanged |= setSsrc(LinphoneStreamTypeVideo, 0);
 	}
 
 	return mediaCapabilityChanged;

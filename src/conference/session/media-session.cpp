@@ -4744,32 +4744,32 @@ void MediaSession::confirmGoClear() {
 	getStreamsGroup().confirmGoClear();
 }
 
-uint32_t MediaSession::getSsrc(SalStreamType type) const {
+uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
 	L_D();
 
 	uint32_t ssrc = 0;
 	const auto remoteMediaDesc = d->getOp()->getRemoteMediaDescription();
 	if (remoteMediaDesc) {
 		switch (type) {
-			case SalAudio:
+			case LinphoneStreamTypeAudio:
 			{
-				const auto & audioStream = remoteMediaDesc->getActiveStreamOfType(type, 0);
+				const auto & audioStream = remoteMediaDesc->getActiveStreamOfType(SalAudio, 0);
 				const auto & audioStreamCfg = audioStream.getActualConfiguration();
 				ssrc = audioStreamCfg.conference_ssrc;
 			}
 				break;
-			case SalVideo:
+			case LinphoneStreamTypeVideo:
 			{
 				const auto & videoStreamIdx = d->getMainVideoStreamIdx(remoteMediaDesc);
-				if ((videoStreamIdx >= 0) && (d->getOp()->getFinalMediaDescription()->nbActiveStreamsOfType(type) > 0)) {
+				if ((videoStreamIdx >= 0) && (d->getOp()->getFinalMediaDescription()->nbActiveStreamsOfType(SalVideo) > 0)) {
 					const SalStreamDescription & videoStream = remoteMediaDesc->getStreamIdx(static_cast<unsigned int>(videoStreamIdx));
 					const auto & videoStreamCfg = videoStream.getActualConfiguration();
 					ssrc = videoStreamCfg.conference_ssrc;
 				}
 			}
 				break;
-			case SalText:
-			case SalOther:
+			case LinphoneStreamTypeText:
+			case LinphoneStreamTypeUnknown:
 				ssrc = 0;
 				break;
 		}

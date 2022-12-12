@@ -331,8 +331,8 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 	audio.setDisplayText("audio");
 	audio.setType("audio");
 	if (audioDirection != LinphoneMediaDirectionInactive) {
-		if (device->getSsrc(SalAudio) > 0) {
-			audio.setSrcId(std::to_string(device->getSsrc(SalAudio)));
+		if (device->getSsrc(LinphoneStreamTypeAudio) > 0) {
+			audio.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeAudio)));
 		}
 	}
 	audio.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(audioDirection));
@@ -346,8 +346,8 @@ void LocalConferenceEventHandler::addMediaCapabilities(const std::shared_ptr<Par
 		if (!device->getLabel().empty()) {
 			video.setLabel(device->getLabel());
 		}
-		if (device->getSsrc(SalVideo) > 0) {
-			video.setSrcId(std::to_string(device->getSsrc(SalVideo)));
+		if (device->getSsrc(LinphoneStreamTypeVideo) > 0) {
+			video.setSrcId(std::to_string(device->getSsrc(LinphoneStreamTypeVideo)));
 		}
 	}
 	video.setStatus(LocalConferenceEventHandler::mediaDirectionToMediaStatus(videoDirection));
@@ -1135,7 +1135,7 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 	if (conf) {
 		auto participant = device->getParticipant();
 		// If the ssrc is not 0, send a NOTIFY to the participant being added in order to give him its own SSRC
-		if ((device->getSsrc(SalAudio) != 0) || (device->getSsrc(SalVideo) != 0)) {
+		if ((device->getSsrc(LinphoneStreamTypeAudio) != 0) || (device->getSsrc(LinphoneStreamTypeVideo) != 0)) {
 			notifyAll(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())));
 		} else {
 			notifyAllExceptDevice(makeContent(createNotifyParticipantDeviceAdded(participant->getAddress().asAddress(), device->getAddress().asAddress())), device);

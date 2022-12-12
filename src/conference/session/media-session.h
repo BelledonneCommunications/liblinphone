@@ -154,7 +154,7 @@ public:
 
 	void confirmGoClear();
 
-	uint32_t getSsrc(SalStreamType type) const;
+	uint32_t getSsrc(LinphoneStreamType type) const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

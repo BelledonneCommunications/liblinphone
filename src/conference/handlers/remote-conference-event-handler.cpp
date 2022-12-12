@@ -421,39 +421,33 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 					bool mediaCapabilityChanged = false;
 					for (const auto &media : endpoint.getMedia()) {
 						const std::string mediaType = media.getType().get();
-						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
+						LinphoneStreamType streamType = LinphoneStreamTypeUnknown;
 						if (mediaType.compare("audio") == 0) {
-							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeAudio);
-							if (mediaDirection == LinphoneMediaDirectionInactive) {
-								device->setSsrc(SalAudio, 0);
-							} else {
-								if (media.getSrcId()) {
-									const std::string srcId = media.getSrcId().get();
-									unsigned long ssrc = std::stoul(srcId);
-									device->setSsrc(SalAudio, (uint32_t) ssrc);
-								}
-							}
+							streamType = LinphoneStreamTypeAudio;
 						} else if (mediaType.compare("video") == 0) {
-							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeVideo);
-							if (media.getLabel()) {
-								const std::string label = media.getLabel().get();
-								if (!label.empty()) {
-									device->setLabel(label);
-								}
-							}
-							if (mediaDirection == LinphoneMediaDirectionInactive) {
-								device->setSsrc(SalVideo, 0);
-							} else {
-								if (media.getSrcId()) {
-									const std::string srcId = media.getSrcId().get();
-									unsigned long ssrc = std::stoul(srcId);
-									device->setSsrc(SalVideo, (uint32_t) ssrc);
-								}
-							}
+							streamType = LinphoneStreamTypeVideo;
 						} else if (mediaType.compare("text") == 0) {
-							mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, LinphoneStreamTypeText);
+							streamType = LinphoneStreamTypeText;
 						} else {
 							lError() << "Unrecognized media type " << mediaType;
+						}
+
+						LinphoneMediaDirection mediaDirection = RemoteConferenceEventHandler::mediaStatusToMediaDirection(media.getStatus().get());
+						mediaCapabilityChanged |= device->setStreamCapability(mediaDirection, streamType);
+						if (media.getLabel()) {
+							const std::string label = media.getLabel().get();
+							if (!label.empty()) {
+								device->setLabel(label);
+							}
+						}
+						if (mediaDirection == LinphoneMediaDirectionInactive) {
+							device->setSsrc(streamType, 0);
+						} else {
+							if (media.getSrcId()) {
+								const std::string srcId = media.getSrcId().get();
+								unsigned long ssrc = std::stoul(srcId);
+								device->setSsrc(streamType, (uint32_t) ssrc);
+							}
 						}
 					}
 

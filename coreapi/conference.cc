@@ -1021,7 +1021,7 @@ void LocalConference::addLocalEndpoint () {
 			auto audioStream = audioMixer->getAudioStream();
 			auto meSsrc = audio_stream_get_send_ssrc(audioStream);
 			for (auto & device : me->getDevices()) {
-				device->setSsrc(SalAudio, meSsrc);
+				device->setSsrc(LinphoneStreamTypeAudio, meSsrc);
 			}
 		}
 
@@ -1034,7 +1034,7 @@ void LocalConference::addLocalEndpoint () {
 				auto videoStream = videoMixer->getVideoStream();
 				auto meSsrc = media_stream_get_send_ssrc(&videoStream->ms);
 				for (auto & device : me->getDevices()) {
-					device->setSsrc(SalVideo, meSsrc);
+					device->setSsrc(LinphoneStreamTypeVideo, meSsrc);
 					videoMixer->setLocalParticipantLabel(device->getLabel());
 				}
 #endif // VIDEO_ENABLED
@@ -1276,7 +1276,7 @@ int LocalConference::participantDeviceMediaCapabilityChanged(const std::shared_p
 	return success;
 }
 
-int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) {
+int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const LinphoneStreamType type, uint32_t ssrc) {
 	const Address &remoteAddress = *session->getRemoteAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(remoteAddress);
 	int success = -1;
@@ -1285,7 +1285,7 @@ int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<Linphone
 		if (device) {
 			bool updated = device->setSsrc(type, ssrc);
 			if (updated) {
-				lInfo() << "Setting " << std::string(sal_stream_type_to_string(type)) << " ssrc of participant device " << device->getAddress().asString() << " in conference " << getConferenceAddress() << " to " << ssrc;
+				lInfo() << "Setting " << std::string(linphone_stream_type_to_string(type)) << " ssrc of participant device " << device->getAddress().asString() << " in conference " << getConferenceAddress() << " to " << ssrc;
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, p, device);
 			} else {
@@ -1294,7 +1294,7 @@ int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<Linphone
 			return 0;
 		}
 	}
-	lInfo() << "Unable to set " << std::string(sal_stream_type_to_string(type)) << " ssrc to " << ssrc << " because participant device with session " << session << " cannot be found in conference " << getConferenceAddress();
+	lInfo() << "Unable to set " << std::string(linphone_stream_type_to_string(type)) << " ssrc to " << ssrc << " because participant device with session " << session << " cannot be found in conference " << getConferenceAddress();
 	return success;
 }
 
@@ -1305,7 +1305,7 @@ int LocalConference::participantDeviceSsrcChanged(const std::shared_ptr<Linphone
 	if (p) {
 		std::shared_ptr<ParticipantDevice> device = p->findDevice(session);
 		if (device) {
-			if (device->setSsrc(SalAudio, audioSsrc) || device->setSsrc(SalAudio, audioSsrc)) {
+			if (device->setSsrc(LinphoneStreamTypeAudio, audioSsrc) || device->setSsrc(LinphoneStreamTypeVideo, videoSsrc)) {
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceMediaCapabilityChanged(creationTime, false, p, device);
 			} else {
@@ -1325,7 +1325,7 @@ int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePr
 
 	if (mixer) {
 		MSAudioConference *conf = mixer->getAudioConference();
-		return ms_audio_conference_get_participant_volume(conf, device->getSsrc(SalAudio));
+		return ms_audio_conference_get_participant_volume(conf, device->getSsrc(LinphoneStreamTypeAudio));
 	}
 
 	return AUDIOSTREAMVOLUMES_NOT_FOUND;
@@ -2623,7 +2623,7 @@ int RemoteConference::participantDeviceMediaCapabilityChanged(const std::shared_
 	return -1;
 }
 
-int RemoteConference::participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const SalStreamType type, uint32_t ssrc) {
+int RemoteConference::participantDeviceSsrcChanged(const std::shared_ptr<LinphonePrivate::CallSession> & session, const LinphoneStreamType type, uint32_t ssrc) {
 	lError() << "RemoteConference::participantDeviceSsrcChanged() not implemented";
 	return -1;
 }
@@ -2667,7 +2667,7 @@ int RemoteConference::getParticipantDeviceVolume(const std::shared_ptr<LinphoneP
 	AudioStream *as = getAudioStream();
 
 	if (as != nullptr) {
-		return audio_stream_get_participant_volume(as, device->getSsrc(SalAudio));
+		return audio_stream_get_participant_volume(as, device->getSsrc(LinphoneStreamTypeAudio));
 	}
 
 	return AUDIOSTREAMVOLUMES_NOT_FOUND;

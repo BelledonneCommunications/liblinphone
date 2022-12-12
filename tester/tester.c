@@ -831,24 +831,24 @@ void check_conference_ssrc(LinphoneConference * local_conference, LinphoneConfer
 					BC_ASSERT_PTR_NOT_NULL(remote_device);
 					if (remote_device) {
 						if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeAudio) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						}
 						if (linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeAudio) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_audio_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeAudio), 0, unsigned long, "%0lu");
 						}
 						if (linphone_participant_device_get_stream_capability(d, LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(d), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(d, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						}
 						if (linphone_participant_device_get_stream_capability(remote_device, LinphoneStreamTypeVideo) != LinphoneMediaDirectionInactive) {
-							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_NOT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						} else {
-							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_video_ssrc(remote_device), 0, unsigned long, "%0lu");
+							BC_ASSERT_EQUAL((unsigned long)linphone_participant_device_get_ssrc(remote_device, LinphoneStreamTypeVideo), 0, unsigned long, "%0lu");
 						}
 					}
 				}

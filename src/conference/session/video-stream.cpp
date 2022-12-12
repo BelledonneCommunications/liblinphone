@@ -163,7 +163,7 @@ void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
 
 	if (new_csrc != 0) {
 		for(const auto &device : cppConference->getParticipantDevices()) {
-			if (new_csrc == device->getSsrc(SalVideo)) {
+			if (new_csrc == device->getSsrc(LinphoneStreamTypeVideo)) {
 				cppConference->notifyActiveSpeakerParticipantDevice(device);
 				found = true;
 				break;

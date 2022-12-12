@@ -129,8 +129,8 @@ public:
 		return mCapabilityDescriptor;
 	}
 
-	bool setSsrc (const SalStreamType type, uint32_t ssrc);
-	uint32_t getSsrc (const SalStreamType type) const;
+	bool setSsrc (const LinphoneStreamType type, uint32_t newSsrc);
+	uint32_t getSsrc (const LinphoneStreamType type) const;
 
 	void *getUserData () const;
 	void setUserData (void *ud);
@@ -178,8 +178,6 @@ private:
 	std::string mDisconnectionReason = std::string();
 	time_t mTimeOfJoining = -1;
 	time_t mTimeOfDisconnection = -1;
-	uint32_t mAudioSsrc = 0;
-	uint32_t mVideoSsrc = 0;
 	bool mSupportAdminMode = false;
 	mutable void * mWindowId = NULL;
 	bool mIsMuted = false;
@@ -187,6 +185,7 @@ private:
 
 	std::map<LinphoneStreamType, LinphoneMediaDirection> mediaCapabilities;
 	std::map<LinphoneStreamType, bool> streamAvailabilities;
+	std::map<LinphoneStreamType, uint32_t> ssrc;
 
 	void *mUserData = nullptr;
 
