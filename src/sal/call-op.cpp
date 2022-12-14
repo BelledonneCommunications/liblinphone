@@ -554,7 +554,19 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 					auto *previousResponse = dialog ? static_cast<belle_sip_response_t *>(
 						belle_sip_object_data_get(BELLE_SIP_OBJECT(dialog), "early_response")
 					) : nullptr;
-					if (previousResponse == nullptr || (code > belle_sip_response_get_status_code(previousResponse))) {
+
+					Content previousBody = (previousResponse) ? extractBody(BELLE_SIP_MESSAGE(previousResponse)) : Content();
+					Content previousSdpBody = previousBody;
+					if (previousBody.isMultipart()) {
+						list<Content> contents = ContentManager::multipartToContentList(previousBody);
+						for (auto& content : contents) {
+							if (content.getContentType() == ContentType::Sdp) {
+								previousSdpBody = content;
+							}
+						}
+					}
+
+					if (previousResponse == nullptr || (previousSdpBody.getContentType() != ContentType::Sdp)) {
 						op->handleBodyFromResponse(response);
 						op->mRoot->mCallbacks.call_ringing(op);
 					}
