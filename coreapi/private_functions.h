@@ -965,9 +965,10 @@ typedef struct _SrtpInfo SrtpInfo;
 /**
  * Get the srtp info
  * @param stats #LinphoneCallStats object @notnil
+ * @param is_inner When double encryption is enabled, set it to true to access inner encryption layer stats @notnil
  * @return The srtp info
  */
-LINPHONE_PUBLIC const SrtpInfo *linphone_call_stats_get_srtp_info(const LinphoneCallStats *stats);
+LINPHONE_PUBLIC const SrtpInfo *linphone_call_stats_get_srtp_info(const LinphoneCallStats *stats, bool_t is_inner);
 /**
  * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
  * @param core #LinphoneCore object @notnil

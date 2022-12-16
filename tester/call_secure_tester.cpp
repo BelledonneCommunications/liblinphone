@@ -143,8 +143,8 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
 static bool_t srtp_check_call_stats(LinphoneCall *marieCall, LinphoneCall*paulineCall, int suite, int source, LinphoneStreamType streamType = LinphoneStreamTypeAudio) {
 	LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
 	LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
-	auto *marieSrtpInfo = linphone_call_stats_get_srtp_info(marieStats);
-	auto *paulineSrtpInfo = linphone_call_stats_get_srtp_info(paulineStats);
+	auto *marieSrtpInfo = linphone_call_stats_get_srtp_info(marieStats, FALSE);
+	auto *paulineSrtpInfo = linphone_call_stats_get_srtp_info(paulineStats, FALSE);
 	bool_t ret = TRUE;
 
 	// use BC_ASSERT_TRUE so we can collect the return value: true if all test pass false otherwise
@@ -175,7 +175,7 @@ static void srtp_call(void) {
 
 	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
 		// Default is MS_AES_128_SHA1_80, we use SDES
-		srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES);
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES));
 	}));
 	
 	// Test differents crypto suites : AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32, AEAD_AES_128_GCM, AEAD_AES_256_GCM 
@@ -234,7 +234,7 @@ static void srtp_call_with_different_crypto_suite(void) {
 
 	mgr_calling_each_other(marie, pauline, ([](LinphoneCall *marieCall, LinphoneCall*paulineCall){
 		// We shall use AES_256 as pauline supports only this one
-		srtp_check_call_stats(marieCall, paulineCall, MS_AES_256_SHA1_80, MSSrtpKeySourceSDES);
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_256_SHA1_80, MSSrtpKeySourceSDES));
 	}));
 	
 	linphone_core_manager_destroy(pauline);

@@ -60,6 +60,7 @@ struct _LinphoneCallStats {
 	float estimated_download_bandwidth; /**<Estimated download bandwidth measurement of received stream, expressed in kbit/s, including IP/UDP/RTP headers*/
 	bool_t rtcp_received_via_mux; /*private flag, for non-regression test only*/
 	ZrtpAlgo zrtp_algo; /**< informations on the ZRTP exchange updated once it is performed(when the SAS is available), this is valid only on the audio stream */
+	SrtpInfo inner_srtp_info; /**< informations on the SRTP crypto suite and and source of key material used on this stream for inner encryption when double encryption is on */
 	SrtpInfo srtp_info; /**< informations on the SRTP crypto suite and and source of key material used on this stream */
 };
 
@@ -123,6 +124,10 @@ static void _linphone_call_stats_clone (LinphoneCallStats *dst, const LinphoneCa
 	dst->srtp_info.send_source = src->srtp_info.send_source;
 	dst->srtp_info.recv_suite = src->srtp_info.recv_suite;
 	dst->srtp_info.recv_source = src->srtp_info.recv_source;
+	dst->inner_srtp_info.send_suite = src->inner_srtp_info.send_suite;
+	dst->inner_srtp_info.send_source = src->inner_srtp_info.send_source;
+	dst->inner_srtp_info.recv_suite = src->inner_srtp_info.recv_suite;
+	dst->inner_srtp_info.recv_source = src->inner_srtp_info.recv_source;
 }
 
 void _linphone_call_stats_set_ice_state (LinphoneCallStats *stats, LinphoneIceState state) {
@@ -256,12 +261,22 @@ void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEv
 			stats->zrtp_algo.auth_tag_algo = evd->info.zrtp_info.authTagAlgo;
 			stats->zrtp_algo.sas_algo = evd->info.zrtp_info.sasAlgo;
 		} else if (evt == ORTP_EVENT_SRTP_ENCRYPTION_CHANGED) {
-			if (evd->info.srtp_info.is_send) {
-				stats->srtp_info.send_suite = evd->info.srtp_info.suite;
-				stats->srtp_info.send_source = evd->info.srtp_info.source;
+			if (evd->info.srtp_info.is_inner) {
+				if (evd->info.srtp_info.is_send) {
+					stats->inner_srtp_info.send_suite = evd->info.srtp_info.suite;
+					stats->inner_srtp_info.send_source = evd->info.srtp_info.source;
+				} else {
+					stats->inner_srtp_info.recv_suite = evd->info.srtp_info.suite;
+					stats->inner_srtp_info.recv_source = evd->info.srtp_info.source;
+				}
 			} else {
-				stats->srtp_info.recv_suite = evd->info.srtp_info.suite;
-				stats->srtp_info.recv_source = evd->info.srtp_info.source;
+				if (evd->info.srtp_info.is_send) {
+					stats->srtp_info.send_suite = evd->info.srtp_info.suite;
+					stats->srtp_info.send_source = evd->info.srtp_info.source;
+				} else {
+					stats->srtp_info.recv_suite = evd->info.srtp_info.suite;
+					stats->srtp_info.recv_source = evd->info.srtp_info.source;
+				}
 			}
 		}
 	}
@@ -421,8 +436,12 @@ void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *sta
 	stats->estimated_download_bandwidth = estimated_value;
 }
 
-const SrtpInfo *linphone_call_stats_get_srtp_info (const LinphoneCallStats *stats){
-	return &stats->srtp_info;
+const SrtpInfo *linphone_call_stats_get_srtp_info (const LinphoneCallStats *stats, bool_t is_inner) {
+	if (is_inner == TRUE) {
+		return &stats->inner_srtp_info;
+	} else {
+		return &stats->srtp_info;
+	}
 }
 
 const ZrtpAlgo *linphone_call_stats_get_zrtp_algo (const LinphoneCallStats *stats){
