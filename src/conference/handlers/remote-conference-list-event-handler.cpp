@@ -158,12 +158,13 @@ void RemoteConferenceListEventHandler::unsubscribe () {
 
 void RemoteConferenceListEventHandler::unsubscribe (LinphoneAccount * c_account) {
 	auto account = Account::toCpp(c_account);
-	auto it = std::find_if(levs.begin(), levs.end(), [&account] (const auto & lev) {
-		char *from = linphone_address_as_string(account->getContactAddress());
-		bool found = (lev->op->getFrom() == from);
-		bctbx_free(from);
-		return found;
+	if(!account || !account->getContactAddress())
+		return;
+	char *from = linphone_address_as_string(account->getContactAddress());
+	auto it = std::find_if(levs.begin(), levs.end(), [from] (const auto & lev) {
+		return (lev->op->getFrom() == from);
 	});
+	bctbx_free(from);
 
 	if (it != levs.end()) {
 		LinphoneEvent * lev = *it;
