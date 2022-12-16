@@ -352,7 +352,7 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 				}
 				break;
 			case 403:
-				if (op->mAuthInfo)
+				if ((op->mAuthInfo) && (method == "REGISTER"))
 					op->mRoot->mCallbacks.auth_failure(op, op->mAuthInfo);
 				break;
 			case 302:

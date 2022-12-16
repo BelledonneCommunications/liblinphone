@@ -763,12 +763,9 @@ shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId, Chat
 void ChatRoom::markAsRead () {
 	L_D();
 
-lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " aggregated messages " << d->aggregatedMessages.size();
 	// Mark any message currently waiting aggregation as read
 	for (auto &chatMessage : d->aggregatedMessages) {
 		chatMessage->getPrivate()->markAsRead();
-
-lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " aggregated chat messages " << chatMessage << " has File Transfer Content " << chatMessage->getPrivate()->hasFileTransferContent();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
 			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);
@@ -778,8 +775,6 @@ lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity
 	CorePrivate *dCore = getCore()->getPrivate();
 	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
 		chatMessage->getPrivate()->markAsRead();
-
-lInfo() << __func__ << " DEBUG DEBUG " << std::string(linphone_core_get_identity(getCore()->getCCore())) << " unread chat messages " << chatMessage << " has File Transfer Content " << chatMessage->getPrivate()->hasFileTransferContent();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
 			chatMessage->getPrivate()->setState(ChatMessage::State::Displayed);

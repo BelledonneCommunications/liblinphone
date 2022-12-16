@@ -3154,7 +3154,6 @@ bool_t liblinphone_tester_chat_message_msg_update_stats(stats * counters, Linpho
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state) {
 	LinphoneCore *lc = linphone_chat_message_get_core(msg);
 	stats *counters = get_stats(lc);
-ms_message(" %s - DEBUG DEBUG core %s chat message state [%s] for msg [%p]",__func__, linphone_core_get_identity(lc),linphone_chat_message_state_to_string(state), msg);
 	if(liblinphone_tester_chat_message_msg_update_stats(counters, state))
 		ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 	else

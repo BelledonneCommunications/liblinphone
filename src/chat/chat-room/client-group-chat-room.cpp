@@ -852,7 +852,7 @@ void ClientGroupChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> 
 	L_Q();
 	const auto &conference = q->getConference();
 
-	if (q->getState() == ConferenceInterface::State::Terminated && capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
+	if (q->getState() == ConferenceInterface::State::Terminated && (capabilities & ClientGroupChatRoom::Capabilities::OneToOne)) {
 		lInfo() << "Trying to send message into a terminated 1-1 chat room [" << conference->getConferenceId() << "], exhuming it first";
 		q->exhume();
 		
