@@ -21,13 +21,14 @@
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "tester_utils.h"
-
-#include "linphone/FlexiAPIClient.hh"
 #include "c-wrapper/c-wrapper.h"
 
+#ifdef HAVE_FLEXIAPI
+#include "linphone/FlexiAPIClient.hh"
 #include <json/json.h>
-
 using namespace Json;
+#endif
+
 
 typedef struct _LinphoneFriendListStats {
 	int new_list_count;
