@@ -141,9 +141,47 @@ end:
 	
 }
 
+static void call_end_and_reinvite(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *marie_call, *pauline_call;
+	LinphoneCallParams *params;
+	bctbx_list_t *lcs = NULL;
+	bool_t call_ok;
+
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
+	if (!call_ok) goto end;
+
+	marie_call = linphone_core_get_current_call(marie->lc);
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	wait_for_list(lcs, NULL,0,1000);
+	/* both pause the call at the same time */
+	params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_update(pauline_call, params);
+	linphone_call_terminate(marie_call);
+	linphone_call_params_unref(params);
+
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallReleased,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased,1,10000));
+
+end:
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+}
+
 static test_t call_race_conditions_tests[] = {
 	TEST_NO_TAG("Call with video added by both parties", call_with_video_added_by_both_parties),
-	TEST_NO_TAG("Call paused by both parties", call_paused_by_both_parties)
+	TEST_NO_TAG("Call paused by both parties", call_paused_by_both_parties),
+	TEST_NO_TAG("Call ended and re-invited at the same time", call_end_and_reinvite)
 };
 
 test_suite_t call_race_conditions_suite = {"Call race conditions", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
