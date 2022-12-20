@@ -181,7 +181,7 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 }
 
 
-std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool reading_response, bool one_matching_codec){
+std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool reading_response, bool one_matching_codec, bool bundle_enabled){
 	std::list<OrtpPayloadType*> res;
 	PayloadType *matched;
 	bool found_codec=false;
@@ -197,6 +197,12 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 					if (found_codec){/* we have found a real codec already*/
 						continue; /*this codec won't be added*/
 					}else found_codec=true;
+				}
+			}
+
+			if(strcasecmp(matched->mime_type,"flexfec") == 0){
+				if(bundle_enabled == false){
+					continue;
 				}
 			}
 
@@ -506,9 +512,25 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
+	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
+
+	/* Bundle */
+	bool bundle_enabled = false;
+	if (remoteCfg.mid.empty() == false){
+		if (localCfg.mid.empty() == false){
+			resultCfg.mid = remoteCfg.mid;
+			resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
+			resultCfg.bundle_only = remoteCfg.bundle_only;
+			resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
+			bundle_enabled = true;
+		}else{
+			lError() << "The remote configuration at index " << remoteCfgIdx << " has set a mid in an answer while local configuration " << localCfgIdx << " didn't offer it.";
+		}
+	}
+
 	const auto & availableEncs = local_offer.getSupportedEncryptions();
 	if (remoteCfg != Utils::getEmptyConstRefObject<SalStreamConfiguration>()) {
-		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
+		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false,bundle_enabled);
 	} else {
 		lWarning() << "[Initiate Outgoing Configuration] Remote configuration has not been found";
 		success = false;
@@ -701,7 +723,11 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			* In this case it must set the bundle-only attribute, and set port to zero.*/
 			result.rtp_port = 0;
 		}
-		lInfo() << "[Initiate Incoming Stream] Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
+		if (resultCfg.rtcp_mux == true) {
+			// RTCP multiplexing is enabled, therefore all traffic goes through the RTP port.
+			result.rtcp_port = 0;
+		}
+		lInfo() << "Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote offered configuration index " << remote_offer.cfgIndex;
 	} else {
 		lDebug() << "[Initiate Incoming Stream] Unable to find a suitable configuration for stream of type " << sal_stream_type_to_string(result.type);
 		result.disable();
@@ -726,9 +752,22 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
+	/* Handle RTP bundle negociation */
+	bool bundle_enabled = false;
+	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty() && remoteCfg.mid_rtp_ext_header_id != 0) {
+		resultCfg.mid = remoteCfg.mid;
+		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
 
+		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
+			/* The stream is a secondary one part of a bundle.
+			 * In this case it must set the bundle-only attribute, and set port to zero.*/
+			resultCfg.bundle_only = true;
+		}
+		bundle_enabled = true;
+		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
+	}
 	const auto & availableEncs = local_cap.getSupportedEncryptions();
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, false, one_matching_codec);
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, false, one_matching_codec, bundle_enabled);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		if (localCfg.getProto() != remoteCfg.getProto() && remoteCfg.hasAvpf()) {
 			lWarning() << "[Initiate Incoming Configuration] Sending a downgraded AVP answer (transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote offered stream configuration at index " << remoteCfgIdx << ") for the received AVPF offer (transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << ")";
@@ -766,20 +805,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	}
 
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
-
-	/* Handle RTP bundle negociation */
-	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty() && remoteCfg.mid_rtp_ext_header_id != 0) {
-		resultCfg.mid = remoteCfg.mid;
-		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
-
-		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
-			/* The stream is a secondary one part of a bundle.
-			 * In this case it must set the bundle-only attribute, and set port to zero.*/
-			resultCfg.bundle_only = true;
-		}
-		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
-	}
-
+	
 	resultCfg.mixer_to_client_extension_id = (localCfg.mixer_to_client_extension_id == 0) ? remoteCfg.mixer_to_client_extension_id : localCfg.mixer_to_client_extension_id;
 	resultCfg.client_to_mixer_extension_id = (localCfg.client_to_mixer_extension_id == 0) ? remoteCfg.client_to_mixer_extension_id : localCfg.client_to_mixer_extension_id;
 	resultCfg.frame_marking_extension_id = (localCfg.frame_marking_extension_id == 0) ? remoteCfg.frame_marking_extension_id : localCfg.frame_marking_extension_id;

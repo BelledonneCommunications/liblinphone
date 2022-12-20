@@ -346,6 +346,13 @@ void linphone_call_params_set_used_video_codec (LinphoneCallParams *params, Ortp
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setUsedVideoCodec(codec);
 }
 
+const OrtpPayloadType * linphone_call_params_get_used_fec_codec (const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedFecCodec();
+}
+void linphone_call_params_set_used_fec_codec (LinphoneCallParams *params, OrtpPayloadType *codec) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setUsedFecCodec(codec);
+}
+
 const OrtpPayloadType *linphone_call_params_get_used_text_codec (const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getUsedRealtimeTextCodec();
 }

@@ -322,6 +322,7 @@ LINPHONE_PUBLIC LinphonePayloadType *linphone_call_params_get_used_audio_payload
 **/
 LINPHONE_PUBLIC LinphonePayloadType *linphone_call_params_get_used_video_payload_type(const LinphoneCallParams *call_params);
 
+LINPHONE_PUBLIC const OrtpPayloadType *linphone_call_params_get_used_fec_codec(const LinphoneCallParams *call_params);
 /**
  * Get the text payload type that has been selected by a call.
  * @param call_params The #LinphoneCallParams object. @notnil

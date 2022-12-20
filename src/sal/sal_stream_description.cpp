@@ -1661,7 +1661,7 @@ const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(con
 	}
 }
 
-const SalStreamConfiguration & SalStreamDescription::getActualConfiguration() const {
+const SalStreamConfiguration & SalStreamDescription::getActualConfiguration() const {	
 	return getConfigurationAtIndex(getActualConfigurationIndex());
 }
 

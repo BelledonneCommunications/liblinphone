@@ -90,6 +90,10 @@ public:
 	bool videoEnabled () const;
 	bool videoMulticastEnabled () const;
 
+	void enableFec(bool value);
+	bool fecEnabled() const;
+	const OrtpPayloadType * getUsedFecCodec () const;
+
 	void enableRealtimeText (bool value);
 	void setRealtimeTextKeepaliveInterval (unsigned int interval);
 	const OrtpPayloadType * getUsedRealtimeTextCodec () const;

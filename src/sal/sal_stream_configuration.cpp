@@ -360,7 +360,6 @@ void SalStreamConfiguration::enableAvpfForStream() {
 		payload_type_set_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 	}
 }
-
 void SalStreamConfiguration::disableAvpfForStream() {
 	for (auto & pt : payloads) {
 		payload_type_unset_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);

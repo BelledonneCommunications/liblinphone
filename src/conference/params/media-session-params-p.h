@@ -70,7 +70,7 @@ public:
 	void setUsedAudioCodec (OrtpPayloadType *pt) { usedAudioCodec = pt; }
 	void setUsedVideoCodec (OrtpPayloadType *pt) { usedVideoCodec = pt; }
 	void setUsedRealtimeTextCodec (OrtpPayloadType *pt) { usedRealtimeTextCodec = pt; }
-
+	void setUsedFecCodec (OrtpPayloadType *pt) { usedFecCodec = pt; }
 	SalCustomSdpAttribute * getCustomSdpAttributes () const;
 	void setCustomSdpAttributes (const SalCustomSdpAttribute *csa);
 	SalCustomSdpAttribute * getCustomSdpMediaAttributes (LinphoneStreamType lst) const;
@@ -91,6 +91,9 @@ public:
 	LinphoneVideoDefinition *receivedVideoDefinition = nullptr;
 	float sentFps = 0.f;
 	LinphoneVideoDefinition *sentVideoDefinition = nullptr;
+
+	bool fecEnabled = false;
+	PayloadType *usedFecCodec = nullptr;
 
 	unsigned int realtimeTextKeepaliveInterval = 25000;
 	PayloadType *usedRealtimeTextCodec = nullptr;

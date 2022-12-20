@@ -444,6 +444,21 @@ bool MediaSessionParams::videoMulticastEnabled () const {
 
 // -----------------------------------------------------------------------------
 
+void MediaSessionParams::enableFec(bool value) {
+	L_D();
+	d->fecEnabled = value;
+}
+
+bool MediaSessionParams::fecEnabled() const {
+	L_D();
+	return d->fecEnabled;
+}
+const OrtpPayloadType * MediaSessionParams::getUsedFecCodec() const {
+	L_D();
+	return d->usedFecCodec;
+}
+
+// -----------------------------------------------------------------------------
 void MediaSessionParams::enableRealtimeText (bool value) {
 	L_D();
 	d->realtimeTextEnabled = value;

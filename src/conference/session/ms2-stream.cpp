@@ -97,6 +97,7 @@ void MS2Stream::removeFromBundle(){
 
 void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 	const auto & resultStreamDesc = params.getResultStreamDescription();
+
 	int index = params.resultMediaDescription->getIndexOfTransportOwner(resultStreamDesc);
 	if (index == -1) {
 		lInfo() << *this << " is not part of any bundle";
@@ -1233,7 +1234,7 @@ void MS2Stream::updateIceInStats(){
 		case ICT_CandidateTypeMax:
 			// Shall not happen.
 			L_ASSERT(false);
-			break;
+			break; 
 	}
 }
 

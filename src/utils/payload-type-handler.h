@@ -49,7 +49,7 @@ class PayloadTypeHandler : public CoreAccessor {
 public:
 	explicit PayloadTypeHandler (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
 
-	std::list<OrtpPayloadType*> makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList);
+	std::list<OrtpPayloadType*> makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList, bool bundle_enabled);
 
 	static bool bandwidthIsGreater (int bandwidth1, int bandwidth2);
 	static int getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth);
@@ -70,6 +70,7 @@ private:
 	void assignPayloadTypeNumbers (const std::list<OrtpPayloadType*> & codecs);
 	std::list<OrtpPayloadType*> createSpecialPayloadTypes (const std::list<OrtpPayloadType*> & codecs);
 	std::list<OrtpPayloadType*> createTelephoneEventPayloadTypes (const std::list<OrtpPayloadType*> & codecs);
+	OrtpPayloadType * createFecPayloadType ();
 	bool isPayloadTypeUsable (const OrtpPayloadType *pt);
 
 	static const int udpHeaderSize;

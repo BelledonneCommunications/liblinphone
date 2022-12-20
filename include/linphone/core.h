@@ -4476,6 +4476,9 @@ LINPHONE_PUBLIC void linphone_core_enable_conference_server (LinphoneCore *core,
  */
 LINPHONE_PUBLIC bool_t linphone_core_conference_server_enabled (const LinphoneCore *core);
 
+LINPHONE_PUBLIC void linphone_core_enable_fec(LinphoneCore *core, bool_t enable);
+LINPHONE_PUBLIC bool_t linphone_core_fec_enabled (const LinphoneCore *core);
+
 /**
  * Select whether the default conference participant list is open or closed
  * @param core A #LinphoneCore object @notnil

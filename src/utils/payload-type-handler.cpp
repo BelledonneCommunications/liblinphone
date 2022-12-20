@@ -165,7 +165,7 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::createSpecialPayloadTypes (const
 		OrtpPayloadType *cn = payload_type_clone(&payload_type_cn);
 		payload_type_set_number(cn, 13);
 		result.push_back(cn);
-	}
+	} 
 	return result;
 }
 
@@ -185,6 +185,13 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::createTelephoneEventPayloadTypes
 		result.push_back(tev);
 	}
 	return result;
+}
+
+OrtpPayloadType* PayloadTypeHandler::createFecPayloadType () {
+	
+	OrtpPayloadType *fec_pt = payload_type_clone(&payload_type_flexfec);
+	payload_type_set_number(fec_pt, -1);
+	return fec_pt;
 }
 
 bool PayloadTypeHandler::isPayloadTypeUsable (const OrtpPayloadType *pt) {
@@ -279,7 +286,7 @@ bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const std::list<OrtpPaylo
 
 // -----------------------------------------------------------------------------
 
-std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList) {
+std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList, bool bundle_enabled) {
 	const bctbx_list_t *allCodecs = nullptr;
 	switch (type) {
 		default:
@@ -328,6 +335,11 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 	if (type == SalAudio) {
 		auto specials = createSpecialPayloadTypes(result);
 		result.insert(result.cend(), specials.cbegin(), specials.cend());
+	}
+	if(type == SalVideo && bundle_enabled && linphone_core_fec_enabled(getCore()->getCCore())){
+		
+		auto fec_pt = createFecPayloadType();
+		result.push_back(fec_pt);
 	}
 	assignPayloadTypeNumbers(result);
 	return result;

@@ -178,7 +178,6 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		}
 		void enableAvpfForStream();
 		void disableAvpfForStream();
-
 };
 
 LINPHONE_END_NAMESPACE

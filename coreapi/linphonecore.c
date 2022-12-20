@@ -1946,6 +1946,7 @@ static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type
 		if (lc->video_conf.display && !lc->video_conf.capture) {
 			return ms_factory_has_decoder(lc->factory, mime);
 		}
+		
 	}
 	return ms_factory_codec_supported(lc->factory, mime);
 }
@@ -8944,6 +8945,14 @@ LinphoneConference *linphone_core_get_conference(LinphoneCore *lc) {
 
 void linphone_core_enable_conference_server (LinphoneCore *lc, bool_t enable) {
 	linphone_config_set_int(linphone_core_get_config(lc), "misc", "conference_server_enabled", enable);
+}
+
+void linphone_core_enable_fec(LinphoneCore *lc, bool_t enable){
+	linphone_config_set_bool(linphone_core_get_config(lc), "fec", "fec_enabled", enable);
+}
+
+bool_t linphone_core_fec_enabled (const LinphoneCore *lc) {
+	return linphone_config_get_bool(linphone_core_get_config(lc), "fec", "fec_enabled", FALSE) ? TRUE : FALSE;
 }
 
 bool_t _linphone_core_is_conference_creation (const LinphoneCore *lc, const LinphoneAddress *addr) {

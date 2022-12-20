@@ -1434,12 +1434,15 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 
 	newStream.type = SalVideo;
 
+	bool bundle_enabled = getParams()->rtpBundleEnabled();
+
 	bool success = false;
 	if (dev) {
 		const auto & label = dev->getLabel();
 		const auto & previousParticipantStream = oldMd ? oldMd->findStreamWithLabel(label) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 		const auto alreadyAssignedPayloads = ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList);
-		std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, alreadyAssignedPayloads);
+		
+		std::list<OrtpPayloadType*> l = pth.makeCodecsList(SalVideo, 0, -1, alreadyAssignedPayloads, bundle_enabled);
 		if (!l.empty()) {
 			newStream.setLabel(label);
 			newStream.name = "Video " + dev->getAddress().asString();
@@ -1518,6 +1521,7 @@ void MediaSessionPrivate::fillLocalStreamDescription(SalStreamDescription & stre
 		}
 		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, stream, cfg, mid);
 
+		
 		stream.addActualConfiguration(cfg);
 		fillRtpParameters(stream);
 	} else {
@@ -1736,7 +1740,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 		std::list<OrtpPayloadType*> emptyList;
 		emptyList.clear();
 		std::list<OrtpPayloadType*> l;
-
+		bool bundle_enabled = getParams()->rtpBundleEnabled();
 		const auto noStreams = md->streams.size();
 		const auto refNoStreams = refMd->streams.size();
 		if (noStreams <= refNoStreams) {
@@ -1757,7 +1761,7 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 				cfg.dir = SalStreamInactive;
 
 				const auto & previousParticipantStream = (oldMd) ? oldMd->getStreamIdx(static_cast<unsigned int>(streamIdx)) : Utils::getEmptyConstRefObject<SalStreamDescription>();
-				l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList));
+				l = pth.makeCodecsList(s.type, 0, -1, ((previousParticipantStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? previousParticipantStream.already_assigned_payloads : emptyList), bundle_enabled);
 				if (!l.empty()){
 					cfg.payloads = l;
 				} else {
@@ -1852,7 +1856,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
-
+	bool bundle_enabled = getParams()->rtpBundleEnabled();
 	auto encList = q->getSupportedEncryptions();
 	// Delete duplicates
 	encList.unique();
@@ -1913,7 +1917,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	const SalStreamDescription &oldAudioStream = refMd ? refMd->findBestStream(SalAudio) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 
 	if ((!conference || (localIsOfferer && getParams()->audioEnabled())) || (oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
-		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList));
+		auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, ((oldAudioStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldAudioStream.already_assigned_payloads : emptyList), bundle_enabled);
 
 		const auto audioStreamIdx = (conference && refMd) ? refMd->findIdxBestStream(SalAudio) : -1;
 		SalStreamDescription & audioStream = addStreamToMd(md, audioStreamIdx, oldMd);
@@ -1948,7 +1952,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	const SalStreamDescription &oldVideoStream = (conference) ? ((oldGridLayoutMainVideoStream == Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldActiveSpeakerLayoutMainVideoStream : oldGridLayoutMainVideoStream) : oldMainVideoStream;
 	if (addVideoStream || (oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>())) {
-		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList));
+		auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1, ((oldVideoStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldVideoStream.already_assigned_payloads : emptyList),bundle_enabled);
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 
 		SalStreamDir videoDir = SalStreamInactive;
@@ -2018,7 +2022,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	const SalStreamDescription &oldTextStream = refMd ? refMd->findBestStream(SalText) : Utils::getEmptyConstRefObject<SalStreamDescription>();
 	if ((localIsOfferer && getParams()->realtimeTextEnabled()) || (oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>())){
-		auto textCodecs = pth.makeCodecsList(SalText, 0, -1, ((oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldTextStream.already_assigned_payloads : emptyList));
+		auto textCodecs = pth.makeCodecsList(SalText, 0, -1, ((oldTextStream != Utils::getEmptyConstRefObject<SalStreamDescription>()) ? oldTextStream.already_assigned_payloads : emptyList), bundle_enabled);
 
 		const auto proto = offerNegotiatedMediaProtocolOnly ? linphone_media_encryption_to_sal_media_proto(getNegotiatedMediaEncryption(), getParams()->avpfEnabled()) : getParams()->getMediaProto();
 

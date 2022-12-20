@@ -352,7 +352,6 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		return;
 	}
 
-
 	video_stream_enable_display_filter_auto_rotate(mStream,
 		!!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "display_filter_auto_rotate", 0)
 	);
@@ -420,6 +419,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	video_stream_use_preview_video_window(mStream, getCCore()->use_preview_window);
 	
+
 	MS2Stream::render(ctx, targetState);
 	
 	RtpAddressInfo dest;
