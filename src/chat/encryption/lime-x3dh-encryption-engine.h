@@ -71,7 +71,6 @@ class LimeX3dhEncryptionEngine : public EncryptionEngine, public CoreListener, p
 public:
 	LimeX3dhEncryptionEngine (
 		const std::string &db_access,
-		const std::string &server_url,
 		belle_http_provider_t *prov,
 		const std::shared_ptr<Core> core
 	);
@@ -80,6 +79,7 @@ public:
 
 	std::shared_ptr<LimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
+	lime::limeCallback setLimeUserCreationCallback (LinphoneCore * lc, const std::string localDeviceId);
 	lime::CurveId getCurveId () const;
 
 	// EncryptionEngine overrides
@@ -172,13 +172,17 @@ public:
 		const std::string &message
 	) override;
 
+	void onServerUrlChanged(
+		const std::shared_ptr<Account> & account,
+		const std::string& limeServerUrl
+	) override;
+
 	void staleSession (const std::string localDeviceId, const std::string peerDeviceId) override;
 
 	void setTestForceDecryptionFailureFlag(bool flag) override;
 private:
 	std::shared_ptr<LimeManager> limeManager;
 	std::time_t lastLimeUpdate;
-	std::string x3dhServerUrl;
 	std::string _dbAccess;
 	lime::CurveId curve;
 	bool forceFailure = false;

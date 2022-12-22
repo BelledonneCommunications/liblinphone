@@ -2116,6 +2116,30 @@ static void group_chat_room_with_sip_errors_base (bool_t invite_error, bool_t su
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 4, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(liseCr), 4, int, "%d");
 
+/*
+		LinphoneAddress *michelle2Contact =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(michelle2.getLc())));
+		ms_message("%s is restarting its core", linphone_address_as_string(michelle2Contact));
+		linphone_address_unref(michelle2Contact);
+		initialFocusStats = focus.getStats();
+		coresList = bctbx_list_remove(coresList, michelle2.getLc());
+		//Restart michelle
+		michelle2.reStart();
+		setup_mgr_for_conference(michelle2.getCMgr(), NULL);
+		coresList = bctbx_list_append(coresList, michelle2.getLc());
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneRegistrationOk, 1, liblinphone_tester_sip_timeout));
+		if (encrypted) {
+			BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(michelle2.getLc()));
+		}
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneConferenceStateCreated, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &michelle2.getStats().number_of_LinphoneSubscriptionActive, 1, liblinphone_tester_sip_timeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &focus.getStats().number_of_LinphoneSubscriptionActive, initialFocusStats.number_of_LinphoneSubscriptionActive + 1, liblinphone_tester_sip_timeout));
+		LinphoneAddress *michelle2DeviceAddr =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(michelle2.getLc())));
+		michelle2Cr = linphone_core_search_chat_room(michelle2.getLc(), NULL, michelle2DeviceAddr, confAddr, NULL);
+		linphone_address_unref(michelle2DeviceAddr);
+		BC_ASSERT_PTR_NOT_NULL(michelle2Cr);
+*/
+
 		msg_text = "message marie blabla";
 		msg = ClientConference::sendTextMsg(marieCr, msg_text);
 		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline,michelle,michelle2,laure,lise}).wait([msg] {

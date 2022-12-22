@@ -685,18 +685,16 @@ void Core::enableLimeX3dh (bool enable) {
 		if (!linphone_core_conference_server_enabled(getCCore())) {
 #ifdef HAVE_LIME_X3DH
 			LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-			string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+			if (strcmp(linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""), "") != 0) {
+				lError() << "Setting x3dh_server_url in section lime is no longer supported. Please use setting lime_server_url under section lime to set the URL of the LIME server globally or in the proxy section of the RC file";
+			}
 			string dbAccess = getX3dhDbPath();
 			belle_http_provider_t *prov = linphone_core_get_http_provider(getCCore());
 
-			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, serverUrl, prov, getSharedFromThis());
+			LimeX3dhEncryptionEngine *engine = new LimeX3dhEncryptionEngine(dbAccess, prov, getSharedFromThis());
 			setEncryptionEngine(engine);
 			d->registerListener(engine);
-
-			// Legacy behavior
-			if (!serverUrl.empty()) {
-				addSpec("lime");
-			}
+			addSpec("lime");
 #else
 			lWarning() << "Lime X3DH support is not available";
 #endif
@@ -720,28 +718,17 @@ std::string Core::getX3dhDbPath() const {
 	return dbAccess;
 }
 
-//Note: this will re-initialise	or start x3dh encryption engine if url is different from existing one
 void Core::setX3dhServerUrl(const std::string &url) {
 	if (!limeX3dhAvailable()) {
 		return;
 	}
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-	string prevUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 	linphone_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
-	linphone_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
-	if (url.compare(prevUrl)) {
-		bool limeEnabled = linphone_config_get_bool(lpconfig, "lime", "enabled", TRUE);
-		if (limeEnabled) {
-			//Force re-initialisation
-			enableLimeX3dh(false);
-			enableLimeX3dh(true);
-		}
-	}
 }
 
 std::string Core::getX3dhServerUrl() const {
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-	string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", "");
 	return serverUrl;
 }
 

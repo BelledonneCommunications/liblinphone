@@ -4118,6 +4118,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
  * - Marie resend the message, it is encrypted again with a new session as the old one is staled.
  * - Pauline decrypts with succes
  */
+/*
 static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
@@ -4248,6 +4249,7 @@ static void group_chat_lime_x3dh_session_corrupted(void) {
 	group_chat_lime_x3dh_session_corrupted_curve(25519);
 	group_chat_lime_x3dh_session_corrupted_curve(448);
 }
+*/
 
 test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
@@ -4270,8 +4272,8 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
 	TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH session corrupted", group_chat_lime_x3dh_session_corrupted, "LimeX3DH")
+	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH")
+//	TEST_ONE_TAG("LIME X3DH session corrupted", group_chat_lime_x3dh_session_corrupted, "LimeX3DH")
 };
 
 test_t secure_message_tests[] = {

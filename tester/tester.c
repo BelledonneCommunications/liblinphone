@@ -4364,18 +4364,19 @@ static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
 }
 
 void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req) {
+	const char * server = NULL;
 	if (curveId == 448) {
 		// Change the curve setting before the server URL
 		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
 		// changing the url will restart the encryption engine allowing to also use the changed curve config
 		if (tls_auth_server == TRUE) {
 			if (req==TRUE) {
-				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_tlsauth_req_url);
+				server = lime_server_c448_tlsauth_req_url;
 			} else {
-				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_tlsauth_opt_url);
+				server = lime_server_c448_tlsauth_opt_url;
 			}
 		} else {
-			linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_url);
+			server = lime_server_c448_url;
 		}
 	} else {
 		// Change the curve setting before the server URL
@@ -4383,13 +4384,24 @@ void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t 
 		// changing the url will restart the encryption engine allowing to also use the changed curve config
 		if (tls_auth_server == TRUE) {
 			if (req == TRUE) {
-				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_tlsauth_req_url);
+				server = lime_server_c25519_tlsauth_req_url;
 			} else {
-				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_tlsauth_opt_url);
+				server = lime_server_c25519_tlsauth_opt_url;
 			}
 		} else {
-			linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_url);
+			server = lime_server_c25519_url;
 		}
+	}
+
+	LinphoneAccount *account = linphone_core_get_default_account(manager->lc);
+	const LinphoneAccountParams* account_params = linphone_account_get_params(account);
+	if (linphone_account_params_get_lime_server_url(account_params)) {
+		LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
+		linphone_account_params_set_lime_server_url(new_account_params, server);
+		linphone_account_set_params(account, new_account_params);
+		linphone_account_params_unref(new_account_params);
+	} else {
+		linphone_core_set_lime_x3dh_server_url(manager->lc, server);
 	}
 }
 
