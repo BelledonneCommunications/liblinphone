@@ -1681,6 +1681,14 @@ static void notify_friend_capabilities(void) {
 	LinphoneCoreManager *chloe3 = linphone_core_manager_create("chloe_rc");
 
 	// Now this spec is enforced when Core is created, remove it for tests purposes
+	linphone_config_set_bool(linphone_core_get_config(marie->lc), "lime", "enabled", FALSE);
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "lime", "enabled", FALSE);
+	linphone_config_set_bool(linphone_core_get_config(pauline2->lc), "lime", "enabled", FALSE);
+	linphone_config_set_bool(linphone_core_get_config(laure->lc), "lime", "enabled", FALSE);
+	linphone_config_set_bool(linphone_core_get_config(chloe->lc), "lime", "enabled", FALSE);
+	linphone_config_set_bool(linphone_core_get_config(chloe2->lc), "lime", "enabled", FALSE);
+	linphone_config_set_bool(linphone_core_get_config(chloe3->lc), "lime", "enabled", FALSE);
+
 	linphone_core_remove_linphone_spec(marie->lc, "ephemeral");
 	linphone_core_remove_linphone_spec(pauline->lc, "ephemeral");
 	linphone_core_remove_linphone_spec(pauline2->lc, "ephemeral");
@@ -2155,6 +2163,7 @@ static void notify_friend_capabilities_with_alias(void) {
 		e164Laure = ms_strdup_printf("+%s%s", linphone_dial_plan_get_country_calling_code(dialPlan), phoneLaure);
 
 		marie = linphone_core_manager_create2("marie_rc", e164Marie);
+		linphone_config_set_bool(linphone_core_get_config(marie->lc), "lime", "enabled", FALSE);
 		linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
 		specs = bctbx_list_append(specs, "groupchat/1.1");
 		specs = bctbx_list_append(specs, "lime/1.5");
@@ -2162,10 +2171,12 @@ static void notify_friend_capabilities_with_alias(void) {
 		linphone_core_manager_start(marie, TRUE);
 
 		laure = linphone_core_manager_create2("marie_rc", e164Laure);
+		linphone_config_set_bool(linphone_core_get_config(laure->lc), "lime", "enabled", FALSE);
 		linphone_core_set_user_agent(laure->lc, "full-presence-support-bypass", NULL);
 		linphone_core_manager_start(laure, TRUE);
 
 		LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+		linphone_config_set_bool(linphone_core_get_config(pauline->lc), "lime", "enabled", FALSE);
 		linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
 
 		marieFriend = linphone_core_create_friend(pauline->lc);

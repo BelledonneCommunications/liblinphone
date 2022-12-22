@@ -24,6 +24,11 @@
 #include "linphone/api/c-account.h"
 #include "linphone/api/c-account-params.h"
 #include "push-notification/push-notification-config.h"
+#ifdef HAVE_ADVANCED_IM
+#ifdef HAVE_LIME_X3DH
+#include "chat/encryption/lime-x3dh-encryption-engine.h"
+#endif // HAVE_ADVANCED_IM
+#endif // HAVE_ADVANCED_IM
 #include "linphone/core.h"
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
@@ -1237,6 +1242,15 @@ void Account::onLimeServerUrlChanged (const std::string& limeServerUrl) {
 			linphone_core_remove_linphone_spec(mCore, "lime");
 		}
 	}
+
+	if (mCore) {
+		// If the lime server URL has changed, then propagate the change to the encryption engine
+		auto encryptionEngine = L_GET_CPP_PTR_FROM_C_OBJECT(mCore)->getEncryptionEngine();
+		if (encryptionEngine && (encryptionEngine->getEngineType() == EncryptionEngine::EngineType::LimeX3dh)) {
+			encryptionEngine->onServerUrlChanged(getSharedFromThis(), limeServerUrl);
+		}
+	}
+
 #else
 	lWarning() << "Lime X3DH support is not available";
 #endif

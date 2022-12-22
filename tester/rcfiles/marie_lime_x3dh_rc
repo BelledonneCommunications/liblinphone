@@ -1,6 +1,7 @@
 [lime]
 lime_update_threshold=86400
-lime_server_url=https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php
+# Port explicitely set to 8943 to make sure that the value set in the proxy_0 section is correctly taken into account
+lime_server_url=https://lime.wildcard1.linphone.org:8943/lime-server/lime-server.php
 
 [sip]
 sip_port=-1
@@ -30,6 +31,7 @@ reg_expires=3600
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
+lime_server_url=https://lime.wildcard1.linphone.org:8443/lime-server/lime-server.php
 
 [friend_0]
 url="Paupoche" <sip:pauline@sip.example.org>

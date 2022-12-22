@@ -38,6 +38,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
 class ChatMessage;
+class Account;
 
 using EncryptionParameter = std::pair<std::string, std::string>;
 
@@ -133,6 +134,11 @@ public:
 
 	virtual void setTestForceDecryptionFailureFlag(
 			bool flag
+	) {}
+
+	virtual void onServerUrlChanged(
+		const std::shared_ptr<Account> & account,
+		const std::string& limeServerUrl
 	) {}
 
 protected:
