@@ -662,6 +662,109 @@ static void group_chat_lime_x3dh_send_encrypted_message_with_response_and_compos
 	lime_x3dh_message_test(TRUE, TRUE, FALSE, 448);
 }
 
+static void group_chat_lime_x3dh_send_encrypted_message_offline_curve(const int curveId) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_x3dh_rc");
+	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL, *laureOneToOneCr = NULL;
+	LinphoneAddress *confAddr = NULL;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	stats initialLaureStats = laure->stat;
+
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, laure);
+	set_lime_curve_list(curveId, coresManagerList);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime users to be created on X3DH server
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_X3dhUserCreationSuccess, initialLaureStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+
+	// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(laure->lc));
+
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
+	initialMarieStats = marie->stat;
+	initialPaulineStats = pauline->stat;
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", TRUE, LinphoneChatRoomEphemeralModeDeviceManaged);
+	
+	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+	confAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 2, FALSE);
+	laureOneToOneCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, "one to one", 2, FALSE);
+
+	LinphoneChatMessage *message = _send_message(paulineOneToOneCr, "Hello hello hello.");
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 10000));
+	linphone_chat_message_unref(message);
+	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
+		goto end;
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, 1, 10000));
+	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
+		goto end;
+
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(marieOneToOneCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(laureOneToOneCr));
+	BC_ASSERT_FALSE(linphone_chat_room_is_empty(paulineOneToOneCr));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(marieOneToOneCr), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(marie->lc), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_unread_messages_count(laureOneToOneCr), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count(laure->lc), 1, int, "%d");
+
+	sal_set_send_error(linphone_core_get_sal(pauline->lc), -1);
+	// Pauline is offline and tries to send a chat message
+	message = _send_message(paulineOneToOneCr, "Help me, Obi-Wan Kenobi. You’re my only hope.");
+	linphone_chat_message_send(message);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageNotDelivered, 1, liblinphone_tester_sip_timeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+
+	sal_set_send_error(linphone_core_get_sal(pauline->lc), 0);
+	linphone_core_refresh_registers(pauline->lc);
+
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneRegistrationOk, 2, liblinphone_tester_sip_timeout));
+
+	// Pauline comes back online and retries to send a chat message
+	linphone_chat_message_send(message);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, 2, liblinphone_tester_sip_timeout));
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageNotDelivered, 2, liblinphone_tester_sip_timeout));
+
+	linphone_chat_message_unref(message);
+
+end:
+	if (confAddr) linphone_address_unref(confAddr);
+	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
+	if (laureOneToOneCr) linphone_core_manager_delete_chat_room(laure, laureOneToOneCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+}
+
+static void group_chat_lime_x3dh_send_encrypted_message_offline (void) {
+	group_chat_lime_x3dh_send_encrypted_message_offline_curve(25519);
+	group_chat_lime_x3dh_send_encrypted_message_offline_curve(448);
+}
+
 static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
@@ -736,11 +839,11 @@ end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 }
+
 static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys (void) {
 	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(25519);
 	group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys_curve(448);
 }
-
 
 static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text (bool_t with_text, bool_t two_files, bool_t use_buffer, const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
@@ -4278,6 +4381,7 @@ test_t secure_group_chat_tests[] = {
 
 test_t secure_message_tests[] = {
 	TEST_ONE_TAG("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message while offline", group_chat_lime_x3dh_send_encrypted_message_offline, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with composing", group_chat_lime_x3dh_send_encrypted_message_with_composing, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with response", group_chat_lime_x3dh_send_encrypted_message_with_response, "LimeX3DH"),

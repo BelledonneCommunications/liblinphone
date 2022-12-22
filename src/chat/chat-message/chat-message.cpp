@@ -1022,7 +1022,7 @@ void ChatMessagePrivate::send () {
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
 	//imdnId.clear(); //moved into  ChatRoomPrivate::sendChatMessage
 
-	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None)) {
+	if (toBeStored && (currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None))) {
 		storeInDb();
 
 		if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
@@ -1222,7 +1222,13 @@ void ChatMessagePrivate::send () {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
 	}
 
-	if (toBeStored) {
+	if (isResend) {
+		// If it is a resend, reset participant states to Idle.
+		// Not doing so, it will lead to the message being incorrectly marked as not delivered when at least one participant hasn't received it yet.
+		for (auto participant : q->getChatRoom()->getParticipants()) {
+			setParticipantState(participant->getAddress(), ChatMessage::State::Idle, q->getTime());
+		}
+	} else if (toBeStored) {
 		// Composing messages and IMDN aren't stored in DB so do not try, it will log an error message Invalid db key for nothing.
 		updateInDb();
 	}

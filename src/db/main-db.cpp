@@ -1770,6 +1770,7 @@ void MainDbPrivate::setChatMessageParticipantState (
 	*dbSession.getBackendSession() << "SELECT state FROM chat_message_participant WHERE event_id = :eventId AND participant_sip_address_id = :participantSipAddressId",
 		soci::into(intState),  soci::use(eventId), soci::use(participantSipAddressId);
 	ChatMessage::State dbState = ChatMessage::State(intState);
+
 	if (int(state) < intState && (dbState == ChatMessage::State::Displayed || dbState == ChatMessage::State::DeliveredToUser)) {
 		lInfo() << "setChatMessageParticipantState: can not change state from " << dbState << " to " << state;
 		return;
