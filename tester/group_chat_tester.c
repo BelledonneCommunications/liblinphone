@@ -5812,7 +5812,7 @@ static void group_chat_room_complex_participant_removal_scenario (void) {
 			nbLaureConferenceCreatedEventsBeforeRestart++;
 	}
 	bctbx_list_free_with_data(laureHistory, (bctbx_list_free_func)linphone_event_log_unref);
-	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 1, unsigned int, "%u");
+	BC_ASSERT_EQUAL(nbLaureConferenceCreatedEventsBeforeRestart, 2, unsigned int, "%u");
 
 	initialLaureStats = laure->stat;
 	linphone_proxy_config_refresh_register(linphone_core_get_default_proxy_config(laure->lc));

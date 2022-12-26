@@ -416,7 +416,6 @@ static void call_updating(SalOp *op, bool_t is_update) {
 	L_GET_PRIVATE(sessionRef)->updating(!!is_update);
 }
 
-
 static void call_ack_received(SalOp *op, SalCustomHeader *ack) {
 	LinphonePrivate::CallSession *session = static_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
 	if (!session) {

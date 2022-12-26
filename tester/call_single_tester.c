@@ -2231,6 +2231,106 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_with_custom_reserved_headers(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCall *call_marie,*call_pauline;
+	LinphoneCallParams *init_pauline_params, *marie_params;
+	const LinphoneCallParams *marie_remote_params;
+	const char *hvalue;
+	char	*pauline_remote_contact_header,
+				*pauline_remote_contact,
+				*marie_remote_contact,
+				*marie_remote_contact_header;
+	LinphoneAddress* marie_identity;
+	char* tmp=linphone_address_as_string_uri_only(marie->identity);
+	char tmp2[256];
+
+	const char * from_str = "sip:laure@custom.header.org";
+	LinphoneAddress *from = linphone_address_new(from_str);
+	init_pauline_params=linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_set_from_header(init_pauline_params,from_str);
+	//linphone_call_params_add_custom_header(init_pauline_params,"From","<sip:laure@custom.header.org>;tag=b88752a2-33ff-4bae-a4b1-e768500a90d8");
+	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	snprintf(tmp2,sizeof(tmp2),"%s?uriHeader=myUriHeader",tmp);
+	marie_identity=linphone_address_new(tmp2);
+	ms_free(tmp);
+	linphone_address_unref(marie->identity);
+	marie->identity=marie_identity;
+
+	stats initial_pauline_stat = pauline->stat;
+	stats initial_marie_stat = marie->stat;
+
+	call_pauline=linphone_core_invite_address_with_params(pauline->lc,marie->identity,init_pauline_params);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, initial_pauline_stat.number_of_LinphoneCallIncomingReceived + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingInit, initial_pauline_stat.number_of_LinphoneCallOutgoingInit + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallOutgoingRinging, initial_pauline_stat.number_of_LinphoneCallOutgoingRinging + 1));
+
+	call_marie=linphone_core_get_current_call(marie->lc);
+	linphone_call_accept(call_marie);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	marie_remote_params=linphone_call_get_remote_params(call_marie);
+	hvalue=linphone_call_params_get_custom_header(marie_remote_params,"From");
+	BC_ASSERT_PTR_NOT_NULL(hvalue);
+	LinphoneAddress *marie_from = linphone_address_new(hvalue);
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marie_from, from));
+
+	BC_ASSERT_PTR_NOT_NULL(call_marie);
+	BC_ASSERT_PTR_NOT_NULL(call_pauline);
+
+	initial_pauline_stat = pauline->stat;
+	initial_marie_stat = marie->stat;
+
+	marie_params=linphone_core_create_call_params(marie->lc, call_marie);
+	linphone_call_update(call_marie, marie_params);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, initial_pauline_stat.number_of_LinphoneCallUpdatedByRemote + 1));
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+	// FIXME: we have to strdup because successive calls to get_remote_params erase the returned const char*!!
+	pauline_remote_contact        = ms_strdup(linphone_call_get_remote_contact(call_pauline));
+	pauline_remote_contact_header = ms_strdup(linphone_call_params_get_custom_header(linphone_call_get_remote_params(call_pauline), "Contact"));
+
+	marie_remote_contact        = ms_strdup(linphone_call_get_remote_contact(call_marie));
+	marie_remote_contact_header = ms_strdup(linphone_call_params_get_custom_header(linphone_call_get_remote_params(call_marie), "Contact"));
+
+	BC_ASSERT_PTR_NOT_NULL(pauline_remote_contact);
+	BC_ASSERT_PTR_NOT_NULL(pauline_remote_contact_header);
+	BC_ASSERT_PTR_NOT_NULL(marie_remote_contact);
+	BC_ASSERT_PTR_NOT_NULL(marie_remote_contact_header);
+	BC_ASSERT_STRING_EQUAL(pauline_remote_contact,pauline_remote_contact_header);
+	BC_ASSERT_STRING_EQUAL(marie_remote_contact,marie_remote_contact_header);
+
+	BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_from_address(linphone_call_get_call_log(call_pauline)),from));
+	BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_call_log_get_from_address(linphone_call_get_call_log(call_marie)),from));
+
+	ms_free(pauline_remote_contact);
+	ms_free(pauline_remote_contact_header);
+	ms_free(marie_remote_contact);
+	ms_free(marie_remote_contact_header);
+
+	linphone_call_terminate(call_marie);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallEnd, initial_pauline_stat.number_of_LinphoneCallEnd + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, initial_marie_stat.number_of_LinphoneCallEnd + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, initial_pauline_stat.number_of_LinphoneCallReleased + 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, initial_marie_stat.number_of_LinphoneCallReleased + 1));
+
+	linphone_address_unref(from);
+	linphone_address_unref(marie_from);
+	linphone_core_cbs_unref(core_cbs);
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(init_pauline_params);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void call_with_custom_sdp_attributes_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
 		LinphoneCallParams *params;
@@ -6670,6 +6770,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with privacy", call_with_privacy),
 	TEST_NO_TAG("Call with privacy 2", call_with_privacy2),
 	TEST_NO_TAG("Call with custom headers", call_with_custom_headers),
+	TEST_NO_TAG("Call with custom reserved headers", call_with_custom_reserved_headers),
 	TEST_NO_TAG("Call with custom SDP attributes", call_with_custom_sdp_attributes),
 	TEST_NO_TAG("Call caller with custom header or sdp", call_caller_with_custom_header_or_sdp_attributes),
 	TEST_NO_TAG("Call callee with custom header or sdp", call_callee_with_custom_header_or_sdp_attributes),
