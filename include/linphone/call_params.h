@@ -47,6 +47,14 @@ extern "C" {
 LINPHONE_PUBLIC void linphone_call_params_add_custom_header(LinphoneCallParams *call_params, const char *header_name, const char *header_value);
 
 /**
+ * Get a custom SIP header.
+ * @param call_params The #LinphoneCallParams to get the custom SIP header from. @notnil
+ * @param header_name The name of the header to get. @notnil
+ * @return The content of the header or NULL if not found. @maybenil
+**/
+LINPHONE_PUBLIC const char *linphone_call_params_get_custom_header(const LinphoneCallParams *call_params, const char *header_name);
+
+/**
  * Copy an existing #LinphoneCallParams object to a new #LinphoneCallParams object.
  * @param call_params The #LinphoneCallParams object to copy. @notnil
  * @return A copy of the #LinphoneCallParams object. @notnil @tobefreed
@@ -210,14 +218,6 @@ LINPHONE_PUBLIC void linphone_call_params_set_srtp_suites(LinphoneCallParams *ca
  * @param enabled A boolean value telling whether to enable video or not.
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_video(LinphoneCallParams *call_params, bool_t enabled);
-
-/**
- * Get a custom SIP header.
- * @param call_params The #LinphoneCallParams to get the custom SIP header from. @notnil
- * @param header_name The name of the header to get. @notnil
- * @return The content of the header or NULL if not found. @maybenil
-**/
-LINPHONE_PUBLIC const char *linphone_call_params_get_custom_header(const LinphoneCallParams *call_params, const char *header_name);
 
 /**
  * Set video layout for conference.
