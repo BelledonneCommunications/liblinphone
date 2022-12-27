@@ -6734,7 +6734,7 @@ static void call_with_same_codecs_ordered_differently(void) {
 	linphone_core_manager_destroy(pauline);
 }
 static void call_rejected_with_403(void){
-
+	const LinphoneErrorInfo *error;
 	LinphoneCoreManager * mgr = linphone_core_manager_new("empty_rc");
 
 	LinphoneAccountParams *accountParams =  linphone_core_create_account_params(mgr->lc);
@@ -6749,10 +6749,18 @@ static void call_rejected_with_403(void){
 	linphone_core_add_account(mgr->lc, account);
 	linphone_core_set_default_account(mgr->lc, account);
 	linphone_core_iterate(mgr->lc);
-	
-	linphone_core_invite(mgr->lc, "sip:nimportequoi@sip.example.org;transport=TLS");
-	BC_ASSERT_TRUE(wait_for(mgr->lc,mgr->lc,&mgr->stat.number_of_LinphoneCallError,1));
 
+	LinphoneCall * call =linphone_core_invite(mgr->lc, "sip:nimportequoi@sip.example.org;transport=TLS");
+	linphone_call_ref(call);
+	
+	BC_ASSERT_TRUE(wait_for(mgr->lc,mgr->lc,&mgr->stat.number_of_LinphoneCallError,1));
+	BC_ASSERT_PTR_NOT_NULL(call);
+	error = linphone_call_get_error_info(call);
+	BC_ASSERT_PTR_NOT_NULL(error);
+	int code = linphone_error_info_get_protocol_code(error);
+	BC_ASSERT_EQUAL(code, 403, int, "%d");
+	
+	linphone_call_unref(call);
 	linphone_address_destroy(serverAddress);
 	linphone_account_params_unref(accountParams);
 	linphone_account_unref(account);

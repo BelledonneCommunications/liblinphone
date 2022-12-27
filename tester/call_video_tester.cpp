@@ -2989,17 +2989,47 @@ static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy 
 	linphone_core_set_video_activation_policy(lc, policy);
 	linphone_core_set_preferred_video_size(lc, {800, 600});
 }
+static void disable_all_audio_codecs(LinphoneCore *lc){
+	const bctbx_list_t *elem=linphone_core_get_audio_codecs(lc);
+	PayloadType *pt;
 
-static void video_call_with_flexfec(void) {
+	for(;elem!=NULL;elem=elem->next){
+		pt=(PayloadType*)elem->data;
+		linphone_core_enable_payload_type(lc,pt,FALSE);
+	}
+}
+typedef struct _flexfec_tests_params {
+
+	LinphoneMediaEncryption encryption_mode;
+	bool_t ice;
+	bool_t audio_enabled;
+
+} flexfec_tests_params;
+static void video_call_with_flexfec_base(flexfec_tests_params params) {
 	LinphoneCoreManager *marie;
 	LinphoneCoreManager *pauline;
 	OrtpNetworkSimulatorParams network_params = {0};
 	network_params.enabled = TRUE;
 	network_params.loss_rate = 5.;
+	network_params.mode = OrtpNetworkSimulatorOutbound;
+
 	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new("pauline_rc");
 	fec_stats *stats = NULL;
 
+
+	linphone_core_set_media_encryption(marie->lc,params.encryption_mode);
+	linphone_core_set_media_encryption(pauline->lc,params.encryption_mode);
+	if (params.encryption_mode == LinphoneMediaEncryptionDTLS) { 
+		char *path = bc_tester_file("certificates-marie");
+		linphone_core_set_user_certificates_path(marie->lc, path);
+		bc_free(path);
+		path = bc_tester_file("certificates-pauline");
+		linphone_core_set_user_certificates_path(pauline->lc, path);
+		bc_free(path);
+		bctbx_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+		bctbx_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+	}
 	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
@@ -3007,11 +3037,21 @@ static void video_call_with_flexfec(void) {
 	linphone_core_set_network_simulator_params(marie->lc, &network_params);
 	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
 
+	if(params.ice){
+		enable_stun_in_core(marie, TRUE, TRUE);
+		enable_stun_in_core(pauline, TRUE, TRUE);
+	}
 	enable_rtp_bundle(marie->lc, TRUE);
 	enable_rtp_bundle(pauline->lc, TRUE);
 
 	linphone_core_enable_fec(marie->lc, TRUE);
 	linphone_core_enable_fec(pauline->lc, TRUE);
+
+	if(!params.audio_enabled){
+		disable_all_audio_codecs(marie->lc);
+		disable_all_audio_codecs(pauline->lc);
+	}
+
 
 	enable_video_stream(marie->lc, pol);
 	enable_video_stream(pauline->lc, pol);
@@ -3023,7 +3063,7 @@ static void video_call_with_flexfec(void) {
 	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
 	if (vstream->ms.fec_stream) {
 		stats = fec_stream_get_stats(vstream->ms.fec_stream);
-		wait_for_until(marie->lc, pauline->lc, &stats->packets_recovered, 50, 30000);
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &stats->packets_recovered, 50, 15000));
 	}
 	end_call(marie, pauline);
 
@@ -3032,48 +3072,45 @@ static void video_call_with_flexfec(void) {
 }
 
 static void video_call_with_flexfec_and_ice(void) {
-	LinphoneCoreManager *marie;
-	LinphoneCoreManager *pauline;
-	OrtpNetworkSimulatorParams network_params = {0};
-	network_params.enabled = TRUE;
-	network_params.loss_rate = 8.;
-	marie = linphone_core_manager_new("marie_rc");
-	pauline = linphone_core_manager_new("pauline_rc");
-	fec_stats *stats = NULL;
-
-	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
-	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
-	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
-
-	linphone_core_set_network_simulator_params(marie->lc, &network_params);
-	linphone_core_set_network_simulator_params(pauline->lc, &network_params);
-	enable_stun_in_core(marie, TRUE, TRUE);
-	enable_stun_in_core(pauline, TRUE, TRUE);
-
-	enable_rtp_bundle(marie->lc, TRUE);
-	enable_rtp_bundle(pauline->lc, TRUE);
-
-	linphone_core_enable_fec(marie->lc, TRUE);
-	linphone_core_enable_fec(pauline->lc, TRUE);
-
-	enable_video_stream(marie->lc, pol);
-	enable_video_stream(pauline->lc, pol);
-
-	linphone_video_activation_policy_unref(pol);
-
-	BC_ASSERT_TRUE(call(marie, pauline));
-	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
-	VideoStream *vstream = (VideoStream *)linphone_call_get_stream(marie_call, LinphoneStreamTypeVideo);
-	if (vstream->ms.fec_stream) {
-		stats = fec_stream_get_stats(vstream->ms.fec_stream);
-		wait_for_until(marie->lc, pauline->lc, &stats->packets_recovered, 50, 30000);
-	}
-	end_call(marie, pauline);
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
+	flexfec_tests_params params {
+		LinphoneMediaEncryptionNone,
+		TRUE,
+		FALSE,
+	};
+	video_call_with_flexfec_base(params);
 }
-
+static void video_call_with_flexfec(void) {
+	flexfec_tests_params params {
+		LinphoneMediaEncryptionNone,
+		FALSE,
+		FALSE,
+	};
+	video_call_with_flexfec_base(params);
+}
+static void video_call_with_flexfec_and_srtp(void) {
+	flexfec_tests_params params {
+		LinphoneMediaEncryptionSRTP,
+		FALSE,
+		FALSE,
+	};
+	video_call_with_flexfec_base(params);
+}
+static void video_call_with_flexfec_and_dtls(void) {
+	flexfec_tests_params params {
+		LinphoneMediaEncryptionDTLS,
+		FALSE,
+		FALSE,
+	};
+	video_call_with_flexfec_base(params);
+}
+static void video_call_with_flexfec_and_zrtp(void) {
+	flexfec_tests_params params {
+		LinphoneMediaEncryptionZRTP,
+		FALSE,
+		TRUE
+	};
+	video_call_with_flexfec_base(params);
+}
 static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with video enabled", call_paused_resumed_with_video_enabled),
@@ -3170,6 +3207,10 @@ static test_t call_video_tests[] = {
 
 	TEST_NO_TAG("Video call with flexfec", video_call_with_flexfec),
 	TEST_NO_TAG("Video call with flexfec & ice", video_call_with_flexfec_and_ice),
+	TEST_NO_TAG("Video call with flexfec & srtp", video_call_with_flexfec_and_srtp),
+	TEST_NO_TAG("Video call with flexfec & dtls", video_call_with_flexfec_and_dtls),
+	TEST_NO_TAG("Video call with flexfec & zrtp", video_call_with_flexfec_and_zrtp),
+
 
 };
 
