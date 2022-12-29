@@ -36,9 +36,6 @@
 #define LIME_SENDER	0x01
 #define LIME_RECEIVER 0x02
 #include <stdint.h>
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <libxml/xmlwriter.h>
 
 #include "linphone/core.h"
 #include <mediastreamer2/mscommon.h>

@@ -771,8 +771,12 @@ LinphoneReason ChatMessagePrivate::receive () {
 		lInfo() << "Cpim step already done, skipping";
 	} else {
 		if (internalContent.getContentType() == ContentType::Cpim) {
+#ifdef HAVE_ADVANCED_IM
 			CpimChatMessageModifier ccmm;
 			ccmm.decode(q->getSharedFromThis(), errorCode);
+#else
+			lWarning() << "Cpim support disabled.";
+#endif
 		}
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
@@ -1116,6 +1120,7 @@ void ChatMessagePrivate::send () {
 			}else lInfo() << "Chat room doesn't support multipart, skipping this modifier";
 		}
 
+#ifdef HAVE_ADVANCED_IM
 		if (chatRoom->canHandleCpim()) {
 			if ((currentSendStep & ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 				lInfo() << "Cpim step already done, skipping";
@@ -1127,6 +1132,9 @@ void ChatMessagePrivate::send () {
 		} else {
 			lInfo() << "Chat room doesn't support CPIM, skipping this modifier";
 		}
+#else
+		lWarning() << "Cpim support disabled.";
+#endif
 
 		if ((currentSendStep & ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 			lInfo() << "Encryption step already done, skipping";

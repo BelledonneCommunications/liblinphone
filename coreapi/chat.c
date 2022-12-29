@@ -19,10 +19,6 @@
  */
 
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/xmlwriter.h>
-
 #include <linphone/utils/utils.h>
 
 #include "linphone/core.h"

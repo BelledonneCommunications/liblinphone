@@ -40,19 +40,24 @@ target_link_libraries(lp-sendmsg ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer $
 set_target_properties(lp-sendmsg PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 set_target_properties(lp-sendmsg PROPERTIES LINKER_LANGUAGE CXX)
 
-set(LP_LPC2XML_TEST_SOURCE_FILES lpc2xml_test.c)
-bc_apply_compile_flags(LP_LPC2XML_TEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
-add_executable(lpc2xml_test ${USE_BUNDLE} ${LP_LPC2XML_TEST_SOURCE_FILES})
-target_link_libraries(lpc2xml_test ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer ${XSD_LIBRARIES})
-set_target_properties(lpc2xml_test PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
-set_target_properties(lpc2xml_test PROPERTIES LINKER_LANGUAGE CXX)
+if(ENABLE_XML2)
 
-set(LP_XML2LPC_TEST_SOURCE_FILES xml2lpc_test.c)
-bc_apply_compile_flags(LP_XML2LPC_TEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
-add_executable(xml2lpc_test ${USE_BUNDLE} ${LP_XML2LPC_TEST_SOURCE_FILES})
-target_link_libraries(xml2lpc_test ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer ${XSD_LIBRARIES})
-set_target_properties(xml2lpc_test PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
-set_target_properties(xml2lpc_test PROPERTIES LINKER_LANGUAGE CXX)
+	set(LP_LPC2XML_TEST_SOURCE_FILES lpc2xml_test.c)
+	bc_apply_compile_flags(LP_LPC2XML_TEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
+	add_executable(lpc2xml_test ${USE_BUNDLE} ${LP_LPC2XML_TEST_SOURCE_FILES})
+	target_link_libraries(lpc2xml_test ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer ${XSD_LIBRARIES})
+	set_target_properties(lpc2xml_test PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+	set_target_properties(lpc2xml_test PROPERTIES LINKER_LANGUAGE CXX)
+
+	set(LP_XML2LPC_TEST_SOURCE_FILES xml2lpc_test.c)
+	bc_apply_compile_flags(LP_XML2LPC_TEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
+	add_executable(xml2lpc_test ${USE_BUNDLE} ${LP_XML2LPC_TEST_SOURCE_FILES})
+	target_link_libraries(xml2lpc_test ${LINPHONE_LIBS_FOR_TOOLS} ortp mediastreamer ${XSD_LIBRARIES})
+	set_target_properties(xml2lpc_test PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
+	set_target_properties(xml2lpc_test PROPERTIES LINKER_LANGUAGE CXX)
+
+	set(LINPHONE_XMLTOOLS lpc2xml_test xml2lpc_test)
+endif()
 
 set(LP_TEST_ECC_SOURCE_FILES test_ecc.c)
 bc_apply_compile_flags(LP_TEST_ECC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
@@ -62,7 +67,7 @@ set_target_properties(lp-test-ecc PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 set_target_properties(lp-test-ecc PROPERTIES LINKER_LANGUAGE CXX)
 
 if (NOT IOS)
-	install(TARGETS lp-auto-answer lp-sendmsg lpc2xml_test xml2lpc_test lp-test-ecc
+	install(TARGETS lp-auto-answer lp-sendmsg  lp-test-ecc ${LINPHONE_XMLTOOLS}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

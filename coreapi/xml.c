@@ -18,7 +18,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "private.h"
 
 #include <libxml/xmlreader.h>
@@ -137,3 +136,5 @@ void linphone_xml_xpath_context_init_carddav_ns(xmlparsing_context_t *xml_ctx) {
 		xmlXPathRegisterNs(xml_ctx->xpath_ctx, (const xmlChar*)"x1", (const xmlChar*)"http://calendarserver.org/ns/");
 	}
 }
+
+

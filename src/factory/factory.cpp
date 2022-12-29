@@ -46,7 +46,11 @@
 #include "chat/ics/ics.h"
 #include "conference/conference-info.h"
 #include "logger/logger.h"
+
+#ifdef HAVE_SQLITE
 #include "sqlite3_bctbx_vfs.h"
+#endif
+
 #include "dictionary/dictionary.h"
 
 // TODO: From coreapi. Remove me later.
@@ -80,10 +84,12 @@ Factory::Factory(){
 	mPackageSoundDir = PACKAGE_SOUND_DIR;
 	mPackageRingDir = PACKAGE_RING_DIR;
 	mPackageDataDir = PACKAGE_DATA_DIR;
-	
+
+#ifdef HAVE_SQLITE
 	/* register the bctbx sqlite vfs. It is not used by default */
 	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
 	sqlite3_bctbx_vfs_register(0);
+#endif
 	mEvfsMasterKey = nullptr;
 }
 
@@ -695,10 +701,13 @@ LinphoneDigestAuthenticationPolicy * Factory::createDigestAuthenticationPolicy()
 
 Factory::~Factory (){
 	bctbx_list_free_with_data(mSupportedVideoDefinitions, (bctbx_list_free_func)linphone_video_definition_unref);
-	
+
+
+#ifdef HAVE_SQLITE
 	// sqlite3 vfs is registered at factory creation, so unregister it when destroying it
 	sqlite3_bctbx_vfs_unregister();
-	
+#endif
+
 	// proper cleaning of EVFS master key if any is set
 	if (mEvfsMasterKey != nullptr) {
 		bctbx_clean(mEvfsMasterKey->data(), mEvfsMasterKey->size());
@@ -712,6 +721,7 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfo() const {
 }
 
 std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarContent(LinphoneContent *content) const {
+#ifdef HAVE_ADVANCED_IM
 	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
 	if (!contentType.strongEqual(ContentType::Icalendar)) return nullptr;
 
@@ -751,6 +761,10 @@ std::shared_ptr<ConferenceInfo> Factory::createConferenceInfoFromIcalendarConten
 	auto ics = Ics::Icalendar::createFromString(buffer.str());
 
 	return ics ? ics->toConferenceInfo() : nullptr;
+#else
+	lWarning() << "createConferenceInfoFromIcalendarContent(): no ICS support, ADVANCED_IM is disabled.";
+	return nullptr;
+#endif
 }
 
 LinphoneContent *Factory::createQRCode(const std::string& code, const unsigned int& width, const unsigned int& height, const unsigned int& margin) const{

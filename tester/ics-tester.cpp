@@ -261,11 +261,6 @@ static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceS
 	}
 }
 
-void setup_conference_info_cbs(LinphoneCoreManager * mgr) {
-	// Needed to send the ICS
-	linphone_core_set_file_transfer_server(mgr->lc, file_transfer_url);
-}
-
 static void send_conference_invitations(bool_t enable_encryption, const char *subject, int curveId, bool_t add_participant_in_error) {
 	bctbx_list_t *coresManagerList = NULL;
 	LinphoneCoreManager* marie = linphone_core_manager_create("marie_lime_x3dh_rc");

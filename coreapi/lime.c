@@ -18,18 +18,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/api/c-content.h"
-
-#include "bctoolbox/crypto.h"
-#include "lime.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+
+#include "linphone/api/c-content.h"
+#include "bctoolbox/crypto.h"
+#include "lime.h"
+
+
 #ifdef HAVE_LIME
+
 #include "private.h"
 #include "bctoolbox/port.h"
 #include "bzrtp/bzrtp.h"
+
+
 
 #define FILE_TRANSFER_KEY_SIZE 32
 

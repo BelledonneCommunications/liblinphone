@@ -43,7 +43,6 @@ set(LINPHONE_SOURCE_FILES_C
 	bellesip_sal/sal_sdp.c
 	buffer.c
 	callbacks.c
-	carddav.c
 	chat.c
 	contactprovider.c
 	ec-calibrator.c
@@ -63,7 +62,6 @@ set(LINPHONE_SOURCE_FILES_C
 	linphone_tunnel_config.c
 	localplayer.c
 	logging.c
-	lpc2xml.c
 	lpconfig.c
 	lsd.c
 	misc.c
@@ -76,13 +74,10 @@ set(LINPHONE_SOURCE_FILES_C
 	ringtoneplayer.c
 	siplogin.c
 	sipsetup.c
-	sqlite3_bctbx_vfs.c
 	update_check.c
 	video_definition.c
-	xml2lpc.c
-	xml.c
-	xmlrpc.c
 	vtables.c
+	xmlrpc.c
 )
 set(LINPHONE_SOURCE_FILES_CXX
 	conference.cc
@@ -100,6 +95,13 @@ if (IOS)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX linphonecore_ios.cc)
 endif()
 
+if(ENABLE_XML2)
+	list(APPEND LINPHONE_SOURCE_FILES_C lpc2xml.c xml2lpc.c xml.c)
+endif()
+
+if(ENABLE_SQLITE)
+	list(APPEND LINPHONE_SOURCE_FILES_C sqlite3_bctbx_vfs.c)
+endif()
 
 if(ENABLE_TUNNEL)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX
@@ -113,6 +115,7 @@ endif()
 
 if(BELCARD_FOUND)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX vcard.cc)
+	list(APPEND LINPHONE_SOURCE_FILES_C carddav.c)
 else()
 	list(APPEND LINPHONE_SOURCE_FILES_C vcard_stubs.c)
 endif()

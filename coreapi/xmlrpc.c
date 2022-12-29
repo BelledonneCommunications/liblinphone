@@ -19,8 +19,11 @@
  */
 
 #include <string.h>
+
+#ifdef HAVE_XML2
 #include <libxml/tree.h>
 #include <libxml/xmlwriter.h>
+#endif
 
 #include "linphone/core.h"
 
@@ -80,7 +83,9 @@ void linphone_xml_rpc_request_cbs_set_response(LinphoneXmlRpcRequestCbs *cbs, Li
 	linphone_xml_rpc_request_set_current_callbacks(request, nullptr); \
 	bctbx_list_free(callbacksCopy);
 
+
 static void format_request(LinphoneXmlRpcRequest *request) {
+#ifdef HAVE_XML2
 	char si[64];
 	belle_sip_list_t *arg_ptr = request->arg_list;
 	xmlBufferPtr buf;
@@ -166,7 +171,11 @@ static void format_request(LinphoneXmlRpcRequest *request) {
 	}
 	xmlFreeTextWriter(writer);
 	xmlBufferFree(buf);
+#else
+	ms_warning("xml-rpc support stubbed.");
+#endif
 }
+
 
 static void free_arg(LinphoneXmlRpcArg *arg) {
 	if ((arg->type == LinphoneXmlRpcArgString) && (arg->data.s != NULL)) {
@@ -210,6 +219,7 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 }
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
+#ifdef HAVE_XML2
 	xmlparsing_context_t *xml_ctx = linphone_xmlparsing_context_new();
 	xmlSetGenericErrorFunc(xml_ctx, linphone_xmlparsing_genericxml_error);
 	request->status = LinphoneXmlRpcStatusFailed;
@@ -282,6 +292,7 @@ end:
 		request->callbacks->response(request);
 	}
 	NOTIFY_IF_EXIST(Response, response, request)
+#endif
 }
 
 static void notify_xml_rpc_error(LinphoneXmlRpcRequest *request) {

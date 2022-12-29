@@ -142,6 +142,11 @@ void linphone_friend_list_cbs_set_presence_received(LinphoneFriendListCbs *cbs,
 	cbs->presence_received_cb = cb;
 }
 
+
+#ifdef HAVE_XML2
+
+static void carddav_done(LinphoneCardDavContext *cdc, bool_t success, const char *msg);
+
 static int add_uri_entry(xmlTextWriterPtr writer, int err, const char *uri) {
 	if (err >= 0) {
 		err = xmlTextWriterStartElement(writer, (const xmlChar *)"entry");
@@ -469,6 +474,22 @@ end:
 	linphone_xmlparsing_context_destroy(xml_ctx);
 }
 
+#else /* HAVE_XML2 */
+
+/* stubs */
+static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList *list, const LinphoneContent *body,
+															  const char *first_part_body){
+	ms_warning("linphone_friend_list_parse_multipart_related_body() is stubbed.");
+}
+
+static char *create_resource_list_xml(const LinphoneFriendList *list){
+	ms_warning("create_resource_list_xml() is stubbed.");
+	return NULL;
+}
+
+#endif
+
+
 static bool_t linphone_friend_list_has_subscribe_inactive(const LinphoneFriendList *list) {
 	if (list->bodyless_subscription)
 		return TRUE;
@@ -739,16 +760,6 @@ LinphoneFriendListStatus linphone_friend_list_import_friend(LinphoneFriendList *
 	return LinphoneFriendListOK;
 }
 
-static void carddav_done(LinphoneCardDavContext *cdc, bool_t success, const char *msg) {
-	LinphoneFriendList *list = cdc->friend_list;
-	if (cdc && cdc->friend_list->cbs && cdc->friend_list->cbs->sync_state_changed_cb) {
-		cdc->friend_list->cbs->sync_state_changed_cb(
-			cdc->friend_list, success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg);
-	}
-	NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list,
-					success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg)
-	linphone_carddav_context_destroy(cdc);
-}
 
 static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf,
 																	bool_t remove_from_server) {
@@ -758,6 +769,8 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	bctbx_list_t *elem = bctbx_list_find(list->friends, lf);
 	if (elem == NULL)
 		return LinphoneFriendListNonExistentFriend;
+
+#if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
 
 	if (lf && lf->lc && lf->lc->friends_db) {
 		linphone_core_remove_friend_from_db(lf->lc, lf);
@@ -777,6 +790,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 			}
 		}
 	}
+#endif
 	list->friends = bctbx_list_erase_link(list->friends, elem);
 	if (lf->refkey) {
 		bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map, lf->refkey);
@@ -846,6 +860,19 @@ LinphoneFriendListStatus linphone_friend_list_remove_friend(LinphoneFriendList *
 
 const bctbx_list_t *linphone_friend_list_get_friends(const LinphoneFriendList *list) {
 	return list->friends;
+}
+
+#if defined(HAVE_SQLITE) && defined(VCARD_ENABLED)
+
+static void carddav_done(LinphoneCardDavContext *cdc, bool_t success, const char *msg) {
+	LinphoneFriendList *list = cdc->friend_list;
+	if (cdc && cdc->friend_list->cbs && cdc->friend_list->cbs->sync_state_changed_cb) {
+		cdc->friend_list->cbs->sync_state_changed_cb(
+			cdc->friend_list, success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg);
+	}
+	NOTIFY_IF_EXIST(SyncStateChanged, sync_status_changed, list,
+					success ? LinphoneFriendListSyncSuccessful : LinphoneFriendListSyncFailure, msg)
+	linphone_carddav_context_destroy(cdc);
 }
 
 void linphone_friend_list_update_dirty_friends(LinphoneFriendList *list) {
@@ -1044,6 +1071,18 @@ void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *li
 		}
 	}
 }
+
+#else
+
+void linphone_friend_list_update_dirty_friends(LinphoneFriendList *list){
+	ms_warning("linphone_friend_list_update_dirty_friends(): stubbed.");
+}
+
+void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *list){
+	ms_warning("linphone_friend_list_synchronize_friends_from_server(): stubbed.");
+}
+
+#endif
 
 LinphoneFriend *linphone_friend_list_find_friend_by_address(const LinphoneFriendList *list,
 															const LinphoneAddress *address) {

@@ -535,9 +535,11 @@ LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filenam
 	return -1;
 }
 
+#ifdef HAVE_XML2
+
+static const char *empty_xml = "empty provisioning file";
 static const char *xml_to_lpc_failed = "xml to lpc failed";
 static const char *invalid_xml = "invalid xml";
-static const char *empty_xml = "empty provisioning file";
 
 static const char* _linphone_config_xml_convert(LpConfig *lpc, xml2lpc_context *context, int result) {
 	const char* error_msg = NULL;
@@ -585,9 +587,19 @@ static void xml2lpc_callback(void *ctx, xml2lpc_log_level level, const char *fmt
 	bctbx_logv(BCTBX_LOG_DOMAIN, bctbx_level,fmt,list);
 }
 
+#else
+
+const char* linphone_config_load_from_xml_file(LinphoneConfig *lpc, const char *filename) {
+	ms_warning("linphone_config_load_from_xml_file(): stubbed.");
+	return "No libxml2 support";
+}
+
+#endif
+
 const char* _linphone_config_load_from_xml_string(LpConfig *lpc, const char *buffer) {
-	xml2lpc_context *context = NULL;
 	const char* error_msg = NULL;
+#ifdef HAVE_XML2
+	xml2lpc_context *context = NULL;
 
 	if (buffer != NULL) {
 		context = xml2lpc_context_new(xml2lpc_callback, NULL);
@@ -596,6 +608,10 @@ const char* _linphone_config_load_from_xml_string(LpConfig *lpc, const char *buf
 		error_msg = empty_xml;
 	}
 	if (context) xml2lpc_context_destroy(context);
+#else
+	error_msg = "No libxml2 support";
+	ms_warning("_linphone_config_load_from_xml_string(): stubbed.");
+#endif
 	return error_msg;
 }
 
@@ -1235,13 +1251,15 @@ bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, con
 }
 
 char* linphone_config_dump_as_xml(const LpConfig *lpconfig) {
-	char *buffer;
-
+	char *buffer = NULL;
+#ifdef HAVE_XML2
 	lpc2xml_context *ctx = lpc2xml_context_new(NULL, NULL);
 	lpc2xml_set_lpc(ctx, lpconfig);
 	lpc2xml_convert_string(ctx, &buffer);
 	lpc2xml_context_destroy(ctx);
-
+#else
+	ms_warning("linphone_config_dump_as_xml(): stubbed.");
+#endif
 	return buffer;
 }
 

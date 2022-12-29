@@ -1367,9 +1367,46 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneFriend, belle_sip_object_t,
 	FALSE
 );
 
+void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, LinphoneFriendList *list) {
+	bctbx_list_t *iterator;
+	bctbx_list_t *phone_numbers;
+	const bctbx_list_t *addresses;
+
+	if (lf->refkey) {
+		bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(lf->refkey, linphone_friend_ref(lf));
+		bctbx_map_cchar_insert_and_delete(list->friends_map, pair);
+	}
+
+	phone_numbers = linphone_friend_get_phone_numbers(lf);
+	iterator = phone_numbers;
+	while (iterator) {
+		const char *number = (const char *)bctbx_list_get_data(iterator);
+		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
+		if (uri) {
+			add_friend_to_list_map_if_not_in_it_yet(lf, uri);
+		}
+		iterator = bctbx_list_next(iterator);
+	}
+	bctbx_list_free(phone_numbers);
+
+	addresses = linphone_friend_get_addresses(lf);
+	iterator = (bctbx_list_t *)addresses;
+	while (iterator) {
+		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
+		char *uri = linphone_address_as_string_uri_only(lfaddr);
+		if (uri) {
+			add_friend_to_list_map_if_not_in_it_yet(lf, uri);
+			ms_free(uri);
+		}
+		iterator = bctbx_list_next(iterator);
+	}
+}
+
 /*******************************************************************************
  * SQL storage related functions                                               *
  ******************************************************************************/
+
+#ifdef HAVE_SQLITE
 
 static void linphone_create_friends_table(sqlite3* db) {
 	char* errmsg = NULL;
@@ -1770,41 +1807,6 @@ void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendL
 	}
 }
 
-void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, LinphoneFriendList *list) {
-	bctbx_list_t *iterator;
-	bctbx_list_t *phone_numbers;
-	const bctbx_list_t *addresses;
-
-	if (lf->refkey) {
-		bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(lf->refkey, linphone_friend_ref(lf));
-		bctbx_map_cchar_insert_and_delete(list->friends_map, pair);
-	}
-
-	phone_numbers = linphone_friend_get_phone_numbers(lf);
-	iterator = phone_numbers;
-	while (iterator) {
-		const char *number = (const char *)bctbx_list_get_data(iterator);
-		const char *uri = linphone_friend_phone_number_to_sip_uri(lf, number);
-		if (uri) {
-			add_friend_to_list_map_if_not_in_it_yet(lf, uri);
-		}
-		iterator = bctbx_list_next(iterator);
-	}
-	bctbx_list_free(phone_numbers);
-
-	addresses = linphone_friend_get_addresses(lf);
-	iterator = (bctbx_list_t *)addresses;
-	while (iterator) {
-		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
-		char *uri = linphone_address_as_string_uri_only(lfaddr);
-		if (uri) {
-			add_friend_to_list_map_if_not_in_it_yet(lf, uri);
-			ms_free(uri);
-		}
-		iterator = bctbx_list_next(iterator);
-	}
-}
-
 bctbx_list_t* linphone_core_fetch_friends_from_db(LinphoneCore *lc, LinphoneFriendList *list) {
 	char *buf;
 	uint64_t begin,end;
@@ -1874,6 +1876,27 @@ bctbx_list_t* linphone_core_fetch_friends_lists_from_db(LinphoneCore *lc) {
 
 	return result;
 }
+
+#else
+void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list){
+	ms_warning("linphone_core_store_friends_list_in_db(): stubbed");
+}
+
+void linphone_core_friends_storage_init(LinphoneCore *lc){
+}
+
+void linphone_core_friends_storage_close(LinphoneCore *lc){
+}
+
+void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf){
+	ms_warning("linphone_core_store_friend_in_db(): stubbed");
+}
+
+void linphone_core_remove_friends_list_from_db(LinphoneCore *lc, LinphoneFriendList *list){
+	ms_warning("linphone_core_store_friend_in_db(): stubbed");
+}
+
+#endif /* HAVE_SQLITE */
 
 void linphone_core_set_friends_database_path(LinphoneCore *lc, const char *path) {
 	if (!linphone_core_conference_server_enabled(lc) && L_GET_PRIVATE(lc->cppPtr)->mainDb)

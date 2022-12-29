@@ -21,7 +21,11 @@
 #ifndef _TESTER_UTILS_H_
 #define _TESTER_UTILS_H_
 
-#include <sqlite3.h>
+#ifdef HAVE_SQLITE
+	#include <sqlite3.h>
+#else
+	typedef struct _sqlite3 sqlite3;
+#endif
 
 #include "account_creator/private.h"
 #include "linphone/core.h"

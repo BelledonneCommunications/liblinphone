@@ -22,10 +22,17 @@
 #define _PRIVATE_STRUCTS_H_
 
 #include <bctoolbox/map.h>
+
+#ifdef HAVE_XML2
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#endif
+
+#ifndef HAVE_SQLITE
+typedef struct _sqlite3 sqlite3;
+#endif
 
 #include "carddav.h"
 #include "sal/register-op.h"
@@ -539,6 +546,7 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePlayer);
 /*****************************************************************************
  * XML UTILITY FUNCTIONS                                                     *
  ****************************************************************************/
+#ifdef HAVE_XML2
 
 #define XMLPARSING_BUFFER_LEN 2048
 #define MAX_XPATH_LENGTH 256
@@ -550,6 +558,7 @@ struct _xmlparsing_context {
 	char warningBuffer[XMLPARSING_BUFFER_LEN];
 };
 
+#endif
 
 /*****************************************************************************
  * OTHER UTILITY FUNCTIONS                                                     *

@@ -115,8 +115,6 @@ BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphonePresenceModel);
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphonePresenceModel);
 
 
-static const char *person_prefix = "/pidf:presence/dm:person";
-
 
 /*****************************************************************************
  * PRIVATE FUNCTIONS                                                         *
@@ -178,10 +176,6 @@ static void presence_service_unref(void *service) {
 	linphone_presence_service_unref((LinphonePresenceService *)service);
 }
 
-static void presence_service_set_timestamp(LinphonePresenceService *service, time_t timestamp) {
-	service->timestamp = timestamp;
-}
-
 static void presence_service_add_note(LinphonePresenceService *service, LinphonePresenceNote *note) {
 	service->notes = bctbx_list_append(service->notes, note);
 }
@@ -194,6 +188,12 @@ static void presence_activity_uninit(LinphonePresenceActivity *activity) {
 
 static void presence_activity_unref(void *activity) {
 	linphone_presence_activity_unref((LinphonePresenceActivity *)activity);
+}
+
+#ifdef HAVE_XML2
+
+static void presence_service_set_timestamp(LinphonePresenceService *service, time_t timestamp) {
+	service->timestamp = timestamp;
 }
 
 static time_t parse_timestamp(const char *timestamp) {
@@ -224,21 +224,19 @@ static time_t parse_timestamp(const char *timestamp) {
 	return seconds - (time_t)adjust_timezone;
 }
 
-char * linphone_timestamp_to_rfc3339_string(time_t timestamp) {
-	struct tm *ret;
-#ifndef _WIN32
-	struct tm gmt;
-	ret = gmtime_r(&timestamp,&gmt);
-#else
-	ret = gmtime(&timestamp);
-#endif
-	int n = snprintf(0, 0, "%4d-%02d-%02dT%02d:%02d:%02dZ",
-		 ret->tm_year + 1900, ret->tm_mon + 1, ret->tm_mday, ret->tm_hour, ret->tm_min, ret->tm_sec);
-	char *timestamp_str = (char *) ms_malloc(size_t(n + 1));
-	snprintf(timestamp_str, (size_t)n + 1, "%4d-%02d-%02dT%02d:%02d:%02dZ",
-		 ret->tm_year + 1900, ret->tm_mon + 1, ret->tm_mday, ret->tm_hour, ret->tm_min, ret->tm_sec);
-	return timestamp_str;
+static void presence_person_add_activities_note(LinphonePresencePerson *person, LinphonePresenceNote *note) {
+	person->activities_notes = bctbx_list_append(person->activities_notes, note);
 }
+
+static void presence_model_add_note(LinphonePresenceModel *model, LinphonePresenceNote *note) {
+	model->notes = bctbx_list_append(model->notes, note);
+}
+
+static void presence_person_add_note(LinphonePresencePerson *person, LinphonePresenceNote *note) {
+	person->notes = bctbx_list_append(person->notes, note);
+}
+
+#endif
 
 static LinphonePresencePerson * presence_person_new(const char *id,  time_t timestamp) {
 	LinphonePresencePerson *person = belle_sip_object_new(LinphonePresencePerson);
@@ -268,13 +266,6 @@ static void presence_person_unref(void *person) {
 	linphone_presence_person_unref((LinphonePresencePerson *)person);
 }
 
-static void presence_person_add_activities_note(LinphonePresencePerson *person, LinphonePresenceNote *note) {
-	person->activities_notes = bctbx_list_append(person->activities_notes, note);
-}
-
-static void presence_person_add_note(LinphonePresencePerson *person, LinphonePresenceNote *note) {
-	person->notes = bctbx_list_append(person->notes, note);
-}
 
 static int presence_model_insert_person_by_timestamp(LinphonePresencePerson *current, LinphonePresencePerson *to_insert) {
 	return current->timestamp < to_insert->timestamp;
@@ -282,10 +273,6 @@ static int presence_model_insert_person_by_timestamp(LinphonePresencePerson *cur
 
 static void presence_model_add_person(LinphonePresenceModel *model, LinphonePresencePerson *person) {
 	model->persons = bctbx_list_insert_sorted(model->persons, linphone_presence_person_ref(person), (bctbx_compare_func)presence_model_insert_person_by_timestamp);
-}
-
-static void presence_model_add_note(LinphonePresenceModel *model, LinphonePresenceNote *note) {
-	model->notes = bctbx_list_append(model->notes, note);
 }
 
 static void presence_model_find_open_basic_status(LinphonePresenceService *service, LinphonePresenceBasicStatus *status) {
@@ -1071,6 +1058,7 @@ static struct _presence_activity_name_map activity_map[] = {
 	{ "worship", LinphonePresenceActivityWorship }
 };
 
+#ifdef HAVE_XML2
 static int activity_name_to_presence_activity_type(const char *name, LinphonePresenceActivityType *acttype) {
 	unsigned int i;
 	for (i = 0; i < (sizeof(activity_map) / sizeof(activity_map[0])); i++) {
@@ -1081,6 +1069,7 @@ static int activity_name_to_presence_activity_type(const char *name, LinphonePre
 	}
 	return -1;
 }
+#endif
 
 static const char * presence_activity_type_to_string(LinphonePresenceActivityType acttype) {
 	unsigned int i;
@@ -1307,6 +1296,14 @@ float linphone_presence_model_get_capability_version(const LinphonePresenceModel
 	return version;
 }
 
+bool_t linphone_presence_model_is_online(const LinphonePresenceModel *model) {
+	if ((model->is_online == TRUE)
+		|| ((linphone_presence_model_get_basic_status(model) == LinphonePresenceBasicStatusOpen)
+			&& (linphone_presence_model_get_nb_activities(model) == 0)))
+		return TRUE;
+	return FALSE;
+}
+
 LinphonePresenceService * linphone_presence_service_ref(LinphonePresenceService *service) {
 	return (LinphonePresenceService *)belle_sip_object_ref(service);
 }
@@ -1385,7 +1382,10 @@ void * linphone_presence_note_get_user_data(const LinphonePresenceNote *note) {
  * XML PRESENCE INTERNAL HANDLING                                            *
  ****************************************************************************/
 
+#ifdef HAVE_XML2
+
 static const char *service_prefix = "/pidf:presence/pidf:tuple";
+static const char *person_prefix = "/pidf:presence/dm:person";
 
 static int process_pidf_xml_presence_service_notes(xmlparsing_context_t *xml_ctx, LinphonePresenceService *service, unsigned int service_idx) {
 	char xpath_str[MAX_XPATH_LENGTH];
@@ -1712,6 +1712,7 @@ static LinphonePresenceModel * process_pidf_xml_presence_notification(xmlparsing
 	return model;
 }
 
+#endif
 
 
 
@@ -1803,6 +1804,8 @@ void linphone_subscription_new(LinphoneCore *lc, SalSubscribeOp *op, const char 
 	linphone_address_unref(uri);
 	ms_free(tmp);
 }
+
+#ifdef HAVE_XML2
 
 void linphone_notify_parse_presence(const char *content_type, const char *content_subtype, const char *body, SalPresenceModel **result) {
 	xmlparsing_context_t *xml_ctx;
@@ -2036,14 +2039,6 @@ static void write_xml_presence_person_obj(LinphonePresencePerson *person, struct
 	if (err < 0) *st->err = err;
 }
 
-bool_t linphone_presence_model_is_online(const LinphonePresenceModel *model) {
-	if ((model->is_online == TRUE)
-		|| ((linphone_presence_model_get_basic_status(model) == LinphonePresenceBasicStatusOpen)
-			&& (linphone_presence_model_get_nb_activities(model) == 0)))
-		return TRUE;
-	return FALSE;
-}
-
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) {
 	xmlBufferPtr buf = NULL;
 	xmlTextWriterPtr writer = NULL;
@@ -2132,6 +2127,20 @@ end:
 	if (buf) xmlBufferFree(buf);
 	return content;
 }
+
+#else
+
+char *linphone_presence_model_to_xml(LinphonePresenceModel *model){
+	ms_warning("linphone_presence_model_to_xml(): stubbed.");
+	return NULL;
+}
+
+void linphone_notify_parse_presence(const char *content_type, const char *content_subtype, const char *body, SalPresenceModel **result){
+	if (result) *result = NULL;
+	ms_warning("linphone_notify_parse_presence(): stubbed.");
+}
+
+#endif
 
 void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model){
 	char *tmp;

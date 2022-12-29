@@ -128,8 +128,9 @@
 #endif
 #endif
 
-
+#ifdef HAVE_SQLITE
 #include <sqlite3.h>
+#endif
 
 #include "private_structs.h"
 #include "private_functions.h"

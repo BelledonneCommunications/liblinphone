@@ -35,7 +35,10 @@
 #include "lime.h"
 #include "conference_private.h"
 #include "logger/logger.h"
+
+#ifdef HAVE_SQLITE
 #include "sqlite3_bctbx_vfs.h"
+#endif
 
 #include "chat/modifier/file-transfer-chat-message-modifier.h"
 #include "content/file-transfer-content.h"
@@ -7896,6 +7899,8 @@ void linphone_core_remove_iterate_hook(LinphoneCore *lc, LinphoneCoreIterateHook
 // TODO: Remove me later, code found in message_storage.c.
 // =============================================================================
 
+#ifdef HAVE_SQLITE
+
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 	char* errmsg = NULL;
 	int ret;
@@ -7925,6 +7930,8 @@ int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 
 	return ret;
 }
+
+#endif
 
 // =============================================================================
 //migration code remove in april 2019, 2 years after switching from xml based zrtp cache to sqlite
@@ -7974,15 +7981,18 @@ LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCore *lc, const cha
 }
 
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc) {
+#ifdef HAVE_SQLITE
 	if (lc->zrtp_cache_db) {
 		sqlite3_close(lc->zrtp_cache_db);
 		bctbx_mutex_destroy(&(lc->zrtp_cache_db_mutex));
 		lc->zrtp_cache_db = NULL;
 	}
+#endif
 }
 
 
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
+#ifdef HAVE_SQLITE
 	int ret;
 	const char *errmsg;
 	const char *backupExtension = "_backup";
@@ -8023,6 +8033,9 @@ void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName) {
 	lc->zrtp_cache_db = db;
 end:
 	if (backupName) bctbx_free(backupName);
+#else
+	ms_warning("linphone_core_zrtp_cache_db_init(): stubbed.");
+#endif
 }
 
 void linphone_core_set_user_certificates_path (LinphoneCore *lc, const char *path) {

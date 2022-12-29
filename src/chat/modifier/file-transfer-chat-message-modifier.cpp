@@ -1106,6 +1106,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 	return result;
 }
 
+#ifdef HAVE_XML2
 /* clean the download file name: we must avoid any directory separator (/ or \)
  * so the file is saved in the intended directory */
 static std::string cleanDownloadFileName(std::string fileName) {
@@ -1115,8 +1116,10 @@ static std::string cleanDownloadFileName(std::string fileName) {
 	}
 	return fileName.substr(dirSepPos+1);
 }
+#endif
 
 void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const char *xml, FileTransferContent *fileTransferContent) const {
+#ifdef HAVE_XML2
 	xmlDocPtr xmlMessageBody;
 	xmlNodePtr cur;
 	/* parse the msg body to get all informations from it */
@@ -1223,6 +1226,9 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 		}
 	}
 	xmlFreeDoc(xmlMessageBody);
+#else
+	lWarning() << "parseFileTransferXmlIntoContent(): stubbed.";
+#endif
 }
 
 string FileTransferChatMessageModifier::escapeFileName(const string& fileName) const {

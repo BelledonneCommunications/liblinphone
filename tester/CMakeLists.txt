@@ -316,8 +316,6 @@ set(SOURCE_FILES_CXX
 	dtls_srtp_capability_negotiation_tester.cpp
 	remote-provisioning-tester.cpp
 	contents-tester.cpp
-	cpim-tester.cpp
-	ics-tester.cpp
 	multipart-tester.cpp
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
@@ -335,7 +333,9 @@ if(ENABLE_FLEXIAPI)
 endif()
 
 if(ENABLE_ADVANCED_IM)
-	list(APPEND SOURCE_FILES_CXX conference-event-tester.cpp)
+	list(APPEND SOURCE_FILES_CXX 	conference-event-tester.cpp
+									cpim-tester.cpp
+									ics-tester.cpp)
 endif()
 
 if(ENABLE_DB_STORAGE)

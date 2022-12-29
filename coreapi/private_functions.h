@@ -21,10 +21,12 @@
 #ifndef _PRIVATE_FUNCTIONS_H_
 #define _PRIVATE_FUNCTIONS_H_
 
+#ifdef HAVE_XML2
 #include <libxml/xmlreader.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#endif
 
 #include <mediastreamer2/msconference.h>
 
@@ -483,7 +485,9 @@ LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct
 int linphone_upnp_init(LinphoneCore *lc);
 void linphone_upnp_destroy(LinphoneCore *lc);
 
+#ifdef HAVE_SQLITE
 int _linphone_sqlite3_open(const char *db_file, sqlite3 **db);
+#endif
 
 LinphoneChatMessageStateChangedCb linphone_chat_message_get_message_state_changed_cb(LinphoneChatMessage* msg);
 void linphone_chat_message_set_message_state_changed_cb(LinphoneChatMessage* msg, LinphoneChatMessageStateChangedCb cb);
@@ -564,6 +568,7 @@ void linphone_player_set_current_callbacks(LinphonePlayer *player, LinphonePlaye
  * XML UTILITY FUNCTIONS                                                     *
  ****************************************************************************/
 
+#ifdef HAVE_XML2
 xmlparsing_context_t * linphone_xmlparsing_context_new(void);
 void linphone_xmlparsing_context_destroy(xmlparsing_context_t *ctx);
 void linphone_xmlparsing_genericxml_error(void *ctx, const char *fmt, ...);
@@ -574,7 +579,7 @@ char * linphone_get_xml_attribute_text_content(xmlparsing_context_t *xml_ctx, co
 void linphone_free_xml_text_content(char *text);
 xmlXPathObjectPtr linphone_get_xml_xpath_object_for_node_list(xmlparsing_context_t *xml_ctx, const char *xpath_expression);
 void linphone_xml_xpath_context_init_carddav_ns(xmlparsing_context_t *xml_ctx);
-
+#endif
 /*****************************************************************************
  * OTHER UTILITY FUNCTIONS                                                     *
  ****************************************************************************/

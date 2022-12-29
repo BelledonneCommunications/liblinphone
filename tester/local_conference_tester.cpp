@@ -53,6 +53,13 @@ using namespace std;
 using namespace Linphone::Tester;
 using namespace ownership;
 
+
+
+void setup_conference_info_cbs(LinphoneCoreManager * mgr) {
+	// Needed to send the ICS
+	linphone_core_set_file_transfer_server(mgr->lc, file_transfer_url);
+}
+
 namespace LinphoneTest {
 
 class BcAssert {

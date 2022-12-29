@@ -415,6 +415,8 @@ void liblinphone_tester_add_suites() {
 #ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&group_chat_test_suite);
 	bc_tester_add_suite(&group_chat2_test_suite);
+	bc_tester_add_suite(&cpim_test_suite);
+	bc_tester_add_suite(&ics_test_suite);
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
 	bc_tester_add_suite(&secure_message_test_suite);
@@ -488,8 +490,6 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&log_collection_test_suite);
 	bc_tester_add_suite(&player_test_suite);
 	bc_tester_add_suite(&recorder_test_suite);
-	bc_tester_add_suite(&cpim_test_suite);
-	bc_tester_add_suite(&ics_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);
 	bc_tester_add_suite(&clonable_object_test_suite);
 #ifdef HAVE_DB_STORAGE

@@ -226,6 +226,7 @@ void ConferenceInfo::updateFrom (const std::shared_ptr<ConferenceInfo> & info) {
 }
 
 const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
+#ifdef HAVE_ADVANCED_IM
 	Ics::Icalendar cal;
 
 	Ics::Icalendar::Method method = Ics::Icalendar::Method::Request;
@@ -295,6 +296,10 @@ const string ConferenceInfo::toIcsString (bool cancel, int sequence) const {
 	}
 
 	return icsString;
+#else
+	lWarning() << "No ICS support, ADVANCED_IM is disabled.";
+	return string();
+#endif
 }
 
 void ConferenceInfo::setCreationTime(time_t time) {

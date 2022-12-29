@@ -43,9 +43,13 @@ endif()
 if(APPLE)
 	list(APPEND INTERFACE_LIBS ${APPLE_LIBS})
 endif()
-set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
 
-list(APPEND LINK_LIBS ${XML2_LIBRARIES})
+if(ENABLE_XML2)
+	list(APPEND LINK_LIBS ${XML2_LIBRARIES})
+endif()
+
+list(APPEND INTERFACE_LIBS ${LINK_LIBS} xsd)
+
 if (ENABLE_ADVANCED_IM)
 	list(APPEND LINK_LIBS ${XercesC_TARGET})
 	if (APPLE AND NOT IOS)
@@ -404,15 +408,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/chat-room.cpp
 	chat/chat-room/chat-room-params.cpp
-	chat/cpim/header/cpim-core-headers.cpp
-	chat/cpim/header/cpim-generic-header.cpp
-	chat/cpim/header/cpim-header.cpp
-	chat/cpim/message/cpim-message.cpp
-	chat/cpim/parser/cpim-parser.cpp
 	chat/encryption/legacy-encryption-engine.cpp
-	chat/ics/ics.cpp
-	chat/ics/parser/ics-parser.cpp
-	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
 	chat/modifier/file-transfer-chat-message-modifier.cpp
 	chat/modifier/multipart-chat-message-modifier.cpp
@@ -555,6 +551,7 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/client-group-to-basic-chat-room.cpp
 		chat/chat-room/proxy-chat-room.cpp
 		chat/chat-room/server-group-chat-room.cpp
+		chat/modifier/cpim-chat-message-modifier.cpp
 		conference/handlers/local-conference-event-handler.cpp
 		conference/handlers/local-audio-video-conference-event-handler.cpp
 		conference/handlers/local-conference-list-event-handler.cpp
@@ -568,6 +565,13 @@ if(ENABLE_ADVANCED_IM)
 		xml/resource-lists.cpp
 		xml/rlmi.cpp
 		xml/xml.cpp
+		chat/cpim/header/cpim-core-headers.cpp
+		chat/cpim/header/cpim-generic-header.cpp
+		chat/cpim/header/cpim-header.cpp
+		chat/cpim/message/cpim-message.cpp
+		chat/cpim/parser/cpim-parser.cpp
+		chat/ics/ics.cpp
+		chat/ics/parser/ics-parser.cpp
 	)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES chat/encryption/lime-x3dh-server-engine.h)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES chat/encryption/lime-x3dh-server-engine.cpp)
