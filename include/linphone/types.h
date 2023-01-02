@@ -1367,12 +1367,6 @@ typedef enum _LinphoneXmlRpcStatus {
 typedef struct _LsdPlayer LsdPlayer;
 
 /**
- * @brief Object representing an RTP payload type.
- * @ingroup media_parameters
- */
-typedef struct _LinphonePayloadType LinphonePayloadType;
-
-/**
  * @brief Structure describing a range of integers
  * @ingroup misc
  */

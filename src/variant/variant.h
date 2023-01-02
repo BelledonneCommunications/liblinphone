@@ -58,11 +58,9 @@ public:
 		if (vi != nullptr) {
 			return vi->setValue(value);
 		}
-		if (mImplBase == nullptr) {
-			lError() << "Variant::setValue - Variant never init";
-		} else {
-			lError() << "Variant::setValue - Type error";
-		}
+		/*if (mImplBase == nullptr) lError() << "Variant::setValue - Variant never init";
+		else lError() << "Variant::setValue - Type error";
+		}*/
 	}
 
 	template <typename T>
@@ -71,11 +69,9 @@ public:
 		if (vi != nullptr) {
 			return vi->getValue();
 		}
-		if (mImplBase.get() == nullptr) {
-			lError() << "Variant::getValue - Variant never init";
-		} else {
-			lError() << "Variant::getValue - Type error";
-		}
+		/*if (mImplBase.get() == nullptr) lError() << "Variant::getValue - Variant never init";
+		else lError() << "Variant::getValue - Type error";
+		}*/
 		return bctoolbox::Utils::getEmptyConstRefObject<T>();
 	}
 

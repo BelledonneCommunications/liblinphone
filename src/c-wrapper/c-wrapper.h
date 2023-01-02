@@ -250,7 +250,7 @@ BELLE_SIP_TYPE_ID(LinphoneAccountCreator), BELLE_SIP_TYPE_ID(LinphoneAccountCrea
     BELLE_SIP_TYPE_ID(LinphoneLoggingService), BELLE_SIP_TYPE_ID(LinphoneLoggingServiceCbs),
     BELLE_SIP_TYPE_ID(LinphoneMagicSearchCbs), BELLE_SIP_TYPE_ID(LinphoneParticipant),
     BELLE_SIP_TYPE_ID(LinphoneParticipantDevice), BELLE_SIP_TYPE_ID(LinphoneParticipantDeviceCbs),
-    BELLE_SIP_TYPE_ID(LinphonePayloadType), BELLE_SIP_TYPE_ID(LinphonePlayer), BELLE_SIP_TYPE_ID(LinphonePlayerCbs),
+    BELLE_SIP_TYPE_ID(LinphonePlayer), BELLE_SIP_TYPE_ID(LinphonePlayerCbs),
     BELLE_SIP_TYPE_ID(LinphonePresenceActivity), BELLE_SIP_TYPE_ID(LinphonePresenceModel),
     BELLE_SIP_TYPE_ID(LinphonePresenceNote), BELLE_SIP_TYPE_ID(LinphonePresencePerson),
     BELLE_SIP_TYPE_ID(LinphonePresenceService), BELLE_SIP_TYPE_ID(LinphoneProxyConfig),

@@ -18,16 +18,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "belle-sip/sipstack.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "bctoolbox/defs.h"
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 #include "mediastreamer2/msutils.h"
 #include "shared_tester_functions.h"
 #include "tester_utils.h"
-#include <bctoolbox/defs.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #ifdef _WIN32
 #define unlink _unlink
@@ -6933,19 +6933,22 @@ static void enable_specific_payloads(LinphoneCore *lc) {
 	type = linphone_core_get_payload_type(lc, "speex", 8000, -1);
 	if (BC_ASSERT_PTR_NOT_NULL(type)) {
 		linphone_payload_type_enable(type, TRUE);
+		linphone_payload_type_unref(type);
 	}
 
 	type = linphone_core_get_payload_type(lc, "pcmu", 8000, -1);
 	if (BC_ASSERT_PTR_NOT_NULL(type)) {
 		linphone_payload_type_enable(type, TRUE);
+		linphone_payload_type_unref(type);
 	}
 
 	type = linphone_core_get_payload_type(lc, "pcma", 8000, -1);
 	if (BC_ASSERT_PTR_NOT_NULL(type)) {
 		linphone_payload_type_enable(type, TRUE);
+		linphone_payload_type_unref(type);
 	}
 
-	bctbx_list_free(payloads);
+	bctbx_list_free_with_data(payloads, (void (*)(void *))linphone_payload_type_unref);
 }
 
 static void call_with_same_codecs_ordered_differently(void) {
@@ -6963,6 +6966,7 @@ static void call_with_same_codecs_ordered_differently(void) {
 		bctbx_list_t *new_order = bctbx_list_new(speex);
 		linphone_core_set_audio_payload_types(marie->lc, new_order);
 		bctbx_list_free(new_order);
+		linphone_payload_type_unref(speex);
 	}
 
 	// Set Pauline audio payloads with the same list but inverted with speex still in first
@@ -6984,7 +6988,7 @@ static void call_with_same_codecs_ordered_differently(void) {
 	linphone_core_set_audio_payload_types(pauline->lc, inverted);
 
 	bctbx_list_free(inverted);
-	bctbx_list_free(payloads);
+	bctbx_list_free_with_data(payloads, (void (*)(void *))linphone_payload_type_unref);
 
 	enable_specific_payloads(marie->lc);
 	enable_specific_payloads(pauline->lc);

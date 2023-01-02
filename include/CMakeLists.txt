@@ -48,7 +48,6 @@ set(ROOT_HEADER_FILES
 	logging.h
 	lpconfig.h
 	misc.h
-	payload_type.h
 	player.h
 	presence.h
 	proxy_config.h
@@ -107,6 +106,7 @@ set(C_API_HEADER_FILES
 	c-participant-device-cbs.h
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
+	c-payload-type.h
 	c-push-notification-message.h
 	c-push-notification-config.h
 	c-recorder.h

@@ -55,7 +55,6 @@
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
 #include "linphone/misc.h"
-#include "linphone/payload_type.h"
 #include "linphone/player.h"
 #include "linphone/presence.h"
 #include "linphone/proxy_config.h"

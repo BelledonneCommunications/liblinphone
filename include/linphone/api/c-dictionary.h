@@ -18,6 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _L_C_DICTIONARY_H_
+#define _L_C_DICTIONARY_H_
+
 #include "linphone/api/c-types.h"
 
 #ifdef __cplusplus
@@ -133,3 +136,5 @@ LINPHONE_PUBLIC LinphoneStatus linphone_dictionary_has_key(const LinphoneDiction
 #ifdef __cplusplus
 }
 #endif
+
+#endif // _L_C_DICTIONARY_H_

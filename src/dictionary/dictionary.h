@@ -18,13 +18,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _L_DICTIONARY_H_
+#define _L_DICTIONARY_H_
+
 #include "linphone/api/c-types.h"
 #include "object/property-container.h"
 #include <belle-sip/object++.hh>
 
 // =============================================================================
-
-using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -35,17 +36,19 @@ class LINPHONE_PUBLIC Dictionary : public bellesip::HybridObject<LinphoneDiction
 public:
 	Dictionary *clone() const override;
 
-	float getFloat(const string &name) const;
-	void setProperty(const string &name, const float value);
+	float getFloat(const std::string &name) const;
+	void setProperty(const std::string &name, const float value);
 
-	const string &getString(const string &name) const;
-	void setProperty(const string &name, const string &value);
+	const std::string &getString(const std::string &name) const;
+	void setProperty(const std::string &name, const std::string &value);
 
-	int getInt(const string &name) const;
-	void setProperty(const string &name, const int value);
+	int getInt(const std::string &name) const;
+	void setProperty(const std::string &name, const int value);
 
-	long long getLongLong(const string &name) const;
-	void setProperty(const string &name, const long long value);
+	long long getLongLong(const std::string &name) const;
+	void setProperty(const std::string &name, const long long value);
 };
 
 LINPHONE_END_NAMESPACE
+
+#endif // ifndef _L_DICTIONARY_H_

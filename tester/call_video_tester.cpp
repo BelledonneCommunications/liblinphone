@@ -1186,11 +1186,14 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy,
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
 	if (video_only) {
-		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1),
-		                             FALSE); /* Disable PCMU */
-		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMA", 8000, 1),
-		                             TRUE); /* Enable PCMA */
+		LinphonePayloadType *pt_pcmu = linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1);
+		linphone_payload_type_enable(pt_pcmu, FALSE); /* Disable PCMU */
+		LinphonePayloadType *pt_pcma = linphone_core_get_payload_type(marie->lc, "PCMA", 8000, 1);
+		linphone_payload_type_enable(pt_pcma, TRUE); /* Enable PCMA */
 		nb_audio_starts = 0;
+
+		linphone_payload_type_unref(pt_pcmu);
+		linphone_payload_type_unref(pt_pcma);
 	}
 
 	linphone_core_manager_wait_for_stun_resolution(marie);
@@ -1439,8 +1442,13 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	linphone_core_set_video_policy(pauline->lc, &vpol);
 	linphone_core_set_video_policy(marie->lc, &vpol);
 
-	linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
-	linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc, "PCMA", 8000, 1), TRUE);  /* Enable PCMA */
+	LinphonePayloadType *pt_pcmu = linphone_core_get_payload_type(marie->lc, "PCMU", 8000, 1);
+	linphone_payload_type_enable(pt_pcmu, FALSE); /* Disable PCMU */
+	LinphonePayloadType *pt_pcma = linphone_core_get_payload_type(marie->lc, "PCMA", 8000, 1);
+	linphone_payload_type_enable(pt_pcma, TRUE); /* Enable PCMA */
+
+	linphone_payload_type_unref(pt_pcmu);
+	linphone_payload_type_unref(pt_pcma);
 
 	out_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	linphone_call_ref(out_call);

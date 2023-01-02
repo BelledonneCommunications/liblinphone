@@ -21,7 +21,7 @@
 #ifndef __LINPHONE_CALL_PARAMS_H__
 #define __LINPHONE_CALL_PARAMS_H__
 
-#include "linphone/payload_type.h"
+#include "linphone/api/c-payload-type.h"
 #include "linphone/types.h"
 
 #ifdef __cplusplus

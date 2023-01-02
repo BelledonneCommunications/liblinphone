@@ -3308,23 +3308,25 @@ static void real_time_text(bool_t audio_stream_enabled,
 	}
 
 	if (mess_with_marie_payload_number) {
-		const bctbx_list_t *elem;
-		for (elem = linphone_core_get_text_payload_types(marie->lc); elem != NULL; elem = elem->next) {
+		bctbx_list_t *payloads = linphone_core_get_text_payload_types(pauline->lc);
+		for (bctbx_list_t *elem = payloads; elem != NULL; elem = elem->next) {
 			PayloadType *pt = (PayloadType *)elem->data;
 			if (pt->mime_type && strcasecmp(pt->mime_type, payload_type_t140.mime_type) == 0) {
 				payload_type_set_number(pt, 99);
 				break;
 			}
 		}
+		bctbx_list_free_with_data(payloads, (void (*)(void *))linphone_payload_type_unref);
 	} else if (mess_with_pauline_payload_number) {
-		const bctbx_list_t *elem;
-		for (elem = linphone_core_get_text_payload_types(pauline->lc); elem != NULL; elem = elem->next) {
+		bctbx_list_t *payloads = linphone_core_get_text_payload_types(pauline->lc);
+		for (bctbx_list_t *elem = payloads; elem != NULL; elem = elem->next) {
 			PayloadType *pt = (PayloadType *)elem->data;
 			if (pt->mime_type && strcasecmp(pt->mime_type, payload_type_t140.mime_type) == 0) {
 				payload_type_set_number(pt, 99);
 				break;
 			}
 		}
+		bctbx_list_free_with_data(payloads, (void (*)(void *))linphone_payload_type_unref);
 	}
 
 	if (ice_enabled) {

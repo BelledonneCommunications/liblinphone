@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "logger/logger.h"
-
 #include "core-accessor.h"
+
+#include "logger/logger.h"
 
 // =============================================================================
 
@@ -36,9 +36,8 @@ public:
 // -----------------------------------------------------------------------------
 
 CoreAccessor::CoreAccessor(const shared_ptr<Core> &core) {
-	L_ASSERT(core);
 	mPrivate = new CoreAccessorPrivate();
-	mPrivate->core = core;
+	if (core) mPrivate->core = core;
 }
 
 CoreAccessor::~CoreAccessor() {
@@ -55,6 +54,11 @@ shared_ptr<Core> CoreAccessor::getCore() const {
 	}
 
 	return core;
+}
+
+void CoreAccessor::setCore(std::shared_ptr<Core> core) {
+	L_D();
+	d->core = core;
 }
 
 LINPHONE_END_NAMESPACE

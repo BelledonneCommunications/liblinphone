@@ -65,7 +65,6 @@ set(LINPHONE_SOURCE_FILES_C
 	lpconfig.c
 	lsd.c
 	misc.c
-	payload_type.c
 	player.c
 	presence.c
 	proxy.c

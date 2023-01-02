@@ -96,6 +96,7 @@ RtpProfile *MS2VideoMixer::sMakeDummyProfile() {
 	LinphonePayloadType *pt = linphone_core_get_payload_type(mSession.getCCore(), "VP8", 90000, -1);
 	PayloadType *ortp_pt = payload_type_clone(linphone_payload_type_get_ortp_pt(pt));
 	rtp_profile_set_payload(prof, sVP8PayloadTypeNumber, ortp_pt);
+	linphone_payload_type_unref(pt);
 	return prof;
 }
 

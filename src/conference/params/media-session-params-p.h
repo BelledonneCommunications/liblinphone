@@ -113,22 +113,22 @@ public:
 	int audioBandwidthLimit = 0;
 	LinphoneMediaDirection audioDirection = LinphoneMediaDirectionSendRecv;
 	bool audioMulticastEnabled = false;
-	PayloadType *usedAudioCodec = nullptr;
+	::PayloadType *usedAudioCodec = nullptr;
 
 	bool videoEnabled = false;
 	LinphoneMediaDirection videoDirection = LinphoneMediaDirectionSendRecv;
 	bool videoMulticastEnabled = false;
-	PayloadType *usedVideoCodec = nullptr;
+	::PayloadType *usedVideoCodec = nullptr;
 	float receivedFps = 0.f;
 	LinphoneVideoDefinition *receivedVideoDefinition = nullptr;
 	float sentFps = 0.f;
 	LinphoneVideoDefinition *sentVideoDefinition = nullptr;
 
 	bool fecEnabled = false;
-	PayloadType *usedFecCodec = nullptr;
+	::PayloadType *usedFecCodec = nullptr;
 
 	unsigned int realtimeTextKeepaliveInterval = 25000;
-	PayloadType *usedRealtimeTextCodec = nullptr;
+	::PayloadType *usedRealtimeTextCodec = nullptr;
 	int videoDownloadBandwidth = 0;
 
 	bool realtimeTextEnabled = false;

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,16 +18,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINPHONE_PAYLOAD_TYPE_H_
-#define LINPHONE_PAYLOAD_TYPE_H_
+#ifndef _L_C_PAYLOAD_TYPE_H_
+#define _L_C_PAYLOAD_TYPE_H_
 
 #include "linphone/types.h"
 
 /**
  * @addtogroup media_parameters
  * @{
-**/
-
+ **/
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,7 +108,7 @@ LINPHONE_PUBLIC void linphone_payload_type_set_normal_bitrate(LinphonePayloadTyp
  * @param payload_type the #LinphonePayloadType object @notnil
  * @return The mime type. @notnil
  */
-LINPHONE_PUBLIC const char * linphone_payload_type_get_mime_type(const LinphonePayloadType *payload_type);
+LINPHONE_PUBLIC const char *linphone_payload_type_get_mime_type(const LinphonePayloadType *payload_type);
 
 /**
  * Get the number of channels.
@@ -122,7 +121,7 @@ LINPHONE_PUBLIC int linphone_payload_type_get_channels(const LinphonePayloadType
  * Returns the payload type number assigned for this codec.
  * @param payload_type the #LinphonePayloadType object @notnil
  * @return The number of the payload type.
-**/
+ **/
 LINPHONE_PUBLIC int linphone_payload_type_get_number(const LinphonePayloadType *payload_type);
 
 /**
@@ -130,7 +129,7 @@ LINPHONE_PUBLIC int linphone_payload_type_get_number(const LinphonePayloadType *
  * This function is mainly to be used for tests, in order to override the automatic assignment mechanism.
  * @param payload_type the #LinphonePayloadType object @notnil
  * @param number The number to assign to the payload type.
-**/
+ **/
 LINPHONE_PUBLIC void linphone_payload_type_set_number(LinphonePayloadType *payload_type, int number);
 
 /**
@@ -182,13 +181,12 @@ LINPHONE_PUBLIC bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *p
  */
 LINPHONE_PUBLIC bool_t linphone_payload_type_is_usable(const LinphonePayloadType *payload_type);
 
-
 #ifdef __cplusplus
 }
 #endif
 
 /**
  * @}
-**/
+ **/
 
-#endif /* LINPHONE_PAYLOAD_TYPE_H_ */
+#endif /* _L_C_PAYLOAD_TYPE_H_ */

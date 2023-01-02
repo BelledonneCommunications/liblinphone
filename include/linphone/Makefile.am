@@ -29,7 +29,6 @@ linphone_include_HEADERS=\
 	lpconfig.h \
 	misc.h \
 	nat_policy.h \
-	payload_type.h \
 	player.h \
 	presence.h \
 	proxy_config.h \

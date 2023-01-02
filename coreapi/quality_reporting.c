@@ -539,8 +539,8 @@ void linphone_reporting_update_ip(LinphoneCall *call) {
 
 void linphone_reporting_update_media_info(LinphoneCall *call, int stats_type) {
 	MediaStream *stream = NULL;
-	const PayloadType *local_payload = NULL;
-	const PayloadType *remote_payload = NULL;
+	const ::PayloadType *local_payload = NULL;
+	const ::PayloadType *remote_payload = NULL;
 	const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
 	std::shared_ptr<CallLog> log = Call::toCpp(call)->getLog();
 	reporting_session_report_t *report = log->getQualityReporting()->reports[stats_type];

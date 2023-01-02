@@ -269,6 +269,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/object.h
 	object/property-container.h
 	object/singleton.h
+	payload-type/payload-type.h
 	push-notification-message/push-notification-message.h
 	push-notification/push-notification-config.h
 	recorder/recorder.h
@@ -388,6 +389,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-payload-type.cpp
 	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-push-notification-config.cpp
 	c-wrapper/api/c-recorder.cpp
@@ -489,6 +491,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/clonable-object.cpp
 	object/object.cpp
 	object/property-container.cpp
+	payload-type/payload-type.cpp
 	push-notification-message/push-notification-message.cpp
 	push-notification/push-notification-config.cpp
 	recorder/recorder.cpp

@@ -39,6 +39,8 @@ public:
 	// Returns a valid core instance. Or throw one std::bad_weak_ptr exception if core is destroyed.
 	std::shared_ptr<Core> getCore() const;
 
+	void setCore(std::shared_ptr<Core> core);
+
 private:
 	CoreAccessorPrivate *mPrivate = nullptr;
 

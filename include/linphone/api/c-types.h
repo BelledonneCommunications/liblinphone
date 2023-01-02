@@ -318,6 +318,12 @@ typedef struct _LinphoneRecorderParams LinphoneRecorderParams;
 typedef struct _LinphoneCallLog LinphoneCallLog;
 
 /**
+ * @brief Object representing an RTP payload type.
+ * @ingroup media_parameters
+ */
+typedef struct _LinphonePayloadType LinphonePayloadType;
+
+/**
  * Object that is used to describe a video source.
  *
  * @ingroup call_control

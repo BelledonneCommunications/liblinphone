@@ -45,13 +45,13 @@
 #include "conference/conference-info.h"
 #include "content/file-content.h"
 #include "core/paths/paths.h"
+#include "dictionary/dictionary.h"
 #include "logger/logger.h"
+#include "payload-type/payload-type.h"
 
 #ifdef HAVE_SQLITE
 #include "sqlite3_bctbx_vfs.h"
 #endif
-
-#include "dictionary/dictionary.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"

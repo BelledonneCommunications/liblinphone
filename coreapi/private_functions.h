@@ -730,7 +730,7 @@ xmlXPathObjectPtr linphone_get_xml_xpath_object_for_node_list(xmlparsing_context
 void linphone_xml_xpath_context_init_carddav_ns(xmlparsing_context_t *xml_ctx);
 #endif
 /*****************************************************************************
- * OTHER UTILITY FUNCTIONS                                                     *
+ * OTHER UTILITY FUNCTIONS                                                   *
  ****************************************************************************/
 
 char *linphone_timestamp_to_rfc3339_string(time_t timestamp);

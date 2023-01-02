@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2022 Belledonne Communications SARL.
+ * Copyright (c) 2010-2023 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
@@ -125,8 +125,9 @@ static void simple_call_with_fmtps(void) {
 	disable_all_audio_codecs_except_one(pauline->lc, "pcmu", -1);
 
 	/*marie set a fantasy fmtp to PCMU*/
-	linphone_payload_type_set_recv_fmtp(linphone_core_get_payload_type(marie->lc, "PCMU", 8000, -1),
-	                                    "parles-plus-fort=1");
+	LinphonePayloadType *marie_pt = linphone_core_get_payload_type(marie->lc, "PCMU", 8000, -1);
+	linphone_payload_type_set_recv_fmtp(marie_pt, "parles-plus-fort=1");
+	linphone_payload_type_unref(marie_pt);
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -138,6 +139,7 @@ static void simple_call_with_fmtps(void) {
 		if (pt) {
 			BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_send_fmtp(pt), "parles-plus-fort=1");
 		}
+		linphone_payload_type_unref(pt);
 		pt = linphone_call_params_get_used_audio_payload_type(
 		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
@@ -146,6 +148,7 @@ static void simple_call_with_fmtps(void) {
 			           linphone_payload_type_get_recv_fmtp(pt));
 			BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_recv_fmtp(pt), "parles-plus-fort=1");
 		}
+		linphone_payload_type_unref(pt);
 	}
 
 	end_call(marie, pauline);
@@ -178,10 +181,12 @@ static void h264_call_with_fmtps(void) {
 	linphone_core_set_video_activation_policy(pauline->lc, pol);
 	linphone_video_activation_policy_unref(pol);
 
-	if (!linphone_core_get_payload_type(marie->lc, "h264", 90000, -1)) {
+	LinphonePayloadType *marie_pt = linphone_core_get_payload_type(marie->lc, "h264", 90000, -1);
+	if (!marie_pt) {
 		ms_warning("H264 not available on this platform, skeeping");
 		goto end;
 	}
+	linphone_payload_type_unref(marie_pt);
 
 	disable_all_video_codecs_except_one(marie->lc, "H264");
 	disable_all_video_codecs_except_one(pauline->lc, "H264");
@@ -218,6 +223,7 @@ static void h264_call_with_fmtps(void) {
 		if (pt) {
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 		}
+		linphone_payload_type_unref(pt);
 		pt = linphone_call_params_get_used_video_payload_type(
 		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
@@ -227,6 +233,7 @@ static void h264_call_with_fmtps(void) {
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 		}
+		linphone_payload_type_unref(pt);
 	}
 
 	end_call(marie, pauline);
@@ -345,10 +352,12 @@ static void h264_call_receiver_with_no_h264_support(void) {
 	linphone_core_set_video_activation_policy(pauline->lc, pol);
 	linphone_video_activation_policy_unref(pol);
 
-	if (!linphone_core_get_payload_type(marie->lc, "h264", 90000, -1)) {
+	LinphonePayloadType *marie_pt = linphone_core_get_payload_type(marie->lc, "h264", 90000, -1);
+	if (!marie_pt) {
 		ms_warning("H264 not available on this platform, skeeping");
 		goto end;
 	}
+	linphone_payload_type_unref(marie_pt);
 
 	disable_all_video_codecs_except_one(marie->lc, "H264");
 	disable_all_video_codecs_except_one(pauline->lc, "VP8");
@@ -393,10 +402,12 @@ static void h264_call_without_packetization_mode(void) {
 	linphone_core_set_video_activation_policy(pauline->lc, pol);
 	linphone_video_activation_policy_unref(pol);
 
-	if (!linphone_core_get_payload_type(marie->lc, "h264", 90000, -1)) {
+	LinphonePayloadType *marie_pt = linphone_core_get_payload_type(marie->lc, "h264", 90000, -1);
+	if (!marie_pt) {
 		ms_warning("H264 not available on this platform, skeeping");
 		goto end;
 	}
+	linphone_payload_type_unref(marie_pt);
 
 	disable_all_video_codecs_except_one(marie->lc, "H264");
 	disable_all_video_codecs_except_one(pauline->lc, "H264");
@@ -411,6 +422,7 @@ static void h264_call_without_packetization_mode(void) {
 		if (pt) {
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 		}
+		linphone_payload_type_unref(pt);
 		pt = linphone_call_params_get_used_video_payload_type(
 		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
@@ -420,6 +432,7 @@ static void h264_call_without_packetization_mode(void) {
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 		}
+		linphone_payload_type_unref(pt);
 	}
 
 	end_call(marie, pauline);
