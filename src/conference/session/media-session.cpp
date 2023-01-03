@@ -3779,7 +3779,9 @@ LinphoneStatus MediaSession::delayResume() {
 LinphoneStatus MediaSession::resume () {
 	L_D();
 	if (d->state == CallSession::State::Pausing) {
+		lInfo() << "Call is currently in state " << Utils::toString(d->state) << " and cannot be immediately resumed therefore this task will be scheduled";
 		addPendingAction([this] {return this->resume();});
+		return -1;
 	} else if (d->state != CallSession::State::Paused) {
 		lWarning() << "we cannot resume a call that has not been established and paused before. Current state: " << Utils::toString(d->state);
 		return -1;
