@@ -1,5 +1,6 @@
 
 TESTER_SOUNDS = sounds/ahbahouaismaisbon.wav \
+				sounds/special-&_characters.wav \
 				sounds/hello8000.wav  \
 				sounds/hello44100.wav  \
 				sounds/oldphone.wav \

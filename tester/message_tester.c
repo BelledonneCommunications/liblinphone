@@ -49,12 +49,12 @@ void liblinphone_tester_chat_message_state_change(LinphoneChatMessage* msg,Linph
 	liblinphone_tester_chat_message_msg_state_changed(msg, state);
 }
 
-LinphoneChatMessage* create_message_from_sintel_trailer_legacy(LinphoneChatRoom *chat_room) {
+LinphoneChatMessage* create_message_from_sintel_trailer_legacy(LinphoneChatRoom *chat_room, const char *filepath, const char *filename) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
 	LinphoneChatMessage* msg;
-	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *send_filepath = bc_tester_res(filepath);
 	size_t file_size;
 	file_to_send = fopen(send_filepath, "rb");
 	fseek(file_to_send, 0, SEEK_END);
@@ -66,7 +66,7 @@ LinphoneChatMessage* create_message_from_sintel_trailer_legacy(LinphoneChatRoom 
 	linphone_content_set_type(content,"video");
 	linphone_content_set_subtype(content,"mkv");
 	linphone_content_set_size(content,file_size); /*total size to be transfered*/
-	linphone_content_set_name(content,"sintel_trailer_opus_h264.mkv");
+	linphone_content_set_name(content,filename);
 	linphone_content_set_user_data(content,file_to_send);
 
 	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
@@ -81,12 +81,12 @@ LinphoneChatMessage* create_message_from_sintel_trailer_legacy(LinphoneChatRoom 
 	return msg;
 }
 
-LinphoneChatMessage* _create_message_from_sintel_trailer(LinphoneChatRoom *chat_room, bool_t use_alt_file_transfer_progress_indication_cb) {
+LinphoneChatMessage* _create_message_from_sintel_trailer(LinphoneChatRoom *chat_room, bool_t use_alt_file_transfer_progress_indication_cb, const char *filepath, const char *filename) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
 	LinphoneChatMessage* msg;
-	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *send_filepath = bc_tester_res(filepath);
 	size_t file_size;
 	file_to_send = fopen(send_filepath, "rb");
 	fseek(file_to_send, 0, SEEK_END);
@@ -98,7 +98,7 @@ LinphoneChatMessage* _create_message_from_sintel_trailer(LinphoneChatRoom *chat_
 	linphone_content_set_type(content,"video");
 	linphone_content_set_subtype(content,"mkv");
 	linphone_content_set_size(content,file_size); /*total size to be transfered*/
-	linphone_content_set_name(content,"sintel_trailer_opus_h264.mkv");
+	linphone_content_set_name(content,filename);
 	linphone_content_set_user_data(content,file_to_send);
 
 	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
@@ -120,10 +120,10 @@ LinphoneChatMessage* _create_message_from_sintel_trailer(LinphoneChatRoom *chat_
 }
 
 LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
-	return _create_message_from_sintel_trailer(chat_room, FALSE);
+	return _create_message_from_sintel_trailer(chat_room, FALSE, "sounds/sintel_trailer_opus_h264.mkv", "sintel_trailer_opus_h264.mkv");
 }
 
-LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *chat_room, const char *filepath) {
+LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *chat_room, const char *filepath, const char *filename) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
@@ -139,7 +139,7 @@ LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *ch
 	belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "sintel trailer content");
 	linphone_content_set_type(content,"video");
 	linphone_content_set_subtype(content,"mkv");
-	linphone_content_set_name(content,filepath);
+	linphone_content_set_name(content,filename);
 	linphone_content_set_file_path(content, send_filepath);
 	linphone_content_set_size(content,file_size); /*total size to be transfered*/
 
@@ -157,7 +157,7 @@ LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *ch
 }
 
 LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
-	return create_file_transfer_message_from_file(chat_room, "sounds/sintel_trailer_opus_h264.mkv");
+	return create_file_transfer_message_from_file(chat_room, "sounds/sintel_trailer_opus_h264.mkv", "sintel_trailer_opus_h264.mkv");
 }
 
 void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type, bool_t forward_message, bool_t reply_message, bool_t allow_cpim_in_basic_chat_room_sender, bool_t allow_cpim_in_basic_chat_room_receiver) {
@@ -447,7 +447,7 @@ static void text_forward_transfer_message_not_downloaded(void) {
 	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
 
 	const char *send_filename = "sounds/sintel_trailer_opus_h264.mkv";
-	LinphoneChatMessage* msg = msg = create_file_transfer_message_from_file(room, send_filename);
+	LinphoneChatMessage* msg = msg = create_file_transfer_message_from_file(room, send_filename, "sintel_trailer_opus_h264.mkv");
 	linphone_chat_message_send(msg);
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
@@ -906,7 +906,7 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 				bool_t legacy,
 				const char* url,
 				bool_t expect_auth_failure_up, bool_t expect_auth_failure_down,
-				const char *file1_path) {
+				const char *file1_path, const char *expected_file_name) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -935,12 +935,12 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 	/* create a file transfer msg */
 	if (use_file_body_handler_in_upload) {
-		msg = create_file_transfer_message_from_file(chat_room, file1_path);
+		msg = create_file_transfer_message_from_file(chat_room, file1_path, expected_file_name);
 	} else {
 		if (legacy) {
-			msg = create_message_from_sintel_trailer_legacy(chat_room);
+			msg = create_message_from_sintel_trailer_legacy(chat_room, file1_path, expected_file_name);
 		} else {
-			msg = create_message_from_sintel_trailer(chat_room);
+			msg = _create_message_from_sintel_trailer(chat_room, FALSE, file1_path, expected_file_name);
 		}
 	}
 	const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
@@ -1117,6 +1117,7 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 				BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 				content = (LinphoneContent *)bctbx_list_get_data(contents);
 				BC_ASSERT_PTR_NOT_NULL(content);
+				BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), expected_file_name);
 				compare_files(send_filepath, linphone_content_get_file_path(content));
 				BC_ASSERT_STRING_NOT_EQUAL(linphone_content_get_subtype(content), "vnd.gsma.rcs-ft-http+xml");
 
@@ -1152,8 +1153,13 @@ end:
 
 void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history,
-							int auto_download, bool_t two_files, bool_t legacy, const char* url, bool_t expect_auth_failure_up, bool_t expect_auth_failure_down ) {
-	transfer_message_base4(marie, pauline, upload_error, download_error, use_file_body_handler_in_upload, use_file_body_handler_in_download, download_from_history, auto_download, two_files, legacy, url, expect_auth_failure_up, expect_auth_failure_down, "sounds/sintel_trailer_opus_h264.mkv");
+							int auto_download, bool_t two_files, bool_t legacy, const char* url, bool_t expect_auth_failure_up, 
+							bool_t expect_auth_failure_down ) {
+	transfer_message_base4(
+		marie, pauline, upload_error, download_error, use_file_body_handler_in_upload, 
+		use_file_body_handler_in_download, download_from_history, auto_download, two_files, 
+		legacy, url, expect_auth_failure_up, expect_auth_failure_down, "sounds/special-&_characters.wav", "special-&_characters.wav"
+	);
 }
 
 // Add tls information for given user into the linphone core
@@ -1320,7 +1326,8 @@ static void transfer_message_small_files_pass(void) {
 			FALSE, FALSE,
 			TRUE, FALSE,
 			FALSE,
-			-1, FALSE, FALSE, file_transfer_url_small_files, FALSE, FALSE, "sounds/ahbahouaismaisbon.wav"); // small file transfer, it should work
+			-1, FALSE, FALSE, file_transfer_url_small_files, FALSE, FALSE, 
+			"sounds/ahbahouaismaisbon.wav", "ahbahouaismaisbon.wav"); // small file transfer, it should work
 
 		// Give some time for IMDN's 200 OK to be received so it doesn't leak
 		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
@@ -1344,7 +1351,8 @@ static void transfer_message_small_files_fail(void) {
 			FALSE, FALSE,
 			TRUE, FALSE,
 			FALSE,
-			-1, FALSE, FALSE, file_transfer_url_small_files, TRUE, FALSE, "sounds/sintel_trailer_opus_h264.mkv"); // large file transfer, the upload should fail
+			-1, FALSE, FALSE, file_transfer_url_small_files, TRUE, FALSE, 
+			"sounds/sintel_trailer_opus_h264.mkv", "sintel_trailer_opus_h264.mkv"); // large file transfer, the upload should fail
 
 		// Give some time for IMDN's 200 OK to be received so it doesn't leak
 		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
@@ -1520,6 +1528,7 @@ static void transfer_message_auto_download_existing_file(void) {
 
 	LinphoneChatRoom* chat_room;
 	LinphoneChatMessage* msg;
+	const char *filename = "sintel_trailer_opus_h264.mkv";
 	const char *filepath = "sounds/sintel_trailer_opus_h264.mkv";
 	char *first_received_file_name = NULL;
 
@@ -1530,7 +1539,7 @@ static void transfer_message_auto_download_existing_file(void) {
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 
 	/* create a file transfer msg */
-	msg = create_file_transfer_message_from_file(chat_room, filepath);
+	msg = create_file_transfer_message_from_file(chat_room, filepath, filename);
 	linphone_chat_message_send(msg);
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000));
@@ -1552,7 +1561,7 @@ static void transfer_message_auto_download_existing_file(void) {
 	BC_ASSERT_PTR_NOT_NULL(first_received_file_name);
 
 	linphone_chat_message_unref(msg);
-	msg = create_file_transfer_message_from_file(chat_room, filepath);
+	msg = create_file_transfer_message_from_file(chat_room, filepath, filename);
 	linphone_chat_message_send(msg);
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000));
@@ -1594,6 +1603,7 @@ static void transfer_message_auto_download_two_files_same_name_same_time(void) {
 	LinphoneChatRoom* marie_chat_room;
 	LinphoneChatMessage* msg;
 	LinphoneChatMessage* msg2;
+	const char *filename = "sintel_trailer_opus_h264.mkv";
 	const char *filepath = "sounds/sintel_trailer_opus_h264.mkv";
 
 	/* Globally configure an http file transfer server. */
@@ -1606,11 +1616,11 @@ static void transfer_message_auto_download_two_files_same_name_same_time(void) {
 	linphone_core_set_network_reachable_internal(marie->lc, FALSE);
 
 	/* create a file transfer msg */
-	msg = create_file_transfer_message_from_file(pauline_chat_room, filepath);
+	msg = create_file_transfer_message_from_file(pauline_chat_room, filepath, filename);
 	linphone_chat_message_send(msg);
 
 	/* create a second file transfer msg */
-	msg2 = create_file_transfer_message_from_file(pauline_chat_room, filepath);
+	msg2 = create_file_transfer_message_from_file(pauline_chat_room, filepath, filename);
 	linphone_chat_message_send(msg2);
 
 	/* wait for both messages to be sent */
@@ -1636,7 +1646,7 @@ static void transfer_message_auto_download_two_files_same_name_same_time(void) {
 		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 		BC_ASSERT_TRUE(linphone_content_is_file(content));
 		const char *file_name = linphone_content_get_name(content);
-		BC_ASSERT_STRING_EQUAL(file_name, "soundssintel_trailer_opus_h264.mkv");
+		BC_ASSERT_STRING_EQUAL(file_name, filename);
 		const char *file_path = linphone_content_get_file_path(content);
 
 		it = bctbx_list_next(it);
@@ -1646,7 +1656,7 @@ static void transfer_message_auto_download_two_files_same_name_same_time(void) {
 		content = (LinphoneContent *)bctbx_list_get_data(contents);
 		BC_ASSERT_TRUE(linphone_content_is_file(content));
 		file_name = linphone_content_get_name(content);
-		BC_ASSERT_STRING_EQUAL(file_name, "soundssintel_trailer_opus_h264.mkv");
+		BC_ASSERT_STRING_EQUAL(file_name, filename);
 		const char *file_path_2 = linphone_content_get_file_path(content);
 
 		BC_ASSERT_STRING_NOT_EQUAL(file_path, file_path_2);
@@ -1781,6 +1791,12 @@ static void transfer_message_auto_download_aborted(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 
+	char *dl_path = linphone_core_get_download_path(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(dl_path);
+
+	char *path = bctbx_strdup_printf("%s/sintel_trailer_opus_h264.mkv", dl_path);
+	remove(path);
+
 	/* Globally configure an http file transfer server. */
 	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
 
@@ -1795,11 +1811,6 @@ static void transfer_message_auto_download_aborted(void) {
 	/* wait for marie to receive pauline's msg */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
 	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
-
-	char *dl_path = linphone_core_get_download_path(marie->lc);
-	BC_ASSERT_PTR_NOT_NULL(dl_path);
-
-	char * path = bctbx_strdup_printf("%s/sintel_trailer_opus_h264.mkv", dl_path);
 	// We auto download using random file name, so we expect above file to not exist yet
 	BC_ASSERT_EQUAL(bctbx_file_exist(path), -1, int, "%d");
 
@@ -1908,8 +1919,8 @@ static void file_transfer_2_messages_simultaneously(void) {
 
 		/* create a chatroom on pauline's side */
 		pauline_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-		msg = _create_message_from_sintel_trailer(pauline_room, FALSE);
-		msg2 = _create_message_from_sintel_trailer(pauline_room, TRUE);
+		msg = _create_message_from_sintel_trailer(pauline_room, FALSE, "sounds/sintel_trailer_opus_h264.mkv", "sintel_trailer_opus_h264.mkv");
+		msg2 = _create_message_from_sintel_trailer(pauline_room, TRUE, "sounds/sintel_trailer_opus_h264.mkv", "sintel_trailer_opus_h264.mkv");
 
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 0, unsigned int, "%u");
 		if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) == 0) {

@@ -23,6 +23,7 @@
 #include "address/address.h"
 #include "bctoolbox/crypto.h"
 #include "bctoolbox/charconv.h"
+#include "bctoolbox/parser.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/encryption/encryption-engine.h"
@@ -275,7 +276,7 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 
 		imee->generateFileTransferKey(message->getChatRoom(), message, currentFileTransferContent);
 	} else {
-		first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileNameUtf8() + "\"";
+		first_part_header = "form-data; name=\"File\"; filename=\"" + escapeFileName(currentFileContentToTransfer->getFileNameUtf8()) + "\"";
 	}
 
 	// create a user body handler to take care of the file and add the content disposition and content-type headers
@@ -379,7 +380,10 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				// Temporary workaround required because file transfer server removes content type parameter
 				parsedXmlFileTransferContent->setFileContentType(currentFileContentToTransfer->getContentType());
 
-				string xml_body = dumpFileTransferContentAsXmlString(parsedXmlFileTransferContent, contentKey, contentKeySize, contentAuthTag, contentAuthTagSize, currentFileContentToTransfer->getFileNameUtf8());
+				string xml_body = dumpFileTransferContentAsXmlString(
+					parsedXmlFileTransferContent, contentKey, contentKeySize, contentAuthTag, 
+					contentAuthTagSize, escapeFileName(currentFileContentToTransfer->getFileNameUtf8())
+				);
 				delete parsedXmlFileTransferContent;
 				
 				currentFileTransferContent->setBodyFromUtf8(xml_body.c_str());
@@ -1078,7 +1082,7 @@ string FileTransferChatMessageModifier::dumpFileTransferContentAsXmlString(
 		// Use real file-name
 		fakeXml << "<file-name>" << realFileName << "</file-name>\r\n";
 	} else {
-		fakeXml << "<file-name>" << parsedXmlFileTransferContent->getFileNameUtf8() << "</file-name>\r\n";
+		fakeXml << "<file-name>" << escapeFileName(parsedXmlFileTransferContent->getFileNameUtf8()) << "</file-name>\r\n";
 	}
 	fakeXml << "<content-type>" << parsedXmlFileTransferContent->getFileContentType() << "</content-type>\r\n";
 	
@@ -1136,7 +1140,8 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileTransferContent->setFileNameUtf8(cleanDownloadFileName(std::string((char *)filename)));
+							string unEscapedfileName = unEscapeFileName(std::string((char *)filename));
+							fileTransferContent->setFileNameUtf8(cleanDownloadFileName(unEscapedfileName));
 							xmlFree(filename);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
@@ -1218,6 +1223,30 @@ void FileTransferChatMessageModifier::parseFileTransferXmlIntoContent (const cha
 		}
 	}
 	xmlFreeDoc(xmlMessageBody);
+}
+
+string FileTransferChatMessageModifier::escapeFileName(const string& fileName) const {
+	bctbx_noescape_rules_t noescapes= {0};
+	bctbx_noescape_rules_add_alfanums(noescapes);
+	bctbx_noescape_rules_add_list(noescapes, "-_.[]");
+	
+	char *escaped_file_name = bctbx_escape(fileName.c_str(), noescapes);
+	if (escaped_file_name) {
+		string escapedFileName = string(escaped_file_name);
+		bctbx_free(escaped_file_name);
+		return escapedFileName;
+	}
+	return fileName;
+}
+
+string FileTransferChatMessageModifier::unEscapeFileName(const string& fileName) const {
+	char *unescaped_file_name = bctbx_unescaped_string(fileName.c_str());
+	if (unescaped_file_name) {
+		string unEscapedFileName = string(unescaped_file_name);
+		bctbx_free(unescaped_file_name);
+		return unEscapedFileName;
+	}
+	return fileName;
 }
 
 LINPHONE_END_NAMESPACE

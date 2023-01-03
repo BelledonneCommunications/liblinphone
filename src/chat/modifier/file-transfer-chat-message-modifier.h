@@ -86,6 +86,9 @@ private:
 	void releaseHttpRequest ();
 	belle_sip_body_handler_t *prepare_upload_body_handler(std::shared_ptr<ChatMessage> message);
 
+	std::string escapeFileName(const std::string& fileName) const;
+	std::string unEscapeFileName(const std::string& fileName) const;
+
 	std::weak_ptr<ChatMessage> chatMessage;
 	FileContent* currentFileContentToTransfer = nullptr;
 	FileTransferContent *currentFileTransferContent = nullptr;
