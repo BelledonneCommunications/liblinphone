@@ -263,14 +263,14 @@ static void conference_scheduler_invitations_sent_with_error(LinphoneConferenceS
 
 static void send_conference_invitations(bool_t enable_encryption, const char *subject, int curveId, bool_t add_participant_in_error) {
 	bctbx_list_t *coresManagerList = NULL;
-	LinphoneCoreManager* marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_create( "pauline_lime_x3dh_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_create("laure_lime_x3dh_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_create( "pauline_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_create("laure_tcp_rc");
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 
-	set_lime_curve_list(curveId, coresManagerList);
+	set_lime_server_and_curve_list(curveId, coresManagerList);
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	setup_conference_info_cbs(marie);

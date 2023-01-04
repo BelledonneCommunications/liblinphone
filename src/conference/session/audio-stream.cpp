@@ -95,15 +95,12 @@ void MS2AudioStream::configure(const OfferAnswerContext &params) {
 }
 
 void MS2AudioStream::initZrtp() {
-	shared_ptr<CallLog> log = getMediaSession().getLog();
-	const LinphoneAddress *peerAddr = log->getRemoteAddress();
-	const LinphoneAddress *selfAddr = log->getLocalAddress();
-	char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
-												, linphone_address_get_username(peerAddr)
-												, linphone_address_get_domain(peerAddr));
-	char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
-												, linphone_address_get_username(selfAddr)
-												, linphone_address_get_domain(selfAddr));
+	auto peerAddr = *(getMediaSession().getRemoteAddress());
+	auto selfAddr = getMediaSession().getLocalAddress();
+	peerAddr.clean();
+	selfAddr.clean();
+	char *peerUri = bctbx_strdup(peerAddr.asStringUriOnly().c_str());
+	char *selfUri = bctbx_strdup(selfAddr.asStringUriOnly().c_str());
 
 	MSZrtpParams zrtpParams;
 	zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(getCCore());
@@ -120,9 +117,9 @@ void MS2AudioStream::initZrtp() {
 	setZrtpCryptoTypesParameters(&zrtpParams, mIsOfferer);
 	audio_stream_enable_zrtp(mStream, &zrtpParams);
 	if (peerUri)
-		ms_free(peerUri);
+		bctbx_free(peerUri);
 	if (selfUri)
-		ms_free(selfUri);
+		bctbx_free(selfUri);
 }
 
 void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {

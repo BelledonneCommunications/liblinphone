@@ -155,6 +155,7 @@ extern const char * liblinphone_tester_ipv6_probing_address;
 extern int liblinphone_tester_ipv6_available(void);
 extern int liblinphone_tester_ipv4_available(void);
 extern const int liblinphone_tester_sip_timeout;
+extern const int x3dhServer_creationTimeout;
 
 /**
  * @brief Tells the tester whether or not to clean the accounts it has created between runs.
@@ -740,9 +741,10 @@ extern MSSndCardDesc dummy_capture_test_snd_card_desc;
  * the encryption engine (only if the given url is different than the current one). It will thus parse
  * again the curve setting that is changed BEFORE.
  */
-void set_lime_curve(const int curveId, LinphoneCoreManager *manager);
-void set_lime_curve_list(const int curveId, bctbx_list_t *managerList);
-void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t required);
+void set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager);
+void legacy_set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager); // Set the lime server url in the [lime] section so it is setup at core level not account
+void set_lime_server_and_curve_list(const int curveId, bctbx_list_t *managerList);
+void set_lime_server_and_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t required);
 
 typedef struct _LinphoneAccountCreatorStats {
 	int cb_done;

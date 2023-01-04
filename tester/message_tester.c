@@ -2136,13 +2136,11 @@ static void info_message_with_body(void){
 
 static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCoreManager *pauline) {
 #ifdef HAVE_SQLITE
-	char* filepath = NULL;
 	char* stmt = NULL;
 	char* errmsg=NULL;
 	int ret = 0;
 	char* paulineUri = NULL;
 	char* marieUri = NULL;
-	char *tmp;
 
 	if (!linphone_core_lime_available(marie->lc) || !linphone_core_lime_available(pauline->lc)) {
 		ms_warning("Lime not available, skipping");
@@ -2156,20 +2154,6 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "zrtp_cache_migration_done", TRUE);
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "zrtp_cache_migration_done", TRUE);
 
-	/* create temporary cache files: setting the database_path will create and initialise the files */
-	tmp = bc_tester_file("tmpZIDCacheMarie.sqlite");
-	remove(tmp);
-	bc_free(tmp);
-	tmp = bc_tester_file("tmpZIDCachePauline.sqlite");
-	remove(tmp);
-	bc_free(tmp);
-	filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
-	linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
-	bc_free(filepath);
-	filepath = bc_tester_file("tmpZIDCachePauline.sqlite");
-	linphone_core_set_zrtp_secrets_file(pauline->lc, filepath);
-	bc_free(filepath);
-
 	/* caches are empty, populate them */
 	paulineUri =  linphone_address_as_string_uri_only(pauline->identity);
 	marieUri = linphone_address_as_string_uri_only(marie->identity);
@@ -2178,7 +2162,7 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	ret = sqlite3_exec(linphone_core_get_zrtp_cache_db(marie->lc),stmt,NULL,NULL,&errmsg);
 	sqlite3_free(stmt);
 	if (ret != SQLITE_OK) {
-		ms_warning("Lime can't populate marie's sqlite cache: %s", errmsg);
+		bctbx_error("Lime can't populate marie's sqlite cache: %s", errmsg);
 		sqlite3_free(errmsg);
 		return -1;
 	}
@@ -2186,7 +2170,7 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	ret = sqlite3_exec(linphone_core_get_zrtp_cache_db(pauline->lc),stmt,NULL,NULL,&errmsg);
 	sqlite3_free(stmt);
 	if (ret != SQLITE_OK) {
-		ms_warning("Lime can't populate pauline's sqlite cache: %s", errmsg);
+		bctbx_error("Lime can't populate pauline's sqlite cache: %s", errmsg);
 		sqlite3_free(errmsg);
 		return -1;
 	}
@@ -2264,8 +2248,6 @@ static void _is_composing_notification(bool_t lime_enabled) {
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 }
 
 static void is_composing_notification(void) {
@@ -2338,8 +2320,6 @@ static void _imdn_notifications(bool_t with_lime) {
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 }
 
 static void _im_notification_policy(bool_t with_lime) {
@@ -2431,8 +2411,6 @@ static void _im_notification_policy(bool_t with_lime) {
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 }
 
 static void imdn_notifications(void) {
@@ -2576,8 +2554,6 @@ static void _im_error_delivery_notification(bool_t online) {
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 }
 
 static void im_error_delivery_notification_online(void) {
@@ -2611,8 +2587,6 @@ static void lime_text_message(void) {
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
 end:
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2665,8 +2639,6 @@ static void lime_text_message_to_non_lime(bool_t sender_policy_mandatory, bool_t
 	linphone_chat_message_unref(sent_cm);
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
 end:
-	remove("tmpZIDCachePauline.sqlite");
-
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2716,8 +2688,6 @@ static void lime_multiple_messages_while_network_unreachable(void) {
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(marie->lc,pauline->identity));
 end:
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2867,9 +2837,6 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 	linphone_chat_message_unref(msg);
 
 end:
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
-
 	bc_free(send_filepath);
 	bc_free(send_filepath2);
 	linphone_core_manager_destroy(marie);
@@ -3885,8 +3852,6 @@ void _text_message_with_custom_content_type(bool_t with_lime, bool_t is_supporte
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	remove("tmpZIDCacheMarie.sqlite");
-	remove("tmpZIDCachePauline.sqlite");
 }
 
 void text_message_with_custom_content_type(void) {

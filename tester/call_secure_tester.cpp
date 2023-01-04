@@ -1154,18 +1154,12 @@ static void recreate_zrtpdb_when_corrupted(void) {
 
 	if (BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionZRTP))) {
 		void *db;
-		const char* db_file;
+		char* db_file;
 		const char *corrupt = "corrupt mwahahahaha";
 		FILE *f;
 
-		char *filepath = bc_tester_file("tmpZIDCacheMarie.sqlite");
-		remove(filepath);
-		char *filepath2 = bc_tester_file("tmpZIDCachePauline.sqlite");
-		remove(filepath2);
 		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
 		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
-		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
-		linphone_core_set_zrtp_secrets_file(pauline->lc, filepath2);
 
 		BC_ASSERT_TRUE(call(pauline,marie));
 		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
@@ -1183,15 +1177,15 @@ static void recreate_zrtpdb_when_corrupted(void) {
 		end_call(marie, pauline);
 
 		//Corrupt db file
-		db_file = linphone_core_get_zrtp_secrets_file(marie->lc);
+		db_file = bctbx_strdup(linphone_core_get_zrtp_secrets_file(marie->lc));
 		BC_ASSERT_PTR_NOT_NULL(db_file);
 
 		f = fopen(db_file, "wb");
 		fwrite(corrupt, 1, sizeof(corrupt), f);
 		fclose(f);
 
-		//Simulate relaunch of linphone core marie
-		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
+		// force marie's zrtp db reload: it will fail and run cacheless
+		linphone_core_set_zrtp_secrets_file(marie->lc, db_file);
 		db = linphone_core_get_zrtp_cache_db(marie->lc);
 		BC_ASSERT_PTR_NULL(db);
 
@@ -1202,14 +1196,17 @@ static void recreate_zrtpdb_when_corrupted(void) {
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
 		end_call(marie, pauline);
 
+		// we run cacheless -> token is not verified on this call even if it was in previous one
 		BC_ASSERT_TRUE(call(pauline,marie));
 		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_FALSE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
 		end_call(marie, pauline);
 
 		//Db file should be recreated after corruption
-		//Simulate relaunch of linphone core marie
-		linphone_core_set_zrtp_secrets_file(marie->lc, filepath);
+		// force marie's zrtp db relaod
+		linphone_core_set_zrtp_secrets_file(marie->lc, db_file);
+		bctbx_free(db_file);
+		db_file = NULL;
 
 		BC_ASSERT_TRUE(call(pauline,marie));
 		linphone_call_set_authentication_token_verified(linphone_core_get_current_call(marie->lc), TRUE);
@@ -1220,17 +1217,12 @@ static void recreate_zrtpdb_when_corrupted(void) {
 
 		db = linphone_core_get_zrtp_cache_db(marie->lc);
 		BC_ASSERT_PTR_NOT_NULL(db);
-		db_file = linphone_core_get_zrtp_secrets_file(marie->lc);
-		BC_ASSERT_PTR_NOT_NULL(db_file);
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_zrtp_secrets_file(marie->lc));
 
 		BC_ASSERT_TRUE(call(pauline,marie));
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_TRUE(linphone_call_get_authentication_token_verified(linphone_core_get_current_call(pauline->lc)));
 		end_call(marie, pauline);
-
-		ms_free(filepath);
-		ms_free(filepath2);
-
 	}
 
 	linphone_core_manager_destroy(marie);

@@ -133,6 +133,7 @@ bool_t liblinphonetester_no_account_creator = FALSE;
 unsigned int liblinphone_tester_max_cpu_count = 2;
 
 const int liblinphone_tester_sip_timeout = 10000; // in ms, use this value for default SIP operation timeout
+const int x3dhServer_creationTimeout = 20000; // in ms, use this value for default lime user creation timeout
 					    //
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with our Freebox v6 when connecting to Ipv6 addresses.
 			It was found that the freebox sometimes block SYN-ACK packets, which prevents connection to be succesful.
@@ -2304,6 +2305,7 @@ void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
 	}
 	if (mgr->rc_path)
 		bctbx_free(mgr->rc_path);
+
 	if (mgr->database_path) {
 		if (unlinkDb == TRUE) {
 			unlink(mgr->database_path);
@@ -4363,7 +4365,18 @@ static void dummy_capture_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy_capture_test_snd_card());
 }
 
-void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req) {
+/**
+ * set the curve and lime server url to use for this test
+ * This will crash whatever settings are in the linphonerc for x3dh server
+ *
+ * @param[in]	curveId		25519 or 448 according to the curve to use -> this MUST match server's setting
+ * @param[in]	manager		The core manager
+ * @param[in]	tls_auth_server	True if we must connect to a server trying to authenticate users with client certificate. Other server will use digest auth to authenticate clients
+ * @param[in]	req		True: when tls_auth_server is true, connect to a server requesting client authentication using certificates
+ * @param[in]	in_account	True: the server URL setting is set in the default account(this is the default behavior)- False: setting in the [lime] section at core level (legacy behavior, do not use)
+ *
+ */
+static void set_lime_server_and_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req, bool_t in_account) {
 	const char * server = NULL;
 	if (curveId == 448) {
 		// Change the curve setting before the server URL
@@ -4393,31 +4406,40 @@ void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t 
 		}
 	}
 
-	LinphoneAccount *account = linphone_core_get_default_account(manager->lc);
-	const LinphoneAccountParams* account_params = linphone_account_get_params(account);
-	if (linphone_account_params_get_lime_server_url(account_params)) {
-		LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
-		linphone_account_params_set_lime_server_url(new_account_params, server);
-		linphone_account_set_params(account, new_account_params);
-		linphone_account_params_unref(new_account_params);
-	} else {
+
+	if (in_account) { // This is the way to set the lime server url: in the accounts
+		const bctbx_list_t *accountList = linphone_core_get_account_list(manager->lc);
+		while (accountList != NULL) {
+			LinphoneAccount *account = (LinphoneAccount *)(accountList->data);
+			const LinphoneAccountParams* account_params = linphone_account_get_params(account);
+			LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
+			linphone_account_params_set_lime_server_url(new_account_params, server);
+			linphone_account_set_params(account, new_account_params);
+			linphone_account_params_unref(new_account_params);
+			accountList = accountList->next;
+		}
+	} else { // this is legacy behavior, just for testing. Set the lime server url in the core [lime] setting
 		linphone_core_set_lime_x3dh_server_url(manager->lc, server);
 	}
 }
 
-void set_lime_curve(const int curveId, LinphoneCoreManager *manager) {
-	set_lime_curve_tls(curveId, manager, FALSE, FALSE);
+void set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager) {
+	set_lime_server_and_curve_tls(curveId, manager, FALSE, FALSE, TRUE);
 }
 
-void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t req) {
+void legacy_set_lime_server_and_curve(const int curveId, LinphoneCoreManager *manager) {
+	set_lime_server_and_curve_tls(curveId, manager, FALSE, FALSE, FALSE);
+}
+
+void set_lime_server_and_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t req) {
 	bctbx_list_t *item = managerList;
 	for (item = managerList; item; item = bctbx_list_next(item)) {
-		set_lime_curve_tls(curveId, (LinphoneCoreManager *)(bctbx_list_get_data(item)), tls_auth_server, req);
+		set_lime_server_and_curve_tls(curveId, (LinphoneCoreManager *)(bctbx_list_get_data(item)), tls_auth_server, req, TRUE);
 	}
 }
 
-void set_lime_curve_list(const int curveId, bctbx_list_t *managerList) {
-	set_lime_curve_list_tls (curveId, managerList, FALSE, FALSE);
+void set_lime_server_and_curve_list(const int curveId, bctbx_list_t *managerList) {
+	set_lime_server_and_curve_list_tls (curveId, managerList, FALSE, FALSE);
 }
 
 void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_stun, const bool_t enable_ice) {

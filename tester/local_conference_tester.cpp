@@ -160,9 +160,9 @@ class Focus;
 /*Core manager acting as a client*/
 class ClientConference : public ConfCoreManager {
 public:
-	ClientConference(std::string rc, Address factoryUri) :
+	ClientConference(std::string rc, Address factoryUri, bool encrypted=false) :
 		ConfCoreManager(rc,
-						[this, factoryUri] {
+						[this, factoryUri, encrypted] {
 							configureCoreForConference(factoryUri);
 							_configure_core_for_audio_video_conference(mMgr.get(),L_GET_C_BACK_PTR(&factoryUri));
 							setupMgrForConference();
@@ -171,6 +171,9 @@ public:
 							linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
 							linphone_core_add_callbacks(getLc(), cbs);
 							linphone_core_cbs_unref(cbs);
+							if (encrypted) {
+								set_lime_server_and_curve(25519, mMgr.get());
+							}
 						}),
 		mFocus(nullptr) {
 	}
@@ -418,7 +421,6 @@ void sendEphemeralMessageInAdminMode(Focus & focus, ClientConference & sender, C
 	bctbx_list_free(coresList);
 }
 
-static const int x3dhServer_creationTimeout = 15000;
 static void group_chat_room_creation_server (void) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
@@ -1838,15 +1840,15 @@ static void server_core_chat_room_state_changed_sip_error (LinphoneCore *core, L
 	}
 }
 
-static void group_chat_room_with_sip_errors_base (bool_t invite_error, bool_t subscribe_error, bool_t encrypted) {
+static void group_chat_room_with_sip_errors_base (bool invite_error, bool subscribe_error, bool encrypted) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
-		ClientConference marie(encrypted? "marie_lime_x3dh_rc" : "marie_rc", focus.getIdentity().asAddress());
-		ClientConference pauline(encrypted? "pauline_lime_x3dh_rc" : "pauline_rc", focus.getIdentity().asAddress());
-		ClientConference laure(encrypted? "laure_lime_x3dh_rc" : "laure_tcp_rc", focus.getIdentity().asAddress());
-		ClientConference lise(encrypted? "lise_lime_x3dh_rc" : "lise_rc", focus.getIdentity().asAddress());
-		ClientConference michelle(encrypted? "michelle_lime_x3dh_rc" : "michelle_rc", focus.getIdentity().asAddress());
-		ClientConference michelle2(encrypted? "michelle_lime_x3dh_rc" : "michelle_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference lise("lise_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference michelle2("michelle_rc", focus.getIdentity().asAddress(), encrypted);
 
 		stats initialFocusStats = focus.getStats();
 		stats initialMarieStats = marie.getStats();
@@ -2359,28 +2361,28 @@ static void group_chat_room_with_sip_errors_base (bool_t invite_error, bool_t su
 }
 
 static void group_chat_room_with_invite_error (void) {
-	group_chat_room_with_sip_errors_base (TRUE, FALSE, FALSE);
+	group_chat_room_with_sip_errors_base (true, false, false);
 }
 
 static void group_chat_room_with_subscribe_error (void) {
-	group_chat_room_with_sip_errors_base (FALSE, TRUE, FALSE);
+	group_chat_room_with_sip_errors_base (false, true, false);
 }
 
 static void secure_group_chat_room_with_invite_error (void) {
-	group_chat_room_with_sip_errors_base (TRUE, FALSE, TRUE);
+	group_chat_room_with_sip_errors_base (true, false, true);
 }
 
 static void secure_group_chat_room_with_subscribe_error (void) {
-	group_chat_room_with_sip_errors_base (FALSE, TRUE, TRUE);
+	group_chat_room_with_sip_errors_base (false, true, true);
 }
 
 static void secure_group_chat_room_with_chat_room_deleted_before_server_restart (void) {
 	Focus focus("chloe_rc");
 	{//to make sure focus is destroyed after clients.
-		ClientConference marie("marie_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference marie2("marie_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference michelle("michelle_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference michelle2("michelle_lime_x3dh_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), true);
+		ClientConference marie2("marie_rc", focus.getIdentity().asAddress(), true);
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress(), true);
+		ClientConference michelle2("michelle_rc", focus.getIdentity().asAddress(), true);
 
 		stats initialFocusStats = focus.getStats();
 		stats initialMarieStats = marie.getStats();
@@ -3362,9 +3364,9 @@ static void group_chat_room_lime_server_message (bool encrypted) {
 	{//to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 		
-		ClientConference marie(encrypted? "marie_lime_x3dh_rc" : "marie_rc", focus.getIdentity().asAddress());
-		ClientConference pauline(encrypted? "pauline_lime_x3dh_rc" : "pauline_rc", focus.getIdentity().asAddress());
-		ClientConference laure(encrypted? "laure_lime_x3dh_rc" : "laure_tcp_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress(), encrypted);
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress(), encrypted);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -3460,9 +3462,9 @@ static void group_chat_room_lime_session_corrupted (void) {
 	{//to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 		
-		ClientConference marie("marie_lime_x3dh_rc" , focus.getIdentity().asAddress());
-		ClientConference pauline("pauline_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference laure("laure_lime_x3dh_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc" , focus.getIdentity().asAddress(), true);
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress(), true);
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress(), true);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
@@ -8456,10 +8458,10 @@ static void conference_edition_with_simultaneous_participant_add_remove (void) {
 	{//to make sure focus is destroyed after clients.
 		linphone_core_enable_lime_x3dh(focus.getLc(), true);
 
-		ClientConference marie("marie_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference pauline("pauline_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference laure("laure_lime_x3dh_rc", focus.getIdentity().asAddress());
-		ClientConference michelle("michelle_lime_x3dh_rc", focus.getIdentity().asAddress());
+		ClientConference marie("marie_rc", focus.getIdentity().asAddress(), true);
+		ClientConference pauline("pauline_rc", focus.getIdentity().asAddress(), true);
+		ClientConference laure("laure_tcp_rc", focus.getIdentity().asAddress(), true);
+		ClientConference michelle("michelle_rc", focus.getIdentity().asAddress(), true);
 
 		focus.registerAsParticipantDevice(marie);
 		focus.registerAsParticipantDevice(pauline);
