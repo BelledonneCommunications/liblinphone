@@ -424,7 +424,15 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 	} else {
 		// No aggregation, notify right away
 		lDebug() << "[Chat Room] [" << q->getConferenceId() << "] No aggregation, notify right away";
-		notifyMessageReceived(chatMessage);
+
+		bool chatMessagesAggregationEnabled = !!linphone_core_get_chat_messages_aggregation_enabled(cCore);
+		if (chatMessagesAggregationEnabled) { // Need to notify using aggregated callback even if there is only on message
+			// This can happen when auto download is enabled and auto download takes longer than the aggregation delay
+			aggregatedMessages.push_back(chatMessage);
+			notifyAggregatedChatMessages();
+		} else {
+			notifyMessageReceived(chatMessage);
+		}
 	}
 }
 
