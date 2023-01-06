@@ -1825,30 +1825,30 @@ static void rtp_config_read(LinphoneCore *lc) {
 	const char* tmp;
 	int tmp_int;
 
-	if (linphone_config_get_range(lc->config, "rtp", "audio_rtp_port", &min_port, &max_port, 7078, 7078) == TRUE) {
-		if (min_port <= 0) min_port = 1;
+	if (linphone_config_get_range(lc->config, "rtp", "audio_rtp_port", &min_port, &max_port, -1, -1) == TRUE) {
+		if (min_port <= 0 && min_port != -1) min_port = 1;
 		if (max_port > 65535) max_port = 65535;
 		linphone_core_set_audio_port_range(lc, min_port, max_port);
 	} else {
-		min_port = linphone_config_get_int(lc->config, "rtp", "audio_rtp_port", 7078);
+		min_port = linphone_config_get_int(lc->config, "rtp", "audio_rtp_port", -1);
 		linphone_core_set_audio_port(lc, min_port);
 	}
 
-	if (linphone_config_get_range(lc->config, "rtp", "video_rtp_port", &min_port, &max_port, 9078, 9078) == TRUE) {
-		if (min_port <= 0) min_port = 1;
+	if (linphone_config_get_range(lc->config, "rtp", "video_rtp_port", &min_port, &max_port, -1, -1) == TRUE) {
+		if (min_port <= 0 && min_port != -1) min_port = 1;
 		if (max_port > 65535) max_port = 65535;
 		linphone_core_set_video_port_range(lc, min_port, max_port);
 	} else {
-		min_port = linphone_config_get_int(lc->config, "rtp", "video_rtp_port", 9078);
+		min_port = linphone_config_get_int(lc->config, "rtp", "video_rtp_port", -1);
 		linphone_core_set_video_port(lc, min_port);
 	}
 
-	if (linphone_config_get_range(lc->config, "rtp", "text_rtp_port", &min_port, &max_port, 11078, 11078) == TRUE) {
-		if (min_port <= 0) min_port = 1;
+	if (linphone_config_get_range(lc->config, "rtp", "text_rtp_port", &min_port, &max_port, -1, -1) == TRUE) {
+		if (min_port <= 0 && min_port != -1) min_port = 1;
 		if (max_port > 65535) max_port = 65535;
 		linphone_core_set_text_port_range(lc, min_port, max_port);
 	} else {
-		min_port = linphone_config_get_int(lc->config, "rtp", "text_rtp_port", 11078);
+		min_port = linphone_config_get_int(lc->config, "rtp", "text_rtp_port", -1);
 		linphone_core_set_text_port(lc, min_port);
 	}
 

@@ -1473,6 +1473,9 @@ void MediaSessionPrivate::fillConferenceParticipantVideoStream(SalStreamDescript
 					}
 				}
 			}
+			if (dir == SalStreamInactive){
+				lWarning() << *q << "Setting stream inactive for label " << label << " and content " << content;
+			}
 			cfg.dir = dir;
 			validateVideoStreamDirection(cfg);
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, newStream, cfg, "vs" + label);
@@ -1587,6 +1590,8 @@ SalStreamDescription & MediaSessionPrivate::addStreamToMd(std::shared_ptr<SalMed
 					const auto & s = oldMd->streams[i];
 					auto & c = md->streams[i];
 					c.type = s.type;
+					/* FIXME: an explanation should be given for doing this, it is not obvious what this case is for.*/
+					lWarning() << "Setting stream inactive at index " << i << " because of std::out_of_range.";
 					c.setDirection(SalStreamInactive);
 				}
 			}
@@ -1693,6 +1698,7 @@ void MediaSessionPrivate::addConferenceParticipantVideostreams(std::shared_ptr<S
 								newStream.rtp_port = 0;
 								newStream.rtcp_port = 0;
 								newStream.addActualConfiguration(cfg);
+								lWarning() << *q << "New stream added as disabled and inactive.";
 							}
 						}
 					}
@@ -1771,7 +1777,8 @@ void MediaSessionPrivate::copyOldStreams(std::shared_ptr<SalMediaDescription> & 
 					cfg.dir = SalStreamInactive;
 					newStream.disable();
 				}
-
+				/* FIXME: need comment to explain what is being done here. Why calling disable() twice, even when there are payload types ? */
+				lWarning() << "Disabling stream at index " << idx << " from copyOldStreams().";
 				newStream.disable();
 				newStream.rtp_port = 0;
 				newStream.rtcp_port = 0;
@@ -2003,6 +2010,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		const auto videoStreamIdx = refMd ? ((conference && refMd->findIdxStreamWithContent(mainStreamAttrValue)) ? refMd->findIdxStreamWithContent(mainStreamAttrValue) : refMd->findIdxBestStream(SalVideo)) : -1;
 
 		SalStreamDescription & videoStream = addStreamToMd(md, videoStreamIdx, oldMd);
+		if (videoDir == SalStreamInactive){
+			lWarning() << *q << "Video stream added with inactive media direction.";
+		}
 		fillLocalStreamDescription(videoStream, md, enableVideoStream, "Video", SalVideo, proto, videoDir, videoCodecs, "vs", getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
 		if (conference) {
