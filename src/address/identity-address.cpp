@@ -252,21 +252,23 @@ bool ConferenceAddress::hasConfId () const {
 
 void ConferenceAddress::fillUriParams (const Address &address) {
 	bctbx_map_t* uriParamMap = address.getUriParams();
-	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
-	bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);
-	for (;!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
-		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
-		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
-		const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
-		if (value) {
-			setUriParam(key, value);
-		} else {
-			setUriParams(key);
+	if(uriParamMap){
+		bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+		bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);
+		for (;!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+			bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+			const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+			if (value) {
+				setUriParam(key, value);
+			} else {
+				setUriParams(key);
+			}
 		}
+		bctbx_iterator_cchar_delete(it);
+		bctbx_iterator_cchar_delete(uriParamMapEnd);
+		bctbx_mmap_cchar_delete_with_data(uriParamMap, bctbx_free);
 	}
-	bctbx_iterator_cchar_delete(it);
-	bctbx_iterator_cchar_delete(uriParamMapEnd);
-	bctbx_mmap_cchar_delete_with_data(uriParamMap, bctbx_free);
 }
 
 int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) const {
