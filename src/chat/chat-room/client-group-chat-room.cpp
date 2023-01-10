@@ -146,12 +146,20 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	L_Q();
 
 	auto focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
-	bool previousSession = (focus->getSession() != nullptr);
+	auto focusSession = focus->getSession();
+	bool previousSession = (focusSession != nullptr);
 
-	if (previousSession) {
+
+	shared_ptr<AbstractChatRoom> exhumedChatRoom = q->getCore()->getPrivate()->findExumedChatRoomFromPreviousConferenceId(
+		ConferenceId(ConferenceAddress(Address(op->getFrom())), ConferenceAddress(Address(op->getTo())))
+	);
+
+	if (previousSession && !exhumedChatRoom) {
 		// Prevents leak
-		focus->getSession()->getPrivate()->getOp()->terminate();
-		focus->getSession()->getPrivate()->getOp()->release();
+		auto focusOp = focusSession->getPrivate()->getOp();
+		lInfo() << "Releasing focus session " << focusSession << " (from: " << Address(focusOp->getFrom()) << " to " << Address(focusOp->getTo()) << ")";
+		focusOp->terminate();
+		focusOp->release();
 	}
 
 	auto session = focus->createSession(*q->getConference().get(), nullptr, false, this);
