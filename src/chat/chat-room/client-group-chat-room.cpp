@@ -651,7 +651,6 @@ bool ClientGroupChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses
 ) {
 	L_D();
-
 	if ((getState() != ConferenceInterface::State::Instantiated) && (getState() != ConferenceInterface::State::Created)) {
 		lError() << "Cannot add participants to the ClientGroupChatRoom in a state other than Instantiated or Created";
 		return false;

@@ -468,17 +468,13 @@ void ConferenceScheduler::sendInvitations (shared_ptr<ChatRoomParams> chatRoomPa
 			lInfo() << "[Conference Scheduler] [" << this << "] Organizer [" << organizer << "] not found in conference participants, adding it to chat room participants";
 			mInvitationsToSend.push_back(Address(organizer.asAddress()));
 		}
-		const bool organizerInInviteesFound = (std::find(invitees.cbegin(), invitees.cend(), organizer) != invitees.cend());
-		if (!organizerInInviteesFound) {
-			invitees.push_back(Address(organizer.asAddress()));
-		}
 	}
 
 	mInvitationsInError.clear();
 	mInvitationsSent = 0;
 
 	// Sending the ICS once for each participant in a separated chat room each time.
-	for (auto participant : invitees) {
+	for (auto participant : mInvitationsToSend) {
 		list<IdentityAddress> participantList;
 		participantList.push_back(participant);
 		shared_ptr<AbstractChatRoom> chatRoom = getCore()->getPrivate()->searchChatRoom(
