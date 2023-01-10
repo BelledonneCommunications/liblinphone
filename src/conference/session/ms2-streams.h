@@ -237,7 +237,7 @@ private:
 	MSSndCard *mCurrentCaptureCard = nullptr;
 	MSSndCard *mCurrentPlaybackCard = nullptr;
 	belle_sip_source_t *mMediaLostCheckTimer = nullptr;
-	bool isOfferer = false;
+	bool mIsOfferer = false;
 	bool mMicMuted = false;
 	bool mSpeakerMuted = false;
 	bool mRecordActive = false;

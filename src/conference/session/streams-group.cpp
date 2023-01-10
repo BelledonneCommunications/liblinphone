@@ -180,6 +180,10 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 		 * provided remote media description.*/
 		params.remoteMediaDescription = mCurrentOfferAnswerState.remoteMediaDescription;
 	}
+	/* Hooks shall be empty before calling render() on each stream.
+	 * This is necessary because of stream calling render() by their own means.
+	 */
+	mPostRenderHooks.clear();
 	
 	for(auto &stream : mStreams){
 		if (!stream) continue;

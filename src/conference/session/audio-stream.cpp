@@ -51,7 +51,7 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = getBindIp();
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
-	isOfferer = params.localIsOfferer;
+	mIsOfferer = params.localIsOfferer;
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
@@ -113,7 +113,7 @@ void MS2AudioStream::initZrtp() {
 	zrtpParams.acceptGoClear = !!linphone_core_zrtp_go_clear_enabled(getCCore());
 	/* Get key lifespan from config file, default is 0:forever valid */
 	zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
-	setZrtpCryptoTypesParameters(&zrtpParams, isOfferer);
+	setZrtpCryptoTypesParameters(&zrtpParams, mIsOfferer);
 	audio_stream_enable_zrtp(mStream, &zrtpParams);
 	if (peerUri)
 		ms_free(peerUri);
@@ -185,8 +185,6 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
-	
-	
 	if (linphone_core_echo_limiter_enabled(getCCore())) {
 		string type = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "el_type", "mic");
 		if (type == "mic")
@@ -499,6 +497,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 			io.input.file = pause ? nullptr : playfile.c_str(); /* We prefer to use the remote_play api, that allows to play multimedia files */
 		}
 	}
+	
 	if (ok) {
 		if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
 		if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
@@ -524,6 +523,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		audio_stream_set_is_muted_callback(mStream, &MS2AudioStream::audioStreamIsMutedCb, this);
 
 		audio_stream_set_audio_route_changed_callback(mStream, &MS2AudioStream::audioRouteChangeCb, &getCore());
+		
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
 		VideoStream *vs = getPeerVideoStream();
@@ -572,17 +572,19 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 
-	getGroup().addPostRenderHook([this, onHoldFile] {
-		/* The on-hold file is to be played once both audio and video are ready */
-		if (!onHoldFile.empty() && !getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
+	if (!onHoldFile.empty() && !getMediaSessionPrivate().getParams()->getPrivate()->getInConference()){
+		lInfo() << "On hold multimedia file specified, will be started shortly after all streams are rendered.";
+		getGroup().addPostRenderHook([this, onHoldFile] {
+			/* The on-hold file is to be played once both audio and video are ready */
 			MSFilter *player = audio_stream_open_remote_play(mStream, onHoldFile.c_str());
 			if (player) {
 				int pauseTime = 500;
 				ms_filter_call_method(player, MS_PLAYER_SET_LOOP, &pauseTime);
 				ms_filter_call_method_noarg(player, MS_PLAYER_START);
 			}
-		}
-	});
+		});
+	}
+
 	
 	if (targetState == CallSession::State::StreamsRunning){
 		setupMediaLossCheck();
@@ -946,28 +948,29 @@ void MS2AudioStream::setSoundCardType(MSSndCard *soundcard) {
 }
 
 int MS2AudioStream::restartStream(RestartReason reason) {
-// Schedule a restart in order to avoid multiple reinitialisation when changing at the same time both devices. Also, it allows to avoid to restart the stream if it has been already restart.
+	// Schedule a restart in order to avoid multiple reinitialisation when changing at the same time both devices. Also, it allows to avoid to restart the stream if it has been already restart.
 	const char * const reasonToText = (reason == RestartReason::OutputChanged ? "output" : "input");
 	if(getState() == Running){
 		if(!mRestartStreamRequired) {
-			lInfo() << "[MS2AudioStream] restart stream required for updating " << reasonToText;
+			lInfo() << *this << "restart required for updating " << reasonToText;
 			mRestartStreamRequired = true;
 			getCore().doLater([&](){
 				if(mRestartStreamRequired && getState() == Running)// Still need to be restarted. If false, then a restart has been already done on an update.
 					render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()), getGroup().getCurrentSessionState());
 			});
 			return 0;
-		}else
-			lInfo() << "[MS2AudioStream] an already restart stream required for updating " << reasonToText;
+		}else{
+			lInfo() << *this << " restart already required (now for updating " << reasonToText << ")";
+		}
 	}
 	return -1;
 }
 
 void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
-	if(!mStream) return;
+	if (!mStream) return;
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
-	if(audio_stream_set_input_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
+	if (audio_stream_set_input_ms_snd_card(mStream, soundcard) < 0 && mCurrentCaptureCard) {
 		// New device couldn't update the stream, request to stop it
 		// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID
 		restartStream(RestartReason::InputChanged);
@@ -975,10 +978,10 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 }
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
-	if(!mStream) return;
+	if (!mStream) return;
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
-	if(audio_stream_set_output_ms_snd_card(mStream, (soundcard?soundcard:NULL)) < 0 ){
+	if (audio_stream_set_output_ms_snd_card(mStream, soundcard) < 0 && mCurrentPlaybackCard){
 		// New device couldn't update the stream, request to stop it
 		// Due to missing implementation of MS_AUDIO_CAPTURE_SET_INTERNAL_ID and MS_AUDIO_PLAYBACK_SET_INTERNAL_ID
 		restartStream(RestartReason::OutputChanged);
