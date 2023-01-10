@@ -295,7 +295,6 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 #ifdef HAVE_ADVANCED_IM
 	L_Q();
 #endif
-
 	if (!params) {
 		lWarning() << "Trying to create chat room with null parameters";
 		return nullptr;
