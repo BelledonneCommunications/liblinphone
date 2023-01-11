@@ -83,7 +83,12 @@ static int send_command(const char *command, char *reply, int reply_len, int pri
 	int err;
 	char path[128];
 #ifndef _WIN32
-	snprintf(path,sizeof(path)-1,"linphonec-%i",getuid());
+	char* profile_id_env = getenv("LINPHONE_PROFILE_ID");
+	if (profile_id_env){
+		snprintf(path,sizeof(path)-1,"linphonec-%s", profile_id_env);
+	}else{
+		snprintf(path,sizeof(path)-1,"linphonec-%i", getuid());
+	}
 #else
 	{
 		char username[128];

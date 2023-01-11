@@ -396,16 +396,21 @@ static void start_prompt_reader(void){
 #if !defined(_WIN32_WCE)
 static bctbx_pipe_t create_server_socket(void){
 	char path[128];
+	{
+		char* profile_id_env = getenv("LINPHONE_PROFILE_ID");
+		if (profile_id_env){
+			snprintf(path,sizeof(path)-1,"linphonec-%s",profile_id_env);
+		}else{
 #ifndef _WIN32
 	snprintf(path,sizeof(path)-1,"linphonec-%i",getuid());
 #else
-	{
 		TCHAR username[128];
 		DWORD size=sizeof(username)-1;
 		GetUserName(username,&size);
 		snprintf(path,sizeof(path)-1,"linphonec-%s",username);
-	}
 #endif
+	  }
+	}
 	return bctbx_server_pipe_create(path);
 }
 
