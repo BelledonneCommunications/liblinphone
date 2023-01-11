@@ -134,6 +134,16 @@ void linphone_core_notify_call_encryption_changed(LinphoneCore *lc, LinphoneCall
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_call_send_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key) {
+	NOTIFY_IF_EXIST(call_send_master_key_changed, lc,call,master_key);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_call_receive_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key) {
+	NOTIFY_IF_EXIST(call_receive_master_key_changed, lc,call,master_key);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_registration_state_changed(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message){
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->notifyRegistrationStateChanged(cfg, cstate, message);
 	NOTIFY_IF_EXIST(registration_state_changed, lc,cfg,cstate,message);

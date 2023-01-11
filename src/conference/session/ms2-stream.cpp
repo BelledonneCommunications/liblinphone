@@ -251,7 +251,8 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	// - internal update
 	// - pausing a call
 	// - resuming a call
-	const auto mediaEncryption = (((getMediaSession().getState() == CallSession::State::Resuming) || (getMediaSession().getState() == CallSession::State::Pausing) || getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate()) ? getMediaSessionPrivate().getNegotiatedMediaEncryption() : getMediaSessionPrivate().getParams()->getMediaEncryption());
+	const auto & sessionState = getMediaSession().getState();
+	const auto mediaEncryption = (((sessionState == CallSession::State::Resuming) || (sessionState == CallSession::State::Pausing) || getMediaSessionPrivate().getParams()->getPrivate()->getInternalCallUpdate()) ? getMediaSessionPrivate().getNegotiatedMediaEncryption() : getMediaSessionPrivate().getParams()->getMediaEncryption());
 	const bool addZrtpAttributes = (mediaEncryption == LinphoneMediaEncryptionZRTP) && ((localDesc.getChosenConfiguration().getProto() == SalProtoRtpAvp) || (localDesc.getChosenConfiguration().getProto() == SalProtoRtpAvpf));
 	if (addZrtpAttributes) {
 		/* set the hello hash */
@@ -902,8 +903,28 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, resultStreamDesc.getChosenConfiguration().crypto_local_tag);
 		if (cryptoIdx >= 0) {
 			MSCryptoSuite algo = resultStreamDesc.getChosenConfiguration().crypto[0].algo;
-			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
-			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key));
+			auto newSendMasterKey = localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key;
+			CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+			// The master key of an SRTP stream must be set in one of the following scenarios:
+			// - the new stream has just been added
+			// - the master key has changed. Note that the SRTP context will not be updated if this streams was previously stopped and then started again without changing the send master key.
+			if (mSendMasterKey.compare(newSendMasterKey) != 0) {
+				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(newSendMasterKey));
+				if (listener) {
+					listener->onSendMasterKeyChanged(getMediaSession().getSharedFromThis(), newSendMasterKey);
+				}
+				mSendMasterKey = newSendMasterKey;
+			}
+
+			auto newReceiveMasterKey = resultStreamDesc.getChosenConfiguration().crypto[0].master_key;
+			if (mReceiveMasterKey.compare(newReceiveMasterKey) != 0) {
+				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, L_STRING_TO_C(newReceiveMasterKey));
+				if (listener) {
+					listener->onReceiveMasterKeyChanged(getMediaSession().getSharedFromThis(), newReceiveMasterKey);
+				}
+				mReceiveMasterKey = newReceiveMasterKey;
+			}
+
 		} else {
 			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
 		}

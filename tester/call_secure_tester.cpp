@@ -858,6 +858,8 @@ static void call_srtp_paused_and_resumed(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	const LinphoneCallParams *params;
 	LinphoneCall *pauline_call;
+	int marieSendMasterKey = 0;
+	int paulineSendMasterKey = 0;
 
 	if (!linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionSRTP)) goto end;
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
@@ -871,6 +873,9 @@ static void call_srtp_paused_and_resumed(void) {
 	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1))) goto end;
 	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1))) goto end;
 
+	marieSendMasterKey = marie->stat.number_of_LinphoneCallSendMasterKeyChanged;
+	paulineSendMasterKey = pauline->stat.number_of_LinphoneCallSendMasterKeyChanged;
+
 	linphone_call_pause(pauline_call);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPaused,1));
@@ -879,6 +884,9 @@ static void call_srtp_paused_and_resumed(void) {
 	linphone_call_resume(pauline_call);
 	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
 	if (!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2))) goto end;
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallSendMasterKeyChanged, marieSendMasterKey, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallSendMasterKeyChanged, paulineSendMasterKey, int, "%d");
 
 	/*assert that after pause and resume, SRTP is still being used*/
 	params = linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc));

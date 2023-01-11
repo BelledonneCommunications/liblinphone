@@ -234,6 +234,8 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreReferReceivedCb refer_received; /**< An out of call refer was received */
 	LinphoneCoreCbsCallGoClearAckSentCb call_goclear_ack_sent; /**<Notifies on sending of GoClear Ack */
 	LinphoneCoreCallEncryptionChangedCb call_encryption_changed; /**<Notifies on change in the encryption of call streams */
+	LinphoneCoreCbsCallSendMasterKeyChangedCb call_send_master_key_changed; /**<Notifies on change of the send master key of call streams */
+	LinphoneCoreCbsCallReceiveMasterKeyChangedCb call_receive_master_key_changed; /**<Notifies on change of the send master key of call streams */
 	LinphoneCoreTransferStateChangedCb transfer_state_changed; /**<Notifies when a transfer is in progress */
 	LinphoneCoreBuddyInfoUpdatedCb buddy_info_updated; /**< a LinphoneFriend's BuddyInfo has changed*/
 	LinphoneCoreCallStatsUpdatedCb call_stats_updated; /**<Notifies on refreshing of call's statistics. */
@@ -664,6 +666,34 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_call_encryption_changed(LinphoneCoreC
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallEncryptionChangedCb linphone_core_cbs_get_call_encryption_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsCallSendMasterKeyChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_call_send_master_key_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallSendMasterKeyChangedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsCallSendMasterKeyChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsCallSendMasterKeyChangedCb linphone_core_cbs_get_call_send_master_key_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Set the #LinphoneCoreCbsCallReceiveMasterKeyChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @param cb The callback.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_call_receive_master_key_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallReceiveMasterKeyChangedCb cb);
+
+/**
+ * Get the #LinphoneCoreCbsCallReceiveMasterKeyChangedCb callback.
+ * @param cbs A #LinphoneCoreCbs. @notnil
+ * @return The callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsCallReceiveMasterKeyChangedCb linphone_core_cbs_get_call_receive_master_key_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsTransferStateChangedCb callback.
