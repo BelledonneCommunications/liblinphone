@@ -50,6 +50,8 @@ void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cs
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
 void linphone_call_notify_goclear_ack_sent(LinphoneCall *call);
 void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, const char *authentication_token);
+void linphone_call_notify_send_master_key_changed(LinphoneCall *call, const char *master_key);
+void linphone_call_notify_receive_master_key_changed(LinphoneCall *call, const char *master_key);
 void linphone_call_notify_transfer_state_changed(LinphoneCall *call, LinphoneCallState cstate);
 void linphone_call_notify_stats_updated(LinphoneCall *call, const LinphoneCallStats *stats);
 void linphone_call_notify_info_message_received(LinphoneCall *call, const LinphoneInfoMessage *msg);
@@ -783,6 +785,8 @@ void linphone_core_notify_call_encryption_changed(LinphoneCore *lc,
                                                   LinphoneCall *call,
                                                   bool_t on,
                                                   const char *authentication_token);
+void linphone_core_notify_call_send_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key);
+void linphone_core_notify_call_receive_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key);
 void linphone_core_notify_registration_state_changed(LinphoneCore *lc,
                                                      LinphoneProxyConfig *cfg,
                                                      LinphoneRegistrationState cstate,

@@ -101,6 +101,18 @@ void linphone_call_notify_encryption_changed(LinphoneCall *call, bool_t on, cons
 	linphone_core_notify_call_encryption_changed(linphone_call_get_core(call), call, on, authentication_token);
 }
 
+void linphone_call_notify_send_master_key_changed(LinphoneCall *call, const char *master_key) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_send_master_key_changed,
+	                                  master_key);
+	linphone_core_notify_call_send_master_key_changed(linphone_call_get_core(call), call, master_key);
+}
+
+void linphone_call_notify_receive_master_key_changed(LinphoneCall *call, const char *master_key) {
+	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_receive_master_key_changed,
+	                                  master_key);
+	linphone_core_notify_call_receive_master_key_changed(linphone_call_get_core(call), call, master_key);
+}
+
 void linphone_call_notify_transfer_state_changed(LinphoneCall *call, LinphoneCallState cstate) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_transfer_state_changed, cstate);
 	linphone_core_notify_transfer_state_changed(linphone_call_get_core(call), call, cstate);

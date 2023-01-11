@@ -414,6 +414,25 @@ void linphone_core_cbs_set_call_encryption_changed(LinphoneCoreCbs *cbs, Linphon
 	cbs->vtable->call_encryption_changed = cb;
 }
 
+LinphoneCoreCbsCallSendMasterKeyChangedCb linphone_core_cbs_get_call_send_master_key_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->call_send_master_key_changed;
+}
+
+void linphone_core_cbs_set_call_send_master_key_changed(LinphoneCoreCbs *cbs,
+                                                        LinphoneCoreCbsCallSendMasterKeyChangedCb cb) {
+	cbs->vtable->call_send_master_key_changed = cb;
+}
+
+LinphoneCoreCbsCallReceiveMasterKeyChangedCb
+linphone_core_cbs_get_call_receive_master_key_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->call_receive_master_key_changed;
+}
+
+void linphone_core_cbs_set_call_receive_master_key_changed(LinphoneCoreCbs *cbs,
+                                                           LinphoneCoreCbsCallReceiveMasterKeyChangedCb cb) {
+	cbs->vtable->call_receive_master_key_changed = cb;
+}
+
 LinphoneCoreCbsTransferStateChangedCb linphone_core_cbs_get_transfer_state_changed(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->transfer_state_changed;
 }

@@ -69,6 +69,23 @@ void linphone_call_cbs_set_encryption_changed(LinphoneCallCbs *cbs, LinphoneCall
 	CallCbs::toCpp(cbs)->encryptionChangedCb = cb;
 }
 
+LinphoneCallCbsSendMasterKeyChangedCb linphone_call_cbs_get_send_master_key_changed(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->sendMasterKeyChangedCb;
+}
+
+void linphone_call_cbs_set_send_master_key_changed(LinphoneCallCbs *cbs, LinphoneCallCbsSendMasterKeyChangedCb cb) {
+	CallCbs::toCpp(cbs)->sendMasterKeyChangedCb = cb;
+}
+
+LinphoneCallCbsReceiveMasterKeyChangedCb linphone_call_cbs_get_receive_master_key_changed(LinphoneCallCbs *cbs) {
+	return CallCbs::toCpp(cbs)->receiveMasterKeyChangedCb;
+}
+
+void linphone_call_cbs_set_receive_master_key_changed(LinphoneCallCbs *cbs,
+                                                      LinphoneCallCbsReceiveMasterKeyChangedCb cb) {
+	CallCbs::toCpp(cbs)->receiveMasterKeyChangedCb = cb;
+}
+
 LinphoneCallCbsInfoMessageReceivedCb linphone_call_cbs_get_info_message_received(LinphoneCallCbs *cbs) {
 	return CallCbs::toCpp(cbs)->infoMessageReceivedCb;
 }

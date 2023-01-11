@@ -152,6 +152,8 @@ private:
 	ZrtpState mZrtpState = ZrtpState::Off;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;
+	std::string mSendMasterKey;
+	std::string mReceiveMasterKey;
 };
 
 class BandwithControllerService : public SharedService {

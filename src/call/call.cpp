@@ -665,7 +665,15 @@ void Call::onLossOfMediaDetected(BCTBX_UNUSED(const shared_ptr<CallSession> &ses
 void Call::onEncryptionChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &session),
                                bool activated,
                                const string &authToken) {
-	linphone_call_notify_encryption_changed(this->toC(), activated, authToken.empty() ? nullptr : authToken.c_str());
+	linphone_call_notify_encryption_changed(this->toC(), activated, L_STRING_TO_C(authToken));
+}
+
+void Call::onSendMasterKeyChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &session), const string &masterKey) {
+	linphone_call_notify_send_master_key_changed(this->toC(), L_STRING_TO_C(masterKey));
+}
+
+void Call::onReceiveMasterKeyChanged(BCTBX_UNUSED(const shared_ptr<CallSession> &session), const string &masterKey) {
+	linphone_call_notify_receive_master_key_changed(this->toC(), L_STRING_TO_C(masterKey));
 }
 
 void Call::onGoClearAckSent() {

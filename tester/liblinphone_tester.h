@@ -380,6 +380,8 @@ typedef struct _stats {
 	int number_of_LinphoneCallGoClearAckSent;
 	int number_of_LinphoneCallEncryptedOn;
 	int number_of_LinphoneCallEncryptedOff;
+	int number_of_LinphoneCallSendMasterKeyChanged;
+	int number_of_LinphoneCallReceiveMasterKeyChanged;
 	int number_of_NetworkReachableTrue;
 	int number_of_NetworkReachableFalse;
 	int number_of_player_eof;
@@ -636,6 +638,8 @@ void linphone_call_encryption_changed(LinphoneCore *lc,
                                       LinphoneCall *call,
                                       bool_t on,
                                       const char *authentication_token);
+void linphone_call_send_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key);
+void linphone_call_receive_master_key_changed(LinphoneCore *lc, LinphoneCall *call, const char *master_key);
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);

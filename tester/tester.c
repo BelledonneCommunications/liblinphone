@@ -2487,6 +2487,8 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, BCTBX_UNUSED(const ch
 	linphone_core_cbs_set_publish_state_changed(mgr->cbs, linphone_publish_state_changed);
 	linphone_core_cbs_set_configuring_status(mgr->cbs, linphone_configuration_status);
 	linphone_core_cbs_set_call_encryption_changed(mgr->cbs, linphone_call_encryption_changed);
+	linphone_core_cbs_set_call_send_master_key_changed(mgr->cbs, linphone_call_send_master_key_changed);
+	linphone_core_cbs_set_call_receive_master_key_changed(mgr->cbs, linphone_call_receive_master_key_changed);
 	linphone_core_cbs_set_call_goclear_ack_sent(mgr->cbs, linphone_call_goclear_ack_sent);
 	linphone_core_cbs_set_network_reachable(mgr->cbs, network_reachable);
 	linphone_core_cbs_set_dtmf_received(mgr->cbs, dtmf_received);
@@ -3663,6 +3665,20 @@ void linphone_call_encryption_changed(LinphoneCore *lc,
 	counters = get_stats(lc);
 	if (on) counters->number_of_LinphoneCallEncryptedOn++;
 	else counters->number_of_LinphoneCallEncryptedOff++;
+}
+
+void linphone_call_send_master_key_changed(LinphoneCore *lc,
+                                           BCTBX_UNUSED(LinphoneCall *call),
+                                           BCTBX_UNUSED(const char *master_key)) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCallSendMasterKeyChanged++;
+}
+
+void linphone_call_receive_master_key_changed(LinphoneCore *lc,
+                                              BCTBX_UNUSED(LinphoneCall *call),
+                                              BCTBX_UNUSED(const char *master_key)) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCallReceiveMasterKeyChanged++;
 }
 
 void dtmf_received(LinphoneCore *lc, BCTBX_UNUSED(LinphoneCall *call), int dtmf) {

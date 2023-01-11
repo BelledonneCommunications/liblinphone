@@ -77,6 +77,20 @@ typedef void (*LinphoneCallCbsGoClearAckSentCb)(LinphoneCall *call);
 typedef void (*LinphoneCallCbsEncryptionChangedCb)(LinphoneCall *call, bool_t on, const char *authentication_token);
 
 /**
+ * Call send master key changed callback.
+ * @param call #LinphoneCall object whose encryption is changed. @notnil
+ * @param master_key The send master key of the SRTP session. @maybenil
+ */
+typedef void (*LinphoneCallCbsSendMasterKeyChangedCb)(LinphoneCall *call, const char *send_master_key);
+
+/**
+ * Call receive master key changed callback.
+ * @param call #LinphoneCall object whose encryption is changed. @notnil
+ * @param master_key The receive master key of the SRTP session. @maybenil
+ */
+typedef void (*LinphoneCallCbsReceiveMasterKeyChangedCb)(LinphoneCall *call, const char *receive_master_key);
+
+/**
  * Callback for receiving info messages.
  * @param call #LinphoneCall whose info message belongs to. @notnil
  * @param message #LinphoneInfoMessage object. @notnil

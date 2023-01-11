@@ -106,6 +106,38 @@ LINPHONE_PUBLIC void linphone_call_cbs_set_encryption_changed(LinphoneCallCbs *c
                                                               LinphoneCallCbsEncryptionChangedCb cb);
 
 /**
+ * Get the send master key changed callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @return The current send master key changed callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsSendMasterKeyChangedCb
+linphone_call_cbs_get_send_master_key_changed(LinphoneCallCbs *cbs);
+
+/**
+ * Set the send master key changed callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @param[in] cb The send master key changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_send_master_key_changed(LinphoneCallCbs *cbs,
+                                                                   LinphoneCallCbsSendMasterKeyChangedCb cb);
+
+/**
+ * Get the receive master key changed callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @return The current receive master key changed callback.
+ */
+LINPHONE_PUBLIC LinphoneCallCbsReceiveMasterKeyChangedCb
+linphone_call_cbs_get_receive_master_key_changed(LinphoneCallCbs *cbs);
+
+/**
+ * Set the receive master key changed callback.
+ * @param cbs #LinphoneCallCbs object. @notnil
+ * @param[in] cb The receive master key changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_call_cbs_set_receive_master_key_changed(LinphoneCallCbs *cbs,
+                                                                      LinphoneCallCbsReceiveMasterKeyChangedCb cb);
+
+/**
  * Get the info message received callback.
  * @param cbs #LinphoneCallCbs object. @notnil
  * @return The current info message received callback.

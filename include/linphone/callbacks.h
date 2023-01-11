@@ -83,6 +83,26 @@ typedef LinphoneCoreCbsCallStateChangedCb LinphoneCoreCallStateChangedCb;
 typedef void (*LinphoneCoreCbsCallGoClearAckSentCb)(LinphoneCore *core, LinphoneCall *call);
 
 /**
+ * Call send master key changed callback.
+ * @param core the #LinphoneCore @notnil
+ * @param call the #LinphoneCall on which the GoClear ACK was sent. @notnil
+ * @param master_key new master key. @maybenil
+ */
+typedef void (*LinphoneCoreCbsCallSendMasterKeyChangedCb)(LinphoneCore *core,
+                                                          LinphoneCall *call,
+                                                          const char *master_key);
+
+/**
+ * Call receive master key changed callback.
+ * @param core the #LinphoneCore @notnil
+ * @param call the #LinphoneCall on which the GoClear ACK was sent. @notnil
+ * @param master_key new master key. @maybenil
+ */
+typedef void (*LinphoneCoreCbsCallReceiveMasterKeyChangedCb)(LinphoneCore *core,
+                                                             LinphoneCall *call,
+                                                             const char *master_key);
+
+/**
  * Call encryption changed callback.
  * @param core the #LinphoneCore @notnil
  * @param call the #LinphoneCall on which encryption is changed. @notnil

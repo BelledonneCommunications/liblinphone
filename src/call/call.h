@@ -60,6 +60,8 @@ public:
 	LinphoneCallCbsDtmfReceivedCb dtmfReceivedCb;
 	LinphoneCallCbsGoClearAckSentCb goClearAckSentCb;
 	LinphoneCallCbsEncryptionChangedCb encryptionChangedCb;
+	LinphoneCallCbsSendMasterKeyChangedCb sendMasterKeyChangedCb;
+	LinphoneCallCbsReceiveMasterKeyChangedCb receiveMasterKeyChangedCb;
 	LinphoneCallCbsInfoMessageReceivedCb infoMessageReceivedCb;
 	LinphoneCallCbsStateChangedCb stateChangedCb;
 	LinphoneCallCbsStatsUpdatedCb statsUpdatedCb;
@@ -285,6 +287,8 @@ public:
 	void onEncryptionChanged(const std::shared_ptr<CallSession> &session,
 	                         bool activated,
 	                         const std::string &authToken) override;
+	void onSendMasterKeyChanged(const std::shared_ptr<CallSession> &session, const std::string &masterKey) override;
+	void onReceiveMasterKeyChanged(const std::shared_ptr<CallSession> &session, const std::string &masterKey) override;
 	void onGoClearAckSent() override;
 	void onCallSessionStateChangedForReporting(const std::shared_ptr<CallSession> &session) override;
 	void onRtcpUpdateForReporting(const std::shared_ptr<CallSession> &session, SalStreamType type) override;
