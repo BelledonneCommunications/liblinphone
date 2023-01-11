@@ -1085,6 +1085,10 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
 		ip = linphone_proxy_config_get_op(destProxy)->getLocalAddress(nullptr);
 		if (ip) {
+			if (needLocalIpRefresh) {
+				af = strchr(ip, ':') ? AF_INET6 : AF_INET;
+				lInfo() << "Address family for the local ip has changed to: " << (af == AF_INET6 ? "IPV6" : "IPV4");
+			}
 			if (strchr(ip, ':') && (af == AF_INET)) {
 				// Case where we've decided to use IPv4 in selectOutgoingIpVersion(), but the signaling local ip address is IPv6.
 				// We'll use the default media localip
