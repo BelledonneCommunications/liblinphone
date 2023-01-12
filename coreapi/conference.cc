@@ -3672,6 +3672,39 @@ void RemoteConference::onParticipantsCleared () {
 	clearParticipants();
 }
 
+void RemoteConference::notifyActiveSpeakerCsrc(uint32_t new_csrc){
+	bool found = false;
+
+	if (new_csrc != 0) {
+		for(const auto &device : getParticipantDevices()) {
+			if (new_csrc == device->getSsrc(LinphoneStreamTypeVideo)) {
+				notifyActiveSpeakerParticipantDevice(device);
+				found = true;
+				break;
+			}
+		}
+
+		if (!found) lError() << "Conference [" << this << "]: Active speaker changed with csrc: " << new_csrc << " but it does not correspond to any participant device";
+	} else {
+		const auto &meDevices = getMe()->getDevices();
+		shared_ptr<ParticipantDevice> firstNotMe = nullptr;
+
+		for(const auto &device : getParticipantDevices()) {
+			if (std::find(meDevices.begin(), meDevices.end(), device) == meDevices.end()) {
+				if (firstNotMe == nullptr) firstNotMe = device;
+				if (device->getIsSpeaking()) {
+					notifyActiveSpeakerParticipantDevice(device);
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if (!found && firstNotMe != nullptr) notifyActiveSpeakerParticipantDevice(firstNotMe);
+	}
+}
+
+
 }//end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE

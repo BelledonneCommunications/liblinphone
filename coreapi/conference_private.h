@@ -410,6 +410,9 @@ public:
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 
+	/* Report the csrc included in the video stream, so that we can notify who is presented on the screen.*/
+	void notifyActiveSpeakerCsrc(uint32_t csrc);
+
 protected:
 
 	virtual void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) override;

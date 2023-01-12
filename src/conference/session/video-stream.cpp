@@ -156,9 +156,15 @@ void MS2VideoStream::cameraNotWorkingCb (const char *cameraName) {
 	}
 }
 
-void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
-	LinphoneConference *conference = (LinphoneConference *) userData;
-	const auto cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+void MS2VideoStream::csrcChangedCb(uint32_t new_csrc) {
+	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
+	const auto conference = (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
+	if (!conference) {
+		lWarning() << "Conference no longer existing.";
+		return;
+	}
+	const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(MediaConference::Conference::toCpp(conference)->getSharedFromThis());
+	if (cppConference) cppConference->notifyActiveSpeakerCsrc(new_csrc);
 	bool found = false;
 
 	if (new_csrc != 0) {
@@ -188,6 +194,11 @@ void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
 
 		if (!found && firstNotMe != nullptr) cppConference->notifyActiveSpeakerParticipantDevice(firstNotMe);
 	}
+}
+
+void MS2VideoStream::sCsrcChangedCb (void *userData, uint32_t new_csrc) {
+	MS2VideoStream *vs = static_cast<MS2VideoStream*>(userData);
+	vs->csrcChangedCb(new_csrc);
 }
 
 MediaStream *MS2VideoStream::getMediaStream()const{
@@ -301,7 +312,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	const auto conference = (listener) ? listener->getCallSessionConference(getMediaSession().getSharedFromThis()) : nullptr;
 
 	if (conference) {
-		video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, conference);
+		video_stream_set_csrc_changed_callback(mStream, sCsrcChangedCb, this);
 	} else {
 		video_stream_set_csrc_changed_callback(mStream, nullptr, nullptr);
 	}
