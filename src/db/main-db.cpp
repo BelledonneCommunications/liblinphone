@@ -438,11 +438,15 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 		const long long &localSipAddressId = insertSipAddress(conferenceId.getLocalAddress().asString());
 
 		long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
+		const int flags = chatRoom->hasBeenLeft() ? 1 : 0;
 		if (chatRoomId >= 0) {
-			// The chat room is already stored in DB, but still update the notify id that might have changed
+			// The chat room is already stored in DB, but still update the notify id and the flags that might have changed
 			lInfo() << "Update chat room in database: " << conferenceId << ".";
-			*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
-				soci::use(notifyId), soci::use(chatRoomId);
+			*dbSession.getBackendSession() << "UPDATE chat_room SET"
+				" last_notify_id = :lastNotifyId, "
+				" flags = :flags "
+				" WHERE id = :chatRoomId",
+				soci::use(notifyId), soci::use(flags), soci::use(chatRoomId);
 		} else {
 
 			lInfo() << "Insert new chat room in database: " << conferenceId << ".";
@@ -454,7 +458,6 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			const int &capabilities = chatRoom->getCapabilities() & ~ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::Proxy);
 
 			const string &subject = chatRoom->getUtf8Subject();
-			const int &flags = chatRoom->hasBeenLeft();
 			int ephemeralEnabled = chatRoom->ephemeralEnabled() ? 1 : 0;
 			long ephemeralLifeTime = chatRoom->getEphemeralLifetime();
 			*dbSession.getBackendSession() << "INSERT INTO chat_room ("
