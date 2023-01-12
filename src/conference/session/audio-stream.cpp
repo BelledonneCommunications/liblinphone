@@ -64,17 +64,21 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 void MS2AudioStream::audioStreamIsSpeakingCb (void *userData, uint32_t speakerSsrc, bool_t isSpeaking) {
 	MS2AudioStream *zis = static_cast<MS2AudioStream*>(userData);
 	zis->getMediaSession().notifySpeakingDevice(speakerSsrc, isSpeaking);
-
 #ifdef VIDEO_ENABLED
 	// If we are in a conference and have a video stream without ssrc then use this callback for active speaker
 	CallSessionListener *listener = zis->getMediaSessionPrivate().getCallSessionListener();
 	if (listener) {
-		const auto conference = listener->getCallSessionConference(zis->getMediaSession().getSharedFromThis());
-		if (conference) {
+		const auto conference = (listener) ? listener->getCallSessionConference(zis->getMediaSession().getSharedFromThis()) : nullptr;
+		if (!conference) {
+			return;
+		}
+		const auto cppConference = dynamic_pointer_cast<MediaConference::RemoteConference>(MediaConference::Conference::toCpp(conference)->getSharedFromThis());
+		if (cppConference) {
 			MS2VideoStream *vs = zis->getGroup().lookupMainStreamInterface<MS2VideoStream>(SalVideo);
 			VideoStream *videostream = vs ? vs->getVideoStream() : nullptr;
+			/* FIXME: no SSRC means no video stream is received. Bug or intended ? */
 			if (videostream && media_stream_get_recv_ssrc(&videostream->ms) == 0) {
-				vs->sCsrcChangedCb(conference, 0);
+				cppConference->notifyActiveSpeakerCsrc(0);
 			}
 		}
 	}

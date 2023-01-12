@@ -509,7 +509,7 @@ void RemoteConferenceEventHandler::conferenceInfoNotifyReceived (const string &x
 						const auto & joiningInfo = endpoint.getJoiningInfo().get();
 						if (joiningInfo.getWhen().present()) {
 							auto joiningTime = joiningInfo.getWhen().get();
-							tm timeStruct;
+							tm timeStruct = {0};
 							timeStruct.tm_year = (joiningTime.year() - 1900),
 							timeStruct.tm_mon = (joiningTime.month() - 1),
 							timeStruct.tm_mday = joiningTime.day(),
