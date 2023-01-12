@@ -259,11 +259,7 @@ void ConferenceAddress::fillUriParams (const Address &address) {
 			bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 			const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
 			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
-			if (value) {
-				setUriParam(key, value);
-			} else {
-				setUriParams(key);
-			}
+			setUriParam(L_C_TO_STRING(key), L_C_TO_STRING(value));
 		}
 		bctbx_iterator_cchar_delete(it);
 		bctbx_iterator_cchar_delete(uriParamMapEnd);
