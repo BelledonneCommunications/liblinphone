@@ -529,6 +529,7 @@ struct _LinphonePlayer{
 	int (*get_position)(LinphonePlayer *player);
 	void (*close)(LinphonePlayer* player);
 	void (*destroy)(LinphonePlayer *player);
+	void *(*create_window_id)(LinphonePlayer *player);
 	void (*set_window_id)(LinphonePlayer *player, void* window_id);
 	bool_t (*is_video_available)(LinphonePlayer *player);
 	void (*set_volume_gain)(LinphonePlayer *player, float gain);
