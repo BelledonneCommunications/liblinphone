@@ -138,6 +138,7 @@ set(RC_FILES
 	rcfiles/account_creator_rc
 	rcfiles/account_creator_flexiapi_rc
 	rcfiles/assistant_create.rc
+	rcfiles/berthe_rc
 	rcfiles/carddav_rc
 	rcfiles/claire_rc
 	rcfiles/claire_sips_rc
