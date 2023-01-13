@@ -156,6 +156,13 @@ LINPHONE_PUBLIC void linphone_player_close(LinphonePlayer *player);
 LINPHONE_PUBLIC void linphone_player_set_window_id(LinphonePlayer *player, void *window_id);
 
 /**
+ * Create a window id to be used to display video if any.
+ * @param player #LinphonePlayer object @notnil
+ * @return window_id The window id pointer to use. @maybenil
+ */
+LINPHONE_PUBLIC void *linphone_player_create_window_id(LinphonePlayer *player);
+
+/**
  * Returns whether the file has video and if it can be displayed
  * @param player #LinphonePlayer object @notnil
  * @return TRUE if file has video and it can be displayed, FALSE otherwise
