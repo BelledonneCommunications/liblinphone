@@ -4103,7 +4103,8 @@ static void group_chat_donot_room_migrate_from_basic_chat_room(void) {
 	coresList = bctbx_list_remove(coresList, marie->lc);
 	linphone_core_manager_restart(marie, TRUE);
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
-	init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_t *coresList2 = init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(coresList2);
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_append(coresList, marie->lc);
 

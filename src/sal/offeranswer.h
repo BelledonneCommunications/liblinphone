@@ -66,6 +66,9 @@ public:
 	                 bool one_matching_codec);
 
 private:
+	static void verifyBundles(const std::shared_ptr<SalMediaDescription> &local,
+	                          const std::shared_ptr<SalMediaDescription> &remote,
+	                          std::shared_ptr<SalMediaDescription> &result);
 	static bool onlyTelephoneEvent(const std::list<OrtpPayloadType *> &l);
 	static bool areProtoInStreamCompatibles(const SalStreamDescription &localStream,
 	                                        const SalStreamDescription &otherStream);

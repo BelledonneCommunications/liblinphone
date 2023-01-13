@@ -22,7 +22,7 @@
 
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_stream_configuration.h"
-#include "sal/sal_stream_description.h"
+#include "linphone/utils/utils.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -78,11 +78,22 @@ bool SalStreamBundle::operator!=(const SalStreamBundle &other) const {
 
 void SalStreamBundle::addStream(SalStreamConfiguration &cfg, const std::string &mid) {
 	cfg.mid = mid;
+	// If the stream is tagged as bundle only and the list of mid is empty, then append an empty element to reserve the slot for the transport owner
+	if (cfg.bundle_only && mids.empty()) {
+		mids.push_back(std::string());
+	} else if (!cfg.bundle_only && !mids.empty() && (mids.front() == std::string())){
+		mids.pop_front();
+		mids.push_front(mid);
+		return;
+	}
 	mids.push_back(mid);
 }
 
-const std::string &SalStreamBundle::getMidOfTransportOwner() const {
-	return mids.front(); /* the first one is the transport owner*/
+const std::string & SalStreamBundle::getMidOfTransportOwner() const {
+	if (!mids.empty()) {
+		return mids.front(); /* the first one is the transport owner*/
+	}
+	return Utils::getEmptyConstRefObject<std::string>();
 }
 
 bool SalStreamBundle::hasMid(const std::string &mid) const {

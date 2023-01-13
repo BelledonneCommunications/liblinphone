@@ -57,8 +57,9 @@ public:
 	void addNewBundle(const SalStreamBundle &bundle);
 
 	int lookupMid(const std::string mid) const;
-	const SalStreamBundle &getBundleFromMid(const std::string mid) const;
-	int getIndexOfTransportOwner(const SalStreamDescription &sd) const;
+	const SalStreamBundle & getBundleFromMid(const std::string mid) const;
+	std::list<int> getTransportOwnerIndexes() const;
+	int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
 	const SalStreamDescription &findStream(SalMediaProto proto, SalStreamType type) const;
 	int findIdxStream(SalMediaProto proto, SalStreamType type) const;

@@ -198,7 +198,23 @@ bool MediaSessionPrivate::rejectMediaSession(const std::shared_ptr<SalMediaDescr
 	    linphone_core_zero_rtp_port_for_stream_inactive_enabled(q->getCore()->getCCore())) {
 		return false;
 	}
-	return (finalMd && (finalMd->isEmpty() || incompatibleSecurity(finalMd)));
+
+	if (!finalMd) return false;
+
+	bool bundleOwnerRejected = false;
+	if (!finalMd->bundles.empty()) {
+		const auto ownerIndexes = finalMd->getTransportOwnerIndexes();
+		bool isThereAnActiveOwner = false;
+		if (!ownerIndexes.empty()) {
+			for (const auto & idx : ownerIndexes) {
+				const auto & sd = finalMd->getStreamIdx(static_cast<unsigned int>(idx));
+				isThereAnActiveOwner |= sd.enabled();
+			}
+			bundleOwnerRejected = !isThereAnActiveOwner;
+		}
+	}
+	return (finalMd->isEmpty() || incompatibleSecurity(finalMd) || bundleOwnerRejected);
+
 }
 
 void MediaSessionPrivate::accepted() {
@@ -249,7 +265,12 @@ void MediaSessionPrivate::accepted() {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (rejectMediaSession(rmd, md)) {
+
+	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
+	bool updatingConference = conferenceInfo && (conferenceInfo->getState() == ConferenceInfo::State::Updated);
+
+	// Do not reject media session if the client is trying to update a conference
+	if (rejectMediaSession(rmd, md) && !updatingConference) {
 		lInfo() << "Rejecting media session";
 		md = nullptr;
 	}
@@ -271,10 +292,10 @@ void MediaSessionPrivate::accepted() {
 					nextState = CallSession::State::Paused;
 					nextStateMsg = "Call paused";
 				} else {
-					// The call always enters state PausedByRemote if all streams are rejected. This is done to support
-					// some clients who accept to stop the streams by setting the RTP port to 0
-					if (!localDesc->hasDir(SalStreamInactive) &&
-					    (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
+					// The call always enters state PausedByRemote if all streams are rejected. This is done to support some clients who accept to stop the streams by setting the RTP port to 0
+					// If the call is part of a conference, then it shouldn't be paused if it is just trying to update the conference
+					if (!updatingConference && !localDesc->hasDir(SalStreamInactive)
+						&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive) || md->isEmpty())) {
 						nextState = CallSession::State::PausedByRemote;
 						nextStateMsg = "Call paused by remote";
 					} else {
@@ -1397,9 +1418,9 @@ void MediaSessionPrivate::addStreamToBundle(const std::shared_ptr<SalMediaDescri
 		cfg.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
 		/* rtcp-mux must be enabled when bundle mode is proposed.*/
 		cfg.rtcp_mux = TRUE;
-		if (mandatoryRtpBundleEnabled() || bundleModeAccepted) {
-			// Bundle is offered inconditionnaly
-			if (bundle.getMidOfTransportOwner() != mid) {
+		if (mandatoryRtpBundleEnabled() || bundleModeAccepted){
+			// Bundle is offered inconditionally
+			if (bundle.getMidOfTransportOwner() != mid){
 				cfg.bundle_only = true;
 				sd.rtp_port = 0;
 			}
@@ -4236,18 +4257,61 @@ void MediaSession::sendVfuRequest() {
 	} else lInfo() << "vfu request using sip disabled from config [sip,vfu_with_info]";
 }
 
-void MediaSession::startIncomingNotification(bool notifyRinging) {
+// Try to search the local conference by first looking at the contact address and if it is unsuccesfull to the to address as a client may try to be calling a conference URI directly
+// Typically, the seach using the contact address will succeed when a client creates a conference.
+const std::shared_ptr<Conference> MediaSession::getLocalConference() const {
+	L_D();
+
+	ConferenceId localConferenceId;
+	shared_ptr<MediaConference::Conference> conference = nullptr;
+
+	auto log = getLog();
+	const auto conferenceInfo = (log) ? log->getConferenceInfo() : nullptr;
+	if (conferenceInfo) {
+		auto conferenceAddress = conferenceInfo->getUri();
+		localConferenceId = ConferenceId(conferenceAddress, conferenceAddress);
+		conference = getCore()->findAudioVideoConference(localConferenceId, false);
+	}
+	if (!conference) {
+		auto contactAddress = getContactAddress();
+		localConferenceId = ConferenceId(contactAddress, contactAddress);
+		conference = getCore()->findAudioVideoConference(localConferenceId, false);
+	}
+	if (!conference) {
+		const Address to(d->op->getTo());
+		// Local conference
+		if (to.hasUriParam("conf-id")) {
+			localConferenceId = ConferenceId(ConferenceAddress(to), ConferenceAddress(to));
+			conference = getCore()->findAudioVideoConference(localConferenceId, false);
+		}
+	}
+
+	return conference;
+}
+
+void MediaSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
 
 	std::shared_ptr<SalMediaDescription> &md = d->op->getFinalMediaDescription();
 
-	if (md && (md->isEmpty() || d->incompatibleSecurity(md))) {
-		LinphoneErrorInfo *ei = linphone_error_info_new();
-		linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
-		/* When call state is PushIncomingReceived, not notify early failed.
-		   Because the call is already added in core, need to be released. */
-		if (d->state != CallSession::State::PushIncomingReceived && d->listener)
+	const auto conference = getLocalConference();
+	bool isLocalDialOutConferenceCreationPending = false;
+
+	if (conference) {
+		// Get state here as it may be changed if the conference dials participants out
+		const auto conferenceState = conference->getState();
+		const auto dialout = (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialIn);
+		isLocalDialOutConferenceCreationPending = dialout && ((conferenceState == ConferenceInterface::State::Instantiated) || (conferenceState == ConferenceInterface::State::CreationPending));
+	}
+
+	if (md && (md->isEmpty() || d->incompatibleSecurity(md)) && !isLocalDialOutConferenceCreationPending) {
+		if (d->state != CallSession::State::PushIncomingReceived &&  d->listener) {
+			LinphoneErrorInfo *ei = linphone_error_info_new();
+			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
+			/* When call state is PushIncomingReceived, not notify early failed.
+			   Because the call is already added in core, need to be released. */
 			d->listener->onCallSessionEarlyFailed(getSharedFromThis(), ei);
+		}
 		d->op->decline(SalReasonNotAcceptable);
 		return;
 	}

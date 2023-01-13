@@ -323,7 +323,25 @@ const SalStreamBundle &SalMediaDescription::getBundleFromMid(const std::string m
 	return Utils::getEmptyConstRefObject<SalStreamBundle>();
 }
 
-int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription &sd) const {
+std::list<int> SalMediaDescription::getTransportOwnerIndexes() const {
+	std::list<int> owners;
+	for (const auto & sd : streams) {
+		auto ownerIdx = getIndexOfTransportOwner(sd);
+		if (ownerIdx >= 0){
+			auto it = std::find(owners.begin(), owners.end(), ownerIdx);
+			if (owners.empty() || (it == owners.end())) {
+				owners.push_back(ownerIdx);
+			}
+		}
+	}
+	return owners;
+}
+
+// getIndexOfTransportOwner() returns the following values:
+// - integer greater than or equal to 0 -> index of the stream holding the transport owner
+// - -1 -> stream is not part of a bundle
+// - -2 -> stream is part of a bundle but the transport owner cannot be found
+int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & sd) const {
 	std::string master_mid;
 	int index;
 	if (sd.getChosenConfiguration().getMid().empty() == true) return -1; /* not part of any bundle */
@@ -331,9 +349,13 @@ int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription &sd
 	const auto &bundle = getBundleFromMid(sd.getChosenConfiguration().getMid());
 	if (bundle == Utils::getEmptyConstRefObject<SalStreamBundle>()) {
 		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.getChosenConfiguration().getMid()));
-		return -1;
+		return -2;
 	}
 	master_mid = bundle.getMidOfTransportOwner();
+	if (master_mid.empty()) {
+		ms_warning("Orphan stream with mid '%s' because the transport owner mid cannot be found", L_STRING_TO_C(sd.getChosenConfiguration().getMid()));
+		return -2;
+	}
 	index = lookupMid(master_mid);
 	if (index == -1) {
 		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !",
