@@ -119,6 +119,7 @@ public:
 	virtual ~Conference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) = 0;
+	virtual bool dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) = 0;
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual bool finalizeParticipantAddition(std::shared_ptr<LinphonePrivate::Call> call) = 0;
@@ -153,6 +154,8 @@ public:
 
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
+
+	virtual IdentityAddress getOrganizer() const = 0;
 
 	bool isConferenceEnded() const;
 	bool isConferenceStarted() const;
@@ -226,6 +229,7 @@ public:
 	virtual ~LocalConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
+	virtual bool dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
 	virtual bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
@@ -241,6 +245,7 @@ public:
 	virtual void finalizeCreation() override;
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 	virtual void setSubject (const std::string &subject) override;
+	virtual IdentityAddress getOrganizer() const override;
 
 	virtual int enter() override;
 	virtual void leave() override;
@@ -311,7 +316,6 @@ private:
 	void chooseAnotherAdminIfNoneInConference();
 	void checkIfTerminated();
 	std::list<IdentityAddress> getAllowedAddresses() const;
-	bool dialOutAddresses(std::list<const LinphoneAddress *> addressList);
 	void configure(SalCallOp *op);
 
 	void addLocalEndpoint();
@@ -338,6 +342,7 @@ public:
 	virtual ~RemoteConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
+	virtual bool dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) override;
 	virtual bool addParticipants(const std::list<std::shared_ptr<LinphonePrivate::Call>> &call) override;
 	virtual bool addParticipants(const std::list<IdentityAddress> &addresses) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
@@ -354,6 +359,8 @@ public:
 	virtual int enter() override;
 	virtual void leave() override;
 	virtual bool isIn() const override;
+
+	virtual IdentityAddress getOrganizer() const override;
 
 	virtual int startRecording (const char *path) override;
 	virtual int stopRecording() override;

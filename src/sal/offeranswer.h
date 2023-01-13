@@ -59,6 +59,7 @@ class OfferAnswerEngine {
 
 	private:
 
+		static void verifyBundles(const std::shared_ptr<SalMediaDescription> & local, const std::shared_ptr<SalMediaDescription> & remote, std::shared_ptr<SalMediaDescription> & result);
 		static bool onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l);
 		static bool areProtoInStreamCompatibles(const SalStreamDescription & localStream, const SalStreamDescription & otherStream);
 		static bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);

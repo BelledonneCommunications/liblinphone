@@ -138,7 +138,7 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 							if (conference || confInfo) {
 								const auto & resourceList = op->getContentInRemote(ContentType::ResourceLists);
 								const auto dialout = conference && (conference->getCurrentParams().getJoiningMode() == ConferenceParams::JoiningMode::DialOut);
-								if (conference && (resourceList.isEmpty() || ((conference->getState() == ConferenceInterface::State::CreationPending) && dialout))) {
+								if (conference && (resourceList.isEmpty() || ((conference->getOrganizer().asAddress().weakEqual(*(q->getRemoteAddress()))) && dialout))) {
 									conference->addParticipant(call);
 								} else {
 									const_cast<LinphonePrivate::CallSessionParamsPrivate *>(q->getParams()->getPrivate())->setInConference(true);

@@ -139,6 +139,31 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 
 LINPHONE_BEGIN_NAMESPACE
 
+void OfferAnswerEngine::verifyBundles(const std::shared_ptr<SalMediaDescription> & local, const std::shared_ptr<SalMediaDescription> & remote, std::shared_ptr<SalMediaDescription> & result){
+	// Reject streams belong to a bundle if the offerer tagged m section has been rejected (RFC8843 - Section 7.3.3)
+	// It is not possible to do it while doing the offer-answer because the offerer-tagged stream may not be the first of teh bundle presented in the SDP
+	// We also must ensure that the result media description is coherent with the local capabilities and the received offer
+	for(size_t i=0;i<result->streams.size();++i){
+		if (local->streams.size() > i) {
+			auto & s = result->streams[i];
+			int result_owner_index = result->getIndexOfTransportOwner(s);
+			auto & ls = local->streams[i];
+			int local_owner_index = local->getIndexOfTransportOwner(ls);
+			auto & rs = remote->streams[i];
+			int remote_owner_index = remote->getIndexOfTransportOwner(rs);
+			// Disable stream if
+			// - it belongs to a bundle and it is not the same as the one in local and remote SDP
+			// - it doesn't belong to a bundle but both the offer and the answer do
+			if (
+				((result_owner_index >= 0) && ((local_owner_index != result_owner_index) || (remote_owner_index != result_owner_index))) ||
+				((result_owner_index < 0) && (local_owner_index >= 0) && (remote_owner_index >= 0))
+			) {
+				s.disable();
+			}
+		}
+	}
+}
+
 bool OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
 	for (const auto & p : l) {
 		if (strcasecmp(p->mime_type,"telephone-event")!=0){
@@ -904,6 +929,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 			ms_warning("No matching stream for %zu",i);
 		}
 	}
+
 	result->times=remote_answer->times;
 	result->bandwidth=remote_answer->bandwidth;
 	result->origin_addr=remote_answer->origin_addr;
@@ -918,7 +944,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 	 * For now, just check the presence of a bundle response. */
 	if (!local_offer->bundles.empty()){
 		if (!remote_answer->bundles.empty()){
-			for(auto & s : result->streams){
+			for(i=0;i<result->streams.size();++i){
+				auto & s = result->streams[i];
 				SalStreamBundle bundle;
 				auto & cfg = s.cfgs[s.getChosenConfigurationIndex()];
 				const auto & mid = cfg.mid;
@@ -936,6 +963,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 	}else if (!remote_answer->bundles.empty()){
 		ms_error("Remote answerer is proposing bundles, which we did not offer.");
 	}
+
+	verifyBundles(local_offer, remote_answer, result);
 
 	if (local_offer->record != SalMediaRecordNone && remote_answer->record != SalMediaRecordNone) {
 		result->record = remote_answer->record;
@@ -961,6 +990,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
+	// Negotiate streams
 	for(auto & rs : remote_offer->streams){
 
 		SalStreamDescription & ls = local_capabilities->streams[i];
@@ -971,7 +1001,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
-				if (owner_index != -1){
+				if (owner_index >= 0){
 					bundle_owner_mid = remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid();
 				}
 			}
@@ -1014,6 +1044,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		result->streams.push_back(stream);
 		i++;
 	}
+
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
 	result->times=local_capabilities->times;
@@ -1039,7 +1070,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		}
 	}
 
-	for(auto & s : result->streams){
+	for(i=0;i<result->streams.size();++i){
+		auto & s = result->streams[i];
 		SalStreamBundle bundle;
 		auto & cfg = s.cfgs[s.getChosenConfigurationIndex()];
 		const auto & mid = cfg.mid;
@@ -1053,6 +1085,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 			result->bundles.push_front(bundle);
 		}
 	}
+
+	verifyBundles(local_capabilities, remote_offer, result);
 
 	return result;
 }

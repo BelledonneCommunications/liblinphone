@@ -660,7 +660,6 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 				auto invitees = Utils::parseResourceLists(resourceList);
 				invitedAddresses.insert(invitedAddresses.begin(), invitees.begin(), invitees.end());
 			}
-#ifdef HAVE_DB_STORAGE
 			const auto & conferenceInfo = createConferenceInfo(organizer, invitedAddresses);
 			auto infoState = ConferenceInfo::State::New;
 			if (resourceList.isEmpty()) {
@@ -670,16 +669,17 @@ void LocalConference::updateConferenceInformation(SalCallOp *op) {
 			}
 			conferenceInfo->setState(infoState);
 
+#ifdef HAVE_DB_STORAGE
 			auto &mainDb = getCore()->getPrivate()->mainDb;
 			if (mainDb) {
 				lInfo() << "Inserting conference information to database in order to be able to recreate the conference " << getConferenceAddress() << " in case of restart";
 				mainDb->insertConferenceInfo(conferenceInfo);
 			}
+#endif
 			auto callLog = session->getLog();
 			if (callLog) {
 				callLog->setConferenceInfo(conferenceInfo);
 			}
-#endif
 			if (resourceList.isEmpty()) {
 				setState(ConferenceInterface::State::TerminationPending);
 			}
@@ -782,6 +782,13 @@ void LocalConference::configure(SalCallOp *op) {
 
 	confParams->setStartTime(startTime);
 	confParams->setEndTime(endTime);
+
+	if (!isUpdate && !info) {
+		// Set joining mode only when creating a conference
+		bool immediateStart = (startTimeSdp < 0);
+		const auto joiningMode = (immediateStart) ? ConferenceParams::JoiningMode::DialOut : ConferenceParams::JoiningMode::DialIn;
+		confParams->setJoiningMode(joiningMode);
+	}
 
 	if (info || admin) {
 		MediaSessionParams msp;
@@ -916,15 +923,6 @@ void LocalConference::finalizeCreation() {
 		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 		shared_ptr<CallSession> session = me->getSession();
 		if (session) {
-			auto op = session->getPrivate()->getOp();
-			auto & md = op ? op->getRemoteMediaDescription() : nullptr;
-			bool immediateStart = false;
-			if (md && md->times.size() > 0) {
-				const auto & timePair = md->times.front();
-				auto startTime = timePair.first;
-				immediateStart = (startTime < 0);
-			}
-
 			std::shared_ptr<ConferenceInfo> info = nullptr;
 		#ifdef HAVE_DB_STORAGE
 			auto &mainDb = getCore()->getPrivate()->mainDb;
@@ -933,10 +931,8 @@ void LocalConference::finalizeCreation() {
 			}
 		#endif // HAVE_DB_STORAGE
 			const bool createdConference = (info && info->isValidUri());
-			const auto joiningMode = (immediateStart && !createdConference) ? ConferenceParams::JoiningMode::DialOut : ConferenceParams::JoiningMode::DialIn;
-			confParams->setJoiningMode(joiningMode);
 
-			if (joiningMode == ConferenceParams::JoiningMode::DialOut) {
+			if (confParams->getJoiningMode() == ConferenceParams::JoiningMode::DialOut) {
 				confParams->setStartTime(ms_time(NULL));
 			}
 
@@ -1083,19 +1079,21 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 		 */
 		if (linphone_core_conference_server_enabled(lc)) {
 			auto participant = findParticipant(cppAddress);
-			const auto & devices = participant->getDevices();
-			if (participant && !devices.empty()) {
-				const auto & device = devices.front();
-				if (!device->getCallId().empty()) {
-					call = linphone_core_get_call_by_callid(lc, device->getCallId().c_str());
-				} else if (device->getSession()) {
-					const auto & session = device->getSession();
-					const auto & calls = getCore()->getCalls();
-					auto it = std::find_if(calls.cbegin(), calls.cend(), [&session] (const auto & call) {
-						return (call->getActiveSession() == session);
-					});
-					if (it != calls.cend()) {
-						call = (*it)->toC();
+			if (participant) {
+				const auto & devices = participant->getDevices();
+				if (!devices.empty()) {
+					const auto & device = devices.front();
+					if (!device->getCallId().empty()) {
+						call = linphone_core_get_call_by_callid(lc, device->getCallId().c_str());
+					} else if (device->getSession()) {
+						const auto & session = device->getSession();
+						const auto & calls = getCore()->getCalls();
+						auto it = std::find_if(calls.cbegin(), calls.cend(), [&session] (const auto & call) {
+							return (call->getActiveSession() == session);
+						});
+						if (it != calls.cend()) {
+							call = (*it)->toC();
+						}
 					}
 				}
 			}
@@ -1331,7 +1329,7 @@ int LocalConference::getParticipantDeviceVolume(const std::shared_ptr<LinphonePr
 	return AUDIOSTREAMVOLUMES_NOT_FOUND;
 }
 
-bool LocalConference::dialOutAddresses(std::list<const LinphoneAddress *> addressList) {
+bool LocalConference::dialOutAddresses(const std::list<const LinphoneAddress *> &addressList) {
 	auto new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 	linphone_call_params_enable_video(new_params, confParams->videoEnabled());
 
@@ -1664,12 +1662,11 @@ bool LocalConference::addParticipant (const IdentityAddress &participantAddress)
 #endif
 		const auto initialState = getState();
 		if ((initialState == ConferenceInterface::State::CreationPending) || (initialState == ConferenceInterface::State::Created)) {
-
-		const auto allowedAddresses = getAllowedAddresses();
-		auto p = std::find(allowedAddresses.begin(), allowedAddresses.end(), participantAddress);
-		if (p == allowedAddresses.end()) {
-			invitedAddresses.push_back(participantAddress);
-		}
+			const auto allowedAddresses = getAllowedAddresses();
+			auto p = std::find(allowedAddresses.begin(), allowedAddresses.end(), participantAddress);
+			if (p == allowedAddresses.end()) {
+				invitedAddresses.push_back(participantAddress);
+			}
 
 			std::list<const LinphoneAddress *> addressesList{L_GET_C_BACK_PTR(&(participantAddress.asAddress()))};
 			return dialOutAddresses(addressesList);
@@ -2143,6 +2140,10 @@ bool LocalConference::isIn() const{
 	return mIsIn;
 }
 
+IdentityAddress LocalConference::getOrganizer() const {
+	return organizer;
+}
+
 AudioControlInterface *LocalConference::getAudioControlInterface()const{
 	return mMixerSession ? dynamic_cast<AudioControlInterface*>(mMixerSession->getMixerByType(SalAudio)) : nullptr;
 }
@@ -2578,6 +2579,11 @@ void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface:
 	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());
 
 	Conference::notifyStateChanged (state);
+}
+
+bool RemoteConference::dialOutAddresses (BCTBX_UNUSED(const list<const LinphoneAddress *> &addressList)) {
+	lError() << "RemoteConference::dialOutAddresses() not implemented";
+	return false;
 }
 
 int RemoteConference::inviteAddresses (BCTBX_UNUSED(const list<const LinphoneAddress *> &addresses), BCTBX_UNUSED(const LinphoneCallParams *params)) {
@@ -3066,6 +3072,21 @@ bool RemoteConference::isIn () const {
 	LinphoneCallState callState = static_cast<LinphoneCallState>(session->getState());
 	const auto & focusContactAddress = session->getRemoteContactAddress();
 	return ((callState == LinphoneCallUpdatedByRemote) || (callState == LinphoneCallUpdating) || (callState == LinphoneCallStreamsRunning)) && focusContactAddress->hasUriParam("conf-id");
+}
+
+IdentityAddress RemoteConference::getOrganizer() const {
+	IdentityAddress organizer;
+#ifdef HAVE_DB_STORAGE
+	auto &mainDb = getCore()->getPrivate()->mainDb;
+	if (mainDb)  {
+		const auto & confInfo = mainDb->getConferenceInfoFromURI(getConferenceAddress());
+		// me is admin if the organizer is the same as me
+		if (confInfo) {
+			organizer = confInfo->getOrganizerAddress();
+		}
+	}
+#endif
+	return organizer;
 }
 
 bool RemoteConference::focusIsReady () const {
