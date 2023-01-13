@@ -1083,19 +1083,21 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 		 */
 		if (linphone_core_conference_server_enabled(lc)) {
 			auto participant = findParticipant(cppAddress);
-			const auto & devices = participant->getDevices();
-			if (participant && !devices.empty()) {
-				const auto & device = devices.front();
-				if (!device->getCallId().empty()) {
-					call = linphone_core_get_call_by_callid(lc, device->getCallId().c_str());
-				} else if (device->getSession()) {
-					const auto & session = device->getSession();
-					const auto & calls = getCore()->getCalls();
-					auto it = std::find_if(calls.cbegin(), calls.cend(), [&session] (const auto & call) {
-						return (call->getActiveSession() == session);
-					});
-					if (it != calls.cend()) {
-						call = (*it)->toC();
+			if (participant) {
+				const auto & devices = participant->getDevices();
+				if (!devices.empty()) {
+					const auto & device = devices.front();
+					if (!device->getCallId().empty()) {
+						call = linphone_core_get_call_by_callid(lc, device->getCallId().c_str());
+					} else if (device->getSession()) {
+						const auto & session = device->getSession();
+						const auto & calls = getCore()->getCalls();
+						auto it = std::find_if(calls.cbegin(), calls.cend(), [&session] (const auto & call) {
+							return (call->getActiveSession() == session);
+						});
+						if (it != calls.cend()) {
+							call = (*it)->toC();
+						}
 					}
 				}
 			}

@@ -1234,9 +1234,6 @@ static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curve
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
 
-	char * paulineAddrStr = linphone_address_as_string_uri_only(paulineAddr);
-	char * marieAddrStr = linphone_address_as_string_uri_only(marieAddr);
-
 	// Check ZRTP status
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, paulineUri), LinphoneZrtpPeerStatusUnknown, int , "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(pauline->lc, marieUri), LinphoneZrtpPeerStatusUnknown, int , "%d");
@@ -1374,9 +1371,6 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 	// Enable ZRTP
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
-
-	char * paulineAddrStr = linphone_address_as_string_uri_only(paulineAddr);
-	char * marieAddrStr = linphone_address_as_string_uri_only(marieAddr);
 
 	// Check ZRTP status
 	BC_ASSERT_EQUAL(linphone_core_get_zrtp_status(marie->lc, paulineUri), LinphoneZrtpPeerStatusUnknown, int , "%d");
