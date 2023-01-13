@@ -141,21 +141,17 @@ set(RC_FILES
 	rcfiles/carddav_rc
 	rcfiles/claire_rc
 	rcfiles/claire_sips_rc
-	rcfiles/chloe_lime_x3dh_rc
 	rcfiles/chloe_rc
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
 	rcfiles/friends_rc
-	rcfiles/groupchat_lime_x3dh_rc
 	rcfiles/groupchat_rc
 	rcfiles/invalid_friends_rc
 	rcfiles/invalid_friends_xml
 	rcfiles/laure_call_logs_rc
-	rcfiles/laure_lime_x3dh_rc
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
 	rcfiles/lise_rc
-	rcfiles/lise_lime_x3dh_rc
 	rcfiles/marie2_rc
 	rcfiles/marie_bodyless_rc
 	rcfiles/marie_dependent_proxy_rc
@@ -164,8 +160,6 @@ set(RC_FILES
 	rcfiles/marie_dual_proxy_rc
 	rcfiles/marie_early_rc
 	rcfiles/marie_h264_rc
-	rcfiles/marie_lime_x3dh_no_server_rc
-	rcfiles/marie_lime_x3dh_rc
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
@@ -190,15 +184,12 @@ set(RC_FILES
 	rcfiles/marie_well_known_port_rc
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
-	rcfiles/michelle_lime_x3dh_rc
 	rcfiles/multi_account_rc
-	rcfiles/multi_account_lime_x3dh_rc
 	rcfiles/pauline_alt_rc
 	rcfiles/pauline_as_friend_rc
 	rcfiles/pauline_dtls_srtp_immediate_rc
 	rcfiles/pauline_external_rc
 	rcfiles/pauline_h264_rc
-	rcfiles/pauline_lime_x3dh_rc
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
 	rcfiles/pauline_rtp_port_range_rc
@@ -216,7 +207,6 @@ set(RC_FILES
 	rcfiles/zero_length_params_rc
 	rcfiles/marie_bodyless_rc
 	rcfiles/groupchat_rc
-	rcfiles/groupchat_lime_x3dh_rc
 	rcfiles/arthur_rc
 )
 

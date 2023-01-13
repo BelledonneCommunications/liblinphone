@@ -232,11 +232,11 @@ bctbx_list_t *create_conference_cores(bctbx_list_t *participantsAddresses) {
 	bctbx_list_t *it;
 	uint32_t i = 0;
 
+	mgr = linphone_core_manager_create("groupchat_rc");
 	if (enable_limex3dh) {
-		mgr = linphone_core_manager_create("groupchat_lime_x3dh_rc");
-	} else {
-		mgr = linphone_core_manager_create("groupchat_rc");
+		set_lime_server_and_curve(25519, mgr);
 	}
+
 	//Enable imdn
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(mgr->lc));
 	coresManagerList = bctbx_list_append(coresManagerList, mgr);

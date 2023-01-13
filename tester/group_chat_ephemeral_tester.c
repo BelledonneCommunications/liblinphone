@@ -33,8 +33,6 @@
 #pragma warning(disable : 4996)
 #endif
 
-static const int x3dhServer_creationTimeout = 15000;
-
 void set_ephemeral_cbs (bctbx_list_t *history) {
 	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
 		const LinphoneChatMessage *msg = (LinphoneChatMessage *)bctbx_list_get_data(item);
@@ -47,15 +45,15 @@ void set_ephemeral_cbs (bctbx_list_t *history) {
 }
 
 static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t expired, const int curveId) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	int size;
 
-	set_lime_curve_list(curveId,coresManagerList);
+	set_lime_server_and_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -155,7 +153,7 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
 		coresList = bctbx_list_remove(coresList, pauline->lc);
 		linphone_core_manager_reinit(pauline);
-		set_lime_curve(curveId,pauline);
+		set_lime_server_and_curve(curveId,pauline);
 		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 		bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
@@ -232,14 +230,14 @@ static void chat_room_expired_ephemeral_message_test (void) {
 }
 
 static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(const int curveId) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
-	set_lime_curve_list(curveId,coresManagerList);
+	set_lime_server_and_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -319,14 +317,14 @@ static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room(void) {
 }
 
 static void mixed_ephemeral_message_test_curve(const int curveId) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
-	set_lime_curve_list(curveId,coresManagerList);
+	set_lime_server_and_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -439,14 +437,14 @@ static void mixed_ephemeral_message_test(void) {
 }
 
 static void chat_room_ephemeral_settings_curve(const int curveId) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
-	set_lime_curve_list(curveId,coresManagerList);
+	set_lime_server_and_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -495,7 +493,7 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 		linphone_core_set_network_reachable(marie->lc, FALSE);
 		coresList = bctbx_list_remove(coresList, marie->lc);
 		linphone_core_manager_reinit(marie);
-		set_lime_curve(curveId,marie);
+		set_lime_server_and_curve(curveId,marie);
 		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
 		bctbx_list_t *tmpCoresList = init_core_for_conference(tmpCoresManagerList);
 		bctbx_list_free(tmpCoresManagerList);
@@ -545,16 +543,16 @@ static void chat_room_ephemeral_settings(void) {
 }
 
 static void ephemeral_group_message_test_curve (const int curveId) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_create("laure_lime_x3dh_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 	coresManagerList = bctbx_list_append(coresManagerList, laure);
 
-	set_lime_curve_list(curveId,coresManagerList);
+	set_lime_server_and_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
 	stats initialLaureStats = laure->stat;

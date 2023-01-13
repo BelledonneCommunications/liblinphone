@@ -787,18 +787,6 @@ static void custom_tones_setup_before_start(void){
 	linphone_core_unref(lc);
 }
 
-static void lime_x3dh_server_url_migration(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_lime_x3dh_rc");
-	BC_ASSERT_TRUE(linphone_core_lime_x3dh_available(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
-	linphone_core_manager_destroy(marie);
-
-	marie = linphone_core_manager_new("marie_lime_x3dh_no_server_rc");
-	BC_ASSERT_TRUE(linphone_core_lime_x3dh_available(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
-	linphone_core_manager_destroy(marie);
-}
-
 static void search_friend_in_alphabetical_order(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -3236,7 +3224,6 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Codec setup", codec_setup),
 	TEST_NO_TAG("Custom tones setup", custom_tones_setup),
 	TEST_NO_TAG("Custom tones setup before start", custom_tones_setup_before_start),
-	TEST_ONE_TAG("LIME X3DH server URL migration from Core to Account", lime_x3dh_server_url_migration, "LimeX3DH"),
 	TEST_NO_TAG("Appropriate software echo canceller check", echo_canceller_check),
 	TEST_ONE_TAG("Return friend list in alphabetical order", search_friend_in_alphabetical_order, "MagicSearch"),
 	TEST_ONE_TAG("Search friend without filter and domain", search_friend_without_filter, "MagicSearch"),

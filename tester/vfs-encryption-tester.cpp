@@ -29,8 +29,6 @@
 #include <iostream>
 #include <fstream>
 
-static const int x3dhServer_creationTimeout = 15000;
-
 static bool is_encrypted(const char *filepath) {
 	bool ret = false;
 	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");
@@ -98,7 +96,9 @@ static void register_user(const uint16_t encryptionModule, const char* random_id
 	}
 
 	// use a local files(rc and db) to check it is encrypted, at user creation, use a factory rc otherwise we do not need it
-	marie = linphone_core_manager_new_local(createUsers?"marie_lime_x3dh_rc":NULL, localRc, linphone_db, lime_db, zrtp_secrets_db);
+	marie = linphone_core_manager_create_local(createUsers?"marie_rc":NULL, localRc, linphone_db, lime_db, zrtp_secrets_db);
+	set_lime_server_and_curve(25519, marie);
+	linphone_core_manager_start(marie, TRUE);
 
 	// check it registers ok and lime user is created
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1));
@@ -196,10 +196,11 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 		unlink(marie_zrtp_secrets_db);
 	}
 	// use a local rc file built from marie_rc to check it is encrypted
-	marie = linphone_core_manager_new_local(createUsers?"marie_lime_x3dh_rc":NULL, marie_rc, marie_linphone_db, marie_lime_db, marie_zrtp_secrets_db);
+	marie = linphone_core_manager_create_local(createUsers?"marie_rc":NULL, marie_rc, marie_linphone_db, marie_lime_db, marie_zrtp_secrets_db);
+	set_lime_server_and_curve(25519, marie);
+	linphone_core_manager_start(marie, TRUE);
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
 	linphone_core_set_zrtp_secrets_file(marie->lc, marie_zidCache);
-
 
 	// create user Pauline
 	LinphoneCoreManager* pauline;
@@ -226,10 +227,11 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 		unlink(pauline_zrtp_secrets_db);
 	}
 	// use a local rc file built from pauline_rc to check it is encrypted
-	pauline = linphone_core_manager_new_local(createUsers?"pauline_lime_x3dh_rc":NULL, pauline_rc, pauline_linphone_db, pauline_lime_db, pauline_zrtp_secrets_db);
+	pauline = linphone_core_manager_create_local(createUsers?"pauline_rc":NULL, pauline_rc, pauline_linphone_db, pauline_lime_db, pauline_zrtp_secrets_db);
+	set_lime_server_and_curve(25519, pauline);
+	linphone_core_manager_start(pauline, TRUE);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
 	linphone_core_set_zrtp_secrets_file(pauline->lc, pauline_zidCache);
-
 
 	// check it registers ok and lime user is created
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 1));
@@ -385,7 +387,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 		unlink(marie_zrtp_secrets_db);
 	}
 	// use a local rc file built from marie_rc to check it is encrypted
-	marie = linphone_core_manager_create_local(createUsers?"marie_lime_x3dh_rc":NULL, marie_rc, marie_linphone_db, marie_lime_db, marie_zrtp_secrets_db);
+	marie = linphone_core_manager_create_local(createUsers?"marie_rc":NULL, marie_rc, marie_linphone_db, marie_lime_db, marie_zrtp_secrets_db);
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
 	// set file transfer
 	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
@@ -415,7 +417,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 		unlink(pauline_zrtp_secrets_db);
 	}
 	// use a local rc file built from pauline_rc to check it is encrypted
-	pauline = linphone_core_manager_create_local(createUsers?"pauline_lime_x3dh_rc":NULL, pauline_rc, pauline_linphone_db, pauline_lime_db, pauline_zrtp_secrets_db);
+	pauline = linphone_core_manager_create_local(createUsers?"pauline_rc":NULL, pauline_rc, pauline_linphone_db, pauline_lime_db, pauline_zrtp_secrets_db);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
 	// set file transfer
 	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
@@ -425,7 +427,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
 	// set lime serveur - fixed to curve25519 we're not testing lime here
-	set_lime_curve_list(25519,coresManagerList);
+	set_lime_server_and_curve_list(25519,coresManagerList);
 	
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;

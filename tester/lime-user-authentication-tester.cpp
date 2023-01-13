@@ -41,8 +41,6 @@ enum class certProvider {
 // Helper to loop on all certificate providing methods availables
 static std::array<certProvider, 3> availCertProv{{certProvider::config_sip, certProvider::config_auth_info_buffer, certProvider::config_auth_info_path}};
 
-static const int x3dhServer_creationTimeout = 15000;
-
 // This function will add proxy and auth info to the core config. The proxy is set as the default one
 static void add_user_to_core_config(LinphoneCore *lc, const char *identity, const char *username, const char *realm, const char * server, const char *password) {
 	// Use the user user_1
@@ -146,7 +144,7 @@ static void TLS_mandatory_two_users_curve(const int curveId) {
 	add_tls_client_certificate(lcm->lc, "user_2", "sip.example.org", "certificates/client/user2_cert.pem", "certificates/client/user2_key.pem", certProvider::config_auth_info_buffer);
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, lcm);
-	set_lime_curve_list_tls(curveId, coresManagerList, TRUE, TRUE);
+	set_lime_server_and_curve_list_tls(curveId, coresManagerList, TRUE, TRUE);
 	stats initialMarieStats = lcm->stat;
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -185,7 +183,7 @@ static void create_user_sip_client_cert_chain(const int curveId, const bool use_
 
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, lcm);
-	set_lime_curve_list_tls(curveId, coresManagerList, TRUE, use_tls);
+	set_lime_server_and_curve_list_tls(curveId, coresManagerList, TRUE, use_tls);
 	stats initialMarieStats = lcm->stat;
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
@@ -299,37 +297,34 @@ static void TLS_mandatory_No_certificate(void) {
 	create_user_sip_client_cert_chain(448, tls_mandatory, certProvider::config_sip, empty, empty, expect_failure);
 }
 
-static void set_lime_server_curve(LinphoneCoreManager * manager, const char * curve, const char * server) {
+static void local_set_lime_server_and_curve(LinphoneCoreManager * manager, const char * curve, const char * server) {
 	linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve",curve);
 	LinphoneAccount *account = linphone_core_get_default_account(manager->lc);
 	const LinphoneAccountParams* account_params = linphone_account_get_params(account);
-	if (linphone_account_params_get_lime_server_url(account_params)) {
-		LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
-		linphone_account_params_set_lime_server_url(new_account_params, server);
-		linphone_account_set_params(account, new_account_params);
-		linphone_account_params_unref(new_account_params);
-	} else {
-		linphone_core_set_lime_x3dh_server_url(manager->lc, server);
-	}
+	LinphoneAccountParams* new_account_params = linphone_account_params_clone(account_params);
+	linphone_account_params_set_lime_server_url(new_account_params, server);
+	linphone_account_set_params(account, new_account_params);
+	linphone_account_params_unref(new_account_params);
 }
 
 /**
  * Create a user registered on lime on sip.example.org and auth1.example.org using the same lime server
  */
 static void Digest_Auth_multidomains_curve(const int curveId) {
-	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *libtester = linphone_core_manager_create(NULL);
 	add_user_to_core_config(libtester->lc, "sip:liblinphone_tester@auth1.example.org", "liblinphone_tester", "auth1.example.org", "sip:auth1.example.org; transport=tls", "secret");
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, libtester);
 
+	// We use a specific server here, so do not use the generic set_lime_server_and_curve function
 	if (curveId == 448) {
-		set_lime_server_curve(marie, "c448", lime_server_any_domain_c448_url);
-		set_lime_server_curve(libtester, "c448", lime_server_any_domain_c448_url);
+		local_set_lime_server_and_curve(marie, "c448", lime_server_any_domain_c448_url);
+		local_set_lime_server_and_curve(libtester, "c448", lime_server_any_domain_c448_url);
 	} else {
-		set_lime_server_curve(marie, "c25519", lime_server_any_domain_c25519_url);
-		set_lime_server_curve(libtester, "c25519", lime_server_any_domain_c25519_url);
+		local_set_lime_server_and_curve(marie, "c25519", lime_server_any_domain_c25519_url);
+		local_set_lime_server_and_curve(libtester, "c25519", lime_server_any_domain_c25519_url);
 	}
 
 	stats initialMarieStats = marie->stat;
@@ -353,7 +348,7 @@ static void Digest_Auth_multidomains(void) {
 }
 
 static void Digest_Auth_multiservers_curve(const int curveId) {
-	LinphoneCoreManager *manager = linphone_core_manager_create("multi_account_lime_x3dh_rc");
+	LinphoneCoreManager *manager = linphone_core_manager_create("multi_account_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, manager);
 
@@ -363,7 +358,7 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
 	}
 
-	LinphoneAccount *marie_account = linphone_core_get_account_by_idkey(manager->lc, "marie");
+	LinphoneAccount *marie_account = linphone_core_get_account_by_idkey(manager->lc, "eric");
 	BC_ASSERT_PTR_NOT_NULL(marie_account);
 	if (marie_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(marie_account));
@@ -376,7 +371,7 @@ static void Digest_Auth_multiservers_curve(const int curveId) {
 		linphone_account_params_unref(params);
 	}
 
-	LinphoneAccount *pauline_account = linphone_core_get_account_by_idkey(manager->lc, "pauline");
+	LinphoneAccount *pauline_account = linphone_core_get_account_by_idkey(manager->lc, "roger");
 	BC_ASSERT_PTR_NOT_NULL(pauline_account);
 	if (pauline_account) {
 		LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(pauline_account));

@@ -1933,7 +1933,11 @@ static void call_with_no_sdp(void) {
 
 static void call_with_no_sdp_lime(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_lime_x3dh_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	set_lime_server_and_curve(25519, pauline);
+	linphone_core_manager_start(pauline, TRUE);
+
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_X3dhUserCreationSuccess,1));
 
 	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
 

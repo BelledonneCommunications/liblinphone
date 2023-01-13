@@ -11,6 +11,7 @@ reg_expires=60
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
+idkey=eric
 
 [proxy_1]
 reg_proxy=<sip:sip.example.org;transport=tcp>
@@ -19,6 +20,7 @@ reg_expires=60
 reg_sendregister=1
 publish=0
 dial_escape_plus=0
+idkey=roger
 
 [proxy_2]
 reg_proxy=sip:auth1.example.org
