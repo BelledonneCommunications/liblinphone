@@ -6733,7 +6733,32 @@ static void call_with_same_codecs_ordered_differently(void) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+static void call_rejected_with_403(void){
 
+	LinphoneCoreManager * mgr = linphone_core_manager_new("empty_rc");
+
+	LinphoneAccountParams *accountParams =  linphone_core_create_account_params(mgr->lc);
+	LinphoneAddress * address = linphone_factory_create_address(linphone_factory_get(), "sip:bob@toto.example.org");
+	linphone_account_params_set_identity_address(accountParams, address);
+
+	LinphoneAddress * serverAddress =linphone_factory_create_address(linphone_factory_get(), "sip:toto.example.org");
+    linphone_account_params_set_server_address(accountParams, serverAddress);
+
+	linphone_account_params_set_register_enabled(accountParams, TRUE);
+	LinphoneAccount * account = linphone_core_create_account(mgr->lc, accountParams);
+	linphone_core_add_account(mgr->lc, account);
+	linphone_core_set_default_account(mgr->lc, account);
+	linphone_core_iterate(mgr->lc);
+	
+	linphone_core_invite(mgr->lc, "sip:nimportequoi@sip.example.org;transport=TLS");
+	BC_ASSERT_TRUE(wait_for(mgr->lc,mgr->lc,&mgr->stat.number_of_LinphoneCallError,1));
+
+	linphone_address_destroy(serverAddress);
+	linphone_account_params_unref(accountParams);
+	linphone_account_unref(account);
+	linphone_address_destroy(address);
+	linphone_core_manager_destroy(mgr);
+}
 static void simple_call_with_display_name(void) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
@@ -6896,6 +6921,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams),
 	TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted),
 	TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
+	
 };
 
 test_t call_not_established_tests[] = {
@@ -6933,7 +6959,10 @@ test_t call_not_established_tests[] = {
 	TEST_NO_TAG("Call with rtcp-mux not accepted", call_with_rtcp_mux_not_accepted),
 	TEST_NO_TAG("Call cancelled with reason", cancel_call_with_error),
 	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
-	TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream)
+	TEST_NO_TAG("Call with unknown stream", call_with_unknown_stream),
+	TEST_NO_TAG("Call rejected with 403", call_rejected_with_403),
+
+
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
