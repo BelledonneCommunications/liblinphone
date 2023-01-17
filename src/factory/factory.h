@@ -169,6 +169,7 @@ public:
 	LinphoneTransports *createTransports() const;
 	LinphoneVideoActivationPolicy *createVideoActivationPolicy() const;
 	LinphoneContent *createContent() const;
+	LinphoneContent *createContentFromFile(const std::string& file_path) const;
 	LinphoneBuffer *createBuffer() const;
 	LinphoneBuffer *createBufferFromData(const uint8_t *data, size_t size) const;
 	LinphoneBuffer *createBufferFromString(const std::string& data) const;

@@ -40,6 +40,7 @@
 #include <sstream>
 
 #include "address/address.h"
+#include "content/file-content.h"
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include "bctoolbox/crypto.h"
@@ -542,6 +543,14 @@ LinphoneVideoActivationPolicy*  Factory::createVideoActivationPolicy() const {
 
 LinphoneContent* Factory::createContent() const {
 	return linphone_content_new();
+}
+
+LinphoneContent *Factory::createContentFromFile(const std::string& file_path) const{
+	std::string file_name = file_path.substr(file_path.find_last_of("/\\") + 1);
+	FileContent *content = new FileContent();
+	content->setFilePath(file_path);
+	content->setFileName(file_name);
+	return L_GET_C_BACK_PTR(dynamic_cast<Content*>(content));
 }
 
 LinphoneBuffer* Factory::createBuffer() const {

@@ -542,6 +542,14 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_dial_plans(const Linph
 LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_content(LinphoneFactory *factory);
 
 /**
+ * Creates a file object of #LinphoneContent from a file path.
+ * @param factory the #LinphoneFactory @notnil
+ * @param file_path the path of the file @notnil
+ * @return a #LinphoneContent which can be used as a file @notnil
+ */
+LINPHONE_PUBLIC LinphoneContent *linphone_factory_create_content_from_file(LinphoneFactory *factory, const char * file_path);
+
+/**
  * Creates an object #LinphoneBuffer
  * @param factory the #LinphoneFactory @notnil
  * @return a #LinphoneBuffer @notnil

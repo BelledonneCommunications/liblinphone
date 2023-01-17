@@ -374,6 +374,10 @@ LinphoneContent *linphone_factory_create_content(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createContent();
 }
 
+LinphoneContent *linphone_factory_create_content_from_file(LinphoneFactory *factory, const char * file_path) {
+	return Factory::toCpp(factory)->createContentFromFile(file_path);
+}
+
 LinphoneBuffer *linphone_factory_create_buffer(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createBuffer();
 }
