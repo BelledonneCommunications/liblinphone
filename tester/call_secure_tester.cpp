@@ -29,6 +29,7 @@
 #include "belle-sip/sipstack.h"
 #include "linphone/api/c-call-stats.h"
 #include <bctoolbox/defs.h>
+#include <bctoolbox/crypto.hh>
 
 #ifdef _WIN32
 #define unlink _unlink
@@ -99,7 +100,7 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
 		liblinphone_tester_check_rtcp(marie, pauline);
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(marie),70,int,"%i");
-		LinphoneCallStats *pauline_stats = linphone_call_get_audio_stats(linphone_core_get_current_call(pauline->lc));
+		LinphoneCallStats *pauline_stats = linphone_call_get_audio_stats(pauline_call);
 		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats)>70);
 		linphone_call_stats_unref(pauline_stats);
 		pauline_stats = NULL;
@@ -119,13 +120,13 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
 
 	marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
-	pauline_call = linphone_core_get_current_call(marie->lc);
+	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (marie_call && pauline_call) {
 		liblinphone_tester_check_rtcp(pauline, marie);
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline),70,int,"%i");
-		LinphoneCallStats *marie_stats = linphone_call_get_audio_stats(linphone_core_get_current_call(marie->lc));
+		LinphoneCallStats *marie_stats = linphone_call_get_audio_stats(marie_call);
 		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats)>70);
 		linphone_call_stats_unref(marie_stats);
 		marie_stats = NULL;
@@ -140,11 +141,11 @@ static void mgr_calling_each_other(LinphoneCoreManager * marie, LinphoneCoreMana
  * Check the given calls have stats matching the expected suite and source, send and receive channel are expected to be the same, pauline and marie too
  * optionnal stream type default to audio
  */
-static bool_t srtp_check_call_stats(LinphoneCall *marieCall, LinphoneCall*paulineCall, int suite, int source, LinphoneStreamType streamType = LinphoneStreamTypeAudio) {
+static bool_t srtp_check_call_stats(LinphoneCall *marieCall, LinphoneCall*paulineCall, int suite, int source, bool_t inner_encryption = FALSE, LinphoneStreamType streamType = LinphoneStreamTypeAudio) {
 	LinphoneCallStats *marieStats = linphone_call_get_stats(marieCall, streamType);
 	LinphoneCallStats *paulineStats = linphone_call_get_stats(paulineCall, streamType);
-	auto *marieSrtpInfo = linphone_call_stats_get_srtp_info(marieStats, FALSE);
-	auto *paulineSrtpInfo = linphone_call_stats_get_srtp_info(paulineStats, FALSE);
+	auto *marieSrtpInfo = linphone_call_stats_get_srtp_info(marieStats, inner_encryption);
+	auto *paulineSrtpInfo = linphone_call_stats_get_srtp_info(paulineStats, inner_encryption);
 	bool_t ret = TRUE;
 
 	// use BC_ASSERT_TRUE so we can collect the return value: true if all test pass false otherwise
@@ -163,6 +164,126 @@ static bool_t srtp_check_call_stats(LinphoneCall *marieCall, LinphoneCall*paulin
 
 	return ret;
 }
+static void generate_ekt(MSEKTParametersSet *ekt_params, MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, uint16_t spi) {
+	ekt_params->ekt_cipher_type = ekt_cipher;
+	ekt_params->ekt_srtp_crypto_suite = crypto_suite;
+	// generate random ekt key and srtp salt. Warning: this is test code, do not use this weak RNG in actual code to generate keys.
+	bctoolbox::RNG::cRandomize(ekt_params->ekt_key_value, 32);
+	bctoolbox::RNG::cRandomize(ekt_params->ekt_master_salt, 14);
+	ekt_params->ekt_spi = spi;
+	ekt_params->ekt_ttl = 0; // do not use ttl
+}
+static void ekt_call(MSEKTCipherType ekt_cipher, MSCryptoSuite crypto_suite, bool unmatching_ekt=false, bool update_ekt=false) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+
+	// perform a simple SDES call and when on going, add an ekt key
+	mgr_calling_each_other(marie, pauline, ([marie,pauline,ekt_cipher, crypto_suite, unmatching_ekt, update_ekt](LinphoneCall *marieCall, LinphoneCall*paulineCall){
+		BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, MS_AES_128_SHA1_80, MSSrtpKeySourceSDES)); // Default crypto suite is MS_AES_128_SHA1_80
+
+		MSEKTParametersSet ekt_params;
+		generate_ekt(&ekt_params, ekt_cipher, crypto_suite, 0x1234);
+
+		// Call is on, add ekt key to both parties (This might generate few srtp error message as old packets without ekt tag
+		// arrives to the receiver side which already expect EKT tags)
+		linphone_call_set_ekt(marieCall, &ekt_params);
+		if (unmatching_ekt) { // set unmatching EKT on both side: simply give different spi so the double encrypted packets will be discarded
+			ekt_params.ekt_spi++;
+		}
+		linphone_call_set_ekt(paulineCall, &ekt_params);
+
+		// wait a little while to be sure some pakets with Full EKT tags reach the receiver
+		int dummy = 0;
+		wait_for_until(pauline->lc,marie->lc,&dummy,1,2000);
+
+		LinphoneCallStats *marie_stats = linphone_call_get_audio_stats(marieCall);
+		LinphoneCallStats *pauline_stats = linphone_call_get_audio_stats(paulineCall);
+
+		if (unmatching_ekt) { // EKT does not match so each end point sends data but cannot decrypt the incoming one
+			auto *marieSrtpInfo = linphone_call_stats_get_srtp_info(marie_stats, TRUE);
+			auto *paulineSrtpInfo = linphone_call_stats_get_srtp_info(pauline_stats, TRUE);
+ 			
+			// call stats are initialiased to 0
+			// As the EKT SPI won't match, the inner encryption reception suite is never set and stays at 0
+			// So is the source
+			BC_ASSERT_TRUE(marieSrtpInfo->send_suite == crypto_suite);
+			BC_ASSERT_TRUE(marieSrtpInfo->recv_suite == 0);
+			BC_ASSERT_TRUE(paulineSrtpInfo->send_suite == crypto_suite);
+			BC_ASSERT_TRUE(paulineSrtpInfo->recv_suite == 0);
+
+			BC_ASSERT_TRUE(marieSrtpInfo->send_source == MSSrtpKeySourceEKT);
+			BC_ASSERT_TRUE(marieSrtpInfo->recv_source == 0);
+			BC_ASSERT_TRUE(paulineSrtpInfo->send_source == MSSrtpKeySourceEKT);
+			BC_ASSERT_TRUE(paulineSrtpInfo->recv_source == 0);
+
+			// Bandwidth usage tests it shall be near to 0, no new packets arrived in the last 2 seconds
+			BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) < 5);
+			BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) < 5);
+		} else { // EKT matches so the stream should be double encrypted and fine
+			// Check we are now double encrypted and inner encryption comes from EKT and uses the given suite
+			BC_ASSERT_TRUE(srtp_check_call_stats(marieCall, paulineCall, crypto_suite, MSSrtpKeySourceEKT, TRUE));
+
+			// Bandwidth usage tests to be sure we actually still exchange data
+			BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats)>70);
+			BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats)>70);
+
+			if (update_ekt) {
+				// Both parties update their EKT
+				generate_ekt(&ekt_params, ekt_cipher, crypto_suite, 0x2345);
+				linphone_call_set_ekt(marieCall, &ekt_params);
+				linphone_call_set_ekt(paulineCall, &ekt_params);
+				// wait a little while to be sure some pakets with Full EKT tags reach the receiver
+				wait_for_until(pauline->lc,marie->lc,&dummy,1,2000);
+				// The streams shall keep going on
+				linphone_call_stats_unref(marie_stats);
+				linphone_call_stats_unref(pauline_stats);
+				marie_stats = linphone_call_get_audio_stats(marieCall);
+				pauline_stats = linphone_call_get_audio_stats(paulineCall);
+				BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats)>70);
+				BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats)>70);
+
+				// Marie updates her EKT but not pauline
+				generate_ekt(&ekt_params, ekt_cipher, crypto_suite, 0x3456);
+				linphone_call_set_ekt(marieCall, &ekt_params);
+				// wait a little while to be sure some pakets with Full EKT tags reach the receiver
+				wait_for_until(pauline->lc,marie->lc,&dummy,1,2000);
+				linphone_call_stats_unref(marie_stats);
+				linphone_call_stats_unref(pauline_stats);
+				marie_stats = linphone_call_get_audio_stats(marieCall);
+				pauline_stats = linphone_call_get_audio_stats(paulineCall);
+				// Marie still receives Pauline packets but Pauline cannot decrypt Marie's one
+				BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(marie_stats) > 70);
+				BC_ASSERT_TRUE(linphone_call_stats_get_upload_bandwidth(marie_stats) > 70);
+				BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(pauline_stats) < 5);
+			}
+		}
+
+		linphone_call_stats_unref(marie_stats);
+		linphone_call_stats_unref(pauline_stats);
+	}));
+
+	// cleaning
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+static void ekt_call(void) {
+	ekt_call(MS_EKT_CIPHERTYPE_AESKW128, MS_AEAD_AES_128_GCM);
+	ekt_call(MS_EKT_CIPHERTYPE_AESKW256, MS_AEAD_AES_256_GCM);
+}
+
+static void unmatching_ekt_call(void) {
+	ekt_call(MS_EKT_CIPHERTYPE_AESKW128, MS_AEAD_AES_128_GCM, true);
+	ekt_call(MS_EKT_CIPHERTYPE_AESKW256, MS_AEAD_AES_256_GCM, true);
+}
+
+static void updating_ekt_call(void) {
+	ekt_call(MS_EKT_CIPHERTYPE_AESKW128, MS_AEAD_AES_128_GCM, false, true);
+	ekt_call(MS_EKT_CIPHERTYPE_AESKW256, MS_AEAD_AES_256_GCM, false, true);
+}
+
 static void srtp_call(void) {
 	// using call base
 	call_base(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
@@ -1599,7 +1720,10 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("Video SRTP call without audio", video_srtp_call_without_audio),
 	TEST_ONE_TAG("DTLS-SRTP call with rtcp-mux", dtls_srtp_audio_call_with_rtcp_mux, "DTLS"),
 	TEST_ONE_TAG("DTLS-SRTP call with rtcp-mux not accepted", dtls_srtp_audio_call_with_rtcp_mux_not_accepted, "DTLS"),
-	TEST_NO_TAG("Call accepting all encryptions", call_accepting_all_encryptions)
+	TEST_NO_TAG("Call accepting all encryptions", call_accepting_all_encryptions),
+	TEST_NO_TAG("EKT call", ekt_call),
+	TEST_NO_TAG("EKT call with unmatching keys", unmatching_ekt_call),
+	TEST_NO_TAG("EKT call with EKT key update", updating_ekt_call)
 };
 
 test_suite_t call_secure_test_suite = {"Secure Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

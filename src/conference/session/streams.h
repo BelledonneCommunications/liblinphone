@@ -452,6 +452,12 @@ public:
 	void goClearAckSent();
 	void confirmGoClear();
 
+	/**
+	 * set the EKT to all audio and video streams in this group
+	 *
+	 * @param[in] ekt_params	All data needed to set the EKT
+	 */
+	void setEkt(const MSEKTParametersSet *ekt_params) const;
 	/*
 	 * Iterates over streams, trying to cast them to the _requestedInterface type. If they do cast,
 	 * invoke the lambda expression on them.

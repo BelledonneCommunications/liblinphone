@@ -583,4 +583,19 @@ void StreamsGroup::confirmGoClear() {
 	}
 }
 
+void StreamsGroup::setEkt(const MSEKTParametersSet *ekt_params) const {
+	for (const auto &stream : mStreams) {
+		if (stream) {
+			auto streamType = stream->getType();
+			if ((streamType == SalAudio) || (streamType == SalVideo) ) {
+				auto ms2Stream = dynamic_cast<MS2Stream*>(stream.get()); // get() on a std::unique_ptr, it's ok because we do not copy that pointer anywhere but just use it in local function
+				if (ms2Stream) {
+					ms2Stream->setEkt(ekt_params);
+				}
+			}
+		}
+	}
+
+}
+
 LINPHONE_END_NAMESPACE

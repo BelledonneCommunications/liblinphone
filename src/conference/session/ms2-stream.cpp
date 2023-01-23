@@ -78,6 +78,13 @@ MS2Stream::MS2Stream(StreamsGroup &sg, const OfferAnswerContext &params) : Strea
 	mStunAllowed = !!linphone_config_get_int(linphone_core_get_config(sg.getCCore()), "rtp", "stun_keepalives", 1);
 }
 
+void MS2Stream::setEkt(const MSEKTParametersSet *ekt_params) const {
+	MediaStream *ms = getMediaStream();
+	if (ms) {
+		ms_media_stream_sessions_set_ekt(&ms->sessions, ekt_params);
+	}
+}
+
 void MS2Stream::removeFromBundle(){
 	if (mRtpBundle){
 		lInfo() << "Session " << mSessions.rtp_session << " of stream " << *this << " removed from rtp bundle " << mRtpBundle;

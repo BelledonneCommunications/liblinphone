@@ -79,6 +79,10 @@ bool_t linphone_call_get_all_muted (const LinphoneCall *call) {
 	return Call::toCpp(call)->getAllMuted();
 }
 
+void linphone_call_set_ekt (const LinphoneCall *call, const MSEKTParametersSet *ekt_params) {
+	Call::toCpp(call)->setEkt(ekt_params);
+}
+
 
 void linphone_call_notify_state_changed (LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	LINPHONE_HYBRID_OBJECT_INVOKE_CBS(Call, Call::toCpp(call), linphone_call_cbs_get_state_changed, cstate, message);

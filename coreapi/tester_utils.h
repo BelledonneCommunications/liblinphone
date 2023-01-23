@@ -183,6 +183,12 @@ LINPHONE_PUBLIC void linphone_core_reset_tone_manager_stats(LinphoneCore *lc);
 LINPHONE_PUBLIC const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id);
 
 /**
+ * set the EKT to all audio and video streams active in the call
+ *
+ * @param[in] ekt_params	All data needed to set the EKT
+ */
+LINPHONE_PUBLIC void linphone_call_set_ekt (const LinphoneCall *call, const MSEKTParametersSet *ekt_params);
+/**
  * Send a request to delete an account on server.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise

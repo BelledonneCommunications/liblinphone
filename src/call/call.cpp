@@ -149,6 +149,10 @@ int Call::getMediaStreamsNb (LinphoneStreamType type) const {
 	return nb;
 }
 
+void Call::setEkt(const MSEKTParametersSet *ekt_params) const {
+	getMediaSession()->setEkt(ekt_params);
+}
+
 SalCallOp * Call::getOp () const {
 	return getActiveSession()->getPrivate()->getOp();
 }

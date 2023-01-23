@@ -51,6 +51,12 @@ public:
 	virtual void stop() override;
 	virtual void finish() override;
 	virtual bool isEncrypted() const override;
+	/**
+	 * pass the given EKT to the underlying ms2 stream
+	 *
+	 * @param[in] ekt_params	All data needed to set the EKT
+	 */
+	void setEkt(const MSEKTParametersSet *ekt_params) const;
 	MSZrtpContext *getZrtpContext()const;
 	std::pair<RtpTransport*, RtpTransport*> getMetaRtpTransports();
 	virtual MediaStream *getMediaStream()const = 0;

@@ -155,6 +155,12 @@ public:
 	void confirmGoClear();
 
 	uint32_t getSsrc(LinphoneStreamType type) const;
+	/**
+	 * set the EKT to all audio and video streams of this media session
+	 *
+	 * @param[in] ekt_params	All data needed to set the EKT
+	 */
+	void setEkt(const MSEKTParametersSet *ekt_params) const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSession);

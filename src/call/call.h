@@ -313,6 +313,12 @@ public:
 	bool canSoundResourcesBeFreed () const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 	const LinphoneStreamInternalStats *getStreamInternalStats(LinphoneStreamType type)const;
+	/**
+	 * set the EKT to all audio and video streams active in the call
+	 *
+	 * @param[in] ekt_params	All data needed to set the EKT
+	 */
+	void setEkt(const MSEKTParametersSet *ekt_params) const;
 
 private:
 	std::shared_ptr<Participant> mParticipant;

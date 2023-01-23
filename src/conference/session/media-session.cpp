@@ -4828,5 +4828,8 @@ uint32_t MediaSession::getSsrc(LinphoneStreamType type) const {
 	return ssrc;
 }
 
+void MediaSession::setEkt(const MSEKTParametersSet *ekt_params) const {
+	getStreamsGroup().setEkt(ekt_params);
+}
 
 LINPHONE_END_NAMESPACE
