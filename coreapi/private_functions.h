@@ -541,8 +541,19 @@ LINPHONE_PUBLIC int linphone_friend_get_rc_index(const LinphoneFriend *lf);
  ****************************************************************************/
 
 void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState state, const char *message);
-int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc, const char *remote_provisioning_uri);
+int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc, const char *remote_provisioning_uri, const bctbx_list_t *remote_provisioning_headers);
 LINPHONE_PUBLIC int linphone_remote_provisioning_load_file( LinphoneCore* lc, const char* file_path);
+// Split <header name>:<value> into pair.
+bctbx_list_t * linphone_remote_provisioning_split_header(bctbx_list_t * headers, const char * joined_header);
+// Get an array of pair (field/value). Note : this kind of type is not supported by wrappers (aka bctbx_list<bctbx_list<char*>>)
+bctbx_list_t * linphone_remote_provisioning_split_headers(bctbx_list_t * headers);
+/**
+ * Get a list of extra headers in the form <header name>:<value> that are used for retrieving the remote provisioning (check linphone_core_set_provisioning_uri()).
+ * @param core the #LinphoneCore object @notnil
+ * @return the list a "<header name>:<value>". \bctbx_list{char *} @notnil @tobefreed
+ * @ingroup initializing
+**/
+bctbx_list_t *linphone_core_get_provisioning_headers(const LinphoneCore *lc);
 
 /*****************************************************************************
  * SESSION TIMERS FUNCTIONS                                                  *

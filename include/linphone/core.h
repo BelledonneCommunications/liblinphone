@@ -4896,6 +4896,23 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_provisioning_uri(LinphoneCore *
 LINPHONE_PUBLIC const char* linphone_core_get_provisioning_uri(const LinphoneCore *core);
 
 /**
+ * Add an extra header for retrieving the remote provisioning (check linphone_core_set_provisioning_uri()).
+ * This can also be set from configuration file or factory config file, from [misc] section, item "config-uri-headers_X" where X is the index of the header starting by 0.
+ * @param core the #LinphoneCore object @notnil
+ * @param header_name the header to use when downloading the configuration. @notnil
+ * @param value the value to use when downloading the configuration. @notnil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_core_add_provisioning_header(LinphoneCore *core, const char* header_name, const char* value);
+
+/**
+ * Clear all headers that were added with linphone_core_add_provisioning_header().
+ * @param core the #LinphoneCore object @notnil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_core_clear_provisioning_headers(LinphoneCore *core);
+
+/**
  * Gets if the provisioning URI should be removed after it's been applied successfully
  * @param core the #LinphoneCore object @notnil
  * @return TRUE if the provisioning URI should be removed, FALSE otherwise

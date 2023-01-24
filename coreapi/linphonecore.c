@@ -3152,8 +3152,16 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 
 		const char *remote_provisioning_uri = linphone_core_get_provisioning_uri(lc);
 		if (remote_provisioning_uri) {
-			if (linphone_remote_provisioning_download_and_apply(lc, remote_provisioning_uri) == -1)
+			bctbx_list_t * raw_headers = linphone_core_get_provisioning_headers(lc);
+			bctbx_list_t * remote_provisioning_headers = linphone_remote_provisioning_split_headers(raw_headers);
+			if (linphone_remote_provisioning_download_and_apply(lc, remote_provisioning_uri, remote_provisioning_headers) == -1)
 				linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "Bad URI");
+			if(remote_provisioning_headers){
+				bctbx_list_free_with_data(remote_provisioning_headers, (bctbx_list_free_func)bctbx_free);
+			}
+			if(raw_headers){
+				bctbx_list_free_with_data(raw_headers, (bctbx_list_free_func)bctbx_free);
+			}
 		} else {
 			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
 		}
