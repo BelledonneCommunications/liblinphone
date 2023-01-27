@@ -221,10 +221,20 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
 
     public void updateDnsServers() {
         ArrayList<String> dnsServers = new ArrayList<>();
+        ArrayList<String> mobileDnsServers = new ArrayList<>();
         ArrayList<String> activeNetworkDnsServers = new ArrayList<>();
 
         if (mConnectivityManager != null) {
             Network activeNetwork = mConnectivityManager.getActiveNetwork();
+            if (activeNetwork == null) {
+                if (mNetworkAvailable == null) {
+                    Log.e("[Platform Helper] [Network Manager 26] Active network is null and no available network has been stored!");
+                } else {
+                    Log.w("[Platform Helper] [Network Manager 26] Active network is null, using stored available network");
+                    activeNetwork = mNetworkAvailable;
+                }
+            }
+            
             for (Network network : mConnectivityManager.getAllNetworks()) {
                 NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
                 if (networkInfo != null) {
@@ -236,9 +246,12 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
                             String dnsHost = dnsServer.getHostAddress();
                             if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
                                 String networkType = networkInfo.getTypeName();
-                                if (network.equals(activeNetwork)) {
+                                if (activeNetwork != null && network.equals(activeNetwork)) {
                                     Log.i("[Platform Helper] [Network Manager 26] Found DNS host " + dnsHost + " from active network " + networkType);
                                     activeNetworkDnsServers.add(dnsHost);
+                                } else if (networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+                                    Log.i("[Platform Helper] [Network Manager 26] Found DNS host " + dnsHost + " from mobile network");
+                                    mobileDnsServers.add(dnsHost);
                                 } else {
                                     if (prioritary) {
                                         Log.i("[Platform Helper] [Network Manager 26] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
@@ -256,6 +269,7 @@ public class NetworkManagerAbove26 implements NetworkManagerInterface {
         }
 
         activeNetworkDnsServers.addAll(dnsServers);
+        activeNetworkDnsServers.addAll(mobileDnsServers);
         mHelper.updateDnsServers(activeNetworkDnsServers);
     }
 }

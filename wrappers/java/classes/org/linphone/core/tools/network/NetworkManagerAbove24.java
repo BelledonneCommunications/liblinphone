@@ -256,6 +256,15 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
 
         if (mConnectivityManager != null) {
             Network activeNetwork = mConnectivityManager.getActiveNetwork();
+            if (activeNetwork == null) {
+                if (mNetworkAvailable == null) {
+                    Log.e("[Platform Helper] [Network Manager 24] Active network is null and no available network has been stored!");
+                } else {
+                    Log.w("[Platform Helper] [Network Manager 24] Active network is null, using stored available network");
+                    activeNetwork = mNetworkAvailable;
+                }
+            }
+            
             for (Network network : mConnectivityManager.getAllNetworks()) {
                 NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
                 if (networkInfo != null) {
