@@ -47,8 +47,6 @@ list<Content> ContentManager::multipartToContentList (const Content &content) {
 		SalBodyHandler *part = (SalBodyHandler *)parts->data;
 		LinphoneContent *cContent = linphone_content_from_sal_body_handler(part, false);
 		Content *cppContent = L_GET_CPP_PTR_FROM_C_OBJECT(cContent);
-		if (content.getContentDisposition().isValid())
-			cppContent->setContentDisposition(content.getContentDisposition());
 		contents.push_back(*cppContent);
 		linphone_content_unref(cContent);
 	}
@@ -64,12 +62,7 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 	);
 	mpbh = (belle_sip_multipart_body_handler_t *)belle_sip_object_ref(mpbh);
 
-	ContentDisposition disposition;
 	for (Content *content : contents) {
-		// Is this content-disposition stuff generic or only valid for notification content-disposition?
-		if (content->getContentDisposition().isValid())
-			disposition = content->getContentDisposition();
-
 		LinphoneContent *cContent = L_GET_C_BACK_PTR(content);
 		SalBodyHandler *sbh = sal_body_handler_from_content(cContent, false);
 		belle_sip_multipart_body_handler_add_part(mpbh, BELLE_SIP_BODY_HANDLER(sbh));
@@ -84,8 +77,6 @@ Content ContentManager::contentListToMultipart (const list<Content *> &contents,
 	belle_sip_object_unref(mpbh);
 
 	Content content = *L_GET_CPP_PTR_FROM_C_OBJECT(cContent);
-	if (disposition.isValid())
-		content.setContentDisposition(disposition);
 	linphone_content_unref(cContent);
 	return content;
 }

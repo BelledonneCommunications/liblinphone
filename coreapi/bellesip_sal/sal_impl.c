@@ -374,7 +374,29 @@ void sal_body_handler_set_encoding(SalBodyHandler *body_handler, const char *enc
 	belle_sip_body_handler_add_header(BELLE_SIP_BODY_HANDLER(body_handler), belle_sip_header_create("Content-Encoding", encoding));
 }
 
-void * sal_body_handler_get_data(const SalBodyHandler *body_handler) {
+const char *sal_body_handler_get_content_disposition(const SalBodyHandler *body_handler) {
+	belle_sip_header_t *content_disposition = sal_body_handler_find_header(body_handler, "Content-Disposition");
+	if (content_disposition != NULL) {
+		return belle_sip_header_get_unparsed_value(content_disposition);
+	}
+	return NULL;
+}
+
+void sal_body_handler_set_content_disposition(SalBodyHandler *body_handler, const char *disposition) {
+	belle_sip_header_t *content_disposition = sal_body_handler_find_header(body_handler, "Content-Disposition");
+	if (content_disposition != NULL) {
+		belle_sip_body_handler_remove_header_from_ptr(BELLE_SIP_BODY_HANDLER(body_handler), content_disposition);
+	}
+	belle_sip_body_handler_add_header(BELLE_SIP_BODY_HANDLER(body_handler),
+									  belle_sip_header_create("Content-Disposition", disposition));
+}
+
+void sal_body_handler_add_header(SalBodyHandler *body_handler, const char *header_name, const char *header_value) {
+	belle_sip_body_handler_add_header(BELLE_SIP_BODY_HANDLER(body_handler),
+									  belle_sip_header_create(header_name, header_value));
+}
+
+void *sal_body_handler_get_data(const SalBodyHandler *body_handler) {
 	return belle_sip_memory_body_handler_get_buffer(BELLE_SIP_MEMORY_BODY_HANDLER(body_handler));
 }
 
