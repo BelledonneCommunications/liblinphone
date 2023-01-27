@@ -235,6 +235,15 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
 
         if (mConnectivityManager != null) {
             Network activeNetwork = mConnectivityManager.getActiveNetwork();
+            if (activeNetwork == null) {
+                if (mNetworkAvailable == null) {
+                    Log.e("[Platform Helper] [Network Manager 23] Active network is null and no available network has been stored!");
+                } else {
+                    Log.w("[Platform Helper] [Network Manager 23] Active network is null, using stored available network");
+                    activeNetwork = mNetworkAvailable;
+                }
+            }
+
             for (Network network : mConnectivityManager.getAllNetworks()) {
                 NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
                 if (networkInfo != null) {
@@ -246,7 +255,7 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
                             String dnsHost = dnsServer.getHostAddress();
                             if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
                                 String networkType = networkInfo.getTypeName();
-                                if (network.equals(activeNetwork)) {
+                                if (activeNetwork != null && network.equals(activeNetwork)) {
                                     Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from active network " + networkType);
                                     activeNetworkDnsServers.add(dnsHost);
                                 } else {

@@ -726,7 +726,6 @@ public class AndroidPlatformHelper {
         }
 
         // Update DNS servers lists
-        Network network = mNetworkManager.getActiveNetwork();
         mNetworkManager.updateDnsServers();
 
         int currentNetworkType = networkInfo.getType();
