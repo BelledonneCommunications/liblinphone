@@ -526,6 +526,9 @@ const char * sal_body_handler_get_content_type_parameter(const SalBodyHandler *b
 void sal_body_handler_set_content_type_parameter(SalBodyHandler *body_handler, const char *paramName, const char *paramValue);
 const char * sal_body_handler_get_encoding(const SalBodyHandler *body_handler);
 void sal_body_handler_set_encoding(SalBodyHandler *body_handler, const char *encoding);
+const char *sal_body_handler_get_content_disposition(const SalBodyHandler *body_handler);
+void sal_body_handler_set_content_disposition(SalBodyHandler *body_handler, const char *disposition);
+void sal_body_handler_add_header(SalBodyHandler *body_handler, const char *header_name, const char *header_value);
 void * sal_body_handler_get_data(const SalBodyHandler *body_handler);
 void sal_body_handler_set_data(SalBodyHandler *body_handler, void *data);
 size_t sal_body_handler_get_size(const SalBodyHandler *body_handler);

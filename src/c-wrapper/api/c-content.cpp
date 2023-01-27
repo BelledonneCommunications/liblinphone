@@ -183,6 +183,23 @@ void linphone_content_set_encoding (LinphoneContent *content, const char *encodi
 	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setContentEncoding(L_C_TO_STRING(encoding));
 }
 
+const char *linphone_content_get_disposition(const LinphoneContent *content) {
+	LinphonePrivate::ContentDisposition contentDisposition =
+		L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentDisposition();
+	return L_STRING_TO_C(contentDisposition.asString());
+}
+
+void linphone_content_set_disposition(LinphoneContent *content, const char *disposition) {
+	if (disposition != nullptr) {
+		string strDisposition = L_C_TO_STRING(disposition);
+		if (!strDisposition.empty()) {
+			LinphonePrivate::ContentDisposition contentDisposition =
+				LinphonePrivate::ContentDisposition(strDisposition);
+			L_GET_CPP_PTR_FROM_C_OBJECT(content)->setContentDisposition(contentDisposition);
+		}
+	}
+}
+
 const char *linphone_content_get_name (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())
@@ -283,6 +300,12 @@ const char *linphone_content_get_custom_header (const LinphoneContent *content, 
 	content->cache.header_value = L_C_TO_STRING(sal_body_handler_get_header(bodyHandler, headerName));
 	sal_body_handler_unref(bodyHandler);
 	return content->cache.header_value.c_str();
+}
+
+void linphone_content_add_custom_header(LinphoneContent *content, const char *header_name,
+										const char *header_value) {
+	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	c->addHeader(L_C_TO_STRING(header_name), L_C_TO_STRING(header_value));
 }
 
 const char *linphone_content_get_key (const LinphoneContent *content) {
@@ -469,8 +492,15 @@ static LinphoneContent *linphone_content_new_with_body_handler (const SalBodyHan
 		L_GET_CPP_PTR_FROM_C_OBJECT(content)->addHeader(header);
 		headers = headers->next;
 	}
+
 	if (sal_body_handler_get_encoding(bodyHandler))
 		linphone_content_set_encoding(content, sal_body_handler_get_encoding(bodyHandler));
+
+	const char *disposition = sal_body_handler_get_content_disposition(bodyHandler);
+	if (disposition) {
+		LinphonePrivate::ContentDisposition contentDisposition = LinphonePrivate::ContentDisposition(disposition);
+		L_GET_CPP_PTR_FROM_C_OBJECT(content)->setContentDisposition(contentDisposition);
+	}
 
 	return content;
 }
@@ -506,11 +536,13 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 	if (!content->is_dirty && content->body_handler)
 		return sal_body_handler_ref(content->body_handler);
 
+	auto cppContent = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+
 	SalBodyHandler *bodyHandler;
-	LinphonePrivate::ContentType contentType = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getContentType();
+	LinphonePrivate::ContentType contentType = cppContent->getContentType();
 	if (contentType.isMultipart() && parseMultipart) {
 		size_t size = linphone_content_get_size(content);
-		char *buffer = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(content)->getBodyAsUtf8String().c_str());
+		char *buffer = bctbx_strdup(cppContent->getBodyAsUtf8String().c_str());
 		const char *boundary = L_STRING_TO_C(contentType.getParameter("boundary").getValue());
 		belle_sip_multipart_body_handler_t *bh = NULL;
 		if( boundary)
@@ -534,12 +566,11 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 		bctbx_free(buffer);
 	} else {
 		bodyHandler = sal_body_handler_new();
-		sal_body_handler_set_data(bodyHandler, belle_sip_strdup(linphone_content_get_utf8_text(content)));
+		sal_body_handler_set_data(bodyHandler, belle_sip_strdup(cppContent->getBodyAsUtf8String().c_str()));
 	}
 
-	for (const auto &header : L_GET_CPP_PTR_FROM_C_OBJECT(content)->getHeaders()) {
-		belle_sip_header_t *additionalHeader = belle_sip_header_parse(header.asString().c_str());
-		belle_sip_body_handler_add_header(BELLE_SIP_BODY_HANDLER(bodyHandler), additionalHeader);
+	for (const auto &header : cppContent->getHeaders()) {
+		sal_body_handler_add_header(bodyHandler, header.getName().c_str(), header.getValueWithParams().c_str());
 	}
 
 	sal_body_handler_set_type(bodyHandler, contentType.getType().c_str());
@@ -550,6 +581,10 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 
 	if (linphone_content_get_encoding(content))
 		sal_body_handler_set_encoding(bodyHandler, linphone_content_get_encoding(content));
+
+	const LinphonePrivate::ContentDisposition &disposition = cppContent->getContentDisposition();
+	if (disposition.isValid())
+		sal_body_handler_set_content_disposition(bodyHandler, disposition.asString().c_str());
 
 	return bodyHandler;
 }

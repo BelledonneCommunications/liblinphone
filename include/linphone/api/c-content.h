@@ -163,7 +163,21 @@ LINPHONE_PUBLIC const char *linphone_content_get_encoding (const LinphoneContent
  * @param content #LinphoneContent object. @notnil
  * @param encoding The encoding of the data buffer. @maybenil
  */
-LINPHONE_PUBLIC void linphone_content_set_encoding (LinphoneContent *content, const char *encoding);
+LINPHONE_PUBLIC void linphone_content_set_encoding(LinphoneContent *content, const char *encoding);
+
+/**
+ * Get the disposition of the Content, for example "recipient-list".
+ * @param content #LinphoneContent object. @notnil
+ * @return The disposition of the Content. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_content_get_disposition(const LinphoneContent *content);
+
+/**
+ * Set the disposition of the Content, for example "recipient-list".
+ * @param content #LinphoneContent object. @notnil
+ * @param disposition The disposition of the Content. @maybenil
+ */
+LINPHONE_PUBLIC void linphone_content_set_disposition(LinphoneContent *content, const char *disposition);
 
 /**
  * Get the name associated with a RCS file transfer message. It is used to store the original filename of the file to be downloaded from server.
@@ -223,11 +237,20 @@ LINPHONE_PUBLIC LinphoneContent *linphone_content_find_part_by_header (
 LINPHONE_PUBLIC const char *linphone_content_get_custom_header (const LinphoneContent *content, const char *header_name);
 
 /**
+ * Adds a custom header in a content.
+ * @param content #LinphoneContent object. @notnil
+ * @param header_name The name of the header to add. @notnil
+ * @param header_value The value of the header to add. @notnil
+ */
+LINPHONE_PUBLIC void linphone_content_add_custom_header(LinphoneContent *content, const char *header_name,
+														const char *header_value);
+
+/**
  * Get the key associated with a RCS file transfer message if encrypted
  * @param content #LinphoneContent object. @notnil
  * @return The key to encrypt/decrypt the file associated to this content. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_content_get_key (const LinphoneContent *content);
+LINPHONE_PUBLIC const char *linphone_content_get_key(const LinphoneContent *content);
 
 /**
  * Get the size of key associated with a RCS file transfer message if encrypted
@@ -313,7 +336,7 @@ LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer (const LinphoneContent 
  * Tells whether or not this content contains an encrypted file
  * @return True is this content contains a file and this file is encrypted, false otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_content_is_file_encrypted (const LinphoneContent *content);
+LINPHONE_PUBLIC bool_t linphone_content_is_file_encrypted(const LinphoneContent *content);
 
 /************ */
 /* DEPRECATED */

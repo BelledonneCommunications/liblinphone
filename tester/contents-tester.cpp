@@ -20,13 +20,14 @@
 #include <algorithm>
 #include <string>
 
+#include "content/content-disposition.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"
 #include "content/header/header-param.h"
 #include "liblinphone_tester.h"
-#include "tester_utils.h"
 #include "logger/logger.h"
+#include "tester_utils.h"
 
 using namespace LinphonePrivate;
 using namespace std;
@@ -50,164 +51,172 @@ static const char *contentdesc2 = "Key for Pauline";
 static const char *contentdesc3 = "Key for Laure";
 static const char *contentdesc4 = "Encrypted message";
 
-static const char* source_multipart = \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n" \
-"Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n" \
-"Content-Description: Key for Marie\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" fullState=\"false\" uri=\"sip:rls@sip.linphone.org\" version=\"1\">" \
-"	<resource uri=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\">" \
-"	<instance cid=\"LO3VOS4@sip.linphone.org\" id=\"1\" state=\"active\"/>" \
-"		</resource>" \
-"	<resource uri=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\">" \
-"		<instance cid=\"5v6tTNM@sip.linphone.org\" id=\"1\" state=\"active\"/>" \
-"	</resource>" \
-"	<resource uri=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\">" \
-"		<instance cid=\"P2WAj~Y@sip.linphone.org\" id=\"1\" state=\"active\"/>" \
-"	</resource>" \
-"</list>" \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
-"Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n" \
-"Content-Description: Key for Pauline\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
-"	<tuple id=\"qmht-9\">" \
-"		<status>" \
-"			<basic>open</basic>" \
-"		</status>" \
-"		<contact>sip:+YYYYYYYYYY@sip.linphone.org;user=phone</contact>" \
-"		<timestamp>2017-10-25T13:18:26</timestamp>" \
-"	</tuple>" \
-"	<p1:person id=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">" \
-"		<p2:activities>" \
-"			<p2:away/>" \
-"		</p2:activities>" \
-"	</p1:person>" \
-"</presence>" \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
-"Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n" \
-"Content-Description: Key for Laure\r\n" \
-"Content-Encoding: b64\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
-"	<tuple id=\"szohvt\">" \
-"		<status>" \
-"			<basic>open</basic>" \
-"		</status>" \
-"		<contact>sip:+XXXXXXXXXX@sip.linphone.org;user=phone</contact>" \
-"		<timestamp>2017-10-25T13:18:26</timestamp>" \
-"	</tuple>" \
-"	<p1:person id=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">" \
-"		<p2:activities>" \
-"			<p2:away/>" \
-"		</p2:activities>" \
-"	</p1:person>" \
-"</presence>" \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
-"Content-Description: Encrypted message\r\n"
-"Content-Id: toto;param1=value1;param2;param3=value3\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
-"	<tuple id=\"oc3e08\">" \
-"		<status>" \
-"			<basic>open</basic>" \
-"		</status>" \
-"		<contact>sip:someone@sip.linphone.org</contact>" \
-"		<timestamp>2017-10-25T13:18:26</timestamp>" \
-"	</tuple>" \
-"	<p1:person id=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">" \
-"		<p2:activities>" \
-"			<p2:away/>" \
-"		</p2:activities>" \
-"	</p1:person>" \
-"</presence>" \
-"-----------------------------14737809831466499882746641449--\r\n";
+static const char *source_multipart =
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n"
+	"Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n"
+	"Content-Description: Key for Marie\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" fullState=\"false\" uri=\"sip:rls@sip.linphone.org\" version=\"1\">"
+	"	<resource uri=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\">"
+	"	<instance cid=\"LO3VOS4@sip.linphone.org\" id=\"1\" state=\"active\"/>"
+	"		</resource>"
+	"	<resource uri=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\">"
+	"		<instance cid=\"5v6tTNM@sip.linphone.org\" id=\"1\" state=\"active\"/>"
+	"	</resource>"
+	"	<resource uri=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\">"
+	"		<instance cid=\"P2WAj~Y@sip.linphone.org\" id=\"1\" state=\"active\"/>"
+	"	</resource>"
+	"</list>"
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+	"Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n"
+	"Content-Description: Key for Pauline\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" "
+	"xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">"
+	"	<tuple id=\"qmht-9\">"
+	"		<status>"
+	"			<basic>open</basic>"
+	"		</status>"
+	"		<contact>sip:+YYYYYYYYYY@sip.linphone.org;user=phone</contact>"
+	"		<timestamp>2017-10-25T13:18:26</timestamp>"
+	"	</tuple>"
+	"	<p1:person id=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">"
+	"		<p2:activities>"
+	"			<p2:away/>"
+	"		</p2:activities>"
+	"	</p1:person>"
+	"</presence>"
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+	"Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n"
+	"Content-Description: Key for Laure\r\n"
+	"Content-Encoding: b64\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" "
+	"xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">"
+	"	<tuple id=\"szohvt\">"
+	"		<status>"
+	"			<basic>open</basic>"
+	"		</status>"
+	"		<contact>sip:+XXXXXXXXXX@sip.linphone.org;user=phone</contact>"
+	"		<timestamp>2017-10-25T13:18:26</timestamp>"
+	"	</tuple>"
+	"	<p1:person id=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">"
+	"		<p2:activities>"
+	"			<p2:away/>"
+	"		</p2:activities>"
+	"	</p1:person>"
+	"</presence>"
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+	"Content-Description: Encrypted message\r\n"
+	"Content-Id: toto;param1=value1;param2;param3=value3\r\n"
+	"Content-Disposition: recipient-list\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" "
+	"xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">"
+	"	<tuple id=\"oc3e08\">"
+	"		<status>"
+	"			<basic>open</basic>"
+	"		</status>"
+	"		<contact>sip:someone@sip.linphone.org</contact>"
+	"		<timestamp>2017-10-25T13:18:26</timestamp>"
+	"	</tuple>"
+	"	<p1:person id=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">"
+	"		<p2:activities>"
+	"			<p2:away/>"
+	"		</p2:activities>"
+	"	</p1:person>"
+	"</presence>"
+	"-----------------------------14737809831466499882746641449--\r\n";
 
-static const char* generated_multipart = \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n" \
-"Content-Description: Key for Marie\r\n" \
-"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n" \
-"Content-Length:582\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" fullState=\"false\" uri=\"sip:rls@sip.linphone.org\" version=\"1\">" \
-"	<resource uri=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\">" \
-"	<instance cid=\"LO3VOS4@sip.linphone.org\" id=\"1\" state=\"active\"/>" \
-"		</resource>" \
-"	<resource uri=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\">" \
-"		<instance cid=\"5v6tTNM@sip.linphone.org\" id=\"1\" state=\"active\"/>" \
-"	</resource>" \
-"	<resource uri=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\">" \
-"		<instance cid=\"P2WAj~Y@sip.linphone.org\" id=\"1\" state=\"active\"/>" \
-"	</resource>" \
-"</list>" \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n" \
-"Content-Description: Key for Pauline\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
-"Content-Length:561\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
-"	<tuple id=\"qmht-9\">" \
-"		<status>" \
-"			<basic>open</basic>" \
-"		</status>" \
-"		<contact>sip:+YYYYYYYYYY@sip.linphone.org;user=phone</contact>" \
-"		<timestamp>2017-10-25T13:18:26</timestamp>" \
-"	</tuple>" \
-"	<p1:person id=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">" \
-"		<p2:activities>" \
-"			<p2:away/>" \
-"		</p2:activities>" \
-"	</p1:person>" \
-"</presence>" \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Encoding:b64\r\n" \
-"Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n" \
-"Content-Description: Key for Laure\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
-"Content-Length:561\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
-"	<tuple id=\"szohvt\">" \
-"		<status>" \
-"			<basic>open</basic>" \
-"		</status>" \
-"		<contact>sip:+XXXXXXXXXX@sip.linphone.org;user=phone</contact>" \
-"		<timestamp>2017-10-25T13:18:26</timestamp>" \
-"	</tuple>" \
-"	<p1:person id=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">" \
-"		<p2:activities>" \
-"			<p2:away/>" \
-"		</p2:activities>" \
-"	</p1:person>" \
-"</presence>" \
-"-----------------------------14737809831466499882746641449\r\n" \
-"Content-Description: Encrypted message\r\n" \
-"Content-Id: toto;param1=value1;param2;param3=value3\r\n" \
-"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n" \
-"Content-Length:546\r\n\r\n" \
-"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
-"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">" \
-"	<tuple id=\"oc3e08\">" \
-"		<status>" \
-"			<basic>open</basic>" \
-"		</status>" \
-"		<contact>sip:someone@sip.linphone.org</contact>" \
-"		<timestamp>2017-10-25T13:18:26</timestamp>" \
-"	</tuple>" \
-"	<p1:person id=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">" \
-"		<p2:activities>" \
-"			<p2:away/>" \
-"		</p2:activities>" \
-"	</p1:person>" \
-"</presence>" \
-"-----------------------------14737809831466499882746641449--\r\n";
+static const char *generated_multipart =
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Id: sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b\r\n"
+	"Content-Description: Key for Marie\r\n"
+	"Content-Type: application/rlmi+xml;charset=\"UTF-8\"\r\n"
+	"Content-Length:582\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<list xmlns=\"urn:ietf:params:xml:ns:rlmi\" fullState=\"false\" uri=\"sip:rls@sip.linphone.org\" version=\"1\">"
+	"	<resource uri=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\">"
+	"	<instance cid=\"LO3VOS4@sip.linphone.org\" id=\"1\" state=\"active\"/>"
+	"		</resource>"
+	"	<resource uri=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\">"
+	"		<instance cid=\"5v6tTNM@sip.linphone.org\" id=\"1\" state=\"active\"/>"
+	"	</resource>"
+	"	<resource uri=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\">"
+	"		<instance cid=\"P2WAj~Y@sip.linphone.org\" id=\"1\" state=\"active\"/>"
+	"	</resource>"
+	"</list>"
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Id: sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010\r\n"
+	"Content-Description: Key for Pauline\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+	"Content-Length:561\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" "
+	"xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">"
+	"	<tuple id=\"qmht-9\">"
+	"		<status>"
+	"			<basic>open</basic>"
+	"		</status>"
+	"		<contact>sip:+YYYYYYYYYY@sip.linphone.org;user=phone</contact>"
+	"		<timestamp>2017-10-25T13:18:26</timestamp>"
+	"	</tuple>"
+	"	<p1:person id=\"sip:+YYYYYYYYYY@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">"
+	"		<p2:activities>"
+	"			<p2:away/>"
+	"		</p2:activities>"
+	"	</p1:person>"
+	"</presence>"
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Encoding:b64\r\n"
+	"Content-Id: sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2\r\n"
+	"Content-Description: Key for Laure\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+	"Content-Length:561\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" "
+	"xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">"
+	"	<tuple id=\"szohvt\">"
+	"		<status>"
+	"			<basic>open</basic>"
+	"		</status>"
+	"		<contact>sip:+XXXXXXXXXX@sip.linphone.org;user=phone</contact>"
+	"		<timestamp>2017-10-25T13:18:26</timestamp>"
+	"	</tuple>"
+	"	<p1:person id=\"sip:+XXXXXXXXXX@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">"
+	"		<p2:activities>"
+	"			<p2:away/>"
+	"		</p2:activities>"
+	"	</p1:person>"
+	"</presence>"
+	"-----------------------------14737809831466499882746641449\r\n"
+	"Content-Description: Encrypted message\r\n"
+	"Content-Id: toto;param1=value1;param2;param3=value3\r\n"
+	"Content-Type: application/pidf+xml;charset=\"UTF-8\"\r\n"
+	"Content-Length:546\r\n"
+	"Content-Disposition: recipient-list\r\n\r\n"
+	"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+	"<presence xmlns=\"urn:ietf:params:xml:ns:pidf\" entity=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" "
+	"xmlns:p1=\"urn:ietf:params:xml:ns:pidf:data-model\">"
+	"	<tuple id=\"oc3e08\">"
+	"		<status>"
+	"			<basic>open</basic>"
+	"		</status>"
+	"		<contact>sip:someone@sip.linphone.org</contact>"
+	"		<timestamp>2017-10-25T13:18:26</timestamp>"
+	"	</tuple>"
+	"	<p1:person id=\"sip:+ZZZZZZZZZZ@sip.linphone.org;user=phone\" xmlns:p2=\"urn:ietf:params:xml:ns:pidf:rpid\">"
+	"		<p2:activities>"
+	"			<p2:away/>"
+	"		</p2:activities>"
+	"	</p1:person>"
+	"</presence>"
+	"-----------------------------14737809831466499882746641449--\r\n";
 
 static const char* part1 = \
 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>" \
@@ -432,6 +441,7 @@ void multipart_to_list () {
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getParameter("param1").getValue() == "value1");
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getParameter("param2").getValue().empty());
 	BC_ASSERT_TRUE(content4.getHeader("Content-Id").getParameter("param3").getValue() == "value3");
+	BC_ASSERT_TRUE(content4.getContentDisposition() == ContentDisposition::RecipientList);
 }
 
 void list_to_multipart () {
@@ -470,6 +480,7 @@ void list_to_multipart () {
 	content4.setContentType(ContentType("application", "pidf+xml"));
 	Header contentDesc4("Content-Description", "Encrypted message");
 	content4.addHeader(contentDesc4);
+	content4.setContentDisposition(ContentDisposition::RecipientList);
 	Header header = Header("Content-Id", "toto");
 	header.addParameter("param1", "value1");
 	header.addParameter("param2", "");
@@ -557,12 +568,36 @@ static void content_header_parsing(void) {
 	BC_ASSERT_TRUE(header.getValueWithParams() == value);
 }
 
-test_t contents_tests[] = {
-	TEST_NO_TAG("Multipart to list", multipart_to_list),
-	TEST_NO_TAG("List to multipart", list_to_multipart),
-	TEST_NO_TAG("Content type parsing", content_type_parsing),
-	TEST_NO_TAG("Content header parsing", content_header_parsing)
-};
+static void content_public_api(void) {
+	LinphoneContent *content = linphone_factory_create_content(linphone_factory_get());
+
+	const char *type = "application";
+	const char *subtype = "resource-lists+xml" ;
+	const char *disposition = "recipient-list" ;
+	const char *encoding = "b64";
+	const char *custom_header_name = "X-LINPHONE-TEST";
+	const char *custom_header_value = "1";
+
+	linphone_content_set_type(content, type);
+	linphone_content_set_subtype(content, subtype);
+	linphone_content_set_disposition(content, disposition);
+	linphone_content_set_encoding(content, encoding);
+	linphone_content_add_custom_header(content, custom_header_name, custom_header_value);
+
+	BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), type);
+	BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), subtype);
+	BC_ASSERT_STRING_EQUAL(linphone_content_get_disposition(content), disposition);
+	BC_ASSERT_STRING_EQUAL(linphone_content_get_encoding(content), encoding);
+	BC_ASSERT_STRING_EQUAL(linphone_content_get_custom_header(content, custom_header_name), custom_header_value);
+
+	linphone_content_unref(content);
+}
+
+test_t contents_tests[] = {TEST_NO_TAG("Multipart to list", multipart_to_list),
+						   TEST_NO_TAG("List to multipart", list_to_multipart),
+						   TEST_NO_TAG("Content type parsing", content_type_parsing),
+						   TEST_NO_TAG("Content header parsing", content_header_parsing),
+						   TEST_NO_TAG("Content C public API", content_public_api)};
 
 test_suite_t contents_test_suite = {
 	"Contents",
