@@ -390,7 +390,7 @@ LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const 
 }
 
 LinphoneAccountCreator * linphone_account_creator_create(LinphoneCore *core) {
-	return linphone_account_creator_new(core, "");
+	return linphone_account_creator_new(core, NULL);
 }
 
 void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
