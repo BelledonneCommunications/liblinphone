@@ -607,7 +607,6 @@ typedef void (*LinphoneCoreCbsConferenceInfoReceivedCb)(LinphoneCore *core, cons
 /**
  * Callback prototype for notifying the application a push notification was received.
  * On iOS it only works with pushkit (VoIP) pushes.
- * On Android it works only for pushes received after Core has been created.
  * @param core #LinphoneCore object @notnil
  * @param payload the body of the push notification, if any @maybenil
  */
