@@ -504,7 +504,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&complex_sip_call_test_suite);
 #endif
 #ifdef VCARD_ENABLED
-//	bc_tester_add_suite(&vcard_test_suite);
+	bc_tester_add_suite(&vcard_test_suite);
 #endif
 	bc_tester_add_suite(&utils_test_suite);
 	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);

@@ -30,7 +30,9 @@
 #include <bctoolbox/map.h>
 
 #include <time.h>
-#define CARDDAV_SERVER "http://dav.linphone.org/card.php/addressbooks/tester/default"
+#define CARDDAV_SERVER "http://dav.example.org/baikal/html/card.php/addressbooks/tester/default"
+#define ME_VCF "http://dav.example.org/baikal/html/card.php/addressbooks/tester/default/me.vcf"
+#define ME_VCF_2 "/baikal/html/card.php/addressbooks/tester/default/me.vcf"
 #define CARDDAV_SYNC_TIMEOUT 15000
 
 static void linphone_vcard_import_export_friends_test(void) {
@@ -765,7 +767,7 @@ static void carddav_integration(void) {
 	linphone_friend_unref(lf);
 
 	lvc2 = linphone_vcard_context_get_vcard_from_buffer(linphone_core_get_vcard_context(manager->lc), "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain Berfini\r\nIMPP:sip:sberfini@sip.linphone.org\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nEND:VCARD\r\n");
-	linphone_vcard_set_url(lvc2, "/card.php/addressbooks/tester/default/me.vcf");
+	linphone_vcard_set_url(lvc2, ME_VCF_2);
 	lf2 = linphone_friend_new_from_vcard(lvc2);
 	linphone_vcard_unref(lvc2);
 	linphone_friend_set_ref_key(lf2, refkey);
@@ -847,7 +849,7 @@ static void carddav_clean(void) {  // This is to ensure the content of the test 
 	bctbx_list_free(friends);
 
 	lvc = linphone_vcard_context_get_vcard_from_buffer(linphone_core_get_vcard_context(manager->lc), "BEGIN:VCARD\r\nVERSION:4.0\r\nFN:Sylvain Berfini\r\nIMPP:sip:sylvain@sip.linphone.org\r\nUID:1f08dd48-29ac-4097-8e48-8596d7776283\r\nEND:VCARD\r\n");
-	linphone_vcard_set_url(lvc, "http://dav.linphone.org/card.php/addressbooks/tester/default/me.vcf");
+	linphone_vcard_set_url(lvc, ME_VCF);
 	lf = linphone_friend_new_from_vcard(lvc);
 	linphone_vcard_unref(lvc);
 	linphone_friend_list_add_friend(lfl, lf);

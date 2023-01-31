@@ -6,10 +6,11 @@ ping_with_options=0
 sip_random_port=1
 
 [auth_info_0]
-domain=dav.linphone.org
+domain=dav.example.org
 username=tester
-ha1=102bdd8ccafef75cf7572c97969afd9a
+ha1=40aa5ad3b300405c20c5e4eda2da9751
 realm=BaikalDAV
+algorithm=MD5
 
 [tester]
 test_env=1
