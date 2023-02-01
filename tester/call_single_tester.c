@@ -4102,6 +4102,74 @@ static void early_media_call_with_codec_update(void) {
 	early_media_call_with_update_base(TRUE);
 }
 
+static void call_with_early_update_failed(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline =
+	    linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	bctbx_list_t *lcs = NULL;
+	LinphoneCall *marie_call, *pauline_call;
+	LinphoneCallParams *marie_params;
+
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+
+	LinphoneVideoPolicy vpol;
+	vpol.automatically_initiate = vpol.automatically_accept = TRUE;
+	linphone_core_set_video_policy(pauline->lc, &vpol);
+
+	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+
+	// Start the call again
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingInit, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1, 5000));
+
+	if (marie_call) {
+		marie_params = linphone_core_create_call_params(marie->lc, marie_call);
+		linphone_call_params_enable_video(marie_params, TRUE);
+		linphone_call_update(marie_call, marie_params);
+		linphone_call_params_unref(marie_params);
+	}
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call) {
+		linphone_call_accept(pauline_call);
+	}
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallConnected, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 1000));
+
+	if (pauline_call) {
+		const LinphoneCallParams *pauline_current_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(pauline_current_call_params));
+	}
+
+	if (marie_call) {
+		const LinphoneCallParams *marie_current_call_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_current_call_params));
+	}
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	end_call(pauline, marie);
+
+	bctbx_list_free(lcs);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void check_call_state(LinphoneCoreManager *mgr, LinphoneCallState state) {
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(mgr->lc));
 	if (linphone_core_get_current_call(mgr->lc))
@@ -7193,6 +7261,7 @@ test_t call_tests[] = {
     TEST_NO_TAG("Early-media call with ringing and network changing",
                 early_media_call_with_ringing_and_network_changing),
     TEST_NO_TAG("Early-media call with updated media session", early_media_call_with_session_update),
+    TEST_NO_TAG("Call with early update failed", call_with_early_update_failed),
     TEST_NO_TAG("Early-media call with updated codec", early_media_call_with_codec_update),
     TEST_NO_TAG("Call terminated by caller", call_terminated_by_caller),
     TEST_NO_TAG("Call without SDP", call_with_no_sdp),
@@ -7260,7 +7329,6 @@ test_t call_tests[] = {
     TEST_NO_TAG("Call with 2 audio streams", call_with_two_audio_streams),
     TEST_NO_TAG("Call with unknown stream, accepted", call_with_unknown_stream_accepted),
     TEST_NO_TAG("Simple call with display name", simple_call_with_display_name),
-
 };
 
 test_t call_not_established_tests[] = {

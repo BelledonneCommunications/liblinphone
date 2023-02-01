@@ -1468,6 +1468,11 @@ void SalCallOp::restartSessionTimersTimer(belle_sip_response_t *response, int de
 }
 
 bool SalCallOp::canSendRequest(bool noUserConsent, bool logError) {
+	if (!hasDialog()) {
+		lError() << "Dialog for op " << this << " has not been created yet";
+		return false;
+	}
+
 	auto state = belle_sip_dialog_get_state(mDialog);
 	bool ret = false;
 	if (state == BELLE_SIP_DIALOG_CONFIRMED) {
