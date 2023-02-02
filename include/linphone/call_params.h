@@ -96,27 +96,27 @@ LINPHONE_PUBLIC void linphone_call_params_enable_low_bandwidth(LinphoneCallParam
 LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_params, bool_t enabled);
 
 /**
+ * Check if tone indications are enabled
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if tone indications are enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_tone_indications_enabled(const LinphoneCallParams *params);
+
+/**
+ * Define whether tone indications are enabled
+ * @param params the #LinphoneCallParams @notnil
+ * @param enable TRUE to enable tone indications; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_call_params_enable_tone_indications(LinphoneCallParams *params, bool_t enable);
+
+/**
  * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
  * @param params the #LinphoneCallParams @notnil
  * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
  * @ingroup media_parameters
  * @deprecated 16/12/2021 Use linphone_call_params_capability_negotiation_reinvite_enabled() instead.
- */
-LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
-
-/**
- * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
- * @param params the #LinphoneCallParams @notnil
- * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
- * @ingroup media_parameters
- */
-LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
-
-/**
- * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
- * @param params the #LinphoneCallParams @notnil
- * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
- * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
 

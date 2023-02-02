@@ -364,7 +364,6 @@ private:
 	std::shared_ptr<SalMediaDescription> resultDesc = nullptr;
 	bool localIsOfferer = false;
 	bool expectMediaInAck = false;
-	bool toneIndicationsEnabled = true;
 	int freeStreamIndex = 0;
 	unsigned int remoteSessionId = 0;
 	unsigned int remoteSessionVer = 0;

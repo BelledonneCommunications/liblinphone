@@ -3879,14 +3879,8 @@ void MediaSession::setNatPolicy(LinphoneNatPolicy *pol) {
 	d->natPolicy = pol;
 }
 
-void MediaSession::enableToneIndications(bool enabled) {
-	L_D();
-	d->toneIndicationsEnabled = enabled;
-}
-
 bool MediaSession::toneIndicationsEnabled() const {
-	L_D();
-	return d->toneIndicationsEnabled;
+	return getMediaParams()->getPrivate()->toneIndicationsEnabled();
 }
 
 void MediaSession::configure(

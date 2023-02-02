@@ -1602,6 +1602,7 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	linphone_call_params_enable_video(params, confParams->videoEnabled());
 	linphone_call_params_set_description(params, L_STRING_TO_C(confParams->getDescription()));
 	linphone_call_params_set_conference_creation(params, TRUE);
+	linphone_call_params_enable_tone_indications(params, FALSE);
 
 	auto participant = Participant::create(nullptr, localAddr);
 	auto session = dynamic_pointer_cast<MediaSession>(
@@ -1618,7 +1619,6 @@ shared_ptr<CallSession> Core::createOrUpdateConferenceOnServer(const std::shared
 	Address meCleanedAddress(localAddr);
 	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, conferenceFactoryUri);
-	session->enableToneIndications(false);
 	LinphoneProxyConfig *destProxy = session->getDestProxy();
 	const LinphoneNatPolicy *natPolicy = nullptr;
 	if (destProxy) {

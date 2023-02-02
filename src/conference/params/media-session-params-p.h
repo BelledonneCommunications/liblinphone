@@ -77,6 +77,10 @@ public:
 		upPtime = value;
 	}
 	bool getUpdateCallWhenIceCompleted() const;
+
+	void enableToneIndications(const bool enable);
+	bool toneIndicationsEnabled() const;
+
 	void setUpdateCallWhenIceCompleted(bool value) {
 		/* apply to both case when set explicitely */
 		updateCallWhenIceCompleted = value;
@@ -149,6 +153,8 @@ public:
 
 	bool recordAware = false;
 	SalMediaRecord recordState = SalMediaRecordNone;
+
+	bool toneIndications = true;
 
 private:
 	bool _implicitRtcpFbEnabled = false;

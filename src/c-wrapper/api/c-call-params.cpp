@@ -82,6 +82,14 @@ SalStreamDir get_video_dir_from_call_params(const LinphoneCallParams *params) {
 	return sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
 }
 
+bool_t linphone_call_params_tone_indications_enabled(const LinphoneCallParams *params) {
+	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->toneIndicationsEnabled();
+}
+
+void linphone_call_params_enable_tone_indications(LinphoneCallParams *params, bool_t enable) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableToneIndications(!!enable);
+}
+
 bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params) {
 	return linphone_call_params_capability_negotiation_reinvite_enabled(params);
 }

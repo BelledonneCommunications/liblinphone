@@ -68,7 +68,6 @@ public:
 	void cancelDtmfs();
 	void setNatPolicy(LinphoneNatPolicy *pol);
 	void setSubject(const std::string &subject);
-	void enableToneIndications(bool enabled);
 	bool toneIndicationsEnabled() const;
 	void configure(LinphoneCallDir direction,
 	               LinphoneProxyConfig *cfg,

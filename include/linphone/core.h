@@ -5350,6 +5350,24 @@ LINPHONE_PUBLIC void linphone_core_enable_video_multicast(LinphoneCore *core, bo
 LINPHONE_PUBLIC bool_t linphone_core_video_multicast_enabled(const LinphoneCore *core);
 
 /**
+ * Enables or disables call tone indications.
+ * This value is taken into account from next tine call parameters are created.
+ * This feature can also be enabled per-call using #LinphoneCallParams.
+ * @param core the #LinphoneCore @notnil
+ * @param value a boolean to indicate whether the feature is to be enabled.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_call_tone_indications(const LinphoneCore *lc, bool_t yesno);
+
+/**
+ * Check whether tone indications of calls are enabled
+ * @param core #LinphoneCore @notnil
+ * @return TRUE if call tone indications are enabled
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_call_tone_indications_enabled(const LinphoneCore *lc);
+
+/**
  * Returns whether RTP bundle mode (also known as Media Multiplexing) is enabled.
  * See https://datatracker.ietf.org/doc/html/rfc8843 for more information.
  * @param core the #LinphoneCore @notnil

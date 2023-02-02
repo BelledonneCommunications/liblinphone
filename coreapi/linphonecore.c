@@ -8925,6 +8925,14 @@ bool_t linphone_core_video_multicast_enabled(const LinphoneCore *lc) {
 	return lc->rtp_conf.video_multicast_enabled;
 }
 
+void linphone_core_enable_call_tone_indications(const LinphoneCore *lc, bool_t yesno) {
+	linphone_config_set_int(linphone_core_get_config(lc), "misc", "tone_indications", yesno);
+}
+
+bool_t linphone_core_call_tone_indications_enabled(const LinphoneCore *lc) {
+	return !!linphone_config_get_int(linphone_core_get_config(lc), "misc", "tone_indications", TRUE);
+}
+
 bool_t linphone_core_rtp_bundle_enabled(const LinphoneCore *lc) {
 	return linphone_config_get_bool(lc->config, "rtp", "bundle", FALSE);
 }

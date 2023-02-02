@@ -241,7 +241,7 @@ void ToneManager::stopDtmfStream() {
 }
 
 LinphoneStatus ToneManager::playFile(const char *audiofile) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "[ToneManager] " << __func__ << " setting up to play file " << std::string(audiofile);
 	LinphoneCore *lc = getCore().getCCore();
 	MSFilter *f = getAudioResource(LocalPlayer, lc->sound_conf.play_sndcard, true);
 	int loopms = -1;
@@ -254,6 +254,9 @@ LinphoneStatus ToneManager::playFile(const char *audiofile) {
 		char *basename = bctbx_basename(audiofile);
 		fileString = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(basename);
 		bctbx_free(basename);
+		lInfo() << "[ToneManager] " << __func__ << " requested play file " << std::string(audiofile)
+		        << " is not found. Using sound resource from platform helper "
+		        << ((fileString.empty()) ? std::string("<unknown>") : fileString);
 		if (fileString != "") audiofileToUse = fileString.c_str();
 	}
 
@@ -266,7 +269,7 @@ LinphoneStatus ToneManager::playFile(const char *audiofile) {
 }
 
 void ToneManager::playTone(const MSDtmfGenCustomTone &tone) {
-	lInfo() << "[ToneManager] " << __func__;
+	lInfo() << "[ToneManager] " << __func__ << " playing DTMF tone " << std::string(tone.tone_name);
 	LinphoneCore *lc = getCore().getCCore();
 	shared_ptr<CallSession> session;
 	MSSndCard *card = NULL;
