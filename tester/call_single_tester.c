@@ -2195,7 +2195,6 @@ static void call_with_custom_headers(void) {
 
 	if (!BC_ASSERT_TRUE(call_with_caller_params(pauline,marie,params))) goto end;
 
-
 	call_marie=linphone_core_get_current_call(marie->lc);
 	call_pauline=linphone_core_get_current_call(pauline->lc);
 
@@ -2551,7 +2550,6 @@ static void call_callee_with_custom_header_or_sdp_cb(BCTBX_UNUSED(LinphoneCore *
 
 }
 
-
 static void call_callee_with_custom_header_or_sdp_attributes(void) {
 	int result;
 	LinphoneCoreManager *callee_mgr = linphone_core_manager_new("marie_rc");
@@ -2607,10 +2605,7 @@ static void call_callee_with_custom_header_or_sdp_attributes(void) {
 		BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
 	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,initial_caller.number_of_LinphoneCallOutgoingProgress+1, int, "%d");
 
-
 	//Create callee params with custom header and custom SDP
-
-
 	callee_params = linphone_core_create_call_params(callee_mgr->lc,call_callee);
 	linphone_call_params_add_custom_header(callee_params, "weather", "thunderstorm");
 	linphone_call_params_add_custom_sdp_media_attribute(callee_params, LinphoneStreamTypeAudio, "sleeping", "almost");
@@ -2685,6 +2680,12 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses, bool_t accep
 	call_pauline = linphone_core_get_current_call(pauline->lc);
 	call_marie = linphone_core_get_current_call(marie->lc);
 	linphone_call_ref(call_pauline);
+
+	const LinphoneCallParams* marie_call_lparams = linphone_call_get_params(call_marie);
+	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(marie_call_lparams));
+
+	const LinphoneCallParams* pauline_call_lparams = linphone_call_get_params(call_pauline);
+	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(pauline_call_lparams));
 
 	/*check if video stream is not offered*/
 	BC_ASSERT_EQUAL((int)linphone_call_get_stream_count(call_pauline), 1, int, "%i");
@@ -5957,6 +5958,8 @@ static void simple_call_with_gruu(void) {
 	BC_ASSERT_TRUE(linphone_address_has_uri_param(pauline_addr,"gr"));
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(pauline_addr),"sip.example.org");
 
+	linphone_core_enable_call_tone_indications(marie->lc, FALSE);
+
 	marie_call = linphone_core_invite_address(marie->lc, pauline_addr);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
 	if(!marie_call) goto end;
@@ -5982,6 +5985,12 @@ static void simple_call_with_gruu(void) {
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+
+	const LinphoneCallParams* marie_call_lparams = linphone_call_get_params(marie_call);
+	BC_ASSERT_FALSE(linphone_call_params_tone_indications_enabled(marie_call_lparams));
+
+	const LinphoneCallParams* pauline_call_lparams = linphone_call_get_params(pauline_call);
+	BC_ASSERT_TRUE(linphone_call_params_tone_indications_enabled(pauline_call_lparams));
 
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(marie_call));
 	if (!BC_ASSERT_TRUE(linphone_address_equal(contact_addr, pauline_addr))) {

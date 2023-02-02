@@ -42,6 +42,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 	audioBandwidthLimit = src->audioBandwidthLimit;
 	audioDirection = src->audioDirection;
 	audioMulticastEnabled = src->audioMulticastEnabled;
+	toneIndications = src->toneIndications;
 	usedAudioCodec = src->usedAudioCodec;
 	videoEnabled = src->videoEnabled;
 	videoDirection = src->videoDirection;
@@ -217,6 +218,14 @@ bool MediaSessionParamsPrivate::getUpdateCallWhenIceCompleted() const{
 	return updateCallWhenIceCompleted;
 }
 
+bool MediaSessionParamsPrivate::toneIndicationsEnabled () const {
+	return toneIndications;
+}
+
+void MediaSessionParamsPrivate::enableToneIndications (const bool enable) {
+	toneIndications = enable;
+}
+
 // =============================================================================
 
 MediaSessionParams::MediaSessionParams () : CallSessionParams(*new MediaSessionParamsPrivate) {
@@ -279,6 +288,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphon
 	d->audioDirection = LinphoneMediaDirectionSendRecv;
 	d->videoDirection = LinphoneMediaDirectionSendRecv;
 	d->earlyMediaSendingEnabled = !!linphone_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);
+	d->enableToneIndications(linphone_core_call_tone_indications_enabled(cCore));
 	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(cCore);
 	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
 	d->updateCallWhenIceCompleted = !!linphone_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);

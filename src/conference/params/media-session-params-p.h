@@ -46,6 +46,8 @@ public:
 	SalStreamDir getSalAudioDirection () const;
 	SalStreamDir getSalVideoDirection () const;
 
+	void enableToneIndications (const bool enable);
+	bool toneIndicationsEnabled () const;
 	void enableImplicitRtcpFb (bool value) { _implicitRtcpFbEnabled = value; }
 	bool implicitRtcpFbEnabled () const { return _implicitRtcpFbEnabled; }
 	int getDownBandwidth () const { return downBandwidth; }
@@ -114,6 +116,8 @@ public:
 
 	bool recordAware = false;
 	SalMediaRecord recordState = SalMediaRecordNone;
+
+	bool toneIndications = true;
 
 private:
 	bool _implicitRtcpFbEnabled = false;
