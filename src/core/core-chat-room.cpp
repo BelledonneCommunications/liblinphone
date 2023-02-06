@@ -944,4 +944,12 @@ LinphoneReason Core::onSipMessageReceived(SalOp *op, const SalMessage *sal_msg) 
 	return reason;
 }
 
+void Core::enableEmptyChatroomsDeletion(const bool enable) {
+	deleteEmptyChatrooms = enable;
+}
+
+bool Core::emptyChatroomsDeletionEnabled() const {
+	return deleteEmptyChatrooms;
+}
+
 LINPHONE_END_NAMESPACE

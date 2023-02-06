@@ -1104,23 +1104,25 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 	}
 
 	/* if all devices of participants are left we'll delete the chatroom*/
-	bool allLeft = true;
-	for (const auto &participant : q->cachedParticipants){
-		if (!allDevicesLeft(participant)){
-			allLeft = false;
-			break;
+	if (q->getCore()->emptyChatroomsDeletionEnabled()) {
+		bool allLeft = true;
+		for (const auto &participant : q->cachedParticipants){
+			if (!allDevicesLeft(participant)){
+				allLeft = false;
+				break;
+			}
 		}
-	}
-	if (allLeft){
-		// Delete the chat room from the main DB as its termination process started and it cannot be retrieved in the future
-		lInfo() << q << ": Delete chatroom from MainDB as not participant is left";
-		mainDb->deleteChatRoom(q->getConferenceId());
-		if (q->getState() != ConferenceInterface::State::TerminationPending) {
-			q->setState(ConferenceInterface::State::TerminationPending);
+		if (allLeft){
+			// Delete the chat room from the main DB as its termination process started and it cannot be retrieved in the future
+			lInfo() << q << ": Delete chatroom from MainDB as not participant is left";
+			mainDb->deleteChatRoom(q->getConferenceId());
+			if (q->getState() != ConferenceInterface::State::TerminationPending) {
+				q->setState(ConferenceInterface::State::TerminationPending);
+			}
+			q->setState(ConferenceInterface::State::Terminated);
+			lInfo() << q << ": No participant left, deleting the chat room";
+			requestDeletion();
 		}
-		q->setState(ConferenceInterface::State::Terminated);
-		lInfo() << q << ": No participant left, deleting the chat room";
-		requestDeletion();
 	}
 }
 

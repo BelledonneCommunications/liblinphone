@@ -197,6 +197,9 @@ public:
 	LinphoneReason onSipMessageReceived(SalOp *op, const SalMessage *sal_msg);
 	LinphoneReason handleChatMessagesAggregation(std::shared_ptr<AbstractChatRoom> chatRoom, SalOp *op, const SalMessage *sal_msg);
 
+	void enableEmptyChatroomsDeletion(const bool enable);
+	bool emptyChatroomsDeletionEnabled() const;
+
 	// ---------------------------------------------------------------------------
 	// Audio Video Conference.
 	// ---------------------------------------------------------------------------
@@ -316,6 +319,8 @@ public:
 	bool isCurrentlyAggregatingChatMessages ();
 private:
 	Core ();
+
+	bool deleteEmptyChatrooms = true;
 
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 	const ConferenceId prepareConfereceIdForSearch(const ConferenceId & conferenceId) const;

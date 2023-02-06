@@ -2954,6 +2954,8 @@ static void linphone_core_init(LinphoneCore *lc, LinphoneCoreCbs *cbs, LpConfig 
 
 	lc->push_config = linphone_push_notification_config_new();
 
+	linphone_core_enable_empty_chatrooms_deletion(lc,linphone_config_get_bool(lc->config, "misc", "empty_chat_room_deletion", TRUE));
+
 #ifdef __ANDROID__
 	if (system_context) {
 		JNIEnv *env = ms_get_jni_env();
@@ -9141,3 +9143,13 @@ LinphoneStatus linphone_core_config_sync(LinphoneCore *core) {
 #endif
 	return linphone_config_sync(core->config);
 }
+
+bool_t linphone_core_empty_chatrooms_deletion_enabled(const LinphoneCore *core) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(core)->emptyChatroomsDeletionEnabled();
+}
+
+void linphone_core_enable_empty_chatrooms_deletion(LinphoneCore *core, bool_t enable) {
+	linphone_config_set_bool(core->config, "misc", "empty_chat_room_deletion", enable);
+	L_GET_CPP_PTR_FROM_C_OBJECT(core)->enableEmptyChatroomsDeletion(enable);
+}
+
