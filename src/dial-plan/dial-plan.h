@@ -70,7 +70,7 @@ private:
 	int nationalNumberLength = 0; // Maximum national number length.
 	std::string internationalCallPrefix; // International call prefix, ex: 00 in europe.
 
-	static const std::list<std::shared_ptr<DialPlan>> DialPlans;
+	static const std::list<std::shared_ptr<DialPlan>> sDialPlans;
 };
 
 LINPHONE_END_NAMESPACE

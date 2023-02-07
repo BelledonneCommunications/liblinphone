@@ -80,8 +80,8 @@ public:
 	void setCurrentCall (const std::shared_ptr<Call> &call);
 	void setVideoWindowId (bool preview, void *id);
 
-	bool setOutputAudioDevice(AudioDevice *audioDevice);
-	bool setInputAudioDevice(AudioDevice *audioDevice);
+	bool setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	bool setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
 
 	void loadChatRooms ();
 	void handleEphemeralMessages (time_t currentTime);
@@ -206,7 +206,7 @@ private:
 	BackgroundTask pushReceivedBackgroundTask {"Push received background task"};
 	std::string lastPushReceivedCallId = "";
 
-	std::list<AudioDevice *> audioDevices;
+	std::list<std::shared_ptr<AudioDevice>> audioDevices;
 	bool stopAsyncEndEnabled = false;
 	ExtraBackgroundTask bgTask {"Stop core async end"};
 	

@@ -248,12 +248,28 @@
 		}
 	}
 
-    ms_message("Notification [%p] processed", userInfo);
+
+	NSError *error;
+	NSString *json = nullptr;
+	/* Serialize the Push Notification dictionnary as a json. Indeed, userInfo.description has an output for debugging purpose,
+	   but no parser, which makes this output useless for the application.
+	*/
+	NSData *jsonData = [NSJSONSerialization dataWithJSONObject:userInfo
+                                                   options:NSJSONWritingPrettyPrinted
+                                                     error:&error];
+
+	if (! jsonData) {
+		ms_error("Cannot serialize push notification payload to json: %s", [error.description UTF8String] );
+	} else {
+		json = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+	}
 	// Tell the core to make sure that we are registered.
 	// It will initiate socket connections, which seems to be required.
 	// Indeed it is observed that if no network action is done in the notification handler, then
 	// iOS kills us.
-	linphone_core_push_notification_received(lc, [userInfo.description UTF8String], [callId UTF8String]);
+	ms_message("Notification [%p] processed, notifying core and application with payload :\n%s", userInfo, [json UTF8String]);
+	linphone_core_push_notification_received(lc, json ? [json UTF8String] : "<no payload>", [callId UTF8String]);
+	[json release];
 }
 
 @end

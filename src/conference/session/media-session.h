@@ -133,10 +133,10 @@ public:
 	void setParams (const MediaSessionParams *msp);
 	void setSpeakerVolumeGain (float value);
 
-	bool setInputAudioDevice(AudioDevice *audioDevice);
-	bool setOutputAudioDevice(AudioDevice *audioDevice);
-	AudioDevice* getInputAudioDevice() const;
-	AudioDevice* getOutputAudioDevice() const;
+	bool setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	bool setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
 	void * getParticipantWindowId(const std::string label);
 

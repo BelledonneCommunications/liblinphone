@@ -36,7 +36,7 @@ LINPHONE_BEGIN_NAMESPACE
  * http://en.wikipedia.org/wiki/Telephone_numbers_in_Europe
  * imported from https://en.wikipedia.org/wiki/List_of_mobile_phone_number_series_by_country
  */
-const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
+const list<shared_ptr<DialPlan>> DialPlan::sDialPlans = {
 	// Country, iso country code, e164 country calling code, number length, international usual prefix
 	DialPlan::create("Afghanistan", "AF", "93", 9, "00"),
 	DialPlan::create("Albania", "AL", "355", 9, "00"),
@@ -345,7 +345,7 @@ int DialPlan::lookupCccFromE164 (const string &e164) {
 	do {
 		found = 0;
 		i++;
-		for (const auto &dp : DialPlans) {
+		for (const auto &dp : sDialPlans) {
 			if (strncmp(dp->getCountryCallingCode().c_str(), &e164[1], i) == 0) {
 				electedDialPlan = dp;
 				found++;
@@ -360,7 +360,7 @@ int DialPlan::lookupCccFromE164 (const string &e164) {
 }
 
 int DialPlan::lookupCccFromIso (const string &iso) {
-	for (const auto &dp : DialPlans) {
+	for (const auto &dp : sDialPlans) {
 		if (dp->getIsoCountryCode() == iso)
 			return Utils::stoi(dp->getCountryCallingCode());
 	}
@@ -376,7 +376,7 @@ shared_ptr<DialPlan> DialPlan::findByCcc (const string &ccc) {
 	if (ccc.empty())
 		return MostCommon;
 
-	for (const auto &dp : DialPlans) {
+	for (const auto &dp : sDialPlans) {
 		if (dp->getCountryCallingCode() == ccc)
 			return dp;
 	}
@@ -386,7 +386,7 @@ shared_ptr<DialPlan> DialPlan::findByCcc (const string &ccc) {
 }
 
 const list<shared_ptr<DialPlan>> &DialPlan::getAllDialPlans () {
-	return DialPlans;
+	return sDialPlans;
 }
 
 LINPHONE_END_NAMESPACE

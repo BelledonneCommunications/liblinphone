@@ -263,9 +263,6 @@ void CorePrivate::shutdown() {
 		linphone_friend_list_enable_subscriptions(list,FALSE);
 	}
 	
-	for (auto &audioDevice : audioDevices) {
-		audioDevice->unref();
-	}
 	audioDevices.clear();
 
 	if (toneManager) toneManager->freeAudioResources();
@@ -504,7 +501,7 @@ void CorePrivate::stopEphemeralMessageTimer () {
 	}
 }
 
-bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+bool CorePrivate::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
 	L_Q();
 	if (audioDevice && ( (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) ) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
@@ -528,7 +525,7 @@ bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 	return applied;
 }
 
-bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+bool CorePrivate::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
 	L_Q();
 	if (audioDevice && ( (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) ) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
@@ -836,9 +833,6 @@ bool Core::isFriendListSubscriptionEnabled () const {
 // ---------------------------------------------------------------------------
 
 void CorePrivate::computeAudioDevicesList() {
-	for (auto &audioDevice : audioDevices) {
-		audioDevice->unref();
-	}
 	audioDevices.clear();
 
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
@@ -846,12 +840,11 @@ void CorePrivate::computeAudioDevicesList() {
 
 	for (const bctbx_list_t *it = list; it != nullptr; it = bctbx_list_next(it)) {
 		MSSndCard *card = static_cast<MSSndCard *>(bctbx_list_get_data(it));
-		AudioDevice *audioDevice = new AudioDevice(card);
-		audioDevices.push_back(audioDevice);
+		audioDevices.push_back((new AudioDevice(card))->toSharedPtr() );
 	}
 }
 
-AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const {
+std::shared_ptr<AudioDevice> Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const {
 	for (const auto &audioDevice : getExtendedAudioDevices()) {
 		if (audioDevice->getSoundCard() == soundCard) {
 			return audioDevice;
@@ -860,8 +853,8 @@ AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) cons
 	return nullptr;
 }
 
-const list<AudioDevice *> Core::getAudioDevices() const {
-	std::list<AudioDevice *> audioDevices;
+list<shared_ptr<AudioDevice>> Core::getAudioDevices() const {
+	std::list<shared_ptr<AudioDevice>> lAudioDevices;
 	bool micFound = false, speakerFound = false, earpieceFound = false;
 	bool bluetoothMicFound = false, bluetoothSpeakerFound = false;
 	bool headsetMicFound = false, headsetSpeakerFound = false;
@@ -871,26 +864,26 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 			case AudioDevice::Type::Microphone:
 				if (!micFound) {
 					micFound = true;
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				}
 				break;
 			case AudioDevice::Type::Earpiece:
 				if (!earpieceFound) {
 					earpieceFound = true;
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				}
 				break;
 			case AudioDevice::Type::Speaker:
 				if (!speakerFound) {
 					speakerFound = true;
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				}
 				break;
 			case AudioDevice::Type::Bluetooth:
 				if (!bluetoothMicFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record))) {
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				} else if (!bluetoothSpeakerFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play))) {
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				}
 
 				// Do not allow to be set to false
@@ -901,9 +894,9 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 			case AudioDevice::Type::Headphones:
 			case AudioDevice::Type::Headset:
 				if (!headsetMicFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record))) {
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				} else if (!headsetSpeakerFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play))) {
-					audioDevices.push_back(audioDevice);
+					lAudioDevices.push_back(audioDevice);
 				}
 
 				// Do not allow to be set to false
@@ -912,22 +905,22 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 				if (!headsetSpeakerFound) headsetSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
 				break;
 			case AudioDevice::Type::HearingAid:
-				audioDevices.push_back(audioDevice);
+				lAudioDevices.push_back(audioDevice);
 				break;
 			default:
 				break;
 		}
 		if (micFound && speakerFound && earpieceFound && bluetoothMicFound && bluetoothSpeakerFound && headsetMicFound && headsetSpeakerFound) break;
 	}
-	return audioDevices;
+	return lAudioDevices;
 }
 
-const list<AudioDevice *> Core::getExtendedAudioDevices() const {
+list<std::shared_ptr<AudioDevice>> Core::getExtendedAudioDevices() const {
 	L_D();
 	return d->audioDevices; 
 }
 
-void Core::setInputAudioDevice(AudioDevice *audioDevice) {
+void Core::setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	L_D();
 	if(getCCore()->use_files) {
 		lInfo() << "Trying to change input audio device on core while use_files mode is on : do nothing";
@@ -940,7 +933,7 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+void Core::setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	L_D();
 	if(getCCore()->use_files) {
 		lInfo() << "Trying to change output audio device on core while use_files mode is on : do nothing";
@@ -953,7 +946,7 @@ void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-AudioDevice* Core::getInputAudioDevice() const {
+std::shared_ptr<AudioDevice> Core::getInputAudioDevice() const {
 
 	// If the core in a local conference, then get the audio device of the audio control interface
 	if (getCCore()->conf_ctx){
@@ -974,7 +967,7 @@ AudioDevice* Core::getInputAudioDevice() const {
 	return nullptr;
 }
 
-AudioDevice* Core::getOutputAudioDevice() const {
+std::shared_ptr<AudioDevice> Core::getOutputAudioDevice() const {
 
 	// If the core in a local conference, then get the audio device of the audio control interface
 	if (getCCore()->conf_ctx){
@@ -995,7 +988,7 @@ AudioDevice* Core::getOutputAudioDevice() const {
 	return nullptr;
 }
 
-void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
+void Core::setDefaultInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return;
@@ -1003,7 +996,7 @@ void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
 	linphone_core_set_capture_device(getCCore(), audioDevice->getId().c_str());
 }
 
-void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
+void Core::setDefaultOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
@@ -1015,14 +1008,14 @@ void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
 	L_D();
 
 	if (card) {
-		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		auto audioDevice = findAudioDeviceMatchingMsSoundCard(card);
 		if (audioDevice) {
 			lInfo() << "[ " << __func__ << " ] on device: " << audioDevice->getDeviceName();
 			d->setOutputAudioDevice(audioDevice);
 			return;
 		}
 	}
-	AudioDevice * defaultAudioDevice = getDefaultOutputAudioDevice();
+	auto defaultAudioDevice = getDefaultOutputAudioDevice();
 	if (defaultAudioDevice) {
 		lInfo() << "[ " << __func__ << " ] on default device: " << defaultAudioDevice->getDeviceName();
 		d->setOutputAudioDevice(defaultAudioDevice);
@@ -1031,7 +1024,7 @@ void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
 	MSSndCard *defaultCard = ms_snd_card_manager_get_default_playback_card(snd_card_manager);
 	if (defaultCard) {
-		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		auto audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
 		if (audioDevice) {
 			lInfo() << "[ " << __func__ << " ] on device matching playback capture card: " << audioDevice->getDeviceName();
 			d->setOutputAudioDevice(audioDevice);
@@ -1049,14 +1042,14 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 	L_D();
 
 	if (card) {
-		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		auto audioDevice = findAudioDeviceMatchingMsSoundCard(card);
 		if (audioDevice) {
 			lInfo() << "[ " << __func__ << " ] on device: " << audioDevice->getDeviceName();
 			d->setInputAudioDevice(audioDevice);
 			return;
 		}
 	}
-	AudioDevice * defaultAudioDevice = getDefaultInputAudioDevice();
+	auto defaultAudioDevice = getDefaultInputAudioDevice();
 	if (defaultAudioDevice) {
 		lInfo() << "[ " << __func__ << " ] on default device: " << defaultAudioDevice->getDeviceName();
 		d->setInputAudioDevice(defaultAudioDevice);
@@ -1065,7 +1058,7 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
 	MSSndCard *defaultCard = ms_snd_card_manager_get_default_capture_card(snd_card_manager);
 	if (defaultCard) {
-		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		auto audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
 		if (audioDevice) {
 			lInfo() << "[ " << __func__ << " ] on device matching default capture card: " << audioDevice->getDeviceName();
 			d->setInputAudioDevice(audioDevice);
@@ -1081,7 +1074,7 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 
 
 
-AudioDevice* Core::getDefaultInputAudioDevice() const {
+std::shared_ptr<AudioDevice> Core::getDefaultInputAudioDevice() const {
 	if(getCCore()->use_files)
 		return nullptr;
 	else{
@@ -1090,7 +1083,7 @@ AudioDevice* Core::getDefaultInputAudioDevice() const {
 	}
 }
 
-AudioDevice* Core::getDefaultOutputAudioDevice() const {
+std::shared_ptr<AudioDevice> Core::getDefaultOutputAudioDevice() const {
 	if(getCCore()->use_files)
 		return nullptr;
 	else{
@@ -1291,7 +1284,7 @@ std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string 
 // Ldap.
 // -----------------------------------------------------------------------------
 
-std::list<std::shared_ptr<Ldap>> Core::getLdapList() {
+const std::list<std::shared_ptr<Ldap>> & Core::getLdapList() {
 	return getPrivate()->mLdapServers;
 }
 

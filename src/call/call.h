@@ -212,12 +212,12 @@ public:
 	
 	// -----------------------------------------------------------------------------
 	
-	void setInputAudioDevice(AudioDevice *audioDevice);
-	bool setInputAudioDevicePrivate(AudioDevice *audioDevice);
-	void setOutputAudioDevice(AudioDevice *audioDevice);
-	bool setOutputAudioDevicePrivate(AudioDevice *audioDevice);
-	AudioDevice *getInputAudioDevice() const;
-	AudioDevice *getOutputAudioDevice() const;
+	void setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	bool setInputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audioDevice);
+	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	bool setOutputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audioDevice);
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 	
 	// -----------------------------------------------------------------------------
 

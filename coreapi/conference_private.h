@@ -157,10 +157,10 @@ public:
 	bool isConferenceEnded() const;
 	bool isConferenceStarted() const;
 
-	void setInputAudioDevice(AudioDevice *audioDevice);
-	void setOutputAudioDevice(AudioDevice *audioDevice);
-	AudioDevice *getInputAudioDevice() const;
-	AudioDevice *getOutputAudioDevice() const;
+	void setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
 	virtual AudioControlInterface * getAudioControlInterface() const = 0;
 	virtual VideoControlInterface * getVideoControlInterface() const = 0;

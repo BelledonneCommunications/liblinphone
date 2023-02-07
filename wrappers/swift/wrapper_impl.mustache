@@ -442,7 +442,7 @@ public class {{className}} : LinphoneObject
 				listTemp = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(listTemp?.pointee.next)
 			}
 			{{#isNotConst}}
-			bctbx_list_free(cList)
+			bctbx_list_free_with_data(cList, belle_sip_object_unref)
 			{{/isNotConst}}
 			return swiftList
 			{{/is_class_list}}

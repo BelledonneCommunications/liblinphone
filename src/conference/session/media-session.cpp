@@ -3461,10 +3461,6 @@ MediaSession::~MediaSession () {
 	d->freeResources();
 	if (d->natPolicy)
 		linphone_nat_policy_unref(d->natPolicy);
-	if (d->currentOutputAudioDevice)
-		d->currentOutputAudioDevice->unref();
-	if (d->currentInputAudioDevice)
-		d->currentInputAudioDevice->unref();
 }
 
 // -----------------------------------------------------------------------------
@@ -4625,7 +4621,7 @@ bool MediaSession::isTerminator() const {
 	return d->localIsTerminator;
 }
 
-bool MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
+bool MediaSession::setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	L_D();
 
 	if (!audioDevice) {
@@ -4647,7 +4643,7 @@ bool MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 	return false;
 }
 
-bool MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
+bool MediaSession::setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	L_D();
 
 	if (!audioDevice) {
@@ -4669,14 +4665,14 @@ bool MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	return false;
 }
 
-AudioDevice* MediaSession::getInputAudioDevice() const {
+std::shared_ptr<AudioDevice> MediaSession::getInputAudioDevice() const {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (i) return i->getInputDevice();
 	return nullptr;
 }
 
-AudioDevice* MediaSession::getOutputAudioDevice() const {
+std::shared_ptr<AudioDevice> MediaSession::getOutputAudioDevice() const {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	if (i) return i->getOutputDevice();
