@@ -174,7 +174,7 @@ LINPHONE_PUBLIC LinphoneErrorInfo* linphone_account_get_error_info(LinphoneAccou
 /**
  * Return the contact address of the account.
  * @param account The #LinphoneAccount object. @notnil
- * @return a #LinphoneAddress correspong to the contact address of the account. @maybenil
+ * @return a #LinphoneAddress correspong to the contact address of the account. @maybenil @tobefreed
 **/
 LINPHONE_PUBLIC LinphoneAddress* linphone_account_get_contact_address(LinphoneAccount *account);
 
@@ -270,7 +270,7 @@ LINPHONE_PUBLIC bool_t linphone_account_is_phone_number(LinphoneAccount *account
  * This function will always generate a normalized username if input is a phone number.
  * @param account The #LinphoneAccount object containing country code and/or escape symbol. If NULL passed, will use default configuration. @maybenil
  * @param username The string to parse. @notnil
- * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil
+ * @return NULL if input is an invalid phone number, normalized phone number from username input otherwise. @maybenil @tobefreed
 */
 LINPHONE_PUBLIC char* linphone_account_normalize_phone_number(LinphoneAccount *account, const char *username);
 
@@ -285,7 +285,7 @@ LINPHONE_PUBLIC char* linphone_account_normalize_phone_number(LinphoneAccount *a
  * The result is a syntactically correct SIP address.
  * @param account The #LinphoneAccount object containing country code, escape symbol and/or domain name. Can be NULL if domain is already provided. @maybenil
  * @param username The string to parse. @notnil
- * @return NULL if invalid input, normalized sip address otherwise. @maybenil
+ * @return NULL if invalid input, normalized sip address otherwise. @maybenil @tobefreed
 */
 LINPHONE_PUBLIC LinphoneAddress* linphone_account_normalize_sip_uri(LinphoneAccount *account, const char* username);
 

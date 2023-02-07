@@ -274,22 +274,21 @@ void MS2AudioStream::audioRouteChangeCb (void* userData, bool_t needReloadSoundD
 		bool inputRequiresUpdate = !newInput.empty();
 		bool outputRequiresUpdate = !newOutput.empty();
 		
-		bctbx_list_t * deviceIt = linphone_core_get_extended_audio_devices(core->getCCore());
-		while ( deviceIt != NULL && (inputRequiresUpdate || outputRequiresUpdate) ) {
-			LinphoneAudioDevice * pDevice = (LinphoneAudioDevice *) deviceIt->data;
-			std::string deviceName(linphone_audio_device_get_device_name(pDevice));
-			
-			if (inputRequiresUpdate && newInput == deviceName) {
-				linphone_core_set_input_audio_device(core->getCCore(), pDevice);
-				inputRequiresUpdate = false;
+		if (inputRequiresUpdate || outputRequiresUpdate){
+			auto devices = core->getExtendedAudioDevices();
+			for (auto device : devices) {
+				std::string deviceName = device->getDeviceName();
+				
+				if (inputRequiresUpdate && newInput == deviceName) {
+					core->setInputAudioDevice(device);
+					inputRequiresUpdate = false;
+				}
+				if (outputRequiresUpdate && newOutput == deviceName) {
+					core->setOutputAudioDevice(device);
+					outputRequiresUpdate = false;
+				}
 			}
-			if (outputRequiresUpdate && newOutput == deviceName) {
-				linphone_core_set_output_audio_device(core->getCCore(), pDevice);
-				outputRequiresUpdate = false;
-			}
-			deviceIt = deviceIt->next;
 		}
-		bctbx_list_free_with_data(deviceIt, (void (*)(void *))linphone_audio_device_unref);
 		
 		if (inputRequiresUpdate) {
 			ms_warning("Current audio route input is '%s', but we could not find the matching device in the linphone devices list", newInput.c_str());
@@ -309,7 +308,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 
-	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	auto outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
 	MS2AudioMixer *audioMixer = getAudioMixer();
 	MSSndCard *playcard = nullptr;
 	// try to get currently used playcard if it was already set
@@ -382,7 +381,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
 
-	AudioDevice *inputAudioDevice = getMediaSessionPrivate().getCurrentInputAudioDevice();
+	auto inputAudioDevice = getMediaSessionPrivate().getCurrentInputAudioDevice();
 	MSSndCard *captcard = nullptr;
 	// try to get currently used playcard if it was already set
 	if (inputAudioDevice) {
@@ -967,7 +966,7 @@ int MS2AudioStream::restartStream(RestartReason reason) {
 	return -1;
 }
 
-void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
+void MS2AudioStream::setInputDevice(const shared_ptr<AudioDevice> &audioDevice) {
 	if (!mStream) return;
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
@@ -978,7 +977,7 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 	}
 }
 
-void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
+void MS2AudioStream::setOutputDevice(const shared_ptr<AudioDevice> &audioDevice) {
 	if (!mStream) return;
 	auto soundcard = audioDevice ? audioDevice->getSoundCard() : nullptr;
 	setSoundCardType(soundcard);
@@ -989,13 +988,13 @@ void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
 	}
 }
 
-AudioDevice* MS2AudioStream::getInputDevice() const {
+shared_ptr<AudioDevice> MS2AudioStream::getInputDevice() const {
 	if (!mStream) return nullptr;
 	MSSndCard *card = audio_stream_get_input_ms_snd_card(mStream);
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);
 }
 
-AudioDevice* MS2AudioStream::getOutputDevice() const {
+shared_ptr<AudioDevice> MS2AudioStream::getOutputDevice() const {
 	if (!mStream) return nullptr;
 	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
 	return getCore().findAudioDeviceMatchingMsSoundCard(card);

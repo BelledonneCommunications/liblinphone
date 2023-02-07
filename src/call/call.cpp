@@ -265,7 +265,7 @@ void Call::terminateBecauseOfLostMedia () {
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 }
 
-bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
+bool Call::setInputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if (!audioDevice) {
 		lError() << "Unable to use audio device [" << audioDevice << "] as recording device";
 		return false;
@@ -279,7 +279,7 @@ bool Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 
 }
 
-bool Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
+bool Call::setOutputAudioDevicePrivate(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if (!audioDevice) {
 		lError() << "Unable to use audio device [" << audioDevice << "] as playback device";
 		return false;
@@ -800,13 +800,13 @@ void Call::configureSoundCardsFromCore(const MediaSessionParams *msp) {
 		setOutputAudioDevicePrivate(msp->getOutputAudioDevice());
 		return;
 	}
-	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
+	auto outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
 	if (outputAudioDevice) {
 		setOutputAudioDevicePrivate(outputAudioDevice);
 	} else if(!getCore()->getCCore()->use_files){
 		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
 	}
-	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
+	auto inputAudioDevice = getCore()->getDefaultInputAudioDevice();
 	if (inputAudioDevice) {
 		setInputAudioDevicePrivate(inputAudioDevice);
 	} else if(!getCore()->getCCore()->use_files){
@@ -1244,7 +1244,7 @@ void Call::setSpeakerVolumeGain (float value) {
 	static_pointer_cast<MediaSession>(getActiveSession())->setSpeakerVolumeGain(value);
 }
 
-void Call::setInputAudioDevice(AudioDevice *audioDevice) {
+void Call::setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if(getCore()->getCCore()->use_files) {
 		lInfo() << "Trying to change input audio device on call while use_files mode is on : do nothing";
 		return;
@@ -1254,7 +1254,7 @@ void Call::setInputAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
+void Call::setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if(getCore()->getCCore()->use_files) {
 		lInfo() << "Trying to change output audio device on call while use_files mode is on : do nothing";
 		return;
@@ -1264,11 +1264,11 @@ void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-AudioDevice* Call::getInputAudioDevice() const {
+std::shared_ptr<AudioDevice> Call::getInputAudioDevice() const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getInputAudioDevice();
 }
 
-AudioDevice* Call::getOutputAudioDevice() const {
+std::shared_ptr<AudioDevice> Call::getOutputAudioDevice() const {
 	switch (getState()) {
 		case CallSession::State::Paused:
 		case CallSession::State::OutgoingRinging:
@@ -1277,7 +1277,7 @@ AudioDevice* Call::getOutputAudioDevice() const {
 		{
 			/* In these states, the AudioDevice may be used by the ToneManager, transciently, to play a waiting
 			* tone indication. */
-			AudioDevice *toneManagerDevice = getCore()->getPrivate()->getToneManager().getOutputDevice(getActiveSession());
+			auto toneManagerDevice = getCore()->getPrivate()->getToneManager().getOutputDevice(getActiveSession());
 			if (toneManagerDevice) return toneManagerDevice; 
 		}
 		default:

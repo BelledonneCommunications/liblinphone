@@ -168,25 +168,25 @@ bool_t linphone_conference_is_in (const LinphoneConference *conference) {
 
 void linphone_conference_set_input_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		MediaConference::Conference::toCpp(conference)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		MediaConference::Conference::toCpp(conference)->setInputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 void linphone_conference_set_output_audio_device(LinphoneConference *conference, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		MediaConference::Conference::toCpp(conference)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		MediaConference::Conference::toCpp(conference)->setOutputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 const LinphoneAudioDevice* linphone_conference_get_input_audio_device(const LinphoneConference *conference) {
-	LinphonePrivate::AudioDevice *audioDevice = MediaConference::Conference::toCpp(conference)->getInputAudioDevice();
+	auto audioDevice = MediaConference::Conference::toCpp(conference)->getInputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
 	return NULL;
 }
 const LinphoneAudioDevice* linphone_conference_get_output_audio_device(const LinphoneConference *conference) {
-	LinphonePrivate::AudioDevice *audioDevice = MediaConference::Conference::toCpp(conference)->getOutputAudioDevice();
+	auto audioDevice = MediaConference::Conference::toCpp(conference)->getOutputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}

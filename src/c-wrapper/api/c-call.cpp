@@ -650,25 +650,25 @@ bool_t linphone_call_is_op_configured (const LinphoneCall *call) {
 
 void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		Call::toCpp(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		Call::toCpp(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		Call::toCpp(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		Call::toCpp(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call) {
-	LinphonePrivate::AudioDevice *audioDevice = Call::toCpp(call)->getInputAudioDevice();
+	auto audioDevice = Call::toCpp(call)->getInputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
 	return NULL;
 }
 const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call) {
-	LinphonePrivate::AudioDevice *audioDevice = Call::toCpp(call)->getOutputAudioDevice();
+	auto audioDevice = Call::toCpp(call)->getOutputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}

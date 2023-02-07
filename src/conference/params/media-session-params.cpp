@@ -81,14 +81,8 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 	videoDownloadBandwidth = src->videoDownloadBandwidth;
 
 	micEnabled = src->micEnabled;
-	if (src->inputAudioDevice) {
-		src->inputAudioDevice->ref();
-		inputAudioDevice = src->inputAudioDevice;
-	}
-	if (src->outputAudioDevice) {
-		src->outputAudioDevice->ref();
-		outputAudioDevice = src->outputAudioDevice;
-	}
+	inputAudioDevice = src->inputAudioDevice;
+	outputAudioDevice = src->outputAudioDevice;
 }
 
 void MediaSessionParamsPrivate::clean () {
@@ -103,15 +97,6 @@ void MediaSessionParamsPrivate::clean () {
 			sal_custom_sdp_attribute_free(customSdpMediaAttributes[i]);
 	}
 	memset(customSdpMediaAttributes, 0, sizeof(customSdpMediaAttributes));
-
-	if (inputAudioDevice) {
-		inputAudioDevice->unref();
-		inputAudioDevice = nullptr;
-	}
-	if (outputAudioDevice) {
-		outputAudioDevice->unref();
-		outputAudioDevice = nullptr;
-	}
 }
 
 // -----------------------------------------------------------------------------
@@ -670,34 +655,22 @@ bool MediaSessionParams::isMicEnabled () const {
 	return d->micEnabled;
 }
 
-void MediaSessionParams::setInputAudioDevice(AudioDevice* device) {
+void MediaSessionParams::setInputAudioDevice(const std::shared_ptr<AudioDevice> &device) {
 	L_D();
-	if (device) {
-		device->ref();
-	}
-	if (d->inputAudioDevice) {
-		d->inputAudioDevice->unref();
-	}
 	d->inputAudioDevice = device;
 }
 
-void MediaSessionParams::setOutputAudioDevice(AudioDevice* device) {
+void MediaSessionParams::setOutputAudioDevice(const std::shared_ptr<AudioDevice> &device) {
 	L_D();
-	if (device) {
-		device->ref();
-	}
-	if (d->outputAudioDevice) {
-		d->outputAudioDevice->unref();
-	}
 	d->outputAudioDevice = device;
 }
 
-AudioDevice* MediaSessionParams::getInputAudioDevice() const {
+std::shared_ptr<AudioDevice> MediaSessionParams::getInputAudioDevice() const {
 	L_D();
 	return d->inputAudioDevice;
 }
 
-AudioDevice* MediaSessionParams::getOutputAudioDevice() const {
+std::shared_ptr<AudioDevice> MediaSessionParams::getOutputAudioDevice() const {
 	L_D();
 	return d->outputAudioDevice;
 }

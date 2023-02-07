@@ -146,10 +146,10 @@ public:
 	// The following methods are only used to set some default settings for call creation!
 	void enableMic (bool value);
 	bool isMicEnabled () const;
-	void setInputAudioDevice(AudioDevice* device);
-	void setOutputAudioDevice(AudioDevice* device);
-	AudioDevice* getInputAudioDevice() const;
-	AudioDevice* getOutputAudioDevice() const;
+	void setInputAudioDevice(const std::shared_ptr<AudioDevice> &device);
+	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &device);
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);

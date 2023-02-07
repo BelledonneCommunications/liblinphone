@@ -252,7 +252,9 @@ void IosSharedCoreHelpers::uninitSharedCore(LinphoneCore *lc) {
 }
 
 void *IosSharedCoreHelpers::getPathContext() {
-	return mAppGroupId.empty() ? NULL : ms_strdup(mAppGroupId.c_str());
+	/* FIXME: not really good idea to use a const char * as an opaque context. An abstract PathContext class 
+	 * would be safer and clearer. */
+	return mAppGroupId.empty() ? NULL : const_cast<void*>(static_cast<const void*>(mAppGroupId.c_str()));
 }
 
 // -----------------------------------------------------------------------------
@@ -311,6 +313,7 @@ void IosSharedCoreHelpers::cleanUserDefaultsMessages() {
 
 	[defaults setObject:messages forKey:@"messages"];
 	[defaults release];
+	[messages release];
 }
 
 LinphoneConferenceInfo *IosSharedCoreHelpers::getConferenceInfo(LinphoneChatMessage *msg) {

@@ -5038,10 +5038,10 @@ LinphoneStatus linphone_core_decline_call(LinphoneCore *lc, LinphoneCall *call, 
 
 const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc) {
 	if (lc->callsCache) {
-		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
+		bctbx_list_free(lc->callsCache);
 		lc->callsCache = NULL;
 	}
-	lc->callsCache = Call::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls());
+	lc->callsCache = Call::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls(), false);
 	return lc->callsCache;
 }
 
@@ -7653,8 +7653,13 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	linphone_core_zrtp_cache_close(lc);
 	ms_bandwidth_controller_destroy(lc->bw_controller);
 	lc->bw_controller = NULL;
+<<<<<<< HEAD
 	if (lc->callsCache) { // Ensure to remove cache before destroying factory
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
+=======
+	if (lc->callsCache) {// Ensure to remove cache before destroying factory
+		bctbx_list_free(lc->callsCache);
+>>>>>>> 04174eac6 (Fix memory leaks.)
 		lc->callsCache = NULL;
 	}
 

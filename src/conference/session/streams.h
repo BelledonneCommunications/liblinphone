@@ -231,10 +231,10 @@ public:
 	virtual void sendDtmf(int dtmf) = 0;
 	virtual void enableEchoCancellation(bool value) = 0;
 	virtual bool echoCancellationEnabled()const = 0;
-	virtual void setInputDevice(AudioDevice *audioDevice) = 0;
-	virtual void setOutputDevice(AudioDevice *audioDevice) = 0;
-	virtual AudioDevice* getInputDevice() const = 0;
-	virtual AudioDevice* getOutputDevice() const = 0;
+	virtual void setInputDevice(const std::shared_ptr<AudioDevice> &audioDevice) = 0;
+	virtual void setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) = 0;
+	virtual std::shared_ptr<AudioDevice> getInputDevice() const = 0;
+	virtual std::shared_ptr<AudioDevice> getOutputDevice() const = 0;
 	virtual ~AudioControlInterface() = default;
 };
 

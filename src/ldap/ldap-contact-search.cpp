@@ -67,10 +67,10 @@ LdapContactSearch::~LdapContactSearch(){
 }
 
 void LdapContactSearch::callCallback(){
-	bctbx_list_t* results = SearchResult::getCListFromCppList(mFoundEntries);
+	bctbx_list_t* results = SearchResult::getCListFromCppList(mFoundEntries, false);
 	mCb(NULL, results, mCbData, mHaveMoreResults);
 	if (results) {
-		bctbx_list_free_with_data(results, (bctbx_list_free_func)linphone_search_result_unref);
+		bctbx_list_free(results);
 	}
 }
 LINPHONE_END_NAMESPACE

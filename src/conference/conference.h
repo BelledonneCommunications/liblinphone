@@ -94,7 +94,7 @@ public:
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	int getParticipantCount () const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
-	virtual const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
+	const std::list<std::shared_ptr<ParticipantDevice>> getParticipantDevices () const override;
 	const std::string &getSubject () const override;
 	const std::string getUtf8Subject () const override;
 	void join (const IdentityAddress &participantAddress) override;

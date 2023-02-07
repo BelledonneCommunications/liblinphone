@@ -162,10 +162,10 @@ public:
 	virtual bool echoCancellationEnabled()const override;
 	void addListener(AudioMixerListener *listener);
 	void removeListener(AudioMixerListener *listener);
-	virtual void setInputDevice(AudioDevice *audioDevice) override;
-	virtual void setOutputDevice(AudioDevice *audioDevice) override;
-	virtual AudioDevice* getInputDevice() const override;
-	virtual AudioDevice* getOutputDevice() const override;
+	virtual void setInputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
+	virtual void setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
+	virtual std::shared_ptr<AudioDevice> getInputDevice() const override;
+	virtual std::shared_ptr<AudioDevice> getOutputDevice() const override;
 	
 	// Used for the tone manager.
 	AudioStream * getAudioStream();

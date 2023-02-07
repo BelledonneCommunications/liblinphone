@@ -130,60 +130,75 @@ private:
 };
 
 /*
+ * Template for easy conversion from std::list to bctbx_list_t.
+ * The authority list is the C++ one, the C one being only a const view of it.
+ * _T must be an HybridObject; so that conversion from C++ type to C type is done automatically.
+ */
+template <typename _T>
+class ListHolder {
+public:
+	// The STL list is a public member, directly accessible.
+	std::list <std::shared_ptr<_T>> mList;
+	// Return a C list from the STL list.
+	const bctbx_list_t *getCList() const{
+		if (mCList) bctbx_list_free(mCList);
+		mCList = _T::getCListFromCppList(mList, false);
+		return mCList;
+	}
+	// Assign a C list. This replaces the STL list.
+	void setCList(const bctbx_list_t *clist){
+		mList =  _T::getCppListFromCList(clist);
+	}
+	~ListHolder(){
+		if (mCList) bctbx_list_free(mCList);
+	}
+private:
+	mutable bctbx_list_t *mCList = nullptr;
+};
+
+/*
  * Template class for classes that hold callbacks (such as LinphoneCallCbs, LinphoneAccountCbs etc.
  * The invocation of callbacks can be done with the LINPHONE_HYBRID_OBJECT_INVOKE_CBS() macro.
  */
 template <typename _CppCbsType>
-class LINPHONE_PUBLIC CallbacksHolder {
+
+class LINPHONE_PUBLIC CallbacksHolder{
 public:
-	~CallbacksHolder() {
-		if (mCCallbacksList) bctbx_list_free(mCCallbacksList);
-	}
-	void addCallbacks(const std::shared_ptr<_CppCbsType> &callbacks) {
-		if (find(mCallbacksList.begin(), mCallbacksList.end(), callbacks) == mCallbacksList.end()) {
-			mCallbacksList.push_back(callbacks);
+	void addCallbacks (const std::shared_ptr<_CppCbsType> &callbacks){
+		if (find(mCallbacksList.mList.begin(), mCallbacksList.mList.end(), callbacks) == mCallbacksList.mList.end()){
+			mCallbacksList.mList.push_back(callbacks);
 			callbacks->setActive(true);
-		} else {
-			lError() << "Rejected Callbacks " << typeid(_CppCbsType).name() << " [" << (void *)callbacks.get()
-			         << "] added twice.";
+		}else{
+			lError() << "Rejected Callbacks " << typeid(_CppCbsType).name() << " [" << (void*) callbacks.get() << "] added twice.";
 		}
 	}
-	void removeCallbacks(const std::shared_ptr<_CppCbsType> &callbacks) {
-		auto it = find(mCallbacksList.begin(), mCallbacksList.end(), callbacks);
-		if (it != mCallbacksList.end()) {
-			mCallbacksList.erase(it);
+	void removeCallbacks (const std::shared_ptr<_CppCbsType> &callbacks){
+		auto it = find(mCallbacksList.mList.begin(), mCallbacksList.mList.end(), callbacks);
+		if (it != mCallbacksList.mList.end()){
+			mCallbacksList.mList.erase(it);
 			callbacks->setActive(false);
-		} else {
-			lError() << "Attempt to remove " << typeid(_CppCbsType).name() << " [" << (void *)callbacks.get()
-			         << "] that does not exist.";
+		}else{
+			lError() << "Attempt to remove " << typeid(_CppCbsType).name() << " [" << (void*) callbacks.get() << "] that does not exist.";
 		}
 	}
-	void setCurrentCallbacks(const std::shared_ptr<_CppCbsType> &callbacks) {
+	void setCurrentCallbacks (const std::shared_ptr<_CppCbsType> &callbacks){
 		mCurrentCallbacks = callbacks;
 	}
-	std::shared_ptr<_CppCbsType> getCurrentCallbacks() const {
+	std::shared_ptr<_CppCbsType> getCurrentCallbacks () const{
 		return mCurrentCallbacks;
 	}
-	const std::list<std::shared_ptr<_CppCbsType>> &getCallbacksList() const {
-		return mCallbacksList;
+	const std::list<std::shared_ptr<_CppCbsType>> & getCallbacksList () const{
+		return mCallbacksList.mList;
 	}
-	const bctbx_list_t *getCCallbacksList() const {
-		if (mCCallbacksList) {
-			bctbx_list_free(mCCallbacksList);
-			mCCallbacksList = nullptr;
-		}
-		for (auto &cbs : mCallbacksList) {
-			/* no need to take a ref, mCallbacksList already has one. */
-			mCCallbacksList = bctbx_list_append(mCCallbacksList, cbs->toC());
-		}
-		return mCCallbacksList;
+	const bctbx_list_t * getCCallbacksList() const{
+		return mCallbacksList.getCList();
 	}
-
 private:
-	std::list<std::shared_ptr<_CppCbsType>> mCallbacksList;
+	ListHolder<_CppCbsType> mCallbacksList;
 	std::shared_ptr<_CppCbsType> mCurrentCallbacks;
-	mutable bctbx_list_t *mCCallbacksList = nullptr;
 };
+
+
 
 LINPHONE_END_NAMESPACE
 

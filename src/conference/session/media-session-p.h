@@ -120,30 +120,17 @@ public:
 		return *streamsGroup.get();
 	}
 
-	AudioDevice * getCurrentInputAudioDevice()const {
+	std::shared_ptr<AudioDevice> getCurrentInputAudioDevice()const {
 		return currentInputAudioDevice;
 	}
-	void setCurrentInputAudioDevice(AudioDevice * audioDevice) {
-		if (audioDevice) {
-			audioDevice->ref();
-		}
-		if (currentInputAudioDevice) {
-			currentInputAudioDevice->unref();
-		}
+	void setCurrentInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 		currentInputAudioDevice = audioDevice;
 	}
 
-	AudioDevice * getCurrentOutputAudioDevice()const {
+	std::shared_ptr<AudioDevice> getCurrentOutputAudioDevice()const {
 		return currentOutputAudioDevice;
 	}
-	void setCurrentOutputAudioDevice(AudioDevice * audioDevice) {
-		if (audioDevice) {
-			audioDevice->ref();
-		}
-		if (currentOutputAudioDevice) {
-			currentOutputAudioDevice->unref();
-			currentOutputAudioDevice = nullptr;
-		}
+	void setCurrentOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 		currentOutputAudioDevice = audioDevice;
 	}
 	std::shared_ptr<Participant> getMe () const;
@@ -319,8 +306,8 @@ private:
 
 	bool bundleModeAccepted = false;
 
-	AudioDevice * currentOutputAudioDevice = nullptr;
-	AudioDevice * currentInputAudioDevice = nullptr;
+	std::shared_ptr<AudioDevice> currentOutputAudioDevice = nullptr;
+	std::shared_ptr<AudioDevice> currentInputAudioDevice = nullptr;
 
 	SalMediaRecord lastRemoteRecordingState = SalMediaRecordOff;
 

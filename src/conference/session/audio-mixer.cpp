@@ -250,19 +250,19 @@ bool MS2AudioMixer::echoCancellationEnabled()const{
 	return linphone_core_echo_cancellation_enabled(getSession().getCCore());
 }
 
-void MS2AudioMixer::setInputDevice(AudioDevice *audioDevice) {
+void MS2AudioMixer::setInputDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if (mLocalParticipantStream) {
 		audio_stream_set_input_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
 	}
 }
 
-void MS2AudioMixer::setOutputDevice(AudioDevice *audioDevice) {
+void MS2AudioMixer::setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) {
 	if (mLocalParticipantStream) {
 		audio_stream_set_output_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
 	}
 }
 
-AudioDevice* MS2AudioMixer::getInputDevice() const {
+std::shared_ptr<AudioDevice> MS2AudioMixer::getInputDevice() const {
 	if (mLocalParticipantStream) {
 		MSSndCard *card = audio_stream_get_input_ms_snd_card(mLocalParticipantStream);
 		return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
@@ -270,7 +270,7 @@ AudioDevice* MS2AudioMixer::getInputDevice() const {
 	return nullptr;
 }
 
-AudioDevice* MS2AudioMixer::getOutputDevice() const {
+std::shared_ptr<AudioDevice> MS2AudioMixer::getOutputDevice() const {
 	if (mLocalParticipantStream) {
 		MSSndCard *card = audio_stream_get_output_ms_snd_card(mLocalParticipantStream);
 		return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);

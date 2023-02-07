@@ -108,7 +108,7 @@ Conference::~Conference() {
 	linphone_core_cbs_unref(m_coreCbs);
 }
 
-void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
+void Conference::setInputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
 	if (audioDevice) {
 		const auto & currentInputDevice = getInputAudioDevice();
 		// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
@@ -135,7 +135,7 @@ void Conference::setInputAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-void Conference::setOutputAudioDevice(AudioDevice *audioDevice) {
+void Conference::setOutputAudioDevice(const shared_ptr<AudioDevice> &audioDevice) {
 	if (audioDevice) {
 		const auto & currentOutputDevice = getOutputAudioDevice();
 		// If pointer toward the new device has changed or at least one member of the audio device changed or no current audio device is set, then return true
@@ -162,7 +162,7 @@ void Conference::setOutputAudioDevice(AudioDevice *audioDevice) {
 	}
 }
 
-AudioDevice* Conference::getInputAudioDevice() const {
+shared_ptr<AudioDevice> Conference::getInputAudioDevice() const {
 	AudioControlInterface *aci = getAudioControlInterface();
 	if (aci) {
 		return aci->getInputDevice();
@@ -172,7 +172,7 @@ AudioDevice* Conference::getInputAudioDevice() const {
 	return nullptr;
 }
 
-AudioDevice* Conference::getOutputAudioDevice() const {
+shared_ptr<AudioDevice> Conference::getOutputAudioDevice() const {
 	AudioControlInterface *aci = getAudioControlInterface();
 	if (aci) {
 		return aci->getOutputDevice();

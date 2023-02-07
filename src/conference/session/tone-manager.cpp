@@ -56,8 +56,8 @@ ToneManager::~ToneManager() {
 }
 
 
-AudioDevice *ToneManager::getOutputDevice(const shared_ptr<CallSession> &session) const{
-	AudioDevice *device = nullptr;
+std::shared_ptr<AudioDevice> ToneManager::getOutputDevice(const shared_ptr<CallSession> &session) const{
+	std::shared_ptr<AudioDevice> device = nullptr;
 	if (session == mSessionRinging){
 		RingStream *ringStream = linphone_ringtoneplayer_get_stream(getCore().getCCore()->ringtoneplayer);
 		if (ringStream) {
@@ -77,7 +77,7 @@ AudioDevice *ToneManager::getOutputDevice(const shared_ptr<CallSession> &session
 	return device;
 }
 
-void ToneManager::setOutputDevice(const shared_ptr<CallSession> &session, AudioDevice *audioDevice){
+void ToneManager::setOutputDevice(const shared_ptr<CallSession> &session, const std::shared_ptr<AudioDevice> &audioDevice){
 	if (mSessionRinging == session){
 		RingStream * ringStream = linphone_ringtoneplayer_get_stream(getCore().getCCore()->ringtoneplayer);
 		if (ringStream) {
@@ -103,7 +103,7 @@ void ToneManager::startRingbackTone() {
 
 	std::shared_ptr<LinphonePrivate::Call> call = getCore().getCurrentCall();
 	if (call) {
-		AudioDevice * audioDevice = call->getOutputAudioDevice();
+		auto audioDevice = call->getOutputAudioDevice();
 
 		// If the user changed the audio device before the ringback started, the new value will be stored in the call playback card
 		// It is NULL otherwise
@@ -278,7 +278,7 @@ void ToneManager::playTone(const MSDtmfGenCustomTone &tone) {
 	std::shared_ptr<LinphonePrivate::Call> call = getCore().getCurrentCall();
 	if (call) session = call->getActiveSession();
 	if (session) {
-		AudioDevice * audioDevice = std::dynamic_pointer_cast<MediaSession>(session)->getPrivate()->getCurrentOutputAudioDevice();
+		auto audioDevice = std::dynamic_pointer_cast<MediaSession>(session)->getPrivate()->getCurrentOutputAudioDevice();
 		if (audioDevice) {
 			card = audioDevice->getSoundCard();
 		}

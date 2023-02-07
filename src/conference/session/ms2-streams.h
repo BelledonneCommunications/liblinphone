@@ -198,10 +198,10 @@ public:
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
 	virtual bool echoCancellationEnabled()const override;
-	virtual void setInputDevice(AudioDevice *audioDevice) override;
-	virtual void setOutputDevice(AudioDevice *audioDevice) override;
-	virtual AudioDevice* getInputDevice() const override;
-	virtual AudioDevice* getOutputDevice() const override;
+	virtual void setInputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
+	virtual void setOutputDevice(const std::shared_ptr<AudioDevice> &audioDevice) override;
+	virtual std::shared_ptr<AudioDevice> getInputDevice() const override;
+	virtual std::shared_ptr<AudioDevice> getOutputDevice() const override;
 	virtual std::string getLabel()const override;
 	
 	virtual MediaStream *getMediaStream()const override;

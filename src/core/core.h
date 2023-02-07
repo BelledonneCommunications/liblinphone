@@ -250,21 +250,21 @@ public:
 	// Audio devices.
 	// ---------------------------------------------------------------------------
 
-	AudioDevice *findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const;
-	const std::list<AudioDevice *> getAudioDevices() const;
-	const std::list<AudioDevice *> getExtendedAudioDevices() const;
+	std::shared_ptr<AudioDevice> findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const;
+	std::list<std::shared_ptr<AudioDevice>> getAudioDevices() const;
+	std::list<std::shared_ptr<AudioDevice>> getExtendedAudioDevices() const;
 
-	void setInputAudioDevice(AudioDevice *audioDevice);
-	void setOutputAudioDevice(AudioDevice *audioDevice);
+	void setInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	void setOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
 	void setOutputAudioDeviceBySndCard(MSSndCard *card);
 	void setInputAudioDeviceBySndCard(MSSndCard *card);
-	AudioDevice *getInputAudioDevice() const;
-	AudioDevice *getOutputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getOutputAudioDevice() const;
 
-	void setDefaultInputAudioDevice(AudioDevice *audioDevice);
-	void setDefaultOutputAudioDevice(AudioDevice *audioDevice);
-	AudioDevice* getDefaultInputAudioDevice() const;
-	AudioDevice* getDefaultOutputAudioDevice() const;
+	void setDefaultInputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	void setDefaultOutputAudioDevice(const std::shared_ptr<AudioDevice> &audioDevice);
+	std::shared_ptr<AudioDevice> getDefaultInputAudioDevice() const;
+	std::shared_ptr<AudioDevice> getDefaultOutputAudioDevice() const;
 
 	// ---------------------------------------------------------------------------
 	// Misc.
@@ -282,7 +282,7 @@ public:
 	// Ldap.
 	// ---------------------------------------------------------------------------
 
-	std::list<std::shared_ptr<Ldap>> getLdapList();
+	const std::list<std::shared_ptr<Ldap>> & getLdapList();
 	std::list<std::shared_ptr<Ldap>>::iterator getLdapIterator(int id);
 	
 	void addLdap(std::shared_ptr<Ldap> ldap);

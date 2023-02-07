@@ -54,7 +54,7 @@ void linphone_conference_info_set_organizer(LinphoneConferenceInfo *conference_i
 	ConferenceInfo::toCpp(conference_info)->setOrganizer(*L_GET_CPP_PTR_FROM_C_OBJECT(organizer));
 }
 
-const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
+bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConferenceInfo *conference_info) {
 	const auto & participants = ConferenceInfo::toCpp(conference_info)->getParticipants();
 	bctbx_list_t * participant_addresses = NULL;
 	for (const auto & participant : participants) {
@@ -64,7 +64,7 @@ const bctbx_list_t *linphone_conference_info_get_participants(const LinphoneConf
 	return participant_addresses;
 }
 
-void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, bctbx_list_t *participants) {
+void linphone_conference_info_set_participants(LinphoneConferenceInfo *conference_info, const bctbx_list_t *participants) {
 	const std::list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
 		return addr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)) : LinphonePrivate::IdentityAddress();
 	});

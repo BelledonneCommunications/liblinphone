@@ -698,18 +698,18 @@ bool_t linphone_call_params_mic_enabled(const LinphoneCallParams *params) {
 
 void linphone_call_params_set_input_audio_device(LinphoneCallParams *params, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(params)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->setInputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 void linphone_call_params_set_output_audio_device(LinphoneCallParams *params, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(params)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		L_GET_CPP_PTR_FROM_C_OBJECT(params)->setOutputAudioDevice(LinphonePrivate::AudioDevice::getSharedFromThis(audio_device));
 	}
 }
 
 const LinphoneAudioDevice* linphone_call_params_get_input_audio_device(const LinphoneCallParams *params) {
-	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getInputAudioDevice();
+	auto audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getInputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
@@ -717,7 +717,7 @@ const LinphoneAudioDevice* linphone_call_params_get_input_audio_device(const Lin
 }
 
 const LinphoneAudioDevice* linphone_call_params_get_output_audio_device(const LinphoneCallParams *params) {
-	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getOutputAudioDevice();
+	auto audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(params)->getOutputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
