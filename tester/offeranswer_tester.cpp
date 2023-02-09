@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,8 +35,7 @@ static int get_codec_position(const MSList *l, const char *mime_type, int rate) 
 	int i;
 	for (elem = l, i = 0; elem != NULL; elem = elem->next, i++) {
 		PayloadType *pt = (PayloadType *)elem->data;
-		if (strcasecmp(pt->mime_type, mime_type) == 0 && pt->clock_rate == rate)
-			return i;
+		if (strcasecmp(pt->mime_type, mime_type) == 0 && pt->clock_rate == rate) return i;
 	}
 	return -1;
 }
@@ -44,15 +43,14 @@ static int get_codec_position(const MSList *l, const char *mime_type, int rate) 
 /*check basic things about codecs at startup: order and enablement*/
 static void start_with_no_config(void) {
 	LinphoneCore *lc =
-		linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
+	    linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 	const MSList *codecs = linphone_core_get_audio_codecs(lc);
 	int opus_codec_pos;
 	int speex_codec_pos = get_codec_position(codecs, "speex", 8000);
 	int speex16_codec_pos = get_codec_position(codecs, "speex", 16000);
 	PayloadType *pt;
 	opus_codec_pos = get_codec_position(codecs, "opus", 48000);
-	if (opus_codec_pos != -1)
-		BC_ASSERT_EQUAL(opus_codec_pos, 0, int, "%d");
+	if (opus_codec_pos != -1) BC_ASSERT_EQUAL(opus_codec_pos, 0, int, "%d");
 	BC_ASSERT_LOWER(speex16_codec_pos, speex_codec_pos, int, "%d");
 
 	pt = linphone_core_find_payload_type(lc, "speex", 16000, 1);
@@ -65,8 +63,7 @@ static void start_with_no_config(void) {
 
 static void check_payload_type_numbers(LinphoneCall *call1, LinphoneCall *call2, int expected_number) {
 	const LinphoneCallParams *params = linphone_call_get_current_params(call1);
-	if (!BC_ASSERT_PTR_NOT_NULL(params))
-		return;
+	if (!BC_ASSERT_PTR_NOT_NULL(params)) return;
 	const PayloadType *pt = linphone_call_params_get_used_audio_codec(params);
 	BC_ASSERT_PTR_NOT_NULL(pt);
 	if (pt) {
@@ -129,24 +126,24 @@ static void simple_call_with_fmtps(void) {
 
 	/*marie set a fantasy fmtp to PCMU*/
 	linphone_payload_type_set_recv_fmtp(linphone_core_get_payload_type(marie->lc, "PCMU", 8000, -1),
-										"parles-plus-fort=1");
+	                                    "parles-plus-fort=1");
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
 		LinphonePayloadType *pt =
-			linphone_call_params_get_used_audio_payload_type(linphone_call_get_current_params(pauline_call));
+		    linphone_call_params_get_used_audio_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_send_fmtp(pt), "parles-plus-fort=1");
 		}
 		pt = linphone_call_params_get_used_audio_payload_type(
-			linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			ms_message("send_fmtp=%s, recv_fmtp=%s", linphone_payload_type_get_send_fmtp(pt),
-					   linphone_payload_type_get_recv_fmtp(pt));
+			           linphone_payload_type_get_recv_fmtp(pt));
 			BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_recv_fmtp(pt), "parles-plus-fort=1");
 		}
 	}
@@ -216,17 +213,17 @@ static void h264_call_with_fmtps(void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
 		LinphonePayloadType *pt =
-			linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
+		    linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 		}
 		pt = linphone_call_params_get_used_video_payload_type(
-			linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			ms_message("send_fmtp=%s, recv_fmtp=%s", linphone_payload_type_get_send_fmtp(pt),
-					   linphone_payload_type_get_recv_fmtp(pt));
+			           linphone_payload_type_get_recv_fmtp(pt));
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 			BC_ASSERT_PTR_NOT_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode=1"));
 		}
@@ -237,14 +234,12 @@ static void h264_call_with_fmtps(void) {
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	if (pt_1)
-		payload_type_destroy(pt_1);
-	if (pt_2)
-		payload_type_destroy(pt_2);
+	if (pt_1) payload_type_destroy(pt_1);
+	if (pt_2) payload_type_destroy(pt_2);
 }
-static void enable_rtp_bundle(LinphoneCore * lc, bool_t enable){
+static void enable_rtp_bundle(LinphoneCore *lc, bool_t enable) {
 
-	if(enable == false){
+	if (enable == false) {
 		linphone_config_set_bool(linphone_core_get_config(lc), "rtp", "accept_bundle", FALSE);
 	}
 	LinphoneAccount *account = linphone_core_get_default_account(lc);
@@ -253,7 +248,7 @@ static void enable_rtp_bundle(LinphoneCore * lc, bool_t enable){
 	linphone_account_set_params(account, account_params);
 	linphone_account_params_unref(account_params);
 }
-static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy){
+static void enable_video_stream(LinphoneCore *lc, LinphoneVideoActivationPolicy *policy) {
 
 	linphone_core_set_video_device(lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_enable_video_capture(lc, TRUE);
@@ -278,7 +273,7 @@ static void _base_video_call_for_fec(flexfec_scenarios params) {
 	LinphoneVideoActivationPolicy *pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
 	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
-	
+
 	enable_rtp_bundle(marie->lc, params.bundle_proposed);
 	enable_rtp_bundle(pauline->lc, params.bundle_accepted);
 
@@ -292,14 +287,13 @@ static void _base_video_call_for_fec(flexfec_scenarios params) {
 
 	BC_ASSERT_TRUE(call(marie, pauline));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
-	if(pauline_call){
+	if (pauline_call) {
 
-		const LinphoneCallParams * call_params = linphone_call_get_current_params(pauline_call);
+		const LinphoneCallParams *call_params = linphone_call_get_current_params(pauline_call);
 		bool_t bundle_enabled = linphone_call_params_rtp_bundle_enabled(call_params);
 
-		if(params.bundle_proposed && params.bundle_accepted)
-			BC_ASSERT_TRUE(bundle_enabled);
-		else{
+		if (params.bundle_proposed && params.bundle_accepted) BC_ASSERT_TRUE(bundle_enabled);
+		else {
 			BC_ASSERT_FALSE(bundle_enabled);
 		}
 	}
@@ -310,34 +304,24 @@ static void _base_video_call_for_fec(flexfec_scenarios params) {
 	linphone_core_manager_destroy(pauline);
 }
 
-void flexfec_test_both_proposed_both_accepted(void){
-	flexfec_scenarios params = {
-		TRUE,TRUE,TRUE,TRUE
-	};
+void flexfec_test_both_proposed_both_accepted(void) {
+	flexfec_scenarios params = {TRUE, TRUE, TRUE, TRUE};
 	_base_video_call_for_fec(params);
 }
-void flexfec_test_both_proposed_bundle_accepted (void){
-	flexfec_scenarios params = {
-		TRUE,TRUE,TRUE,FALSE
-	};
+void flexfec_test_both_proposed_bundle_accepted(void) {
+	flexfec_scenarios params = {TRUE, TRUE, TRUE, FALSE};
 	_base_video_call_for_fec(params);
 }
-void flexfec_test_both_proposed_nothing_accepted (void){
-	flexfec_scenarios params = {
-		TRUE,TRUE,FALSE,FALSE
-	};
+void flexfec_test_both_proposed_nothing_accepted(void) {
+	flexfec_scenarios params = {TRUE, TRUE, FALSE, FALSE};
 	_base_video_call_for_fec(params);
 }
-void flexfec_test_both_poposed_only_fec_accepted(void){
-	flexfec_scenarios params = {
-		TRUE,TRUE,FALSE,TRUE
-	};
+void flexfec_test_both_poposed_only_fec_accepted(void) {
+	flexfec_scenarios params = {TRUE, TRUE, FALSE, TRUE};
 	_base_video_call_for_fec(params);
 }
-void flexfec_test_only_fec_proposed_and_accepted (void){
-	flexfec_scenarios params = {
-		FALSE,TRUE,FALSE,TRUE
-	};
+void flexfec_test_only_fec_proposed_and_accepted(void) {
+	flexfec_scenarios params = {FALSE, TRUE, FALSE, TRUE};
 	_base_video_call_for_fec(params);
 }
 static void h264_call_receiver_with_no_h264_support(void) {
@@ -374,10 +358,10 @@ static void h264_call_receiver_with_no_h264_support(void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
 		LinphonePayloadType *pt =
-			linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
+		    linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NULL(pt);
 		pt = linphone_call_params_get_used_video_payload_type(
-			linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NULL(pt);
 	}
 
@@ -422,17 +406,17 @@ static void h264_call_without_packetization_mode(void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call) {
 		LinphonePayloadType *pt =
-			linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
+		    linphone_call_params_get_used_video_payload_type(linphone_call_get_current_params(pauline_call));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 		}
 		pt = linphone_call_params_get_used_video_payload_type(
-			linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
+		    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 		BC_ASSERT_PTR_NOT_NULL(pt);
 		if (pt) {
 			ms_message("send_fmtp=%s, recv_fmtp=%s", linphone_payload_type_get_send_fmtp(pt),
-					   linphone_payload_type_get_recv_fmtp(pt));
+			           linphone_payload_type_get_recv_fmtp(pt));
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 			BC_ASSERT_PTR_NULL(strstr(linphone_payload_type_get_recv_fmtp(pt), "packetization-mode"));
 		}
@@ -443,10 +427,8 @@ static void h264_call_without_packetization_mode(void) {
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-	if (pt_1)
-		payload_type_destroy(pt_1);
-	if (pt_2)
-		payload_type_destroy(pt_2);
+	if (pt_1) payload_type_destroy(pt_1);
+	if (pt_2) payload_type_destroy(pt_2);
 }
 #endif
 
@@ -472,8 +454,13 @@ static void call_failed_because_of_codecs(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void profile_call_base(bool_t avpf1, LinphoneMediaEncryption srtp1, bool_t avpf2, LinphoneMediaEncryption srtp2,
-							  bool_t encryption_mandatory, const char *expected_profile, bool_t enable_video) {
+static void profile_call_base(bool_t avpf1,
+                              LinphoneMediaEncryption srtp1,
+                              bool_t avpf2,
+                              LinphoneMediaEncryption srtp2,
+                              bool_t encryption_mandatory,
+                              const char *expected_profile,
+                              bool_t enable_video) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneProxyConfig *lpc;
@@ -524,8 +511,7 @@ static void profile_call_base(bool_t avpf1, LinphoneMediaEncryption srtp1, bool_
 		goto end;
 	}
 
-	if (!BC_ASSERT_TRUE(call(marie, pauline)))
-		goto end;
+	if (!BC_ASSERT_TRUE(call(marie, pauline))) goto end;
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
@@ -585,8 +571,7 @@ static void avp_avpf_video_call(void) {
 		linphone_core_set_video_policy(pauline->lc, &policy);
 	}
 
-	if (!BC_ASSERT_TRUE(call(marie, pauline)))
-		goto end;
+	if (!BC_ASSERT_TRUE(call(marie, pauline))) goto end;
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
@@ -599,9 +584,9 @@ static void avp_avpf_video_call(void) {
 		BC_ASSERT_STRING_EQUAL(linphone_call_params_get_rtp_profile(params), expected_profile);
 	}
 	BC_ASSERT_TRUE(linphone_call_params_audio_enabled(
-		linphone_call_get_current_params(linphone_core_get_current_call(marie->lc))));
+	    linphone_call_get_current_params(linphone_core_get_current_call(marie->lc))));
 	BC_ASSERT_TRUE(linphone_call_params_audio_enabled(
-		linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))));
+	    linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc))));
 
 	linphone_core_terminate_all_calls(marie->lc);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
@@ -617,8 +602,12 @@ end:
 
 #endif
 
-static void profile_call(bool_t avpf1, LinphoneMediaEncryption srtp1, bool_t avpf2, LinphoneMediaEncryption srtp2,
-						 const char *expected_profile, bool_t enable_video) {
+static void profile_call(bool_t avpf1,
+                         LinphoneMediaEncryption srtp1,
+                         bool_t avpf2,
+                         LinphoneMediaEncryption srtp2,
+                         const char *expected_profile,
+                         bool_t enable_video) {
 	profile_call_base(avpf1, srtp1, avpf2, srtp2, FALSE, expected_profile, enable_video);
 }
 
@@ -776,12 +765,12 @@ static void savpf_dtls_to_savpf_dtls_video_call(void) {
 
 static void savpf_dtls_to_savpf_dtls_encryption_mandatory_call(void) {
 	profile_call_base(TRUE, LinphoneMediaEncryptionDTLS, TRUE, LinphoneMediaEncryptionDTLS, TRUE, "UDP/TLS/RTP/SAVPF",
-					  FALSE);
+	                  FALSE);
 }
 #ifdef VIDEO_ENABLED
 static void savpf_dtls_to_savpf_dtls_encryption_mandatory_video_call(void) {
 	profile_call_base(TRUE, LinphoneMediaEncryptionDTLS, TRUE, LinphoneMediaEncryptionDTLS, TRUE, "UDP/TLS/RTP/SAVPF",
-					  TRUE);
+	                  TRUE);
 }
 #endif
 
@@ -865,14 +854,12 @@ static void compatible_avpf_features(void) {
 	OrtpPayloadType *pt;
 	bool_t call_ok;
 
-	if (configure_core_for_avpf_and_video(marie->lc) == NULL)
-		goto end;
+	if (configure_core_for_avpf_and_video(marie->lc) == NULL) goto end;
 
 	pt = configure_core_for_avpf_and_video(pauline->lc);
 
 	BC_ASSERT_TRUE((call_ok = call(marie, pauline)));
-	if (!call_ok)
-		goto end;
+	if (!call_ok) goto end;
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
@@ -892,15 +879,13 @@ static void incompatible_avpf_features(void) {
 	OrtpPayloadType *pt;
 	bool_t call_ok;
 
-	if (configure_core_for_avpf_and_video(marie->lc) == NULL)
-		goto end;
+	if (configure_core_for_avpf_and_video(marie->lc) == NULL) goto end;
 
 	pt = configure_core_for_avpf_and_video(pauline->lc);
 	pt->avpf.features = PAYLOAD_TYPE_AVPF_NONE;
 
 	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
-	if (!call_ok)
-		goto end;
+	if (!call_ok) goto end;
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
@@ -915,77 +900,80 @@ end:
 #endif
 
 static test_t offeranswer_tests[] = {
-	TEST_NO_TAG("Start with no config", start_with_no_config),
-	TEST_NO_TAG("Call failed because of codecs", call_failed_because_of_codecs),
-	TEST_NO_TAG("Simple call with different codec mappings", simple_call_with_different_codec_mappings),
-	TEST_NO_TAG("Simple call with fmtps", simple_call_with_fmtps),
-	TEST_NO_TAG("AVP to AVP call", avp_to_avp_call),
-	TEST_NO_TAG("AVP to AVPF call", avp_to_avpf_call),
-	TEST_NO_TAG("AVP to SAVP call", avp_to_savp_call),
-	TEST_NO_TAG("AVP to SAVPF call", avp_to_savpf_call),
-	TEST_NO_TAG("AVPF to AVP call", avpf_to_avp_call),
-	TEST_NO_TAG("AVPF to AVPF call", avpf_to_avpf_call),
-	TEST_NO_TAG("AVPF to SAVP call", avpf_to_savp_call),
-	TEST_NO_TAG("AVPF to SAVPF call", avpf_to_savpf_call),
-	TEST_NO_TAG("SAVP to AVP call", savp_to_avp_call),
-	TEST_NO_TAG("SAVP to AVPF call", savp_to_avpf_call),
-	TEST_NO_TAG("SAVP to SAVP call", savp_to_savp_call),
-	TEST_NO_TAG("SAVP to SAVPF call", savp_to_savpf_call),
-	TEST_NO_TAG("SAVPF to AVP call", savpf_to_avp_call),
-	TEST_NO_TAG("SAVPF to AVPF call", savpf_to_avpf_call),
-	TEST_NO_TAG("SAVPF to SAVP call", savpf_to_savp_call),
-	TEST_NO_TAG("SAVPF to SAVPF call", savpf_to_savpf_call),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS call", savpf_dtls_to_savpf_dtls_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS encryption mandatory call",
-				 savpf_dtls_to_savpf_dtls_encryption_mandatory_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF call", savpf_dtls_to_savpf_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF encryption mandatory call", savpf_dtls_to_savpf_encryption_mandatory_call,
-				 "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to AVPF call", savpf_dtls_to_avpf_call, "DTLS"),
+    TEST_NO_TAG("Start with no config", start_with_no_config),
+    TEST_NO_TAG("Call failed because of codecs", call_failed_because_of_codecs),
+    TEST_NO_TAG("Simple call with different codec mappings", simple_call_with_different_codec_mappings),
+    TEST_NO_TAG("Simple call with fmtps", simple_call_with_fmtps),
+    TEST_NO_TAG("AVP to AVP call", avp_to_avp_call),
+    TEST_NO_TAG("AVP to AVPF call", avp_to_avpf_call),
+    TEST_NO_TAG("AVP to SAVP call", avp_to_savp_call),
+    TEST_NO_TAG("AVP to SAVPF call", avp_to_savpf_call),
+    TEST_NO_TAG("AVPF to AVP call", avpf_to_avp_call),
+    TEST_NO_TAG("AVPF to AVPF call", avpf_to_avpf_call),
+    TEST_NO_TAG("AVPF to SAVP call", avpf_to_savp_call),
+    TEST_NO_TAG("AVPF to SAVPF call", avpf_to_savpf_call),
+    TEST_NO_TAG("SAVP to AVP call", savp_to_avp_call),
+    TEST_NO_TAG("SAVP to AVPF call", savp_to_avpf_call),
+    TEST_NO_TAG("SAVP to SAVP call", savp_to_savp_call),
+    TEST_NO_TAG("SAVP to SAVPF call", savp_to_savpf_call),
+    TEST_NO_TAG("SAVPF to AVP call", savpf_to_avp_call),
+    TEST_NO_TAG("SAVPF to AVPF call", savpf_to_avpf_call),
+    TEST_NO_TAG("SAVPF to SAVP call", savpf_to_savp_call),
+    TEST_NO_TAG("SAVPF to SAVPF call", savpf_to_savpf_call),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS call", savpf_dtls_to_savpf_dtls_call, "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS encryption mandatory call",
+                 savpf_dtls_to_savpf_dtls_encryption_mandatory_call,
+                 "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF call", savpf_dtls_to_savpf_call, "DTLS"),
+    TEST_ONE_TAG(
+        "SAVPF/DTLS to SAVPF encryption mandatory call", savpf_dtls_to_savpf_encryption_mandatory_call, "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to AVPF call", savpf_dtls_to_avpf_call, "DTLS"),
 #ifdef VIDEO_ENABLED
-	TEST_NO_TAG("AVP to AVP video call", avp_to_avp_video_call),
-	TEST_NO_TAG("AVP to AVPF video call", avp_to_avpf_video_call),
-	TEST_NO_TAG("AVP to SAVP video call", avp_to_savp_video_call),
-	TEST_NO_TAG("AVP to SAVPF video call", avp_to_savpf_video_call),
-	TEST_NO_TAG("AVPF to AVP video call", avpf_to_avp_video_call),
-	TEST_NO_TAG("AVPF to AVPF video call", avpf_to_avpf_video_call),
-	TEST_NO_TAG("AVPF to SAVP video call", avpf_to_savp_video_call),
-	TEST_NO_TAG("AVPF to SAVPF video call", avpf_to_savpf_video_call),
-	TEST_NO_TAG("SAVP to AVP video call", savp_to_avp_video_call),
-	TEST_NO_TAG("SAVP to AVPF video call", savp_to_avpf_video_call),
-	TEST_NO_TAG("SAVP to SAVP video call", savp_to_savp_video_call),
-	TEST_NO_TAG("SAVP to SAVPF video call", savp_to_savpf_video_call),
-	TEST_NO_TAG("SAVPF to AVP video call", savpf_to_avp_video_call),
-	TEST_NO_TAG("SAVPF to AVPF video call", savpf_to_avpf_video_call),
-	TEST_NO_TAG("SAVPF to SAVP video call", savpf_to_savp_video_call),
-	TEST_NO_TAG("SAVPF to SAVPF video call", savpf_to_savpf_video_call),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS video call", savpf_dtls_to_savpf_dtls_video_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS encryption mandatory video call",
-				 savpf_dtls_to_savpf_dtls_encryption_mandatory_video_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF video call", savpf_dtls_to_savpf_video_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to SAVPF encryption mandatory video call",
-				 savpf_dtls_to_savpf_encryption_mandatory_video_call, "DTLS"),
-	TEST_ONE_TAG("SAVPF/DTLS to AVPF video call", savpf_dtls_to_avpf_video_call, "DTLS"),
+    TEST_NO_TAG("AVP to AVP video call", avp_to_avp_video_call),
+    TEST_NO_TAG("AVP to AVPF video call", avp_to_avpf_video_call),
+    TEST_NO_TAG("AVP to SAVP video call", avp_to_savp_video_call),
+    TEST_NO_TAG("AVP to SAVPF video call", avp_to_savpf_video_call),
+    TEST_NO_TAG("AVPF to AVP video call", avpf_to_avp_video_call),
+    TEST_NO_TAG("AVPF to AVPF video call", avpf_to_avpf_video_call),
+    TEST_NO_TAG("AVPF to SAVP video call", avpf_to_savp_video_call),
+    TEST_NO_TAG("AVPF to SAVPF video call", avpf_to_savpf_video_call),
+    TEST_NO_TAG("SAVP to AVP video call", savp_to_avp_video_call),
+    TEST_NO_TAG("SAVP to AVPF video call", savp_to_avpf_video_call),
+    TEST_NO_TAG("SAVP to SAVP video call", savp_to_savp_video_call),
+    TEST_NO_TAG("SAVP to SAVPF video call", savp_to_savpf_video_call),
+    TEST_NO_TAG("SAVPF to AVP video call", savpf_to_avp_video_call),
+    TEST_NO_TAG("SAVPF to AVPF video call", savpf_to_avpf_video_call),
+    TEST_NO_TAG("SAVPF to SAVP video call", savpf_to_savp_video_call),
+    TEST_NO_TAG("SAVPF to SAVPF video call", savpf_to_savpf_video_call),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS video call", savpf_dtls_to_savpf_dtls_video_call, "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS encryption mandatory video call",
+                 savpf_dtls_to_savpf_dtls_encryption_mandatory_video_call,
+                 "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF video call", savpf_dtls_to_savpf_video_call, "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to SAVPF encryption mandatory video call",
+                 savpf_dtls_to_savpf_encryption_mandatory_video_call,
+                 "DTLS"),
+    TEST_ONE_TAG("SAVPF/DTLS to AVPF video call", savpf_dtls_to_avpf_video_call, "DTLS"),
 
-	TEST_NO_TAG("Compatible AVPF features", compatible_avpf_features),
-	TEST_NO_TAG("Incompatible AVPF features", incompatible_avpf_features),
-	TEST_NO_TAG("H264 packetization-mode set to 1 on sender", h264_call_with_fmtps),
-	TEST_NO_TAG("H264 on sender, but not on receiver", h264_call_receiver_with_no_h264_support),
-	TEST_NO_TAG("H264 packetization-mode not set", h264_call_without_packetization_mode),
-	TEST_NO_TAG("Mixed AVP+AVPF video call", avp_avpf_video_call),
-	TEST_NO_TAG("flexfec both proposed both accepted", flexfec_test_both_proposed_both_accepted),
-	TEST_NO_TAG("flexfec both proposed bundle accepted", flexfec_test_both_proposed_bundle_accepted ),
-	TEST_NO_TAG("flexfec both proposed nothing accepted", flexfec_test_both_proposed_nothing_accepted),
-	TEST_NO_TAG("flexfec both proposed only fec accepted", flexfec_test_both_poposed_only_fec_accepted),
-	TEST_NO_TAG("flexfec only fec proposed and accepted", flexfec_test_only_fec_proposed_and_accepted),
+    TEST_NO_TAG("Compatible AVPF features", compatible_avpf_features),
+    TEST_NO_TAG("Incompatible AVPF features", incompatible_avpf_features),
+    TEST_NO_TAG("H264 packetization-mode set to 1 on sender", h264_call_with_fmtps),
+    TEST_NO_TAG("H264 on sender, but not on receiver", h264_call_receiver_with_no_h264_support),
+    TEST_NO_TAG("H264 packetization-mode not set", h264_call_without_packetization_mode),
+    TEST_NO_TAG("Mixed AVP+AVPF video call", avp_avpf_video_call),
+    TEST_NO_TAG("flexfec both proposed both accepted", flexfec_test_both_proposed_both_accepted),
+    TEST_NO_TAG("flexfec both proposed bundle accepted", flexfec_test_both_proposed_bundle_accepted),
+    TEST_NO_TAG("flexfec both proposed nothing accepted", flexfec_test_both_proposed_nothing_accepted),
+    TEST_NO_TAG("flexfec both proposed only fec accepted", flexfec_test_both_poposed_only_fec_accepted),
+    TEST_NO_TAG("flexfec only fec proposed and accepted", flexfec_test_only_fec_proposed_and_accepted),
 
 #endif
 };
 
 test_suite_t offeranswer_test_suite = {"Offer-answer",
-									   NULL,
-									   NULL,
-									   liblinphone_tester_before_each,
-									   liblinphone_tester_after_each,
-									   sizeof(offeranswer_tests) / sizeof(offeranswer_tests[0]),
-									   offeranswer_tests};
+                                       NULL,
+                                       NULL,
+                                       liblinphone_tester_before_each,
+                                       liblinphone_tester_after_each,
+                                       sizeof(offeranswer_tests) / sizeof(offeranswer_tests[0]),
+                                       offeranswer_tests};

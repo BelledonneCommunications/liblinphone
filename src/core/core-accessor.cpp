@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,17 +35,17 @@ public:
 
 // -----------------------------------------------------------------------------
 
-CoreAccessor::CoreAccessor (const shared_ptr<Core> &core) {
+CoreAccessor::CoreAccessor(const shared_ptr<Core> &core) {
 	L_ASSERT(core);
 	mPrivate = new CoreAccessorPrivate();
 	mPrivate->core = core;
 }
 
-CoreAccessor::~CoreAccessor () {
+CoreAccessor::~CoreAccessor() {
 	delete mPrivate;
 }
 
-shared_ptr<Core> CoreAccessor::getCore () const {
+shared_ptr<Core> CoreAccessor::getCore() const {
 	L_D();
 
 	shared_ptr<Core> core = d->core.lock();

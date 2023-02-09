@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,9 +18,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
 #include "object/property-container.h"
+#include <belle-sip/object++.hh>
 
 // =============================================================================
 
@@ -30,21 +30,22 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-class LINPHONE_PUBLIC Dictionary : public bellesip::HybridObject<LinphoneDictionary, Dictionary>, public PropertyContainer {
+class LINPHONE_PUBLIC Dictionary : public bellesip::HybridObject<LinphoneDictionary, Dictionary>,
+                                   public PropertyContainer {
 public:
-    Dictionary* clone() const override;
+	Dictionary *clone() const override;
 
-    float getFloat (const string &name) const;
-    void setProperty (const string &name, const float value);
+	float getFloat(const string &name) const;
+	void setProperty(const string &name, const float value);
 
-    const string &getString (const string &name) const;
-    void setProperty (const string &name, const string &value);
+	const string &getString(const string &name) const;
+	void setProperty(const string &name, const string &value);
 
-    int getInt (const string &name) const;
-    void setProperty (const string &name, const int value);
-    
-    long long getLongLong (const string &name) const;
-    void setProperty (const string &name, const long long value);
+	int getInt(const string &name) const;
+	void setProperty(const string &name, const int value);
+
+	long long getLongLong(const string &name) const;
+	void setProperty(const string &name, const long long value);
 };
 
 LINPHONE_END_NAMESPACE

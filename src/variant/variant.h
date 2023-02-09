@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,9 +21,9 @@
 #ifndef _L_VARIANT_H_
 #define _L_VARIANT_H_
 
-#include "variant-impl.h"
 #include "bctoolbox/utils.hh"
 #include "logger/logger.h"
+#include "variant-impl.h"
 
 // =============================================================================
 
@@ -34,27 +34,27 @@ public:
 	Variant() = default;
 	~Variant() = default;
 
-	template <typename T> Variant(T value) {
+	template <typename T>
+	Variant(T value) {
 		mImplBase.reset(new VariantImpl<T>(value));
 	}
 
 	Variant(const Variant &other) {
-		if (other.mImplBase)
-			mImplBase.reset(other.mImplBase->clone());
+		if (other.mImplBase) mImplBase.reset(other.mImplBase->clone());
 	}
 
 	Variant(Variant &&other) = default;
 
-	Variant &operator= (const Variant &other) {
-		if (other.mImplBase)
-			mImplBase.reset(other.mImplBase->clone());
+	Variant &operator=(const Variant &other) {
+		if (other.mImplBase) mImplBase.reset(other.mImplBase->clone());
 		return *this;
 	}
 
-	Variant &operator= (Variant &&other) = default;
+	Variant &operator=(Variant &&other) = default;
 
-	template <typename T> void setValue(const T &value) {
-		VariantImpl<T> *vi = dynamic_cast<VariantImpl<T>*>(mImplBase.get());
+	template <typename T>
+	void setValue(const T &value) {
+		VariantImpl<T> *vi = dynamic_cast<VariantImpl<T> *>(mImplBase.get());
 		if (vi != nullptr) {
 			return vi->setValue(value);
 		}
@@ -65,8 +65,9 @@ public:
 		}
 	}
 
-	template <typename T> const T &getValue() const {
-		VariantImpl<T> *vi = dynamic_cast<VariantImpl<T>*>(mImplBase.get());
+	template <typename T>
+	const T &getValue() const {
+		VariantImpl<T> *vi = dynamic_cast<VariantImpl<T> *>(mImplBase.get());
 		if (vi != nullptr) {
 			return vi->getValue();
 		}

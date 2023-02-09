@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2010-2022 Belledonne Communications SARL.
  *
- * This file is part of Liblinphone 
+ * This file is part of Liblinphone
  * (see https://gitlab.linphone.org/BC/public/liblinphone).
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,11 +33,11 @@ class CoreAccessorPrivate;
 // Decorator to get a valid core instance.
 class LINPHONE_PUBLIC CoreAccessor {
 public:
-	CoreAccessor (const std::shared_ptr<Core> &core);
-	virtual ~CoreAccessor () = 0;
+	CoreAccessor(const std::shared_ptr<Core> &core);
+	virtual ~CoreAccessor() = 0;
 
 	// Returns a valid core instance. Or throw one std::bad_weak_ptr exception if core is destroyed.
-	std::shared_ptr<Core> getCore () const;
+	std::shared_ptr<Core> getCore() const;
 
 private:
 	CoreAccessorPrivate *mPrivate = nullptr;
