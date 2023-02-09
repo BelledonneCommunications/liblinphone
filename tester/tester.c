@@ -2707,6 +2707,13 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 	linphone_core_add_friend(lc,lf); /*accept subscription*/
 }
 
+void notify_friend_presence_received(LinphoneFriend *lf) {
+	ms_message("Presence received for friend [%p (%s)]", lf, linphone_friend_get_name(lf));
+	LinphoneCore *lc = linphone_friend_get_core(lf);
+	stats* counters = get_stats(lc);
+	counters->number_of_NotifyFriendPresenceReceived++;
+}
+
 void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	stats* counters;
 	unsigned int i;
