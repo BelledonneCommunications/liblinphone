@@ -200,6 +200,7 @@ LINPHONE_PUBLIC void linphone_core_remove_iterate_hook(LinphoneCore *lc, Linphon
 
 LINPHONE_PUBLIC const bctbx_list_t *linphone_player_get_callbacks_list(const LinphonePlayer *player);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_event_get_callbacks_list(const LinphoneEvent *ev);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_get_callbacks_list(const LinphoneFriend *linphone_friend);
 LINPHONE_PUBLIC const bctbx_list_t *linphone_friend_list_get_callbacks_list(const LinphoneFriendList *friend_list);
 LINPHONE_PUBLIC const bctbx_list_t *
 linphone_logging_service_get_callbacks_list(const LinphoneLoggingService *log_service);

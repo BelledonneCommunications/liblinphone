@@ -753,6 +753,12 @@ typedef void (*LinphoneFriendListCbsSyncStateChangedCb)(LinphoneFriendList *frie
 typedef void (*LinphoneFriendListCbsPresenceReceivedCb)(LinphoneFriendList *friend_list, const bctbx_list_t *friends);
 
 /**
+ * Callback used to notify a friend that it has received presence information.
+ * @param linphone_friend The #LinphoneFriend object for which the status has changed @notnil
+ **/
+typedef void (*LinphoneFriendCbsPresenceReceivedCb)(LinphoneFriend *linphone_friend);
+
+/**
  * @}
  **/
 

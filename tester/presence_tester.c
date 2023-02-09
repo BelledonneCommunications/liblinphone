@@ -53,8 +53,12 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager *caller_mgr, Linp
 	linphone_friend_enable_subscribes(friend, TRUE);
 	linphone_friend_done(friend);
 
+	LinphoneFriendCbs *cbs = linphone_factory_create_friend_cbs(linphone_factory_get());
+	linphone_friend_cbs_set_presence_received(cbs, notify_friend_presence_received);
+	linphone_friend_add_callbacks(friend, cbs);
+	linphone_friend_cbs_unref(cbs);
+
 	linphone_core_add_friend(caller_mgr->lc, friend);
-	linphone_friend_unref(friend);
 
 	result = wait_for(caller_mgr->lc, callee_mgr->lc, &caller_mgr->stat.number_of_LinphonePresenceActivityOnline,
 	                  initial_caller.number_of_LinphonePresenceActivityOnline + 1);
@@ -70,6 +74,10 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager *caller_mgr, Linp
 	*/
 	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_NotifyPresenceReceived,
 	                initial_caller.number_of_NotifyPresenceReceived + 1, int, "%d");
+
+	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_NotifyFriendPresenceReceived,
+	                initial_caller.number_of_NotifyFriendPresenceReceived + 1, int, "%d");
+	linphone_friend_unref(friend);
 
 	ms_free(identity);
 	return result;

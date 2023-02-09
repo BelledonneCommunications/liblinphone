@@ -58,6 +58,81 @@ using namespace std;
 
 using namespace LinphonePrivate;
 
+BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFriendCbs);
+
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneFriendCbs,
+                           belle_sip_object_t,
+                           NULL, // destroy
+                           NULL, // clone
+                           NULL, // Marshall
+                           FALSE);
+
+LinphoneFriendCbs *linphone_friend_cbs_new(void) {
+	return belle_sip_object_new(LinphoneFriendCbs);
+}
+
+void linphone_friend_add_callbacks(LinphoneFriend *linphone_friend, LinphoneFriendCbs *cbs) {
+	linphone_friend->callbacks = bctbx_list_append(linphone_friend->callbacks, linphone_friend_cbs_ref(cbs));
+}
+
+void linphone_friend_remove_callbacks(LinphoneFriend *linphone_friend, LinphoneFriendCbs *cbs) {
+	linphone_friend->callbacks = bctbx_list_remove(linphone_friend->callbacks, cbs);
+	linphone_friend_cbs_unref(cbs);
+}
+
+LinphoneFriendCbs *linphone_friend_get_current_callbacks(const LinphoneFriend *linphone_friend) {
+	return linphone_friend->currentCbs;
+}
+
+void linphone_friend_set_current_callbacks(LinphoneFriend *linphone_friend, LinphoneFriendCbs *cbs) {
+	linphone_friend->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_friend_get_callbacks_list(const LinphoneFriend *linphone_friend) {
+	return linphone_friend->callbacks;
+}
+
+#define NOTIFY_IF_EXIST(cbName, functionName, ...)                                                                     \
+	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_friend_get_callbacks_list(linphone_friend));                \
+	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {                                             \
+		linphone_friend_set_current_callbacks(linphone_friend,                                                         \
+		                                      reinterpret_cast<LinphoneFriendCbs *>(bctbx_list_get_data(it)));         \
+		LinphoneFriendCbs##cbName##Cb cb =                                                                             \
+		    linphone_friend_cbs_get_##functionName(linphone_friend_get_current_callbacks(linphone_friend));            \
+		if (cb) cb(__VA_ARGS__);                                                                                       \
+	}                                                                                                                  \
+	linphone_friend_set_current_callbacks(linphone_friend, nullptr);                                                   \
+	bctbx_list_free(callbacksCopy);
+
+LinphoneFriendCbs *linphone_friend_cbs_ref(LinphoneFriendCbs *cbs) {
+	belle_sip_object_ref(cbs);
+	return cbs;
+}
+
+void linphone_friend_cbs_unref(LinphoneFriendCbs *cbs) {
+	belle_sip_object_unref(cbs);
+}
+
+void *linphone_friend_cbs_get_user_data(const LinphoneFriendCbs *cbs) {
+	return cbs->user_data;
+}
+
+void linphone_friend_cbs_set_user_data(LinphoneFriendCbs *cbs, void *ud) {
+	cbs->user_data = ud;
+}
+
+LinphoneFriendCbsPresenceReceivedCb linphone_friend_cbs_get_presence_received(const LinphoneFriendCbs *cbs) {
+	return cbs->presence_received_cb;
+}
+
+void linphone_friend_cbs_set_presence_received(LinphoneFriendCbs *cbs, LinphoneFriendCbsPresenceReceivedCb cb) {
+	cbs->presence_received_cb = cb;
+}
+
+void linphone_friend_notify_presence_received(LinphoneFriend *linphone_friend) {
+	NOTIFY_IF_EXIST(PresenceReceived, presence_received, linphone_friend)
+}
+
 const char *linphone_online_status_to_string(LinphoneOnlineStatus ss) {
 	const char *str = NULL;
 	switch (ss) {
@@ -701,6 +776,9 @@ static void _linphone_friend_destroy(LinphoneFriend *lf) {
 	if (lf->vcard != NULL) linphone_vcard_unref(lf->vcard);
 	if (lf->refkey != NULL) ms_free(lf->refkey);
 	if (lf->native_uri != NULL) ms_free(lf->native_uri);
+
+	bctbx_list_free_with_data(lf->callbacks, (bctbx_list_free_func)linphone_friend_cbs_unref);
+	lf->callbacks = nullptr;
 }
 
 static belle_sip_error_code

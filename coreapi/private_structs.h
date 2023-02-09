@@ -72,6 +72,14 @@ struct _LinphoneFriendPhoneNumberSipUri {
 	char *uri;
 };
 
+struct _LinphoneFriendCbs {
+	belle_sip_object_t base;
+	void *user_data;
+	LinphoneFriendCbsPresenceReceivedCb presence_received_cb;
+};
+
+BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriendCbs);
+
 struct _LinphoneFriend {
 	belle_sip_object_t base;
 	void *user_data;
@@ -100,6 +108,8 @@ struct _LinphoneFriend {
 	int rc_index;
 	bool_t is_starred;
 	char *native_uri;
+	bctbx_list_t *callbacks;
+	_LinphoneFriendCbs *currentCbs;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneFriend);

@@ -277,6 +277,9 @@ static void linphone_friend_presence_received(LinphoneFriendList *list,
 		linphone_friend_set_presence_model_for_uri_or_tel(lf, uri, presence);
 		linphone_core_notify_notify_presence_received_for_uri_or_tel(list->lc, lf, uri, presence);
 	}
+
+	linphone_friend_notify_presence_received(lf);
+
 	// Deprecated
 	linphone_core_notify_notify_presence_received(list->lc, lf);
 }

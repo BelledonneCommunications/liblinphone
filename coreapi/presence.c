@@ -2163,6 +2163,7 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 		lf->subscribe_active = TRUE;
 		lf->presence_received = TRUE;
 		lf->out_sub_state = linphone_subscription_state_from_sal(ss);
+		linphone_friend_notify_presence_received(lf);
 		linphone_core_notify_notify_presence_received(lc, (LinphoneFriend *)lf);
 		if (op != lf->outsub) {
 			/*case of a NOTIFY received out of any dialog*/

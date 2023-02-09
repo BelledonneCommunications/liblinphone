@@ -21,6 +21,7 @@
 #ifndef LINPHONE_FRIEND_H_
 #define LINPHONE_FRIEND_H_
 
+#include "linphone/callbacks.h"
 #include "linphone/sipsetup.h"
 #include "linphone/types.h"
 
@@ -454,6 +455,74 @@ LINPHONE_PUBLIC void linphone_friend_set_organization(LinphoneFriend *linphone_f
  * @return the organization set if any & vCard is available, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_friend_get_organization(const LinphoneFriend *linphone_friend);
+
+/************ */
+/* Friend CBS */
+/* ********** */
+
+/**
+ * Adds the #LinphoneFriendCbs object associated with a LinphoneFriend.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @param cbs The current #LinphoneFriendCbs object to be added to the LinphoneFriend. @notnil
+ **/
+LINPHONE_PUBLIC void linphone_friend_add_callbacks(LinphoneFriend *linphone_friend, LinphoneFriendCbs *cbs);
+
+/**
+ * Removes the #LinphoneFriendCbs object associated with a LinphoneFriend.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @param cbs The current #LinphoneFriendCbs object to be remove from the LinphoneFriend. @notnil
+ **/
+LINPHONE_PUBLIC void linphone_friend_remove_callbacks(LinphoneFriend *linphone_friend, LinphoneFriendCbs *cbs);
+
+/**
+ * Get the current #LinphoneFriendCbs object associated with a LinphoneFriend.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @return The current #LinphoneFriendCbs object associated with the LinphoneFriend. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneFriendCbs *linphone_friend_get_current_callbacks(const LinphoneFriend *linphone_friend);
+
+/**
+ * Acquire a reference to a #LinphoneFriendCbs object.
+ * @param cbs #LinphoneFriendCbs object. @notnil
+ * @return The same #LinphoneFriendCbs object.
+ **/
+LINPHONE_PUBLIC LinphoneFriendCbs *linphone_friend_cbs_ref(LinphoneFriendCbs *cbs);
+
+/**
+ * Release a reference to a #LinphoneFriendCbs object.
+ * @param cbs #LinphoneFriendCbs object. @notnil
+ **/
+LINPHONE_PUBLIC void linphone_friend_cbs_unref(LinphoneFriendCbs *cbs);
+
+/**
+ * Retrieve the user pointer associated with a #LinphoneFriendCbs object.
+ * @param cbs #LinphoneFriendCbs object. @notnil
+ * @return The user pointer associated with the #LinphoneFriendCbs object. @maybenil
+ **/
+LINPHONE_PUBLIC void *linphone_friend_cbs_get_user_data(const LinphoneFriendCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneFriendCbs object.
+ * @param cbs #LinphoneFriendCbs object. @notnil
+ * @param user_data The user pointer to associate with the #LinphoneFriendCbs object. @maybenil
+ **/
+LINPHONE_PUBLIC void linphone_friend_cbs_set_user_data(LinphoneFriendCbs *cbs, void *user_data);
+
+/**
+ * Get the presence received callback.
+ * @param cbs #LinphoneFriendCbs object. @notnil
+ * @return The current presence received callback.
+ **/
+LINPHONE_PUBLIC LinphoneFriendCbsPresenceReceivedCb
+linphone_friend_cbs_get_presence_received(const LinphoneFriendCbs *cbs);
+
+/**
+ * Set the presence received callback.
+ * @param cbs #LinphoneFriendCbs object. @notnil
+ * @param cb The presence received callback to be used.
+ **/
+LINPHONE_PUBLIC void linphone_friend_cbs_set_presence_received(LinphoneFriendCbs *cbs,
+                                                               LinphoneFriendCbsPresenceReceivedCb cb);
 
 /************ */
 /* DEPRECATED */

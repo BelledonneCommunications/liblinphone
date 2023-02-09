@@ -695,6 +695,13 @@ LINPHONE_PUBLIC LinphoneEventCbs *linphone_factory_create_event_cbs(LinphoneFact
 LINPHONE_PUBLIC LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *factory);
 
 /**
+ * Creates an object #LinphoneFriendCbs
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneFriendCbs @notnil
+ */
+LINPHONE_PUBLIC LinphoneFriendCbs *linphone_factory_create_friend_cbs(LinphoneFactory *factory);
+
+/**
  * Creates an object #LinphoneAccountCreatorCbs
  * @param factory the #LinphoneFactory @notnil
  * @return a #LinphoneAccountCreatorCbs @notnil

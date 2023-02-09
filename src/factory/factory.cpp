@@ -610,6 +610,10 @@ LinphoneEventCbs *Factory::createEventCbs() const {
 	return linphone_event_cbs_new();
 }
 
+LinphoneFriendCbs *Factory::createFriendCbs() const {
+	return linphone_friend_cbs_new();
+}
+
 LinphoneFriendListCbs *Factory::createFriendListCbs() const {
 	return linphone_friend_list_cbs_new();
 }

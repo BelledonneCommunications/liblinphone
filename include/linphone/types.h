@@ -321,6 +321,12 @@ typedef enum _LinphoneVideoSourceType {
 typedef struct _LinphoneFriend LinphoneFriend;
 
 /**
+ * @brief An object to handle the callbacks for #LinphoneFriend.
+ * @ingroup buddy_list
+ **/
+typedef struct _LinphoneFriendCbs LinphoneFriendCbs;
+
+/**
  * @brief Enum describing the capabilities of a #LinphoneFriend, populated through presence subscribe/notify process.
  * @ingroup buddy_list
  **/

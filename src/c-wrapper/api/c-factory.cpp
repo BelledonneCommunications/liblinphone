@@ -389,6 +389,10 @@ LinphoneFriendListCbs *linphone_factory_create_friend_list_cbs(LinphoneFactory *
 	return Factory::toCpp(factory)->createFriendListCbs();
 }
 
+LinphoneFriendCbs *linphone_factory_create_friend_cbs(LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->createFriendCbs();
+}
+
 LinphoneAccountCreatorCbs *linphone_factory_create_account_creator_cbs(LinphoneFactory *factory) {
 	return Factory::toCpp(factory)->createAccountCreatorCbs();
 }

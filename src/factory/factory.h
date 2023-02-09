@@ -179,6 +179,7 @@ public:
 
 	LinphoneEventCbs *createEventCbs() const;
 
+	LinphoneFriendCbs *createFriendCbs() const;
 	LinphoneFriendListCbs *createFriendListCbs() const;
 
 	LinphoneAccountCreatorCbs *createAccountCreatorCbs() const;
